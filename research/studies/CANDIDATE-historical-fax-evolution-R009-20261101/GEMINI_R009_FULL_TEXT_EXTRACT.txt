@@ -1,0 +1,2589 @@
+# R009 — Gemini: historical evolution of squash in the alternative global FAX world
+
+Original source: owner-provided DOCX "Historická Evoluce Squashe ve FAX.docx" (52 pages, 2026-11-01).
+**RESEARCH STATUS: UNVERIFIED PROPOSAL ONLY; NOT A PRODUCT DECISION, ENGINE IMPLEMENTATION, RELEASE CERTIFICATION OR VERIFIED SCIENTIFIC CALIBRATION.**
+This is a searchable, **lossy text-only rendering** of the source DOCX, NOT the original binary document. Source has 9 Word tables and 175 inline shapes (formulas, charts and illustration assets). Table layout and mathematical expressions can be misread or absent in extracted text. Check original DOCX before using formulas or numeric calibrations.
+Scientific risk highlights: 12.67→12.99 shots/rally is +2.53%, not +7.89%; a Rock-Paper-Scissors matchup/limit cycle is a conditional hypothesis, NOT an established property of squash; 2026 racket-sport relative-age evidence does not prove RAE necessarily emerges in FAX. Existing Country Attributes V1 define 6 authored ratings plus factual population, NOT seven authored country ratings. Health V1 currently has no approved/applied calibrated numeric injury effect. See review.
+FAX is **a historically evolving, alternative globally popular squash world**. PSA Earth observations are only evidence anchors, not mandated FAX output targets. Authority stays with current Master/owner decisions and stable Saved historical state.
+
+----- BEGIN AVAILABLE SEARCHABLE TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 52>
+Nezávislý hloubkový výzkum historické
+evoluce squashe v alternativním
+globálním sportovním světě (R009)
+Epistemologický úvod a teoretický rámec modelování
+světa FAX
+Modelování dlouhodobé evoluce profesionálního sportu v alternativním historickém světě
+vyžaduje striktní metodologické oddělení historické kontingence od univerzálních
+systémových mechanismů. Skutečná historie profesionálního squashe na Zemi,
+reprezentovaná okruhem PSA a jeho institucionálními předchůdci, představuje pouze jednu
+konkrétní trajektorii z nekonečného prostoru možných realizací stochastického dynamického
+systému1. V simulačním prostředí Squash Engine není svět FAX pouhou kopií současné PSA
+Tour s navýšeným počtem agentů, nýbrž autonomním kontrafaktuálním světem s vlastní
+demografickou, ekonomickou, geografickou a institucionální historií.
+Hlavní výzkumný problém spočívá v určení toho, jak se sportovní úroveň, taktická meta,
+mezinárodní konkurence a profesionální ekosystém vyvíjejí v horizontu několika desetiletí, aniž
+by simulace spoléhala na deterministické skriptování typu „od roku 2040 získává útočný styl
+bonus“ nebo porušovala základní axiom architektury Squash Engine, podle něhož národnost
+hráče nikdy přímo neurčuje vrozený talent, herní styl, mentální odolnost ani biologický
+potenciál. Veškeré makroskopické jevy — od vzniku a úpadku národních dynastií přes
+zrychlování tempa hry až po výkonnostní stagnaci na biologické asymptotě — musejí vyvstávat
+jako emergentní důsledky mikroskopických interakcí mezi generováním talentů (R001),
+zápasovým enginem (R002), rankingovým systémem (R003), turnajovým kalendářem (R004),
+fyziologickým opotřebením (R005) a taktickou adaptací (R006).
+Předkládaná studie systematicky dekonstruuje reálný vývoj squashe do roku 2026, převádí
+zjištěné empirické poznatky do aparátu ekonomie sportu, teorie extrémních hodnot (EVT),
+evoluční teorie her a fyziologie zátěže a následně formuluje exaktní matematické a validační
+návrhy plně kompatibilní s verzovanými historickými snapshoty konkrétního simulačního běhu
+(Runu)2.
+
+A — Skutečná historická evoluce squashe (od počátků
+do roku 2026)
+Institucionalizace, profesionalizace a globalizace okruhu
+Historický vývoj squashe na Zemi je charakterizován přechodem od decentralizované britské
+klubové a školní tradice ke globálně komercializovanému profesionálnímu okruhu1. První
+mezinárodní střetnutí proběhlo v roce 1922 v podobě severoamerického Lapham Cupu mezi
+<PARSED TEXT FOR PAGE: 2 / 52>
+USA a Kanadou1. Institucionalizace pravidel nastala v roce 1923, kdy anglické kluby ustavily
+subkomisi pod hlavičkou Tennis & Rackets Association (T&RA), která definovala standardní
+rozměry mezinárodního („softballového“) kurtu o délce 32 stop (9,75 m) a šířce 21 stop (6,40
+m), stanovila výšku tinu na 19 palců (480 mm) a uspořádala první British Amateur
+Championship1. V roce 1926 vydala T&RA oficiální pravidla, založila juniorský Drysdale Cup
+(dnešní British Junior Open U19) a změnila tradiční bodování z 15 na 9 bodů1.
+Po založení British Open v roce 1930, jehož vítěz byl po desetiletí de facto považován za mistra
+světa, zůstal sport dlouhou dobu doménou britských a egyptských hráčů v poloprofesionálním
+režimu7. Zásadní zlom v profesionalizaci přinesl rok 1951, kdy sedmatřicetiletý pákistánský
+profesionál a bývalý sběrač míčků z důstojnického klubu v Péšávaru Hashim Khan s finanční
+podporou mladých důstojníků Pákistánského letectva (PAF) odcestoval do Londýna a získal
+první ze svých sedmi titulů na British Open1. Nástup širší rodiny Khanů (Hashim, Roshan, Azam,
+Mohibullah) a posléze australské školy vyvolal tlak na vytvoření nezávislé hráčské organizace a
+globálního kalendáře7.
+V 70. a 80. letech došlo k institucionálnímu oddělení amatérského a profesionálního řízení.
+Mezinárodní federace ISRF (v roce 1992 přejmenovaná na World Squash Federation — WSF)
+spravovala technické normy a národní šampionáty, zatímco mužský profesionální okruh řídila
+International Squash Players Association (ISPA)1. V roce 1989 překročil mužský profesionální
+okruh poprvé hranici 1 milionu USD v celkových prize money1. K definitivnímu sjednocení
+mužského profesionálního squashe došlo v roce 1993, kdy se ISPA sloučila se severoamerickou
+asociací hardballového squashe (kde se do té doby hrálo na užších kurtech o šířce 18 stop a 6
+palců s 15palcovým tinem), čímž vznikla Professional Squash Association (PSA)1. Ženský
+profesionální okruh prošel paralelní evolucí přes organizaci WSA (dříve WISPA) až k historické
+fúzi s mužskou PSA v roce 2015 do jediné globální organizace1. Vyvrcholením institucionální
+globalizace bylo rozhodnutí Mezinárodního olympijského výboru z října 2023 o zařazení
+squashe do oficiálního programu Olympijských her v Los Angeles 20289.
+Vývoj pravidel, bodovacích systémů a geometrie kurtu
+Pravidlová evoluce squashe byla primárně tažena snahou zkrátit extrémně dlouhé
+opotřebovávací zápasy („wars of attrition“), zvýšit diváckou atraktivitu pro televizní přenosy a
+podpořit útočné zakončování výměn6. V tradičním britském systému Hand-In, Hand-Out
+(HiHo) do 9 bodů (s možností volby „set two“ do 10 bodů ze strany přijímajícího za stavu 8:8)
+získával bod pouze podávající hráč; pokud výměnu vyhrál přijímající, získal pouze právo
+podání6. V éře absolutní kondiční dominance Jahangira Khana v 80. letech vedl systém HiHo k
+zápasům přesahujícím dvě až tři hodiny, v nichž série desítek ztracených podání neposouvaly
+skóre6. V roce 1989 proto mužský profesionální okruh zrušil pravidlo druhého podání, přešel na
+bodování každou výměnou (Point-A-Rally Scoring — PARS / PPR) do 15 bodů a současně snížil
+výšku tinu pro profesionální muže z 19 palců (48 cm) na 17 palců (43 cm)1.
+Druhá zásadní reforma nastala v květnu 2004 na turnaji Brit Insurance Super Series Finals v
+Londýně, kde PSA zavedla systém PARS do 11 bodů s povinností vyhrát o dva čisté body v
+<PARSED TEXT FOR PAGE: 3 / 52>
+tiebreaku od stavu 10:106. Ženský profesionální okruh adoptoval PARS 11 v červenci 2008 a k 1.
+dubnu 2009 prohlásila WSF systém PARS 11 za jediný oficiální bodovací systém pro všechny
+úrovně soutěžního squashe na světě1. V roce 2012 snížila WSF výšku tinu pro mezinárodní
+čtyřhry na 13 palců (33 cm) a v roce 2015 došlo po sloučení PSA a WSA ke sjednocení výšky tinu
+na 17 palců i pro ženskou profesionální špičku1.
+Empirické důkazy o dopadu pravidlových změn: Kauzalita versus
+korelace
+V populárním diskurzu panuje přesvědčení, že přechod na PARS 11 a snížení tinu přímo zkrátily
+samotné výměny a vynutily si radikálně odlišnou stavbu každého bodu. Exaktní notacionální
+studie (Hughes et al., 2006b; Liddle & O'Donoghue, 1998) však odhalují mnohem jemnější
+kauzální mechanismus11.
+
+
+
+ Sledovaná           Bodování PPR        Bodování PPR     Procentuální       Statistická a
+ zápasová            do 15 bodů          do 11 bodů       změna (%)          taktická
+ proměnná                                                                    interpretace
+ (Hughes et al.,
+ 2006b)
+
+
+                     70:40 (70,67        69:20 (69,33     -1,90 %11          Minimální
+ Skutečná
+                     min) 11
+                                         min)11
+                                                                             pokles kvůli
+ délka zápasu
+                                                                             vyšší četnosti
+ (min:s)
+                                                                             pětisetových
+                                                                             zápasů11.
+
+                     74:53 (74,88        52:26 (52,43     -29,99 %11         Výrazné
+ Extrapolovan
+                     min) 11
+                                         min)11
+                                                                             zkrácení doby
+ á délka
+                                                                             trvání
+ zápasu (min:s)
+                                                                             jednotlivých
+                                                                             setů (
+                                                                                            )11.
+
+                     12,6711             12,9911          +7,89 %11          Průměrná,
+ Počet úderů
+                                                                             modální ani
+ na výměnu
+                                                                             mediánová
+ (Shots per
+                                                                             délka výměny
+ Rally)
+                                                                             se statisticky
+                                                                             nezměnila11.
+<PARSED TEXT FOR PAGE: 4 / 52>
+                     53,4111            60,1011            +12,53 %11         Vyšší efektivita
+ Vítězné údery
+                                                                              zakončení při
+ za zápas
+                                                                              zachování
+ (Winners)
+                                                                              základních
+                                                                              herních
+                                                                              vzorců11.
+
+                     31,7911            27,6111            -13,15 %11         Vyšší bodová
+ Nevynucené
+                                                                              cena každé
+ chyby za
+                                                                              chyby vede k
+ zápas
+                                                                              disciplinovaněj
+ (Unforced
+                                                                              ší selekci
+ Errors)
+                                                                              úderů11.
+
+                     4,1711             6,1711             +48,00 %11         Dramatický
+ Minimální
+                                                                              nárůst
+ počet
+                                                                              psychologické
+ kritických
+                                                                              ho tlaku a
+ bodů za zápas
+                                                                              rozhodujících
+                                                                              stavů v setu11.
+
+                     11,5511            12,7111            +10,04 %11         Delší mentální
+ Odpočinek
+                                                                              a fyziologická
+ mezi
+                                                                              příprava před
+ výměnami (s)
+                                                                              každou
+                                                                              výměnou11.
+
+Analýza dat z výzkumu Hughese et al. (2006b) dokazuje, že při přechodu z PPR 15 na PPR 11
+nedošlo ke statisticky významné změně v průměrné, modální ani mediánové délce výměny a
+celkové prostorové vzorce hry zůstaly zachovány11. Průměrný počet úderů na výměnu
+dokonce mírně vzrostl z 12,67 na 12,99 (+7,89 %)11. Skutečná průměrná délka zkoumaných
+zápasů klesla jen o 1,90 % (ze 70,67 na 69,33 minuty), avšak extrapolovaná délka zápasu při
+stejném počtu setů klesla o 29,99 % (ze 74,88 na 52,43 minuty), což potvrzují i plošné testy WSF
+z roku 2008 vykazující zkrácení zápasů zhruba o 30 % oproti 9bodovému HiHo systému11.
+Skutečný kauzální dopad reformy bodování spočíval v psychologické a pravděpodobnostní
+transformaci zápasu17. Počet kritických bodů za zápas vzrostl o 48,00 % (ze 4,17 na 6,17), počet
+vítězných úderů stoupl o 12,53 % (z 53,41 na 60,10) a počet nevynucených chyb klesl o 13,15 %
+(z 31,79 na 27,61), přičemž hráči si mezi výměnami dopřávali o 10,04 % delší odpočinek (12,71 s
+oproti 11,55 s) kvůli vyšší váze každého míče11. Současně došlo k zásadnímu omezení
+pravděpodobnosti velkých obratů ve skóre: zatímco v systému HiHo byly obraty ze stavu 0:8 či
+<PARSED TEXT FOR PAGE: 5 / 52>
+1:8 relativně běžné, neboť vedoucí hráč musel při ztrátě podání vždy vyhrát dvě výměny v řadě
+k proměnění gameballu, v systému PARS 11 potřebuje hráč za stavu 10:0 či 10:1 uhrát jediný
+bod z libovolné výměny, což strukturálně znevýhodňuje pomaleji startující a čistě
+opotřebovávací typy hráčů19.
+Technologické inovace a vývoj vybavení
+Technologický vývoj ve squashi neprobíhal spojitě, nýbrž ve třech diskrétních vlnách, které
+silně interagovaly s pravidlovými změnami. První vlnou byla kompozitní revoluce raket mezi
+polovinou 80. let a rokem 1991. Tradiční rakety z laminovaného jasanového dřeva s malou
+hlavou, přírodním střívkovým výpletem a hmotností kolem 210 gramů byly po změně pravidel v
+polovině 80. let nahrazeny hliníkovými a následně kompozitními rámy z grafitu, kevlaru, titanu a
+bóru se syntetickými výplety6. V roce 1991 WSF povolila zvětšení vypletené plochy až na
+          při maximální délce 686 mm (27 palců) a šířce 215 mm (8,5 palce)1. Moderní
+karbonové rakety se sníženou hmotností rámu na 120–125 g radikálně zredukovaly moment
+setrvačnosti20. Kauzálním důsledkem nebyla pouze vyšší maximální rychlost míčku, ale
+především schopnost generovat razanci a přesnost pomocí extrémně krátkého nápřahu ze
+zápěstí a předloktí, což umožnilo brzké zachytávání míčku z voleje a deceptivní změny směru
+na poslední chvíli17.
+Druhou vlnou byla standardizace míčků v období 1970–2000. V roce 1970 bylo zavedeno
+barevné tečkování míčků podle rychlosti odskoku a v roce 2000 se soutěžním standardem stal
+míček s dvojitou žlutou tečkou (double-yellow dot), který nahradil dřívější jednomístnou žlutou
+tečku, zatímco pro vysokohorské oblasti vznikla ještě pomalejší oranžová tečka1. Nižší odskok
+dvojité žluté tečky působil jako přirozený protiváhový mechanismus vůči silnějším karbonovým
+raketám, čímž zabránil degradaci squashe na hru o dvou úderech a udržel kontrolu nad délkou
+výměn6.
+Třetí vlnu představovala transformace architektury kurtů a analytické infrastruktury v letech
+1971–2026. První závěsná celoskleněná zadní stěna byla postavena roku 1971 v Abbeydale Park
+v Sheffieldu a na mistrovství světa 1990 v Toulouse bylo poprvé využito více přenosných
+skleněných show-kurtů1. Čtyřstěnné skleněné kurty umožnily instalaci arén v netradičních
+lokalitách, jako jsou prostranství před pyramidami v Gíze, a zlepšily televizní viditelnost i
+přehlednost skórovacích grafik17. V oblasti analytiky přešel sport od ruční notace (Sanderson,
+1983; Hughes, 1985) přes první počítačové 3D histogramy poskytující zpětnou vazbu mezi sety
+(Hughes & Robertson, 1998) až po systémy počítačového vidění a umělé inteligence v letech
+2020–2026 (např. SquashVision, Smart Squash AI, Rally Vision), které automaticky měří kvalitu
+každého úderu, rychlost míčku, distribuci pohybu kolem T-pozice a detekují autové čáry v
+reálném čase15.
+
+
+
+ Období /            Pravidlová /        Primární            Empiricky           Síla
+ Milník              Technologick        příčina             doložený            vědeckého
+<PARSED TEXT FOR PAGE: 6 / 52>
+                 á změna            zavedení          dopad na            důkazu
+                                                      výkon a
+                                                      taktiku
+
+
+                 Standardizace      Sjednocení        Vznik               Vysoká
+1923–1926
+                 kurtu (32×21       roztříštěných     základního          (historická
+                 stop), tin 19      klubových         prostorového        kodifikace)1
+                 palců, HiHo        pravidel pod      archetypu hry
+                 bodování do 9      T&RA1             (dominance T-
+                 bodů1                                pozice a
+                                                      přímých
+                                                      úderů)6
+
+                 Kompozitní         Technologický     Zkrácení            Střední až
+Pol. 80. let –
+                 materiály          pokrok            nápřahu,            vysoká
+1991
+                 (grafit, kevlar,   materiálového     nárůst              (biomechanick
+                 bór) a hlava       inženýrství6      frekvence           á shoda,
+                 rakety do                            volejů, vyšší       absence
+                             1                        špičkové            izolovaných
+                                                      zrychlení hlavy     RCT)17
+                                                      rakety a
+                                                      deceptivní
+                                                      údery17
+
+                 Zrušení 2.         Eliminace         Zvýšení             Střední
+1989–1990
+                 podání,            extrémně          návratnosti         (souběh
+                 přechod PSA        dlouhých          útočných            změny tinu,
+                 mužů na PPR        zápasů a          zkrácení            bodování a
+                 15 a snížení       zvýšení           (drops/kills)       raket ztěžuje
+                 tinu na 17         atraktivity pro   díky nižšímu        izolaci vlivu)19
+                 palců1             TV6               tinu, omezení
+                                                      pasivních
+                                                      bloků2
+
+                 Zavedení           Kompenzace        Stabilizace         Střední
+2000
+                 míčku s            rostoucí          délky výměn,        (praktický
+                 dvojitou žlutou    razance           nutnost zahřátí     konsenzus,
+                 tečkou jako        kompozitních      míčku a vyšší       omezené
+                 soutěžního         raket6            fyzické úsilí pro   longitudinální
+<PARSED TEXT FOR PAGE: 7 / 52>
+                      standardu6                               udržení délky        studie)6
+                                                               úderu6
+
+                      Přechod na           Zkrácení            Délka výměn          Velmi vysoká
+  2004–2009
+                      PARS 11 (PSA         celkové doby        beze změny           (přímé
+                      muži 2004,           zápasů a            (~13 úderů),         notacionální
+                      ženy 2008,           sjednocení          pokles               studie Hughes
+                      WSF                  světového           extrapolované        et al., 2006b)11
+                      celosvětově          bodování6           délky zápasu o
+                      2009)1                                   ~30 %, nárůst
+                                                               kritických
+                                                               bodů o 48 %,
+                                                               pokles chyb o
+                                                               13 %11
+
+                      Sjednocení           Rovnoprávnost       Sblížení             Střední
+  2015–2026
+                      PSA/WSA,             okruhů,             taktické             (probíhající
+                      ženský tin 17        komercializace      agresivity           transformace,
+                      palců (2015),        a datová            ženského a           měřeno přes
+                      nástup AI            optimalizace        mužského             analytické
+                      videoanalýzy1        tréninku1           okruhu,              platformy)26
+                                                               systematická
+                                                               optimalizace
+                                                               vzorců z T-
+                                                               pozice1
+
+B — Alternativní globální historie FAX: Kontrafaktuální
+analýza masového sportu
+V alternativním světě FAX, kde squash po několik generací zaujímá pozici prvořadého
+globálního profesionálního sportu srovnatelného s tenisem či fotbalem, dochází k hluboké
+strukturální proměně celého ekosystému. Abychom předešli naivní lineární extrapolaci, kdy
+vyšší popularita automaticky generuje nekonečně lepší atributy hráčů, je nutné rozebrat deset
+klíčových dimenzí masového rozvoje prostřednictvím devítipilířového modelu SPLISS (De
+Bosscher et al., 2006, 2015), teorie extrémních hodnot (EVT) a ekonomie superhvězd3.
+Analýza deseti dimenzí masového globálního squashe
+První a druhou dimenzi tvoří výrazně větší hráčská základna (Pilíř 3 modelu SPLISS — Sport
+Participation) a z ní plynoucí větší počet juniorských talentů a selekční tlak (Pilíř 4 — Talent ID
+and Development)29. Podle teorie extrémních hodnot jsou elitní šampioni výběrem z pravého
+chvostu pravděpodobnostního rozdělení lidského talentu4. Zvětšení globální členské základny z
+<PARSED TEXT FOR PAGE: 8 / 52>
+řádu statisíců na desítky milionů aktivních hráčů nezvyšuje biologické maximum lidského druhu
+(   ), ale dramaticky zvyšuje hustotu pozorování v blízkosti této horní meze, čímž se
+výkonnostní rozdíly mezi hráči v Top 100 kompresně zmenšují4. Masová základna však
+současně přináší obrovský přetlak na vstupu do juniorských akademií9. Zatímco v reálném
+squashi (Earth) byl v důsledku menší konkurence efekt relativního věku (Relative Age Effect —
+RAE) historicky slabý či statisticky nevýznamný, v masových raketových sportech, jako je tenis
+a badminton, je RAE silně přítomen33. Metaanalýza 26 studií (198 nezávislých vzorků,
+                    ) prokázala, že v raketových sportech jsou hráči narození v prvním čtvrtletí
+(Q1) zastoupeni z 34,8 % oproti 16,8 % v Q4 (          ,            ), přičemž v
+německých národních juniorských výběrech v tenisu dosahuje poměr narozených v prvním
+pololetí 70,2 % oproti 29,8 % ve druhém pololetí33. Ve světě FAX proto masovost nevyhnutelně
+vyvolává silný RAE a předčasnou selekci biologicky dříve dozrávajících jedinců na úkor
+technicky kreativních, ale později dospívajících talentů33.
+Třetí a čtvrtou dimenzi představují vyšší sportovní investice (Pilíř 1 — Financial Support) a
+profesionálnější akademie s pokročilou infrastrukturou (Pilíř 6 — Training Facilities)29. Výzkumy
+konsorcia SPLISS potvrzují, že absolutní objem financování alokovaného do elitního sportu je
+nejsilnějším prediktorem mezinárodního úspěchu na úrovni vstupů a výstupů, přičemž finanční
+podpora během kariéry i po ní (Pilíř 5) přímo redukuje předčasný odchod talentů ze sportu
+(drop-out) mezi 18. a 23. rokem29. Namísto izolovaného individuálního tréninku, jaký v počátcích
+kariéry popisoval Amr Shabana, který si v 18 letech sám řídil kondiční přípravu, posilovnu, nákup
+letenek i ubytování, vznikají ve světě FAX průmyslové tréninkové komplexy typu egyptského
+Wadi Degla (2 000 hráčů a 100 trenérů) v desítkách zemí světa9.
+Pátou, šestou a sedmou dimenzi tvoří intenzivnější mezinárodní konkurence (Pilíř 8), lepší
+přenos trenérských znalostí (knowledge spillovers) a úzká specializace trenérů, analytiků a
+sportovních lékařů (Pilíře 7 a 9)29. Vyšší homogenita špičky, kterou Rosen (1986) označuje jako
+„survival of the fittest“, znamená, že favorité čelí vysokému riziku vyřazení již v prvních kolech
+turnajů a klesá podíl „snadných“ zápasů, v nichž by elitní hráč mohl šetřit síly na finálové fáze32.
+V globalizovaném a lukrativním odvětví zároveň dochází k vysoké mezinárodní mobilitě elitních
+trenérů a bývalých šampionů10. Geografická aglomerace v tréninkových centrech nejprve
+urychluje lokální difuzi inovací, ale mezinárodní trh práce tyto poznatky následně rychle
+vyrovnává napříč kontinenty38. Uvnitř realizačních týmů dochází k dělbě práce na technické
+trenéry, kondiční specialisty na opakované sprinty (RSA) a změny směru (COD), datové
+analytiky zpracovávající miliony datových bodů o kvalitě úderů a fyzioterapeuty26.
+Osmou, devátou a desátou dimenzi představují širší geografické zastoupení, větší počet
+profesionálních turnajů a vyšší prestiž profesionální kariéry. Na okruh vstupují demograficky
+silné a ekonomicky rozvinuté země, což podle zjištění projektu SPLISS Athletics (De Bosscher
+et al., 2012) vede k růstu počtu zemí dosahujících na medailové a Top 8 pozice a k erozi
+monopolu tradičních regionů40. Vzniká hluboká hierarchie turnajů (regionální satelitní okruhy,
+<PARSED TEXT FOR PAGE: 9 / 52>
+kontinentální challengery, elitní světová série), takže hráči nižšího rankingu se mohou uživit na
+lokální úrovni. Současně však podle Rosenovy teorie superstar (Rosen, 1981; Lazear & Rosen,
+1981) vytváří masová mediální spotřeba extrémně konvexní rozdělení příjmů: malý rozdíl v
+dovednostech generuje obrovský rozdíl v odměnách, přičemž prize money tvoří u superhvězd
+pouze 30–40 % příjmů a zbytek pochází z reklamních kontraktů, startovného a exhibicí3. Příliš
+strmá distribuce odměn přitom vyvolává vedlejší patologické jevy v podobě psychologického
+tlaku, přetrénování, zranění a poklesu úsilí (shirking) u hráčů, kteří čelí dominantní superhvězdě
+nebo věří, že jejich šance na průlom do elitního klubu vyvolených je mizivá43.
+Taxonomie odezvy systému v alternativním světě FAX
+
+
+ Kategorie odezvy                  Jevy a parametry v               Kauzální zdůvodnění a
+                                   alternativním světě FAX          vědecká opora
+
+
+                                                                    Zákonitosti EVT při větším
+ 1. Co se pravděpodobně            Hustota výkonnosti v Top
+ mění                              100, průměrná kondiční           vzorku     4
+                                                                                ; SPLISS Pilíř 1
+                                   připravenost širší špičky,       (finance) a Pilíř 5 (podpora
+                                   konverzní míra juniorů do        kariéry) přímo redukují
+                                   profi okruhu, počet zemí v       předčasný drop-out29;
+                                   Top 100, finanční                homogenizace
+                                   soběstačnost hráčů Top           tréninkového know-how
+                                   200.                             snižuje rozptyl tréninkové
+                                                                    efektivity40.
+
+                                                                    Geografická diverzita roste
+ 2. Co se mění pouze za            Koncentrace národních
+                                                                    jen tehdy, pokud
+ určitých podmínek                 velmocí v Top 10, průměrná
+                                                                    mezinárodní difuze znalostí
+                                   délka profesionální kariéry,
+                                                                    převáží nad lokálními
+                                   míra útočnosti herní mety.
+                                                                    aglomeračními klastry38.
+                                                                    Délka kariéry roste díky
+                                                                    medicíně a financím29, ale
+                                                                    klesá, pokud hustota
+                                                                    těžkých zápasů v prvních
+                                                                    kolech zvýší míru
+                                                                    kumulativního opotřebení43.
+
+                                                                    Genetická architektura
+ 3. Co nemusí reagovat             Maximální biologický
+                                                                    lidského druhu se v
+ vůbec
+                                   potenciál jednotlivce (   ),     horizontu několika generací
+<PARSED TEXT FOR PAGE: 10 / 52>
+                                  fyziologické konstanty          nemění49; biomechanika
+                                  (max. TF, reakční doba          výpadu a doba letu míčku
+                                  ~200 ms), geometrická           diktují, že návrat na T a
+                                  výhoda T-pozice a přímých       přímý úder (~70 % úderů)
+                                  úderů (drives).                 zůstávají prostorově
+                                                                  optimální bez ohledu na
+                                                                  popularitu sportu27.
+
+                                                                  Masová selekce zesiluje
+ 4. Co se může paradoxně          Ztráta pozdně dozrávajících
+ zhoršit                          talentů (RAE), incidence        RAE33; raná specializace
+                                  růstových a únavových           zvyšuje výskyt
+                                  zranění u mládeže, taktická     osteochondrózy (až 22 %
+                                  kreativita (homogenizace),      diagnóz a 16 % ztracených
+                                  úsilí hráčů druhého sledu       dnů u juniorů)51;
+                                  proti superhvězdám.             algoritmická optimalizace
+                                                                  potlačuje riskantní
+                                                                  improvizaci26; příliš strmá
+                                                                  struktura odměn vede k
+                                                                  psychologickému tlaku,
+                                                                  přetrénování a poklesu úsilí
+                                                                  (shirking) u outsiderů43.
+
+                                                                  Vznik extrémního jedince na
+ 5. Co nelze empiricky            Konkrétní identita
+                                                                  samé hranici biologického
+ určit                            dominantního státu v dané
+                                  dekádě, přesný okamžik          chvostu (        ) je
+                                  zrodu generační anomálie        stochastický jev s vysokou
+                                  (typu Jahangira Khana či        mírou nejistoty4; socio-
+                                  Ramyho Ashoura).                kulturní spouštěče
+                                                                  (superstar efekt) podléhají
+                                                                  nelineární citlivosti na
+                                                                  počáteční podmínky36.
+
+C — Evoluce herního stylu a taktiky: Od individuálních
+rozhodnutí k populační metě
+Čtyřúrovňová ontologie taktiky
+Pro korektní modelování taktického vývoje v Squash Engine je nezbytné striktně rozlišit čtyři
+hierarchické roviny taktické reality, které bývají v povrchních analýzách zaměňovány. První
+rovinu představuje individuální herní styl (Player Style Profile), což je dlouhodobá, pomalu se
+<PARSED TEXT FOR PAGE: 11 / 52>
+měnící charakteristika konkrétního hráče, daná souhrou jeho antropometrie, technických
+dovedností, rychlosti anticipace a psychologické tolerance k riziku21. Příkladem je Ramy Ashour,
+jehož individuální styl stál na extrémně krátkém nápřahu, čtení hry a snaze volejovat každý
+míček dříve, než jej mine, do přímých drivů, křížů či zkrácení21. Naopak Amr Shabana v průběhu
+své 21leté kariéry svůj individuální styl vědomě modifikoval každé 3 až 4 roky podle toho, jak se
+obměňovaly generace soupeřů: v 17 letech spoléhal na exhibiční útočný squash bez kondičního
+základu, zatímco ve 22 a 28 letech přešel k vysoce disciplinované kontrole prostoru a účelové
+efektivitě37.
+Druhou rovinu tvoří zápasový gameplan (Match Gameplan), tedy krátkodobé situační
+rozhodování v konkrétním zápase proti specifickému soupeři a za daného stavu skóre17. V
+bodování PARS si hráči vytvářejí bodové „nárazníkové zóny“ (buffer zones), v nichž přepínají
+mezi bezpečnou (safe) a útočnou hrou52. Za vyrovnaného stavu 9:9 či v tiebreaku 10:10 hráči
+vědomě redukují počet uvažovaných variant úderů na minimum, což má dvojí efekt: zrychluje
+to rozhodovací proces pod časovým tlakem a snižuje nároky na vědomou koncentraci, takže
+kontrolu přebírají zautomatizované tréninkové instinkty17.
+Třetí rovinou je sportovní meta (Tactical Meta), která popisuje makroskopický stav populace
+na okruhu v určité éře — tedy rozdělení četností jednotlivých herních stylů v elitní špičce a
+soubor taktických vzorců, které vůči tomuto rozdělení aktuálně vykazují nejvyšší očekávanou
+pravděpodobnost vítězství5. Meta není pravidlo enginu; je to statistický popis toho, co se v
+dané generaci vyplácí hrát vzhledem k tomu, co hrají ostatní5. Čtvrtou rovinou je pak
+historická inovace (Historical Innovation), definovaná jako trvalé rozšíření prostoru
+dostupných akcí nebo změna výplatní matice v důsledku technologického, pravidlového či
+metodického průlomu6. Patří sem například zavedení systematických tréninkových vzorců pro
+rozvoj laterální a longitudinální decepce a „reverzního fázování“ (reverse phasing — hraní
+krátkých úderů z pozice za soupeřem, které boří tradiční poučku o výhradně dlouhých úderech
+ze zadní části kurtu) nebo příchod ultralehkých karbonových rámů umožňujících útok bez
+nápřahu6.
+Mechanika prostoru a času: Proč neexistuje jeden univerzálně nejlepší
+styl
+V každém raketovém sportu je primárním cílem úderu minimalizovat čas, který má soupeř na
+odehrání míčku, a maximalizovat vzdálenost, kterou musí urazit27. Ve squashi je tato rovnice
+ukotvena kolem tzv. T-pozice: průzkumy pohybu (Vučković et al., 2009) jednoznačně prokazují,
+že vítězové výměn a zápasů tráví v oblasti T statisticky významně větší podíl hracího času než
+poražení6. Základním stavebním kamenem elitního squashe je proto přímý úder podél stěny
+(straight drive), přičemž notacionální analýzy ukazují, že 70,2 % úderů směřujících dopředu je
+hráno rovně podél stěny, nikoliv křížem, aby se zamezilo odkrytí středu kurtu27.
+Přestože se může zdát, že optimální strategií je vždy maximální agrese a okamžité čtení hry,
+neurofyziologická a biomechanická data vysvětlují, proč každý styl naráží na přirozenou
+protireakci. Studie anticipace (James & Bradley, 2004; Triolet et al., 2013) zjistily, že elitní hráči
+<PARSED TEXT FOR PAGE: 12 / 52>
+squashe zahajují první pohyb směrem k míčku v průměru 270 ms (                ) po kontaktu
+soupeřovy rakety s míčkem; při započtení lidské reakční doby (~200 ms) to znamená, že ve
+většině standardních situací vyčkávají na informaci o dráze letu míčku a anticipační pohyb před
+úderem využívají jen omezeně (v tenisu pouze v 6,14 až 13,42 % situací)27. Příčina je ryze herně-
+teoretická: pokud hráč anticipuje příliš brzy a často, soupeř tento pohyb detekuje, pozdrží švih
+(hold/disguise) a zahraje míček do protipohybu, čímž vyvolá maximální tlak definovaný jako
+stav, kdy je hráč nucen odehrát míček v okamžiku, kdy se jeho těžiště nepohybuje optimálním
+směrem přímo k T-pozici27.
+Endogenní modelování proměnlivé mety bez umělých časových
+bonusů
+Proměnlivou taktickou metu lze v Squash Engine modelovat zcela endogenně pomocí evoluční
+teorie her a replikátorové dynamiky v netranzitivním prostoru strategií, analogicky ke hře
+Kámen-Nůžky-Papír (Rock-Paper-Scissors — RPS)5. Uvažujme redukovaný prostor tří
+
+základních taktických archetypů (v plném enginu R006 reprezentovaných spojitým vektorem
+
+vah): Archetyp    představuje vysokotempového volejového agresora (High-Pace Volley
+Interceptor), který zachytává míče vysoko na T a útočí z první příležitosti21; Archetyp
+představuje deceptivního tvůrce hry a kontrolora tempa (Deceptive Counter-Dropper &
+Lobber), který využívá skrytý nápřah, vysoké loby přes oblast T a nečekaná zkrácení do
+protipohybu (reverse phasing)21; a Archetyp    představuje kondičního obranáře (Attrition
+Retriever), který hraje s vysokou marží bezpečnosti podél stěn, minimalizuje nevynucené chyby
+a spoléhá na vyčerpání soupeře v dlouhých výměnách nad 30 úderů6.
+Mezi těmito přístupy existuje přirozená netranzitivní asymetrie v zápasovém enginu (R002).
+
+Archetyp    má strukturální převahu nad Archetypem , neboť vysoké tempo z voleje a útoky
+do předních rohů nedovolí opotřebovávacímu obranáři usadit se v rytmu dlouhých výměn na
+
+základní čáře21. Naopak Archetyp     poráží Archetyp , protože hráč agresivně vyrážející
+dopředu a spoléhající na brzkou anticipaci je extrémně zranitelný vůči pozdrženému švihu,
+deceptivním flickům do protipohybu a vysokým lobům přes hlavu21. Konečně Archetyp
+poráží Archetyp , neboť kondiční obranář s elitní pohybovou ekonomikou a defenzivní
+trpělivostí nepodléhá klamavým pohybům, dobíhá zkrácení s dostatečnou časovou rezervou a
+trestá vyšší míru chybovosti spojenou s riskantní kreativitou6.
+
+Označme podíl těchto tří taktických orientací v populaci elitních hráčů a akademií v čase jako
+vektor                            , kde               . Pokud mladí hráči a trenéři v akademiích
+upravují své tréninkové preference napodobováním aktuálně nejúspěšnějších šampionů v
+žebříčku Top 20 (imitative dynamics), vyvíjí se populační meta podle replikátorové rovnice s
+mutačním členem5:
+<PARSED TEXT FOR PAGE: 13 / 52>
+kde     je asymetrická výplatní matice odvozená ze skutečné bilance zápasů v enginu a
+       reprezentuje míru individuální inovace a šumu v generování talentů5. V asymetrických
+RPS hrách s imitací a mutací dochází k Hopfově bifurkaci, která generuje trvalé endogenní
+oscilace (limitní cykly) nebo chaotické atraktory v zastoupení stylů v horizontu desetiletí55. K
+žádnému umělému časovému bonusu není třeba sahat: jakmile určitý styl ovládne nadpoloviční
+většinu špičky, zvýší se očekávaná turnajová výhernost, a tím i rankingový vzestup a následná
+imitace stylu, který jej přirozeně kontruje54.
+
+D — Vývoj fyzických schopností, fyziologické limity a
+nelineární dynamika výkonu
+Fyziologický profil elitního squashe
+Vědecká literatura řadí squash na samotný vrchol fyzické náročnosti mezi všemi raketovými
+sporty (Girard & Millet, 2009)59. Jedná se o intermitentní cvičení střední až velmi vysoké
+intenzity, které vyžaduje simultánní zapojení aerobního systému, anaerobní alaktátové i
+laktátové kapacity a vysoké neuromuskulární odolnosti při opakovaných akceleracích,
+deceleracích a změnách směru (COD)2. Empirická měření fyziologie zápasového squashe
+ukazují, že hráči jsou aktivní 50 až 70 % celkového hracího času60. Přestože v obecném vzorku
+končí 80 % výměn do 10 sekund s průměrným odpočinkem kolem 8 až 12,7 sekundy, v elitním
+mužském squashi dosahují průměrné výměny délky 15 až 20 sekund a nezřídka přesahují 30
+úderů6. Během soutěžního zápasu (s průměrnou délkou jednoho setu                             )
+dosahuje průměrná tepová frekvence                                   a špičková tepová frekvence
+                          (ve specifických testech SSP až                            ) při
+subjektivním vnímání námahy RPE                   . Koncentrace krevního laktátu se v zápasovém
+                                                 62
+
+
+průměru pohybuje kolem                                (ve specifickém protokolu
+                        ), přičemž schopnost udržet výkon na laktátovém prahu                     v
+kombinaci s rychlostí změny směru (COD, velikost efektu               ) a opakovanou
+sprintovou schopností (RSA) statisticky nejvýrazněji odlišuje hráče vyššího a nižšího
+výkonnostního tieru (             )41.
+<PARSED TEXT FOR PAGE: 15 / 52>
+Biologické limity, klesající výnosy a eroze regenerační kapacity
+Při modelování vývoje fyzických atributů v horizontu desetiletí je zásadní rozlišovat mezi
+vrozeným biologickým potenciálem a realizovanou tréninkovou připraveností49. Vrozený
+biologický potenciál lidské populace je determinován genetickými a anatomickými limity
+motorického aparátu, kardiovaskulární kapacity a metabolismu kosterního svalstva (Joyner &
+Lucia)49. V časovém měřítku několika generací (50–100 let simulace) je tento biologický strop
+druhu Homo sapiens konstantní. Matematicky tomu v teorii extrémních hodnot odpovídá
+rozdělení s lehkým pravým chvostem, tedy se záporným indexem extrémních hodnot                  ,
+které má konečný pravý koncový bod                                                  31
+                                                                                       . Analýzy
+světových rekordů v atletice pomocí EVT (např. Fair, 2017; Einmahl & Magnus) ukazují, že
+stávající lidské rekordy se již nacházejí v průměru jen přibližně 7,8 % pod absolutní teoretickou
+hranicí65.
+Veškerý historicky pozorovaný růst atletické výkonnosti tak pramení ze dvou faktorů: jednak z
+většího výběrového vzorku (     ), který zvyšuje pravděpodobnost objevení jedince v těsné
+blízkosti biologického stropu    , a jednak z tréninkové konverze a sportovní vědy (        ), kde
+zlepšení periodizace, silové a kondiční přípravy, výživy a regenerace umožňují přiblížit fenotyp
+hráče jeho genotypovému maximu4. Tento proces však podléhá striktnímu zákonu klesajících
+mezních výnosů (diminishing returns) a naráží na tvrdou fyziologickou bariéru zotavení68.
+Výzkumy potvrzují, že po jediném elitním squashovém zápase dochází k měřitelnému poklesu
+neuromuskulární funkce a ke zvýšení stresové hormonální odezvy po dobu až 24 hodin68.
+Pokud v globálním světě FAX roste počet turnajů a vyrovnanost soupeřů, stoupá kumulativní
+soutěžní zátěž43. Epidemiologická data ukazují, že squash vykazuje nejvyšší míru incidence
+zranění mezi zkoumanými mládežnickými sporty (8,5 zranění na 1 000 hodin expozice, což je
+více než dvojnásobek oproti šermu s 3,99 zraněními na 1 000 h)48. V šestileté longitudinální
+studii 21 adolescentních hráčů squashe (21 570 tréninkových hodin) utrpělo zranění 100 %
+sledovaných jedinců (celkem 212 zranění, incidence 7,28 na 1 000 h, z toho 4,78 zranění s
+výpadkem tréninku na 1 000 h)51. Celých 67 % tréninkových zranění postihlo dolní končetiny,
+přičemž nejzávažnější příčinou ztráty tréninkového času byla růstová osteochondróza (323
+ztracených dnů, 22 % všech diagnóz a 16 % všech time-loss zranění) a svalová natržení (215
+dnů)51. U anglických profesionálů (studie z let 2004–2015, Horsley et al., 2020) činil průměr 8,83
+zranění na hráče během 11 let, přičemž 76,48 % zranění zasáhlo dolní končetiny (u pokročilých
+hráčů ve specializovaných studiích až 81,3 % oproti 23,8 % u rekreačních hráčů), zejména oblast
+kotníku, paty a kolene v důsledku opakovaných rázových výpadů, zatímco přibližně 10–16 %
+zranění připadá na chronické přetížení bederní páteře48.
+Z těchto dat plyne pro Squash Engine zásadní závěr: úroveň elitního sportu nemůže růst
+lineárně a za určitých podmínek může stagnovat nebo dokonce lokálně klesat. Pokud
+ekonomické pobídky a hustý turnajový kalendář přimějí hráče překročit regenerační kapacitu
+(24hodinové okno neuromuskulární obnovy), dochází k přetrénování, kumulaci mikrotraumat a
+<PARSED TEXT FOR PAGE: 16 / 52>
+výpadkům v akvizici dovedností u juniorů, což snižuje reálnou zápasovou výkonnost špičky
+navzdory rostoucím investicím43.
+
+E — Globalizace a sportovní velmoci: Dynamika
+vzestupu a úpadku
+Vznik a zánik národních sportovních hegemonií v reálném světě i ve světě FAX lze vysvětlit bez
+jakéhokoliv uchylování k národním genetickým bonusům či předurčeným vítězným érám.
+Teoretickým základem je devítipilířový model SPLISS (De Bosscher et al., 2006, 2015)
+kombinovaný s ekonomickou geografií aglomeračních klastrů a znalostních přelivů29.
+Anatomie dvou historických hegemonií: Pákistán a Egypt
+Porovnání dvou nejvýraznějších dynastií v dějinách squashe na Zemi dokazuje, že národní
+dominance je vždy produktem specifické institucionální, sociální a prostorové konfigurace.
+Prvním případem je pákistánský klastr (1951–1998), založený na rodinném přenosu know-
+how a vojenském patronátu. Pákistán ovládl mužský squash na více než čtyři desetiletí: Hashim
+Khan získal 7 titulů British Open, Roshan Khan 1, Azam Khan 4, Mohibullah Khan 1, Qamar
+Zaman 1, Jahangir Khan 6 titulů mistra světa a Jansher Khan 8 titulů mistra světa7. Původním
+epicentrem nebyla celostátní masovost, nýbrž extrémně lokalizovaný geografický klastr kolem
+Péšávaru a důstojnické kurty britské a posléze pákistánské armády7. Na počátku 70. let přešla
+Pákistánská squashová federace (PSF) přímo pod záštitu Pákistánského letectva (PAF), které
+zajistilo institucionální financování, přepravu hráčů a výstavbu tréninkových akademií, jako jsou
+Hashim Khan Squash Complex v Péšávaru a PSF-Jahangir Khan Squash Complex7. Pozitivní
+zpětná vazba fungovala skrze příbuzenský přenos tacitních tréninkových metod a vysokou
+sociální prestiž šampionů, zatímco úpadek po konci 90. let nastal v důsledku přílišné
+institucionální centralizace, úbytku mezinárodních turnajů v zemi a neschopnosti uzavřeného
+systému konkurovat modernímu vědeckému a komerčnímu modelu přípravy8.
+Druhým případem je egyptský ekosystém (od poloviny 90. let do 2026), postavený na
+klubové urbanizaci a průmyslových akademiích. Egyptská dominance (Amr Shabana, Ramy
+Ashour, Karim Darwish, Mohamed El-Shorbagy, Ali Farag, Karim Abdel Gawad, Tarek Momen, u
+žen Nour El Sherbini, Nouran Gohar či Hania El-Hammamy) nevznikla z genetické výjimečnosti,
+nýbrž z unikátní souhry čtyř institucionálních faktorů10. Prvním spouštěčem byl katalytický
+superstar efekt v 90. letech (průlom Ahmeda Barady podpořený mediálním zájmem a
+politickou prestiží), který přivedl na kurty masovou vlnu dětí36. Druhým pilířem je sociální
+architektura soukromých sportovních klubů v Káhiře a Alexandrii (Gezira, Heliopolis, Al Ahly,
+Smouha, Wadi Degla)9. Talentované dítě v klubu Gezira či Heliopolis nepřichází na izolovanou
+hodinovou lekci jako v Evropě, kde děti často začínají až v dospívání; egyptské děti začínají s
+profesionálním tréninkem v 5 letech, tráví v klubu celý den s rodinou a na vedlejším kurtu denně
+sledují a vyzývají světové šampiony9. Třetím pilířem je komerční škálování a korporátní
+sponzoring: akademie Karima Darwishe v klubu Wadi Degla soustřeďuje přibližně 2 000 hráčů a
+100 trenérů a vyplácí pravidelné platy světovým šampionům (např. Alimu Faragovi a Nour El
+<PARSED TEXT FOR PAGE: 17 / 52>
+Tayeb), zatímco El Borolossy Academy trénuje 600 dětí9. Celý systém je masivně financován
+soukromým bankovním sektorem, zejména Commercial International Bank (CIB), která
+sponzoruje národní federaci, šampiony i mega-turnaje u pyramid23. Čtvrtým pilířem je pak
+vnitřní mezigenerační recyklace znalostí, kdy se Amr Shabana po ukončení kariéry stal
+technickým ředitelem národních týmů a Karim Darwish sportovním ředitelem Wadi Degla37.
+Pozitivní a negativní zpětné vazby národních systémů
+V dynamickém modelu světa FAX vznikají a zanikají sportovní velmoci působením endogenních
+zpětnovazebních smyček. Pozitivní zpětná vazba je odstartována průlomem jednotlivce do
+Top 5 (často jako stochastický outlier z běžného talentového poolu), což vyvolá nárůst lokální
+popularity a mediální viditelnosti (Demonstration / Superstar Effect)36. Následuje příliv dětí v
+raném věku (5–8 let) a soukromého sponzorského kapitálu, což vede ke zhuštění domácí
+konkurence v klubech — aglomeračnímu efektu, kde přítomnost rivalů v téže lokalitě zvyšuje
+produktivitu tréninku9. Když pak šampioni po skončení kariéry zakládají akademie, trvale tím
+zvyšují lokální trenérskou kapacitu9.
+Proti tomuto růstu však v dlouhém období působí negativní zpětná vazba, která brání
+nekonečnému monopolu jediné země. Prvním brzdícím mechanismem je sociální a ekonomická
+exkluzivita: jak upozorňují sociologické analýzy egyptského squashe i prostorové studie
+tenisové infrastruktury v Hamburku, tržně alokované raketové kluby následují kupní sílu
+obyvatelstva a uzavírají se do drahých privátních enkláv, čímž se systém odřezává od talentů z
+nižších socioekonomických vrstev75. Druhým mechanismem je export trenérů a mezinárodní
+difuze znalostí, kdy přebytek elitních trenérů v dominantní zemi vede k jejich odchodu do
+bohatých zahraničních federací a klubů (a k opačnému najímání zahraničních metodiků, jako je
+angažování bulharských sportovních expertů ve Wadi Degla), což vyrovnává informační
+asymetrii10. Třetím mechanismem je pak domácí kanibalizace a nasycení kvót, kdy při
+omezeném počtu míst v národních reprezentacích a kvalifikačních kvótách na vrcholné akce
+dochází v hegemonické zemi k přetlaku, kvůli němuž hráči druhého sledu ztrácejí motivaci
+nebo migrují pod vlajky jiných států29.
+
+F — Matematické přístupy k modelování dlouhodobé
+evoluce
+Pro zachycení historického vývoje ve světě FAX bylo analyzováno osm matematických
+paradigmat. Nejsložitější model není automaticky nejvhodnější; každý přístup musí být
+posouzen z hlediska identifikovatelnosti parametrů, determinismu (RNG seed) a rizika dvojího
+započítání (double counting) mechanismů již přítomných v enginu.
+Matematická formulace vybraných kandidátních modelů
+První klíčovou třídu tvoří modely technologických a tréninkových limitů založené na EVT a
+asymptotické saturaci. Nechť                              jsou nezávislé realizace vrozeného
+
+potenciálu v zemi   v roce s efektivní velikostí osloveného juniorského poolu            . Pro
+<PARSED TEXT FOR PAGE: 18 / 52>
+rozdělení v doméně přitažlivosti zobecněného rozdělení extrémních hodnot              se záporným
+indexem           (konečný biologický strop      ) platí pro kvantilovou funkci
+                                  vztah31:
+
+
+
+
+Realizovaná fyzická a technická výkonnost hráče v roce je pak součinem jeho vrozeného
+potenciálu     a saturační funkce tréninkového prostředí                          , zmenšeným o
+nelineární penalizaci z kumulativní únavy a zranění         při překročení regeneračního prahu51:
+
+
+
+
+Tento tvar zaručuje, že ani při                 a                 nepřekročí atributy hráče
+biologický strop   31
+                     .
+Druhou třídu představují difuzní modely trenérských znalostí na síti zemí. Nechť
+                           označuje úroveň trenérského a sportovně-vědeckého know-how v
+zemi . Znalosti se vyvíjejí prostřednictvím domácího učení z praxe (proporcionálního počtu
+aktivních elitních hráčů          v Top 100), prostorového a institucionálního přelivu ze
+
+zahraničí a přirozené amortizace při odchodu trenérů do důchodu (         )37:
+
+
+
+
+kde        je matice mezinárodní konektivity a otevřenosti trhu (turnajová výměna, mobilita
+trenérů).
+Třetí třídu tvoří agent-based modely (ABM) a evoluční populační modely šíření taktiky.
+
+Každý hráč disponuje vektorem taktických vah                     . Během přechodu mezi
+
+sezónami (nebo při generování nové kohorty juniorů v akademii ) dochází k aktualizaci
+tréninkového důrazu akademie                   váženým průměrem taktických profilů
+nejúspěšnějších hráčů na okruhu (podle zisku bodů či prize money         ) s lokálním ukotvením a
+stochastickou mutací         :
+                            21
+<PARSED TEXT FOR PAGE: 19 / 52>
+Protože výplatní funkce     je přímo výstupem zápasového enginu (R002), vzniká uzavřená
+zpětnovazební smyčka bez nutnosti ručně definovat evoluční matice mimo zápasový model.
+Komparativní matice matematických přístupů
+
+
+ Mate      Vědec     Dostu     Identi   Výpoč     Deter     Zpětn      Riziko     Riziko
+ matic     ké        pnost     fikova   etní      minis     á          umělý      dvojíh
+ ký        opods     dat       telnos   nároč     mus a     komp       ch         o
+ přístu    tatně               t        nost      RNG       atibilit   trend      započ
+ p         ní                  param                        a          ů          ítání
+                               etrů
+
+
+           Nízké
+ 1.                  Vysok     Velmi    Minim     Absol     Plná       Nulov      Nulov
+           (popír
+ Konst               á         vysok    ální (    utní      (výcho     é pro      é
+           á
+ antní               (vyžad    á                  (nulov    zí stav    inflaci,
+           histori
+ model               uje       (minim   na        á         souča      vysok
+           ckou
+ prostř              pouze     ální     úrovni    spotře    sného      é pro
+           dynam
+ edí                 1         počet    prostř    ba        enginu     nereali
+           iku
+                     statick   volnýc   edí)      RNG       )          sticko
+           institu
+                     ý         h                  pro                  u
+           cionali
+                     snaps     param              prostř               strnul
+           zace)1    hot)      etrů)              edí)                 ost
+
+
+           Středn
+ 2.                  Středn    Vysok    Minim     Absol     Velmi      Středn     Nízké
+           í až
+ Histor              í         á        ální      utní      vysok      í          (poku
+           vysok
+ icky                (vyžad    (para    (načte    (deter    á          (poku      d
+           é
+ verzo               uje       metry    ní        ministi   (přiroz    d          uprav
+           (odpo
+ vané                definic   jsou     konfig    cké       ená        autor      uje
+           vídá
+ změn                i         exoge    urace     přepn     podpo      balíčk     pouze
+           diskrét
+ y                   epoch     nní      při       utí v     ra         u zadá     makro
+           ním
+ prostř              ve        vstupy   přech     dané      přes       nereali    -
+           šokům
+ edí                 World     scénář   odu       m         snaps      stické     vstupy
+           pravid
+                     Packa     e)       epoch     roce)     hoty       skoky)     zemí)
+           el a
+<PARSED TEXT FOR PAGE: 20 / 52>
+         ekono
+                   ge)                y)                  Runu)
+         miky)1
+
+         Vysok
+3.                 Nízká     Nízká    Nízká (   Vysok     Středn     Vysok     Vysok
+         é
+Endog              (obtíž    (silná             ý         í          é         é
+         (teorie
+enní               ná        koline   za        (poku     (vyžad     (riziko   (kolidu
+         endog
+šíření             kvanti    arita    sezón     d je      uje        neom      je s
+         enního
+inova              fikace    mezi     u, kde    vázán     uložen     ezené     atribut
+         růstu a
+cí                 ceny      financ             na        í stavu    ho        em
+         R&D                            je
+                   inovac    emi a              deter     inovač     expon     Kvalita
+         ve                           počet
+                   e na      inovac             ministi   ního       enciál    rozvoj
+         sportu                       zemí)
+                   Zemi)     emi)               cký       fondu      ního      ea
+         ,
+                                                PRNG      do         růstu     Elitní
+         SPLISS
+                                                strea     snaps      atribut   podpo
+         P9)29                                  m)        hotu)      ů)        ra)
+
+
+         Velmi     Středn
+4.                           Středn   Nízká (   Absol     Vysok      Nízké     Středn
+         vysok     í (lze
+Difuz                        í                  utní      á          (při      í (musí
+         é         kalibro
+ní                           (vyžad   jednou    (difere   (stačí     omeze     modifi
+         (teorie   vat na
+model                        uje      ročně     nciální   verzov     ní        kovat
+         knowl     rychlo
+y                            odhad    při       /difere   at         horní     stávají
+         edge      st
+trenér                       míry     uzávěr    nční      vektor     asymp     cí
+         spillov   vzestu
+ských                        difuze   ce        rovnic               totou     Count
+         ers a     pu
+znalos                         a      sezón     e nad     v                    ry
+         klastrů   Egypt
+tí                           amorti   y)        stave     Count      )         Attrib
+         )38       a/Evro
+                             zace               m         ry                   utes,
+                   py)9                         světa)                         ne
+                                                          Attrib
+                                )                                              vytvář
+                                                          utes)
+                                                                               et
+                                                                               paralel
+                                                                               ní
+                                                                               bonus
+                                                                               )
+
+
+         Extré     Vysok     Vysok
+5.                                    Minim     Absol     Plná       Extré     Nízké
+         mně       á         á
+Model                                 ální      utní      (komp      mně       (slouží
+         vysok     (rozsá    (konc
+y                                     (apliko   (analyt   atibilní   nízké     jako
+         é (EVT    hlá       ový
+techn                                 váno      ická      s          (aktivn   horní
+         se        literat   bod
+<PARSED TEXT FOR PAGE: 21 / 52>
+         zápor      ura o
+ologic                            a      při       satura     talent    ě brání   obálka
+         ným        limitec
+kých                          tvar       gener     ční        ovým      umělé     existují
+                    h
+a                             jsou       ování     transf     model     inflaci   cích
+         a          lidské
+trénin                        dobře      a         ormac      em        atribut   mecha
+         biologi    ho
+kovýc                         ukotve     trénin    e)         R001)     ů)        nismů)
+         cké        výkon
+h                                        ku
+                    u)31      ny)31
+limitů   limity)4                        hráče)
+(EVT)
+
+
+         Vysok                Středn
+6.                  Nízká                Nízká (   Absol      Vysok     Středn    Vysok
+         é                    í
+Evolu               (vyžad                         utní       á         í (při    é
+         (evolu               (citlivo
+ční                 uje                  na        (deter     (odvo     špatné    (poku
+         ční                  st na
+popul               agreg                úrovni    ministi    ditelné   kalibra   d by
+         teorie               rychlo
+ační                aci                  agreg     cký        z         ci        přímo
+         her,                 st
+model               zápas                ovaný     výpoč      histori   může      přepis
+         cyklick              adapt
+y                   ových                ch        et z       e         vést k    oval
+         á                    ace a
+(Repli              matic)               stylů)    turnaj     zápas     příliš    výsled
+         domin                mutaci
+kátor                                              ových      ův        pravid    ek
+         ance
+ová                             )56                statisti   dané      elným     zápas
+dyna     RPS)   5
+                                                   k)         m         kmitů     u
+mika)                                                         Runu)     m)        R002
+                                                                                  místo
+                                                                                  ovlivn
+                                                                                  ění
+                                                                                  vah
+                                                                                  R006)
+
+
+         Velmi
+7.                  Středn    Středn     Středn    Vysok      Středn    Nízké     Nízké
+         vysok
+Agent               í         í (váha    í(        ý (při     í         (trend    (poku
+         é
+-                   (využí    imitac               odděl      (vyžad    y         d
+         (mikro
+based               vá                   jednou    eném       uje       vyvstá    operuj
+         -                    e a
+model               přímo                za        PRNG       ukládá    vají      e
+         found                šířka
+(ABM)               interní              sezón     klíči      ní vah    čistě z   výhrad
+         ed                   sledov
+šíření              telem                u)        pro        prefer    úspěš     ně nad
+         imitac               ané
+taktik              etrii                          každo      encí u    nosti v   rozděl
+         e                    špičky
+                    zápas                          u          agent     zápas     ením
+         šampi                   )
+                    ů                              akade      ů/zemí    ovém      stylů
+         onů a
+                    R002/                          mii/hrá    )         enginu    nováč
+         trenér
+<PARSED TEXT FOR PAGE: 22 / 52>
+            ský
+                       R006)                           če)                   )          ků a
+            přeno
+                                                                                        trénin
+            s)9                                                                         kem
+                                                                                        R006)
+
+
+            Velmi      Středn
+ 8.                               Středn     Nízká (   Absol      Vysok      Nízké      Nízké
+            vysok      í
+ Postu                            í                    utní       á          (při       (integr
+            é          (komp
+ pné                              (vazba     na        (deter     (zapis     zahrnu     uje
+            (SPLIS     arativn
+ změn                             mezi       konci     ministi    uje        tí         stávají
+            S          í
+ y                                úspěc      sezón     cká        přímo      negati     cí
+            model      studie
+ institu                          hem v      y)        aktuali    do         vních      atribut
+            9 pilířů   15
+ cí a                             Top 10               zace       verzov     zpětný     y zemí
+            a          zemí v
+ soutě                            a                    makro      aných      ch         do
+            ekono      SPLISS
+ žního                            růste                -          snaps      vazeb      uzavře
+            mie        2.0)35
+ prostř                           m                    atribut    hotů       a          né
+            turnaj
+ edí                              popul                ů          Count      stropů     smyčk
+            ů)29                  arity/fi             zemí)      ry         )          y)
+                                  nancí)                          Attrib
+                                                                  utes)
+
+
+G — Alternativní časové scénáře pro svět FAX
+Namísto jediné deterministické linky přináší analýza sedm vědecky podmíněných scénářů
+vývoje světa FAX. Tyto scénáře nepředstavují pevně naskriptované události, nýbrž odlišné
+topologie počátečních a okrajových podmínek (World Packages), kterým záměrně nejsou
+přiřazovány žádné arbitrární pravděpodobnosti.
+Včasná globální profesionalizace a Pozdní rychlá globalizace
+První scénář, včasná globální profesionalizace (Early Global Professionalization), nastává v
+případě vysoké počáteční komerční prestiže, sjednocených pravidel (ekvivalent PARS 11 a
+standardizovaných kurtů) a silné finanční podpory (Pilíře 1 a 8 modelu SPLISS) ve více než 20
+zemích již od počátku simulace6. Kvalitativním důsledkem je velmi rychlé vyčerpání snadných
+tréninkových rezerv a brzký náběh na biologickou asymptotu       , přičemž výkonnostní špička
+je od prvních dekád extrémně hustá a vykazuje nízkou varianci atributů v Top 5031. Scénář by
+byl falzifikován, pokud by příliš strmá pyramidová struktura odměn v rané fázi vyvolala finanční
+kolaps a masivní odchod hráčů mimo Top 30 před vybudováním nižších turnajových tierů43.
+Druhý scénář, pozdní, ale rychlá globalizace (Late Rapid Globalization), modeluje dlouhé
+období poloprofesionálního regionálního rozvoje v malém počtu tradičních zemí, následované
+náhlým institucionálním šokem (např. vstupem globálního mediálního kapitálu a masivním
+<PARSED TEXT FOR PAGE: 23 / 52>
+otevřením nových trhů v dekádě           )1. V rané éře vznikají dlouhé individuální dynastie s
+vysokým podílem turnajových vítězství (analogie 60–81% míry turnajových triumfů v érách
+nízké hustoty konkurence)8. Po globalizačním šoku dochází k prudkému nárůstu počtu zemí v
+Top 100 a k rychlému vytlačení starých tradičních škol, které se nedokážou adaptovat na
+vědecký trénink40. Tento scénář by selhal v případě, že v tradičních zemích existují natolik silné
+bariéry přenosu tacitních znalostí (          ), že nové bohaté země nedokážou ani za dvě
+generace přetavit finanční vstupy v elitní technickou kvalitu53.
+Regionálně nerovnoměrný rozvoj a Technologicky stabilní sport
+Třetí scénář, regionálně nerovnoměrný rozvoj (Core-Periphery Divergence), je vyvolán silnou
+vazbou mezi kupní silou, soukromou klubovou infrastrukturou a elitní podporou v několika málo
+metropolitních klastrech, zatímco zbytek světa trpí nízkou dostupností sportovišť9. Důsledkem
+je vznik trvalé dichotomie centrum–periferie, kde se hráči z periferie musejí v juniorském věku
+fyzicky přesunout do tréninkových center v jádru, jinak jejich tréninková konverze stagnuje pod
+elitním prahem. Scénář je vyvrácen v okamžiku, kdy digitální analytické nástroje a
+standardizované metodiky sníží význam fyzické geografické blízkosti pro přenos know-how 26.
+Čtvrtý scénář, technologicky stabilní sport s rostoucí konkurencí (Technological Stasis,
+Demographic Expansion), předpokládá přísnou konzervativní regulaci vybavení a kurtů (žádné
+změny hmotnosti raket, odskoku míčku ani výšky tinu po celou dobu Runu), doprovázenou
+kontinuálním růstem globální populace a popularity squashe6. Představuje čistou laboratoř pro
+efekt velikosti vzorku v teorii extrémních hodnot4. Maximální rázová rychlost úderů zůstává
+konstantní, ale průměrná chybovost klesá a kondiční vytrvalost v Top 100 konverguje k horní
+fyziologické mezi; zápasy se prodlužují a roste význam taktické trpělivosti a mikro-pozicování
+na T6. Falzifikační podmínkou je nárůst délky výměn nad mez únosnosti pohybového aparátu,
+který by vedl k vlně únavových zranění a zkrácení kariér nejlepších obranářů48.
+Takticky adaptivní éra, Oligopol sportovních škol a Hyper-
+konkurenční obměna
+Pátý scénář, silná takticky adaptivní éra (High-Frequency Meta Oscillation), vzniká při vysoké
+otevřenosti trenérských sítí, okamžité dostupnosti notacionální a video-analytické zpětné
+vazby mezi zápasy a vyvážené fyzikální parametrizaci kurtu, kde ani útok, ani obrana nemají
+strukturální převahu15. V tomto režimu si žádný herní styl neudrží dominanci déle než 4 až 6
+let37. Jakmile v Top 10 převáží agresivní volejový styl, analytické týmy vyvinou obranná lob-and-
+counter-drop schémata, která během půl generace otočí bilanci vzájemných zápasů, a
+
+nejúspěšnějšími hráči se stávají komplexní univerzálové schopní měnit gameplan uprostřed
+zápasu21. Scénář nenastane, pokud je náklad na přeučení herního stylu u dospělého hráče příliš
+vysoký a tréninková setrvačnost akademií přesahuje délku jednoho generačního cyklu.
+Šestý scénář, éra dlouhodobé dominance několika sportovních škol (Oligopolistic
+Doctrines), pramení z nízké mezinárodní mobility trenérů kombinované s výraznou lokální
+specializací tréninkových systémů, kdy například jedna velmoc maximalizuje aerobní objem a
+<PARSED TEXT FOR PAGE: 24 / 52>
+opotřebovávací drily, zatímco druhá buduje dětské akademie zaměřené na deceptivní
+raketovou techniku od 5 let věku6. Přestože národnost nemá žádný genetický vliv na talent,
+institucionální nastavení tréninkových vah v akademiích vytváří rozpoznatelné „školy“ s
+odlišným rozložením produkovaných herních stylů, jež se však zhroutí při globalizaci
+trenérského trhu nebo po radikální změně pravidel6.
+Sedmý scénář, vysoce konkurenční svět s rychlou generační obměnou (Hyper-Attrition
+Burnout World), je důsledkem extrémně nahuštěného globálního turnajového kalendáře s
+povinnou účastí špičky, vysokými bodovými a finančními penalizacemi za vynechání turnaje a
+ranou intenzivní specializací mládeže43. Hráči v něm dosahují výkonnostního vrcholu velmi brzy
+(kolem 20.–22. roku), ale kombinace 24hodinového deficitu neuromuskulární regenerace,
+chronických poranění dolních končetin a psychického vyhoření vede k masivnímu úpadku po
+27. roce věku a k rotaci generací každé 3 až 4 roky37. Scénář je vyvrácen tehdy, pokud pokročilý
+load-management (strategické vynechávání turnajů v modulu R004) a sportovní medicína
+(R005) dokážou plně kompenzovat kalendářní zátěž.
+
+
+
+ Scénář světa        Primární           Očekávaná          Klíčová            Podmínka
+ FAX                 kauzální           struktura          nejistota          vyvrácení
+                     spouštěč           špičky a mety                         (Falzifikace)
+
+
+                     Vysoké             Rychlá             Finanční           Masový drop-
+ 1. Včasná
+                     investice          saturace u         udržitelnost       out hráčů
+ globální
+                     (SPLISS P1/P8)     biologického       hráčů druhého      mimo Top 30
+ profesionaliza
+                     a unifikovaná                         sledu (Top 50–     kvůli strmé
+ ce                                     stropu    ,
+                     pravidla ve >20                       150)43             konvexitě
+                                        nízký rozptyl v
+                     zemích od                                                odměn43
+                                        Top 5031
+                                   6
+
+
+
+                     Dlouhý             Dlouhé             Rychlost           Nulová difuze
+ 2. Pozdní
+                     regionální         dynastie v rané    absorpce           tacitních
+ rychlá
+                     amatérismus        fázi8, následně    trenérského        znalostí (
+ globalizace
+                     následovaný        prudký pokles      know-how
+                                                                                          )
+                     komerčním          HHI a eroze        novými
+                                                                              blokující
+                     šokem v            starých škol40     zeměmi ( )  38
+                                                                              vzestup
+                              1
+                                                                              nových zemí53
+
+                     Silná vazba                           Míra sociální      Demokratizace
+ 3. Regionálně                          Trvalá
+                     soukromých                            exkluzivity        tréninku skrze
+ nerovnoměrn                            struktura
+                     klubů na kupní                        elitních klubů v   AI analytiku a
+ ý rozvoj                               jádro–
+                     sílu v několika                       jádru75            veřejnou
+                                        periferie,
+<PARSED TEXT FOR PAGE: 25 / 52>
+                    metropolích9      nutnost                              infrastrukturu26
+                                      juniorské
+                                      migrace do
+                                      klastrů
+
+
+                    Zmrazení          Čistý EVT          Odolnost          Kolaps
+ 4.
+                    parametrů         efekt: pokles      pohybového        životnosti
+ Technologick
+                    raket, míčků a    chybovosti,        aparátu vůči      obranářů v
+ y stabilní
+                    tinu při růstu    růst vytrvalosti   dlouhým           důsledku
+ sport
+                    populace          a délky výměn6     opotřebováva      přetížení
+                           4                             cím zápasům6      dolních
+                                                                           končetin48
+
+                    Okamžitá          Rychlé RPS         Plastičnost
+ 5. Silná                                                                  Vysoká
+                    videoanalýza,     oscilace mety      dospělých
+ takticky                                                                  setrvačnost
+                    vysoká difuze     (cykly 4–6 let),   hráčů při
+ adaptivní éra                                                             akademií
+                      a neutrální     převaha            změně
+                                                                           zabraňující
+                    geometrie         adaptivních        technických
+                                                                           mezigenerační
+                    kurtu15           univerzálů21       návyků52          protireakci
+
+
+                    Nízká mobilita    Střet              Stabilita         Otevření
+ 6. Dominance
+                    trenérů a         vyhraněných        pravidel vůči     globálního trhu
+ několika škol
+                    odlišná           doktrín            specifickým       trenérů nebo
+                    specializace      (kondiční          doktrínám6        pravidlový šok
+                    národních         opotřebení vs.                       (např. snížení
+                    akademií6         raná decepce)6                       tinu)6
+
+                    Přehuštěný        Vrchol v 20–22     Účinnost
+ 7. Rychlá                                                                 Efektivní load-
+                    kalendář,         letech,            lékařské
+ generační                                                                 management v
+                    povinné           vyhoření po 27.    regenerace
+ obměna                                                                    modulu R004
+                    turnaje a raná    roce, obměna       oproti 24h
+                                                                           eliminující
+                    specializace      špičky každé 3     neuromuskulár
+                                                                           kumulaci
+                    od 5 let43        roky37             nímu deficitu68   únavy
+
+
+H — Současný Squash Engine: Architektonický audit a
+analýza dostatečnosti
+Před návrhem jakékoliv nové mechaniky je nezbytné podrobit přísnému auditu stávající
+architekturu Squash Engine (specifikovanou v dokumentech
+<PARSED TEXT FOR PAGE: 26 / 52>
+SQUASH_ENGINE_MASTER_VISION.md, AGENTS.md, CURRENT_STATE.md,
+docs/COUNTRY_ATTRIBUTES_V1.md a výzkumných zprávách R001–R008). Cílem je prokázat,
+které evoluční jevy již současný systém generuje nepřímo jako emergentní vlastnost a kde by
+neuvážený zásah vedl k porušení determinismu či dvojímu započítání.
+
+
+
+
+Audit vlastností a stavů v současné architektuře
+Následující tabulka systematizuje stav jednotlivých komponent v ekosystému Squash Engine
+podle závazné nomenklatury (DECIDED, IMPLEMENTED, TARGET, OPEN, DEFERRED):
+
+
+
+ Oblast /                Stav v Squash          Architektonické        Analýza
+ Mechanismus             Engine                 chování                dostatečnosti
+                                                (Konstantní vs.        (Proč současná
+                                                Reaktivní /            architektura stačí,
+                                                Verzované)             nebo kde naráží na
+                                                                       limit)
+
+
+                                                                       Plně dostatečné:
+ Axiom národní           DECIDED /              Konstantní
+                                                                       Jakýkoliv zásah do
+ neutrality              IMPLEMENTED            invariant:
+                                                                       této roviny je
+ biologického                                   Rozdělení
+                                                                       zakázán a vědecky
+ potenciálu                                     vrozeného
+                                                biologického,          neopodstatněný49.
+                                                mentálního a
+                                                stylového
+<PARSED TEXT FOR PAGE: 27 / 52>
+                                 potenciálu v R001
+                                 je identické pro
+                                 všechny
+                                 národnosti.
+
+
+                                                        Částečně
+Country            DECIDED /     Verzované v rámci
+                                                        dostatečné:
+Attributes V1 (7   IMPLEMENTED   World Package /
+                                                        Statické hodnoty
+makro-atributů                   Snapshotu:
+                                                        pro danou epochu
+zemí)                            Populace,
+                                                        již dnes správně
+                                 popularita,
+                                                        generují rozdílnou
+                                 dostupnost, kvalita
+                                                        hustotu špičky (EVT
+                                 rozvoje, soutěžní
+                                 prostředí, elitní      efekt)4. Chybí však
+                                 podpora, tradice.      volitelná pomalá
+                                                        endogenní odezva
+                                                        (např. průlom hráče
+                                                        do Top 3 neovlivní
+                                                        budoucí popularitu
+                                                        v zemi bez
+                                                        přechodu na nový
+                                                        historický
+                                                        snapshot).
+
+                                                        Dostatečné pro
+Generování         DECIDED /     Reaktivní vůči
+                                                        statické epochy,
+talentů a          IMPLEMENTED   Country
+                                                        otevřené pro
+tréninková                       Attributes: Velikost
+                                                        saturaci: Pokud se
+konverze (R001)                  kohorty a míra
+                                                        v dlouhém Runu
+                                 naplnění potenciálu
+                                                        zvýší atributy všech
+                                 reagují na atributy
+                                                        zemí, hrozí bez
+                                 země v okamžiku
+                                                        horní asymptotické
+                                 generování a
+                                                        obálky (EVT s
+                                 juniorského vývoje.
+                                                                ) plíživá
+                                                        inflace průměrných
+                                                        atributů nad rámec
+                                                        kalibrace
+                                                        zápasového enginu
+                                                        R00231.
+<PARSED TEXT FOR PAGE: 28 / 52>
+Zápasové jádro a   DECIDED / TARGET   Reaktivní v            Dostatečné na
+taktické                              reálném čase           úrovni zápasu,
+rozhodování                           zápasu: Výsledek       neúplné
+(R002 & R006)                         výměny plyne z         mezigeneračně:
+                                      interakce atributů,    R002 a R006 již
+                                      únavy, herního stylu   nepřímo vytvářejí
+                                      a zápasového           „metu“ (určité styly
+                                      gameplanu.             vyhrávají častěji
+                                                             proti aktuálnímu
+                                                             složení Top 50).
+                                                             Pokud je však
+                                                             generování stylů
+                                                             nováčků v R001 v
+                                                             čase stacionární,
+                                                             populace jako celek
+                                                             se na dominantní
+                                                             styl neadaptuje
+                                                             (chybí
+                                                             mezigenerační
+                                                             imitační přenos).
+
+
+Ranking (R003) a   DECIDED /          Plně dynamické a       Plně dostatečné:
+Turnajová účast    IMPLEMENTED        verzované: Body,       Přidání většího
+(R004)                                nasazení a výběr       počtu turnajů ve
+                                      turnajů reagují na     světě FAX
+                                      strukturu kalendáře    přirozeně zvýší
+                                      v daném Runu.          propustnost okruhu
+                                                             a změní cestovní a
+                                                             zápasovou zátěž
+                                                             bez nutnosti měnit
+                                                             logiku R003/R004.
+
+
+                                                             Plně dostatečné:
+Zdraví, únava a    DECIDED / TARGET   Reaktivní vůči
+                                                             Modul R005 již
+délka kariéry                         zápasové a
+                                                             přímo modeluje
+(R005)                                kalendářní zátěži:
+                                                             negativní zpětnou
+                                      Kumulace únavy,
+                                                             vazbu hustého
+                                      riziko akutních a
+                                                             kalendáře a fyzicky
+                                      chronických zranění
+<PARSED TEXT FOR PAGE: 29 / 52>
+                                      a věková regrese.     náročných výměn48.
+                                                            Zavedení
+                                                            jakéhokoliv
+                                                            globálního
+                                                            „parametru
+                                                            opotřebení éry“ by
+                                                            vedlo k dvojímu
+                                                            započítání.
+
+
+ Historické         DECIDED /         Striktně              Závazné
+ snapshoty a        IMPLEMENTED       verzované: Každý      architektonické
+ Save/Load                            Run uchovává          omezení: Jakákoliv
+ determinismus                        kompletní stav        evoluce prostředí
+                                      světa a PRNG          nebo mety musí být
+                                      streamy pro plnou     funkcí uloženého
+                                      reprodukovatelnost    stavu v okamžiku
+                                      .                     roční uzávěrky a
+                                                            dedikovaného
+                                                            PRNG seedu.
+
+
+                                                            Skutečná
+ Mezigenerační      OPEN / DEFERRED   Aktuálně
+                                                            architektonická
+ přenos znalostí                      neimplementován
+                                                            mezera: Současná
+                                      o jako uzavřená
+ (Hráč   Trenér /                                           architektura neumí
+                                      smyčka:
+ Akademie)                                                  bez exogenního
+                                      Odcházející
+                                                            zásahu do World
+                                      šampioni po
+                                                            Package vysvětlit,
+                                      ukončení kariéry
+                                                            proč generace po
+                                      nemodifikují
+                                                            Amru Shabanovi a
+                                      tréninkové váhy ani
+                                                            Karimu Darwishovi
+                                      atributy své země.
+                                                            těží z jejich
+                                                            trenérského a
+                                                            akademického
+                                                            know-how, ani proč
+                                                            mládež napodobuje
+                                                            styl Ramyho
+                                                            Ashoura9.
+
+Důkaz proti zbytečnému přidávání mechanik (Prevence dvojího
+započítání)
+<PARSED TEXT FOR PAGE: 30 / 52>
+Analýza současného stavu prokazuje, že převážná většina požadovaného chování
+alternativního světa FAX již emergentně vyplývá ze stávajících modulů R001–R006, pokud jsou
+správně nakrmeny daty World Package. Zvětšení hráčské základny a popularity v
+COUNTRY_ATTRIBUTES_V1 automaticky vygeneruje silnější pravý chvost talentů v R001 (efekt
+velikosti vzorku    ), což v R003 a R004 zvýší konkurenci v prvních kolech turnajů a v R005
+zvýší fyzické opotřebení hráčů z těžších zápasů4.
+Jediné dvě oblasti, které současná architektura nemůže dostatečně reprezentovat bez
+cíleného rozšíření na úrovni roční uzávěrky sezóny (Season Rollover), představují
+mezigenerační taktická adaptace a endogenní institucionální odezva. Pokud generátor
+nováčků v R001 losuje herní styly z fixního apriorního rozdělení, nemůže v simulaci nikdy
+vzniknout ani zaniknout taktická éra a meta zůstane statisticky plochá po celá staletí. Podobně
+pokud jsou atributy zemí stoprocentně zmrazené mezi manuálně definovanými epochami,
+nemůže historický úspěch generace šampionů organicky vybudovat tradici a trenérské zázemí
+v zemi, která v počátečním snapshotu neměla předdefinovaný růst7.
+
+I — Vědecká validace: 15 reprodukovatelných
+experimentů (Propojení s R007 a R008)
+V souladu s datovou metodikou R007 a validačním rámcem R008 je navrženo 15 exaktních,
+reprodukovatelných simulačních experimentů. Každý experiment využívá deterministický
+PRNG seed, definuje kontrolní a testovací konfiguraci, specifikuje měřitelné makro-metriky a
+striktně rozlišuje, zda jde o Okamžitě proveditelný test v současném enginu (Current
+Engine Test), nebo o Výzkumný návrh pro budoucí verzi (Future Research Proposal).
+Souhrnný katalog validačních experimentů (EXP-01 až EXP-15)
+
+
+ ID                Název           Klasifikace    Konfigurac      Primární        Kritérium
+                   experimen       proveditel     ea              měřené          úspěchu /
+                   tu              nosti          protokol        metriky         Falzifikační
+                                                  běhu (Run       (R008)          práh
+                                                  Setup)
+
+
+ EXP-01            Stabilní svět   Okamžitě       Běh A:          Průměr a        Běh A
+                   versus          proveditel     Konstantní      rozptyl         vykazuje
+                   měnící se       ný test        World           hodnocení       stacionární
+                   podmínky                       Package po      v Top 50,       časovou
+                                                  50 let. Běh     HHI             řadu (ADF
+                                                  B:              (Herfindahl-    test
+                                                  Verzované       Hirschmanů      stacionarity
+                                                  změny           v index)
+<PARSED TEXT FOR PAGE: 31 / 52>
+                                    Country             národního
+                                                                                     )
+                                    Attributes v        zastoupení.
+                                                                       ; Běh B
+                                    letech
+                                                                       vykazuje
+                                                    a                  hladký
+                                                                       přechod s
+                                    (stejný                            fázovým
+                                    PRNG seed                          zpožděním
+                                    pro hráče).                        6–10 let
+                                                                       (doba zrání
+                                                                       juniorů).
+
+
+                                                                       Růst
+EXP-02   Větší         Okamžitě     Fixní               Kvantily
+                                                                       špičkového
+         hráčská       proveditel   tréninková          99,9 % a
+                                                                       talentu je
+         základna      ný test      kvalita a           maxima
+                                                                       přísně
+         ceteris                    finance;            atributů
+                                                                       sublineární
+         paribus                    škálování           nováčků
+                                                                       a
+                                    oslovené            (R001), GEV
+                                                                       konverguje
+                                    populace            fit
+                                                                       k
+                                                        tvarového
+                                      v                                asymptotě
+                                                        parametru
+                                    poměru
+                                                                            (
+                                                          , marže
+                                        ,       ,                      ) ; marže
+                                                                       31
+                                                        vítězství v
+                                            a           Top 20.        vítězství v
+                                                                       prvních
+                                    napříč 4                           kolech
+                                    paralelními                        klesají s
+                                    běhy (30                           rostoucím
+                                    let).                                   32
+                                                                                .
+
+                                                        Čas do
+EXP-03   Změny         Výzkumný     Počáteční
+                                                        poločasu       Pro
+         šíření        návrh pro    stav s 1
+                                                        konvergenc     přetrvává
+         trenérských   budoucí      dominantní
+                                                        e atributu     monopol;
+         znalostí      verzi        zemí (
+                                                        Kvalita        pro
+                                                        rozvoje,       klesá podíl
+                                    ) a 19
+                                                        podíl zemí v   hegemona
+                                    slabými
+                                                        Top 50         v Top 50
+                                    zeměmi (
+                                                        (SPLISS
+<PARSED TEXT FOR PAGE: 32 / 52>
+                                                     P7/P8)29.     podle
+                                    ). Variace                     logistické
+                                    koeficientu                    difuzní
+                                    difuze                         křivky bez
+                                                                   kolapsu
+                                    na 60 let.                     absolutní
+                                                                   kvality
+                                                                   původního
+                                                                   lídra.
+
+
+                                                                   Při
+EXP-04   Přenos        Výzkumný     Injekce 3        Podíl
+         taktických    návrh pro    generačníc       herních
+         trendů mezi   budoucí      h šampionů       stylů v       roste podíl
+         generacemi    verzi        s                kohortách     napodobov
+                                    extrémním        U19 a v Top   aného stylu
+                                    volejovým        100 s         v
+                                    stylem do        odstupem      juniorských
+                                    Top 5 v                        kohortách
+                                    roce                           se
+                                                     let.
+                                                                   zpožděním
+                                            .
+                                                                   4–8 let, aniž
+                                    Sledování
+                                                                   by vymizely
+                                    distribuce
+                                                                   ostatní styly
+                                    stylů
+                                                                   (zachování
+                                    nováčků s
+                                                                   diverzity
+                                    vahou
+                                                                   díky
+                                    imitace
+                                                                           )56.
+
+                                    vs.          .
+
+
+EXP-05   Stagnace      Okamžitě     Prudký           Průměrný      Sklon
+         po období     proveditel   nárůst           celkový       lineární
+         rychlého      ný test (s   tréninkovýc      rating Top    regrese
+         vývoje        kontrolou    ha               10 a Top      průměrnéh
+                       obálky       finančních       100,          o ratingu
+                       R001)        atributů v       průměrná      Top 10 v
+                                                     rychlost a    období
+                                    letech
+                                                     přesnost
+                                    až
+<PARSED TEXT FOR PAGE: 33 / 52>
+                                     ,              úderů v       nesmí být
+                                     následovan     R002.         statisticky
+                                     ý udržením                   odlišný od
+                                     maximálníc                   nuly ($
+                                     h hodnot
+                                     do roku
+                                              .
+
+
+                                                                  Výskyt
+EXP-06   Vznik a        Výzkumný     Stoletá        Spektrální
+                                                                  kvazi-
+         zánik          návrh pro    simulace (     hustota
+                                                                  periodickýc
+         dominantní     budoucí                     (Fourierova
+                                              )                   h cyklů
+         ch             verzi                       analýza) a
+                                     se                           (Hopfova
+         taktických                                 autokorelač
+                                     zapnutou                     oscilace
+         přístupů                                   ní funkce
+                                     endogenní                    mety s
+                                                    podílů tří
+                                     replikátorov                 periodou
+                                                    hlavních
+                                     ou                           10–25 let)
+
+                                                    taktických
+                                     aktualizací                  bez
+                                                    archetypů v
+                                     vah stylů (                  trvalého
+                                                    Top 30.
+                                            )a                    uzamčení
+                                     konstantní                   jednoho
+                                     mi pravidly.                 stylu na 100
+                                                                  %55.
+
+                                                    Průměr,
+EXP-07   Historicky     Okamžitě     Simulace                     Drift
+                                                    medián, 99.
+         konzistentní   proveditel   80 let při                   průměrnéh
+                                                    percentil a
+         ranking        ný test      zdvojnásob                   o ratingu
+                                                    Giniho
+         (Bez inflace                ení počtu                    Top 100
+                                                    koeficient
+         a deflace)                  turnajů a                    mezi rokem
+                                                    rankingový
+                                     hráčů v                                a
+                                                    ch bodů /
+                                     roce
+                                                    ratingu v              je
+                                              .                   menší než
+                                                    čase .
+                                                        45
+
+                                     Sledování
+                                     distribuce                         ;
+                                     bodů/Elo v                   bodové
+                                     modulu                       prahy pro
+                                     R003.                        vstup do
+                                                                  elitních
+<PARSED TEXT FOR PAGE: 34 / 52>
+                                                                  turnajů
+                                                                  zůstávají
+                                                                  srovnatelné
+                                                                  .
+
+
+                                                    Shannonov
+EXP-08   Národní        Okamžitě     Porovnání                    Konfigurac
+                                                    a entropie
+         rozmanitost    proveditel   World                        e „FAX-
+                                                    národností
+         a srovnání s   ný test      Package                      Global“
+                                                    v Top 20 a
+         koncentrací                 „Earth-like“                 vykazuje
+                                                    Top 100,
+                                     (vysoká                      statisticky
+                                                    počet
+                                     asymetrie                    významně
+                                                    unikátních
+                                     klubové                      vyšší
+                                                    zemí s
+                                     tradice a                    Shannonov
+                                                    vítězem
+                                     elity v 1–2                  u entropii a
+                                                    major
+                                     zemích) a                    nižší HHI
+                                                    turnaje za
+                                     „FAX-                        než „Earth-
+                                     Global“        dekádu40.     like“ při
+                                     (vyrovnané                   zachování
+                                     makro-                       stejné
+                                     pilíře ve 25                 individuální
+                                     zemích).                     kvality
+                                                                  zápasů.
+
+
+                                                                  Ve světě s
+EXP-09   Změny          Okamžitě     Měření         Míra
+                                                                  vyšší
+         výkonnostní    proveditel   zápasové       překvapení
+                                                                  výkonnostní
+         hloubky        ný test      bilance        (upset
+                                                                  hloubkou
+         (Performan                  hráčů na       rate),
+                                                                  roste
+         ce Depth)                   pozicích       průměrný
+                                                                  průměrná
+                                     #1–#5 proti    počet setů
+                                                                  délka
+                                     hráčům         a délka
+                                                                  zápasů v 1.
+                                     #20–#50 a      zápasu v 1.
+                                                                  kolech a
+                                     #51–#100 v     a 2. kolech
+                                                                  upset rate
+                                     éře nízké      major
+                                                                  stoupá
+                                     vs. vysoké     turnajů
+                                                                  směrem k
+                                     globální       (R002/R00
+                                                                  teoretické
+                                     participace.   4).
+                                                                  rovnováze,
+                                                                  což zvyšuje
+                                                                  únavu
+<PARSED TEXT FOR PAGE: 35 / 52>
+                                                                     favoritů
+                                                                     před
+                                                                     finále32.
+
+                                                                     V
+EXP-10   Emergentní     Výzkumný     20              Trvání
+                                                                     jednotlivých
+         dynastie       návrh pro    nezávislých     národních
+                                                                     bězích
+         (Kluby a       budoucí      běhů (různé     vedoucích
+                                                                     spontánně
+         země bez       verzi        seedy) nad      ér (souvislé
+                                                                     vznikají 15–
+         skriptování)                symetrický
+                                                     roky s          30leté
+                                     m světem
+                                                     hráči v Top     národní
+                                     10 středně
+                                                     10), identita   dynastie
+                                     velkých
+                                                     vedoucí         (analogie
+                                     zemí se
+                                                     země v          Pákistánu/E
+                                     zapnutou
+                                                     každém          gypta)7, ale
+                                     zpětnou
+                                                     seedu.
+                                     vazbou                          v každém
+                                     Superstar                       PRNG
+                                                                     seedu
+                                                                     dominuje
+                                     Popularita
+                                                                     jiná země
+                                                                     (důkaz
+                                     Akademie.                       absence
+                                                                     předurčeno
+                                                                     sti).
+
+
+EXP-11   Kontrola       Okamžitě     Stoletý běh     Win rate        Win rate
+         umělého        proveditel                   šampionů z      šampionů z
+                                     (         )
+         každoroční     ný test                      roku            roku
+                                     bez
+         ho růstu
+                                     jakýchkoliv
+         (Zero-                                      proti           se musí
+                                     změn
+         Creep                                       klonům z        pohybovat
+                                     prostředí.
+         Audit)                                      roku            v intervalu
+                                     „Zmrazení“
+                                     klonů                      v
+                                     šampionů z      10 000          (potvrzení
+                                     roku            simulovaný      nulového
+                                                     ch              skrytého
+                                                 a
+                                                     zápasech.       narůstání
+                                     jejich
+                                                                     atributů v
+                                     virtuální
+                                                                     čase).
+                                     exhibiční
+<PARSED TEXT FOR PAGE: 36 / 52>
+                                     zápas
+                                     (R002) proti
+                                     šampionům
+                                     z roku
+                                                     .
+
+
+EXP-12   Absence        Okamžitě     Vygenerová          Dvouvýběr      Hodnota
+         národní        proveditel                       ový
+                                     ní
+         vrozené        ný test                          Kolmogoro      (po
+                                     surových
+         talentové                                       v-             Bonferronih
+                                     talentů v
+         výhody                                          Smirnovův      o korekci)
+                                     R001 před
+                                                         (KS) test a    pro
+                                     aplikací
+                                                         ANOVA          všechny
+                                     tréninkovéh
+                                                         přes           páry zemí;
+                                     o rozvoje
+                                                         rozdělení      nulová
+                                     napříč
+                                                         vrozeného      velikost
+                                     všemi
+                                                         potenciálu,    efektu (
+                                     zeměmi v
+                                                         mentality a
+                                     databázi
+                                                         stylových      ), čímž je
+                                     COUNTRY_
+                                                         sklonů         matematick
+                                     ATTRIBUTE
+                                                         podle          y prokázána
+                                     S_V1.
+                                                         národnosti.    genetická
+                                                                        neutralita.
+
+
+EXP-13   Save/Load a    Okamžitě     Běh A:              Bitová         100%
+         replay         proveditel   Souvislá            shoda          bitová
+         determinis     ný test      simulace let        (SHA-256       identita
+         mus při                                         hash) všech    výstupních
+         historických                s                   vygenerova     snapshotů (
+         změnách                     verzovanou          ných hráčů,
+                                     změnou              výsledků       ). Jakákoliv
+                                     prostředí v         zápasů,        odchylka
+                                                         zranění,       indikuje
+                                                 .
+                                                         rankingový     únik stavu
+                                     Běh B:
+                                                         ch tabulek a   mimo
+                                     Uložení v
+                                                         stavů zemí     serializovan
+                                              ,          v roce         ý PRNG
+                                     načtení ze
+<PARSED TEXT FOR PAGE: 37 / 52>
+                                     snapshotu                      kontext.
+                                                                .
+                                     a dohrání
+                                     do
+                                                .
+
+
+                                                    Šířka 95%
+EXP-14   Identifikova   Výzkumný     Vygenerová                     Všechny
+                                                    konfidenční
+         telnost        návrh pro    ní                             parametry
+                                                    ch/kredibilní
+         modelovýc      budoucí      syntetické                     leží uvnitř
+                                                    ch intervalů
+         h              verzi        50leté                         95% CI a
+                                                    odhadnutýc
+         parametrů                   historie se                    žádná
+                                                    h
+         (Inverzní                   známými                        dvojice
+                                                    parametrů
+         test)                       parametry                      parametrů
+                                                    a matice
+                                                                    nevykazuje
+                                                    vzájemných
+                                     . Slepý                        kolinearitu $
+                                                    korelací
+                                     odhad
+                                                    odhadů85.
+                                     těchto
+                                     parametrů
+                                     z makro-
+                                     statistik
+                                     (R007/R008
+                                     ) pomocí
+                                     ABC / MLE.
+
+
+                                                    Výskyt
+EXP-15   Dlouhodob      Okamžitě     Spuštění                       0
+                                                    degenerova
+         á stabilita    proveditel                                  degenerova
+                                                    ných stavů
+         napříč více    ný test      nezávislých                    ných běhů
+                                                    (vymření
+         seedy                       běhů po                        ze všech 50
+                                                    okruhu,
+         (Multi-Seed                 100 letech                     seedů;
+                                                    kolaps
+         Monte                       na                             rozptyl
+                                                    turnajové
+         Carlo)                      referenční                     klíčových
+                                                    účasti,
+                                     m balíčku                      makro-
+                                                    exploze
+                                     světa FAX.                     ukazatelů
+                                                    věku v Top
+                                                                    zůstává v
+                                                    10 nad 42
+                                                                    každé
+                                                    let nebo
+                                                                    dekádě
+                                                    pod 18 let,
+                                                                    uvnitř
+                                                    NaN/Inf
+                                                                    fyziologicky
+                                                    chyby)37.       a
+<PARSED TEXT FOR PAGE: 38 / 52>
+                                                                                 ekonomicky
+                                                                                 realistickéh
+                                                                                 o koridoru.
+
+
+J — Matice přenositelnosti důkazů Earth → FAX,
+syntéza doporučení a bibliografie
+Následující matice syntetizuje veškeré historické a vědecké poznatky ze světa Earth a
+vymezuje podmínky jejich přenositelnosti do alternativního světa FAX v rámci Squash Engine.
+
+Matice přenositelnosti důkazů (Earth                  FAX Transferability Matrix)
+
+
+ Skuteč      Vědeck      Mecha       Závislo    Možná       Riziko      Součas      Potřeb
+ né          á síla      nismus,     st na      změna       chybné      ná          a
+ historic    důkazu      který       pravidl    v           extrap      podpor      nového
+ ké                      pozoro      ech a      globáln     olace       av          produk
+ pozoro                  vání        sporto     ím                      Squash      tového
+ vání                    podpor      vním       světě                   Engine      rozhod
+ (Earth)                 uje         prostře    FAX                                 nutí
+                                     dí
+
+
+ 1.          Velmi       Kratší      Extrém     Pokud       Vysoké
+                                                                        IMPLEM      Není
+ Přecho      vysoká      vzdálen     ní:        svět        :
+                                                                        ENTED /     třeba
+ d na        (přímá      ost k       Přímo      FAX         Předpo
+                                                                        TARGET      (pokud
+ PARS        notacio     vítězství   závislé    používá     kládat,
+                                                                        v           R002
+ 11          nální       v setu      na         v           že
+                                                                        zápaso      parame
+ nezmě       měření      zvyšuje     bodova     některé     zkrácen
+                                                                        vém         trizuje
+ nil         Hughes      mezní       cím        éře         í setů
+                                                                        enginu      cílový
+ délku       et al.,     váhu        systém     delší       automa
+                                                                        R002 a      počet
+ výměn       2006b)1     každé       u (HiHo    sety        ticky
+                                                                        taktické    bodů v
+ y (~13      1           výměny      9 vs.      (např.      zkracuj
+                                                                        m           setu).
+ úderů),                 a           PARS 15    PARS        e
+                                                                        modulu
+ ale                     eliminuj    vs.        15),        každou
+                                                                        R006
+ zkrátil                 e           PARS       poroste     výměnu
+                                                                        (reakce
+ sety o                  pasivní     11)6.      výhoda      na 3–4
+                                                                        na stav
+ ~30 %                   setrváv                pomalej     údery11.    skóre).
+ a zvýšil                ání v                  i
+ počet                   zápase1                startujíc
+ kritický                                       ích
+<PARSED TEXT FOR PAGE: 39 / 52>
+ch                    .
+                      1
+                                              kondičn
+bodů o                                        ích
+48 %11                                        hráčů a
+                                              klesne
+                                              míra
+                                              překvap
+                                              ení11.
+
+2.         Střední    Nižší       Vysoká      V          Střední
+                                                                    TARGET     Voliteln
+Snížení    až         momen       : Závisí    technol    :
+                                                                    přes       é
+tinu z     vysoká     t           na          ogicky     Připisov
+                                                                    globální   rozhod
+19 na 17   (biome     setrvač     fyzikální   konzerv    at
+                                                                    modifik    nutí
+palců a    chanick    nosti       ch          ativním    nárůst
+                                                                    átory      (OPEN)
+karbon     áa         rakety      parame      scénáři    útočnos
+                                                                    prostře    : Zda ve
+ové        historic   umožňu      trech       FAX        ti v 21.
+                                                                    dí v       World
+rakety     ká         je úder     vybave      (19palc    století
+                                                                    R002       Packag
+(do        shoda,     bez         ní,         ový tin,   genetic
+                                                                    (úspěšn    e
+           souběh     nápřah      výšce       těžší      ké
+                                                                    ost        verzova
+, ~120     více       u ze        tinu a      rakety)    proměn
+                                                                    zkrácen    t
+g)         faktorů)   zápěstí;    rychlost    zůstane    ě hráčů
+                                                                    í vs.      parame
+zvýšily
+           2
+                      nižší tin   i míčku     meta       místo
+                                                                    obrana)    tr výšky
+efektivi              zvětšuj     (dvojitá    výrazně    interakc
+                                                                    .          tinu /
+tu                    e           žlutá       defenzi    e tinu a
+                                                                               reaktivit
+volejů a              geomet      tečka)1.    vnější a   raket19.              y
+krátkýc               rické                   opotře
+                                                                               vybave
+h                     okno                    bováva
+                                                                               ní.
+úderů1                pro                     cí6.
+                      vítězný
+                      drop/kill
+                      6
+                          .
+
+3.         Velmi      Geome                   Nemění     Vysoké
+                                  Nízká                             IMPLEM     Není
+Vítězov    vysoká     trie                    se ani v   :
+                                  (univer                           ENTED /    třeba:
+é tráví    (experi    uzavřen                 masov      Modelo
+                                  zální                             TARGET     Ponech
+více       mentáln    ého                     ém         vat
+                                  invaria                           v jádru    at jako
+času na    í studie   kurtu a                 světě      elitní
+                                  nt):                              R002 a     pevný
+T-         pohybu     lidská                  FAX:       hráče v
+                                  Platí                             R006.      bio-
+pozici a   a          reakční                 Základn    budouc
+                                  pro                                          prostor
+70,2 %     anticipa   doba                    í          nosti
+                                  jakýkoli                                     ový
+přední     ce,        (~200                   prostor    jako
+                                  v                                            zákon
+<PARSED TEXT FOR PAGE: 40 / 52>
+ch        Vučkovi     ms);                   ová         jedince
+                                  čtyřstě                                     enginu.
+úderů     ć et al.,   příliš                 logika      se
+                                  nný kurt
+směřuj    2009;       brzká                  kontrol     100%
+                                  standar
+e rovně   James       anticipa               yTa         anticipa
+                                  dních
+podél     &           ce je                  riziko      cí před
+                                  rozměr
+stěny;    Bradley,    trestán                pře-        úderem
+                                  ů.
+anticip   2004)27     a                      anticipo    (zničilo
+ace                   pozdrž                 vání        by to
+před                  eným                   zůstávaj    roli
+údere                 švihem                 í           decepc
+m je                  (disguis               zachov      e)27.
+omeze                 e) do                  ány6.
+ná                    protipo
+(pohyb                hybu27.
+~270
+ms po
+kontak
+tu)6
+
+4.        Vysoká      Geogra      Střední    Ve          Kritick
+                                                                    IMPLEM    Produk
+Čtyřice   (sociolo    fická       : Vznik    světě       é:
+                                                                    ENTED     tové
+tiletá    gické,      aglome      extrém     FAX,        Zavržen
+                                                                    na        rozhod
+domina    instituci   race,       ního       kde do      íhodné
+                                                                    úrovni    nutí
+nce       onální a    rodinný     monop      squash      by bylo
+                                                                    vstupů    (OPEN)
+Pákistá   ekono       /klubov     olu        e           zakódo
+                                                                    (COUN     : Zda
+nu        mické       ý           jediné     masivn      vat
+                                                                    TRY_AT    povolit
+(Péšáv    případo     přenos      země       ě           Pákistá
+                                                                    TRIBUT    pomalo
+ar /      vé          know-       byl na     investuj    nu či
+                                                                    ES_V1),   u
+PAF) a    studie)7    how,        Zemi       e 30        Egyptu
+                                                                    OPEN      endoge
+násled                zahájení    usnadn     zemí        trvalý
+                                                                    pro       nní
+ná                    trénink     ěn tím,    součas      bonus k
+                                                                    endoge    aktualiz
+hegem                 uv5         že         ně,         talentu
+                                                                    nní       aci
+onie                  letech,     globální   budou       nebo
+                                                                    zpětno    Popular
+Egypta                vertikál    velmoci    národní     fixní
+                                                                    u         ity a
+(Káhira               ní          investo    dynasti     „egypts
+                                                                    vazbu.    Kvality
+/Alexan               kontakt     valy do    e kratší,   ký
+                                                                              rozvoje
+drie,                 s elitou,   jiných     méně        útočný
+                                                                              podle
+kluby                 superst     sportů4    absolut     styl“ do
+                                                                              úspěch
+Gezira,               ar efekt    .
+                                  0          ní a        jejich
+                                                                              ů v Top
+Wadi                  a                      geogra      národní
+<PARSED TEXT FOR PAGE: 41 / 52>
+Degla s                sponzor               ficky      ho
+                                                                             10.
+2 000                  ing                   rozmani    kódu37.
+hráči)7                (PAF,                 tější40.
+                       CIB)7.
+
+5.         Velmi       Biomec     Střední    V          Vysoké
+                                                                  IMPLEM     Není
+Extrém     vysoká      hanické    : Závisí   hyper-     :
+                                                                  ENTED /    třeba:
+ní         (klinické   přetíže    na         konkure    Předpo
+                                                                  TARGET     Stávající
+fyziolo    a           ní při     hustotě    nčním      kládat,
+
+                                                                  v          propoje
+gická      fyziolog    opakov     turnajo    světě      že
+                                                                  modulu     ní R004
+zátěž      ické        aných      vého       FAX s      pokrok
+                                                                  zdraví     a R005
+(TF        studie,     výpade     kalendá    hustším    sportov
+                                                                  R005 a     tento
+~179–      Horsley     ch a       ře,        kalendá    ní
+                                                                  plánová    mechan
+189        et al.,     změnác     délce      řem        medicín
+                                                                  ní         ismus
+bpm,       2020;       h směru    zápasů     může       y zcela
+                                                                  kalendá    pokrývá
+pokles     Rejeb et    (COD) v    a          zvýšená    vymaže
+                                                                  ře         .
+neuro      al.,        kombin     objemu     zápaso     zranění
+                                                                  R004.
+muskul     2017;       aci s      rané       vá         a
+ární       Wilkins     omezen     speciali   zátěž      prodlou
+funkce     on et       ou         zace v     parado     ží
+24 h) a    al.,        rychlost   akadem     xně        každou
+vysoká     2006)48     í          iích43.    zvýšit     kariéru
+inciden                tkáňové               míru       do 45
+ce                     a                     opotře     let37.
+zranění                nervové               bení a
+dolních                regener               urychlit
+končeti                ace51.                vyhořen
+n (67–                                       í
+81 %) a                                      špičky43
+osteoc                                       .
+hondró
+zy u
+juniorů
+51
+
+
+
+6. Efekt   Velmi       Pevná      Vysoká     Ve         Střední              Odlože
+                                                                  DEFERR
+relativn   vysoká      věková     : RAE      světě      :                    no
+                                                                  ED /
+ího        (system     data       roste      FAX        Extrapo              (DEFER
+                                                                  implicit
+věku       atická      selekce    přímo      (kde je    lovat                RED):
+                                                                  ně v
+(RAE)      přehled     v          úměrně     squash     dnešní               Není
+                                                                  šumu
+<PARSED TEXT FOR PAGE: 42 / 52>
+je v       ová         masový     s          masový      nízký                nutné
+                                                                    trénink
+dnešní     studie a    ch         masovo     m           RAE ze               explicit
+                                                                    ové
+m          metaan      mládež     stí        sporte      squash               ně
+                                                                    konverz
+squashi    alýza 26    nických    základn    m jako      e na                 simulov
+                                                                    e R001.
+slabý,     studií,     systém     ya         tenis)      Zemi do              at
+ale v                  ech        přetlak    se RAE      masové               měsíce
+masov      , Song      zvýhod     em v       a riziko    ho                   narozen
+ém         et al.,     ňují       raných     přehléd     globální             í, stačí
+tenisu     2026)33     biologic   selekční   nutí        ho                   zachov
+a                      ky dříve   ch         pozdně      světa                at
+badmin                 dozráva    sítech     dozráva     FAX33.               neúplno
+tonu                   jící       akadem     jících                           u
+silný                  děti33.    ií33.      talentů                          korelaci
+(OR =                                        výrazně                          mezi
+1,58; až                                     zesílí33.                        juniorsk
+70 % v                                                                        ým a
+1.                                                                            dospělý
+pololetí                                                                      m
+u                                                                             vrchole
+elitních                                                                      mv
+výběrů                                                                        R00185.
+)33
+
+7.         Vysoká      Nedoko     Vysoká     Masová      Střední
+                                                                    TARGET    Není
+Konvex     (ekono      nalá       : Závisí   komerci     :
+                                                                    v         třeba
+ní         metrick     substitu   na         alizace     Předpo
+                                                                    ekono     měnit
+struktu    é studie    ce         rozděle    ve          kládat,
+                                                                    mické     jádro:
+ra         z tenisu,   špičkov    ní prize   světě       že vyšší
+                                                                    vrstvě    Zohledn
+odměn      šachu,      ého        money      FAX         celkové
+                                                                    turnajů   it pouze
+a          golfu a     talentu    a          vytvoří     peníze
+                                                                    R004 a    při
+Supers     kolektiv    u          ranking    extrém      v
+                                                                    psychol   nastavo
+tar        ních        diváků a   ových      ní          odvětví
+                                                                    ogii      vání
+efekt      sportů,     soutěžn    bodů       příjmov     automa
+                                                                    zápasu    výplatní
+(top       Rosen,      í          mezi       ou          ticky
+                                                                    R002.     ch
+hráči      1981;       psychol    vítěze a   nerovn      zajistí
+                                                                              křivek
+berou      Deutsc      ogie       poraže     ost         rovnost
+                                                                              turnajů
+násobk     her et      pod        né v       mezi        příjmů
+                                                                              ve
+y,         al.,        tlakem     prvních    Top 10      pro
+                                                                              World
+přítom     2023)3      očekáv     kolech43   a hráči     všechn
+                                                                              Packag
+nost                   ání3.      .          kolem       y
+<PARSED TEXT FOR PAGE: 43 / 52>
+ hegem                                             150.           profesi
+                                                                                           e.
+ ona                                               místa .43
+                                                                  onály43.
+ mění
+ chybov
+ ost a
+ úsilí
+ soupeř
+ ů)3
+
+Závěrečná syntéza a architektonická doporučení pro Squash Engine
+Na hlavní výzkumnou otázku — jak může globální alternativní squashový svět během desetiletí
+přirozeně vyvíjet svou sportovní úroveň, taktiku, konkurenci a profesionální prostředí, aniž by
+simulace vytvářela umělé historické trendy nebo porušovala svou vnitřní logiku — poskytuje
+provedený výzkum ucelenou syntézu ukotvenou ve čtyřech architektonických principech.
+Prvním principem je absolutní zákaz přímých časových multiplikátorů a národní genetiky. V
+enginu nesmí existovat žádná proměnná, která by přímo násobila atributy hráčů či
+pravděpodobnost úspěchu úderů podle letopočtu (                ) nebo podle ISO kódu země.
+Biologický strop lidského druhu (   ) a fyzikálně-geometrické zákonitosti kurtu (výhoda T-
+pozice, přímých úderů a reakční doby) musejí zůstat časově invariantní27.
+Druhým principem je oddělení exogenního rámce (World Package) od endogenní odezvy.
+Makroskopický vývoj světa FAX je řízen kombinací verzovaných historických konfigurací (které
+definují populační a institucionální milníky daného scénáře) a přísně ohraničených (bounded)
+zpětnovazebních smyček. Zvětšení osloveného talentového poolu                 a zlepšení
+tréninkové infrastruktury        v COUNTRY_ATTRIBUTES_V1 přirozeně posouvají
+realizovanou kvalitu špičky směrem k biologické asymptotě podle zákonitostí teorie
+extrémních hodnot (         ), čímž po vyčerpání tréninkových rezerv automaticky nastává
+realistická výkonnostní saturace a komprese špičky bez nutnosti umělého brzdění4.
+Třetím principem je emergentní taktická meta řízená skrze mezigenerační imitaci. Aby se herní
+meta v průběhu desetiletí vyvíjela dynamicky bez skriptovaných bonusů, postačuje na konci
+každé sezóny upravit váhy taktických preferencí pro generování a trénink nových juniorů podle
+skutečné turnajové úspěšnosti jednotlivých stylů v Top         žebříčku s malým mutačním šumem
+ . Protože zápasový engine (R002/R006) obsahuje přirozené netranzitivní vztahy, kde každý
+dominantní styl vytváří prostor pro svůj taktický protipól, vzniknou v simulaci organické taktické
+éry, adaptace a protireakce5.
+Čtvrtým principem je zachování přirozených fyziologických a institucionálních brzd. Rostoucí
+intenzita konkurence a hustota turnajů ve světě FAX jsou v architektuře Squash Engine
+přirozeně vyvažovány modulem zdraví a únavy (R005) a selekčním tlakem v turnajích (R004)48.
+<PARSED TEXT FOR PAGE: 44 / 52>
+Tím je zajištěno, že simulace zůstane dlouhodobě stabilní, deterministicky reprodukovatelná
+napříč uloženými snapshoty a vědecky obhajitelná v každém ze zkoumaných časových
+scénářů.
+Systematická bibliografie a přehled primární literatury
+Následující tabulka shrnuje klíčovou vědeckou literaturu, empirické studie a institucionální
+prameny využité při formulaci teoretického a matematického rámce R009.
+
+
+
+
+ Tematický okruh          Autoři / Instituce a     Název studie /          Klíčový přínos pro
+                          rok vydání               Publikace a             modelování světa
+                                                   kontext zjištění        FAX
+
+
+                          Hughes, M. (1985,        The evolution of        Empirické ukotvení
+ Notacionální
+                          1986); Sanderson, F.     computerised            distribuce úderů v
+ analýza, taktika a
+                          H. (1983); Hughes,       notational analysis     15 buňkách kurtu a
+ pravidla squashe
+                          M., & Robertson, C.      through the             prokázání rozdílu v
+                          (1998)15                 example of racket       chybovosti a
+                                                   sports; strukturální    efektivitě dlouhých
+                                                   archetypy elitního      úderů15.
+                                                   squashe a rozdíly
+                                                   mezi rekreačními,
+                                                   národními a
+                                                   mezinárodními
+                                                   hráči15.
+
+                          Hughes, M. et al.        Strukturální a          Důkaz, že PARS 11
+ Notacionální
+                          (2006b); Liddle, S.      taktické změny v        nezměnil délku
+ analýza, taktika a
+                          D., & O'Donoghue,        mužském elitním         výměn (~13 úderů),
+ pravidla squashe
+                          P. G. (1998)11           squashi při             ale zvýšil počet
+                                                   přechodu z              kritických bodů o
+                                                   bodování PPR 15 na      48 % a zkrátil
+                                                   PPR 11 a analýza        extrapolovanou
+                                                   časových faktorů11.     dobu zápasu o ~30
+                                                                           %11.
+
+                          Vučković, G. et al.      Analýza dominance       Vysvětlení limitů
+ Notacionální
+                          (2009); James, N., &     T-pozice,               anticipace a role
+ analýza, taktika a
+                          Bradley, C. (2004);      biomechaniky split-     pozdrženého švihu
+ pravidla squashe
+                          Abernethy, B.            stepu a časování        (disguise) a přímých
+<PARSED TEXT FOR PAGE: 45 / 52>
+                     (1990); Triolet, C. et   anticipačního            drivů (70,2 %) v
+                     al. (2013)   27
+                                              pohybu (270 ms po        zápasovém jádru
+                                              kontaktu míčku) v        R002/R00627.
+                                              raketových
+                                              sportech27.
+
+                     Flynn, R. / Squash       Tactics and              Kodifikace
+Notacionální
+                     Canada (2020);           Strategy in Squash;      historických milníků
+analýza, taktika a
+                     World Squash             WSF History of           (1923–2026),
+pravidla squashe
+                     Federation (WSF,         Squash &                 koncept bodových
+                     2017–2025); Zug, J.      Championship             buffer zones a
+                     (2017)1                  Regulations              reverse phasing v
+                                              (chronologie tinu        tréninkových
+                                              19/17/13 palců, raket    vzorcích1.
+                                                             a
+                                              bodování) .1
+
+
+
+                     Montpetit, R. R.         Applied physiology       Parametrizace
+Fyziologie zátěže
+                     (1990); Girard, O., &    of squash;               aktivního času (50–
+a epidemiologie
+                     Millet, G. P. (2009);    Physiological and        70 %), tepové
+zranění
+                     Wilkinson, M. et al.     Performance              frekvence (179–189
+                     (2006); Jones, T. W.     Correlates of            bpm), laktátového
+                     et al. (2022)41          Squash Physical          prahu (4 mmol/l),
+                                              Performance (J
+                                                                       COD (           ),
+                                              Sports Sci Med,
+                                                                       RSA a 24h
+                                              21(1), 82–90)41.         neuromuskulární
+                                                                       únavy41.
+
+                     Horsley, I. G.,          The Epidemiology         Empirický základ
+Fyziologie zátěže
+                     O'Donnell, V., &         of injuries in English   pro nelineární
+a epidemiologie
+                     Leeder, J. (2020);       Professional             únavový a úrazový
+zranění
+                     Rejeb, A. et al.         Squash (2004–            model (R005):
+                     (2017); Finch, C. F.,    2015); studie            průměr 8,83 zranění
+                     & Eime, R. M. (2001,     incidence zranění u      za 11 let u profi
+                     2003); Berson, B. L.     mládeže (8,5 / 1         hráčů, 67–81 % v
+                     et al.48                 000 h) a                 dolních
+                                              osteochondrózy           končetinách48.
+                                              (323 ztracených
+                                              dnů)48.
+<PARSED TEXT FOR PAGE: 46 / 52>
+                      Joyner, M. J., &         Statistics of             Matematický
+Biologické limity,
+                      Lucia, A.; Fair, R. C.   extremes in               aparát
+EVT a efekt
+                      (2017); Einmahl, J.      athletics; Ultimate       zobecněného
+relativního věku
+                      H. J., & Magnus, J.      100-m world               rozdělení
+(RAE)
+                      R.; Stephenson, A.,      records through           extrémních hodnot
+                      & Tawn, J. (2013);       extreme-value             (GEV) se záporným
+                      Berry, S. M. et al.      theory; Bayesian          tvarovým
+                      (1999)31                 modelling of elite        parametrem (
+                                               sporting                          )a
+                                               performance31.            konečným
+                                                                         biologickým
+                                                                         stropem        .
+                                                                                       31
+
+
+
+                      Song, Z., Li, C.,        The Relative Age          Důkaz, že masovost
+Biologické limity,
+                      Weldon, A., Duncan,      Effect in Racket          raketového sportu
+EVT a efekt
+                      M., & Kelly, A. L.       Sports: A                 vyvolává silný RAE (
+relativního věku
+                      (2026)33                 Systematic Review
+(RAE)                                                                                     pro
+                                               and Meta-Analysis         Q1 vs. Q4; až 70,2
+                                               (26 studií, 198           % v 1. pololetí u
+                                               vzorků,
+                                                                         národních
+                                                                     )   výběrů)33.
+                                                .
+                                               33
+
+
+
+                      De Bosscher, V.,         Successful Elite          Devítipilířový model
+Sportovní politika,
+                      Shibli, S.,              Sport Policies:           faktorů
+klastry a národní
+                      Westerbeek, H., &        SPLISS 2.0 in 15          mezinárodního
+velmoci
+                      van Bottenburg, M.       nations (Meyer &          úspěchu (96 CSF),
+                      (2006, 2012, 2015,       Meyer Verlag); The        důkaz role
+                      2021)29                  SPLISS Athletics          financování (Pilíř 1)
+                                               Project35.                a princip
+                                                                         benchlearningu bez
+                                                                         genetického
+                                                                         determinismu29.
+
+                      Pakistan Squash          Případové studie          Mechanismus
+Sportovní politika,
+                      Federation (PSF);        pákistánské               geografické
+klastry a národní
+                      CIB Egypt Annual         dynastie (Péšávar,        aglomerace,
+velmoci
+                      Reports (2019–           patronát PAF) a           znalostních přelivů
+                      2025); Ratten, V.        egyptského klastru        (knowledge
+<PARSED TEXT FOR PAGE: 47 / 52>
+                         (2019); Hamburg         (Gezira, Heliopolis,   spillovers) a sociální
+                         Sports Metropolis       Al Ahly, Wadi Degla    exkluzivity tržně
+                         Study7                  — 2 000 hráčů, 100     alokovaných klubů9.
+                                                 trenérů)7.
+
+                         Rosen, S. (1981,        The Economics of       Konvexita odměn,
+ Ekonomie sportu a
+                         1986); Lazear, E. P.,   Superstars; Rank-      přitahování
+ evoluční teorie her
+                         & Rosen, S. (1981);     Order                  pozornosti a
+                         Lucifora, C., &         Tournaments; The       superstar efekt
+                         Simmons, R. (2003);     Superstar Effect in    ovlivňující
+                         Deutscher, C. et al.    Tennis and Chess3.     chybovost a úsilí
+                         (2023); Brown, J.                              soupeřů v
+                         (2011)3                                        turnajovém
+                                                                        pavouku3.
+
+                         Szabó, G., & Fáth,      Evolutionary games     Matematický model
+ Ekonomie sportu a
+                         G. (2007); Gintis, H.   on graphs; Chaotic     netranzitivní
+ evoluční teorie her
+                         (2009); Perc, M. et     Dynamics in            cyklické dominance
+                         al.; Zhou, H. (2016)5   Asymmetric Rock-       a Hopfovy
+                                                 Paper-Scissors         bifurkace pro
+                                                 Games; Replicator      endogenní evoluci
+                                                 Dynamics with          taktické mety bez
+                                                 Imitation and          umělých časových
+                                                 Mutation5.             pravidel5.
+
+Citovaná díla
+
+  1. HISTORY TIMELINE | World Squash Library | Archived & Available,
+       https://www.squashlibrary.info/history-of-squash
+  2.   Physiological and Nutritional Considerations for Elite Squash,
+       https://d-nb.info/1355217830/34
+  3.   Superstars' wages in collective sports - IS MUNI,
+       https://is.muni.cz/th/v24l4/Drozd_diploma_thesis.pdf
+  4.   Extreme Value Distributions : Theory and Applications - Minerva,
+       https://minerva.it.manchester.ac.uk/~saralees/book5.pdf
+  5.   the replicator equation in evolutionary - arXiv, https://arxiv.org/pdf/2412.02222?
+  6.   History and Basics of Squash Sport | PDF - Scribd,
+       https://www.scribd.com/document/49623540/INTRODUCTION-TO-SQUASH
+  7.   About Us - Pakistan Squash Federation, https://pakistansquash.org/about-us/
+  8.   Squash - Pakistan Olympic Association, https://nocpakistan.org/squash/
+  9.   The Egyptian Machine: How One Country Took Over Squash,
+       https://racquets.me/indoor/culture/egypt-squash-machine/
+<PARSED TEXT FOR PAGE: 48 / 52>
+10. News - WadiDegla Clubs Website, https://wadideglaclubs.com/News/
+11. The Evolution of Computerised Notational Analysis Through the,
+    https://pdfs.semanticscholar.org/08cb/c9050e64a1c1cd081c333ade122978422d
+    46.pdf
+12. Super Series Finals Unveil New PSA Scoring System - Squash Player,
+    https://www.squashplayer.co.uk/superseries/superseries_org/newscoring.htm
+13. Championship Guidelines,
+    https://squash.or.jp/wp/wp-content/uploads/2018/09/Championship-
+    Guidelines-2018.pdf
+14. 1 January 2025 Version 10.5 - World Squash, https://www.worldsquash.sport/wp-
+    content/uploads/2025/07/250101-Championship-Regulations-V10.5.pdf
+15. (PDF) The evolution of computerised notational analysis through the,
+    https://www.researchgate.net/publication/228337502_The_evolution_of_comput
+    erised_notational_analysis_through_the_example_of_racket_sports
+16. Is A Unified Scoring System Looming? - Squash Magazine,
+    https://squashmagazine.com/2008/05/is-a-unified-scoring-system-looming/
+17. Squash scoring: how does it work? - ScoreLeader,
+    https://scoreleader.com/squash-scoring/
+18. The Psychology of Squash: Staying Focused Between Points,
+    https://scienceofcoachingsquash.wordpress.com/2009/03/02/the-psychology-
+    of-squash-between-points/
+19. The Evolution Of Squash - SERIOUS SQUASH,
+    http://www.serioussquash.com/2016/10/the-evolution-of-squash.html
+20. Rackets, Squash, Sporting Goods - PicClick UK, https://picclick.co.uk/Sporting-
+    Goods/Squash/Rackets/
+21. Ramy Ashour Philosophy : r/squash - Reddit,
+    https://www.reddit.com/r/squash/comments/xz27bo/ramy_ashour_philosophy/
+22. Squash Engine, https://www.squashengine.com/
+23. The latest in the Egypt-Ethiopia saga - EnterpriseAM,
+    https://enterpriseam.com/egypt/afternoon/the-latest-in-the-egypt-ethiopia-
+    saga/
+24. GitHub - LukeGibson/SquashVision: An OpenCV based tool for,
+    https://github.com/LukeGibson/SquashVision
+25. Smart Squash AI - YouTube, https://www.youtube.com/watch?v=JP7EUJqNR4w
+26. Rally Vision – Squash Analytics AI App, https://rallyvision.ai/
+27. Using a Situation Awareness Approach to Identify Differences in the,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC6527813/
+28. Descriptive statistics for rallies categorised by duration. | Download,
+    https://www.researchgate.net/figure/Descriptive-statistics-for-rallies-
+    categorised-by-duration_tbl2_305923523
+29. About SPLISS, https://spliss.research.vub.be/about-spliss
+30. Extreme-value Statistics: Rudiments and applications - arXiv,
+    https://arxiv.org/html/2407.00725v1
+<PARSED TEXT FOR PAGE: 49 / 52>
+31. (PDF) Statistics of Extremes in Athletics - ResearchGate,
+    https://www.researchgate.net/publication/286056792_Statistics_of_extremes_in_
+    athletics
+32. Tournaments within football teams: players' performance and wages,
+    https://www.tandfonline.com/doi/full/10.1080/1331677X.2021.2019595
+33. The Relative Age Effect in Racket Sports: A Systematic Review and,
+    https://www.researchgate.net/publication/405340070_The_Relative_Age_Effect_
+    in_Racket_Sports_A_Systematic_Review_and_Meta-Analysis
+34. The Relative Age Effect and Physical Fitness Characteristics in,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC4541129/
+35. Successful Elite Sport Policies | Veerle de Bosscher | Simon Shibli,
+    https://www.inlibra.com/en/document/view/detail/uuid/8c2681ce-b590-3dab-
+    ac7f-d14119fcd69a
+36. Squash and the Egyptian formula for sporting success - Diligencia,
+    https://www.diligenciagroup.com/blogs/squash-and-the-egyptian-formula-for-
+    sporting-success
+37. Today, I contribute to the sport in a different way: squash champion,
+    https://www.dailynewsegypt.com/2016/11/03/today-contribute-sport-different-
+    way-squash-champion-shabana/
+38. (PDF) Sport entrepreneurial ecosystems and knowledge spillovers,
+    https://www.researchgate.net/publication/337307284_Sport_entrepreneurial_ec
+    osystems_and_knowledge_spillovers
+39. Economies of Density and Productivity in Service Industries,
+    https://www.rieti.go.jp/jp/publications/dp/08e023.pdf
+40. The SPLISS Athletics Project: A Resource-Based Evaluation of Elite,
+    https://www.worldathletics.org/download/downloadnsa?filename=df8bc381-
+    2379-483a-b346-b35eaaa2dd33.pdf&urlslug=the-spliss-athletics-project-a-
+    resource-based
+41. Physiological and Performance Correlates of Squash Physical,
+    https://pubmed.ncbi.nlm.nih.gov/35250337/
+42. Sports Policy Leading to International Sporting Success - Sport for Life,
+    https://sportforlife.ca/wp-content/uploads/2020/03/04-NSO-Leads-
+    Day_Jan-2020_SPLISS-HP-Strategy.pdf
+43. Tournament theory: can we guarantee an athlete's best performance?,
+    https://www.unilim.fr/ebooks/485&file=1/
+44. Superstar Effects in Sport | PDF | Ordinary Least Squares - Scribd,
+    https://www.scribd.com/document/616333478/Superstar-effects-in-sport
+45. Explaining the Superstar Effect Using Evidence from Chess,
+    https://ernbilen.github.io/pdfs/Superstar_Effect.pdf
+46. DEPARTMENT OF ECONOMICS - Linz - JKU,
+    https://www.jku.at/fileadmin/gruppen/117/WorkingPapers/econ/2016/wp1613.pdf
+47. (PDF) The Superstar Phenomenon Within a Digitized Economy,
+    https://www.researchgate.net/publication/370502885_The_Superstar_Phenomen
+<PARSED TEXT FOR PAGE: 50 / 52>
+    on_Within_a_Digitized_Economy_Theories_Causes_and_Case_Studies_Surroundi
+    ng_the_Entertainment_Industry_and_Beyond
+48. Squash Under Strain: A Systematic Review and Meta-Analysis of,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC12944960/
+49. Introduction to the Sociology of Sport 9004464700, 9789004464704,
+    https://dokumen.pub/introduction-to-the-sociology-of-sport-9004464700-
+    9789004464704-9789004464711.html
+50. Breaking The 100M Dash World Record: A Deep Dive Into The,
+    https://alfa.razon.com.mx/breaking-the-100m-dash-world-record-a-deep-dive-
+    into-the-limits-of-human-speed
+51. The Prevalence of Musculoskeletal Injuries in Junior Elite Squash,
+    https://brieflands.com/journals/asjsm/articles/84495
+52. “TACTICS AND STRATEGY IN SQUASH”,
+    https://squash.ca/wp-content/uploads/2020/10/Tactics-and-Strategy-in-
+    Squash.pdf
+53. An International Comparison of Elite Sport Policies in 15 Nations,
+    https://events.eventact.com/wingate/21996/De%20Bosscher%20-
+    %20Extended%20Abstract.pdf
+54. (PDF) Game Theory and Nash Equilibrium in Rock Paper Scissors,
+    https://www.researchgate.net/publication/366578958_Game_Theory_and_Nash_
+    Equilibrium_in_Rock_Paper_Scissors
+55. Correlated Equilibrium and Evolutionary Stability in 3-Player Rock,
+    https://www.mdpi.com/2073-4336/14/3/45
+56. Chaotic Dynamics in Asymmetric Rock-Paper-Scissors Games,
+    https://www.researchgate.net/publication/337645166_Chaotic_Dynamics_in_Asy
+    mmetric_Rock-Paper-Scissors_Games
+57. Beginner's guide to squash rules in the UK,
+    https://squashmad.com/uncategorized/beginners-guide-to-squash-rules-in-the-
+    uk-2/
+58. M3/4PA48 Dynamics of Games,
+    https://www.ma.imperial.ac.uk/~svanstri/TeachingFiles/Solutions_Exercises_Dyna
+    mics_of_Games.pdf
+59. A review of the performance requirements of squash - ResearchGate,
+    https://www.researchgate.net/publication/326881927_A_review_of_the_perform
+    ance_requirements_of_squash
+60. Applied physiology of squash - PubMed,
+    https://pubmed.ncbi.nlm.nih.gov/2197698/
+61. Physiological and Performance Correlates of Squash Physical,
+    https://www.jssm.org/jssm-21-82.xml-Fulltext
+62. An exercise protocol that simulates the activity patterns of elite junior,
+    https://pubmed.ncbi.nlm.nih.gov/17101531/
+63. (PDF) The age-performance relationship in the general population,
+    https://www.researchgate.net/publication/337832761_The_age-
+<PARSED TEXT FOR PAGE: 51 / 52>
+    performance_relationship_in_the_general_population_and_strategies_to_delay_a
+    ge_related_decline_in_performance
+64. Advanced Strength and Conditioning: Evidence-Based Approach,
+    https://studylib.net/doc/26999384/advanced-strength-and-conditioning-an-
+    evidence-based-appr...
+
+65. Estimating Aging Effects in Running Events - Ray C. Fair,
+    https://fairmodel.econ.yale.edu/rayfair/pdf/2017B.PDF
+66. Ultimate 100‐m world records through extreme‐value theory,
+    https://www.researchgate.net/publication/227759663_Ultimate_100-
+    m_world_records_through_extreme-value_theory
+67. SPLISS model: A conceptual model of 9 pillars of Sports Policy,
+    https://www.researchgate.net/figure/SPLISS-model-A-conceptual-model-of-9-
+    pillars-of-Sports-Policy-factors-Leading-to_fig2_48327849
+68. Physical and Physiological Match-Play Demands and Player,
+    https://pubmed.ncbi.nlm.nih.gov/33240157/
+69. The Theoretical Fastest Man and Woman - Stealth Mind,
+    https://www.stealthmind.com/the-theoretical-fastest-man-and-woman/
+70. Epidemiology of squash injuries requiring hospital treatment,
+    https://www.researchgate.net/publication/8969536_Epidemiology_of_squash_inj
+    uries_requiring_hospital_treatment
+71. (PDF) The epidemiology of squash injuries - ResearchGate,
+    https://www.researchgate.net/publication/235645687_The_epidemiology_of_squ
+    ash_injuries
+72. 266th Session - Senate of Pakistan,
+    https://senate.gov.pk/uploads/documents/questions/1503639032_566.pdf
+73. THE SENATE OF PAKISTAN DEBATES,
+    https://senate.gov.pk/uploads/documents/debates/1531147320_370.pdf
+74. CHAMPIONING A LEGACY - Amazon S3,
+    https://s3.amazonaws.com/resources.inktankir.com/cib/CIB-AR21-v7.1.pdf
+75. How Egypt Became a Global Squash Champion - Fanack,
+    https://fanack.com/culture/sports-and-politics/egypt-global-squash-champion/
+76. EVERYDAY LIFE - CIB Egypt,
+    https://www.cibeg.com/-/media/project/downloads/investor-relations/ir-library/
+    annual-reports/2025/cib-ar-2025-final.pdf
+77. Driving Digital Change - CIB Egypt,
+    https://www.cibeg.com/-/media/project/downloads/investor-relations/ir-library/
+    annual-reports/2019/cib-annual-report-2019.pdf
+78. Outcome Uncertainty, the Superstar Effect, Talent and Live,
+    https://www.athensjournals.gr/sports/2017-4-3-3-Chaplin.pdf
+79. (PDF) Geography of a sports metropolis - ResearchGate,
+    https://www.researchgate.net/publication/227626980_Geography_of_a_sports_
+    metropolis
+80. SUCCESSFUL ELITE SPORT POLICIES,
+<PARSED TEXT FOR PAGE: 52 / 52>
+    https://ussa-my.com/assets/SPLISS_report.pdf
+81. The Dynamics of Innovation and Knowledge-Based Regional, https://www.diva-
+    portal.org/smash/get/diva2:373788/FULLTEXT01.pdf
+82. Extreme Value Statistics for General Heterogeneous Data through,
+    https://www.tandfonline.com/doi/full/10.1080/01621459.2026.2676731
+83. Competitive balance measures in sports leagues - ResearchGate,
+    https://www.researchgate.net/publication/262692363_Competitive_balance_mea
+    sures_in_sports_leagues_The_effects_of_variation_in_season_length
+84. The superstar effect in Tennis: A within-match analysis - EconStor,
+    https://www.econstor.eu/bitstream/10419/302868/1/1902717023.pdf
+85. Bayesian modelling of elite sporting performance with large databases,
+    https://www.researchgate.net/publication/366124275_Bayesian_modelling_of_elit
+    e_sporting_performance_with_large_databases
+86. Using Extreme Value Theory Approaches to Estimate High ... - SCIRP,
+    https://www.scirp.org/journal/paperinformation?paperid=131567
+87. Epidemiological Patterns of Alternative Racquet-Sport Injuries in the,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC6056792/
+88. A History of Squash, https://www.worldsquash.sport/a-history-of-squash/
+89. Bayesian modelling of elite sporting performance with large databases,
+    https://kar.kent.ac.uk/id/document/3353777
+90. Ranking, and Other Properties, of Elite Swimmers Using Extreme,
+    https://academic.oup.com/jrsssa/article/184/1/368/7056347
+91. 2. Successful elite sport policies - CIF - Centrum för idrottsforskning,
+    https://centrumforidrottsforskning.se/digitala-rapporter/svensk-elitidrott-vid-
+    ett-vagskal/3-successful-elite-sport-policies/
+92. Evolutionary games on graphs - Carlo Piccardi,
+    https://piccardi.faculty.polimi.it/VarieCsr/Papers/Szabo_and_Fath_07_PhysRep.p
+    df
+93. Game Theory Evolving, Second Edition,
+    https://public.ek-cer.hu/~szabo/EJE20/library/Gintis%20-
+    %20GameTheory%20Evolving%202ed.pdf
+94. Revisiting deterministic evolution - Matjaz.Perc,
+    https://www.matjazperc.com/publications/ApplMathComput_522_129994.pdf
+
+----- END AVAILABLE SEARCHABLE TEXT -----

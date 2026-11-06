@@ -2,10 +2,12 @@
 
 from typing import Literal
 import json
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, ConfigDict, Field
 
 from beta_engine.api.deps import (
+    ApiRuntime,
+    get_runtime,
     get_calendar_package_run_adapter,
     get_run_package_service,
     get_world_package_run_adapter,
@@ -19,6 +21,9 @@ from beta_engine.application.run_package_service import (
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.atp_reference_package_adapter import ATPReferencePackageAdapter
 from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
+from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_earth_weeks_on_run
+from beta_engine.application.run_calendar_read_authority import resolve_saved_run_calendar
+from scripts.audit_atp_earth_week_mapping_v1 import SOURCE_FILE as ATP_DATE_SOURCE_FILE, build_projection
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash, entity_content_fingerprint
 from beta_engine.application.run_edition_entry_timing import RunEditionEntryTimingService
 from beta_engine.domain.tournaments.edition_entry_timing import EditionEntryTiming
@@ -303,6 +308,54 @@ def get_source_atp_reference_calendar_year(year: int):
         }
     except (OSError, ValueError) as exc:
         raise HTTPException(409, "ATP Calendar source year is invalid") from exc
+
+
+@router.get("/source-atp-reference-calendar/run-week-preview")
+def preview_atp_reference_against_saved_run_calendar(
+    run_id: str,
+    branch_id: str,
+    year: list[int] | None = Query(default=None, ge=1990, le=2026),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Pure source-only ATP projection against a hash-checked Saved Run clock.
+
+    This endpoint never installs Calendar Editions, rounds, Simulation Slots,
+    rankings, or a Package; it never changes Working Draft or Saved history.
+    Source ATP dates are *server reference data*, NOT a claim of a previously
+    applied/saved ATP Package snapshot for this Run.
+    """
+    try:
+        # No source drift: validate the exact historical Calendar adapter's
+        # stored generated document against the four canonical source files.
+        ATPHistoricalCalendarAdapter().build_calendar()
+        dated = json.loads(ATP_DATE_SOURCE_FILE.read_text(encoding="utf-8"))
+        mapping = build_projection(dated)
+        with runtime.repository._session_factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            clock = resolve_saved_run_calendar(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            report = preview_atp_earth_weeks_on_run(
+                calendar=clock, mapping=mapping, years=year
+            )
+        return {
+            **report,
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "saved_run_calendar_verified": True,
+            "uses_current_server_reference_not_run_snapshot": True,
+            "run_mutated": False,
+            "working_draft_mutated": False,
+            "historical_revision_mutated": False,
+        }
+    except (OSError, TypeError, ValueError) as exc:
+        raise HTTPException(
+            409,
+            detail={
+                "code": "atp_run_week_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
 
 
 @router.post("/source-atp-reference-calendar/preview")

@@ -3555,7 +3555,7 @@ export type CanonicalDrawBracket = {
 
 export type CanonicalTournamentDrawAuthority = {
   schema_version: 'tournament_draw_authority.v1' | 'tournament_draw_authority.v2'
-  algorithm_version: 'protected_seed_shuffle.v1' | 'idealized_seed_tiers.v2'
+  algorithm_version: 'protected_seed_shuffle.v1' | 'idealized_seed_tiers.v2' | 'padded_qualification_sections.v3'
   run_id: string
   branch_id: string
   event_id: string

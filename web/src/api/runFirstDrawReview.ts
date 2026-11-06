@@ -75,7 +75,8 @@ export function verifiedGeneratedFirstDraw(
     authority.run_id !== runId || authority.branch_id !== branchId ||
     authority.event_id !== eventId ||
     authority.draw_input_fingerprint !== expectedDrawInputFingerprint ||
-    ![ 'protected_seed_shuffle.v1','idealized_seed_tiers.v2' ].includes(authority.algorithm_version) ||
+    ![ 'protected_seed_shuffle.v1','idealized_seed_tiers.v2','padded_qualification_sections.v3' ].includes(authority.algorithm_version) ||
+    draw.draw_algorithm_version !== authority.algorithm_version ||
     authority.main.bracket_size !== field.main_draw_capacity ||
     authority.main.slots.length !== field.main_draw_capacity ||
     authority.main.bye_slot_indexes.length !== draw.main_bye_count ||

@@ -1,4 +1,28 @@
-# Current pre-alpha dependency path — 6 November 2026
+# Current dependency checkpoint — 6 November 2026
+
+Base `buuk` `1800697b978a33f6895d2e6a3fa3e77bfb066954` includes the owner merge
+of #1744; frontend baseline repair is complete. The source-sized player Draw
+candidate now keeps Q24 admission separate from four eight-position sections,
+reuses canonical seeding/BYEs/WC and passes persisted initial Draw mechanics.
+See the single [integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+
+1. Review this bounded Draw candidate on its final head; keep the ATP package
+   Drafts separate. Its authenticated source projection does not create a new
+   Saved authority or decide automatic Entry eligibility.
+2. Next connect the established real-player Main/Q Draw to **versioned global-slot
+   feeder, round and match-result acceptance**, including correct BYE advancement
+   and Q winner → Q1–Q4 replacement. Preserve old v2/v3 execution seeds and fail
+   closed on unsupported withdrawal/replacement paths rather than changing history.
+3. Resolve only genuinely open Entry/award/source chronology prerequisites; then
+   prove one actual Gold and one Platinum through Q/Main/points/explicit Save and
+   reopen, followed by multiple Editions, a full reference season and the required
+   50-season/recovery/performance gates. Draw success is not sporting execution.
+
+The complete Master scope is retained. Earlier dated roadmap entries are history.
+
+---
+
+# Historical dependency checkpoint before #1744 merge
 
 Baseline: `buuk` `b666c109b9dc596a6d226025500ceb462a4fff8b`; all 38 reviewed
 non-package PRs are merged with no feature-content loss. ATP package Drafts

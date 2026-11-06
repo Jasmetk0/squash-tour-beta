@@ -1,0 +1,1200 @@
+# R014 — Gemini long-form physiological training and periodization research (owner-uploaded DOCX)
+Original: "Vypracování Výzkumného Dokumentu R014.docx" (~28 rendered pages; contains ~5 tables and **hundreds of embedded inline shapes/equation renderings**).
+Source uploaded November 3, 2026. The exact original Word binary is held by the owner, NOT in this repository.
+**WARNING: LOSSY SEARCHABLE PLAIN-TEXT EXTRACT.** Many mathematical equations, superscript values, measurement units, statistical parameters, rendered tables and diagram labels are image/Word shapes, and may be blank or corrupted in this extraction. For precise numbers and formulas CONSULT THE ORIGINAL DOCX, not this extract. No graphics, formulas or Word tables are being claimed preserved here.
+**CANDIDATE SOURCE ONLY** — not a completed R014 project audit, not approved FAX physiology/gameplay calibration. The report does not discuss Squash Engine, FAX, its real code or 15 required simulation experiments. It is a topical sports-physiology review, not the full original R014 task. Some claims overgeneralize two-week cohorts, running injury risk or periodization evidence. Consult INDEPENDENT_CRITICAL_REVIEW_AND_HANDOFF.md.
+Content includes external bibliographic links at end; their presence does not imply independent verification of every cited claim. No simulation tests conducted.
+
+----- BEGIN SEARCHABLE TEXT (LOSSY) -----
+
+<PARSED TEXT FOR PAGE: 1 / 28>
+Fyziologická architektura, kvantifikace
+zatížení a periodizace v elitním squashi a
+raketových sportech
+Evoluce herních nároků a metabolicko-mechanický
+profil elitního squashe
+Squash představuje z hlediska metabolické, kardiovaskulární a neuromuskulární zátěže
+nejnáročnější disciplínu mezi všemi raketovými sporty1. Na rozdíl od síťových raketových her
+sdílejí hráči uzavřený prostor kurtu, kde za účelem získání taktické převahy opakovaně
+vykonávají vysoce intenzivní, nelineární akcelerace z centrální pozice („T“) s cílem odehrát míč v
+co nejčasnější fázi odrazu1. Pohybová struktura je definována acyklickými a dynamickými
+akcemi zahrnujícími sprinty na vzdálenost 3 až 6 metrů, hluboké výpady (lunges), prudké
+decelerace a vícesměrné změny směru (COD)1. Tento specifický lokomoční profil vyvolává u
+elitních mužů průměrný energetický výdej                               , průměrnou srdeční
+frekvenci na úrovni                                                      (         ) a průměrný
+respirační výměnný poměr (            )                , což dokládá extrémní zapojení
+oxidativních i glykolytických energetických drah .3
+
+
+Zásadní zlom v časové a fyziologické struktuře výkonu přinesla standardizace pravidel
+Světovou squashovou federací (WSF) a Profesionální squashovou asociací (PSA) v roce 20093.
+Přechod z devítibodového systému se ziskem bodu pouze při vlastním podání (POS9) na
+jedenáctibodový systém, v němž je každá výměna bodována (PAR11), spolu se snížením horní
+hrany čelní plechové desky (tin line) ze              na          , strukturálně proměnil
+strategické chování hráčů . Snížení cílové zóny pro vítězné údery vedlo k ofenzivnějšímu pojetí
+                           3
+
+
+hry, což se projevilo zkrácením průměrné doby trvání výměny z                   před změnou
+pravidel na                    po změně pravidel, zatímco průměrný počet úderů na jednu
+výměnu vzrostl z              na            3
+                                             . Zvýšená frekvence úderů v kratším časovém okně
+dokládá zrychlení herního tempa a redukci pasivních fází uvnitř samotných výměn, kvůli čemuž
+je značná část starší fyziologické literatury (publikované před rokem 2009) z hlediska
+absolutních objemových parametrů metodologicky zastaralá3.
+<PARSED TEXT FOR PAGE: 2 / 28>
+Z bioenergetického hlediska je elitní squash charakterizován jako vysoce intenzivní
+intermitentní aktivita, kde se v závislosti na úrovni hráčů a taktickém kontextu pohybují
+průměrné délky výměn v širším historickém spektru od                až po           , zatímco
+intervaly odpočinku mezi výměnami vykazují normální rozdělení s průměrem kolem                   v
+běžném herním rytmu, respektive                  při započtení přerušení2. Přestože až
+výměn v obecném herním profilu trvá             nebo méně, specifický poměr práce a odpočinku (
+      až        ) způsobuje, že míč je ve hře po dobu                  celkového času zápasu1.
+Přesná notová analýza dokládá, že čistý hrací čas u elitního squashe dosahuje
+                   celkového trvání utkání, což ostře kontrastuje například s elitním a
+juniorským mezinárodním badmintonem, kde je míč ve hře pouze                                 ,
+respektive                      času7.
+Tento vysoký podíl čistého času hry vysvětluje, proč srdeční frekvence během prvních minut
+utkání prudce stoupá a následně se stabilizuje v dynamickém rovnovážném stavu mezi
+                         , přičemž elitní hráči stráví přibližně     celkové doby zápasu v zóně
+nad                  . Zatímco u rekreačních či nižších výkonnostních skupin bývá
+                     1
+
+
+zaznamenávána průměrná tepová frekvence kolem                                            (s maximy
+                                   ) nebo stabilní hladina okolo                         s mírnější
+laktátovou odezvou, vrcholový mužský squash generuje spotřebu kyslíku (              ) na průměrné
+úrovni přibližně                               (odpovídající                     ) a průměrné
+<PARSED TEXT FOR PAGE: 3 / 28>
+koncentrace krevního laktátu dosahující až                2
+                                                           . Taková kombinace fyziologických
+markerů potvrzuje, že bezprostřední krytí energetických nároků během výměn probíhá
+primárně prostřednictvím intramuskulárních fosfátů (ATP-CP), anaerobní glykolýzy a zásob
+kyslíku navázaných na myoglobin, které jsou následně během krátkých restitučních fází (8–16
+s) resyntetizovány oxidativním metabolismem2. Pro udržení této schopnosti resyntézy vykazují
+elitní hráči hodnoty aerobní kapacity (            ) v rozmezí
+(ve specifických případech až přes                           ), což činí z vysokého aerobního
+výkonu základní předpoklad pro udržení herní intenzity v utkáních přesahujících 30 až 90
+minut2.
+
+
+
+ Parametr /               Elitní squash             Srovnávací / Sub-             Fyziologická a
+ Charakteristika          (specifické               elitní kontext                metodologická
+                          hodnoty)                                                implikace
+
+
+                                                    Badminton:                    Extrémní nároky na
+ Čistý čas hry (Ball                           (
+                                                                                  oxidativní resyntézu
+ in play)                               )6                                        PCr v krátkých
+                                                    (U19:                    )7
+                                                                                  pauzách2
+
+                                                    Historické rozpětí:           Zkrácení výměn a
+ Doba trvání
+                          (PAR11) vs.                                             vyšší agresivita po
+ výměny (Rally                                                   ;
+                                                                                  snížení tinu na
+ duration)                                          výměn                2
+
+                          (POS9)   3                                                          3
+
+
+
+                                                    Před změnou                   Vyšší frekvence
+ Počet úderů na                        úderů
+                                                    pravidel (POS9):              neuromuskulárního
+ výměnu                   (PAR11)3
+                                                                                  zapojení na
+                                                                     úderů3
+                                                                                  jednotku času3
+
+                                                    Vysoká citlivost na           Dominantní
+ Energetický výdej
+                          ;                         intenzitu a délku             sacharidový
+ a RER
+                                                    utkání3                       metabolismus a
+                          3                                                       riziko
+                                                                                  energetického
+                                                                                  deficitu3
+
+                          Průměr                    Sub-elitní / obecný           Kardiovaskulární
+ Srdeční frekvence
+                                                    průměr:                       strop s
+<PARSED TEXT FOR PAGE: 4 / 28>
+                                                                                     redukovanou
+                          ;              času
+ (     )                                                   5                         korelací
+                          1                                                                         nad
+                                                                                           3
+
+
+
+                          Průměr v zápase                               elitních     Nutnost
+ Spotřeba kyslíku (
+                                                           mužů:                     specifického
+        )                                                                            testování na kurtu
+                          (
+                                                           2
+                                                                                     pro zachycení
+                                                                                     skutečného
+                          )   2
+
+                                                                                                2
+
+
+
+                          Průměr v elitním                 Submaximální              Vysoká citlivost
+ Koncentrace
+                          zápase až                        monitoring na             plazmatického
+ krevního laktátu
+                                                 2         prahu                     laktátu na poměr
+                                                                             6       práce a odpočinku6
+
+                          Rychlost pocení                  Kumulativní riziko        Nutnost
+ Termoregulace a
+                                                           hypohydratace při         individualizované
+ pocení
+                                                           dvoufázovém               rehydratace a
+                          (při           ,
+                                                           tréninku10                suplementace
+                                             )13
+                                                                                     sodíku (       )7
+
+Vysoká metabolická produkce tepla v uzavřených, často omezeně větraných kurtech přináší
+specifické termoregulační a nutriční komplikace3. Kvantifikace hydratačního stavu u 14 elitních
+a světových hráčů (7 mužů, 7 žen) během tréninkové jednotky v mírných environmentálních
+podmínkách (                      ; relativní vlhkost vzduchu                      ) prokázala průměrnou
+rychlost pocení                         13
+                                          . Vzhledem k tomu, že elitní hráči absolvují v rámci
+mikrocyklu vysoké objemy a intenzity tréninku – často formou dvou tréninkových jednotek v
+témže dni nebo v rychle navazujících dnech – vzniká při neadekvátní rehydrataci a
+nekompenzovaných ztrátách sodíku (                   ) v potu kumulativní efekt hypohydratace, který
+zhoršuje klíčové ukazatele herního výkonu . Tento problém je umocněn zjištěním
+                                                 7
+
+systematického přehledu (35 studií vybraných z 1208 záznamů dle PRISMA, z nichž pouze 17
+vzniklo po změně pravidel v roce 2009 a jen 6 vykazovalo dobrou či excelentní metodologickou
+kvalitu), že v elitním squashi panuje výrazný nesoulad mezi reálným příjmem makronutrientů a
+současnými sportovně-nutričními doporučeními4. Hodnocení nutričních znalostí pomocí
+dotazníku RNSKQ ukázalo pouze průměrnou úroveň informovanosti hráčů s průměrným skóre
+                    bodu (                                ), bez signifikantního rozdílu mezi muži a
+<PARSED TEXT FOR PAGE: 5 / 28>
+ženami (                )6. Byla zaznamenána pouze slabá pozitivní korelace mezi skóre RNSKQ a
+světovým žebříčkem (                 ) či věkem (                  ), přičemž signifikantně lepších
+výsledků dosahovali pouze hráči s vysokoškolským vzděláním v oboru sportovních věd 6.
+Suboptimální stravovací praktiky v kombinaci s energetickým výdejem blížícím se
+                    tak přímo vystavují elitní hráče riziku syndromu relativního energetického
+deficitu ve sportu (RED-S) a chronickému poklesu tréninkové adaptace3.
+
+Diagnostika specifické zdatnosti a metodologické
+limity laboratorního testování
+Unikátní pohybový vzorec squashe, založený na stochastickém střídání akcelerací, decelerací,
+obratů a výpadů, představuje zásadní metodologickou překážku pro fyziologickou
+diagnostiku2. Standardní laboratorní zátěžové testy na běžeckém pásu (LAB) postrádají
+ekologickou validitu, neboť lineární běh nereflektuje specifické svalové zapojení, excentrickou
+zátěž dolních končetin ani metabolické nároky změn směru2. Empirická data potvrzují, že
+hodnoty           získané z nespecifického laboratorního testování nejsou relevantní pro
+přesný odhad specifické zdatnosti elitních squashistů; naopak specifické přírůstkové testy na
+kurtu (Squash-Specific Incremental Test – ST) dokážou spolehlivě diskriminovat vytrvalostní
+výkonnost mezi squashisty a běžci a vyvolávají u hráčů squashe signifikantně vyšší hodnoty
+            než testy na běžeckém pásu2.
+Vývoj specifických kurtových protokolů prošel evolucí od prediktabilních pohybových sekvencí
+(např. Steininger a Wodick), které sice vykazovaly silnou korelaci s odhadem zápasové kondice
+(           ,               ), ale nedokázaly postihnout neuromuskulární schopnost reagovat na
+prostorovou nejistotu . Tento deficit odstranil protokol podle Girarda a kol., který integroval
+                        2
+
+vizuální či zvukovou nejistotu směru pohybu z centrální pozice a vykázal mimořádně silnou
+negativní korelaci s postavením hráče na světovém žebříčku (                )2. Při ověřování
+reprodukovatelnosti těchto kurtových testů (ST) se ukázala vysoká stabilita fyziologických i
+výkonnostních ukazatelů: zatímco v původním protokolu Girarda a kol. činil variační koeficient
+(CV), resp. relativní typická chyba měření (TEM) pro čas do vyčerpání (
+                            )        a pro              (                                       )
+        , následná validační studie Wilkinsona a kol. (s odstupem 7 dnů) zaznamenala relativní
+TEM             pro celkový čas výkonu,           pro              ,         pro            a
+pro ekonomiku pohybu2. Zjištěná chyba měření                   (          ) plně spadá do
+referenčního pásma běžného u laboratorního testování na běžeckém pásu (                 ),
+přičemž mírný pozitivní posun v čase výkonu a signifikantní zlepšení ekonomiky pohybu při
+druhém testu (              ,                ) indikují přítomnost motorického učení, které
+<PARSED TEXT FOR PAGE: 6 / 28>
+vyžaduje zařazení familiarizačního pokusu před ostrým sběrem dat2.
+
+
+
+ Diagnostický           Zjištěná validita a                 Reliabilita (TEM /               Praktické využití v
+ protokol / Metrika     senzitivita                         CV)                              tréninkovém řízení
+
+
+                        Korelace s
+ Squash-Specific                                            Čas:             ;               Stanovení        ,
+                        žebříčkem
+ Incremental Test                                                    :               2
+                                                                                                     (    )a
+ (ST – Girard et al.)                             ; vyšší
+                                                                                             specifických
+                                     než na                                                  tréninkových zón
+                        běžeckém pásu2                                                       na kurtu9
+
+                        Signifikantní posun                                                  Hodnocení
+ Reprodukovatelno                                           Čas:             ;
+                        ekonomiky pohybu                                                     aerobního výkonu a
+ st ST (Wilkinson et                                                     :               ;   specifické
+ al.)                   (             ,
+                                                                     :               ;       pohybové
+                                              )                                              ekonomiky po
+                                                            Ekonomika:
+                        vlivem učení2                                                        familiarizaci2
+                                                            2
+
+
+
+                        Bez rozdílu v                       Vysoká shoda mezi                Simultánní zisk
+ Modifikovaný
+                                                            ST1 a ST2 (s                     výkonnostního
+ kurtový test (ST –               , laktátu a
+                                                            odstupem 48 h) při               skóre, laktátového
+ James et al., 2019)    RPE oproti LAB;
+                                                            10s klouzavém                    bodu obratu (LTP) a
+                        nejvyšší shoda
+                                                            průměru14                        kyslíkového
+                                     při 10s
+                                                                                             výdeje14
+                        průměrování       14
+
+
+
+                        Vyšší výkonnostní                   Velmi silná korelace             Pravidelný
+ Squash Physical
+                        úroveň koreluje s                   mezi SPPT a                      submaximální
+ Performance Test
+                        konečným kolem                      submaximálním                    monitoring (kolo na
+ (SPPT) a laktátový
+                                                            výkonem na                                        )
+ práh                   SPPT (                          )
+                        a kolem na                                               6
+                                                                                             bez nutnosti
+                                                                                             testování do
+                                                    (
+                                                                                             vyčerpání6
+                                      )   6
+
+
+
+                        Vyšší rozlišovací                   Velmi vysoká až                  Identifikace talentů
+ Specifický COD a
+                        schopnost (validita)                téměř dokonalá                   a sledování
+ Multiple-Sprint
+                        než nespecifické                    reliabilita celkové              neuromuskulární
+ Test (SCODS)
+                        terénní testy; COD                  práce a                          adaptace v
+<PARSED TEXT FOR PAGE: 7 / 28>
+                                                    nejrychlejšího               opakovaných
+                           efekt              6
+
+                                                    sprintu (slabá u             sprintech12
+                                                    indexu únavy)12
+
+Pro praktickou aplikaci v národních tréninkových centrech byly dále vyvinuty protokoly
+eliminující nutnost složitého počítačového vybavení a simulovaných úderů raketou, které mohly
+zkreslovat techniku běhu14. Validace takového modifikovaného kurtového testu (James a kol.,
+2019) oproti laboratornímu testu s verifikační fází (zvýšení sklonu pásu o           nad konečný
+stupeň, s kritériem maximálního úsilí při změně                                          ) prokázala
+absenci signifikantních rozdílů v        , post-zátěžovém krevním laktátu i konečném RPE14.
+Studie však odhalila kritický metodologický poznatek pro analýzu vydechovaných plynů v
+intermitentních raketových testech: nejvyšší shodu (agreement) hodnot              mezi
+laboratoří a kurtem i mezi opakovanými testy (ST1 vs. ST2 po 48 hodinách) vykazují
+10sekundové klouzavé průměry (rolling averages)14. Delší intervaly průměrování (20 s a 30 s),
+běžně používané v kontinuálních vytrvalostních disciplínách, generují v intermitentním
+prostředí squashe výrazně vyšší chybu měření a uměle vyhlazují fyziologické špičky příjmu
+kyslíku9.
+Z hlediska dlouhodobého řízení tréninku v průběhu sezóny je nepraktické podrobovat elitní
+hráče opakovaným testům do volního vyčerpání, u nichž navíc pouze                   testovaných splní
+přísné kritérium respiračního výměnného poměru (                       ) a jen         dosáhne obou
+věkově predikovaných kritérií         (        ) v opakovaných pokusech9. Komplexní
+profilování výkonnosti proto kombinuje hodnocení rychlosti změny směru (COD, velikost
+účinku mezi vyšší a nižší elitní úrovní       ), opakované sprinterské schopnosti (RSA) a
+specifického kurtového testu SPPT (Squash Physical Performance Test, rozdíl v konečném kole
+            )6. Protože celkový výkon v SPPT vykazuje velmi silnou korelaci s výkonem na
+submaximálním laktátovém prahu                        (rozdíl mezi výkonnostními skupinami
+            ), představuje pravidelné submaximální vyhodnocování dosaženého kola při
+koncentraci laktátu                 v rámci SPPT mimořádně efektivní, neinvazivní a časově
+úsporný nástroj pro kontinuální monitoring kardiovaskulární připravenosti během soutěžního
+období6.
+
+Kvantifikace tréninkového zatížení v soutěžním
+mikrocyklu
+Pro současný vrcholový squash je charakteristický souběžný (konkurentní) tréninkový model, v
+němž hráči simultánně rozvíjejí technicko-taktické dovednosti a fyzické kapacity1. Zatímco
+elitní junioři (11–14 let) v raketových sportech jako tenis absolvují přibližně 11–12 hodin tréninku
+<PARSED TEXT FOR PAGE: 8 / 28>
+týdně a dospělí profesionálové 17–19 hodin týdně, u profesionálních hráčů squashe zařazených
+do národního programu (průměrný věk                          , účastníci okruhu PSA)
+představuje typický soutěžní mikrocyklus přibližně 10 tréninkových jednotek týdně o celkovém
+objemu okolo 11 hodin čistého času (bez rozcvičení a uklidnění)15. Detailní empirická
+kvantifikace dvoutýdenního soutěžního mikrocyklu na vzorku 15 elitních malajsijských hráčů (11
+mužů, 4 ženy; 14 pravorukých, 1 levoruký; celkem 166 tréninkových jednotek, průměrně
+               jednotky na hráče s průměrnou dobou trvání                        ) ukazuje, že
+trénink na kurtu tvoří             týdenního programu (134 z 166 jednotek), zatímco zbytek
+připadá na kondiční a silovou přípravu mimo kurt1. Standardní týdenní struktura zahrnuje tři
+skupinové tréninky na kurtu (Group), jeden až dva tréninky zápasové hry (Matchplay), jeden až
+dva individuální tréninky s nahráváním od trenéra (Feeding / „pressure“ sessions), dva silové
+tréninky a dvě až tři kondiční jednotky (běžecké Conditioning mimo kurt nebo specifický
+pohybový Ghosting na kurtu řízený zvukovou stopou)1.
+<PARSED TEXT FOR PAGE: 10 / 28>
+Pro přesnou kvantifikaci vnější (mechanické) a vnitřní (psychofyziologické) zátěže v tomto
+mikrocyklu se využívají tříosé akcelerometry se vzorkovací frekvencí                       umístěné ve
+vestě mezi lopatkami, snímače srdeční frekvence a percepční škály . Externí zatížení je
+                                                                             1
+
+
+primárně vyjádřeno metrikou                            , která kvantifikuje okamžitou rychlost změny
+
+zrychlení ve třech ortogonálních rovinách (mediolaterální            , anteroposteriorní     a vertikální )
+podle kartézského vzorce :       11
+
+
+
+
+Vnitřní kardiovaskulární zatížení (Training Impulse –                    ) je modelováno třemi odlišnými
+algoritmy, které různě váží intenzitu a trvání zátěže11. Banisterův model (                      ) integruje
+dobu trvání tréninku        (v minutách), rezervu srdeční frekvence (                  ) a pohlavně
+specifický exponenciální koeficient          (         pro ženy a        pro muže), který odráží
+nelineární nárůst laktátu : 11
+
+
+
+
+Edwardsův model (                      ) sumuje čas      strávený v pěti diskrétních zónách
+vážený lineárními koeficienty (                  pro            ,           pro              ,
+pro               ,              pro              a            pro                          ), zatímco
+                      aplikuje nelineární váhy pro kolektivní a intermitentní sporty11. Percepční
+interní zátěž (                   ) a její diferenciální subškály pro lokální svalovou únavu dolních
+končetin (                    ) a centrální dušnost (                         ) se
+vypočítávají jako součin bodového hodnocení na detailní škále Borg CR100 a doby trvání
+jednotky v minutách15.
+
+
+
+  Typ                 Počet              Doba              Celkový          Relativní        Charakteri
+  tréninkové          (nnn) v            trvání            Playerload       Playerload       stika
+  jednotky            mikrocyklu         (min\text{        (a.u.            (a.u.⋅min−1      interní
+                                         min}min)          \text{a.u.}      \text{a.u.}      zátěže
+                                                           a.u.)            \cdot\text{      (HR\text{H
+                                                                            min}^{-1}        R}HR,
+<PARSED TEXT FOR PAGE: 11 / 28>
+                                       a.u.⋅min−1)     TRIMP\text
+                                                       {TRIMP}
+                                                       TRIMP,
+                                                       sRPE\text{s
+                                                       RPE}sRPE)
+
+
+             5311                      Střední až      Nejvyšší
+Group               1
+
+                        (nejvyšší na   vysoký
+(Skupinový                                                        (
+                        kurtu,         (kombinace
+trénink na
+kurtu)                                 drilů a her)1
+                                                       ),
+                        )1
+                                                       (
+
+
+                                                       )a
+
+
+                                                       (
+
+
+                                                       ); vysoký
+                                                       čas
+
+                                                       1
+
+
+
+             2111       Nižší než      Střední         Nejnižší čas
+Feeding             1
+
+                        Group (        (řízené         strávený
+(Nahrávání
+                                       nahrávky s
+od
+                        )1             pauzami na      ze všech
+trenéra /
+„tlak“)                                korekci)   1
+                                                       jednotek (
+
+
+                                                       )1
+
+             4411       Nižší než                      Vysoký čas
+Matchplay           1
+
+                        Conditionin    (shodné s
+(Zápasová
+                        g a Group (    Ghosting,       (bez rozdílu
+hra)
+                                                       vůči Group,
+                        )1             )1              Conditionin
+                                                       ga
+                                                       Ghosting,
+<PARSED TEXT FOR PAGE: 12 / 28>
+                                                                                 )1
+
+                 3211                                                            Vysoký čas
+ Conditioni                              1
+
+
+ ng                                             (absolutně        (nejvyšší ze
+ (Běžecká                                       nejvyšší,         všech,         ; směs
+ kondice                                                                         souvislého
+ mimo kurt)                                     )1                )1             běhu (20–
+                                                                                 40 min) a
+                                                                                 intervalů
+                                                                                 (2–3 min
+                                                                                 nebo
+                                                                                           )1
+
+                 1611                           Nižší                            Vysoký čas
+ Ghosting                                1
+
+                                                absolutní         (shodné s
+ (Stínový
+                                                objem kvůli       Matchplay,     ; cílená
+ pohyb dle
+                                                krátkému                         fyziologická
+ audia)
+                                                trvání1           )1             stimulace
+                                                                                 řízená
+                                                                                 zvukovou
+                                                                                 stopou1
+
+                 16611                                                           Průměrná
+ Celkový
+ průměr
+                                 11             11
+                                                                  (vážený
+ mikrocyklu                                                       průměr         ;
+                                                                  mikrocyklu)
+                                                                  11
+                                                                                 ;
+
+
+                                                                                 ;
+
+
+                                                                                 ;
+
+                                                                                 11
+
+
+Srovnávací analýza jednotlivých tréninkových modalit odhaluje zásadní poznatek druhé úrovně:
+zápasová hra (Matchplay) v tréninkovém procesu systematicky negeneruje nejvyšší tréninkové
+objemy ani nejvyšší relativní mechanickou intenzitu22. Přestože Matchplay vyvolává vysokou
+odezvu srdeční frekvence v pásmu nad                      (srovnatelnou s jednotkami Group,
+<PARSED TEXT FOR PAGE: 13 / 28>
+Conditioning a Ghosting,                 ), jeho relativní mechanická intenzita (
+                             ) činí pouze                                , což je statisticky
+nerozlišitelné od tréninku Ghosting (                         ,                          ) a více než
+dvojnásobně nižší než u běžeckého tréninku Conditioning mimo kurt (
+                               ,            )1. Tento jev je způsoben tím, že vertikální oscilace
+těžiště při kontinuálním běhu a přímých sprintech mimo kurt generuje na hrudním
+akcelerometru obrovský objem cyklických otřesů (vedoucí k absolutně nejvyššímu Playerloadu
+                       za pouhých                ), zatímco pohyb na kurtu zahrnuje snížené těžiště,
+klouzavé kroky a izometrickou stabilizaci ve výpadu1. Naopak ústřední pilíř celého tréninkového
+procesu tvoří skupinové tréninky (Group), které díky své délce (                         ) a struktuře
+podmíněných her a drilů produkují nejvyšší Playerload na kurtu (                          ,
+                 ) a absolutně nejvyšší hodnoty interního zatížení měřeného pomocí                 (
+              ),             (            )i                    (            )1. Jednotky
+individuálního nahrávání s trenérem (Feeding), ačkoliv jsou často označovány jako „tlakové“
+(pressure sessions) a navrhovány s cílem vyvolat specifický potenciační stimul, ve skutečnosti
+vykazují statisticky nejnižší čas strávený nad                    ze všech sledovaných modalit (
+             ), neboť technické instrukce a sběr míčů snižují průměrnou metabolickou hustotu1.
+Inerciální pohybová analýza (IMA verze 2) z téhož mikrocyklu přinesla první exaktní kvantifikaci
+vysoce intenzivních mikropohybů v elitním squashi a vyvrátila výchozí hypotézu o symetrii
+akceleračních a deceleračních sil15. V průběhu dvoutýdenního bloku zaznamenali hráči
+signifikantně vyšší počet vysoce intenzivních (HI,                      ) akcelerací (
+na hráče) než decelerací (                  na hráče;                , velikost účinku                   )a
+analogicky vyšší objem velmi vysoce intenzivních (VHI,                        ) akcelerací (
+                 na hráče) oproti deceleracím, stejně jako výrazně vyšší frekvenci změn směru
+doleva než doprava11. Tato strukturální asymetrie má hluboké biomechanické a klinické
+důsledky: převaha pravorukých hráčů (14 z 15 ve vzorku) a taktická dominance hry podél levé
+boční stěny (bekhend) nuceně vede k opakovaným rotacím trupu doleva a excentrickému
+brzdění přes vedoucí končetinu ve výpadu2. Chronická kumulace této asymetrické zátěže
+přímo vysvětluje zjištění, že pravidelné hraní squashe pozitivně koreluje se signifikantně vyšším
+výskytem kontraktur svalu bedrokyčlostehenního (m. iliopsoas) oproti nehráčům7. Současně
+tato mechanika osvětluje epidemiologický profil zranění ve squashi, kde po poraněních hlavy a
+obličeje (             ) představují nejčastěji zasažené oblasti kyčelní a břišní region (                ),
+loket a paže (            ) a kolenní kloub (           ), přičemž raketové sporty obecně generují
+spolu s míčovými hrami přibližně            všech ruptur Achillovy šlachy (s věkovým vrcholem
+<PARSED TEXT FOR PAGE: 14 / 28>
+incidence mezi 30 a 39 lety)23.
+
+Disociace interního a externího zatížení: Analýza
+konvergentní validity
+Klíčovým metodologickým problémem při monitoringu tréninku v raketových sportech je
+skutečnost, že vnější (mechanická) a vnitřní (fyziologická/percepční) odezva organismu
+vykazují v pestré skladbě tréninkového mikrocyklu pouze minimální vzájemnou shodu11.
+Kvantitativní analýza 166 tréninkových jednotek prokázala, že celkový                                      vykazuje
+pouze střední korelaci s Banisterovým                       (                [95% CI:                       ],
+               ), Edwardsovým                      (              [95% CI:                     ],                     )
+a percepční zátěží                 (                   [95% CI:                 ],                       ), zatímco
+jeho vztah k                      je pouze slabý (                  [95% CI:                        ],
+               )11. Stejně tak součet velmi vysoce intenzivních pohybů (
+                                    ) vykazuje sice střední až silnou korelaci s interními metrikami,
+ale pouze slabou korelaci se samotným celkovým                                        .
+                                                                                     15
+
+
+
+
+ Analytický klastr /       Korelační                      Statistická                     Klasifikace síly
+ Srovnávané                koeficient (rrr) a             významnost (ppp)                vztahu a
+ metriky                   95% CI                                                         diagnostická
+                                                                                          interpretace
+
+
+                                                                                          Slabá korelace;
+ Externí vs. Interní:                    [                              15
+
+                                                                                          nelineární vážení
+ Playerload vs.                              ]15                                          vysoké tepové
+                                                                                          frekvence
+                                                                                          neodpovídá objemu
+                                                                                          akcelerací11
+
+                                                                                          Střední korelace;
+ Externí vs. Interní:                    [                              11
+
+                                                                                          disociace
+ Playerload vs.                              ]11                                          způsobená
+                                                                                          specifickou prací na
+                                                                                          kurtu vs. během
+                                                                                          mimo kurt11
+
+                                                                                          Střední korelace;
+ Externí vs. Interní:                    [                              11
+<PARSED TEXT FOR PAGE: 15 / 28>
+                                                        obdobně střední
+Playerload vs.                          ]11
+                                                        vztah platí i pro
+                                                                        vs.
+
+                                                        15
+
+
+
+                                                        Střední korelace;
+Externí vs. Interní:                [              11
+
+                                                        nejvyšší shoda v
+Playerload vs.                          ]11             rámci
+                                                                             ,
+                                                        avšak stále
+                                                        nedostatečná pro
+                                                        substituci11
+
+                       Slabá (vůči PL) /                Nárazové
+Externí vs. Interní:                          15
+
+                       Střední až silná                 mikropohyby (
+Total VHI vs.
+Playerload /           (vůči interním)15                                         )
+Interní                                                 lépe odrážejí
+                                                        fyziologický stres
+                                                        než celkový
+                                                                        15
+
+
+
+                                                        Střední korelace
+Percepční vs.                       [              15
+
+                                                        (shodně střední
+Tepová:                                 ]15             vztah vykazuje i
+              vs.
+
+                                                        vs.
+                                                                                 )11
+
+                                                        Silná korelace
+Percepční vs.                       [              11
+
+                                                        (shodně silný vztah
+Tepová:                                 ]11             vykazuje i
+              vs.
+
+                                                        vs.              )11
+
+                                                        Velmi silná korelace
+Percepční vs.                       [              15
+
+                                                        (platí i pro
+Tepová:                                 ]15
+<PARSED TEXT FOR PAGE: 16 / 28>
+                                                                            );             je
+                 vs.
+                                                                            validním surogátem
+                                                                                 11
+
+
+
+                                                                            Téměř dokonalá
+ Kolinearita RPE:                     [                           11
+
+
+                                                                            korelace; hráči
+                   vs.                    ]11                               nediferencují mezi
+                                                                            lokální svalovou a
+                                                                            centrální dechovou
+                                                                            únavou15
+
+                                                                            Téměř dokonalá
+ Kolinearita RPE:                     [                           15
+
+                                                                            korelace na škále
+          vs.                             ]15                               Borg CR100 napříč
+                                                                            celým
+                                                                            mikrocyklem15
+
+                                                                            Téměř dokonalá
+ Kolinearita RPE:                     [                           15
+
+                                                                            korelace potvrzující
+          vs.                             ]15                               redundanci
+                                                                            diferenciálního
+                                                                                       ve
+                                                                            squashi   15
+
+
+Tato disociace mezi vnější a vnitřní zátěží pramení ze tří kauzálních mechanismů specifických
+pro squash11. Za prvé, senzor umístěný na trupu v oblasti hrudní páteře nedokáže adekvátně
+detekovat kinetickou energii horních končetin při švihu raketou a odehrávání úderů, ani
+izometrickou svalovou práci kvadricepsů a gluteálního svalstva při setrvání v hlubokém
+výpadu2. Během jednotek Feeding nebo Ghosting hráč vykonává obrovské množství
+specifických zastavení a švihových akcí, které vyvolávají vysokou metabolickou a percepční
+odezvu, avšak generují podstatně nižší celkový                    než lineární běh v jednotkách
+Conditioning . Za druhé, během stochastického intermitentního zatížení dochází k častému
+             1
+
+
+překračování druhého ventilačního prahu (        /         ), nad nímž se rozpadá lineární vztah
+mezi srdeční frekvencí a spotřebou kyslíku (         ) v důsledku pomalé složky kinetiky       a
+kardiovaskulárního driftu9. Za třetí, vnímání úsilí (     ) v sobě integruje nejen mechanickou
+práci, ale také psychofyziologický stres, kognitivní únavu z rozhodování pod časovým tlakem a
+úroveň předchozího vyčerpání11.
+Snaha o zpřesnění percepčního monitoringu pomocí diferenciálního hodnocení vnímaného úsilí
+<PARSED TEXT FOR PAGE: 17 / 28>
+(          ), které odděluje periferní svalovou bolest dolních končetin (                                ) od
+centrální kardiorespirační dušnosti (                                ), ukázala v elitním squashi
+překvapivou kolinearitu15. Mezi celkovým                   a                    (               [95% CI:
+                ],                ), mezi          a                                (                [95% CI:
+                ],                ) i mezi oběma subškálami navzájem (                               vs.
+                            :               [95% CI:                  ],                  ) panuje téměř
+dokonalá korelace11. Kromě toho zátěž odvozená z                                nevykázala silnější vztah k
+mechanickému                            (pouze střední korelace) než samotné globální
+15
+    . Tento nález plně koresponduje s poznatky z elitního badmintonu, kde ani rozložení vektoru
+                     na jednotlivé anatomické roviny (vertikální, horizontální, frontální) nevedlo k
+silnější asociaci s                     . Z toho vyplývá zásadní praktický závěr: v elitním squashi
+                                       16
+
+
+nepřináší sběr diferenciálního                žádnou dodatečnou diagnostickou hodnotu oproti
+izolovanému globálnímu                 měřenému na škále CR10015. Naopak samotné
+vykazuje střední korelaci s                            (             [95% CI:                   ],
+                ), silnou korelaci s               (                [95% CI:                   ],
+                ) a velmi silnou korelaci s                    (           [95% CI:                        ],
+                ), což z něj činí vysoce validní, neinvazivní a nízkonákladový surogát pro
+monitoring kardiovaskulární zátěže napříč celým squashovým mikrocyklem11.
+Nutnost paralelního vyhodnocování interních a externích metrik se potvrzuje i v širším kontextu
+sportovní přípravy mládeže a příbuzných sportů19. Například při biologickém seskupování hráčů
+(biobanding) v malých hrách (SSG) vede vyrovnání biologického věku u méně zralých jedinců
+(pre-PHV) k signifikantnímu nárůstu externího                              (rozdíl                   ,
+                ; zatímco u vyspělejších PHV hráčů je v biologicky vyrovnané skupině externí
+zátěž nižší: odhadovaný průměr                                     oproti chronologické skupině
+                           ), avšak tato změna vnější mechanické práce se vůbec nepromítá do
+signifikantní změny vnitřní zátěže měřené pomocí                     či                 (který se pohyboval
+mezi                        ) ani do četnosti technických akcí (ICC zapojení   )19. V
+kontextu raketových sportů pak studie u mladých tenistů během mezinárodních turnajových
+šňůr prokázaly, že hráči v horním tercilu percepční zátěže (                    ) utrpěli
+podstatně hlubší propad ve všech aspektech fyzické výkonnosti než hráči ve spodním tercilu (
+             )17. Stejně tak u dvou tenisových tréninků se shodným trváním (                         )a
+<PARSED TEXT FOR PAGE: 18 / 28>
+identickou uběhnutou vzdáleností (                 ) může dojít k dramatickému rozdílu v počtu
+akcelerací                     (3 vs. 17) a decelerací                   17
+                                                                              . Interpretace jakékoliv
+jediné metriky v izolaci (např. pouze          nebo pouze objem hodin) proto v
+raketových sportech nevyhnutelně vede k podhodnocení či nadhodnocení skutečného
+biomechanického a fyziologického stresu15.
+
+Matematické modelování adaptace, kritika ACWR a
+řízení zdravotních rizik
+Teoretické ukotvení řízení tréninkového zatížení vychází z dvousložkového matematického
+modelu zdatnosti a únavy (Fitness-Fatigue model), který formulovali Banister a Calvert28. Tento
+
+systémový model předpokládá, že okamžitá sportovní výkonnost              v čase je výslednicí
+bazální výkonnosti   , pozitivního adaptačního účinku tréninku (zdatnost / fitness) a
+negativního tlumivého účinku (únava / fatigue), přičemž obě složky reagují na tréninkové
+impulzy        s odlišnými váhovými koeficienty (            ) a odlišnými časovými konstantami
+exponenciálního odeznívání (             )28:
+
+
+
+
+Na tento koncept navázala konsenzuální prohlášení Mezinárodního olympijského výboru (IOC)
+z roku 2016 o vztahu zatížení a rizika zranění (Část 1 – Soligard a kol.) a onemocnění (Část 2 –
+Schwellnus a kol.), která definovala zatížení (load) v nejširším biopsychosociálním smyslu jako
+souhrn sportovních i nesportovních stresorů (fyziologických, psychologických a
+mechanických) působících na lidský biologický systém od subcelulární úrovně až po celý
+organismus30. Konsenzus IOC zdůraznil, že hlavním etiologickým faktorem nefunkčního
+přetrénování (non-functional overreaching s únavou trvající týdny až měsíce) a přetížení
+(overuse injuries) není vysoké absolutní zatížení samo o sobě, nýbrž nepřiměřeně rychlý nárůst
+akutního zatížení vůči připravenosti (chronické historii zatížení) sportovce, případně aplikace
+vysoké zátěže v situaci, kdy organismus vyžaduje restituci26.
+V oblasti prevence akutních infekčních onemocnění (zejména infekcí horních cest dýchacích –
+URTI) dokumentují data z 30 olympijských sportů (24 letních, 6 zimních), že onemocnění jsou
+příčinou celých      zameškaných tréninkových jednotek32. Akutní infekce degradují
+výkonnost prostřednictvím svalového katabolismu (wasting), zhoršení intramuskulární
+koordinace, poklesu izotonické i izometrické síly, snížení           a narušení enzymatické
+aktivity . Přítomnost horečky navíc kompromituje termoregulaci a zvyšuje ztráty tekutin, což
+       32
+<PARSED TEXT FOR PAGE: 19 / 28>
+snižuje tepový objem a srdeční výdej32. Dokonce i po plném klinickickému uzdravení z URTI
+přetrvává měřitelný pokles fyzické výkonnosti po dobu 2 až 4 dnů, a sportovci nastupující do
+vytrvalostního závodu se systémovými příznaky akutního onemocnění mají 2krát až 3krát nižší
+pravděpodobnost dokončení soutěže (přičemž gastrointestinální onemocnění doprovázená
+systémovými symptomy generují v elitním sportu dvojnásobnou zátěž oproti lokálním
+potížím)32. Riziko propuknutí infekce i zranění přitom exponenciálně roste při souběhu
+nahuštěného turnajového kalendáře, mezinárodního cestování přes časová pásma (narušení
+cirkadiánního rytmu), spánkové deprivace a psychosociálního stresu (negativní životní události,
+každodenní starosti – daily hassles)26.
+Pro kvantifikaci tempa nárůstu zátěže byl v konsenzu IOC (na základě dat z australského
+fotbalu, kriketu a ragby) široce zpopularizován poměr akutního a chronického zatížení
+(Acute:Chronic Workload Ratio – ACWR), definovaný nejčastěji jako poměr zátěže za
+posledních 7 dnů (akutní únavová složka) k průměrné týdenní zátěži za posledních 28 dnů
+(chronická složka zdatnosti)26:
+
+
+
+
+Původní modely postulovaly existenci tzv. „bezpečného pásma“ (sweet spot) v rozmezí
+                         , v němž je pravděpodobnost zranění nízká (              ), zatímco při
+překročení hranice                      (resp.         ) se riziko zranění více než
+zdvojnásobuje . Následný metodologický a biostatistický výzkum (zejména práce
+               26
+
+Impellizzeriho a kol. či Lolliho a kol.) však podrobil koncept ACWR a jeho kvadratickou křivku
+„sweet spotu“ zdrcující kritice, která vyústila až v žádost o formální opravu (errata corrige) v
+časopise British Journal of Sports Medicine38. Bylo prokázáno, že původní graf „sweet spotu“
+byl zamýšlen pouze jako ilustrativní vodítko, avšak po sedminásobném přetištění (včetně dvou
+konsenzů IOC) začal být nekriticky přijímán jako validovaný biologický zákon38.
+Selhání ACWR jako spolehlivého prediktoru zranění spočívá v souboru fundamentálních
+matematických a fyziologických artefaktů38. Ve standardním provázaném výpočtu (coupled
+ACWR) je akutní týden (   ) zároveň součástí čitatele i čtyřtýdenního chronického průměru ve
+jmenovateli, což způsobuje matematické provázání (mathematical coupling), které uměle
+nafukuje korelaci a vytváří falešné statistické vazby (Lolli a kol., 2019)38. Poměrové indexy navíc
+trpí extrémní nestabilitou při nízkém jmenovateli; pokud je chronická zátěž nízká (například po
+návratu ze zranění nebo po přestávce mezi turnaji PSA), dochází k masivnímu zkreslení dat a
+neúměrné inflaci ACWR i při fyziologicky zcela bezpečném tréninkovém podnětu38. Dalším
+deficitem je neschopnost prostých klouzavých průměrů (Rolling Averages) zachytit biologický
+rozpad adaptace, neboť přisuzují stejnou váhu tréninku před 28 dny jako tréninku včerejšímu38.
+Částečnou korekci sice přinášejí exponenciálně vážené klouzavé průměry (EWMA – Menaspà,
+<PARSED TEXT FOR PAGE: 20 / 28>
+2017), které zohledňují exponenciální pokles únavy v čase, avšak ani ty neodstraňují skutečnost,
+že identická hodnota ACWR může maskovat diametrálně odlišnou tréninkovou historii dvou
+hráčů38. V neposlední řadě postrádá ACWR kauzální predikční sílu a vykazuje vysokou citlivost
+na zvolenou metriku, kdy se výsledný poměr dramaticky mění podle toho, zda je aplikován na
+                ,             nebo              , a napříč studiemi generuje nekonzistentní
+výsledky od pozitivní přes nulovou až po inverzní asociaci se zraněním38.
+Moderní epidemiologické studie proto opouštějí týdenní poměrové indexy (kde se pro týdenní
+poměr zátěže neprokázal žádný vztah ke zranění) a přecházejí k řízení specifických prahů
+jednotlivých tréninkových jednotek (session-specific cut-offs)41. Rozsáhlá analýza prokázala
+signifikantní nárůst míry zranění z přetížení v momentě, kdy objem (vzdálenost) jediné
+tréninkové jednotky překročí o více než         nejdelší (nejobjemnější) jednotku absolvovanou
+v posledních 30 dnech (přičemž nárůst rizika je patrný již v pásmu                nad
+třicetidenním maximem) . V kombinaci se sledováním prevalence (nikoliv pouze incidence)
+                         41
+
+prodromálních symptomů přetížení (bolest, ztuhlost, funkční limitace), submaximálních
+srdečních markerů a psychometrických škál zotavení (spánek, emoční pohoda) představuje
+tento        strop na úrovni jednotlivé tréninkové relace mnohem robustnější ochranný
+mechanismus než tradiční ACWR31.
+
+Periodizační paradigmata a demografická dynamika
+kariérní dlouhověkosti
+Vysoká saturace mezinárodního kalendáře PSA a nutnost udržovat špičkovou připravenost po
+dobu 10 až 11 měsíců v roce zásadně limitují použitelnost tradiční (lineární) periodizace v elitním
+squashi31. Tradiční periodizační model, postupující lineárně od vysokoobjemové obecné
+přípravy k nízkoobjemové specifické přípravě s jedním až třemi vrcholy v sezóně, naráží u
+pokročilých sportovců na problém protichůdných fyziologických adaptací (tzv. interference
+effect při souběžném rozvoji vytrvalosti a explozivní síly) a neschopnost udržet vícečetné
+výkonnostní špičky42. Jako efektivnější alternativa se v komplexních a intermitentních
+disciplínách prosazuje bloková periodizace (koncept Issurina), která koncentruje vysoce
+specifické tréninkové zatížení do krátkých sekvenčních mezocyklů (akumulace, transmutace,
+realizace) zaměřených na minimální počet motorických a fyziologických schopností, zatímco
+ostatní kapacity jsou udržovány prostřednictvím tréninkových reziduí (training residuals)42.
+Empirické srovnávací studie potvrzují, že bloková periodizace silového a vytrvalostního
+tréninku přináší u intermitentních sportovců (např. v ledním hokeji či funkčním vysoce
+intenzivním tréninku – HIFT) výrazně lepší přírůstky maximální síly a výkonu než tradiční
+periodizace, aniž by došlo ke kompromitaci metabolické kondice nebo kardiovaskulárních
+markerů47. Podobně v úpolových a acyklických sportech (např. taekwondo) vede bloková
+periodizace ke zlepšení specifické zdatnosti a motorického výkonu bez ohledu na zvolenou
+třítýdenní strategii ladění formy (taperingu)48. V samotném elitním squashi nicméně vykazují v
+<PARSED TEXT FOR PAGE: 21 / 28>
+cílených kratších přípravných oknech vysokou účinnost i modulární lineární a plyometrické
+intervence: zatímco 5týdenní lineárně periodizovaný program vede u elitních squashistů k
+měřitelnému posunu maximální síly a rychlosti, 8týdenní specializovaný plyometrický program
+vyvolává signifikantní nárůst explozivního výkonu a rychlosti změny směru (COD)43.
+Při volbě prostředků silového tréninku ve squashi je však nutné přísně zohlednit mechanickou
+specifitu a zdravotní rizika7. Experimentální srovnání tří tréninkových skupin (G1, G2, G3) s
+odlišným navýšením celkového zatížení (         u G2              u G1          u G3)
+ukázalo, že skupina G2 (pracující převážně s vlastním tělem a funkčním odporem při nejnižším
+nárůstu celkového objemu zátěže) dosáhla suverénně nejvyššího přírůstku ve specifickém
+kurtovém testu (            oproti              u G3 a            u G1), nejvyššího zisku v
+nespecifickém testu (            oproti             u G3 a             u G1) a nejvyššího
+koeficientu výkonnosti (      u G2 oproti      u G3 a     u G1)7. Tato data indikují, že
+nadměrně těžký silový trénink s činkami (heavy weight training) může u elitních squashistů
+vyvolávat nepřiměřenou neuromuskulární únavu, narušovat jemnou koordinaci výpadů a
+zvyšovat riziko zranění, zatímco funkční trénink s hmotností vlastního těla a plyometrií vykazuje
+mnohem vyšší transfer do specifického pohybu na kurtu7.
+
+
+
+ Dimenze /                Squash (PSA /             Tenis (ATP / WTA        Padel (FIP /
+ Charakteristika          Elitní úroveň)            Singles)                Premier Padel)
+
+
+                          Vysoká konkurentní        Vysoký roční objem      Široké věkové
+ Dominantní
+                          zátěž (60–70 % na         (17–19 h/týden u        spektrum; poziční
+ periodizační výzva
+                          kurtu); riziko            profi); nutnost         diferenciace interní
+                          přetížení kyčlí a         regulace                a externí zátěže na
+                          kolen z                   turnajových bloků a     kurtu52
+                          asymetrických             cestování17
+                          výpadů1
+
+                          Bloková                   Prevence akutních       Rozvoj dynamické
+ Optimální silově-
+                          periodizace;              výkyvů                  rovnováhy a
+ kondiční modalita
+                          8týdenní                                          rychlosti zotavení
+                          plyometrie; funkční       (kritický pokles        tepové frekvence
+                          silový trénink            výkonu při              za 60 s (           )12
+                          (koeficient
+                          výkonnosti       )7       )17
+
+                          Přechod z                 Historický model        Vrcholné okno
+ Věk vrcholné
+<PARSED TEXT FOR PAGE: 22 / 28>
+                         explozivního optima
+ výkonnosti (Peak                                  #1:                                         (
+ Age)                    (                 )k                                      Top 50); průměrný
+                                                   (ženy,
+                         vytrvalostně-                                             věk Top 50 je
+                                                   výher) a
+                         taktickému (                                                         53
+                                                                     (muži,
+                                          )51
+                                                                 výher);
+                                                   posun k
+                                                                       53
+
+
+
+                         Prodloužení kariéry       Průměrná doba od                Extrémní rozpětí v
+ Kariérní
+                         díky periodizované        1. bodu (14–17 let)             Top 100: od 17 let
+ dlouhověkost a
+                         výživě, řízení            do Top 100 činí                 (#14 ženy, #67
+ demografie
+                         mikrocyklu a                                      ;       muži) až po 47 let
+                         kompenzaci                úlevy z Masters                 (#90 muži) a 50 let
+                         kognitivní                                                (#58 ženy)53
+                                                   1000 pro veterány51
+                         zkušeností10
+
+Správně nastavená periodizace a řízení zatížení se přímo odrážejí v demografickém posunu
+věku vrcholné výkonnosti (age of peak competitive performance) a prodlužování kariérní
+dlouhověkosti napříč raketovými a olympijskými sporty (kde medián věku olympioniků vzrostl
+mezi Barcelonou 1992 a Tokiem 2020 z 23 na 25 let a rozdíl mezi muži a ženami se zmenšil na
+přibližně                   )51. Z hlediska obecné fyziologie zátěže platí zákonitost, že u
+disciplín determinovaných explozivní silou a rychlostí klesá věk vrcholné výkonnosti s rostoucím
+trváním výkonu (od             u vrhačských disciplín trvajících               k                   u
+plaveckých sprintů na             ), zatímco u vytrvalostních disciplín věk vrcholu s délkou
+trvání dramaticky roste (od             u kratších tratí až po                 u ultravytrvalostní
+cyklistiky) . Zatímco čistě fyziologické funkce vrcholí těsně před 30. rokem života, schopnost
+           54
+
+akumulovat, integrovat a aplikovat kognitivní dovednosti (anticipace, rozhodování, taktická
+inteligence) roste minimálně do 60 let věku54.
+Raketové sporty se nacházejí přesně na průsečíku těchto dvou křivek, což umožňuje starším
+hráčům kompenzovat počínající pokles explozivní reaktivity vyšší pohybovou ekonomikou a
+taktickou vyspělostí53. V profesionálním tenise potřebují hráči od zisku prvního žebříčkového
+bodu (mezi 14. a 17. rokem) průměrně                             k průniku do elitní stovky (Top
+100) . Přestože exponenciální modely historické úspěšnosti světových jedniček ukazovaly
+    55
+
+
+vrchol procenta vítězných zápasů ve věku                   u žen (                 výher) a
+u mužů (          výher) s dřívějším nástupem i poklesem u žen, moderní éra posunula
+průměrný věk Top 50 ATP dvouhry k                        a přinesla dominanci hráčů nad 28 až 30
+<PARSED TEXT FOR PAGE: 23 / 28>
+let v závěrečných kolech Grand Slamů (podpořenou i regulačními změnami, jako je možnost
+vynechat turnaj Masters 1000 bez finanční penalizace pro zajištění delší regenerace starších
+tkání)51.
+Ještě výraznější ilustraci synergie mezi mládím a veteránskou taktikou nabízí profesionální
+padel (databáze žebříčku FIP z března 2026), kde jsou nejvýznamnějšími determinanty výkonu
+dynamická rovnováha a rychlost zotavení srdeční frekvence za 60 sekund (                 )12.
+Zatímco nejhustší věkové okno vrcholného výkonu a výdělků leží mezi 26 a 30 lety (
+hráčů i hráček v Top 50, průměrný věk Top 50 je              ), v elitní stovce koexistují
+sedmnáctiletí junioři (mužské #67 a ženské #14; přičemž          ženské Top 50 je mladších 21
+let oproti       u mužů) s padesátiletou hráčkou na 58. místě světa, sedmačtyřicetiletým
+hráčem na 90. místě a sedmatřicetiletým hráčem držícím 7. příčku světového žebříčku53. Ve
+squashi, kde absence spoluhráče a vyšší metabolická náročnost (čistý čas hry            )
+kladou na pohybový aparát mnohem tvrdší nároky než ve čtyřhře padelu, je udržení
+konkurenceschopnosti po 30. roce života (v období nejvyšší zranitelnosti Achillovy šlachy a
+kyčelních struktur) přímo podmíněno přechodem na přísně individualizovanou periodizaci,
+redukcí zbytečného mechanického objemu mimo kurt a využitím taktické anticipace k
+minimalizaci počtu VHI decelerací7.
+
+Syntéza a metodologická doporučení pro řízení
+vrcholového výkonu
+Komplexní analýza fyziologických, biomechanických a metodologických dat z elitního squashe
+a příbuzných raketových disciplín umožňuje formulovat integrovaný rámec pro řízení
+tréninkového procesu na vrcholové úrovni4. V oblasti architektury soutěžního mikrocyklu
+musejí trenéři a kondiční specialisté opustit předpoklad, že tréninková zápasová hra
+(Matchplay) generuje maximální fyziologický či mechanický tréninkový podnět22. Pro akumulaci
+nejvyššího specifického interního (              ,             ) i kurtového externího (
+                                   ) zatížení musejí tvořit jádro mikrocyklu řízené skupinové
+tréninky (Group) . Naopak individuální tréninky s nahráváním od trenéra (Feeding) vyžadují v
+                 1
+
+případě kondičního záměru radikální zkrácení instruktážních pauz, neboť v běžné praxi generují
+nejnižší čas strávený nad                  (            ) ze všech kurtových i mimokurtových
+modalit .
+        1
+
+
+Vzhledem k nízké až střední korelaci mezi tříosou akcelerometrií a vnitřní fyziologickou
+odezvou (                     ) je v denní praxi nezbytné implementovat dvoukanálový
+monitoring kombinující externí a interní metriky11. Jako primární, vysoce validní a finančně
+dostupný nástroj pro každodenní kvantifikaci vnitřní zátěže slouží globální                     na
+<PARSED TEXT FOR PAGE: 24 / 28>
+škále Borg CR100 (korelace s                dosahuje              ), přičemž sběr diferenciálního
+         (nohy vs. dech) lze kvůli téměř dokonalé kolinearitě (                    ) z praxe zcela
+vypustit . Pro hodnocení mechanického stresu na kurtu je nutné místo celkového
+        11
+
+
+                  , který neúměrně nadhodnocuje lineární běh v jednotkách Conditioning (
+                       oproti                       v zápase), sledovat inerciální mikropohyby o
+velmi vysoké intenzitě (                                    ) a směrovou asymetrii změn směru1.
+Při řízení zdravotních rizik a prevenci přetížení je nutné opustit izolované vyhodnocování
+poměru akutního a chronického zatížení (ACWR) a jeho teoretického „sweet spotu“ (
+), které trpí matematickým provázáním a nestabilitou při nízkém chronickém jmenovateli38.
+Řízení progrese zátěže musí namísto toho respektovat prahové limity jednotlivých
+tréninkových relací tak, aby objem žádné jednotlivé tréninkové jednotky nepřekročil o více než
+      nejobjemnější relaci absolvovanou v posledních 30 dnech, a to v kombinaci s
+prospektivním sledováním prevalence prodromálních bolestivých stavů, kvality spánku a
+cestovního stresu31. V případě prodělání akutní respirační infekce (URTI), která v elitním sportu
+způsobuje třetinu všech zameškaných tréninků, musí realizační tým počítat s přetrvávajícím
+poklesem fyzické kapacity po dobu minimálně 2 až 4 dnů i po plném odeznění klinických
+příznaků32.
+V oblasti funkční diagnostiky a dlouhodobé periodizace je nezbytné nahradit nespecifické
+laboratorní testy na běžeckém pásu validovanými kurtovými protokoly (ST, SPPT, SCODS) s
+povinným zařazením familiarizačního pokusu kvůli efektu motorického učení2. Při
+spirometrickém vyhodnocování na kurtu je pro eliminaci vyhlazovacích chyb nutné využívat
+10sekundové klouzavé průměry            a pro pravidelný sezónní monitoring upřednostnit
+submaximální hodnocení dosaženého kola při koncentraci laktátu                       v testu SPPT
+(           )6. V samotné kondiční přípravě vykazuje nejvyšší účinnost bloková periodizace a
+8týdenní plyometrické cykly s preferencí funkčního odporu a hmotnosti vlastního těla
+(koeficient výkonnosti    ) před těžkým vzpíráním, doplněné o cílenou excentrickou a
+mobilizační kompenzaci m. iliopsoas, kyčelního kloubu a Achillovy šlachy k vyvážení dominance
+levostranných bekhendových výpadů7. Celý adaptační proces musí být konečně zastřešen
+periodizovanou nutriční a rehydratační intervencí: vzhledem k energetickému výdeji
+                     , vysokému podílu sacharidového krytí (                ), rychlosti pocení
+                        a nízké výchozí nutriční gramotnosti hráčů (RNSKQ             ) je
+nezbytné zavést strukturovanou nutriční edukaci a individualizované rehydratační protokoly se
+suplementací sodíku, zejména při dvoufázovém tréninku v témže dni, aby se předešlo
+kumulativní hypohydrataci a rozvoji syndromu RED-S3.
+<PARSED TEXT FOR PAGE: 25 / 28>
+Citovaná díla
+
+  1. (PDF) Quantifying Training Demands of a 2-Week In-Season,
+      https://www.researchgate.net/publication/349053800_Quantifying_Training_De
+      mands_of_a_2-Week_In-Season_Squash_Microcycle
+  2. Northumbria Research Link - SciSpace, https://scispace.com/pdf/reproducibility-
+      of-physiological-and-performance-measures-tvdm7fsusx.pdf
+  3. (PDF) Physiological and Nutritional Considerations for Elite Squash,
+      https://www.researchgate.net/publication/385821990_Physiological_and_Nutritio
+      nal_Considerations_for_Elite_Squash_A_Systematic_Review
+  4. Physiological and Nutritional Considerations for Elite Squash,
+      https://shura.shu.ac.uk/34486/
+  5. Correlations of physiological responses in squash players during,
+      https://altorendimiento.com/correlations-of-physiological-responses-in-squash-
+      players-during-competition/
+  6. Game Analysis and Energy Requirementsl of Elite Squash,
+      https://www.researchgate.net/publication/232198296_Game_Analysis_and_Energ
+      y_Requirementsl_of_Elite_Squash
+  7. Game Analysis and Energy Requirements of Elite Squash,
+      https://www.researchgate.net/publication/6153257_Game_Analysis_and_Energy_
+      Requirements_of_Elite_Squash
+  8. Physiological and Nutritional Considerations for Elite Squash,
+      https://shura.shu.ac.uk/34486/1/Turner%20et%20al.,%20(2024)%20-
+      %20Physiological%20and%20Nutritional%20Considerations%20for%20Elite%20
+      Squash%20-%20A%20Systematic%20Review.pdf
+  9. Specific incremental test in elite squash players - ResearchGate,
+      https://www.researchgate.net/publication/7461412_Specific_incremental_test_in
+      _elite_squash_players
+  10. Ollie Turner's research while affiliated with Leeds Beckett University,
+      https://www.researchgate.net/scientific-contributions/Ollie-Turner-2185637506
+  11. Minimal Agreement between Internal and External Training Load,
+      https://www.researchgate.net/publication/348382140_Minimal_Agreement_betw
+      een_Internal_and_External_Training_Load_Metrics_across_a_2-
+      wk_Training_Microcycle_in_Elite_Squash
+  12. Validity of a Squash-Specific Test of Multiple-Sprint Ability,
+      https://www.semanticscholar.org/paper/Validity-of-a-Squash-Specific-Test-of-
+      Ability-Wilkinson-McCord/f24de9a0ad8319bc6af76a45d53bdeb61403b958
+  13. Fluid Balance, Sodium Losses and Hydration Practices of Elite,
+      https://shura.shu.ac.uk/31731/1/Fluid%20Balance%2C%20Sodium%20Losses%20
+      %20and%20Hydration%20Practices%20of%20Elite%20Squash%20Players%20d
+      uring%20Training.pdf
+  14. validity and reliability of an on-court fitness test for assessing and,
+      https://www.contest.nl/wp-content/uploads/2019/07/James-et-al.-2019-Validity-
+<PARSED TEXT FOR PAGE: 26 / 28>
+    and-Reliability-of-an-On-Court-Fitness-test-in-Squash.pdf
+15. Minimal Agreement between Internal and External Training Load,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC7919364/
+16. Minimal Agreement between Internal and External Training Load,
+    https://www.jssm.org/researchjssm-20-101.xml.xml
+17. Acute:chronic training loads in tennis: which metrics should we,
+    https://www.researchgate.net/publication/315844558_Acutechronic_training_loa
+    ds_in_tennis_Which_metrics_should_we_monitor
+18. Measuring the Physical Demands of Popular Squash Training,
+    https://blog.squashskills.com/-/measuring-the-physical-demands-of-popular-
+    squash-training-sessions/
+19. Effects of biobanding on training loads and technical performance of,
+    https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0317432
+20. Minimal Agreement between Internal and External Training Load,
+    https://www.jssm.org/mobile/ShowFigure.php?jid=jssm-20-
+    101.xml&FigureId=fig001
+21. Minimal Agreement between Internal and External Training Load,
+    https://www.jssm.org/mobile/ShowFigure.php?jid=jssm-20-
+    101.xml&FigureId=fig003
+22. Quantifying Training Demands of a 2-Week In-Season Squash,
+    https://pubmed.ncbi.nlm.nih.gov/33547264/
+23. Incidence, Temporal Trends, and Surgical Shift of Achilles Tendon,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC13260312/
+24. Physical Preparation for Elite-Level Squash Players - ResearchGate,
+    https://www.researchgate.net/publication/330659077_Physical_Preparation_for_
+    Elite-
+    Level_Squash_Players_Monitoring_Assessment_and_Training_Practices_for_the_
+    Strength_and_Conditioning_Coach
+25. Minimal Agreement between Internal and External Training Load,
+    https://pubmed.ncbi.nlm.nih.gov/33707993/
+26. How much is too much? (Part 1) International Olympic Committee,
+    https://repository.up.ac.za/bitstreams/624eec7f-cce1-4e74-8283-
+    06951a6d87db/download
+27. Effects of biobanding on training loads and technical performance of,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11824955/
+28. International Journal of Computer Science in Sport Volume 7/Edition 2,
+    https://iacss.org/wp-content/uploads/2024/09/IJCSS-Volume7_Edition2.pdf
+29. Modelling responses to training loads to lead athletic performance in,
+    https://www.researchgate.net/publication/358128096_Modelling_responses_to_t
+    raining_loads_to_lead_athletic_performance_in_sports
+30. How much is too much? (Part 1) International Olympic Committee,
+    https://pubmed.ncbi.nlm.nih.gov/27535989/
+31. How much is too much? (Part 1) International Olympic Committee,
+<PARSED TEXT FOR PAGE: 27 / 28>
+    https://www.researchgate.net/publication/306271510_How_much_is_too_much_
+    Part_1_International_Olympic_Committee_consensus_statement_on_load_in_spo
+    rt_and_risk_of_injury
+32. (PDF) How much is too much? (Part 2) International Olympic,
+    https://www.researchgate.net/publication/306276417_How_much_is_too_much_
+    Part_2_International_Olympic_Committee_consensus_statement_on_load_in_sp
+    ort_and_risk_of_illness
+33. Olympic Games during nationwide lockdown - Ovid,
+    https://www.ovid.com/journals/bjsme/fulltext/10.1136/bjsports-2023-
+    107412~olympic-games-during-nationwide-lockdown-sports-injuries-and
+34. How much is too much? (Part 1) International Olympic Committee,
+    https://stillmed.olympics.com/media/Documents/Athletes/Medical-Scientific/
+    Consensus-Statements/2016_How-much-is-too-much-load-sport-risk-illness-
+    part-1.pdf
+35. The illness burden of gastrointestinal illness is two times higher if it,
+    https://www.researchgate.net/publication/369091232_The_illness_burden_of_gas
+    trointestinal_illness_is_two_times_higher_if_it_is_associated_with_systemic_sym
+    ptoms_and_signs_a_cross-
+    sectional_study_of_the_super_rugby_tournament_over_5_seasons_102738_play
+36. Athlete Travel & Jet Lag: Evidence and Guidance - HERO Lab,
+    https://herolabsportsmedicine.com/travel-circadian.html
+37. How much is too much? (Part 2) International Olympic Committee,
+    https://bjsm.bmj.com/content/50/17/1043
+38. Has the Acute:Chronic Workload Ratio Been Debunked?,
+    https://www.globalperformanceinsights.com/post/has-the-acute-chronic-
+    workload-ratio-been-debunked
+39. WORKLOAD MANAGEMENT - Athlete Monitoring,
+    https://www.athletemonitoring.com/wordpress/wp-content/uploads/2019/07/
+    WLMGMT_TIPS.pdf
+40. The acute-chronic workload ratio-injury figure and its 'sweet spot' are,
+    https://www.researchgate.net/publication/333589357_The_acute-
+    chronic_workload_ratio-injury_figure_and_its_'sweet_spot'_are_flawed
+41. How much running is too much? Identifying high-risk running,
+    https://bjsm.bmj.com/content/59/17/1203
+42. Toward autonomous artificial intelligence agents in sports science: a,
+    https://www.termedia.pl/Toward-autonomous-artificial-intelligence-agents-in-
+    sports-science-r-na-modular-framework-for-development-validation-and-r-
+    nimplementation,78,58032,1,1.html
+43. Effects of an 8-Week Plyometric Program on Acceleration, Power,
+    https://ideas.repec.org/a/alk/jspes0/v3y2023i3id6275.html
+44. Strategies for Athlete Training and Achieving Peak Performance,
+    https://coacheye.ai/article/strategies-for-athlete-training-and-achieving-peak-
+    performance-an-analysis-of-season-planning-and-periodization-methods
+<PARSED TEXT FOR PAGE: 28 / 28>
+45. Sport Science - Instituto Politécnico de Leiria, https://www.ipleiria.pt/esecs/wp-
+    content/uploads/sites/15/2019/10/Sport_Science_Final_WEB.pdf
+46. The Flexible Periodization Method by Karsten Jensen | PDF - Scribd,
+    https://www.scribd.com/document/317175901/The-Flexible-Periodization-
+    Method-by-Karsten-Jensen
+47. Optimizing concurrent training programs: A review on factors that,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11688070/
+48. [PDF] Tapering practices of elite CrossFit athletes - Semantic Scholar,
+    https://www.semanticscholar.org/paper/Tapering-practices-of-elite-CrossFit-
+    athletes-Pritchard-Keogh/e87fd7dc43bb5f1cb4be39aa9c7172e026711293
+49. comparison of resistance training progression models to develop,
+    https://openrepository.aut.ac.nz/server/api/core/bitstreams/6448d9cd-3430-
+    45c1-a887-1e56cf7800a1/content
+50. Effects of a 5-Week Linear Periodization Program on Maximal,
+    https://www.semanticscholar.org/paper/Effects-of-a-5-Week-Linear-
+    Periodization-Program-on-Teichmann-Soyza/
+    75fd6f22c4dee13057de6cd578ab4c83ded0e20a
+51. peak performance age in sport - Cepar,
+    https://cepar.edu.au/sites/default/files/peak-performance-age-sport.pdf
+52. Internal and external training load in men's professional padel,
+    https://discovery.researcher.life/article/internal-and-external-training-load-in-
+    men-s-professional-padel-players-a-positional-comparison-in-the-premier-
+    padel-circuit/f64a62680e5731248edbd8ca1770ec42
+53. At What Age Do Players Peak? (2026 Data) - Padel Earnings,
+    https://padelearnings.com/blog/padel-player-age-when-do-players-peak
+54. Age of Peak Competitive Performance of Elite Athletes - ResearchGate,
+    https://www.researchgate.net/publication/264631971_Age_of_Peak_Competitive
+    _Performance_of_Elite_Athletes_A_Systematic_Review
+55. Professional tennis is getting older: Age for the top 100 ranked,
+    https://www.researchgate.net/publication/289521450_Professional_tennis_is_ge
+    tting_older_Age_for_the_top_100_ranked_tennis_players
+56. Is 30+ plus the new tennis peak age, http://tt.tennis-warehouse.com/index.php?
+    threads/is-30-plus-the-new-tennis-peak-age.599650/
+57. How to improve? 101 - Periodization for Squash,
+    https://www.squashtigers.com/blog/how-to-improve-101-periodization-for-
+    squash
+58. Anticipation and Decision Making in Sport,
+    https://api.pageplace.de/preview/DT0400.9781351380195_A36249065/preview-9
+    781351380195_A36249065.pdf
+
+----- END SEARCHABLE TEXT (LOSSY) -----

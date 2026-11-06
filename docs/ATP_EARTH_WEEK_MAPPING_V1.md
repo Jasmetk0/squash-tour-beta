@@ -54,6 +54,49 @@ Read-only from the repository root:
 
 The --json command prints the complete machine-readable report (one mapping per year/Series) without changing files. The report contains a deterministic source digest, original dates and original ISO weeks, chosen W52 labels, rule, flags, season provenance and an explicit sporting_schedule_installed=false boundary. The --check command validates the expected current-source totals.
 
+## Explicit Run Calendar bridge (read-only native-week preview)
+
+The pure application adapter src/beta_engine/application/atp_earth_run_calendar_preview.py
+takes a **supplied explicit RunCalendar**, validates the source-only 2,407-event
+projection and produces native RunCalendarPosition rows with season_index,
+season_week, calendar_year, year_week and canonical elapsed-week ordinal. It
+round-trips each ordinal and refuses noncontiguous spans, mismatched season
+identities or weeks outside the requested Run's actual horizon. This is a
+real mapping to the *native clock contract*, **not** a DB-backed actual Run
+command, authenticated state write, or playable Edition.
+
+A Run may have an offset other than 1. The adapter uses calendar_to_season
+rather than assuming ISO Wxx equals Season Week xx. It requires an explicit
+current-schema 52-week Run clock. A legacy/FAX 61-week Run, nonexistent year,
+invalid chosen year, incomplete 37-year source, or out-of-horizon week is
+rejected rather than silently clamped. A subset can be selected with explicit
+year(s); only those years must fit the Run horizon.
+
+Reproducible read-only CLI example (from an environment with project deps):
+
+    python scripts/preview_atp_earth_run_calendar_v1.py
+    python scripts/preview_atp_earth_run_calendar_v1.py --year 2025 --run-start-year 2025 --run-seasons 2 --json
+    python scripts/preview_atp_earth_run_calendar_v1.py --year 1990 --run-start-year 1989 --run-seasons 40 --run-offset 37
+    python -m pytest -q tests/application/test_atp_earth_run_calendar_preview.py
+
+The CLI constructs an **illustrative clock from passed args**, not a real
+persisted Run. The application's preview is deterministic, carries an input
+fingerprint and explicit run metadata, lists all projected positions and
+source-exception flags, summarizes week overlap, and always states
+sporting_ready=false / no_sporting_install=true.
+
+The preview audit of the *full* 1990–2026 Earth W52 frame expects 2,407
+occurrences, 1,284 occupied week positions and maximum five source tournaments
+in one week. It preserves all 26 majority-week-vs-finish exceptions and three
+source intervals spanning three ISO weeks. Those 3-week projections are **not**
+automatically scheduled as three full weeks of matches.
+
+**Boundaries that remain open:** a live saved Run adapter, per-Edition sporting
+duration, Entry/application/announcement windows, match/round ordering, common
+Simulation Slot simultaneity, rest, ranking closure semantics, and explicit
+snapshot/Preview/Confirm/Save ownership. This PR does not invent those
+mechanics from date metadata.
+
 ## Required independent follow-up before playable installation
 
 - Decide the actual **sporting occupancy** of the three 12-day, three-ISO-week cases. The reported three-week projection is not a source assertion that three full weeks of matches were played.

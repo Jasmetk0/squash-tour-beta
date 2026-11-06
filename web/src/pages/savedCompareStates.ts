@@ -86,6 +86,13 @@ export function projectSavedStateComparison(
     x.revision_branch_id===y.revision_branch_id&&
     x.parent_revision_id===y.parent_revision_id
   if(!same(data.from_revision,a)||!same(data.to_revision,b))return null
+  return projectSavedComparisonRows(data)
+}
+
+/** Shared presentation guard; callers must independently verify their source identities. */
+export function projectSavedComparisonRows(
+  data:Pick<SavedRevisionComparison,'run_changes'|'branch_changes'|'components'>
+):CompareResult|null{
   const validMap=(map:unknown):map is Record<string,{before:unknown;after:unknown}>=>
     !!map&&typeof map==='object'&&!Array.isArray(map)&&
     Object.values(map).every(x=>!!x&&typeof x==='object'&&!Array.isArray(x)&&

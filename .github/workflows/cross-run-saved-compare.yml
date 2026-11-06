@@ -1,0 +1,65 @@
+name: Cross-Run Saved comparison
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    paths:
+      - '.github/workflows/cross-run-saved-compare.yml'
+      - 'src/beta_engine/application/run_cross_saved_comparison.py'
+      - 'src/beta_engine/api/routers/admin_saved_cross_compare.py'
+      - 'src/beta_engine/api/routes.py'
+      - 'src/beta_engine/api/schemas.py'
+      - 'src/beta_engine/application/run_saved_revision_history_service.py'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'tools/desktop/launcher.py'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/src/api/crossSavedCompare*'
+      - 'web/src/pages/SavedCrossRun*'
+      - 'web/src/pages/crossSavedCompare*'
+      - 'web/src/pages/savedCompareStates*'
+      - 'web/acceptance/cross_run_saved_compare_browser.py'
+      - 'tests/support/cross_run_compare.py'
+      - 'tests/api/test_admin_saved_cross_compare.py'
+      - 'tests/application/test_*cross*compare*'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: cross-saved-compare-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+jobs:
+  browser:
+    name: Cross-Run Saved / real Chromium SQLite restart
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - name: Install production and browser test dependencies
+        run: python -m pip install -e '.[dev]' playwright
+      - name: Build actual frontend
+        run: |
+          npm --prefix web ci
+          npm --prefix web run build
+      - name: Install real browser
+        run: python -m playwright install --with-deps chromium
+      - name: Verify actual UI, API, Saved persistence and restart (also on Drafts)
+        env:
+          PYTHONPATH: src:.
+        run: python web/acceptance/cross_run_saved_compare_browser.py --artifacts /tmp/cross-saved-evidence
+      - name: Preserve browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cross-run-saved-browser-evidence
+          path: /tmp/cross-saved-evidence/
+          if-no-files-found: warn

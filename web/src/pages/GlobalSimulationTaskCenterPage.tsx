@@ -1,5 +1,6 @@
 import { BoundaryDescription } from '../components/FullSimulationBoundaryTargets'
 import { FullSimulationServerTasks, useServerTasks } from '../components/FullSimulationServerTasks'
+import { TaskCenterRecoveryDiagnostics } from '../components/TaskCenterRecoveryDiagnostics'
 import { useQuery } from '@tanstack/react-query'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
@@ -159,6 +160,12 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
       <h2>{text.title}</h2><p className="subtitle">{text.subtitle}</p>
     </div>
     <FullSimulationServerTasks />
+    <TaskCenterRecoveryDiagnostics
+      tasks={serverTasks.isSuccess ? serverTasks.data : null}
+      inventory={inventory.isSuccess ? inventory.data : null}
+      fresh={inventory.isSuccess && !inventory.isFetching
+        && serverTasks.isSuccess && !serverTasks.isFetching}
+    />
     <h3>{text.receiptsTitle}</h3>
     <p className="status">{text.distinction}</p>
     <p className="status">{text.truth}</p>

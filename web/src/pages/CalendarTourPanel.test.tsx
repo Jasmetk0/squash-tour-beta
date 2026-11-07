@@ -17,6 +17,28 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
   beforeEach(()=>{vi.clearAllMocks();localStorage.setItem('squash-engine-language-v1','en');api.inspectCalendarTour.mockImplementation((r,b)=>Promise.resolve(view(r,b)))})
   const slotView=(run='r',branch='b'):TourView=>({...view(run,branch),saved:true,sporting_saved:true,tour_fingerprint:'c'.repeat(64),next_slot:{schema_version:'calendar_global_slot_inspection.v1',number:14,snapshot_fingerprint:null,completed:0,remaining:2,matches:[{edition_id:'a',match_id:'a:sf1',player_a_id:'p1',player_b_id:'p2',completed:false},{edition_id:'b',match_id:'b:sf1',player_a_id:'p3',player_b_id:'p4',completed:false}]},state:{week:{calendar:{schema_version:'run_calendar.v1',weeks_per_year:80,season_start_year_week:80,start_year:2030,season_count:2},season_index:0,week:4},editions:[],rankings:[],transitions:[]}})
 
+  it.each(['en','cs'])('consumes an immutable canonical Saved draw and confirms its real terminal in %s',async language=>{
+    localStorage.setItem('squash-engine-language-v1',language)
+    const current=slotView(),week=current.state!.week
+    current.state!.editions=[{edition:{schema_version:'calendar_tournament_edition.v4',edition_id:'canonical',name:'Canonical Q/Main',week,announcement_week:{...week,week:3},start_slot:1,main_entrant_count:32,point_table:{},validity_weeks:80},submissions:[],field:null,
+      draw:{main:{slots:[{slot_index:1,player_id:'p1'},{slot_index:2,player_id:null,placeholder_id:'Q1'},{slot_index:3,player_id:null,entrant_kind:'bye'}]}},
+      canonical_binding:{saved_revision_id:'original-source',draw_input:{qualification_player_ids:['p3','p4']},schedule:{qualification:[1,2,3],main:[4,5,6,7,8]}},tournament_fingerprint:'d'.repeat(64),result_confirmed:false}]
+    current.edition_evidence.canonical={results:[],matches:[{match_id:'canonical:main:R5-N1',slot:8,player_a_id:'p1',player_b_id:'p2',winner_player_id:'p1',rally_count:120}]}
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve(preview(c)))
+    render(panel());await screen.findByRole('heading',{name:/Canonical Q\/Main/})
+    expect(screen.queryByLabelText('Tour applicants canonical')).not.toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:language==='cs'?'Zkontrolovat schválení':'Review approval'})).not.toBeInTheDocument()
+    expect(screen.getByText('Q1')).toBeInTheDocument()
+    expect(screen.getByText(language==='cs'?'Volný los':'BYE')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Independent terminal confirmation'}})
+    fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zkontrolovat výsledky':'Review results'}))
+    await screen.findByLabelText('Confirm Tour command')
+    expect(api.previewCalendarTour.mock.calls[api.previewCalendarTour.mock.calls.length-1]?.[2]).toMatchObject({action:'confirm-result',edition_id:'canonical'})
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+
   it.each(['en','cs'])('reviews an explicit group withdrawal without mutation or Save in %s',async language=>{
     localStorage.setItem('squash-engine-language-v1',language)
     const current=slotView()

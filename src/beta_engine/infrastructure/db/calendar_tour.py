@@ -582,6 +582,11 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
         # selected Saved boundary, even when the original Branch has moved on.
         reachable.intersection_update(_reachable_revision_ids)
 
+    # A replayable embedded Draw is not proof of its physical historical origin.
+    # Read actual bytes on every gate, including the authenticated-prefix path.
+    from beta_engine.infrastructure.db.native_canonical_draw_origin import verify_canonical_draw_origins
+    verify_canonical_draw_origins(session, state, reachable)
+
     if state.schema_version == "calendar_tour_authority.v3":
         first_source = None
         for index, receipt in enumerate(
@@ -758,6 +763,11 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
                 if result.get("schema_version") in {"calendar_terminal_edition_result.v1", "calendar_terminal_edition_result.v2"}:
                     terminal_clocks.setdefault(result["edition_id"], []).append(result["completed_week"]["calendar"])
     for authority in state.editions:
+        if authority.canonical_binding is not None:
+            # v4 binds the original Saved Calendar/Draw, which predates adoption.
+            # Its physical source is verified above; the slot service separately
+            # requires the adopted authority in the immediate Saved Tour.
+            continue
         if not authority.played_saved_head:
             continue
         row = session.get(BranchSavedRevisionModel, authority.played_saved_head)

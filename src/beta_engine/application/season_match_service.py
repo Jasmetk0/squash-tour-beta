@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from beta_engine.domain.tournaments.qualifier_promotion import FrozenQualifierPromotion
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
@@ -275,12 +277,6 @@ class MatchPackageMetadata(BaseModel):
     qualification_winners_promoted: bool = False
 
 
-class FrozenQualifierPromotion(BaseModel):
-    qualifier_index: int = Field(ge=1)
-    source_match_id: str
-    target_match_id: str
-    target_side: Literal["top", "bottom"]
-    target_slot_id: str
 
 
 class SeasonEventMatchPackage(BaseModel):

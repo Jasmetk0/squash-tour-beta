@@ -36,7 +36,7 @@ jobs:
           cache-dependency-path: pyproject.toml
       - run: python -m pip install -e . pytest
       - name: Adversarial and actual 80-source contracts
-        run: python -m pytest tests/tools/test_fax_native_playability.py -vv --maxfail=1
+        run: GITHUB_EVENT_NAME=fax_native_playability_acceptance python -m pytest tests/tools/test_fax_native_playability.py -vv --maxfail=1
       - name: Produce truthful incomplete-release JSON without changing authority
         shell: bash
         run: |

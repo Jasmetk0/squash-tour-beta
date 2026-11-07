@@ -1,4 +1,40 @@
-# Saved-bound FAX feeder kernel candidate — 6 November 2026
+# Native canonical Q/Main candidate — 6 November 2026
+
+Merged base `buuk` **`c7bb53eb893dceb2cb603bc0d312b71070489a0e`** is the owner
+merge of #1746 and preserves its exact reviewed tree. This candidate consumes its
+pure domain feeder through Edition v4, frozen canonical match / GlobalSlot v4 and
+the existing v13 checkpoint. Actual results remain accepted continuation records;
+the terminal tournament result is derived, never another persisted result ledger.
+
+`adopt-saved-draw` explicitly selects the exact current Saved Calendar/Draw/Input
+and a complete strictly increasing Q/Main round-slot schedule. The source supplies
+`event_level_overrides.native_announcement_week` on its original Run clock.
+Adoption must precede that week; normal Week Transition publishes the public event
+and a whole week passes before play. No date, eligibility, points or rest calibration
+is invented. Physical reachable Saved-envelope/hash/Draw validation is separate
+from mathematical replay and still runs with warmed prefix reads.
+
+Scope: source-authored **Unranked single-week FAX reference geometry**, preserving
+Main24/Q16 and Main32/Q24 capacities and actual BYEs. Original Ranked 80-Edition
+source is NOT enabled through zero-point awards. Inherited native fork remapping,
+revised Draws/replacements, multi-week execution and complete Ranked awards remain
+unsupported. Old schemas, seeds, legacy index bounds and pure domain boundaries stay.
+
+Dedicated real HTTP/SQLite cases exercise actual Q/Main, public announcement,
+partial Next Match Save/reopen, exact retry, terminal confirmation and transition.
+Their disposable sources explicitly author Unranked status/week/announcement;
+they do not prove original full season or 50-season acceptance. Small contract and
+old-golden regressions remain separate. Candidate final-head local/hosted results
+must be recorded in PR; Draft skips are not passing acceptance.
+
+Next finish original Entry/publication/complete Ranked awards/chronology and
+owner-level Admin adoption, then multiple Editions/full season and existing
+50-season/recovery/performance gates. No Master, source Package, canon or calibration
+change. ATP package PRs are separate. Owner alone merges.
+
+---
+
+# Historical Saved-bound feeder kernel — owner-merged as #1746
 
 Current merged base: `buuk` **`7620b89ab53b93780216955a72bd5e4c91f6d691`**
 (owner merge of #1745). Its tree exactly preserves the reviewed player Draw.

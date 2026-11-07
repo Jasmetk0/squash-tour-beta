@@ -47,6 +47,10 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 )
 
 
+from beta_engine.domain.tournaments.native_canonical_knockout import (
+    NativeCanonicalDrawBinding, is_canonical_edition, canonical_announcement_week,
+)
+
 def ranking_week(week):
     return CalendarRankingWeek(season_index=week.season_index, week=week.week)
 
@@ -55,7 +59,7 @@ from beta_engine.domain.tournaments.calendar_groups import NativeGroupConfigurat
 
 
 class CalendarTourEdition(FrozenInput):
-    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2", "calendar_tournament_edition.v3"] = (
+    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"] = (
         "calendar_tournament_edition.v1"
     )
     edition_id: str = Field(min_length=3, max_length=80)
@@ -83,7 +87,7 @@ class CalendarTourEdition(FrozenInput):
 
     @property
     def capacity(self):
-        if self.schema_version == "calendar_tournament_edition.v3":
+        if self.schema_version in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v4"}:
             return TournamentEntryFieldCapacity(geometry_kind="fixed_participant_field", main_draw_size=self.main_entrant_count)
         return TournamentEntryFieldCapacity.for_main_entrant_count(
             main_entrant_count=self.main_entrant_count
@@ -158,6 +162,7 @@ class CalendarEditionAuthority(FrozenInput):
     played_saved_head: str | None = None
     tournament_fingerprint: str | None = None
     result_confirmed: bool = False
+    canonical_binding: NativeCanonicalDrawBinding | None = Field(default=None, exclude_if=lambda v: v is None)
 
     @property
     def execution_fingerprint(self):
@@ -172,11 +177,42 @@ class CalendarEditionAuthority(FrozenInput):
                 else None,
                 "created_command_id": self.created_command_id,
                 "created_saved_head": self.created_saved_head,
+                **({"canonical_binding": self.canonical_binding.fingerprint} if self.canonical_binding is not None else {}),
             }
         )
 
     @model_validator(mode="after")
     def validate_sources(self):
+        if is_canonical_edition(self):
+            binding = self.canonical_binding
+            if binding is None or self.draw is None or self.submissions or self.field is not None or self.ranking_authority is not None:
+                raise ValueError("Canonical Edition requires its sole exact Saved Draw binding")
+            binding.plan(self.draw)
+            event = binding.source_event
+            if self.edition.announcement_week != canonical_announcement_week(binding):
+                raise ValueError("Canonical announcement differs from its Saved source")
+            if self.edition.ranked or event.ranking_status != "unranked" or self.edition.point_table:
+                raise ValueError("Canonical native Ranked awards need their explicit versioned consumer; no zero-point fallback")
+            if event.duration_in_season_weeks != 1 or event.start_season_week != event.season_week or event.end_season_week != event.season_week:
+                raise ValueError("Canonical native v4 requires an explicit same-week source; multi-week execution is not yet supported")
+            if (self.edition.name, self.edition.start_slot, self.edition.simulation_seed, self.edition.validity_weeks) != (event.event_name, binding.schedule.qualification[0], binding.draw_input.draw_seed, binding.calendar.weeks_per_year):
+                raise ValueError("Canonical Edition changes its frozen name/schedule/seed/validity")
+            if (self.edition.edition_id, self.edition.main_entrant_count, self.edition.week.calendar,
+                self.edition.week.week, self.created_saved_head, self.played_saved_head,
+                self.draw_seed, self.draw_command_id) != (
+                event.event_id, event.main_draw_size, binding.calendar, event.season_week,
+                binding.saved_revision_id, binding.saved_revision_id, binding.draw_input.draw_seed,
+                self.draw.generated_by_command_id,
+            ):
+                raise ValueError("Canonical Edition changes its frozen source identity/clock/Draw")
+            if self.edition.week.season_index != int(str(event.season).split('/')[0]) - binding.calendar.start_year:
+                raise ValueError("Canonical Edition changes its source season")
+            position = self.edition.week.calendar_position
+            if (event.calendar_year, event.year_week) != (position.calendar_year, position.year_week):
+                raise ValueError("Canonical source dates require an explicit compatible Run calendar; no silent conversion")
+            return self
+        if self.canonical_binding is not None:
+            raise ValueError("Historical Edition cannot acquire canonical v4 source binding")
         ids = tuple(s.application_id for s in self.submissions)
         if ids != tuple(sorted(set(ids))) or len(
             {s.player_id for s in self.submissions}
@@ -436,6 +472,14 @@ def lifecycle_calendars(state):
 def edition_results(authority, event):
     """One authoritative result per player; immutable Edition table is the source."""
     played_fingerprint = event.fingerprint
+    if is_canonical_edition(authority):
+        if (authority.edition.ranked or event.schema_version != "native_canonical_tournament_result.v1"
+            or authority.tournament_fingerprint != played_fingerprint
+            or event.edition_authority_fingerprint != authority.execution_fingerprint
+            or event.prepared_awards):
+            raise ValueError("Canonical Unranked result differs from its exact terminal source")
+        event.actual_terminal()
+        return ()
     if authority.tournament_fingerprint != played_fingerprint:
         raise ValueError("Edition result is detached from played MatchEngine evidence")
     if (

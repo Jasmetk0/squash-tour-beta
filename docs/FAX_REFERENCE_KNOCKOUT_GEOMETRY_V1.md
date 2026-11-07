@@ -144,3 +144,30 @@ Next consume it through versioned native Edition/global-slot/result models,
 existing v13 ownership, operation/Health/award/schedule guards and public partial
 Next Match/Save/resume/restart. No points, time progression, branch fork remapping,
 withdrawal/LL mechanics, full season or 50-season acceptance is inferred here.
+
+
+## Native consumer v4 (6 November 2026 candidate)
+
+The pure topology/feeder now lives in domain, with application compatibility exports
+and unchanged historical goldens. `adopt-saved-draw` binds the exact current Saved
+Calendar/Draw/Input and an explicit complete Q/Main round-slot schedule. Source
+`event_level_overrides.native_announcement_week` is RunWeekPosition JSON on the
+original Run clock. Adoption must precede it. Normal Week Transition owns its
+public event, with a whole week before play; a past date alone is insufficient.
+
+Only source-authored Unranked single-week reference geometry is supported. Complete
+Ranked awards, multi-week, revised Draw and inherited fork remapping fail closed.
+The original Ranked source is unchanged; disposable tests explicitly author these
+inputs and preserve real Main/Q counts and BYEs. No automatic Entry eligibility,
+original season or 50-season proof is inferred.
+
+Edition v4 stores the Draw once with its Saved binding. GlobalSlot v4 extends only
+its new canonical frozen match type; historical match indexes remain 0–6. BO5
+results, Health/effects, shared snapshots and partial Save use the existing v13
+ledger. `native_canonical_tournament_result.v1` is derived, not another store.
+Physical reachable Saved bytes are checked separately from replay caches. Historical
+clock values remain frozen; the new consumer allows only compatible extensions.
+
+Admin hides inappropriate Entry mutations and displays explicit Q/BYE positions,
+with separate terminal confirmation. Adoption itself is currently an explicit API
+command; no complete adoption wizard or owner-level Chromium pass is claimed.

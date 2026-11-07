@@ -5,7 +5,6 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from pathlib import Path
 
 from pydantic import ValidationError
 
@@ -13,6 +12,11 @@ from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
 from beta_engine.domain.countries import CountriesConfig
 from beta_engine.domain.players import ManualPlayerOverridesRegistry
+from beta_engine.infrastructure.atomic_json_file import (
+    require_regular_destination,
+    stage_file_bytes,
+    stage_json_file,
+)
 
 WORLD_PACKAGE_VERSION = "1"
 
@@ -236,31 +240,22 @@ class WorldPackageService:
         if countries_path is None:
             raise PermissionError("Built-in World Package countries are read-only; use an editable custom package")
         overrides_path = self.manual_overrides_service.config_path
-        countries_before = countries_path.read_text(encoding="utf-8") if countries_path.exists() else None
-        overrides_before = overrides_path.read_text(encoding="utf-8") if overrides_path.exists() else None
+        require_regular_destination(countries_path)
+        require_regular_destination(overrides_path)
+        if countries_path.resolve() == overrides_path.resolve():
+            raise ValueError("Country and override datasets require different files")
+        countries_before = countries_path.read_bytes()
 
-        try:
-            self._write_json_atomic(countries_path, countries.model_dump(mode="json"))
-            self._write_json_atomic(overrides_path, overrides.model_dump(mode="json"))
-        except Exception:
-            self._restore_file(countries_path, countries_before)
-            self._restore_file(overrides_path, overrides_before)
-            raise
-
-    @staticmethod
-    def _write_json_atomic(path: Path, payload: dict[str, object]) -> None:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        tmp_path = path.with_suffix(f"{path.suffix}.tmp")
-        with tmp_path.open("w", encoding="utf-8") as fh:
-            json.dump(payload, fh, indent=2)
-            fh.write("\n")
-        tmp_path.replace(path)
-
-    @staticmethod
-    def _restore_file(path: Path, previous_text: str | None) -> None:
-        if previous_text is None:
-            if path.exists():
-                path.unlink()
-            return
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(previous_text, encoding="utf-8")
+        # Allocate both replacements and the rollback file before modifying
+        # either destination. Recovery never needs another full-sized write.
+        with (
+            stage_file_bytes(countries_path, countries_before) as backup,
+            stage_json_file(countries_path, countries.model_dump(mode="json")) as new_countries,
+            stage_json_file(overrides_path, overrides.model_dump(mode="json")) as new_overrides,
+        ):
+            new_countries.replace(countries_path)
+            try:
+                new_overrides.replace(overrides_path)
+            except OSError:
+                backup.replace(countries_path)
+                raise

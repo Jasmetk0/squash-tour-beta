@@ -15,6 +15,9 @@ from beta_engine.application.canonical_knockout_feeders import (
     freeze_knockout_feeder_plan,
     project_knockout_progress,
 )
+from beta_engine.application.native_canonical_ranked_awards import (
+    prepare_native_canonical_ranked_awards,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.health import (
@@ -56,8 +59,19 @@ def ranking():
     return fax_inputs.ranking_snapshot(fax_inputs.PLAYERS)
 
 
-def feeder_plan(source, ranking, main_size):
+def feeder_plan(source, ranking, main_size, *, authored_points=False):
     event = next(e for e in source[0].events if e.main_draw_size == main_size)
+    if authored_points:
+        # Disposable points, frozen before playing. The original table stays unchanged.
+        table = {
+            **event.ranking_points_table,
+            "qualification_winner": 17,
+            "qualification_final": 11,
+            "qualification_semifinal": 3,
+        }
+        if main_size == 32:
+            table["qualification_round"] = 0
+        event = event.model_copy(update={"ranking_points_table": table})
     inputs = fax_inputs.in_memory_input(event, ranking)
     draw = TournamentDrawAuthorityBuilder.build(draw_input=inputs, command_id="draw")
     return freeze_knockout_feeder_plan(
@@ -167,7 +181,10 @@ def played(plan):
 
 @pytest.fixture(scope="module")
 def games(fax_source, ranking):
-    return {size: played(feeder_plan(fax_source, ranking, size)) for size in (24, 32)}
+    return {
+        size: played(feeder_plan(fax_source, ranking, size, authored_points=True))
+        for size in (24, 32)
+    }
 
 
 def test_all_original_editions_resolve_byes_without_creating_matches(
@@ -259,6 +276,57 @@ def test_actual_q_and_main_matches_feed_real_winners_without_bye_results(
     assert all(
         p == initial_by_id[p.player_id] for p in terminal if p.player_id not in entrants
     )
+
+
+@pytest.mark.parametrize("size", [24, 32])
+def test_ranked_projection_uses_played_results_and_frozen_stage_awards(games, size):
+    plan, matches, _, _, _ = games[size]
+    projection = prepare_native_canonical_ranked_awards(plan=plan, matches=matches)
+    result, awards = projection.result, projection.awards
+    assert result.match_package_fingerprint is None
+    assert result.native_feeder_plan_fingerprint == plan.fingerprint
+    assert type(result).model_validate_json(result.model_dump_json()) == result
+    assert awards.tournament_result_fingerprint == result.fingerprint
+    final = next(match for match in matches if match.match_id == plan.topology.terminal_group_id)
+    assert result.champion_player_id == final.result.winner_player_id
+    assert result.finalist_player_id == final.result.loser_player_id
+    expected_records = {match.match_id: match.fingerprint for match in matches}
+    assert {
+        row.match_id: row.result_fingerprint for row in result.matches if row.scoreline != "BYE"
+    } == expected_records
+    assert {
+        row.match_id: row.winner_player_id for row in result.matches if row.scoreline == "BYE"
+    } == dict(plan.topology.bye_winners)
+    assert sum(player.wins for player in result.players) == len(matches)
+    assert sum(player.losses for player in result.players) == len(matches)
+    award_by_player = {award.player_id: award for award in awards.awards}
+    assert len(result.qualification_winner_ids) == 4
+    table = plan.source.source_event.ranking_points_table
+    for player_id in result.qualification_winner_ids:
+        award = award_by_player[player_id]
+        assert award.qualification_point_stage == "qualification_winner"
+        assert award.qualification_points_awarded == 17
+        assert award.ranking_points_awarded == table[award.reached_stage] + 17
+    if size == 32:
+        first_round = [
+            award for award in awards.awards if award.reached_stage == "qualification_round"
+        ]
+        assert first_round and all(award.ranking_points_awarded == 0 for award in first_round)
+    else:
+        assert prepare_native_canonical_ranked_awards(
+            plan=plan, matches=tuple(reversed(matches))
+        ) == projection
+
+
+def test_ranked_projection_rejects_incomplete_results_and_original_point_gap(
+    games, fax_source, ranking
+):
+    plan, matches, _, _, _ = games[24]
+    with pytest.raises(ValueError, match="every executable match"):
+        prepare_native_canonical_ranked_awards(plan=plan, matches=matches[:-1])
+    original = feeder_plan(fax_source, ranking, 24)
+    with pytest.raises(ValueError, match="missing=.*qualification_winner"):
+        prepare_native_canonical_ranked_awards(plan=original, matches=())
 
 
 def test_no_main_match_even_direct_opponents_before_all_four_q_finals(games):

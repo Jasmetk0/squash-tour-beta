@@ -27,6 +27,16 @@ def load_json_object(path: Path) -> dict:
     return value
 
 
+def load_optional_legacy_history_catalog(root: Path, filename: str) -> dict | None:
+    """Read a built-in legacy catalog path, treating only a missing entry as absent."""
+    relative_path = f"generation/{filename}"
+    try:
+        (root / relative_path).lstat()
+    except FileNotFoundError:
+        return None
+    return load_json_object(safe_package_file(root, relative_path))
+
+
 def safe_package_file(root: Path, relative_path: str) -> Path:
     """Resolve a regular package-owned file and reject traversal and symlink tricks."""
 

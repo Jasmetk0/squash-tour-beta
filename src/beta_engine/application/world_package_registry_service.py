@@ -6,7 +6,9 @@ from pathlib import Path
 from typing import Any
 from beta_engine.application.countries_service import CountriesConfigService
 from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
-from beta_engine.application.package_evidence_files import canonical_json_sha256, load_json_object, safe_package_file
+from beta_engine.application.package_evidence_files import (
+ canonical_json_sha256, load_json_object, load_optional_legacy_history_catalog, safe_package_file,
+)
 from beta_engine.infrastructure.world_package_storage import PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 from beta_engine.world_packages import BUILT_IN_WORLD_IDS, OFFICIAL_FAX_WORLD_ID
 
@@ -102,8 +104,8 @@ class WorldPackageRegistryService:
     ) for p in sorted(source_dir.glob('*.json'))
    }
   else:
-   rating_sources=path/'generation/country_rating_sources.json'
-   if rating_sources.is_file(): payload['country_rating_sources']=self._read_json(rating_sources)
+   sources=load_optional_legacy_history_catalog(path,'country_rating_sources.json')
+   if sources is not None: payload['country_rating_sources']=sources
   manifest_dir=path/'generation/observation_manifests'
   if manifest_dir.is_dir():
    manifests={
@@ -111,8 +113,7 @@ class WorldPackageRegistryService:
     for p in sorted(manifest_dir.glob('*.json'))
    }
   else:
-   rating_observations=path/'generation/country_rating_observation_datasets.json'
-   manifests=self._read_json(rating_observations) if rating_observations.is_file() else {}
+   manifests=load_optional_legacy_history_catalog(path,'country_rating_observation_datasets.json')
   if manifests:
    payload['country_rating_observation_datasets']={
     dataset_id:canonical_json_sha256(manifest) for dataset_id,manifest in sorted(manifests.items())
@@ -129,9 +130,9 @@ class WorldPackageRegistryService:
     ) for p in sorted(calibration_dir.glob('*.json'))
    }
   else:
-   calibration_catalog=path/'generation/country_rating_calibration_models.json'
-   if calibration_catalog.is_file():
-    catalog=self._read_json(calibration_catalog); payload['country_rating_calibration_models']=catalog
+   catalog=load_optional_legacy_history_catalog(path,'country_rating_calibration_models.json')
+   if catalog is not None:
+    payload['country_rating_calibration_models']=catalog
     models=catalog.get('models')
     if not isinstance(models,dict): raise ValueError('calibration catalogue models must be an object')
     payload['country_rating_calibration_files']={

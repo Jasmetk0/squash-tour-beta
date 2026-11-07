@@ -22,6 +22,21 @@ On the original checked-in source, all 40 Gold Editions lack `qualification_winn
 
 None of the 80 original Editions carries an explicit `native_announcement_week` override. The report checks presence, not validity, and gives only an upper bound for an in-Run announcement from the first match; Entry, WC or Draw can require an earlier date. `null` means no preceding in-Run week exists. `FAX-ACCEPT-WT-001` and `002` both start in SW1, so a Week-1 bootstrap alone cannot keep their dates and satisfy the full-week lead requirement. Preserving both dates needs an explicit pre-Run publication source or another owner-approved chronology. The audit does not create either, infer dates or move any Edition.
 
+### Admin check for one Saved Draw
+
+`GET /admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/draw/saved-native-preflight`
+takes `season` and `expected_saved_revision_id`. It authenticates the current
+Branch-owned Saved Calendar, Draw Input and Draw with the native feeder reader.
+It returns the Saved revision, Draw and feeder plan fingerprints for review and
+reports absent and invalid required point stages separately. It reads only the
+authored Edition table and does not consult a live category registry or apply
+default points. An unsaved or stale source returns a conflict.
+
+`point_table_status=complete` means coverage of required stage keys only.
+Ranked native execution is still unsupported; Unranked still requires the
+normal adoption preview, which validates schedule and announcement. This read
+does not adopt the Draw, publish an Edition or award points.
+
 ## Legacy native v2 gap codes
 
 | Code | Gap (not automatically repaired) |

@@ -228,3 +228,13 @@ They do not replace original Ranked/source/50-season gates. Small source/version
 contracts stay in Fast CI; the long new cases are smoke/full-suite tests in their
 dedicated matrix, avoiding duplicate execution in Fast CI. Existing relevant native
 Tour, Full Simulation and fork gates remain required.
+
+## Reproducible Fast CI dependencies
+
+Fast CI installs the Linux x86-64 CPython 3.11/3.12 wheels from
+`.github/requirements/fast-ci-linux.lock.txt` in a fresh environment. It checks
+wheel hashes, installed metadata and the runtime requirements in `pyproject.toml`.
+When a runtime requirement changes, update the lock and verify both Python jobs.
+The separate Windows packaging and acceptance workflows retain their own
+installation policies. Fast CI uses `web/package-lock.json` without npm lifecycle
+scripts; the normal frontend build and tests still run.

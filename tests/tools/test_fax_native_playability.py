@@ -2,8 +2,8 @@
 
 This is deliberately an adapter gap audit, not proof of 80 completed Editions.
 """
-from collections import Counter
 import json
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -12,11 +12,20 @@ from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
     PreAlphaFaxAcceptanceCalendarSource,
 )
 from beta_engine.application.season_calendar_service import SeasonCalendarService
-from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
-from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.application.season_category_points_service import (
+    SeasonCategoryPointsService,
+)
+from beta_engine.application.tournament_templates_service import (
+    TournamentTemplatesConfigService,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from tools.audit_fax_native_playability import (
-    SCHEMA, audit, build_current_source_report, classify_event, main,
+    SCHEMA,
+    _canonical_source_prerequisites,
+    audit,
+    build_current_source_report,
+    classify_event,
+    main,
 )
 
 pytestmark = pytest.mark.smoke
@@ -88,6 +97,54 @@ def test_actual_80_fax_calendar_gap_classifies_every_original_edition_with_exact
     assert Counter(code for row in rows for code in row["blocker_codes"]) == Counter(
         report["blocker_counts"]
     )
+
+
+@pytest.mark.pr_critical
+def test_original_canonical_readiness_uses_physical_main_and_each_qualification_section(tmp_path):
+    report = build_current_source_report(category_registry_path=tmp_path / "missing.json")
+    rows = report["editions"]
+    main = ["champion", "finalist", "semifinal", "quarterfinal", "round_of_16", "round_of_32"]
+    qualification = ["qualification_winner", "qualification_final", "qualification_semifinal"]
+    counts = Counter()
+    first_week_ids = []
+    for row in rows:
+        source = row["canonical_q_main_source_prerequisites"]
+        gold = row["source_main_draw_size"] == 24
+        q_stages = qualification if gold else [*qualification, "qualification_round"]
+        assert source["required_ranked_point_stages"] == [*main, *q_stages]
+        assert source["missing_ranked_point_stages"] == q_stages
+        assert source["invalid_ranked_point_stages"] == []
+        assert source["authored_ranked_point_values_complete"] is False
+        counts[source["expected_real_match_count"]] += 1
+        assert source["source_has_explicit_native_announcement"] is False
+        limit = source["latest_in_run_announcement_week_from_play_only"]
+        if limit is None:
+            first_week_ids.append(row["event_id"])
+        else:
+            assert limit == row["source_season_week"] - 1
+    assert counts == {35: 40, 51: 40}
+    assert first_week_ids == ["FAX-ACCEPT-WT-001", "FAX-ACCEPT-WT-002"]
+
+
+def test_gold_values_distinguish_explicit_zero_from_missing_r32_or_invalid_qualification(tmp_path):
+    event = next(e for e in _source(registry=tmp_path / "missing.json").build_calendar().events
+                 if e.main_draw_size == 24)
+    # Fully explicit test table; these values are not a Category proposal.
+    table = {stage: 0 for stage in event.required_ranking_point_stages}
+    table["round_of_32"] = 0
+    del table["qualification_round"]
+    fixture = event.model_copy(update={"ranking_points_table": table})
+    complete = _canonical_source_prerequisites(fixture)
+    assert complete["authored_ranked_point_values_complete"] is True
+
+    invalid = fixture.model_copy(update={"ranking_points_table": {
+        k: False if k == "qualification_final" else v for k, v in table.items()
+        if k != "round_of_32"
+    }})
+    failed = _canonical_source_prerequisites(invalid)
+    assert failed["authored_ranked_point_values_complete"] is False
+    assert failed["missing_ranked_point_stages"] == ["round_of_32"]
+    assert failed["invalid_ranked_point_stages"] == ["qualification_final"]
 
 
 @pytest.mark.pr_critical

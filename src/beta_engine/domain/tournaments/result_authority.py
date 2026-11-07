@@ -23,6 +23,7 @@ from beta_engine.application.season_event_results_service import (
 )
 from beta_engine.application.season_match_service import SeasonEventMatchPackage
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
+from beta_engine.domain.rankings.points import knockout_loss_point_stage
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
 from beta_engine.domain.tournaments.models import CalendarEvent
 
@@ -114,7 +115,7 @@ class TournamentResultAuthority(FrozenInput):
     matches: tuple[TournamentMatchResultAuthority, ...]
 
     @model_validator(mode="after")
-    def validate_result(self) -> "TournamentResultAuthority":
+    def validate_result(self) -> TournamentResultAuthority:
         player_ids = tuple(player.player_id for player in self.players)
         if len(player_ids) != len(set(player_ids)):
             raise ValueError("Tournament Result contains duplicate player identity")
@@ -548,7 +549,7 @@ def build_tournament_result_authority(
             loser["last_round"] = match.round_number
             loser["last_draw"] = match.draw_type
             loser["eliminated_by"] = match.winner_player_id
-            loser["stage"] = _loss_stage(
+            loser["stage"] = knockout_loss_point_stage(
                 draw_type=match.draw_type,
                 round_number=match.round_number,
                 final_round=(
@@ -795,26 +796,6 @@ def project_tournament_result_legacy_dto(
         validation_warnings=[],
         validation_errors=[],
     )
-
-
-def _loss_stage(*, draw_type: str, round_number: int, final_round: int) -> str:
-    distance = final_round - round_number
-    if draw_type == "qualification":
-        if distance == 0:
-            return "qualification_final"
-        if distance == 1:
-            return "qualification_semifinal"
-        return "qualification_round"
-    mapping = {
-        0: "finalist",
-        1: "semifinal",
-        2: "quarterfinal",
-        3: "round_of_16",
-        4: "round_of_32",
-        5: "round_of_64",
-        6: "round_of_128",
-    }
-    return mapping.get(distance, "main_draw_participant")
 
 
 def _hash(value: object) -> str:

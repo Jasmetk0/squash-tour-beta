@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field, StrictInt, field_validator
 
 from beta_engine.domain.countries import CountriesConfig, Country
 from beta_engine.domain.countries.rating_history import CountryRatingHistory, RATING_SCALE_V2
+from beta_engine.infrastructure.package_owned_paths import resolve_package_owned_file
 
 COUNTRIES_INDEX_SCHEMA = "world_package_countries_index.v1"
 COUNTRY_IDENTITY_SCHEMA = "world_package_country.v1"
@@ -112,28 +113,8 @@ def _read_object(path: Path) -> dict[str, Any]:
 
 
 def _safe_package_owned_file(root: Path, relative_path: str) -> Path:
-    if not isinstance(relative_path, str) or not relative_path or "\\" in relative_path:
-        raise ValueError("rating history path must be a non-empty portable relative path")
-    relative = Path(relative_path)
-    if relative.is_absolute() or any(part in {"", ".", ".."} for part in relative.parts):
-        raise ValueError(f"unsafe rating history path {relative_path!r}")
-    if root.is_symlink():
-        raise ValueError("rating history package root must not be a symlink")
-    root_resolved = root.resolve()
-    cursor = root
-    for part in relative.parts:
-        cursor = cursor / part
-        if cursor.is_symlink():
-            raise ValueError(f"rating history path uses symlink {relative_path!r}")
-    try:
-        resolved = (root / relative).resolve(strict=True)
-    except OSError as exc:
-        raise ValueError(f"rating history file is unavailable: {relative_path}") from exc
-    if not resolved.is_relative_to(root_resolved):
-        raise ValueError(f"rating history path escapes package root: {relative_path!r}")
-    if not resolved.is_file():
-        raise ValueError(f"rating history path is not a regular file: {relative_path!r}")
-    return resolved
+    return resolve_package_owned_file(root, relative_path, label="rating history package")
+
 
 def _write_json_atomic(path: Path, payload: object) -> None:
     if path.is_symlink() or path.parent.is_symlink():

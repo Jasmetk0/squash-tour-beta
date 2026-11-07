@@ -489,3 +489,55 @@ def test_source_and_calibration_symlink_shards_are_rejected(tmp_path):
             if check.status == "failed"
         )
         assert registry.get_package(world_id) is None
+
+
+@pytest.mark.parametrize(
+    ("catalog", "message"),
+    [
+        ("country_rating_sources.json", "source catalogue"),
+        ("country_rating_observation_datasets.json", "observation dataset catalogue"),
+        ("country_rating_calibration_models.json", "calibration catalogue"),
+    ],
+)
+def test_legacy_history_catalogs_must_be_package_owned(tmp_path, catalog, message):
+    root, world_id = _build_portable_test_package(tmp_path, derived=True)
+    generation = root / world_id / "generation"
+    for directory, legacy_file in (
+        ("sources", "country_rating_sources.json"),
+        ("observation_manifests", "country_rating_observation_datasets.json"),
+    ):
+        shards = generation / directory
+        aggregate = {path.stem: json.loads(path.read_text()) for path in shards.glob("*.json")}
+        (generation / legacy_file).write_text(json.dumps(aggregate))
+        shutil.rmtree(shards)
+
+    model_id = "synthetic-calibration.v1"
+    model_file = f"{model_id}.json"
+    (generation / "calibration" / model_file).rename(generation / model_file)
+    shutil.rmtree(generation / "calibration")
+    (generation / "country_rating_calibration_models.json").write_text(json.dumps({
+        "models": {model_id: {"relative_path": f"generation/{model_file}"}},
+    }))
+
+    registry = WorldPackageRegistryService(world_packages_root=root)
+    service = WorldPackageValidationService(registry)
+    assert service.validate_package(world_id).status == "valid"
+    assert registry.get_package(world_id) is not None
+
+    original = generation / catalog
+    outside = tmp_path / catalog
+    original.rename(outside)
+    original.symlink_to(outside)
+
+    def assert_catalog_is_rejected():
+        result = service.validate_package(world_id)
+        assert result.status == "errors"
+        assert any(
+            check.status == "failed" and message in check.message and "symlink" in check.message
+            for check in result.checks
+        )
+        assert registry.get_package(world_id) is None
+
+    assert_catalog_is_rejected()
+    outside.unlink()
+    assert_catalog_is_rejected()  # A dangling link is not an absent optional catalog.

@@ -8,6 +8,7 @@ previously required persisted national ``style_dna``.
 
 from __future__ import annotations
 
+import json
 import shutil
 from pathlib import Path
 
@@ -24,6 +25,61 @@ _V1_RATING_FIELDS = (
     "elite_support",
     "squash_tradition",
 )
+
+
+@pytest.mark.pr_critical
+def test_population_coverage_validation_returns_structured_errors_and_preserves_legacy(tmp_path):
+    from beta_engine.domain.countries import CountriesConfig
+    from tests.support.world_packages import materialize_test_world_package
+
+    world_id = "coverage_test_world"
+    worlds_root = tmp_path / "worlds"
+    countries = CountriesConfig.model_validate(_suite.COUNTRIES_FIXTURE)
+    root = materialize_test_world_package(worlds_root / "custom", countries, world_id=world_id)
+    metadata_path = root / "world.json"
+    metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
+
+    with _suite.ApiServer(
+        database_url=f"sqlite:///{tmp_path / 'coverage.db'}",
+        countries_config_path=str(tmp_path / "unused-countries.json"),
+        manual_overrides_config_path=str(tmp_path / "unused-overrides.json"),
+        worlds_root=str(worlds_root),
+    ) as server:
+        endpoint = f"{server.base_url}/world/packages/{world_id}/validation"
+
+        def inspect(declaration, *, present=True):
+            body = dict(metadata)
+            if present:
+                body["population_years"] = declaration
+            metadata_path.write_text(json.dumps(body), encoding="utf-8")
+            status, result = _suite._request("GET", endpoint)
+            assert status == 200
+            checks = [check for check in result["checks"] if check["code"] == "population_coverage_valid"]
+            return result["status"], checks
+
+        assert inspect(None, present=False) == ("valid", [])
+        status, checks = inspect({"from": 2020, "to": 2020})
+        assert status == "valid" and checks[0]["status"] == "passed"
+
+        for declaration in (
+            None, [], {}, {"from": 2021, "to": 2020},
+            {"from": 2020, "to": "2050"}, {"from": True, "to": 2050},
+            {"from": 1954, "to": 2050}, {"from": 1955, "to": 10**12},
+        ):
+            status, checks = inspect(declaration)
+            assert status == "errors" and len(checks) == 1
+            assert checks[0]["status"] == "failed"
+            assert "population_years" in checks[0]["message"]
+
+        status, checks = inspect({"from": 2020, "to": 2021})
+        assert status == "errors" and checks[0]["status"] == "failed"
+        assert "2021" in checks[0]["message"]
+
+        population_path = root / "countries/AAA/attributes/population.json"
+        population_path.write_text("{}", encoding="utf-8")
+        status, checks = inspect({"from": 2020, "to": 2020})
+        assert status == "errors"
+        assert not any(check["status"] == "passed" for check in checks)
 
 
 def _country_update_payload(detail: dict[str, object]) -> dict[str, object]:

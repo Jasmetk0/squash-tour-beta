@@ -61,6 +61,13 @@ def test_source_week_preview_on_real_saved_earth_clock_is_nondestructive(tmp_pat
         assert preview["selected_atp_years"] == [2025, 2026]
         assert preview["calendar"]["weeks_per_year"] == 52
         assert preview["calendar"]["start_year"] == 2025
+        chengdu = next(row for row in preview["events"]
+                       if row["source_identity"] == "atp_2025_chengdu")
+        assert chengdu["run_weeks"][0]["year_week"] == 38
+        assert chengdu["source_finish_run_week"]["year_week"] == 39
+        assert chengdu["source_finish_run_ordinal"] == chengdu["run_ordinals"][-1] + 1
+        assert chengdu["source_finish_after_mapped_occupancy"] is True
+        assert chengdu["source_finish_is_not_sporting_result_closure"] is True
         assert len(preview["events"]) > 80
         assert any(
             e["atp_season_year"] == 2026 and

@@ -108,6 +108,35 @@ def preview_atp_earth_weeks_on_run(
             raise ValueError(f"Noncontiguous native ATP weeks: {identity}")
         if run_positions[-1]["calendar_year"] != year:
             raise ValueError(f"ATP season closure in another calendar year: {identity}")
+
+        # A compressed one-week tournament may finish in the *following*
+        # source ISO week. Preserve that finish label on the same native Run
+        # clock; it is NOT permission to close matches, rankings or results.
+        source_finish = row.get("source_finish_iso_week")
+        review_flags = row.get("review_flags")
+        if not isinstance(source_finish, dict) or not isinstance(review_flags, list):
+            raise ValueError(f"Missing source finish/flags for {identity}")
+        if any(not isinstance(flag, str) for flag in review_flags):
+            raise ValueError(f"Invalid source review flag for {identity}")
+        finish_year, finish_week = (
+            source_finish.get("calendar_year"), source_finish.get("year_week")
+        )
+        if (type(finish_year) is not int or type(finish_week) is not int
+                or finish_year != year or not 1 <= finish_week <= 52):
+            raise ValueError(f"Invalid source finish week for {identity}")
+        finish_position = calendar.calendar_to_season(finish_year, finish_week)
+        if finish_position is None:
+            raise ValueError(f"ATP source finish outside Run horizon: {identity}")
+        finish_ordinal = calendar.ordinal(
+            finish_position.season_index, finish_position.season_week
+        )
+        if calendar.position_at_ordinal(finish_ordinal) != finish_position:
+            raise ValueError("Run Calendar source-finish round trip disagrees")
+        finish_after_occupancy = finish_ordinal != ordinals[-1]
+        flagged_late_finish = "single_week_majority_precedes_finish_week" in review_flags
+        if (finish_after_occupancy != flagged_late_finish
+                or (finish_after_occupancy and finish_ordinal != ordinals[-1] + 1)):
+            raise ValueError(f"ATP source finish/occupancy mismatch: {identity}")
         preview.append({
             "source_identity": identity,
             "atp_season_year": year,
@@ -115,8 +144,12 @@ def preview_atp_earth_weeks_on_run(
             "source_start_date": row["original_start_date"],
             "source_end_date": row["original_end_date"],
             "source_finish_iso_week": row["source_finish_iso_week"],
+            "source_finish_run_week": asdict(finish_position),
+            "source_finish_run_ordinal": finish_ordinal,
+            "source_finish_after_mapped_occupancy": finish_after_occupancy,
+            "source_finish_is_not_sporting_result_closure": True,
             "mapping_rule": row["mapping_rule"],
-            "review_flags": list(row["review_flags"]),
+            "review_flags": list(review_flags),
             "run_weeks": run_positions,
             "run_ordinals": ordinals,
             "requires_sporting_round_and_slot_design": True,
@@ -153,6 +186,7 @@ def preview_atp_earth_weeks_on_run(
             },
             "three_week_sporting_review_required": three_week,
             "short_majority_before_finish_review_required": compressed_finishes,
+            "native_finish_week_is_reference_only": True,
             "sporting_ready": False,
         },
         "events": preview,

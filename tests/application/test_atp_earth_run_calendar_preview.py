@@ -52,6 +52,16 @@ def test_all_2407_mapped_to_real_run_clock_with_no_sporting_install(full):
     assert full["requires_explicit_confirmation_and_save_for_future_import"] is True
     assert len(full["summary"]["three_week_sporting_review_required"]) == 3
     assert len(full["summary"]["short_majority_before_finish_review_required"]) == 26
+    assert full["summary"]["native_finish_week_is_reference_only"] is True
+    assert sum(r["source_finish_after_mapped_occupancy"] for r in full["events"]) == 26
+    assert all(
+        r["source_finish_run_week"]["calendar_year"]
+        == r["source_finish_iso_week"]["calendar_year"]
+        and r["source_finish_run_week"]["year_week"]
+        == r["source_finish_iso_week"]["year_week"]
+        and r["source_finish_is_not_sporting_result_closure"] is True
+        for r in full["events"]
+    )
     assert len({r["source_identity"] for r in full["events"]}) == 2407
     assert all(
         r["requires_sporting_round_and_slot_design"] is True
@@ -94,6 +104,12 @@ def test_majority_week_and_recorded_finish_remain_distinct(full):
         "calendar_year": 2016, "year_week": 24
     }
     assert "single_week_majority_precedes_finish_week" in stuttgart["review_flags"]
+    assert stuttgart["source_finish_run_week"]["year_week"] == 24
+    assert stuttgart["source_finish_run_ordinal"] == stuttgart["run_ordinals"][-1] + 1
+    assert stuttgart["source_finish_after_mapped_occupancy"] is True
+    ordinary = _event(full, 2013, "brisbane")
+    assert ordinary["source_finish_after_mapped_occupancy"] is False
+    assert ordinary["source_finish_run_ordinal"] == ordinary["run_ordinals"][-1]
 
 
 def test_year_slice_is_deterministic_and_cannot_look_outside_run(mapping):
@@ -182,3 +198,35 @@ def test_missing_or_forged_source_mapping_fails_closed(mapping):
         preview_atp_earth_weeks_on_run(
             calendar=cal, mapping=forged, years=[2026]
         )
+
+
+def test_forged_source_finish_cannot_authorize_a_different_closure_week(mapping):
+    cal = RunCalendar.earth_default(start_year=2025, season_count=2)
+    rows = list(mapping["mappings"])
+    idx = next(i for i, row in enumerate(rows)
+               if row["source_identity"] == "atp_2025_chengdu")
+    row = dict(rows[idx], source_finish_iso_week={
+        "calendar_year": 2025, "year_week": 40
+    })
+    rows[idx] = row
+    with pytest.raises(ValueError, match="finish/occupancy mismatch"):
+        preview_atp_earth_weeks_on_run(
+            calendar=cal, mapping=dict(mapping, mappings=rows), years=[2025]
+        )
+
+
+def test_native_finish_week_respects_nondefault_run_offset(mapping):
+    clock = RunCalendar(
+        weeks_per_year=52, season_start_year_week=37,
+        start_year=2024, season_count=3
+    )
+    preview = preview_atp_earth_weeks_on_run(
+        calendar=clock, mapping=mapping, years=[2025]
+    )
+    chengdu = _event(preview, 2025, "chengdu")
+    assert chengdu["run_weeks"][0]["year_week"] == 38
+    assert chengdu["source_finish_run_week"]["year_week"] == 39
+    assert chengdu["source_finish_run_week"]["season_week"] == (
+        chengdu["run_weeks"][-1]["season_week"] + 1
+    )
+    assert chengdu["source_finish_run_ordinal"] == chengdu["run_ordinals"][-1] + 1

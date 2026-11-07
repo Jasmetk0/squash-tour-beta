@@ -122,6 +122,20 @@ revision. Implementing a snapshot-bound playable import requires a separate
 package-source/Saved Revision authority and a reviewable, explicitly
 confirmed target diff.
 
+The HTTP and pure previews now also return `source_finish_run_week` and
+`source_finish_run_ordinal` for each event, derived from its *original*
+source-finish ISO week and the actual Saved Run clock. These are deliberately
+separate from `run_weeks` / `run_ordinals`, which represent mapped
+occupancy. A `source_finish_after_mapped_occupancy` flag identifies the 26
+short source events with a later finish-week label; an explicit
+`source_finish_is_not_sporting_result_closure=true` prohibits interpreting
+this metadata as permission to post match results, publish rankings or
+advance Simulation Slots. Source-finish positions obey the same W52,
+season-offset, horizon and forward/reverse validation; mismatched review
+flags and impossible finish positions fail closed. Real HTTP/SQLite tests
+cover the preserved distinction across a restart. No business-side
+sporting completion policy is selected.
+
 The endpoint accepts repeated year= query parameters, e.g. year=2025&year=2026.
 If omitted it requests **all 37 years**, requiring a Run horizon covering all
 selected years. Requests for an out-of-range year, a W61/legacy Run, wrong

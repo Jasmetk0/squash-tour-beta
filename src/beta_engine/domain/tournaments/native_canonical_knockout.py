@@ -119,8 +119,12 @@ def is_canonical_edition(authority):
 
 def canonical_edition_plan(authority, matches):
     plan = authority.canonical_binding.plan(authority.draw)
-    event_id = authority.edition.edition_id
-    selected = tuple(m for mid, m in matches.items() if mid.startswith(event_id + ":"))
+    # Edition IDs can share a prefix. Only exact executable nodes belong here.
+    selected = tuple(
+        matches[node.match_id]
+        for node in plan.topology.plans
+        if node.match_id in matches
+    )
     progress = native_progress(plan, selected)
     ready = {m.match_id: m.player_ids for m in progress.ready_matches}
     accepted = {
@@ -224,22 +228,22 @@ class NativeCanonicalTournamentResult(FrozenInput):
 
 def completed_canonical_result(authority, slots, *, owner=None):
     plan = authority.canonical_binding.plan(authority.draw)
-    selected = tuple(
-        m
-        for s in slots
-        for m in s.accepted
-        if m.match_id.startswith(authority.edition.edition_id + ":")
-    )
+    event_id = authority.edition.edition_id
+    selected = []
+    for slot in slots:
+        # Use the frozen slot owner, so an invalid node assigned to this Edition
+        # still reaches the feeder validator. Ignore only other Editions' matches.
+        scheduled_ids = {
+            match.match_id for match in slot.scheduled if match.edition_id == event_id
+        }
+        if scheduled_ids:
+            selected.extend(m for m in slot.accepted if m.match_id in scheduled_ids)
     # Never hide a duplicated ledger record by collapsing it to a dictionary.
-    progress = native_progress(plan, selected)
+    progress = native_progress(plan, tuple(selected))
     records = {m.match_id: m for m in selected}
     if not progress.champion_player_id:
         return None
-    first = next(
-        s
-        for s in slots
-        if any(m.edition_id == authority.edition.edition_id for m in s.scheduled)
-    )
+    first = next(s for s in slots if any(m.edition_id == event_id for m in s.scheduled))
     if owner is not None and owner != first.branch_id:
         raise ValueError(
             "Canonical native fork continuation requires its versioned source remapping"

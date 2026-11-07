@@ -1,6 +1,7 @@
 """Versioned native contracts retain exact source and fail closed at boundaries."""
 
 import json
+from types import SimpleNamespace
 
 import pytest
 from pydantic import ValidationError
@@ -38,9 +39,15 @@ def fax_source(tmp_path_factory):
 
 @pytest.fixture
 def authority(fax_source):
+    return _authority(fax_source)
+
+
+def _authority(fax_source, *, event_id_suffix=""):
     clock = RunCalendar(61, 37, 2000, 3)
-    event = next(e for e in fax_source[0].events if e.main_draw_size == 32).model_copy(
+    original = next(e for e in fax_source[0].events if e.main_draw_size == 32)
+    event = original.model_copy(
         update={
+            "event_id": original.event_id + event_id_suffix,
             "ranking_status": type(fax_source[0].events[0].ranking_status)("unranked"),
             "duration_in_season_weeks": 1,
             "season_week": 4,
@@ -331,8 +338,6 @@ def test_canonical_slot_cannot_downgrade_to_an_untagged_legacy_match(authority):
 def test_derived_terminal_does_not_silently_collapse_duplicate_ledger_records(
     authority,
 ):
-    from types import SimpleNamespace
-
     plan = authority.canonical_binding.plan(authority.draw)
     record = SimpleNamespace(
         match_id=plan.topology.plans[0].match_id,
@@ -340,8 +345,53 @@ def test_derived_terminal_does_not_silently_collapse_duplicate_ledger_records(
     )
     with pytest.raises(ValueError, match="Duplicate"):
         completed_canonical_result(
-            authority, (SimpleNamespace(accepted=(record, record)),)
+            authority, (_slot_match_receipts(authority, record, record),)
         )
+
+
+def _slot_match_receipts(authority, *accepted):
+    return SimpleNamespace(
+        accepted=accepted,
+        scheduled=(
+            SimpleNamespace(
+                edition_id=authority.edition.edition_id,
+                match_id=accepted[0].match_id,
+            ),
+        ),
+    )
+
+
+@pytest.mark.parametrize("projection", ("schedule", "terminal"))
+def test_shared_slots_keep_prefix_neighbour_matches_with_their_exact_edition(
+    authority,
+    fax_source,
+    projection,
+):
+    # Both source identities are valid. The second match belongs to a different
+    # Edition even though the first Edition's ID is a prefix of its match ID.
+    other = _authority(fax_source, event_id_suffix=":parallel")
+    other_plan = other.canonical_binding.plan(other.draw)
+    record = SimpleNamespace(
+        match_id=other_plan.topology.plans[0].match_id,
+        week=other.edition.week,
+    )
+    assert record.match_id.startswith(authority.edition.edition_id + ":")
+    if projection == "schedule":
+        assert canonical_edition_plan(authority, {record.match_id: record}) == (
+            canonical_edition_plan(authority, {})
+        )
+    else:
+        assert (
+            completed_canonical_result(
+                authority, (_slot_match_receipts(other, record),)
+            )
+            is None
+        )
+        # A foreign node attributed to this Edition remains invalid.
+        with pytest.raises(ValueError, match="foreign"):
+            completed_canonical_result(
+                authority, (_slot_match_receipts(authority, record),)
+            )
 
 
 def test_future_adoption_retains_source_announcement_across_strict_horizon_extension(

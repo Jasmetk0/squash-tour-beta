@@ -86,8 +86,8 @@ function Inventory(enabled=true) {
 function SourceNote({category}:{category?:PackageCategory}):JSX.Element {
   const {language}=useLanguage(), cs=language==='cs'
   return <p className="status">{cs
-    ? 'Pouze World Packages mají nyní sjednocený registr přenosných balíčků. Šablony ani závislosti nejsou automaticky balíčky.'
-    : 'Only World Packages currently have a unified portable source registry. Templates and dependencies are not automatically packages.'}
+    ? 'World má obecný registr; ATP Tour je výslovně oddělený historický zdroj. Šablony ani závislosti nejsou automaticky balíčky.'
+    : 'World has a general registry; ATP Tour is a distinct fixed historical source. Templates and dependencies are not automatically packages.'}
     {category && tools[category] && <> · <Link to={tools[category]!}>{cs?'Zdrojové nástroje':'Source tools'} →</Link></>}
   </p>
 }
@@ -106,8 +106,13 @@ export function PackagesHomePage():JSX.Element {
   const {language}=useLanguage(), cs=language==='cs', {query,items}=Inventory()
   return <section className="panel package-index">
     <div className="page-intro"><h2>{cs?'Balíčky':'Packages'}</h2>
-      <p className="subtitle">{cs?'Rozcestník zdrojových kategorií bez otevřeného Runu. Aktuální přenosný registr obsahuje pouze World Packages.':'Source-category hub without an active Run. Only World Packages have a portable registry today.'}</p></div>
+      <p className="subtitle">{cs?'Rozcestník zdrojových kategorií. World má přenosný registr; ATP Tour má samostatný historický referenční Setup.':'Source-category hub. World has a portable registry; ATP Tour has a separate historical reference Setup.'}</p></div>
     <p><Link className="button-link" to="/admin/packages/all">{cs?'Všechny balíčky':'All packages'} →</Link></p>
+    <p><Link to="/admin/packages/atp-tour-reference">{cs
+      ? 'ATP Tour 1990–2026: historické Category + Series'
+      : 'ATP Tour 1990–2026: historical Category + Series'}</Link>
+      {' · '}<span className="status">{cs?'Reference, nikoliv hratelný kalendář':'Reference only, not a playable calendar'}</span>
+    </p>
     {query.isPending && <p role="status">{cs?'Načítám registry…':'Loading registry…'}</p>}
     {query.isError && <><p className="error" role="alert">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}
     {query.isSuccess && <RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} />}
@@ -162,6 +167,12 @@ export function PackagesListPage():JSX.Element {
         <option value="countries">{cs?'Podle počtu zemí sestupně':'By country count descending'}</option>
       </select></label>
     </div>}
+    {(cat==='all'||cat==='category'||cat==='series'||cat==='setup')&&
+      <p><Link to="/admin/packages/atp-tour-reference">{cs
+        ? 'ATP Tour 1990–2026 – zdrojový Category/Series Setup'
+        : 'ATP Tour 1990–2026 – source Category/Series Setup'}</Link>
+        {' · '}<span className="status">{cs?'Samostatné historické reference':'Separate historical references'}</span>
+      </p>}
     {!registrySupported && <p role="status" className="status">{cs?'Z této kategorie zatím nemáme ověřený inventář balíčků.':'A verified package inventory for this category is not yet available.'}</p>}
     {registrySupported && query.isPending && <p role="status">{cs?'Načítám…':'Loading…'}</p>}
     {registrySupported && query.isError && <><p role="alert" className="error">{cs ? 'Registr balíčků se nepodařilo načíst: ' : 'Package registry failed to load: '}{formatApiError(query.error)}</p><RetryRead cs={cs} what="catalog" fetching={query.isFetching} onRetry={() => { void query.refetch() }} /></>}

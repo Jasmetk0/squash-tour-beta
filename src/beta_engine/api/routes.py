@@ -38,7 +38,7 @@ from beta_engine.api.routers.admin_categories import router as admin_categories_
 from beta_engine.api.routers.admin_tournaments import router as admin_tournaments_router
 from beta_engine.api.routers.admin_tour_seasons_validation import router as admin_tour_seasons_validation_router
 from beta_engine.api.routers.admin_run_branches import router as admin_run_branches_router
-from beta_engine.api.routers.admin_run_packages import router as admin_run_packages_router
+from beta_engine.api.routers.admin_run_packages import router as admin_run_packages_router, atp_reference_catalog_router
 from beta_engine.api.routers.admin_run_home import router as admin_run_home_router
 from beta_engine.api.routers.admin_country_match_records import router as admin_country_match_records_router
 from beta_engine.api.routers.config import router as config_router
@@ -110,6 +110,7 @@ router.include_router(admin_tournaments_router)
 router.include_router(admin_tour_seasons_validation_router)
 router.include_router(admin_run_branches_router)
 router.include_router(admin_run_packages_router)
+router.include_router(atp_reference_catalog_router)
 router.include_router(admin_run_home_router)
 router.include_router(admin_country_match_records_router)
 router.include_router(countries_router)

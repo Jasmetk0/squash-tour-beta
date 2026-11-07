@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "package_type": "Category",
+  "package_id": "atp_tour_1990_2026_category",
+  "source_version": 1,
+  "provenance": {
+    "created_for": "Squash Engine ATP Tour 1990–2026 historical reference (not ATP-endorsed)",
+    "reference_span": {
+      "from": 1990,
+      "to": 2026
+    },
+    "governing_scope": "ATP Tour main circuit and ATP-operated Finals/Next Gen exhibition event only; no Grand Slams, ITF, ATP Challenger Tour or partner team competitions",
+    "runtime_status": "data_only_no_semantic_adapters_or_sporting_consumers",
+    "coverage_status": "PARTIAL_HISTORICAL_REGISTRY",
+    "competition_source": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+    "ranking_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+    "calendar_2026": "https://www.atptour.com/en/news/what-is-the-2026-atp-tour-calendar",
+    "notes": [
+      "Historic family labels; category/series presence does not mean every edition occurred.",
+      "2026 1000/500/250 title points are contemporary, not historical universal points.",
+      "Next Gen ATP Finals is ATP-operated, but no ordinary ATP ranking points."
+    ]
+  },
+  "explicit_scope": [
+    "tennis.atp_tour.category.reference.1990_2026"
+  ],
+  "entities": [
+    {
+      "source_entity_id": "atp_finals",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "Nitto ATP Finals",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 1500,
+        "points_interpretation": "undefeated_round_robin_maximum",
+        "reference_year": 2026,
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "historical_label": "ATP Tour World Championships",
+            "source_url": "https://www.nittoatpfinals.com/en/heritage/history"
+          },
+          {
+            "from": 2000,
+            "to": 2008,
+            "historical_label": "Tennis Masters Cup",
+            "source_url": "https://www.nittoatpfinals.com/en/heritage/history"
+          },
+          {
+            "from": 2009,
+            "to": 2026,
+            "historical_label": "ATP Finals",
+            "source_url": "https://www.nittoatpfinals.com/en/heritage/history"
+          }
+        ],
+        "historical_coverage": "documented_family_only_not_all_annual_rules",
+        "singles_points_special_2026": {
+          "round_robin_win": 200,
+          "semifinal_win": 400,
+          "final_win": 500,
+          "max_undefeated": 1500
+        },
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_masters_1000",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP Masters 1000",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 1000,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2009,
+            "to": 2026,
+            "historical_label": "ATP Masters 1000",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3",
+            "notes": ""
+          }
+        ],
+        "historical_coverage": "documented_family_only_not_all_annual_rules",
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_500",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP Tour 500",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 500,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2009,
+            "to": 2026,
+            "historical_label": "ATP Tour 500",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2017/2017-atp-media-guide.pdf",
+            "notes": ""
+          }
+        ],
+        "historical_coverage": "documented_family_only_not_all_annual_rules",
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_250",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP Tour 250",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": 250,
+        "points_interpretation": "standard_main_draw",
+        "reference_year": 2026,
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2009,
+            "to": 2026,
+            "historical_label": "ATP Tour 250",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2017/2017-atp-media-guide.pdf",
+            "notes": ""
+          }
+        ],
+        "historical_coverage": "documented_family_only_not_all_annual_rules",
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "next_gen_finals",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "Next Gen ATP Finals",
+        "governing_body": "ATP",
+        "event_family": "atp",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "special_no_standard_ranking_points",
+        "reference_year": 2026,
+        "not_squash_rules": true,
+        "history_periods": [
+          {
+            "from": 2017,
+            "to": 2026,
+            "historical_label": "Next Gen ATP Finals",
+            "source_url": "https://www.atptour.com/-/media/files/media-guide/2017/2017-atp-media-guide.pdf",
+            "notes": "no standard ATP singles ranking-point award"
+          }
+        ],
+        "historical_coverage": "documented_family_only_not_all_annual_rules",
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards",
+        "not_normal_tour_ranking_event": true
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_championship_single_week",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP Championship Series Single Week / Super 9",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1995,
+            "historical_label": "ATP Championship Series, Single Week",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3"
+          },
+          {
+            "from": 1996,
+            "to": 1999,
+            "historical_label": "Super 9",
+            "source_url": "https://www.atptour.com/en/news/atp-50-moments-longform-part-3"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_championship_series",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP Championship Series (legacy tier)",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "historical_label": "ATP Championship Series",
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_world_series",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP World Series (legacy tier)",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 1990,
+            "to": 1999,
+            "historical_label": "ATP World Series",
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "tennis_masters_series",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "Tennis Masters Series",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2008,
+            "historical_label": "Tennis Masters Series",
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_international_series_gold",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP International Series Gold",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2008,
+            "historical_label": "ATP International Series Gold",
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    },
+    {
+      "source_entity_id": "atp_international_series",
+      "entity_kind": "tennis.category.reference.v1",
+      "entity_schema_version": 1,
+      "scope": "tennis.atp_tour.category.reference.1990_2026",
+      "payload": {
+        "name": "ATP International Series",
+        "reference_year": null,
+        "governing_body": "historic_source_dependent",
+        "event_family": "historical",
+        "singles_winner_or_maximum_points_2026": null,
+        "points_interpretation": "historical_points_not_backfilled",
+        "not_squash_rules": true,
+        "historical_coverage": "historical_category_existence_only",
+        "history_periods": [
+          {
+            "from": 2000,
+            "to": 2008,
+            "historical_label": "ATP International Series",
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis"
+          }
+        ],
+        "history_scope": "category_label_effective_span_only_not_historically_complete_point_awards"
+      },
+      "references": [],
+      "valid": true
+    }
+  ],
+  "children": [],
+  "parent_source_fingerprint": null
+}

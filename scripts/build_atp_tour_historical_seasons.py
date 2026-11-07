@@ -1,0 +1,450 @@
+"""Resolve ATP Tour-only historical Category/Series reference seasons, 1990–2026.
+
+The current source registry is intentionally incomplete for some historical years:
+an absent tournament means not verified, NEVER proof it did not exist.
+No Calendar Editions, played results, Run mutation, ranking or squash logic.
+Run: python scripts/build_atp_tour_historical_seasons.py --check | --write
+"""
+from __future__ import annotations
+
+import argparse
+import json
+from pathlib import Path
+from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
+SOURCE = ROOT / "config" / "reference_packages" / "atp_tour_1990_2026"
+TARGET = SOURCE / "seasons_1990_2026.json"
+FIRST, LAST = 1990, 2026
+
+# Source-backed ATP singles main Tour tier rosters. These expected counts
+# describe *played events* (never cancelled Series identities), and are
+# intentionally NOT backfilled from any present-day calendar to older years.
+# Official archive: https://www.atptour.com/en/scores/results-archive?year=YYYY
+# 2000–2008 predate the ATP 1000/500/250 tier rebrand. Do not map Gold
+# into 500 or International into 250; evidence is category-effective.
+# 1990–1999 original ATP era had a different native Tier vocabulary.
+# Never map these names onto post-2000 Masters/Gold/International results.
+PRE_2000_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    1990: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 53,
+    },
+    1991: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 54,
+    },
+    1992: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 56,
+    },
+    1993: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 62,
+    },
+    1994: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 63,
+    },
+    1995: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 59,
+    },
+    1996: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 11,
+        "atp_world_series": 57,
+    },
+    1997: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 53,
+    },
+    1998: {
+        "atp_championship_single_week": 9,
+        "atp_championship_series": 12,
+        "atp_world_series": 52,
+    },
+    1999: {
+        "atp_championship_single_week": 9,  # Original ATP Super 9 label in 1999
+        "atp_championship_series": 11,
+        "atp_world_series": 45,
+    },
+}
+
+HISTORIC_PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2000: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 11,
+        "atp_international_series": 44,
+    },
+    2001: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 46,
+    },
+    2002: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43,
+    },
+    2003: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    },
+    2004: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    },
+    2005: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    },
+    2006: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 44,
+    },
+    2007: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 43,
+    },
+    2008: {
+        "tennis_masters_series": 9,
+        "atp_international_series_gold": 9,
+        "atp_international_series": 42,
+    },
+}
+
+PLAYED_TIER_COUNTS: dict[int, dict[str, int]] = {
+    2009: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
+    2010: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
+    2011: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
+    2012: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
+    2013: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 40},
+    2014: {"atp_masters_1000": 9, "atp_500": 11, "atp_250": 39},
+    2015: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 39},
+    2016: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 39},
+    2017: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 40},
+    2018: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 40},
+    2019: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 39},
+    2020: {"atp_masters_1000": 3, "atp_500": 7, "atp_250": 18},
+    2021: {"atp_masters_1000": 8, "atp_500": 9, "atp_250": 39},
+    2022: {"atp_masters_1000": 8, "atp_500": 13, "atp_250": 42},
+    2023: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 38},
+    2024: {"atp_masters_1000": 9, "atp_500": 13, "atp_250": 38},
+    2025: {"atp_masters_1000": 9, "atp_500": 16, "atp_250": 30},
+}
+
+
+
+def _active(periods: list[dict[str, Any]], year: int) -> list[dict[str, Any]]:
+    return [p for p in periods if p["from"] <= year <= p["to"]]
+
+
+def _era(year: int) -> str:
+    if year < 2000:
+        return "atp_tour_championship_and_world_series"
+    if year < 2009:
+        return "tennis_masters_and_international_series"
+    return "atp_masters_1000_500_250"
+
+
+
+def _validate_year_effective_source_metadata(entity: dict[str, Any]) -> None:
+    """Reject source metadata that disagrees with recorded effective membership.
+
+    Historical venues are intentionally sparse: this validates records that
+    exist without pretending every active Series year has a verified host.
+    """
+    payload = entity["payload"]
+    series_id = entity["source_entity_id"]
+    periods = payload["history_periods"]
+    effective_2026 = _active(periods, LAST)
+    expected_2026 = effective_2026[0]["category_id"] if effective_2026 else None
+    if payload.get("category_id_2026") != expected_2026:
+        raise ValueError("2026 Series category mismatch: " + series_id)
+    present_fields = ("host_city_2026", "host_country_code_2026", "surface_2026")
+    if expected_2026 is None:
+        if any(payload.get(field) is not None for field in present_fields):
+            raise ValueError("Inactive 2026 Series has current venue: " + series_id)
+    elif any(not isinstance(payload.get(field), str) or not payload[field].strip()
+             for field in present_fields):
+        raise ValueError("Active 2026 Series missing venue/surface: " + series_id)
+
+    host_history = payload.get("historical_host_change", [])
+    if not isinstance(host_history, list):
+        raise ValueError("Invalid historical hosts: " + series_id)
+    seen_years: set[int] = set()
+    for host in host_history:
+        if not isinstance(host, dict):
+            raise ValueError("Invalid historical hosts: " + series_id)
+        year = host.get("year")
+        if (type(year) is not int or not FIRST <= year <= LAST
+                or year in seen_years or not _active(periods, year)
+                or not isinstance(host.get("city"), str) or not host["city"].strip()
+                or not isinstance(host.get("country_code"), str)
+                or len(host["country_code"]) != 3
+                or not host["country_code"].isupper()
+                or not isinstance(host.get("source_url"), str)
+                or not host["source_url"].startswith("https://")):
+            raise ValueError("Invalid historical host year/evidence: " + series_id)
+        seen_years.add(year)
+        if year == LAST and (
+            host["city"] != payload["host_city_2026"]
+            or host["country_code"] != payload["host_country_code_2026"]
+        ):
+            raise ValueError("2026 historical host mismatch: " + series_id)
+
+
+def build(
+    category_doc: dict[str, Any], series_doc: dict[str, Any]
+) -> dict[str, Any]:
+    if category_doc["package_type"] != "Category" or series_doc["package_type"] != "Series":
+        raise ValueError("Expected one Category and one Series Package")
+    if (category_doc["package_id"], series_doc["package_id"]) != (
+        "atp_tour_1990_2026_category", "atp_tour_1990_2026_series"
+    ):
+        raise ValueError("Unexpected source Package identity")
+    categories = {x["source_entity_id"]: x for x in category_doc["entities"]}
+    series = {x["source_entity_id"]: x for x in series_doc["entities"]}
+    if len(categories) != len(category_doc["entities"]) or len(series) != len(series_doc["entities"]):
+        raise ValueError("Duplicate source entity identity")
+
+    # Reference scope is *only* ATP Tour main circuit/ATP-operated Finals,
+    # not external tennis events or separate Challenger/ITF competitions.
+    forbidden = {"grand_slam", "davis_cup", "laver_cup", "united_cup"}
+    if forbidden & categories.keys() or forbidden & series.keys():
+        raise ValueError("Non-ATP Tour reference leaked into Package")
+
+    for entity in category_doc["entities"]:
+        intervals = entity["payload"].get("history_periods") or []
+        if not intervals:
+            raise ValueError("Category missing history: " + entity["source_entity_id"])
+        for year in range(FIRST, LAST + 1):
+            if len(_active(intervals, year)) > 1:
+                raise ValueError("Overlapping Category intervals: " + entity["source_entity_id"])
+        for p in intervals:
+            if not p.get("source_url") or p["from"] > p["to"] or p["from"] < FIRST or p["to"] > LAST:
+                raise ValueError("Invalid Category evidence interval")
+
+    for entity in series_doc["entities"]:
+        intervals = entity["payload"].get("history_periods") or []
+        if not intervals:
+            raise ValueError("Series missing history: " + entity["source_entity_id"])
+        # A publication URL is supporting evidence, never a blanket
+        # licence certification. Reject malformed metadata rather than
+        # silently omitting records from independent provenance review.
+        payload = entity["payload"]
+        licence_single = payload.get("historical_licence_source_url")
+        licence_multi = payload.get("historical_licence_source_urls", [])
+        if (
+            (licence_single is not None and
+             (not isinstance(licence_single, str) or
+              not licence_single.startswith("https://")))
+            or not isinstance(licence_multi, list)
+            or any(not isinstance(url, str) or
+                   not url.startswith("https://") for url in licence_multi)
+            or len(licence_multi) != len(set(licence_multi))
+            or (licence_single is not None and licence_single in licence_multi)
+        ):
+            raise ValueError(
+                "Invalid historical licence evidence: " + entity["source_entity_id"]
+            )
+        # Venue-name variants, alternating-city events and pandemic site
+        # changes are provenance context, NOT assertions of ATP licence rights.
+        contexts = payload.get("historical_host_context_sources", [])
+        allowed_kinds = {
+            "site_change", "alternating_hosts", "temporary_site",
+            "surface_not_licence", "city_alias", "historical_context_only",
+            "rotating_hosts",
+        }
+        if (
+            not isinstance(contexts, list)
+            or any(
+                not isinstance(item, dict)
+                or set(item) != {"kind", "url", "note"}
+                or not isinstance(item["kind"], str)
+                or item["kind"] not in allowed_kinds
+                or not isinstance(item["url"], str)
+                or not item["url"].startswith("https://")
+                or not isinstance(item["note"], str)
+                or not item["note"].strip()
+                for item in contexts
+            )
+            or len({item["url"] for item in contexts}) != len(contexts)
+        ):
+            raise ValueError(
+                "Invalid historical host-context evidence: "
+                + entity["source_entity_id"]
+            )
+        refs = {
+            r["source_entity_id"]
+            for r in entity["references"]
+            if r["source_package_id"] == category_doc["package_id"]
+            and r["expected_entity_kind"] == "tennis.category.reference.v1"
+        }
+        for p in intervals:
+            cid = p["category_id"]
+            if cid not in categories or cid not in refs or not p.get("source_url"):
+                raise ValueError("Invalid Series Category reference / evidence")
+            if p["from"] < FIRST or p["to"] > LAST or p["from"] > p["to"]:
+                raise ValueError("Series out-of-range history")
+            for year in range(p["from"], p["to"] + 1):
+                if len(_active(categories[cid]["payload"]["history_periods"], year)) != 1:
+                    raise ValueError("Series references category outside effective years")
+        nonheld_years = entity["payload"].get("not_held_years_known", [])
+        if (
+            not isinstance(nonheld_years, list)
+            or any(type(y) is not int or y < FIRST or y > LAST for y in nonheld_years)
+            or len(set(nonheld_years)) != len(nonheld_years)
+        ):
+            raise ValueError(
+                "Invalid or duplicate known-not-held years: " + entity["source_entity_id"]
+            )
+        for year in range(FIRST, LAST + 1):
+            applicable = _active(intervals, year)
+            if len(applicable) > 1:
+                raise ValueError("Conflicting category for Series in year " + str(year))
+            if year in entity["payload"].get("not_held_years_known", []) and not applicable:
+                raise ValueError("Cancellation without effective Series category in year " + str(year))
+
+    rows = []
+    for year in range(FIRST, LAST + 1):
+        active_cats = sorted(
+            x["source_entity_id"] for x in category_doc["entities"]
+            if _active(x["payload"]["history_periods"], year)
+        )
+        active_series = {
+            x["source_entity_id"]: _active(x["payload"]["history_periods"], year)[0]["category_id"]
+            for x in series_doc["entities"]
+            if _active(x["payload"]["history_periods"], year)
+        }
+        active_series = dict(sorted(active_series.items()))
+        nonheld = sorted(
+            x["source_entity_id"] for x in series_doc["entities"]
+            if year in x["payload"].get("not_held_years_known", [])
+        )
+        # Counts of ordinary played tiers alone would silently permit an extra,
+        # missing or substituted Finals source. The annual ATP-only special
+        # Series identities are independently fixed; a 2020 Next Gen cancellation
+        # remains a known-not-held member, not a played Edition.
+        expected_special = {"atp_finals": "atp_finals"}
+        if year >= 2017:
+            expected_special["next_gen_atp_finals"] = "next_gen_finals"
+        actual_special = {
+            series_id: category for series_id, category in active_series.items()
+            if category in {"atp_finals", "next_gen_finals"}
+        }
+        if actual_special != expected_special:
+            raise ValueError(
+                f"ATP special-Series roster mismatch in {year}: "
+                f"expected {expected_special}, observed {actual_special}"
+            )
+
+        if year in PLAYED_TIER_COUNTS or year in HISTORIC_PLAYED_TIER_COUNTS or year in PRE_2000_PLAYED_TIER_COUNTS:
+            expected = (
+                PLAYED_TIER_COUNTS.get(year)
+                or HISTORIC_PLAYED_TIER_COUNTS.get(year)
+                or PRE_2000_PLAYED_TIER_COUNTS[year]
+            )
+            actual = {
+                category: sum(
+                    tier == category and series_id not in nonheld
+                    for series_id, tier in active_series.items()
+                )
+                for category in expected
+            }
+            if actual != expected:
+                raise ValueError(
+                    f"ATP played-tier roster mismatch in {year}: "
+                    f"expected {expected}, observed {actual}"
+                )
+            played_roster = {
+                "status": "played_tour_tiers_reconciled_to_atp_results_archive",
+                "source_url": f"https://www.atptour.com/en/scores/results-archive?year={year}",
+                "played_counts": expected,
+                "scope": (
+                    f"{year} ATP Super 9 / ATP Championship Series / ATP World Series; "
+                    "excludes Finals, Grand Slam Cup, majors and team events"
+                    if year in PRE_2000_PLAYED_TIER_COUNTS else
+                    "ATP Tennis Masters Series / International Series Gold / "
+                    "International Series; excludes Finals, Olympics and team events"
+                    if year in HISTORIC_PLAYED_TIER_COUNTS else
+                    "ATP Masters 1000, ATP 500, ATP 250; excludes Finals and team events"
+                ),
+                "not_an_edition_calendar": True,
+            }
+        else:
+            played_roster = {
+                "status": (
+                    "provisional_calendar_not_final_results"
+                    if year == 2026 else "unverified_incomplete"
+                ),
+                "played_counts": None,
+                "scope": "No complete played ATP 1000/500/250 event census established",
+                "not_an_edition_calendar": True,
+            }
+        rows.append({
+            "year": year,
+            "era": _era(year),
+            "category_ids": active_cats,
+            "series_category_ids": active_series,
+            "known_not_held_series_ids": nonheld,
+            "played_tier_roster_validation": played_roster,
+            "source_coverage": "partial_historical_reference_not_complete_atp_tour_census",
+            "edition_assertion": "none; reference membership does not prove played annual edition",
+        })
+
+    for entity in series_doc["entities"]:
+        _validate_year_effective_source_metadata(entity)
+
+    return {
+        "schema_version": "tennis.atp_tour_reference_seasons.v1",
+        "from_year": FIRST,
+        "to_year": LAST,
+        "seasons_count": len(rows),
+        "category_source_package_id": category_doc["package_id"],
+        "series_source_package_id": series_doc["package_id"],
+        "coverage": "PARTIAL: 1990–2026 ATP-only Category labels, selected historic Tour Series, and 2026 main Tour roster",
+        "historical_absence_semantics": "Missing means unverified, NOT nonexistent or cancelled",
+        "seasons": rows,
+    }
+
+
+def canonical_output(data: dict[str, Any]) -> str:
+    return json.dumps(data, ensure_ascii=False, sort_keys=True, indent=2) + "\n"
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    choice = parser.add_mutually_exclusive_group(required=True)
+    choice.add_argument("--check", action="store_true")
+    choice.add_argument("--write", action="store_true")
+    args = parser.parse_args()
+    c = json.loads((SOURCE / "category.json").read_text(encoding="utf-8"))
+    s = json.loads((SOURCE / "series.json").read_text(encoding="utf-8"))
+    payload = canonical_output(build(c, s))
+    if args.check:
+        if not TARGET.is_file() or TARGET.read_text(encoding="utf-8") != payload:
+            print("Historical seasons stale; run --write")
+            return 1
+        print("ATP Tour reference 1990–2026: 37 seasons derived; complete played-tier rosters 1990–2025, 2026 provisional")
+        return 0
+    TARGET.write_text(payload, encoding="utf-8")
+    print("Created", TARGET)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

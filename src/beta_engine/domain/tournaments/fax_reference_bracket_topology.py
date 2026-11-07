@@ -13,8 +13,9 @@ from __future__ import annotations
 from collections import Counter
 from typing import Literal
 
-from pydantic import ConfigDict, Field, BaseModel, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
+from beta_engine.domain.rankings.points import knockout_loss_point_stage
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.draw_authority import (
     TournamentDrawNode,
@@ -144,6 +145,32 @@ class FaxReferenceBracketTopology(BaseModel):
             + sum(x.actual_match_count_if_fully_played
                   for x in self.qualification_sections)
         )
+
+    @property
+    def ranked_point_stages(self) -> tuple[str, ...]:
+        """Use physical rounds, including first-round awards after a BYE.
+
+        Four independent Qualification sections do not play one aggregate draw.
+        Readiness needs the same stages the canonical results and awards use.
+        """
+        main_final = self.main.nodes[-1].round_number
+        stages = ["champion", *(
+            knockout_loss_point_stage(
+                draw_type="main", round_number=round_number, final_round=main_final,
+            )
+            for round_number in range(main_final, 0, -1)
+        )]
+        if self.qualification_sections:
+            stages.append("qualification_winner")
+        for section in self.qualification_sections:
+            final = section.nodes[-1].round_number
+            stages.extend(
+                knockout_loss_point_stage(
+                    draw_type="qualification", round_number=round_number, final_round=final,
+                )
+                for round_number in range(final, 0, -1)
+            )
+        return tuple(dict.fromkeys(stages))
 
     @property
     def fingerprint(self) -> str:

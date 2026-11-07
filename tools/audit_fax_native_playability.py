@@ -1,17 +1,19 @@
 """Read-only: identify concrete gaps between 80 copied FAX Calendar Editions
 and the production configured native Tour's *supported* knockout executor.
 
-An 80-Edition calendar is NOT 80 playable or actually played native Editions.
+The legacy v2 executor probe and canonical Q/Main source prerequisites are
+separate. An 80-Edition calendar is NOT 80 playable or actually played Editions.
 Do not generate replacement 4/8-player fixtures, qualify players silently,
 fill missing Category point awards, write into the Run, or re-date SW1 events.
 """
 from __future__ import annotations
 
 import argparse
-from collections import Counter
 import json
+from collections import Counter
+from collections.abc import Sequence
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any
 
 from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
     PRE_ALPHA_FAX_ACCEPTANCE_EDITION_COUNT,
@@ -19,11 +21,22 @@ from beta_engine.application.pre_alpha_fax_acceptance_calendar_source import (
     PreAlphaFaxAcceptanceCalendarSource,
 )
 from beta_engine.application.season_calendar_service import SeasonCalendarService
-from beta_engine.application.season_category_points_service import SeasonCategoryPointsService
-from beta_engine.application.tournament_templates_service import TournamentTemplatesConfigService
+from beta_engine.application.season_category_points_service import (
+    SeasonCategoryPointsService,
+)
+from beta_engine.application.tournament_templates_service import (
+    TournamentTemplatesConfigService,
+)
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.tournaments.calendar_tour import CalendarTourEdition, required_stages
+from beta_engine.domain.rankings.points import is_valid_ranking_point
+from beta_engine.domain.tournaments.calendar_tour import (
+    CalendarTourEdition,
+    required_stages,
+)
+from beta_engine.domain.tournaments.fax_reference_bracket_topology import (
+    build_fax_reference_bracket_topology,
+)
 from beta_engine.domain.tournaments.models import SeasonCalendarEvent
 
 SCHEMA = "fax_native_playability_gap_audit.v1"
@@ -122,6 +135,34 @@ def classify_event(
     }
 
 
+def _canonical_source_prerequisites(event: SeasonCalendarEvent) -> dict[str, Any]:
+    """Read exact bracket and point inputs, without inferring an announcement."""
+    topology = build_fax_reference_bracket_topology(event)
+    ranked = event.ranking_status == "ranked"
+    required = topology.ranked_point_stages if ranked else ()
+    missing = [stage for stage in required if stage not in event.ranking_points_table]
+    invalid = [
+        stage for stage in required
+        if stage in event.ranking_points_table
+        and not is_valid_ranking_point(event.ranking_points_table[stage])
+    ]
+    # The first match sets only an upper bound. Entry, WC or Draw can require
+    # an earlier announcement. SW1 has no preceding in-Run week at all.
+    return {
+        "expected_real_match_count": topology.actual_match_count_if_fully_played,
+        "required_ranked_point_stages": list(required),
+        "missing_ranked_point_stages": missing,
+        "invalid_ranked_point_stages": invalid,
+        "authored_ranked_point_values_complete": (
+            not missing and not invalid and not event.ranking_configuration_legacy
+        ) if ranked else None,
+        "source_has_explicit_native_announcement": (
+            event.event_level_overrides.get("native_announcement_week") is not None
+        ),
+        "latest_in_run_announcement_week_from_play_only": event.season_week - 1 or None,
+    }
+
+
 def audit(
     events: Sequence[SeasonCalendarEvent],
     *,
@@ -143,10 +184,11 @@ def audit(
            or event.is_elite_tour for event in events):
         raise ValueError("Non-World-Tour input in the reference World Tour audit")
 
-    rows = [
-        classify_event(event, initial_native_week=initial_native_week, clock=clock)
-        for event in sorted(events, key=lambda item: (item.season_week, item.event_id))
-    ]
+    rows = []
+    for event in sorted(events, key=lambda item: (item.season_week, item.event_id)):
+        row = classify_event(event, initial_native_week=initial_native_week, clock=clock)
+        row["canonical_q_main_source_prerequisites"] = _canonical_source_prerequisites(event)
+        rows.append(row)
     reasons = Counter(code for row in rows for code in row["blocker_codes"])
     categories = Counter(event.category for event in events)
     compatible = sum(row["structurally_compatible_only"] for row in rows)

@@ -4,7 +4,7 @@
 
 The existing Saved copied-FAX preparation proves 1,000 initial players and 80 *planned* World Tour Editions; isolated native MatchEngine tests prove four-player knockouts across weeks and Signed Seasons. These are different authorities. Together they do **not** prove a single 80-Edition FAX calendar is actually playable.
 
-This read-only tool compares every one of the 80 actual reference Calendar Editions against the currently supported native knockout executable contract. It preserves exact source identity, templates, Year/Season weeks and all as-authored Category points. A structurally compatible event is still not proof of Entry, player validity or real play.
+This read-only tool compares all 80 reference Calendar Editions against the legacy native v2 executor and separately reports the original source prerequisites for canonical Q/Main. It preserves exact source identity, templates, Year/Season weeks and all as-authored Category points. A structurally compatible event is still not proof of Entry, player validity or real play.
 
 ## Command
 
@@ -14,7 +14,15 @@ Optional input flags are `--templates`, `--category-points` and `--initial-nativ
 
 The report schema is `fax_native_playability_gap_audit.v1`. It contains the original Calendar source fingerprint, all 80 original Edition IDs, categories and unchanged source geometry, missing stage values, per-Edition blockers and an aggregated matrix. `actually_played_edition_count_proven=0` states this tool did not execute any matches, not that no other Run has played any.
 
-## Precise gap codes
+## Canonical Q/Main source prerequisites
+
+Each row's `canonical_q_main_source_prerequisites` is separate from the old v2 verdict. It uses the physical Main bracket and each separate Q section to derive stages from the same mapping as canonical results and point awards. Gold24 needs `round_of_32` despite admitting only 24 players. A BYE followed by an initial loss still needs that first-round award. Gold's four four-player Q sections do not use `qualification_round`; Platinum's four six-player Q sections have eight physical slots each and do use it. An authored zero is valid; an absent, negative or non-integer value is not a zero.
+
+On the original checked-in source, all 40 Gold Editions lack `qualification_winner`, `qualification_final` and `qualification_semifinal`. All 40 Platinum Editions also lack `qualification_round`. The source's Main awards cover the required stage keys for both shapes. The 35/51 expected real matches are geometry, not results or new execution evidence. This diagnostic changes no point values or canonical source fingerprints.
+
+None of the 80 original Editions carries an explicit `native_announcement_week` override. The report checks presence, not validity, and gives only an upper bound for an in-Run announcement from the first match; Entry, WC or Draw can require an earlier date. `null` means no preceding in-Run week exists. `FAX-ACCEPT-WT-001` and `002` both start in SW1, so a Week-1 bootstrap alone cannot keep their dates and satisfy the full-week lead requirement. Preserving both dates needs an explicit pre-Run publication source or another owner-approved chronology. The audit does not create either, infer dates or move any Edition.
+
+## Legacy native v2 gap codes
 
 | Code | Gap (not automatically repaired) |
 | --- | --- |

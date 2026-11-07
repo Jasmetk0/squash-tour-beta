@@ -28,7 +28,7 @@ class SavedDrawAdoptionInput(FrozenInput):
 
 
 def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
-    clock, _revision, _world, _health, cp, _saved, _evidence = ctx
+    clock, _revision, _world, _health, cp, _saved, evidence = ctx
     if state.schema_version == "native_fork_tour.v1":
         raise ValueError(
             "Canonical Draw adoption requires a Branch-owned root; inherited native remapping is unsupported"
@@ -97,6 +97,11 @@ def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
         a.edition.edition_id == event.event_id for a in state.editions
     ) or event.event_id in {t.tournament_id for t in cp.tournaments}:
         raise ValueError("Canonical Edition already exists in sporting history")
+    # Opening exhibition evidence is separate from checkpoint.tournaments.
+    if event.event_id == getattr(evidence, "knockout", evidence).match_id:
+        raise ValueError(
+            "Existing exhibition cannot be promoted to a Canonical Edition"
+        )
     participants = {
         *source.draw_input.direct_main_player_ids,
         *source.draw_input.wild_card_player_ids,

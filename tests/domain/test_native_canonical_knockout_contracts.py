@@ -204,6 +204,8 @@ def test_missing_source_announcement_is_not_invented(authority):
         "foreign_head",
         "late_announcement",
         "missing_player",
+        "opening_knockout_id",
+        "standalone_exhibition_id",
         "ranked",
         "multiweek",
         "fork",
@@ -275,9 +277,23 @@ def test_adoption_is_explicit_prospective_and_operation_scoped(authority, damage
             "schedule": binding.schedule.model_dump(mode="json"),
         },
     )
-    context = (binding.calendar, None, None, None, cp, None, None)
+    exhibition_collision = damage in {"opening_knockout_id", "standalone_exhibition_id"}
+    exhibition = SimpleNamespace(
+        match_id=source.draw.event_id
+        if exhibition_collision
+        else "historical-exhibition",
+    )
+    evidence = (
+        exhibition
+        if damage == "standalone_exhibition_id"
+        else SimpleNamespace(knockout=exhibition)
+    )
+    context = (binding.calendar, None, None, None, cp, None, evidence)
     if damage:
-        with pytest.raises(ValueError):
+        message = (
+            "Existing exhibition cannot be promoted" if exhibition_collision else None
+        )
+        with pytest.raises(ValueError, match=message):
             adopt_saved_draw(None, context, state, cmd, replay_plan=plan)
     else:
         assert (

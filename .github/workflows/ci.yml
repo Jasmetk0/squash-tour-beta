@@ -24,6 +24,7 @@ jobs:
       earth_data: ${{ steps.filter.outputs.earth_data }}
       earth_realism: ${{ steps.filter.outputs.earth_realism }}
       backend_core: ${{ steps.filter.outputs.backend_core }}
+      python_environment: ${{ steps.filter.outputs.python_environment }}
       world_package_security: ${{ steps.filter.outputs.world_package_security }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -80,9 +81,12 @@ jobs:
               - 'src/beta_engine/application/world_package_countries_service.py'
               - 'tests/application/test_timezone_registry_atomic_write.py'
               - 'tests/application/test_codeql_security_boundaries.py'
-            backend_core:
+            python_environment:
               - '.github/requirements/fast-ci-linux.lock.txt'
               - 'tools/check_fast_ci_python_lock.py'
+              - '.github/workflows/ci.yml'
+              - 'pyproject.toml'
+            backend_core:
               - 'config/world_packages/**'
               - 'config/player_generation/**'
               - 'scripts/**'
@@ -96,7 +100,6 @@ jobs:
               - 'src/**'
               - 'tests/**'
               - '!tests/application/test_earth_seed_progress.py'
-              - 'pyproject.toml'
               - 'requirements*.txt'
             frontend:
               - '.github/workflows/ci.yml'
@@ -180,6 +183,14 @@ jobs:
         if: needs.changes.outputs.backend_core == 'true'
         run: |
           python -m pytest -m pr_critical --maxfail=1 --durations=10
+      # A dependency-only PR need not change any test modules. Bypass the
+      # changed-test selector only for this explicit environment baseline.
+      - name: Verify the locked environment against the backend
+        if: needs.changes.outputs.python_environment == 'true'
+        run: |
+          GITHUB_EVENT_NAME=fast_ci_dependency_acceptance \
+            python -m pytest tests/api/test_config_validation_api.py \
+            tests/domain/test_tournament_config.py --maxfail=1 --durations=10
       # Config loader tests are deliberately not all marked pr_critical:
       # keep the general selector small, but execute these lightweight
       # path-boundary regressions explicitly when backend code changes.

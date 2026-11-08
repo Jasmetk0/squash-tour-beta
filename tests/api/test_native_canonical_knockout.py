@@ -66,15 +66,16 @@ def authored_source(server, repo, source, size, *, ranked=False):
     view = inspect(server)
     clock = view["state"]["week"]["calendar"]
     event = next(e for e in source[0].events if e.main_draw_size == size)
+    play_week = 7 if ranked else 4
     raw = event.model_dump(mode="json")
     raw.update(
         event_name="Disposable native acceptance, not original FAX",
-        season_week=4,
-        start_season_week=4,
-        end_season_week=4,
+        season_week=play_week,
+        start_season_week=play_week,
+        end_season_week=play_week,
         duration_in_season_weeks=1,
         calendar_year=2000,
-        year_week=40,
+        year_week=36 + play_week,
         ranking_status="ranked" if ranked else "unranked",
         ranking_configuration_legacy=False,
         ranking_points_table={
@@ -91,7 +92,7 @@ def authored_source(server, repo, source, size, *, ranked=False):
             "native_announcement_week": {
                 "calendar": clock,
                 "season_index": 0,
-                "week": 3,
+                "week": play_week - 1,
             },
         },
     )
@@ -174,6 +175,72 @@ def authored_source(server, repo, source, size, *, ranked=False):
     return plan
 
 
+def establish_native_tour_entry(server, plan):
+    """Use an actual reviewed Entry batch; only four applicants play this Edition."""
+    edition_id = "entry-before-ranked-gold"
+    view = inspect(server)
+    current = {**view["state"]["week"], "calendar": view["run_calendar"]}
+    execute(
+        server,
+        command(
+            view,
+            "create-edition",
+            name="create-entry-edition",
+            data={
+                "edition_id": edition_id,
+                "name": "Prior Tour Entry",
+                "week": {**current, "week": 4},
+                "announcement_week": {**current, "week": 3},
+                "start_slot": 1,
+                "main_entrant_count": 4,
+                "ranked": True,
+                "validity_weeks": 61,
+                "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+            },
+        ),
+    )
+    save_tour(server)
+    for week in (3, 4):
+        execute(
+            server,
+            command(inspect(server), "transition", name=f"entry-week-{week}"),
+        )
+        save_tour(server)
+    draw_input = plan.source.draw_input
+    entrants = sorted(
+        {
+            *draw_input.direct_main_player_ids,
+            *draw_input.wild_card_player_ids,
+            *draw_input.qualification_player_ids,
+        }
+    )
+    assert len(entrants) == 36
+    execute(
+        server,
+        command(
+            inspect(server),
+            "submit",
+            name="entry-applications",
+            edition_id=edition_id,
+            data={"player_ids": entrants},
+        ),
+    )
+    for action in ("approve", "draw", "play", "confirm-result"):
+        execute(
+            server,
+            command(
+                inspect(server), action, name=f"entry-{action}", edition_id=edition_id
+            ),
+        )
+        if action in {"draw", "play", "confirm-result"}:
+            save_tour(server)
+    execute(server, command(inspect(server), "transition", name="publish-entry-edition"))
+    save_tour(server)
+    ranking = inspect(server)["state"]["rankings"][-1]["rows"]
+    assert {row["player_id"] for row in ranking} == set(entrants)
+    assert sum(bool(row["counted_results"]) for row in ranking) == 4
+
+
 @pytest.mark.parametrize(
     ("size", "ranked"),
     [
@@ -230,6 +297,30 @@ def test_actual_q_main_partial_save_restart_and_terminal(
             "source_plan_fingerprint": plan.fingerprint,
             "schedule": schedule,
         }
+        event_id = plan.source.draw.event_id
+        play_week = 7 if ranked else 4
+        if ranked:
+            # A published seeding source and an exact Saved Draw are insufficient
+            # to register a player on the live native Tour.
+            before = inspect(server)
+            status, rejected = _request(
+                "POST", tour_url(server) + "/preview",
+                command(before, "adopt-saved-draw", data=data),
+            )
+            assert status == 409, rejected
+            assert "prior native Tour Entry for 36 participant(s)" in rejected["detail"]["message"]
+            after = inspect(server)
+            for field in ("saved_head_revision_id", "checkpoint_fingerprint", "tour_fingerprint", "draft_version"):
+                assert after[field] == before[field]
+            establish_native_tour_entry(server, plan)
+            plan = SavedFaxKnockoutFeederService(repo).prepare(
+                run_id="run",
+                branch_id="branch",
+                season="2000/2001",
+                event_id=event_id,
+                expected_saved_revision_id=inspect(server)["saved_head_revision_id"],
+            )
+            data["source_plan_fingerprint"] = plan.fingerprint
         before_adoption = inspect(server)
         if size == 24:
             for damaged in (
@@ -292,7 +383,8 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         status, public = _request(
             "GET", server.base_url + "/viewer/runs/run/calendar-tour"
         )
-        assert status == 200 and not public["editions"], public
+        assert status == 200, public
+        assert event_id not in {e["edition_id"] for e in public["editions"]}
         # Only the normal public Week Transition publishes the explicit source date.
         for _ in range(2):
             execute(
@@ -308,17 +400,14 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 "GET", server.base_url + "/viewer/runs/run/calendar-tour"
             )
             assert status == 200, public
-            assert [e["edition_id"] for e in public["editions"]] == [
-                plan.source.draw.event_id
-            ]
-            assert public["editions"][0]["completed"] is False
-        assert inspect(server)["state"]["week"]["week"] == 4
-        assert (
-            plan.source.draw.event_id
-            in inspect(server)["state"]["transitions"][0]["public_event"][
-                "announced_edition_ids"
-            ]
-        )
+            adopted_public = [e for e in public["editions"] if e["edition_id"] == event_id]
+            assert len(adopted_public) == 1
+            assert adopted_public[0]["completed"] is False
+        assert inspect(server)["state"]["week"]["week"] == play_week
+        assert sum(
+            event_id in t["public_event"]["announced_edition_ids"]
+            for t in inspect(server)["state"]["transitions"]
+        ) == 1
         result, request = execute(
             server, command(inspect(server), "next-match", name="first-canonical")
         )
@@ -349,6 +438,11 @@ def test_actual_q_main_partial_save_restart_and_terminal(
             )
 
     with ApiServer(database_url=db) as server:
+        def canonical_edition(view):
+            return next(
+                a for a in view["state"]["editions"] if a["edition"]["edition_id"] == event_id
+            )
+
         view = inspect(server)
         assert view["checkpoint_fingerprint"] == partial["checkpoint_fingerprint"]
         assert view["next_slot"] == partial["next_slot"]
@@ -367,17 +461,22 @@ def test_actual_q_main_partial_save_restart_and_terminal(
 
         for i in range(12):
             view = inspect(server)
-            if view["state"]["editions"][0]["tournament_fingerprint"]:
+            if canonical_edition(view)["tournament_fingerprint"]:
                 break
             execute(server, command(view, "next-slot", name=f"remaining-slot-{i}"))
             save_tour(server)
         view = inspect(server)
-        authority = view["state"]["editions"][0]
+        authority = canonical_edition(view)
         assert authority["tournament_fingerprint"]
         evidence = view["edition_evidence"][plan.source.draw.event_id]
         assert len(evidence["matches"]) == (35 if size == 24 else 51)
         assert bool(evidence["results"]) is ranked
-        assert all(row["points"] == 0 for row in view["state"]["rankings"][-1]["rows"])
+        before_publication = view["state"]["rankings"][-1]
+        assert not any(
+            result["edition_id"] == event_id
+            for row in before_publication["rows"]
+            for result in row["counted_results"]
+        )
         from beta_engine.application.calendar_continuation_service import (
             CalendarContinuationService,
         )
@@ -403,26 +502,29 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 201,
                 confirmed,
             )
-            assert all(
-                row["points"] == 0
-                for row in inspect(server)["state"]["rankings"][-1]["rows"]
-            )
+            assert inspect(server)["state"]["rankings"][-1] == before_publication
         save_tour(server)
         execute(server, command(inspect(server), "transition"))
         save_tour(server)
-        assert inspect(server)["state"]["week"]["week"] == 5
+        assert inspect(server)["state"]["week"]["week"] == play_week + 1
         final_view = inspect(server)
         ranking = final_view["state"]["rankings"][-1]["rows"]
         if ranked:
             resolved = {
-                row["player_id"]: row["main_points"] + row["qualification_points"]
+                row["player_id"]: (row["main_points"], row["qualification_points"])
                 for row in evidence["results"]
             }
             assert len(resolved) == 36
-            assert all(
-                row["points"] == resolved.get(row["player_id"], 0) for row in ranking
-            )
-            assert all(len(row["counted_results"]) <= 1 for row in ranking)
+            assert {row["player_id"] for row in ranking} == resolved.keys()
+            prior_points = {row["player_id"]: row["points"] for row in before_publication["rows"]}
+            for row in ranking:
+                pid = row["player_id"]
+                from_gold = [r for r in row["counted_results"] if r["edition_id"] == event_id]
+                assert len(from_gold) == 1
+                assert (
+                    from_gold[0]["main_points"], from_gold[0]["qualification_points"]
+                ) == resolved[pid]
+                assert row["points"] == prior_points[pid] + sum(resolved[pid])
             assert (
                 sum(row["qualification_points"] == 17 for row in evidence["results"])
                 == 4
@@ -437,7 +539,8 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         status, public = _request(
             "GET", server.base_url + "/viewer/runs/run/calendar-tour"
         )
-        assert status == 200 and public["editions"][0]["completed"] is True, public
+        assert status == 200, public
+        assert next(e for e in public["editions"] if e["edition_id"] == event_id)["completed"] is True
     if ranked:
         with ApiServer(database_url=db) as restarted:
             assert inspect(restarted)["state"]["rankings"][-1] == published_snapshot

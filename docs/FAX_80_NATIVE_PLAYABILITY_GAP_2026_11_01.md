@@ -35,8 +35,10 @@ default points. An unsaved or stale source returns a conflict.
 `point_table_status=complete` means coverage of required stage keys only.
 Same-week Ranked execution requires W61 and an existing following publication
 week. Both Ranked and Unranked still need the normal adoption preview, which
-validates schedule and announcement. This read does not adopt the Draw, publish
-an Edition or award points.
+validates schedule and announcement. Ranked adoption also requires that each
+participant already has native Tour Entry in the owned lifecycle. Point coverage
+does not establish Entry. This read does not adopt the Draw, publish an Edition
+or award points.
 
 ## Legacy native v2 gap codes
 

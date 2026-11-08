@@ -6,7 +6,7 @@ no changes to source Packages, derived seasons or Runs.
 
 Run:
   python scripts/audit_atp_reference_provenance.py
-  python scripts/audit_atp_reference_provenance.py --output /tmp/atp_audit.json
+  python scripts/audit_atp_reference_provenance.py --json > atp_audit.json
 """
 from __future__ import annotations
 
@@ -189,18 +189,15 @@ def audit(
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--output", type=Path,
-                        help="Optional JSON report path. Omitted = no writes.")
+    parser.add_argument("--json", action="store_true",
+                        help="Print the full JSON report instead of the summary.")
     args = parser.parse_args()
     categories = json.loads((SOURCE / "category.json").read_text(encoding="utf-8"))
     series = json.loads((SOURCE / "series.json").read_text(encoding="utf-8"))
     seasons = json.loads((SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8"))
     result = audit(categories, series, seasons)
-    if args.output:
-        args.output.write_text(json.dumps(result, ensure_ascii=False,
-                                          sort_keys=True, indent=2) + "\n",
-                               encoding="utf-8")
-        print(f"Saved read-only provenance review: {args.output}")
+    if args.json:
+        print(json.dumps(result, sort_keys=True, indent=2))
     else:
         print(json.dumps(result["counts"], ensure_ascii=False, sort_keys=True))
         print("2026 is provisional; source coverage is not licence verification.")

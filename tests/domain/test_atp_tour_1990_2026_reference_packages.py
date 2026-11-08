@@ -42,7 +42,11 @@ def test_canonical_source_boundaries_and_type_identities() -> None:
     assert series_doc.package_type == PackageType.SERIES
     assert category_doc.package_id == "atp_tour_1990_2026_category"
     assert series_doc.package_id == "atp_tour_1990_2026_series"
-    assert category_doc.source_fingerprint == category_doc.source_fingerprint
+    assert category_doc.source_fingerprint != series_doc.source_fingerprint
+    reordered_category = CanonicalPackageDocument.model_validate_json(
+        json.dumps(categories, sort_keys=True)
+    )
+    assert reordered_category.source_fingerprint == category_doc.source_fingerprint
     assert not category_doc.children and not series_doc.children
     assert len(categories["entities"]) == 11
     assert len(series["entities"]) == 164

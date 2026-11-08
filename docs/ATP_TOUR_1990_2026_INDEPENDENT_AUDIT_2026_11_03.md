@@ -124,8 +124,9 @@ Series/year, highlights generic archive URLs, sparse host-years and
 multi-host source IDs without explicit licence proof, and separately
 records the **2026 ATP 250 announced-summary/TBD ambiguity**. It neither
 auto-fetches webpages nor claims legal or sporting certification.
-Use `python scripts/audit_atp_reference_provenance.py` for summary or
-`--output FILE.json` to export the full per-Series/per-year evidence queue.
+Use `python scripts/audit_atp_reference_provenance.py` for the summary or
+`python scripts/audit_atp_reference_provenance.py --json > atp-audit.json`
+to export the full per-Series/per-year evidence queue to a new file.
 
 ### Confirmed 2014 Düsseldorf → 2015 Geneva ATP 250 licence
 

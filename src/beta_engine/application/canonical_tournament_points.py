@@ -5,6 +5,9 @@ from __future__ import annotations
 import hashlib
 import json
 
+from beta_engine.application.season_event_results_service import (
+    SeasonEventResultPackage,
+)
 from beta_engine.application.season_point_awards_service import (
     EventPointAwardPackage,
     FrozenPointAwardAuthority,
@@ -12,12 +15,12 @@ from beta_engine.application.season_point_awards_service import (
     PointAwardMetadata,
     PointAwardSummary,
 )
+from beta_engine.domain.rankings.points import knockout_loss_point_stage
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPlayerPointAwardAuthority,
     TournamentPointAwardAuthority,
 )
 from beta_engine.domain.tournaments.result_authority import TournamentResultAuthority
-from beta_engine.application.season_event_results_service import SeasonEventResultPackage
 
 
 def _validate_result_match_counters(result: TournamentResultAuthority) -> None:
@@ -72,23 +75,9 @@ def _first_round_point_stage(
     ]
     if not rounds:
         raise ValueError("Tournament point source has no matches for player draw")
-    distance = max(rounds) - 1
-    if draw_type == "qualification":
-        if distance == 0:
-            return "qualification_final"
-        if distance == 1:
-            return "qualification_semifinal"
-        return "qualification_round"
-    mapping = {
-        0: "finalist",
-        1: "semifinal",
-        2: "quarterfinal",
-        3: "round_of_16",
-        4: "round_of_32",
-        5: "round_of_64",
-        6: "round_of_128",
-    }
-    return mapping.get(distance, "main_draw_participant")
+    return knockout_loss_point_stage(
+        draw_type=draw_type, round_number=1, final_round=max(rounds)
+    )
 
 
 def _player_draw_matches(

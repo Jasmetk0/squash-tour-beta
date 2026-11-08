@@ -1,0 +1,2567 @@
+# R007 — Gemini Independent Research: squash data provenance and calibration
+
+SOURCE: Owner-supplied original DOCX "Dostupnost a Kalibrace Dat Squashe.docx", received 2026-11-01, 50 pages.
+
+**STATUS: PROVISIONAL EXTERNAL AI RESEARCH / UNVERIFIED FACTS AND CLAIMS. THIS IS NOT A DATA LICENSE, A VALIDATED DATASET, A PRODUCT DECISION OR PERMISSION TO IMPORT NUMERIC PARAMETERS.**
+Fidelity: the following is a searchable text-only rendering. The original DOCX contains substantial tables, figures and 166 inline graphical elements, including mathematical formulae. The original binary DOCX is NOT in this PR and extraction can corrupt formulae, table order, graphic captions and references. Consult original Word document before reproducing quantitative claims.
+The paper's internet/access assertions can be stale or overbroad; read the separately archived independent review. An important correction: FAX is an **alternative globally popular and historically evolving squash world**, not simply an enlarged 2026 PSA world. Real-world data describe Earth regimes and candidate mechanism relationships, not compulsory FAX outcome aggregates.
+
+----- BEGIN SEARCHABLE RESEARCH TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 50>
+SQUASH ENGINE — R007: Nezávislý
+výzkum dostupnosti reálných dat
+profesionálního squashe, jejich
+provenience a vědecké kalibrace
+Exekutivní syntéza a epistemologický rámec kalibrace
+Vývoj realistického sportovního simulátoru naráží v určité fázi nevyhnutelně na hranici mezi
+algoritmickou elegancí a empirickou pravdivostí. Předchozí výzkumné etapy projektu Squash
+Engine (R001 až R006) vybudovaly sofistikovanou teoretickou architekturu pokrývající
+dynamiku talentu, mikromechaniku zápasů, formování rankingových dynastií, rozhodovací
+procesy při přihlašování na turnaje (Entry AI), epidemiologii zranění i prostorovou taktiku na
+kurtu. Všechny tyto moduly však odhalily strukturální deficit spočívající v nedostatku kriticky
+ověřených primárních dat, která by umožnila nahradit expertní heuristiky exaktními statistickými
+odhady. Tato zpráva (R007) proto nepřináší návrhy nových herních mechanismů a v souladu s
+přísnými pravidly správy projektu nijak nezasahuje do zdrojového kódu cílového repozitáře
+(https://github.com/Jasmetk0/squash-tour-beta), který je z pohledu externího síťového auditu
+uzavřený a nepřístupný veřejným automatizovaným nástrojům1. Cílem tohoto dokumentu je
+vytvoření vyčerpávajícího, nezávislého datového atlasu profesionálního mužského squashe a
+stanovení přesné dělicí linie mezi parametry, které lze vědecky kalibrovat již nyní, a parametry,
+jež jsou kvůli informační asymetrii odsouzeny zůstat v rovině odůvodněných předpokladů.
+Hlavní zjištění tohoto auditu spočívá v existenci hluboké granulární propasti v datovém
+ekosystému profesionálního squashe. Na makroúrovni, zahrnující kariérní trajektorie, výsledky
+turnajů, skóre jednotlivých setů a týdenní či měsíční žebříčky PSA, existuje pozoruhodně
+souvislá historická stopa sahající od poloviny 70. let 20. století až do současnosti2. Na
+mikroúrovni, kam spadá dynamika jednotlivých výměn, časy trvání bodů, sekvence úderů,
+opotřebení hráčů v reálném čase a prostorové souřadnice pohybu kolem T-zóny, však veřejný
+prostor vykazuje stav blízký klinické datové poušti3. Zatímco tenis nebo basketbal disponují
+veřejně přístupnými repozitáři s miliony anotovaných událostí, ve squashi jsou data na úrovni
+bodů a výměn buď komerčně uzamčena v proprietárních kanálech, jako je Sportradar či interní
+telemetrie PSA a SquashTV4, nebo fragmentována v malých laboratorních vzorcích
+akademických studií s velikostí souboru           až               zápasů6.
+Druhým klíčovým poznatkem je právní a licenční nepropustnost sekundárních databází.
+Skutečnost, že jsou historické výsledky vizuálně čitelné v internetovém prohlížeči na portálech
+jako SquashInfo, neznamená z pohledu duševního vlastnictví a smluvních podmínek povolení k
+jejich strojovému stahování (web scrapingu) či redistribuci v rámci open-source simulátoru9.
+Existence softwarových balíčků s otevřenou licencí, jako je R balíček squashinformr šířený pod
+licencí GPL-3, vytváří nebezpečnou iluzi volné dostupnosti dat, ačkoliv licence GPL-3 pokrývá
+výhradně zdrojový kód skriptu, nikoliv samotný obsah cílové databáze, jejíž podmínky užití
+jakýkoliv automatizovaný sběr explicitně zakazují9.
+<PARSED TEXT FOR PAGE: 2 / 50>
+Vědecká kalibrace systému Squash Engine proto nemůže spočívat v naivním napojení na
+jediný neexistující „zlatý dataset“. Vyžaduje víceúrovňovou syntézu, v níž jsou makroparametry
+modulů R001, R003 a části R004 kalibrovány na základě oficiálních agregací a pravidlových
+matic PSA2, zatímco mikroparametry modulů R002, R005 a R006 musí být ukotveny pomocí
+parametrických rozdělení odvozených z recenzované fyziologické, epidemiologické a
+kinematické literatury6.
+Oblast A a Oblast B — Kompletní audit datových
+zdrojů a jejich skutečné dostupnosti
+Pro potřeby empirického ověřování simulátoru bylo identifikováno a podrobeno hloubkovému
+auditu devět hlavních skupin zdrojů. Každý zdroj je hodnocen z hlediska technické struktury,
+populačního pokrytí, kvality záznamů a právní proveditelnosti strojového zpracování.
+1. PSA Squash Tour (Oficiální ekosystém řídící organizace)
+Profesionální asociace squashe (PSA), operující na doméně https://www.psasquashtour.com a
+publikující závazné regule prostřednictvím oficiálních dokumentů jako PSA Tour Rule Book15,
+představuje primární autoritativní zdroj pro veškeré soutěže mužského profesionálního okruhu.
+Historické kořeny oficiálních žebříčků sahají k lednu 19752, přičemž plně digitalizované profily,
+kalendáře a živé výsledky pokrývají moderní éru s více než 1 200 registrovanými
+profesionálními hráči z pěti kontinentů a více než 60 zemí17. Veřejné rozhraní poskytuje data na
+úrovni hráče (věk, národnost, výška, váha, držení rakety), turnaje (tier, dotace v USD, velikost
+pavouka, místo konání), zápasu (kolo, nasazení, celkové skóre, doba trvání zápasu v minutách)
+a setu s přesným bodovým skóre každé hry, například 11-9 či 12-102. V živém zobrazení (live
+scoring) se objevují i průběžné stavy bodů, avšak po skončení zápasu nejsou sekvence
+jednotlivých výměn ani telemetrická data, která se občas zobrazují v televizních přenosech
+SquashTV, veřejně archivována v tabulkové podobě. Ve veřejných výstupech tak zcela chybí
+archivy jednotlivých výměn (point-by-point historie), typy úderů (winners vs. unforced errors),
+pozice na kurtu, tepová frekvence, přesné lékařské diagnózy u skrečí a historické snímky
+přihlašovacích listin (entry lists) před uzavřením losu.
+Všechny záznamy na portálu PSA jsou přímo pozorované a vycházejí z primárního oficiálního
+zápisu rozhodčích a turnajového ředitele15. Web je přístupný zdarma, avšak nenabízí žádný
+oficiální export do CSV, JSON či veřejného API pro výzkumníky. Pravidlové parametry, zejména
+bodové tabulky, dělitelé a finanční rozpad, jsou publikovány ve formátu PDF v dokumentu PSA
+Tour Rule Book2. Obsah webu je chráněn autorským právem PSA a komerčně licencován
+partnerům, jako je společnost Sportradar4, pročež hromadný scraping webu bez povolení naráží
+na technické ochrany a smluvní omezení. Vědecká využitelnost pravidlových dokumentů a
+agregovaných žebříčkových tabulek je nicméně kritická a přímá pro kalibraci architektury okruhu
+v modulech R003 a R0042.
+2. SquashInfo (Centrální historická výsledková databáze)
+Portál SquashInfo (https://www.squashinfo.com) funguje jako nejkomplexnější světový repozitář
+výsledků profesionálního i špičkového amatérského squashe, na který odkazuje i samotná
+Světová squashová federace (World Squash)18. Databáze poskytuje detailní pokrytí od počátku
+21. století až do roku 2026, s retrospektivními záznamy hlavních turnajů (World Open, British
+<PARSED TEXT FOR PAGE: 3 / 50>
+Open) a žebříčků sahajícími do 70. a 80. let 20. století. Pokrývá kompletní mužskou
+profesionální populaci PSA včetně Challenger Tour, satelitních turnajů, juniorských šampionátů
+a národních mistrovství10. Granularita dat dosahuje úrovně jednotlivých her/setů (games) a
+dostupné proměnné zahrnují identifikátory hráče a turnaje, kategorie, přesné datum, nasazení
+obou soupeřů, národnost, kolo turnaje, skóre jednotlivých setů, vítěze setu, dobu trvání zápasu
+v minutách u většiny turnajů PSA, nejvyšší dosažený ranking (HWR) a datum jeho dosažení10.
+Na volně přístupných stránkách naopak zcela chybí průběh bod po bodu (rally-by-rally),
+statistiky úderů, délky jednotlivých setů (často je uvedena jen celková délka zápasu) a v
+některých historických záznamech nižších turnajů chybí i celková minutáž zápasu.
+Záznamy v databázi SquashInfo jsou pozorované a přebírané z oficiálních hlášení turnajů10.
+Základní prohlížení jednotlivých stránek v prohlížeči je bezplatné, ale plný přístup k pokročilým
+historickým dotazům, kompletním head-to-head bilancím a detailním statistikám je zpoplatněn
+formou prémiového členství v úrovních Silver, Gold a Platinum nebo prostřednictvím
+jednorázových komerčních balíčků Event Services účtovaných v britských librách (GBP), které
+zahrnují dokumenty Event Roll of Honour, Performance History, Player Information a Head-to-
+Heads standardně od osmifinále dále10. Podmínky použití (https://www.squashinfo.com/terms-
+conditions.php) jsou z hlediska datové vědy extrémně restriktivní9. Text podmínek doslovně
+stanovuje, že obsah webu nesmí být kopírován, reprodukován, distribuován, stahován ani
+scrapován v žádné formě bez předchozího písemného souhlasu společnosti SquashInfo, s
+jedinou výjimkou čtení a tisku jednotlivé stránky pro soukromé a osobní nekomerční účely9.
+Podmínky dále výslovně zakazují poskytovat obsah či jakékoliv z něj odvozené extrakty a
+informace třetím stranám9. Zkušenosti nezávislých vývojářů v komunitě potvrzují, že
+provozovatel neposkytuje otevřené API a aktivně brání neautorizovanému využití dat v
+aplikacích třetích stran21. Z čistě informačního hlediska jde o nejbohatší sekundární zdroj, avšak
+kvůli přísnému zákazu scrapingu a redistribuce odvozených extraktů nelze surové tabulky ze
+SquashInfo legálně stahovat ve velkém ani je vkládat do veřejného repozitáře Squash Engine9.
+Lze je využít pouze pro manuální ověření malých vzorků v rámci osobního nekomerčního
+výzkumu nebo po zakoupení explicitní písemné licence9.
+3. Squash Stats a sekundární analytické platformy
+Pod označením „Squash Stats“ a příbuznými analytickými databázemi existuje v současnosti
+pět zcela odlišných entit, které je nutné v datovém katalogu striktně rozlišovat, aby nedošlo ke
+kontaminaci provenience. První a vědecky nejcennější entitou je analytický portál Squash Stats
+(https://squashstats.com), což je nezávislý kvantitativní blog a výzkumný web publikující
+hloubkové statistické rozbory profesionálního squashe v období 2020–202622. Tento portál
+zpracovává analýzy rozdělení prize money a bodů na PSA World Tour, variabilitu v Top 10,
+délku pobytu v elitě od roku 2000, fyzické parametry hráčů (/2020/05/19/physicals/), délky
+zápasů, analýzy obratů (The Comeback Kings and Queens, říjen 2026), nejrychlejší vzestupy
+na post světové jedničky a historické rivality éry 2000–202622. Data zde publikovaná jsou
+odvozená a agregovaná do podoby vizualizací a tabulek v článcích, jsou přístupná zdarma bez
+přímého CSV exportu podkladové databáze a vykazují vysokou vědeckou hodnotu jako
+referenční sekundární benchmark pro moduly R001, R002, R003 a R00422.
+Druhou entitou je platforma SquashLevels (https://squashlevels.com), představující globální
+dynamický ratingový systém oficiálně uznávaný a podporovaný organizacemi WSF a PSA25.
+<PARSED TEXT FOR PAGE: 4 / 50>
+Systém počítá dynamickou výkonnostní úroveň hráče po každém odehraném zápase na
+základě vyhraných zápasů, setů a jednotlivých bodů s algoritmickým tlumením a vážením síly
+soupeře jak pro profesionály, tak pro klubové hráče25. Přístup k základním profilům je bezplatný,
+zatímco pokročilé funkce a plná historie podléhají registraci a placeným úrovním členství,
+přičemž hromadný export není povolen25. Pro kalibraci interního Elo či Glicko hodnocení v
+modulech R001 a R002 poskytuje SquashLevels důležitý konceptuální vzor, zejména důrazem
+na to, že ve výsledném ratingu záleží na každém vyhraném bodu a poměru skóre, nikoliv pouze
+na binární výhře v zápase25.
+Třetí entitou je severoamerická komerční beta platforma Squash Stats (https://squash-
+stats.com) se základním předplatným od 3,99 USD měsíčně, která agreguje ratingovou historii,
+výsledky zápasů, živé žebříčky US Squash a univerzitní soutěže (College Squash standings)26.
+Protože pokrývá primárně americký ekosystém a nikoliv globální PSA Tour, má pro kalibraci
+elitního mužského okruhu pouze okrajový význam, například při studiu přechodu univerzitních
+hráčů do PSA v modulu R00126. Čtvrtou skupinu tvoří mobilní skórovací aplikace, konkrétně
+Squash Stats na Google Play (id=app.squashstats) a Squash Stats Scorer v2.3 od společnosti
+ChemEng Software Design27. Tyto nezávislé klientské aplikace slouží k manuálnímu záznamu
+skóre a statistik během zápasu (vítězné údery na forhendu a bekhendu, voleje, esa, chyby z
+podání, nevynucené a vynucené chyby, délky výměn) s možností lokálního uložení či exportu
+vlastních záznamů do CSV nebo PDF27. Tyto aplikace však neobsahují žádnou centrální
+databázi profesionálních zápasů PSA; výslovně deklarují, že nejsou spojeny s PSA, WSF ani
+FFSquash a neshromažďují data uživatelů na centrálním serveru, takže představují čistě
+záznamové nástroje, nikoliv datové zdroje28. Pátou příbuznou platformou je infrastrukturní
+databáze https://stats.squashplayers.app/charts, která poskytuje globální geografické statistiky
+o počtu squashových kurtů, klubů, venkovních kurtů a nejizolovanějších hal podle zemí a
+regionů31, což je využitelné pro geografické vážení generování talentů podle hustoty
+infrastruktury v modulu R001.
+4. World Squash Library a World Squash (Historické archivy a regule)
+World Squash Library (https://www.squashlibrary.info), vedená bývalým výkonným ředitelem
+WSF a PSA Andrewem Shelleym jako nezisková organizace (registrovaná ve Velké Británii jako
+World Squash Library CIC, č. 12188524 od roku 2019, se sídlem v Londýně-Southgate), plní roli
+oficiálního mezinárodního historického archivu squashe32. Její historické pokrytí sahá až k
+počátkům sportu v 50. letech 19. století (1850s) a pokrývá mužské i ženské světové, regionální
+a národní šampionáty18. Digitální projekt Worldwide Winners Resource sjednocuje historické
+seznamy vítězů světových, regionálních a národních titulů na jednom místě18, avšak samotná
+knihovna pro detailní výsledky jednotlivých kol odkazuje přímo na portál www.squashinfo.com18.
+Většina unikátního fondu knihovny, zahrnující knihy, časopisy Squash Player Magazine,
+ročenky, turnajové programy, fotografie, VHS kazety a DVD, existuje ve fyzické podobě nebo ve
+formě narativních rešerší (Spotlights and features)32.
+Jako klíčový doplňkový zdroj slouží oficiální web mezinárodní federace World Squash
+(https://www.worldsquash.sport), který poskytuje veřejně dostupné PDF dokumenty s
+kompletními soutěžními předpisy (Championship Regulations V10.5 / V11.4, Annexure B1 / C)35
+a technickými specifikacemi kurtů, míčků a brýlí v rámci World Squash Quality Programme
+202639. Tyto dokumenty obsahují exaktní pravidla pro situace typu double walkover, double
+<PARSED TEXT FOR PAGE: 5 / 50>
+retirement, bodové systémy a certifikaci povrchů37. Webové přehledy vítězů a PDF předpisy
+jsou volně čitelné, avšak podléhají standardnímu copyrightu WSF podle anglického práva
+(https://www.worldsquash.sport/terms-of-use/)19. Pro Squash Engine slouží World Squash
+Library a dokumentace WSF jako primární ověřovací autorita pro historické milníky, dlouhodobé
+dynastie (R003) a procedurální pravidla skrečí (R005), nikoliv jako zdroj strojově čitelných
+zápasových tabulek18.
+5. SquashAI a ekosystém systémů počítačového vidění (Computer
+Vision)
+Průzkum termínu „SquashAI“ odhalil, že neexistuje žádná jednotná veřejná databáze pozic
+hráčů na kurtu pod tímto jménem. Místo toho tento pojem označuje skupinu nezávislých
+inženýrských projektů, komerčních SaaS platforem a akademických systémů pro zpracování
+videa a senzorických dat. Prvním z nich je projekt SquashAI autora Tommyho Mullaneyho z
+roku 2020 (http://tommymullaney.com/projects/squash-ai), který vznikl jako experimentální
+systém počítačového vidění během pandemie COVID-1940. Tento systém využívá manuálně
+anotované snímky rekreačního squashe z YouTube zpracované v nástroji LabelMe k tréninku tří
+specializovaných modelů: detekce a sledování hráčů pomocí architektury YOLOv3 s upraveným
+algoritmem DeepSORT, detekce míčku pomocí vlastní konvoluční neuronové sítě založené na
+architektuře TrackNet a segmentace kurtu postavené na kombinaci UNet a MobileNet40.
+Přestože pipeline generuje z normalizovaných pozičních dat pozápasové statistické reporty,
+nepublikuje žádný otevřený dataset profesionálních zápasů PSA40.
+Druhým projektem stejného jména je mobilní aplikace SquashAI vývojáře M. M. Karama
+(https://www.mmkaram.dev/projects/squashai/), která zpracovává video z chytrého telefonu
+přeškálované na rozlišení               pixelů41. Pro sledování míčku aplikuje odečítání pozadí
+pomocí knihovny OpenCV (createBackgroundSubtractorKNN), morfologickou dilataci a detekci
+kontur či souvislých komponent, čímž dosahuje úspěšnosti záchytu míčku kolem 90 % na
+základě modifikace postupu Duncana Morrise a konzultací s Dr. Joe Webberem41. Pro
+sledování hráče využívá tento systém model Google MoveNet pod licencí Apache 2.0, který pro
+každý snímek vrací float32 tenzor o tvaru [1, 1, 17, 3] reprezentující normalizované souřadnice
+         v intervalu            a skóre spolehlivosti pro 17 klíčových bodů lidského těla41. Opět
+jde o softwarovou pipeline pro koncové uživatele, nikoliv o veřejný archiv dat41.
+Třetí entitou je komerční platforma SmartSquash AI (https://www.smartsquash.ai), fungující jako
+cloudová služba, která transformuje nahraná zápasová videa do podoby teplotních map
+(heatmaps), map umístění úderů (spray charts), měření celkové uběhnuté vzdálenosti,
+průměrné rychlosti pohybu, rychlosti míčku, využití regionů kurtu a metrik kontroly T-zóny (T-
+Control Stats)42. Služba je zpoplatněna v tarifních stupních od 14,99 USD měsíčně (pro 1
+zápas) přes 24,99 USD měsíčně (Pro Play pro 3 zápasy) až po 49,99 USD měsíčně pro
+neomezený tarif Elite Unlimited a zpracovává výhradně videa nahraná samotným uživatelem,
+aniž by poskytovala veřejný katalog historických dat z PSA Tour43. Čtvrtým nástrojem je
+senzorická aplikace Squash AI pro chytré hodinky Garmin
+(https://apps.garmin.com/en-US/apps/63d73d93-c1ce-4424-bfbe-bbe2939f6704 a
+https://www.sport-ai.net), která pomocí vestavěného akcelerometru na dominantní ruce
+rozpoznává a počítá typy úderů s 20denní bezplatnou zkušební dobou, avšak neobsahuje
+<PARSED TEXT FOR PAGE: 6 / 50>
+prostorové souřadnice kurtu ani data profesionálů44.
+Pátou větví jsou otevřené GitHub projekty počítačového vidění. Projekt Parkera Dixona
+(https://parkerdixon.github.io/Squash-Vision/ z června 2018) demonstruje využití CNN modelu
+DeepPose a homografické transformace k projekci kloubů hráčů na 2D půdorys kurtu a
+generování heatmap kontroly středu kurtu45. Repozitář https://github.com/wmcnally/kapao
+obsahuje model KAPAO-S aplikovaný na 1080p zpomalené squashové video se sledováním
+pózy mezi snímky47. Bakalářská práce Davida Hursta (https://github.com/DavidHurst/ai-umpire)
+pak propojuje fyzikální engine PyChrono s raytracingovým rendererem POVRay k syntetické
+simulaci profesionálního squashového zápasu a následnému sledování míčku pomocí
+Kalmanova filtru a husté pravděpodobnostní mřížky pro rozhodování o autech (in/out)48.
+Šestým a pro vědeckou kalibraci nejvýznamnějším pilířem této kategorie je akademický systém
+SAGIT/Squash vyvinutý na Univerzitě v Lublani Janezem Peršem a Goranem Vučkovićem49.
+Tento systém využívá pevnou kameru SVHS (JBL UTC-A6000H) připevněnou přímo na stropě
+ve středu kurtu se širokoúhlým objektivem (2,3–6,0 mm) snímajícím při frekvenci 25 Hz a
+rozlišení              pixelů6. Systém SAGIT/Squash rozdělil kurt na 15 či 29 segmentů a
+vygeneroval nejcitovanější empirická data o pohybu elitních hráčů kolem T-zóny a na
+Mistrovství světa družstev6. Ačkoliv surové databáze uložené v Microsoft Access nejsou volně
+ke stažení, agregované statistické rozdělení je plně publikováno v recenzovaných článcích a
+přímo použitelné pro kalibraci modulu R0066.
+6. Balíček squashinformr (Možnosti a právní limity automatizovaného
+sběru)
+Softwarový balíček squashinformr (https://github.com/HaydenMacDonald/squashinformr,
+publikovaný na CRAN ve verzi 0.2.0 autorem Haydenem MacDonaldem v květnu 2020 a
+refaktorovaný v únoru 2021) je nástroj v jazyce R navržený pro web scraping, parsování a
+čištění dat z portálu SquashInfo10. Technická architektura balíčku je rozdělena do tří rodin
+funkcí10. První rodinu tvoří hráčské funkce get_players(), get_player_recent_results(),
+get_player_recent_matches(), get_player_recent_games() a get_matchup(), druhou rodinu
+turnajové funkce get_tournaments(), get_tournament_players(), get_tournament_matches() a
+get_tournament_games() a třetí rodinu rankingová funkce get_rankings() pro získávání
+aktuálních i historických žebříčkových tabulek10. Funkce vracejí čisté tabulkové struktury
+(tibble), přičemž například volání get_tournament_games() vrací 15 sloupců na úrovni
+jednotlivých setů: tournament_name, category, tournament_date, player_1, player_2,
+player_1_seed, player_2_seed, player_1_nationality, player_2_nationality, round, match, game,
+player_1_score, player_2_score a game_winner10.
+Při posuzování využitelnosti tohoto nástroje je však nutné zdůraznit kritický právní rozpor mezi
+licencí softwarového nástroje a licencí zobrazovaných dat. Samotný balíček squashinformr je
+šířen pod svobodnou licencí GPL-3 a implementuje principy tzv. „zdvořilého scrapování“ (polite
+scraping), které vynucují povinné časové prodlevy mezi dotazy nastavené serverem
+SquashInfo10. Autor v dokumentaci sám upozorňuje, že uživatelé musí být při běhu skriptů
+trpěliví a měli by zvážit zakoupení prémiového členství na SquashInfo k podpoře jejich práce10.
+Z hlediska správy dat však platí nepřekročitelná zásada, že licence GPL-3 udělená autorem R
+skriptu se vztahuje výhradně na zdrojový kód v jazyce R a nemůže zrušit ani překonat smluvní
+<PARSED TEXT FOR PAGE: 7 / 50>
+podmínky (Terms & Conditions) vlastníka cílové databáze SquashInfo, který jakýkoliv scraping,
+stahování a následnou distribuci dat či odvozených extraktů bez písemného souhlasu výslovně
+zakazuje9. Využití balíčku squashinformr k masovému stažení historie PSA a jejímu uložení do
+veřejného GitHub repozitáře projektu Squash Engine by proto představovalo přímé porušení
+podmínek poskytovatele dat9.
+7. Sportradar Squash API (Komerční B2B telemetrie a
+pravděpodobnostní modely)
+Společnost Sportradar provozuje specializované rozhraní Sportradar Squash v2 API
+(https://developer.sportradar.com/squash/reference/squash-overview, s indexem dokumentace
+pro AI agenty na /squash/llms.txt a veřejnou kolekcí v Postman API Network)4. Architektura API
+je plně standardizována v rámci rodiny General Sport APIs, nabízí kompletní XSD schéma,
+OpenAPI specifikaci a dokonce dedikovaný Sportradar Squash MCP Server (Model Context
+Protocol) pro přímou integraci s jazykovými modely a agenty5. Rozhraní obsahuje přesně 23
+endpointů pokrývajících strukturu soutěží, profily hráčů, zápasové kanály a prediktivní
+analytiku5. Strukturu sezón a pavouků zajišťují endpointy Competitions, Competition Info,
+Competition Seasons, Seasons, Season Info, Season Competitors, Season Links (umožňující
+propojení kol pro sestavení kompletních vyřazovacích pavouků i ve stavu TBD vs. TBD),
+Season Standings a Season Summaries5. Hráčské profily a bilance obsluhují endpointy
+Competitor Profile, Competitor Summaries, Competitor vs Competitor (historické a nadcházející
+vzájemné zápasy včetně skóre) a Competitor Merge Mappings pro mapování sloučených
+duplicitních identifikátorů5. Zápasovou a živou telemetrii poskytují Daily Summaries, Sport Event
+Summary, Sport Event Timeline (detailní časová osa událostí v zápase), Live Summaries, Live
+Timelines a Live Timelines Delta (10sekundové živé přírůstkové změny skóre a časové osy)5.
+Prediktivní vrstvu a správu změn doplňují Season Probabilities (dvoucestné pravděpodobnosti
+výhry v zápase typu home/away) a monitorovací kanály Sport Events Created, Sport Events
+Updated a Sport Events Removed sledující změny za posledních 24 hodin4.
+Dokumentace však odhaluje zásadní limit pro historické modelování: endpointy Competition
+Seasons a Seasons vracejí maximálně tři sezóny dat včetně aktuální či nově vytvořené
+sezóny5. Podobně endpoint Competitor Merge Mappings uchovává záznamy o sloučení
+duplicitních profilů v kanálu pouze po dobu 7 dnů5. Všechna volání vyžadují autentizační klíč,
+přičemž k dispozici je sice časově a objemově omezená zkušební verze (trial/v2), avšak
+produkční využití podléhá přísným komerčním B2B licencím s vysokými poplatky a zákazem
+veřejné redistribuce surových feedů5. Pro vědeckou kalibraci modulu R002 (zejména časové
+osy bodů v Sport Event Timeline a kalibrace předzápasových pravděpodobností v Season
+Probabilities) jde o technicky nejpokročilejší zdroj současných dat, avšak třísezónní limit zcela
+vylučuje jeho použití pro dlouhodobé historické studie v modulech R001 a R0035.
+8. Veřejné univerzitní datové sady, GitHub, Zenodo, Figshare a Kaggle
+Systematický průzkum otevřených vědeckých repozitářů (zenodo.org, figshare.com,
+kaggle.com) odhalil zásadní metodologické úskalí spočívající v extrémní sémantické kolizi
+anglického termínu „squash“, která při nekritickém automatizovaném vyhledávání vede k více
+než 95% míře falešně pozitivních nálezů. První sémantickou pastí je zemědělská botanika a
+fytopatologie, neboť drtivá většina datasetů na Zenodo, Figshare a Kaggle obsahujících klíčové
+<PARSED TEXT FOR PAGE: 8 / 50>
+slovo „squash“ se týká tykve obecné (Cucurbita pepo), konkrétně segmentace listů a detekce
+padlí (Squash Powdery mildew) v datasetech PlantVillage, PlantDoc, DiaMOS Plant či
+CropAndWeedAndLeaf (Zenodo záznam 20116408 z května 2026, třída č. 15 Squash
+Cucurbita) nebo studiích role kyseliny abscisové při dozrávání plodů (Figshare záznam
+3569334)61. Druhou pastí jsou epidemiologické dotazníky veřejného zdraví, kde rozsáhlé
+klinické datasety na Figshare (např. Test-re-test reliability of the SQUASH questionnaire, DOI
+10.1371/journal.pone.0161066.t002 v rámci studie HELIUS) nezkoumají raketový sport, nýbrž
+nizozemský dotazník pohybové aktivity SQUASH (Short Questionnaire to Assess Health-
+enhancing physical activity)66. Třetí kolizí je kvantové počítání, reprezentované velkoobjemovým
+datasetem na Zenodo (záznam 15230565 z dubna 2025 o objemu 810,9 GB) s názvem
+SQuASH Surrogate Benchmark Dataset, který slouží pro hledání kvantových architektur
+(Quantum Architecture Search – QAS)67.
+Po odfiltrování těchto sémantických kolizí zůstávají v otevřených repozitářích tři autentické
+datasety sportovního squashe. Prvním je akustická a výkonnostní databáze na Figshare (Hajdú-
+Szücs et al., 2018), publikovaná v časopise PLoS ONE (doi:10.1371/journal.pone.0194394),
+která zpřístupnila pod otevřenou licencí Creative Commons Attribution (CC BY) kompletní
+projekt na adrese https://figshare.com/projects/Audio-
+based_performance_evaluation_of_squash_players/30115 včetně záznamu reálného
+sedmiminutového zápasu z března 2016
+(https://figshare.com/articles/media/Audio_2_lively_situation_part_1/5962114)3. Tento soubor
+obsahuje surové 96 kHz audio záznamy (6,25 ms okna) a anotace dopadů míčku na přední
+stěnu, boční stěny, sklo a podlahu, přičemž empiricky dokládá kadenci 40 až 60 úderových
+událostí za minutu3. Druhým zdrojem je manuálně anotovaný dataset pozic chodidel hráčů z
+veřejně dostupných zápasů za různých světelných podmínek kurtu, vytvořený v rámci studie
+hodnotící předtrénované hluboké konvoluční sítě (HPE-CNN) v roce 2021 (PMC8271826)52.
+Třetím zdrojem je syntetický fyzikální dataset v repozitáři DavidHurst/ai-umpire, který nabízí
+skripty pro generování syntetických trajektorií míčku a hráčů v čase pomocí knihovny
+PyChrono48.
+9. Původní recenzované výzkumy fyziologie, zranění a taktiky
+Vzhledem k absenci otevřených bodových a pozičních API tvoří recenzovaná vědecká literatura
+jediný legální, metodologicky validovaný a okamžitě dostupný zdroj pro kalibraci vnitřních
+mechanismů zápasového enginu (R002), zdravotního modelu (R005) a taktické AI (R006). V
+oblasti fyziologie a časové struktury zápasu poskytují studie Oliviera Girarda et al. (2005,
+2007)7, Adriana Leese (1998, 2003, 2008)13, Wilkinsona et al.13, Montpetita (1990)14, Sharpa
+(1998)8, Hughese et al. (2005, 2006)8 a disertační práce Turnera (2024)73 přesné průměry a
+směrodatné odchylky pro dobu trvání výměn, pauzy mezi výměnami, čistý hrací čas (effective
+playing time), tepovou frekvenci, spotřebu kyslíku (            ) a koncentraci krevního laktátu.
+V oblasti kinematiky, T-zóny a volby úderů kvantifikují práce Gorana Vučkoviće, Janeze Perše,
+Nice Jamese, Mikea Hughese a Stafforda Murrayho (2004, 2005, 2008, 2009, 2010, 2013,
+2014)6 rozdíly v uběhnuté vzdálenosti mezi vítězi a poraženými jednotlivých výměn,
+procentuální obsazení T-zóny v okamžiku úderu soupeře a pravděpodobnostní rozdělení typů
+úderů v závislosti na lokaci míčku (15 resp. 29 zón kurtu) a dostupném čase mezi údery. V
+doméně epidemiologie zranění pak studie Horsleyho, O'Donnella a Leedera (analyzující
+<PARSED TEXT FOR PAGE: 9 / 50>
+profesionální hráče po dobu 11 let)12, Rejeba et al.12, Meyera et al.12, Parkkariho et al.12, Eime et
+al.12 a Benera et al.75 poskytují exaktní míry incidence zranění na 1 000 hodin expozice a
+anatomické rozložení úrazů.
+Souhrnná srovnávací matice zdrojů (Oblast B)
+Následující tabulka syntetizuje všech dvanáct požadovaných atributů dostupnosti a datové
+správy napříč devíti prověřenými kategoriemi zdrojů.
+
+
+  Zdr     Pok     Mu       Gra     Dos      Chy     Úpl      Pov     For     Přís     Pod     Věd
+  oj a    rytí    žsk      nul     tup      bějí    nos      aha     mát     tup      mín     eck
+  pře     rok     á        arit    né       cí      t        záz     exp     zda      ky      á
+  sný     ů       pro      a       pro      pro     hist     na      ort     rma      pou     vyu
+  odk             fi       dat     mě       mě      orie     mů      u                žití    žite
+  az              pop              nné      nné                                       a       lno
+                  ula                                                                 stro    st
+                  ce                                                                  jov     pro
+                                                                                      ého     Squ
+                                                                                      zpr     ash
+                                                                                      aco     Eng
+                                                                                      ván     ine
+                                                                                      í
+
+
+  1.      197     Ko       Hrá     Poř                       Poz     HT               Cop     Vys
+                                            Hist    Vys                      Ano
+  PS      5–      mpl      č,      adí,                      oro     ML               yrig    oká
+                                            orie    oká                      (we
+  A       202     etní     turn    bod                       van     web              ht      pro
+                                            bod     pro                      ba
+  Squ     6       regi     aj,     y,                        é       ,                PS      kali
+                                            po      Top                      PD
+  ash     (že     stro     záp     dělit                     (ofic   PD               A;      bra
+                                            bod     50                       F
+  Tou     bříč    van      as,     el,                       iální   F                kom     ci
+                                            u,      a                        pra
+  r       ky);    á        set     priz                      záz     (Rul             erč     pra
+                                            délk    Wor                      vidl
+          det     pop      (v      e                         na      e                ní      vide
+                                            y       ld                       a)
+  psa     ailní   ulac     live    mo                        my      Boo              distr   l,
+                                            vým     Eve
+  squ     záp     e        reži    ney,                      roz     k);              ibuc    bod
+                                            ěn,     nts;
+  asht    asy     PS       mu      pav                       hod     bez              e       ový
+                                            typy    nižš
+  our.    ~20     A        doč     ouk,                      čích    veř              pře     ch
+                                            úde     í
+  com     00–     (>1      asn     skór                      a       ejné             s       tab
+                                            rů,     pro
+          202     200      ě       e                         PS      ho               Spo     ulek
+                                            pozi    star
+  PS      62      hrá      bod     setů                      A)15    CS               rtra    ,
+                                            ce,     ší
+  A               čů)1     )2      ,                                 V/A              dar;    dělit
+                                            léka    sate
+  Tou             7                čas                               PI15             zák     elů
+                                            řské    lity
+  r                                záp                                                az      a
+                                            diag
+  Rul                              asu,                                               hro     stru
+                                            nóz
+  e                                bio                                                ma      ktur
+                                            y
+  Boo                              hrá                                                dné     y
+<PARSED TEXT FOR PAGE: 10 / 50>
+k2                          če2                                           ho     sez
+                                                                          scra   óny
+                                                                          ping   (R0
+                                                                          u4     03,
+                                                                                 R00
+                                                                                 4)2.
+
+2.     197    Ko     Hrá    Dat            Nej     Poz     HT     Čás     Přís   Om
+                                   Prů
+Squ    0s–    mpl    č,     um,            úpln    oro     ML;    tečn    ný     eze
+                                   běh
+ash    202    etní   turn   kolo           ější    van     plac   ě       zák    ná
+                                   bod
+Info   6      PS     aj,    ,              exis    é       ené    (zák    az     prá
+                                   po
+       (ko    A      záp    nas            tujíc   (ofic   PD     ladn    scr    vní
+                                   bod
+squ    mpl    Wor    as,    aze            í       iální   F/d    í       api    m
+                                   u,
+ashi   etní   ld &   set    ní,            arc     výsl    oku    strá    ngu    rám
+                                   délk
+nfo.   mo     Cha    (ga    nár            hiv     edk     me     nky)    ,      ce
+                                   y
+com    der    llen   me)    odn            výsl    ové     nty    ;       stah   m:
+                                   vým
+9
+       ní     ger    10
+                            ost,           edk     listi   v      pok     ová    vyni
+                                   ěn,
+       éra    Tou           skór           ů       ny)1    Eve    ročil   ní a   kají
+                                   stati
+       od     r,            e              záp     0       nt     é       šíře   cí
+                                   stik
+       ~20    juni          setů           asů             Ser    funk    ní     pro
+                                   y
+       00)1   oři,          ,              a               vice   ce      odv    ma
+                                   chy
+       0      nár           čas            setů            s20    plac    oze    nuál
+                                   ba
+              odn           záp            18
+                                                                  ené     nýc    ní
+                                   vítě
+              í             asu,                                  10
+                                                                          h      ově
+                                   zný
+              akc           HW                                            extr   ření
+                                   ch
+              e10           R,                                            aktů   mal
+                                   úde
+                            H2                                            bez    ých
+                                   rů
+                            H10                                           píse   vzor
+                                                                          mn     ků,
+                                                                          ého    nelz
+                                                                          sou    e
+                                                                          hlas   hro
+                                                                          u      ma
+                                                                          SI9.   dně
+                                                                                 scra
+                                                                                 pov
+                                                                                 at
+                                                                                 do
+                                                                                 rep
+                                                                                 o9.
+
+3a.    Ana    Elit   Agr    Roz            Výb     Odv     HT     Ano            Vys
+                                   Sur                                    Sta
+Squ    lýzy   ní     ego    pad            ěro     oze     ML     (pln           oká
+                                   ové                                    nda
+<PARSED TEXT FOR PAGE: 11 / 50>
+ash    pok     pop     van    priz            vá      né /   člán    ě               jako
+                                      tab                                    rdní
+Stat   rýva    ulac    é      e               (za     rek    ky,     bez             refe
+                                      ulky                                   aut
+s      jící    e       stud   mo              měř     onst   stati   plat            ren
+                                      jedn                                   orsk
+(Bl    éru     PS      ie     ney,            eno     ruo    cké     ný              ční
+                                      otliv                                  é
+og)    197     A       na     bod             na      van    graf    přís            sek
+                                      ých                                    prá
+       5–      (zej    úro    ů,              publ    éz     ya      tup)            und
+                                      záp                                    vo k
+squ    202     mé      vni    vari            ikov    pri    sou     22
+                                                                                     ární
+                                      asů,                                   anal
+ash    6       na      hrá    abili           ané     már    hrn                     ben
+                                      dat                                    ytic
+stat   (pu     Top     čů,    ta              tem     ních   né                      chm
+                                      ao                                     kým
+s.co   blik    10      turn   ran             atic    výsl   tab                     ark
+                                      vým                                    text
+m22    ace     až      ajů,   king            ké      edk    ulky                    pro
+
+                                      ěná                                    ům;
+       202     Top     záp    u,              stud    ů22    22
+                                                                                     verif
+                                      ch a                                   publ
+       0–      100     asů    délk            ie)22                                  ikac
+                                      poh                                    ikov
+       202     a       a      y                                                      i
+                                      ybu                                    ané
+       6)22    Wor     setů   záp                                                    mak
+                                                                             sou
+               ld      22
+                              asů,                                                   rom
+                                                                             hrn
+               Tou            com                                                    odel
+                                                                             né
+               r)22           eba                                                    ů
+                                                                             stati
+                              cky,                                                   (R0
+                                                                             stik
+                              fyzi                                                   01–
+                                                                             y
+                              cké                                                    R00
+                                                                             lze
+                              rysy                                                   4)22.
+                              22
+                                                                             cito
+                                                                             vat.
+
+
+3b.    Mo      Glo     Hrá    Dyn             Vys     Odh    We      Čás     Pro     Stř
+                                      Det
+Squ    der     báln    č,     ami             oká     adn    bov     tečn    prie    edn
+                                      aily
+ash    ní      í       záp    cký             pro     uté    é       ě       tárn    í:
+                                      jedn
+Lev    digit   (PS     as,    číse            mo      /      roz     (fre    í       klíč
+                                      otliv
+els    ální    A       set,   lný             der     mo     hra     emi     dat     ová
+                                      ých
+       éra     prof    bod    leve            ní      delo   ní      um      abá     met
+                                      vým
+squ    až      esio    ové    l,              záp     van    (uz     mo      ze a    odol
+                                      ěn,
+ashl   do      nálo    po     hist            asy     é      avř     del     algo    ogic
+                                      takti
+evel   202     vé      měr    orie            zap     (pro   ená     s       ritm    ká
+                                      cké
+s.co   625     +       y25    leve            ojen    prie   platf   plac    us;     insp
+                                      a
+m25            stati          lu,             ých     tárn   orm     ený     zák     irac
+                                      pro
+               síce           pro             fed     í      a)25    mi      az      e
+                                      stor
+               klub           cent            era     rati           tarif   hro     pro
+                                      ové
+               ový            uáln            cí a    ngo            y)25    ma      náv
+                                      pro
+               ch             í               PS      vý                     dné     rh
+                                      mě
+               hrá            změ             A25     algo                   extr    vah
+                                      nné
+               čů)2           ny                      ritm                   akc     bod
+               5              výk                     us)2                   e       ový
+                              onu                                            dat2    ch
+<PARSED TEXT FOR PAGE: 12 / 50>
+                                25                     5                     5
+                                                                             .       po
+                                                                                     měr
+                                                                                     ův
+                                                                                     rati
+                                                                                     ngu
+                                                                                     (R0
+                                                                                     01,
+                                                                                     R00
+                                                                                     2)25.
+
+4.      185     Hist    Tur     Hist    Det     Vys    Poz    HT     Ano     Cop     Stř
+Wo      0s–     oric    naj     oric    ailní   oká    oro    ML,    (digi   yrig    edn
+rld     202     ká      (vít    ké      výsl    pro    van    PD     tální   ht      í až
+Squ     6       elita   ězo     listi   edk     šam    éa     F      zdr     WS      vys
+ash     (hist   ,       vé a    ny      y       pion   hist   dok    oje     F/      oká
+Libr    orie    vítě    final   vítě    nižš    y      oric   um     a       WS      pro
+ary     spo     zov     isté)   zů,     ích     hlav   ky     enty   PD      L       vali
+&       rtu);   é       ,       pře     kol     ních   arc    pře    F       CIC     daci
+WS      reg     svět    pra     dpis    (od     akcí   hivo   dpis   reg     (an     dlou
+F       ule     ový     vidl    y       kaz     ;      van    ů;     ule     glic    hod
+        202     ch a    ový     pro     uje     neú    é32    fyzi   WS      ké      obý
+squ     4–      nár     rám     wal     na      plná          cký    F)18    prá     ch
+ashl    202     odn     ec18    kov     Squ     pro           arc            vo);    dyn
+ibra    632     ích             er/s    ashI    nižš          hiv            nek     astií
+ry.in           titul           kreč    nfo)    í             v              om      (R0
+fo              ů18             e,      18
+                                                kola          Lon            erč     03)
+                                certi           18
+                                                              dýn            ní      a
+worl                            fika                          ě33            čten    pra
+dsq                             ce                                           í       vide
+uas                             kurt                                         pov     l
+h.sp                            ů18                                          olen    skre
+ort18                                                                        o19.    čí/w
+                                                                                     alko
+                                                                                     ver
+                                                                                     ů
+                                                                                     (R0
+                                                                                     05)1
+                                                                                     8
+                                                                                       .
+
+5.      200     Mal     Sní     Sou             Extr   Poz    Vla    Ne      Saa     Vys
+                                        Cel
+Squ     2–      é       mek     řad             ém     oro    stní   u       S       oká
+                                        ose
+ash     201     vzor    vide    nice            ně     van    JS     Sm      platf   u
+                                        zón
+AI      4       ky      a                       frag   é      ON/    artS    orm     pub
+                                        ní
+<PARSED TEXT FOR PAGE: 13 / 50>
+&       (SA    elitn   (25    ,              me      (co    CS      qua    y      liko
+                                      pok
+CV      GIT    ích     Hz),   čas            ntov    mp     Vu      sh     jsou   van
+                                      rytí
+sys     );     hrá     vým    v T-           aná     uter   Saa     AI     pro    ých
+                                      PS
+tém     201    čů      ěna    zón            (izol   visi   S;      (14,   prie   výs
+                                      A
+y       8–     (na     ,      ě,             ova     on     publ    99–    tárn   tup
+                                      Tou
+        202    př.     úde    ubě            né      trac   ikov    49,    í;     ů
+                                      r,
+sma     6              r,     hnu            záp     king   ané     99     ope    SA
+                                      pro
+rtsq    (mo    na      15     tá             asy     s      tab     US     n-     GIT
+                                      poje
+uas     der    MS      neb    vzd            a       ma     ulky    D/m    sou    pro
+                                      ní s
+h.ai,   ní     dru     o      álen           labo    nuál   v       ěs.)   rce    kali
+                                      ran
+tom     CV/    žste    29     ost,           rato    ní     člán    ;      mo     bra
+                                      king
+my      DL     vu      zón    rych           rní     kor    cích    Ano    dely   ci
+                                      ovo
+mull    proj   SA      kurt   lost,          test    ekcí   6
+                                                                    u      (MI    poh
+                                      u
+ane     ekty   GIT     u6     typ            y)6     )6             aka    T/A    ybu
+                                      hist
+y.co    )40    )6             úde                                   de     pac    na
+                                      orií
+m,                            ru6                                   mic    he     Ta
+mm                                                                  kýc    2.0)   takti
+kar                                                                 h      neo    ky
+am.                                                                 tab    bsa    (R0
+dev,                                                                ulek   hují   06)6
+SA                                                                  43
+                                                                           prof   .
+GIT                                                                        i
+6
+                                                                           dat
+                                                                           a41.
+
+6.      Nás    Stej    Hrá    15      Stej   Závi    Extr   R       Ano    Kód    Níz
+squ     troj   ná      č,     pro     né     slá     aho    dat     (bal   je     ká
+ash     vyví   jako    turn   mě      jako   na      van    a.fr    íček   GP     pro
+info    jený   Squ     aj,    nný     veř    dost    é      am      na     L-3,   pro
+rmr     202    ashI    záp    ch u    ejný   upn     (we    e/      CR     ale    duk
+        0–     nfo     as,    her,    web    osti    b      tibbl   AN     stah   ční
+gith    202    (dle    set    12      Squ    HT      scra   e       a      ova    ing
+ub.c    1      dot     (tib   u       ashI   ML      ping   (sn     Git    ná     est:
+om/     (při   azu     ble    záp     nfo1   stru    z      adn     Hub    dat    prá
+Hay     stup   uživ    v      asů,    0      ktur    HT     ý       u)10   a      vní
+den     uje    atel    R)10   7u             y       ML     exp            podl   koli
+Mac     k      e)10           žeb            Squ     strá   ort            éhaj   ze s
+Don     dat                   říčk           ashI    nek    do             í      ToS
+ald/    ům                    ů10            nfo1    )10    CS             zák    cílo
+squ     Squ                                  0              V/P            azu    véh
+ashi    ashI                                                arq            scr    o
+nfor    nfo)                                                uet)           api    web
+mr10    10                                                  10
+                                                                           ngu    u
+<PARSED TEXT FOR PAGE: 14 / 50>
+                                                                           v       zne
+                                                                           ToS     mož
+                                                                           Squ     ňuje
+                                                                           ash     legá
+                                                                           Info    lní
+                                                                           9
+                                                                            .      ploš
+                                                                                   ný
+                                                                                   sbě
+                                                                                   r9.
+
+7.     Klo    Top     Sez    Roz     Hist   Vys     Poz     JS     Ne              Stř
+                                                                           Ko
+Spo    uza    ligy    óna    pisy    orie   oká     oro     ON,    (po             edn
+                                                                           mer
+rtra   vé     a       ,      ,       star   pro     van     XM     uze             í:
+                                                                           ční
+dar    okn    prof    turn   skór    ší     aktu    é       L      om              ideá
+                                                                           pro
+Squ    o:     esio    aj,    e,      než    ální    (op     (XS    eze             lní
+                                                                           prie
+ash    ma     náln    záp    čas     3      3       erát    D      ný              stru
+                                                                           tárn
+v2     xim    í       as,    ová     sez    sez     oři v   sch    Tria            ktur
+                                                                           í
+API    áln    turn    set,   osa     óny,   óny;    reál    ém     l               a
+                                                                           lice
+       ě3     aje     bod    bod     pro    nulo    né      a,     klíč;           pro
+                                                                           nce;
+dev    sez    PS      /ud    ů,      stor   vá      m       Ope    jina            bod
+                                                                           přís
+elop   óny    A       álo    2-      ové    pro     čas     nAP    k               ové
+                                                                           ný
+er.s   na     sled    st     way     sou    star    e) +    I,     kom             čas
+                                                                           zák
+port   sout   ova     (tim   win     řad    ší      odh     MC     erč             ové
+                                                                           az
+rad    ěž5    né      elin   pro     nice   hist    adn     P      ní              osy
+                                                                           redi
+ar.c          ope     e,     babi    hrá    orii5   uté     serv   B2B             (R0
+                                                                           strib
+om/           ráto    10s    litie   čů,            (pra    er)5   tarif           02),
+                                                                           uce
+squ           ry4     delt   s,      fyzi           vdě            )5              ale
+                                                                           sur
+ash                   a)5    mer     olog           pod                            blok
+                                                                           ový
+5
+                             ge      ie5            obn                            ová
+                                                                           ch
+                             ma                     osti)                          no
+                                                                           dat
+                             ppin                   4
+                                                                                   cen
+                                                                           třetí
+                             gs4                                                   ou
+                                                                           m
+                                                                                   a
+                                                                           stra
+                                                                                   3se
+                                                                           ná
+                                                                                   zón
+                                                                           m.
+                                                                                   ním
+                                                                                   limit
+                                                                                   em5
+                                                                                   .
+
+8.     201    Jed     Mili   Aku            Nul     Poz     WA     Ano     Pln     Spe
+                                     Jak
+Zen    6–     notli   sek    stic           ová     oro     V/     (Op     ě       cifi
+                                     ákol
+odo    202    vci     und    ké             pro     van     raw    en      otev    cká
+                                     iv
+<PARSED TEXT FOR PAGE: 15 / 50>
+,       1       (tes    y      spe           okr    é      audi    Acc    řen     :
+                                      vaz
+Fig     (izol   tova    (96    ktru          uh     (mik   o,      ess,   é       pří
+                                      ba
+sha     ova     cí      kHz    m             PS     rofo   obr     CC     pro     mý
+                                      na
+re,     né      hrá     audi   dop           A      ny,    azo     BY     výz     em
+                                      turn
+Kag     exp     či v    o      adů           (po    kam    vé      lice   kum     piric
+                                      aje
+gle     eri     aku     úde    míč           uze    ery,   mas     nce    i       ký
+                                      PS
+        me      stic    rů),   ku,           labo   ma     ky,     )3     stroj   důk
+                                      A,
+figs    ntál    kýc     sní    kad           rato   nuál   tab            ové     az
+                                      skór
+har     ní      ha      mky    enc           rní    ní     ulky           zpr     pro
+                                      e,
+e.co    sbě     CV      vide   e             nah    ano    52
+                                                                          aco     kad
+                                      žeb
+m/      ry)3    stud    a3     úde           rávk   tace                  vání    enci
+                                      říčk
+proj            iích)          rů            y)3    )3                    za      úde
+                                      y či
+ects            3
+                               (40                                        pod     rů
+                                      kari
+/.../                          –                                          mín     (R0
+                                      éry
+301                            60/                                        ky      06),
+153                            min                                        cita    ale
+                               ),                                         ce      poz
+                               pozi                                       aut     or
+                               ce                                         orů     na
+                               cho                                        (CC     95
+                               dide                                       BY)     %
+                               l3                                         3
+                                                                            .     šum
+                                                                                  (tyk
+                                                                                  ve,
+                                                                                  QA
+                                                                                  S,
+                                                                                  dot
+                                                                                  azní
+                                                                                  ky)3
+                                                                                  .
+
+9.      199     Vzo     Záp    Dél           Pok    Poz    Pub     Ano            Krit
+                                      Indi                                Vol
+Rec     0–      rky     as,    ka            rývá   oro    liko    (Op            ick
+                                      vidu                                né
+enz     202     elitn   set,   vým           jak    van    van     en             áa
+                                      ální                                vyu
+ova     6       ích     vým    ěny,          éru    é      é       Acc            oka
+                                      jme                                 žití
+né      (ku     a       ěna    pau           deví   (lab   stati   ess            mži
+                                      nné                                 agr
+stu     mul     prof    ,      zy,           tibo   orat   stic    člán           tá:
+                                      prof                                ego
+die     ativ    esio    úde    W:            dov    orní   ké      ky v           jedi
+                                      ily                                 van
+(Fy     ní      náln    r,     R             ou     a      tab     PM             ný
+                                      kon                                 ých
+ziol    věd     ích     fyzi   po            (19    turn   ulky    C,             legá
+                                      krét                                věd
+ogi     eck     hrá     olog   měr           90),   ajov   (prů    PLo            lní a
+                                      ních                                eck
+e,      ý       čů (    ická   ,             tak    á      měr     S,             exa
+                                      hrá                                 ých
+Zra     kor             ode    HR,           mo     měř            MD             ktní
+                                      čů                                  fakt
+<PARSED TEXT FOR PAGE: 16 / 50>
+ něn     pus     až      zva,    lakt             der     ení,    SD,     PI,             zákl
+                                          PS                                      ůa
+ í,      )12             exp     át,              ní      klini   CI,     univ            ad
+                                          A                                       stati
+ Tak             )6      ozic                     PA      cká             erzit           pro
+                                          (dat                     -              stic
+ tika                    ev      ,                R-1     epid            ní              kali
+                                          a                       hod             kýc
+ )                       hodi    inci             114     emi             rep             bra
+                                          jsou                    noty            h
+                         nác     den                      olog            ozit            ci
+                                          ano                     )v              par
+ Pub                     h12     ce                       ie)6            áře)            R00
+                                          nym                     PD              am
+ Me                              zra
+                                                                          3
+                                                                                          2,
+                                          izov                    F/H             etrů
+ d/                              něn                                                      R00
+                                          aná                     TM              při
+ PM                              í/                                                       5a
+                                          )                       L6              řád
+ C/                              100                                                      R00
+                                                                                  né
+ Spri                            0                                                        66.
+                                                                                  cita
+ nge                             h12                                              ci.
+ r6
+
+Oblast C — Kritický audit historických statistik a
+strukturálních zkreslení
+Historická data profesionálního squashe za období 1975–2026 nepředstavují stacionární
+časovou řadu generovanou neměnným datovým procesem. Naopak, jde o záznam systému,
+jehož pravidla měření, vzorkovací frekvence, bodové ohodnocení i samotná definice vyhraného
+bodu prošly několika radikálními fázovými přechody2. Pokud by kalibrační skripty systému
+Squash Engine trénovaly parametry přímo na neupravených surových historických řadách,
+vnesly by do simulátoru těžká systematická zkreslení (structural breaks a survivorship bias).
+1. Historická četnost publikování PSA rankingů (Měsíční vs. týdenní
+režim)
+Od vzniku oficiálního mužského světového žebříčku v lednu 1975 až do srpna 2022 publikovala
+asociace PSA (a její předchůdce ISPA) světové žebříčky v měsíčním intervalu, zpravidla k
+prvnímu dni kalendářního měsíce2. Dne 23. srpna 2022 oznámila PSA zásadní strukturální
+reformu, na jejímž základě přešel výpočet a publikace PSA World Rankings počínaje pondělím
+29. srpna 2022 na týdenní frekvenci vydávanou každé pondělí, vždy den po skončení finále
+velkých turnajů2. V měsíčním režimu před 29. srpnem 2022 vykazovala časová řada
+žebříčkového postavení umělou setrvačnost (step-function censoring). Hráč, který vyhrál velký
+turnaj pátého dne v měsíci, čekal na promítnutí bodů do oficiálního žebříčku a nasazení dalších
+25 dní, zatímco od září 2022 se jeho ranking mění okamžitě následující pondělí77. Při odhadu
+volatility žebříčku pro modul R003 nebo rychlosti vzestupu pro modul R001 vede smíchání obou
+ér bez časového převzorkování k falešnému závěru, že se po roce 2022 více než čtyřnásobně
+zvýšila nestabilita výkonnosti elitních hráčů, ačkoliv šlo pouze o změnu vzorkovací frekvence z
+jednoho měsíce na sedm dní2.
+2. Úplnost Top 10, Top 50 a Top 100 v čase
+Hustota a spolehlivost historických dat prudce klesá se vzdáleností od absolutní špičky žebříčku
+a s posunem hlouběji do minulosti. Úplnost jmenného seznamu světové jedničky je stoprocentní
+od ledna 19752. Koncoroční (Year-end) žebříčky Top 10 jsou ve veřejných přehledech
+<PARSED TEXT FOR PAGE: 17 / 50>
+konzistentně zdokumentovány od roku 1996 do současnosti2 a detailní analýzy života v Top 10,
+včetně vstupního věku, doby setrvání a variability, jsou plně rekonstruovatelné od roku 200022.
+V moderní digitální éře, zhruba od roku 2005 do roku 2026, je v databázích jako SquashInfo
+pokrytí Top 50 a Top 100 prakticky kompletní na úrovni zápasů hlavních soutěží10. Před rokem
+2000 však u hráčů na pozicích 51.–100. a zejména mimo Top 100 docházelo k masivnímu
+neukládání výsledků kvalifikací a nižších kol20. Dokonce i komerční balíčky Event Services na
+SquashInfo standardně zpracovávají historické vzájemné zápasy (Head-to-Heads) pouze od
+osmifinále (L16) dále, přičemž dřívější kola vyžadují speciální dohodu a jsou podmíněna
+dostupností dat20. Pokud tedy model kariérního vývoje v modulu R001 odhaduje
+pravděpodobnost průlomu mladého hráče z pozice č. 150 do Top 20 na historických datech, vidí
+ve starších dekádách pouze ty hráče, kteří skutečně uspěli a dostali se do hlavních soutěží
+(L16/L32), zatímco stovky neúspěšných pokusů v kvalifikacích podléhají levému cenzurování
+(left-truncation). Tento efekt přeživších (survivorship bias) vede k nadhodnocení
+pravděpodobnosti úspěšného přechodu z juniorského do elitního squashe a k podhodnocení
+míry předčasného ukončení kariéry (attrition rate) mimo Top 100.
+3. Rozdíly mezi oficiálními a interpolovanými pořadími
+Historické přehledy doby strávené na postu světové jedničky uvádějí souběžně celkový počet
+měsíců (Total months) a celkový počet dnů (Total days)2. Pro éru od ledna 1975 do srpna 2022
+jsou však počty dnů — například Jansher Khan s 2 952 dny za 97 měsíců, Jahangir Khan s 2
+861 dny za 94 měsíců nebo Peter Nicol s 1 825 dny za 60 měsíců — pouze aritmetickým
+přepočtem kalendářních měsíců, zatímco od 29. srpna 2022 v éře střídání Aliho Faraga, Paula
+Colla, Mostafy Asala a Diega Elíase vznikají přesné týdenní bloky po sedmi dnech2. Pokud by
+výzkumník pro trénink simulátoru s týdenním taktem lineárně interpoloval měsíční žebříčky před
+srpnem 2022 na týdenní hodnoty, vytvořil by umělé zlomové body (například neceločíselné
+pořadí 2,5 v polovině měsíce) a drasticky by podhodnotil rozptyl mezitýdenních změn
+                    , protože lineární interpolace vyhlazuje šum. Naopak použití metody Last
+Observation Carried Forward (LOCF, tedy podržení měsíční hodnoty po dobu čtyř týdnů)
+generuje 75 % nulových mezitýdenních změn a 25 % extrémních skoků na přelomu měsíce. Pro
+korektní kalibraci týdenního enginu proto musí být mezitýdenní přechodové matice odhadovány
+výhradně na datech po 29. srpnu 20222, zatímco data před tímto datem musí být při validaci
+agregována na měsíční úroveň.
+4. Změny rankingového systému, dělitelů a struktury okruhu
+Výpočet světového žebříčku PSA je založen na systému klouzavého průměru s minimálním
+dělitelem (divisor system) za posledních 52 týdnů, avšak přesné parametry tohoto dělitele a
+bodové tabulky se v čase měnily2. Starší edice PSA Tour Rule Book a některé metodické
+příručky pracovaly se základem okolo 10 turnajů ročně, kdy hráč získal součet bodů ze svých
+nejlepších 10 výsledků, který byl vydělen číslem 1015. V moderní specifikaci PSA, včetně
+reforem k lednu 2024 a srpnu 2024, je stanoven minimální dělitel 112. Pokud hráč odehraje 11
+nebo méně turnajů za 52 týdnů, jeho celkový součet bodů se dělí číslem 11; pokud odehraje
+více turnajů, dělitel se postupně zvyšuje a započítává se pouze definovaný počet nejlepších
+výsledků — například při 16 odehraných turnajích se sečte nejlepších 12 výsledků a součet se
+vydělí číslem 122.
+<PARSED TEXT FOR PAGE: 18 / 50>
+Od srpna 2024 je navíc profesionální okruh formálně rozdělen do dvou větví: PSA World
+Events (World Championship, Diamond, Platinum, Gold, Silver, Bronze, Copper) a PSA
+Challenger Events (Challenger 30, 20, 15, 12, 9, 6, 3)2. Nově zavedená nejvyšší turnajová
+úroveň Diamond (dotace 300 000 USD, pavouk 48 hráčů, 3 100 bodů pro vítěze) byla vložena
+mezi Mistrovství světa (600 000 USD, 64 hráčů, 3 500 bodů) a úroveň Platinum (190 000 USD,
+32 hráčů, 2 800 bodů), zatímco na spodní hranici World Events přibyl tier Copper (25 000 USD,
+24 hráčů, 500 bodů)2. Bodové nůžky mezi jednotlivými úrovněmi jsou přitom mimořádně
+rozevřené: vítězství v jediném turnaji kategorie Diamond za 3 100 bodů má větší bodovou
+hodnotu než tři tituly z turnajů kategorie Bronze (                     bodů) dohromady2.
+Zároveň na rozhraní obou okruhů vzniká důležitá bodová a finanční inverze mezi nejnižším
+turnajem World Events (Copper s dotací 25 000 USD a ziskem 500 bodů pro vítěze) a
+nejvyšším turnajem Challenger Tour (Challenger 30 s dotací 30 000 USD a ziskem 525 bodů
+pro vítěze), přestože celkový bodový bank u Copper je vyšší (3 061 vs. 2 814 bodů)2.
+Kvalifikace na závěrečný turnaj sezóny pro osm nejlepších hráčů (PSA Squash Tour Finals)
+přitom neprobíhá podle standardního 52týdenního klouzavého průměru, nýbrž podle sezónního
+bodového žebříčku Race to the Finals, kde se sčítají body získané výhradně na turnajích PSA
+World Events (včetně Copper, ale bez Challenger 30) v dané sezóně bez dělení dělitelem, a
+přímou automatickou kvalifikaci získávají úřadující mistr světa a všichni vítězové turnajů
+kategorie Diamond v dané sezóně bez ohledu na své celkové pořadí11.
+Jak dokládá kompletní bodová matice v tabulce níže, mezi jednotlivými koly turnaje platí pevné
+matematické poměry, kdy poražený finalista získává u World Events přesně 65 % bodů vítěze,
+semifinalisté 40 %, čtvrtfinalisté 25 % a osmifinalisté 15 %2. Změna škály bodů mezi
+historickými érami, kdy se v některých obdobích udělovaly body v jiných nominálních řádech,
+znamená, že absolutní počet bodů hráče nelze srovnávat napříč dekádami bez poměrové
+normalizace, například vydělením bodovým ziskem vítěze MS v daném roce.
+
+ Kate     Okr      Dota    Celk     Vítě     Fina    Sem      Čtvr    Osm      2.       1.
+ gori     uh       ce      ový      z        lista   ifiná    tfiná   ifiná    kolo     kolo
+ e        (od      (Priz   bod                       le       le      le       (17/     (33/
+ turn     08/2     e       ový                       (3/4)    (5/8)   (9/1     32)      48)
+ aje      024)     Mon     ban                                        6)
+ (Tier             ey      k
+ )                 USD
+                   )
+
+
+ Worl     PSA      $600    27       3        2       1        875,    525,     321,     196,
+ d        Worl     000     683,     500      275,    400      0       0        0        0
+ Cha      d                0                 0
+ mpi      Eve
+ ons      nts
+ hip
+<PARSED TEXT FOR PAGE: 19 / 50>
+Dia     PSA    $300   24     3     2      1     775,   465,   284,   173,
+mon     Worl   000    511,   100   015,   240   0      0      0      5
+d       d             0            0
+        Eve
+        nts
+
+
+Plati   PSA    $190   17     2     1      1     700,   420,   257,   —
+num     Worl   000    132,   800   820,   120   0      0      0
+        d             0            0
+        Eve
+        nts
+
+
+Gol     PSA    $100   11     1     1      720   450,   270,   165,   —
+d       Worl   000    010,   800   170,         0      0      0
+        d             0            0
+        Eve
+        nts
+
+
+Silv    PSA    $75    8      1     877,   540   337,   202,   124,   —
+er      Worl   000    261,   350   5            5      5      0
+        d             5
+        Eve
+        nts
+
+
+Bro     PSA    $50    5      900   585,   360   225,   135,   82,5   —
+
+nze     Worl   000    505,         0            0      0
+        d             0
+        Eve
+        nts
+
+
+Cop     PSA    $25    3      500   325,   200   125,   75,0   46,0   —
+per     Worl   000    061,         0            0
+        d             0
+        Eve
+        nts
+
+
+Chal    PSA    $30    2      525   345,   210   130,   78,0   47,5   —
+leng    Chal   000    814,         0            0
+er      leng
+<PARSED TEXT FOR PAGE: 20 / 50>
+30     er           0
+       Tour
+
+
+Chal   PSA    $20   1      350   230,   140   85,0   51,0   31,5   —
+leng   Chal   000   860,         0
+er     leng         0
+20     er
+       Tour
+
+
+Chal   PSA    $15   1      250   162,   100   62,5   37,5   22,5   —
+leng   Chal   000   343,         5
+er     leng         0
+15     er
+       Tour
+
+
+Chal   PSA    $12   1      200   130,   80    50,0   30,0   18,0   —
+leng   Chal   000   074,         0
+er     leng         0
+12     er
+       Tour
+
+
+Chal   PSA    $9    806,   150   97,5   60    37,5   22,5   13,5   —
+leng   Chal   000   0
+er 9   leng
+       er
+       Tour
+
+
+Chal   PSA    $6    537,   100   65,0   40    25,0   15,0   9,0    —
+leng   Chal   000   0
+er 6   leng
+       er
+       Tour
+
+
+Chal   PSA    $3    331,   65    40,0   25    15,0   9,0    5,5    —
+leng   Chal   000   0
+er 3   leng
+       er
+       Tour
+<PARSED TEXT FOR PAGE: 21 / 50>
+5. Historické změny bodování zápasů (HiHo-9, PAR-15, PAR-11,
+PAR-7)
+Mužský profesionální squash prošel třemi hlavními bodovacími režimy a několika speciálními
+formáty. V tradičním anglickém bodování (Hand-in/Hand-out do 9 bodů, HiHo-9) mohl bod
+získat pouze podávající hráč, zatímco při ztrátě výměny podávajícím došlo pouze ke změně
+práva podání (hand-out) bez posunu skóre; při stavu 8:8 pak přijímající hráč volil hru do 9 (Set
+One) nebo do 10 bodů (Set Two)28. V 90. letech a na počátku 21. století zavedla PSA na
+mužském okruhu přímé bodování každé výměny do 15 bodů (PAR-15), což dokládá například
+záznam finále Mistrovství světa 1998 v Anglii, kde Peter Nicol zvítězil po setech 15-12, 13-15,
+15-11 a 15-1015. Současným globálním standardem PSA World Tour i WSF je systém Point-A-
+Rally do 11 bodů (PAR-11), kde každá výměna znamená bod, hraje se do 11 bodů a při stavu
+10:10 následuje tiebreak o 2 body (12-10, 13-11 atd.)15. Na vybraných akcích WSF, jako byl
+Světový pohár smíšených družstev v Čennaí, byl navíc testován zkrácený formát best-of-5 her
+do 7 bodů (PAR-7)35.
+Bodovací systém zásadně mění jak průměrnou dobu trvání setu, tak pravděpodobnost výhry
+slabšího hráče. V systému HiHo-9 mohl set skončit skóre 9:0, přestože poražený hráč vyhrál 15
+výměn, při kterých však pouze získával servis a následně jej ztrácel. V systému PAR-11 je
+počet odehraných výměn v setu (bez započtení opakovaných výměn let) přesně roven součtu
+bodů obou hráčů (                                   ). Pokud by model R002 počítal průměrnou
+délku setu v minutách na bod z historických dat bez filtrování na éru PAR-11, smíchal by
+diametrálně odlišné stochastické procesy15.
+6. Formát BO3 versus BO5 (Best-of-Three vs. Best-of-Five)
+Standardním formátem vyřazovacích turnajů PSA World Tour je hra na tři vítězné sety, tedy
+Best-of-5 (BO5)15. Výjimku tvoří závěrečný turnaj sezóny PSA Squash Tour Finals, kde se
+základní skupiny (dvě skupiny po čtyřech hráčích) i semifinále hrají na dva vítězné sety (Best-
+of-3, BO3) a pouze finálový zápas se vrací k formátu BO581. Formát BO3 byl rovněž periodicky
+využíván v raných kolech vybraných turnajů a v týmových soutěžích28. Tento rozdíl má přímý
+matematický dopad na pravděpodobnost překvapení (upset bias)85. Nechť        je nezávislá
+pravděpodobnost, že favorit vyhraje jednotlivý set (              ). V režimu BO3 vyhraje
+favorit zápas s pravděpodobností:
+
+V režimu BO5 vyhraje favorit zápas s pravděpodobností:
+
+
+
+
+Pro favorita s pravděpodobností zisku setu             dává vzorec
+(šance na upset outsidera je 28,17 %), zatímco                            (šance na upset
+klesá na 23,52 %). Neodlišení BO3 a BO5 zápasů v trénovacích datech zkresluje kalibraci
+rozptylu výkonnosti v modulu R002 i odhad celkové doby trvání zápasu, která v režimu BO3
+klesá v průměru o 35 až 40 %8.
+7. Změny struktury turnajů, velikosti pavouků a rozdělení odměn
+<PARSED TEXT FOR PAGE: 22 / 50>
+Struktura pavouků na PSA Tour není jednotná a prošla vývojem: Mistrovství světa má pavouk
+pro 64 hráčů bez volných losů v prvním kole, dřívější Platinum a současné Diamond turnaje
+využívají pavouk pro 48 hráčů (kde 16 nejvýše nasazených hráčů má v 1. kole volný los — bye
+— a nastupuje až ve 2. kole / L32), současné Platinum turnaje mají pavouk pro 32 hráčů a
+turnaje Gold, Silver, Bronze a Copper mají pavouk pro 24 hráčů (opět s 8 volnými losy v 1. kole
+pro nejvýše nasazené hráče)11. Závěrečný turnaj World Tour Finals má pouze 8 hráčů24. Jak
+detailně prokázala analýza portálu Squash Stats, vyšší celková dotace turnaje neznamená
+automaticky vyšší výdělek pro hráče v nižších kolech, protože na MS se peníze dělí mezi 64
+hráčů, u 48členného pavouka mezi 48 hráčů a u Tour Finals pouze mezi 8 hráčů24. U
+16členného pavouka bere vítěz 20 % dotace, finalista 14 % a semifinalisté po 9 % (celkem 18
+% pro kategorii 3.–4. místa), zatímco u 48členného pavouka bere vítěz 16 % a semifinalisté po
+6 %24. Ještě závažnější je dopad volných losů (byes) v 24členných a 48členných pavoucích:
+hráči v Top 8 nasazení mají garantované body a prize money za 2. kolo (L16 resp. L32) i v
+případě, že svůj první odehraný zápas prohrají, přičemž dle regulí WSF a PSA se volný los
+(bye) nepočítá jako odehraný zápas, zatímco walkover ano24. Nezapracování přesné topologie
+pavouka s volnými losy do modulů R003 a R004 vede k podhodnocení bodové renty elitních
+hráčů (Structural Seeding Protection).
+8. Odlišné národnosti v průběhu kariéry a tiché přepisování databází
+V profesionálním squashi dochází u špičkových hráčů ke změnám sportovní reprezentace v
+průběhu aktivní kariéry. Bývalá světová jednička Peter Nicol (celkem 60 měsíců / 1 825 dnů na
+1. místě od února 1998) reprezentoval v první části kariéry Skotsko (včetně zisku titulu mistra
+světa v roce 1998), avšak v roce 2001 přešel pod vlajku Anglie2. Podobně bývalá světová
+jednička Mohamed ElShorbagy (narozen v Egyptě) i jeho bratr Marwan ElShorbagy (aktuálně v
+Top 10) reprezentovali po většinu kariéry Egypt, avšak v pozdější fázi kariéry změnili sportovní
+národnost a reprezentují Anglii; v aktuálních tabulkách Top 10 z let 2025 a 2026 jsou oba
+vedeni pod kódem ENG, zatímco v historických přehledech figuruje Mohamed pod Egyptem2.
+Pokud simulační model v modulech R001 nebo R003 agreguje produkci talentů a tituly podle
+zemí, použití posledního známého atributu národnosti (current nationality) zpětně přepíše
+desítky egyptských a skotských titulů na účet Anglie. Národnost proto musí být v databázi
+modelována jako časově proměnný atribut            , nikoliv jako statická konstanta v tabulce
+hráčů.
+Tento problém úzce souvisí s retrospektivními aktualizacemi sekundárních databází, které
+neuchovávají veřejný auditní log změn (changelog) pro historické záznamy5. Při změně
+národnosti hráče nebo změně sponzorského názvu turnaje (např. CIB Black Ball Open) bývá v
+relačních tabulkách přepsán primární záznam, čímž mizí historický kontext10. V komerčním API
+Sportradar navíc dochází k slučování duplicitních profilů hráčů prostřednictvím endpointu
+Competitor Merge Mappings, avšak mapovací záznam o tom, že dvě ID byla sloučena do
+jednoho, zůstává ve feedu pouze 7 dnů5. Pokud výzkumná pipeline nestahuje tato mapování
+týdně, vznikají v lokální databázi rozdvojené kariéry téhož hráče, které uměle zkracují
+odhadovanou délku kariéry v modulu R001.
+<PARSED TEXT FOR PAGE: 24 / 50>
+Oblast D — Datová použitelnost pro šest výzkumů
+(R001–R006)
+Tato sekce představuje jádro kalibračního auditu. Pro každou z šesti výzkumných domén
+simulátoru Squash Engine je provedena dekonstrukce požadovaných parametrů a jejich
+konfrontace s reálně existujícími daty. Platí přitom striktní metodologická zásada, že
+nepřítomnost empirických dat neopravňuje k vymýšlení čísel; tam, kde data neexistují nebo jsou
+neidentifikovatelná, je parametr označen jako empiricky neověřitelný v současném stavu
+poznání.
+Analytická syntéza domén R001 až R006
+V doméně R001 (Talent a dlouhodobé kariéry) jsou věkové křivky výkonnosti, rychlost
+vzestupu na vrchol a délka setrvání v elitě z makrodat velmi dobře pozorovatelné2. Konkrétní
+biografické záznamy dokládají, že například Mostafa Asal (narozen 9. května 2001) dosáhl
+postu světové jedničky v lednu 2023 ve věku 21 let a 8 měsíců, zatímco Hania El Hammamy
+(narozena 1. září 2000) vyhrála juniorský světový titul a vstoupila do Top 10 v roce 2019 ve
+věku 18 až 19 let a Iker Pajares zahájil svou cestu na PSA Tour v roce 2013 a první titul získal v
+roce 201682. Z veřejných dat však nelze přímo měřit vrozený „skrytý talent“ odděleně od kvality
+tréninkového prostředí (například efektu egyptského tréninkového systému či britských a
+amerických univerzit) a u nižších pater žebříčku působí silné cenzurování neúspěšných kariér20.
+V doméně R002 (Realističnost zápasů) jsou distribuce skóre na úrovni setů — kde průměrné
+skóre elitního zápasu činí 3:1 dle Hughese (2005)8 — a celková doba trvání zápasu, dosahující
+v průměru 53 minut dle Hughese et al. (2006), respektive           minut s rozpětím 39 až 89
+                                                                 8
+minut dle Turnera (2024) a 48 až 81 minut v přehledu Edela (2019) , exaktně ukotveny. Interní
+fyziologie a dynamika výměn musí čerpat výhradně z akademických studií, které dokládají
+průměrnou délku výměny                      (Girard et al. 2007; resp. rozmezí 16 až 21 s u
+Wilkinsona et al. a 20 s ve vzorku 100 elitních zápasů SSCESEP 2010)8, průměrnou pauzu
+mezi výměnami                  (Girard et al. 2007; resp. 9 s či 10–16 s v dalších studiích)13,
+efektivní hrací čas                             celkové doby hry a poměr práce a odpočinku
+                                                       8
+(work-to-rest ratio / work density) , respektive        . Fyziologická odezva během zápasu
+dosahuje ustálené tepové frekvence 80 až 95 % maxima (
+                                        ), spotřeby kyslíku přibližně                                 (
+                                         ) a průměrné hladiny laktátu v krvi                      ,
+přičemž byl zdokumentován pokles z                       ve čtvrtém setu na
+v pátém setu, když hráč takticky zpomalil tempo hry, aby si vytvořil prostor pro regeneraci před
+rozhodující koncovkou7. Naopak poměr vítězných úderů a nevynucených chyb v celé populaci
+PSA není v žádné veřejné databázi tabelován a opírá se pouze o neformální odhady komunity
+na úrovni 3 až 5 vítězných úderů a 1 až 3 nevynucených chyb na jeden set90.
+Doména R003 (Rankingové dynastie) vykazuje nejvyšší míru přímé empirické ověřitelnosti ze
+všech šesti výzkumných oblastí. Kompletní časové řady světových jedniček od roku 1975,
+koncoroční Top 10 a bodové poměry mezi tiery umožňují exaktní kalibraci Giniho koeficientu
+<PARSED TEXT FOR PAGE: 25 / 50>
+bodové nerovnosti, délky trvání dynastií i frekvence střídání na vrcholu2. V doméně R004
+(Turnajová účast a Entry AI) pak pravidlové matice PSA — konkrétně minimální dělitel 11,
+tabulka růstu dělitele při 12 a více turnajích a automatická kvalifikace vítězů Diamond a MS na
+Tour Finals — poskytují přesná omezení optimalizační úlohy hráče2. Z veřejných výsledků lze
+spočítat skutečný počet odehraných turnajů za rok podle rankingu, nelze však plně identifikovat
+nezrealizované záměry, tedy původní přihlášky před uzávěrkou, které byly včas staženy bez
+penalizace, ani bilaterální finanční startovné (appearance fees) vyplácené promotéry mimo
+oficiální prize money.
+V doméně R005 (Zranění a zdraví) zaznamenávají veřejné výsledkové listiny pouze viditelné
+vyústění zdravotního problému přímo v turnaji, tedy skreč v průběhu zápasu (retirement) nebo
+nenastoupení k zápasu (walkover)16. Skutečnou incidenci zranění včetně tréninkových, kde
+vzniká většina úrazů91, poskytují výhradně epidemiologické studie: u profesionálních hráčů jde v
+průměru o 8,83 zranění na hráče za 11leté období (              zranění ročně dle Horsleyho,
+                         12
+O'Donnella a Leedera) , v přepočtu na expozici pak 4,78 time-loss zranění na 1 000 hodin
+tréninku92, 8,5 zranění na 1 000 hodin expozice u mládežnických sportovců za pětileté období
+(Rejeb et al., což je více než dvojnásobek oproti šermu s 3,99 zraněními na 1 000 h)12, 0,45
+zranění na 1 000 hodin ve čtyřtýdenní kohortě (Meyer et al.)12 a 6,6 až 18,3 zranění na 1 000
+hodin v širších přehledech (Parkkari et al., Eime et al.)12. Téměř polovina zranění postihuje dolní
+končetiny (zejména kotník a bérec), přičemž přes třetinu tvoří natažení a podvrtnutí (strains and
+sprains) a u pravidelných hráčů je prokázán statisticky významně vyšší výskyt kontraktury
+bedrokyčlostehenního svalu (m. iliopsoas)69.
+V doméně R006 (Herní styly a taktika) nemůže kalibrace taktické AI využít neexistující plošná
+trackingová data z PSA Tour, ale může být vědecky ukotvena pomocí zjištění systému
+SAGIT/Squash a akustických studií. Kadence úderů činí 40 až 60 za minutu3 a elitní hráči tráví
+kolem                    aktivního hracího času v oblasti T49, přičemž klíčovým prediktorem
+dominance není celkový čas strávený v T-zóně, ale přítomnost v T-zóně přesně v okamžiku,
+kdy soupeř odehrává svůj úder (              )49. Vítězové výměn uběhnou v průměru o 0,71 m
+méně než poražení (u velmi krátkých výměn                         vs.                   ;u
+krátkých výměn                        oproti poraženým), avšak ve 41,4 % případů uběhne
+poražený hráč menší vzdálenost než vítěz, což vyvrací zjednodušený deterministický
+předpoklad, že delší běh soupeře automaticky znamená zisk bodu6. Prostorová distribuce úderů
+dále ukazuje, že méně než 10 % úderů je hráno z předních oblastí kurtu (které přitom tvoří
+38,97 % celkové plochy podlahy), více úderů směřuje na levou (bekhendovou) stranu, ze zadní
+části kurtu dominují nízké tvrdé údery (drives) vracející míček do zadních rohů a s přiblížením k
+přední stěně roste podíl kraťasů (drop shots), volejů a lobů50.
+<PARSED TEXT FOR PAGE: 27 / 50>
+Kompletní kalibrační matice pro výzkumy R001–R006
+Následující matice detailně specifikuje všech sedm požadovaných dimenzí vědecké
+ověřitelnosti pro každý z šesti předchozích výzkumů.
+
+
+ 1.           2. Jaká       3. Který     4. Co lze    5. Co         6. Jaká       7.
+ Výzkumn      data jsou     zdroj je     skutečně     nelze         nejistota     Vědecké
+ ý modul      pro něj       může         vypočítat    identifik     zbývá         ověření
+ a            nutná         poskytn                   ovat                        již nyní?
+ požadov                    out
+ aný
+ výstupní
+ parametr
+
+
+ R001:                      PSA          Rozdělen                   Survivor
+              Data                                    Čistý                       ANO (pro
+ Věková                     Squash       í věku při                 ship bias
+              narození                                „vrozený                    Top 50 /
+ křivka                     Tour         vstupu do                  (cenzurov
+              hráčů,                                  talent“                     Top 10);
+ výkonno                    (profily a   Top 10 a                   ání
+              kompletní                               oddělený                    ČÁSTEČ
+ sti a                      žebříčky)2   na post                    neúspěšn
+              časové                                  od                          NĚ pro
+ rychlost                   , Squash     No. 1                      ých
+              řady                                    socioeko                    spodní
+ vzestupu                   Stats        (např.                     juniorů) a
+              týdenního                               nomickéh                    patra
+                            blog         Asal v 21                  změna
+              /měsíčníh                               o zázemí                    okruhu
+ (                          (Fastest     letech),                   vzorkova
+              o                                       a                           (vyžaduje
+                            Rise to      průměrná                   cí
+              rankingu,                               tréninkov                   korekci
+ ,                          World        délka                      frekvence
+              věk při                                 ého                         na
+                            No.1, Life   setrvání v                 žebříčku
+              zisku                                   centra;                     cenzurov
+                            in Top       Top 10                     v srpnu
+ ,            juniorský                               přesné                      ání).
+                            10)22,       od r.                      20222.
+              ch titulů a                             trajektorie
+                            medailon     2000,
+ ,            prvního                                 hráčů,
+                            ky hráčů     korelace
+              vstupu do                               kteří
+                            (Asal, El    mezi
+              Top 100 /                               opustili
+ )                          Hammam       juniorský
+              Top 10 /                                okruh
+                            y, Gilis,    m titulem
+              No. 1.                                  před
+                            Pajares)82   MS a
+                                                      průnikem
+                            ,            průnikem
+                                                      do Top
+                            SquashIn     do Top
+                                                      100.
+                            fo           102.
+                            (manuáln
+                            í
+                            vzorky)10.
+
+ R002:                      Recenzo      Průměrná     Skutečný      Malý          ANO pro
+              Minutáž
+ Časová a                   vané         délka        plošný        rozsah        časovou
+              zápasů a
+<PARSED TEXT FOR PAGE: 28 / 50>
+skórová                        studie       zápasu (        poměr        vzorků ve    strukturu,
+                  setů v éře
+struktura                      (Girard et                   Winners      fyziologic   skóre
+                  PAR-11,
+zápasu                         al. 2007,    , resp.         vs.          kých         setů a
+                  časy
+                               Wilkinson                    Unforced     studiích (   fyziologii1
+                  trvání                                )
+                               et al.,                      Errors na                 3
+                                                                                       ; NE pro
+(             ,   jednotlivý                , délka
+                               Hughes                       PSA Tour     až           plošné
+                  ch výměn                  setu (
+          ,                    2005/200                     (veřejně                  statistiky
+                  a pauz,
+      ,                        6, Turner                    nearchivn                 W/UE
+                  celkové                                                )7 a
+                               2024,        ), délka        í, jen                    (zůstává
+       ,          skóre                                                  neexisten
+                               Edel         výměny (        komunitní                 odhad).
+distribuce        setů,                                                  ce
+                               2019)8,                      odhad 3–
+setů              záznamy                                                otevřené
+                               Squash       ), pauza (      5 W vs.
+3:0/3:1/3:        o                                                      ho point-
+                               Stats                        1–3 UE
+2, poměr          vítězných                                              by-point
+                  úderech      blog         ),              na set)90;
+W/UE)                                                                    archivu
+                  (W) a        (How         efektivní       individuál
+                                                                         pro
+                  nevynuce     Long Is a    čas hry (       ní prahy
+                                                                         výpočet
+                  ných         Squash                       únavy
+                                                                         pravděpo
+                  chybách      Match?,                      konkrétní
+                                            ), W:R                       dobnosti
+                  (UE).        Comebac                      ch hráčů
+                                            poměr (                      obratu ze
+                               k                            PSA.
+                                                                         stavu
+                               Kings)22,        ),
+                                                                         6:10 v
+                               Sportrada    průměrné
+                                                                         setu.
+                               r API        skóre (
+                               (Sport              ),
+                               Event        laktát (
+                               Timeline)
+                               5
+                                .
+                                            ),          (
+
+
+                                            )8.
+
+R003:                          PSA          Přesné          Přesná       Nekompa      ANO
+                  Kompletn
+Ranking                        World        rozdělení       denní/týd    tibilita     (Plně
+                  í
+ové                            Rankings     délky           enní         nominální    ověřiteln
+                  historické
+dynastie                       tabulky a    panování        dynamika     ch           é) —
+                  tabulky
+a                              archivy      všech           bodových     bodových     nejlépe
+                  světovýc
+koncentr                       (Wikipedi    17+             rozestupů    škál před    zdokume
+                  h
+ace moci                       a / PSA)2,   historický      v éře        a po         ntovaná
+                  jedniček
+                               Squash       ch              1975–        reformác     oblast v
+                  (1975–
+                               Stats        jedniček        2022         h v lednu    celém
+(      ,          2026),
+                               blog (A      (od 61 do       (kvůli       a srpnu      ekosysté
+Giniho            bodové
+                               History of   2 952           tehdejší     2024         mu
+koeficient        zisky
+                               the World    dnů),           měsíční      (nutnost     squashe2.
+bodů,             hráčů v
+<PARSED TEXT FOR PAGE: 29 / 50>
+mezitýde                   No.1,        současný     publikaci     poměrov
+              Top
+nní                        PSA          poměr        žebříčků)     é
+              10/Top
+variabilita                Rank         bodů #1      2
+                                                      .            normaliza
+              50,
+rankingu)                  Variation    ku #10 (                   ce)2.
+              matice
+                           in Top
+              bodového
+              ohodnoce     10)22,       ),
+              ní           World        frekvence
+              turnajů.     Squash       střídání
+                           Library18.   na čele
+                                        po r.
+                                        20222.
+
+R004:                      PSA Tour     Přesná                                  ANO pro
+              Pravidla                               Původní       Chybějící
+Turnajov                   Rule         pravidlov                               strukturál
+              minimální                              přihlašov     pozorová
+á účast a                  Book15,      á funkce                                ní a
+              ho                                     ací listiny   ní
+rozhodo                    přehledy     dělitele                                pravidlov
+              dělitele a                             (initial      zamítnutý
+vání                       struktury    (minimum                                é
+              započítáv                              entry         ch
+Entry AI                   tierů a      11, při 16                              ukotvení
+              aných                                  lists) před   přihlášek
+                           Tour         akcích                                  Entry AI2;
+              turnajů,                               odhlášení     (hráči
+(                          Finals       nejlepšíc                               ČÁSTEČ
+              velikosti                              m;            pod
+                           (racquets    h 12                                    NĚ pro
+              pavouků,                               neoficiáln    čarou
+, volba                    .me,         děleno                                  behaviorá
+              pravidla                               í             uzávěrky
+tieru dle                  Wikipedia    12),                                    lní
+              Race to                                startovné     – cut-off)
+rankingu,                  )2, WSF      kvalifikač                              odhady
+              the                                    (appeara      ve
+kvalifikac                 Champio      ní uzly                                 odhlašov
+              Finals,                                nce           veřejných
+e na Tour                  nship        pro Tour                                ání.
+              reálné                                 money) u      výsledkov
+Finals,                    Regulatio    Finals
+              počty                                  hvězd;        ých
+míra                       ns37.        (Diamond
+              odehraný                               přesný        tabulkách
+pozdních                                vítězové
+              ch turnajů                             výskyt        hlavního
+odhlášení                               + MS +
+              hráčů za                               penalizac     losu.
+)                                       Race),
+              52 týdnů,                              í zero-
+                                        bodová
+              sankce                                 pointer u
+                                        inverze
+              za late                                jednotlivý
+                                        Challeng
+              withdraw                               ch hráčů.
+                                        er 30
+              al.
+                                        (525 b.)
+                                        vs.
+                                        Copper
+                                        (500 b.)2.
+
+R005:                      Epidemiol    Roční                      Značný       ANO na
+              Epidemiol                              Přesná
+Zranění,                   ogické       míra                       rozptyl      agregova
+              ogické                                 lékařská
+zdraví a                   studie       zranění                    publikova    né
+              studie s                               příčina
+<PARSED TEXT FOR PAGE: 30 / 50>
+absence                   (Horsley     profi                        ných měr    populační
+             měřenou                                 konkrétní
+                          et al.,      hráče (                      incidence   a
+             expozicí                                ho
+                          Rejeb et                                              anatomic
+(            v                                       turnajové      (     až
+                          al., Meyer   ),                                       ké úrovni
+na 1000      hodinách,                               ho
+                          et al.,                                          na   z
+h,           dlouhodo                  incidence     walkover
+                          Parkkari                                  1 000 h)    medicíns
+             bé                        na 1 000      u či
+                          et al.,                                   způsoben    ké
+             sledování                 h             skreče
+,                         Eime et                                   ý
+             kohort                    expozice      (zda šlo o                 literatury1
+                          al.,                                      odlišnou    2
+                                                                                  ; NE na
+             profi                     (      v      kotník,
+, doba                    ASJSM,                                    definicí
+             hráčů,                                  nemoc,                     úrovni
+rekonvale                 Bener et     tréninku;                    zranění
+             četnost                                 nebo                       individuál
+scence,                   al.)12,          u                        (nemocni
+             skrečí a                                únavu);                    ní
+lokalizace                pravidla     mládeže;                     ční
+             walkover                                subklinick                 lékařské
+)                         WSF/PS                                    ošetření
+             ův                                      á                          historie
+                          A pro                                     vs. time-
+             zápasech                  celkově),     zranění,                   hráčů
+                          walkover                                  loss v
+             PSA.                      podíl         se                         PSA.
+                          ya                                        tréninku
+                                       dolních       kterými
+                          skreče16.                                 vs.
+                                       končetin (    hráč
+                                                                    jakákoliv
+                                                     zápas
+                                                                    potíž)12.
+                                       )a            dohrál.
+                                       podvrtnut
+                                       í/natažení
+                                       (
+
+
+                                       )12.
+
+R006:                     Akademic     Kadence                      Vzorky      ANO pro
+
+             Prostorov                               Individuál
+Herní                     ké studie    úderů (                      systému     obecnou
+             é                                       ní
+styly,                    systému                                   SAGIT       biomecha
+             souřadnic                               taktické
+prostoro                  SAGIT/S      ), čas v                     pocházejí   niku a
+             e hráčů a                               profily
+vá                        quash        T-zóně (                     převážně    prostorov
+             míčku při                               všech 1
+taktika a                 (Vučković                                 z let       é zákony
+             úderu,                                  200
+volba                     et al.                                    2003–       taktiky na
+             časy                      ), rozdíl v   hráčů
+úderů                     2005,                                     2014 (      kurtu3;
+             mezi                      běhu          PSA (kdo
+                          2009,                                                 NE pro
+             údery,                    vítěze a      je
+(                         2010,                                     elitních    automatiz
+             klasifikac                poražené      „attritional
+                          2013,                                     zápasů      ovanou
+             e typů                    ho (          retriever“
+,            úderů        2014)6,                    vs. „shot-     na MS       typologii
+obsazení     (drive,      akustický                  maker“) z      družstev)   konkrétní
+                          dataset      průměrně                                 ch hráčů
+T-zóny,      drop, lob,                              objektivní
+                                                                    6
+                                                                     , takže
+                          Figshare     , ale v                                  PSA.
+kadence      boast,                                  ch             nemusejí
+úderů,       volley),     (Hajdú-                    trackingo      plně
+                                       naopak),
+<PARSED TEXT FOR PAGE: 31 / 50>
+ běžecká                     Szücs et     podíl                      odrážet
+               uběhnutá                                 vých dat,
+ zátěž)                      al.          úderů z                    zrychlení
+               vzdáleno                                 protože
+                             2018)3.      předního                   hry na
+               st ve                                    plošný
+                                          kurtu (                    skleněný
+               výměně.                                  tracking
+                                                                     ch
+                                                        PSA není
+                                          ),                         kurtech v
+                                                        veřejný.
+                                          přechod                    roce
+                                          od drive                   2026.
+                                          vzadu k
+                                          drop/lob
+                                          vpředu3.
+
+Oblast E — Datový návrh pro výzkumné benchmarky
+(Nezávislý katalog)
+Aby mohl být vývoj simulátoru Squash Engine vědecky řízen, aniž by docházelo k nelegálnímu
+vkládání proprietárních dat (například ze SquashInfo či Sportradaru) do produkčního repozitáře
+nebo k nekontrolovanému míchání pozorovaných faktů s odhady vývojářů, navrhuje se
+architektura nezávislého reprodukovatelného katalogu výzkumných benchmarků (Squash
+Engine Benchmark Data Catalog – SE-BDC). V souladu se zadáním je tento návrh čistě
+architektonickou specifikací pro analytické ověřování a nezasahuje do produkčního kódu.
+
+
+
+
+Specifikace devíti pilířů datového katalogu (SE-BDC)
+Každý záznam v nezávislém katalogu benchmarků — ať už jde o turnajovou tabulku bodů,
+agregovanou věkovou křivku, nebo fyziologický parametr z literatury — musí být uložen v
+normalizované relační či dokumentové struktuře (například ve schématu validovaném přes
+JSON Schema či Frictionless Data Package), která vynucuje devět vzájemně provázaných
+<PARSED TEXT FOR PAGE: 32 / 50>
+atributových pilířů. Prvním pilířem je provenience každého záznamu (provenance), která
+vyžaduje jednoznačný identifikátor původu (source_id), přesnou URL adresu nebo DOI
+publikace (například doi:10.1080/02640410902926412 pro studii T-zóny Vučkoviće et al. 200949
+nebo https://figshare.com/projects/Audio-based_performance_evaluation_of_squash_players/
+30115 pro akustický dataset3), typ autority (PRIMARY_OFFICIAL_PSA,
+SECONDARY_AGGREGATOR_SI, COMMERCIAL_API_SPORTRADAR,
+PEER_REVIEWED_ACADEMIC) a metodu extrakce (MANUAL_TRANSCRIPTION,
+PDF_RULEBOOK_PARSE, API_TRIAL_QUERY, LITERATURE_META_ANALYSIS). Druhým
+pilířem je datum a verze zdroje (source_versioning), zahrnující časové razítko pořízení
+záznamu v normě ISO 8601 (retrieved_at_utc), označení verze zdrojového dokumentu
+(například PSA Squash Tour Rule Book July 2024-2-116 nebo WSF Championship Regulations
+V11.437) a kryptografický otisk (sha256_hash) zdrojového souboru či snímku pro zajištění bitové
+reprodukovatelnosti.
+Třetím pilířem je historická platnost řešená pomocí bi-temporálního modelování
+(temporal_validity), což je kritický mechanismus eliminující strukturální zlomy identifikované v
+Oblasti C. Každý záznam v katalogu nese dvě nezávislé časové osy. První osou je Valid Time
+(valid_from, valid_to), vymezující období reálné historie squashe, pro které dané pravidlo nebo
+pozorování platilo — například valid_from: 1975-01-01 a valid_to: 2022-08-28 pro měsíční
+frekvenci žebříčků PSA, na niž navazuje interval valid_from: 2022-08-29 a valid_to: null pro
+týdenní frekvenci2, nebo valid_from: 2024-08-01 pro zavedení tierů Diamond a Copper11.
+Druhou osou je Transaction Time (recorded_at, superseded_at), zaznamenávající okamžik, kdy
+byl údaj zapsán do zdroje, což zabraňuje tichému přepsání historické národnosti; Peter Nicol
+má díky tomu v katalogu dva časově ohraničené záznamy reprezentace: SCO do roku 2001 a
+ENG od roku 20012.
+Čtvrtým pilířem jsou jednotky a exaktní definice (units_and_definitions), které zavádějí
+striktní slovník veličin v soustavě SI a oborových standardech. Například proměnná
+rally_duration musí mít explicitně definovanou jednotku s (sekundy) a přesné hraniční události
+od okamžiku úderu do podání po okamžik, kdy míček dopadne dvakrát na podlahu, skončí v
+autu či na tinu nebo rozhodčí zahlásí let/stroke8. Podobně proměnná injury_incidence musí v
+definici striktně rozlišovat jmenovatele mezi hodnotami injuries_per_1000h_exposure,
+injuries_per_player_career a hospital_treated_per_100k_players12. Pátým pilířem je rodokmen
+originálních a odvozených hodnot (value_lineage), který vynucuje striktní oddělení surového
+pozorování (raw_value, například celkový čas zápasu 53 min a skóre setů 11-8, 9-11, 11-6, 11-
+7) od vypočtených metrik (derived_value, například minutes_per_point = 53 / 74 = 0.716 min). U
+každé odvozené hodnoty musí být uložen deterministický vzorec (derivation_formula), aby bylo
+možné při změně metodiky přepočítat celý katalog bez ztráty primární informace.
+Šestým pilířem jsou indikátory chybějících dat (missingness_indicators). Namísto generické
+hodnoty NULL zavádí katalog typizovanou taxonomii chybějících dat podle Rubinovy teorie
+rozšířené o doménová specifika squashe. Kód MCAR (Missing Completely at Random)
+označuje náhodný výpadek záznamu minutáže u jednotlivého zápasu na World Tour kvůli
+technické chybě časomíry. Kód MAR (Missing at Random) označuje chybějící minutáž nebo
+přesné datum u historických turnajů nižší kategorie (Challenger/Satellite), kde pravděpodobnost
+chybění závisí plně na pozorované proměnné tournament_tier a year. Kód MNAR_CENSORED
+(Missing Not at Random – Left/Right Censoring) identifikuje chybějící záznamy o hráčích mimo
+<PARSED TEXT FOR PAGE: 33 / 50>
+Top 100 v 80. a 90. letech nebo chybějící bilance H2H před osmifinále (L16)20, kde přítomnost
+záznamu závisí přímo na nepozorované výkonnosti hráče. Konečně kód STRUCTURAL_NA
+(Strukturálně neaplikovatelné) označuje pole, která z principu nemohou nabývat hodnoty, jako
+je skóre 4. a 5. setu u zápasu hraného ve formátu BO3 na World Tour Finals81 nebo skóre 1.
+kola (33/48) u turnaje kategorie Gold s 24členným pavoukem2.
+Sedmým pilířem je licenční status a propustnost (licensing_governance), kde každý
+záznam obsahuje pole license_tier s třemi úrovněmi oprávnění. Úroveň
+TIER_1_OPEN_REDISTRIBUTABLE pokrývá data pod licencemi CC BY nebo CC0 (například
+akustický dataset Hajdú-Szücs et al. na Figshare3) a nechráněné fyzikální či matematické
+konstanty a statistické parametry z Open Access článků12; tato data smějí být přímo verzována
+v repozitáři. Úroveň TIER_2_PROPRIETARY_REFERENCE_ONLY pokrývá data z veřejně
+čitelných stránek s restriktivním ToS, jako je SquashInfo9; surové tabulky nesmějí být nahrány
+do veřejného GitHub repozitáře a do kódu simulátoru lze přenést pouze zobecněné
+parametrické rozdělení (například tvar Weibullova či Gamma rozdělení délky zápasu) odvozené
+z manuální kontroly. Úroveň TIER_3_COMMERCIAL_RESTRICTED pak označuje komerční
+B2B feedy, jako je Sportradar Squash v2 API5 nebo placený tarif SmartSquash AI43, které
+vyžadují lokální šifrované úložiště mimo veřejný repozitář.
+Osmým pilířem jsou automatizované kontroly konzistence (consistency_checks),
+spouštěné jako validační predikáty při každém zápisu do katalogu. Pro každý dokončený set v
+režimu PAR-11 musí platit predikát platnosti skóre
+
+15
+ . Pro dokončený zápas bez skreče ve formátu BO5 musí platit relace součtu setů
+                                                             , zatímco ve formátu BO3 platí
+                                                        15
+                                                          . Pro každého hráče s počtem
+odehraných turnajů                    za 52 týdnů pak musí platit identita rankingového dělitele
+                                  2
+                                   . Devátým pilířem je datová kvalita a nejistota
+(quality_and_uncertainty), vyžadující, aby byl každý numerický benchmark v katalogu
+reprezentován nejen bodovým odhadem (point_estimate), ale také mírou rozptylu (std_dev
+nebo iqr), velikostí podkladového vzorku (sample_size_n) a stupněm epistemické jistoty
+(confidence_grade na škále od stupně A pro přímý popis celé populace PSA přes stupeň B pro
+recenzovaný vzorek            a stupeň C pro malý laboratorní vzorek                až po stupeň
+D pro neformální expertní odhad).
+Schéma datového slovníku katalogu (SE-BDC Schema Specification)
+
+
+     Název pole v    Datový typ          Povinnost            Příklad            Popis a
+     katalogu                                                 hodnoty            validační
+                                                              (záznam z          pravidlo
+                                                              katalogu)
+<PARSED TEXT FOR PAGE: 34 / 50>
+record_uuid      UUIDv4   Povinné   f47ac10b-58cc     Unikátní
+                                    -4372-a567-       primární klíč
+                                    0e02b2c3d479      záznamu v
+                                                      katalogu SE-
+                                                      BDC.
+
+
+target_module    ENUM     Povinné   R002_MATCH        Cílový modul
+                                    _REALISM          (R001 až
+                                                      R006).
+
+
+parameter_cod    STRING   Povinné   ELITE_RALLY       Standardizova
+e                                   _DURATION_        ný strojový
+                                    SECONDS           název
+                                                      kalibrovaného
+                                                      parametru.
+
+
+                                                      Přesný odkaz
+source_id_url    URI      Povinné   https://
+                                                      na primární či
+                                    sport.ruhr-uni-
+                                                      sekundární
+                                    bochum.de/.../
+                                                      zdroj (Girard et
+                                    Edel_2019.pdf
+                                                      al. 2007 v Edel
+                                                      2019)14.
+
+                                                      Datum
+source_version   DATE     Povinné   2007-06-01
+                                                      publikace nebo
+_date                               (citováno v
+                                                      verze
+                                    přehledu 2019-
+                                                      zdrojového
+                                    07-01)
+                                                      dokumentu14.
+
+
+valid_from /     DATE     Povinné   2004-01-01 /      Časová
+valid_to                            NULL              platnost
+                                                      pozorování v
+                                                      historii
+                                                      squashe (bi-
+                                                      temporální osa
+                                                      1).
+
+
+observation_ty   ENUM     Povinné   OBSERVED_E        Rozlišení:
+pe                                  MPIRICAL_SA       OBSERVED_P
+                                    MPLE              OPULATION,
+<PARSED TEXT FOR PAGE: 35 / 50>
+                                                        OBSERVED_E
+                                                        MPIRICAL_SA
+                                                        MPLE,
+                                                        RECONSTRU
+                                                        CTED,
+                                                        ESTIMATED.
+
+
+unit_si          STRING   Povinné     s (sekundy)       Fyzikální nebo
+                                                        statistická
+                                                        jednotka
+                                                        měření.
+
+
+                                                        Původní
+raw_value_jso    JSON     Povinné     {"mean": 18.6,
+                                                        hodnota
+n                                     "sd": 4.6}
+                                                        přesně tak, jak
+                                                        je uvedena ve
+                                                        zdroji14.
+
+
+derived_value_   JSON     Volitelné   {"gamma_shap      Odvozené
+json                                  e_k": 16.35,      parametry
+                                      "gamma_scale      rozdělení (
+                                      _theta": 1.138}
+                                                                        ,
+                                                                    )
+                                                        pro generátor
+                                                        náhodných
+                                                        čísel.
+
+
+missingness_fl   ENUM     Povinné     COMPLETE_N        Kód chybění
+ag                                    O_MISSINGN        (COMPLETE,
+                                      ESS               MCAR, MAR,
+                                                        MNAR_CENS
+                                                        ORED,
+                                                        STRUCTURAL
+                                                        _NA).
+
+
+license_tier     ENUM     Povinné     TIER_1_OPEN       Právní režim
+                                      _REDISTRIBU       (TIER_1
+                                      TABLE             povoleno v Git
+                                                        repo; TIER_2 a
+<PARSED TEXT FOR PAGE: 36 / 50>
+                                                                             TIER_3 mimo
+                                                                             repo).
+
+
+                                                                             Výsledek
+ consistency_st       BOOLEAN            Povinné          TRUE (mean /
+                                                                             křížové
+ atus                                                     rest_mean =        kontroly
+                                                          18.6 / 8.0 =       konzistence s
+                                                          2.325 ≈ W:R        příbuznými
+                                                          2.4)               proměnnými14.
+
+
+ confidence_gra       ENUM               Povinné          GRADE_B_PE         Stupeň
+ de                                                       ER_REVIEWE         vědecké
+                                                          D                  spolehlivosti a
+                                                                             nejistoty
+                                                                             (GRADE_A až
+                                                                             GRADE_D).
+
+
+Oblast F — Praktický výzkumný plán: 10 empirických
+mikro-studií
+Pro překlenutí zbývajících mezer v kalibraci modulů R001–R006 bez nutnosti budovat
+nákladnou cloudovou infrastrukturu, nakupovat drahé enterprise licence Sportradaru nebo
+porušovat smluvní podmínky portálu SquashInfo hromadným scrapingem, byl navržen soubor
+deseti vysoce cílených empirických mikro-studií. Každá studie je koncipována tak, aby ji jeden
+analytik dokázal provést pomocí standardních vědeckých nástrojů (R nebo Python, veřejné PDF
+dokumenty, otevřené datasety a manuální odečet malých vzorků v mezích osobního
+nekomerčního užití) s okamžitým přínosem pro parametry simulátoru.
+Přehledová matice 10 praktických studií
+
+
+ ID a          Cílový        Přesné        Požadov     Statistic     Hlavní       Konkrétn
+ název         modul         zdroje        aný         ká a          omezení      í výstup
+ studie                      dat           vzorek      analytick                  a
+                                           (NNN)       á metoda                   hodnota
+                                                                                  pro
+                                                                                  Squash
+                                                                                  Engine
+
+
+                             Publikova     Syntéza     Metoda
+ S01:          R002                                                  Studie       Výstup:
+                             né            6           momentů
+ Kalibrac                                                            kombinují    Exaktní
+                             momenty       publikova   (MoM) a
+ e                                                                   různé        dvojice
+<PARSED TEXT FOR PAGE: 37 / 50>
+                   a            ných         proložení
+rozdělení                                                  dekády;       parametr
+                   histogram    studií       kvantilů
+délky                                                      chybí
+                   y v Girard   (reprezen    (49 %                       ů
+výměn a                                                    surový
+                   et al.       tujících     výměn                       pro
+pauz                                                       seznam
+                   (2007),                                               generátor
+pomocí                                                 ,   jednotlivý
+                   Wilkinson                                             délky
+Gamma/                          elitních     80 %          ch výměn
+                   et al.,                                               výměny.
+Weibull                         zápasů)8.                  z r. 2026.
+                   Montpetit                           ,                 Hodnota:
+modelů
+                   (1990),                   průměr                      Nahrazen
+                   Edel                                                  í
+                   (2019),                   ) směsí                     lineárního
+                   Choe                      log-                        času
+                   (2016)8.                  normální                    realistický
+                                             ho/Weibu                    m těžkým
+                                             llova                       koncem
+                                             rozdělení                   rozdělení
+                                             pro                         (dlouhé
+                                             výměny a                    vyčerpáv
+                                             normální                    ající
+                                             ho                          výměny).
+                                             rozdělení
+                                             (
+
+                                             ) pro
+                                             pauzy8.
+
+                   Manuální                  Lineární
+S02:        R002                                           Nezachyc      Výstup:
+                   odečet z                  regrese s
+Empirick                        zápasů z                   uje počet     Koeficient
+                   veřejných                 náhodný
+á                               hlavního                   opakovan
+                   výsledků                  mi efekty:
+regrese                         losu 2–3                   ých           (průměrn
+                   PSA
+doby                            turnajů                    výměn         ý počet
+                   Squash
+trvání                          kategorie    , kde         (lets/strok   sekund
+                   Tour /
+zápasu                          Platinum/    zachycuj      es) a         na jeden
+                   Squash
+na                              Gold         e 90s         ošetřován     odehraný
+                   Stats
+celkový                         (manuáln     přestávky     í krve.       bod na
+                   blogu +
+počet                           í            mezi                        PSA
+                   Turner
+bodů v                          nekomerč     sety94.                     Tour).
+                   (2024) (
+PAR-11                          ní zápis).                               Hodnota:
+                                                                         Přesný
+                   )a
+                                                                         výpočet
+                   Hughes
+                                                                         minutáže
+                   (2006) (
+                                                                         zápasu
+<PARSED TEXT FOR PAGE: 38 / 50>
+                              )                                       ze
+                   8
+                   .                                                  simulova
+                                                                      ného
+                                                                      skóre
+                                                                      setů.
+
+
+            R002   Výsledky
+S03:                                         Binomick     Specifick   Výstup:
+                   PSA
+Kvantifik                         ročníky    ý test       ý formát    Empirický
+            R004   Squash
+ace                               PSA        rozdílu      skupin na   koeficient
+                   Tour
+Upset                             Squash     proporcí     Tour        meziseto
+                   Finals
+Rate a                            Tour       výher        Finals      vé
+                   (skupiny
+skórové                           Finals (   níže         (kde hráč   autokorel
+                   a SF v
+distribuc                                    nasazené     může        ace
+                   BO3,
+e v BO3                                      ho hráče     postoupit   výkonu.
+                   finále v       zápasů)
+vs. BO5                                      (            i po        Hodnota:
+                   BO5) vs.       porovnan
+                                                          prohře).    Ověření,
+                   běžný          és
+                                             vs.                      zda v
+                   Diamond
+                                                                      BO5
+                   turnaj         zápasy                              dochází k
+                   (BO5)11.       Top 8      )a
+                                                                      obratům
+                                  hráčů v    srovnání
+                                                                      častěji,
+                                  BO5.       s
+                                                                      než
+                                             teoretický
+                                                                      predikuje
+                                             m
+                                                                      nezávislý
+                                             binomick
+                                                                      hod mincí
+                                             ým
+                                                                      (únavový
+                                             modelem
+                                                                      návrat
+                                                                      favorita).
+                                             vs.
+
+                                             (test
+                                             přítomno
+                                             sti
+                                             momentu
+                                             m
+                                             efektu).
+
+
+                   Kompletn       Kompletn   Analýza      Malý
+S04:        R003                                                      Výstup:
+                   í tabulka      í          přežití      absolutní
+Paretův                                                               Cílové
+                   17+            populace   (Kaplan-     počet
+zákon a                                                               metriky
+                   historický                Meierova     unikátníc
+přežívání                                                             pro
+                   ch             světovýc   křivka       h
+dynastií                                                              automatiz
+<PARSED TEXT FOR PAGE: 39 / 50>
+                    světovýc    h           délky        jedniček (
+na postu                                                              ovaný
+                    h           jedniček    panování
+světové                                                               test
+                    jedniček    od ledna    v dnech)     za 50
+jedničky                                                              dlouhodo
+                    a           19752.      a odhad      let)2.
+(1975–                                                                bé
+                    měsíčníc                mocninné
+2025)                                                                 simulace
+                    h/týdenní               ho/Pareto
+                                                                      (kolik %
+                    ch                      va
+                                                                      času drží
+                    přehledů                exponent
+                                                                      #1 top 20
+                    (1975–
+                                            u pro                     % lídrů).
+                    2025)2.                 celkový                   Hodnota:
+                                            počet dnů                 Zabráněn
+                                            na 1.                     í příliš
+                                            místě;                    častému
+                                            srovnání                  či příliš
+                                            volatility                vzácném
+                                            před a po                 u střídání
+                                            29. 8.                    králů v
+                                            20222.                    R003.
+
+
+             R003   Aktuální    Průřezov    Nelineárn
+S05:                                                     Veřejná      Výstup:
+                    tabulka     ý snímek    í regrese
+Bodová                                                   tabulka v    Parametr
+             R004   PSA                     bodového
+elasticita                                               základu      y křivky
+                    World       hráčů       průměru
+a efekt                                                  ukazuje      rozdělení
+                    Rankings    (Top 100    na
+minimáln                                                 průměr,      bodů v
+                    a           v jednom    pořadí:
+ího                                                      nikoliv      populaci
+                    pravidlov   týdnu) +
+dělitele                                                 rozpad       a mezní
+                    á matice    přesná      a
+11 napříč                                                všech 16     užitek
+                    bodů pro    tabulka     simulace
+Top 100                                                  jednotlivý   dalšího
+                    všech 14    Top 10      citlivosti   ch turnajů   turnaje.
+                    tierů2.     (Asal       pořadí na    hráče.       Hodnota:
+                                2338 b.     odehrání                  Přesné
+                                až          12. až 16.                nastavení
+                                Ibrahim     turnaje                   prahu
+                                578 b.)2.   (kdy se                   únavy vs.
+                                            mění                      bodového
+                                            dělitel z                 zisku v
+                                            11 na                     rozhodov
+
+                                            12)2.                     acím
+                                                                      stromu
+                                                                      Entry AI
+                                                                      (R004).
+<PARSED TEXT FOR PAGE: 40 / 50>
+                   Oficiální    Matemati     Teorie
+S06:        R004                                         Nezohled     Výstup:
+                   bodová a     cká          her /
+Analýza                                                  ňuje         Rozhodo
+                   finanční     matice       výpočet
+bodové                                                   geografic    vací
+                   tabulka      výplat pro   očekávan
+inverze a                                                ké           matice
+                   PSA od                    é hodnoty
+migrační                        7 kol                    cestovní     racionální
+                   srpna                     bodů a
+bariéry                         14 tierů +               náklady      volby
+                   2024                      peněz
+mezi                            vzorek                   hráče do     tieru pro
+                   (Copper
+Challeng                                                 místa        hráče
+                   $25k /                    pro hráče
+er 30 a                         turnajů                  konání.      střední
+                   500 b. vs.                na
+Copper                          (10                                   třídy.
+                   Challeng                  pozicích
+                                Copper,                               Hodnota:
+                   er 30                     25.–60.
+                                10                                    Eliminace
+                   $30k /                    světa při
+                                Challeng                              nerealisti
+                   525 b.)2.                 zohledně                 ckého
+                                er 30)2.
+                                             ní                       chování
+                                             započtení                AI, kdy by
+                                             Copper                   hráči Top
+                                             do Race                  30
+                                             to the                   ignorovali
+                                             Finals2.                 Copper
+                                                                      turnaje
+                                                                      kvůli
+                                                                      25bodové
+                                                                      mu
+                                                                      rozdílu u
+                                                                      Challeng
+                                                                      er 30.
+
+
+                   Veřejné                                            Výstup:
+S07:        R005                             Odhad       Nerozlišuj
+                   výsledkov                                          Základní
+Odhad                           odehraný     binomick    e mezi
+                   é                                                  pravděpo
+pravděp                         ch           é           zraněním
+                   pavouky                                            dobnost
+odobnos                         zápasů       pravděpo    a akutní
+                   PSA                                                předčasn
+ti                              napříč       dobnosti    virózou/ot
+                   World                                              ého
+turnajov                        kompletní                ravou
+                   Tour                                               ukončení
+é skreče                        mi           a           jídlem
+                   (manuáln                                           zápasu
+(Retirem                        pavouky                  (např. na
+                   í sčítání                                          na 1
+ent) a                          cca 15                   turnajích
+                   příznaků                  s                        odehraný
+Walkove                         vybranýc                 v Egyptě
+                   ret. a                    Wilsonov                 zápas a
+ru                              h turnajů                či Indii).
+                   w/o) +                    ým 95%                   na 1
+                   pravidla     sezóny       intervale                minutu
+                   WSF/PS       2025/202     m                        hry.
+                                6.           spolehliv                Hodnota:
+<PARSED TEXT FOR PAGE: 41 / 50>
+                   A16.                       osti,
+                                                                          Přímé
+                                                                          propojení
+                                              stratifikov
+                                                                          tréninkov
+                                              aný podle
+                                                                          é/zápaso
+                                              kola
+                                                                          vé
+                                              turnaje a
+                                                                          incidence
+                                              délky
+                                                                          (4,78–8,5
+                                              předchozí
+                                                                          / 1000 h)
+                                              ho
+                                                                          s
+                                              zápasu.
+                                                                          viditelný
+                                                                          mi
+                                                                          skrečemi
+                                                                          v
+                                                                          turnajové
+                                                                          m
+                                                                          pavouku1
+                                                                          2
+                                                                           .
+
+            R002   Publikova    Publikova     Sestaven                    Výstup:
+S08:                                                         Malý
+                   ná           né křivky     í                           Rovnice
+Kalibrac                                                     počet
+            R005   fyziologic   laktátu (     diferenciá                  útlumu
+e modelu                                                     měřených
+                   ká data:                   lní                         rychlosti
+metaboli                                                     jedinců
+                   Girard et    průměr,       rovnice 1.                  pohybu
+cké                                                          při
+                   al.          pokles z      řádu pro                    hráče ve
+únavy a                                                      invazivníc
+                   (2007),                    akumulac                    4. a 5.
+taktickéh                            ve 4.                   h
+                   Wilkinson                  ia                          setu,
+o                               setu na                      odběrech
+                   et al.,                    odbouráv                    která
+zpomale                                                      krve
+                   Sharp                      ání                         přesně
+ní v 5.                                                      během
+                   (1998) v     v 5. setu),   metabolic                   reproduk
+setu                                                         zápasu.
+                   Choe         HR (          ké únavy                    uje
+                   (2016)7.                   během                       pozorova
+                                              výměn (                     ný pokles
+                                )a
+                                                                          intenzity
+                                (                        )
+                                                                          (a laktátu
+                                              a
+                                                                          z 9,2 na
+                                              přestávek
+                                )8.                                       5,7
+                                              (      m                    mmol/l)8.
+                                              ezi body,                   Hodnota:
+                                                                          Fyzikálně
+                                              mezi                        a
+                                              sety)13.                    fyziologic
+                                                                          ky věrný
+                                                                          model
+<PARSED TEXT FOR PAGE: 42 / 50>
+                                                                 vyčerpání
+                                                                 v
+                                                                 maratons
+                                                                 kých
+                                                                 bitvách.
+
+                 Publikova   Agregova    Konstruk                Výstup:
+S09:      R006                                       Publikova
+                 né          ná data z   ce                      Kalibrova
+Markovo                                              né články
+                 tabulky                 podmíně                 né váhy
+vská                                                 uvádějí
+                 systému     elitních    né                      pro
+přechod                                              margináln
+                 SAGIT/S     zápasů      pravděpo                rozhodov
+ová                                                  ía
+                 quash       MS          dobnostní               ání
+matice                                               skupinov
+                 (Vučković   družstev    tabulky                 taktické
+volby                                                é
+                 et al.      +                                   AI (kdy
+úderů a                                              proporce,
+                 2009,       rozdělení   ukotvené                hrát drive
+dominan                                              nikoliv
+                 2010,       15 zón      na                      vs.
+ce T-                                                plnou
+                 2013,       kurtu +     faktech:                drop/lob)
+zóny                                                 matici
+                 2014) +     audio                               a
+                 akustický   nahrávky                            stochasti
+                                         úderů z     všech
+                 dataset     96 kHz3.                            cký
+                                         předních    přechodů
+                 Figshare                                        model
+                 (Hajdú-                             .           vyhodnoc
+                 Szücs                   plochy,                 ení
+                 2018)3.                                         výměny
+                                         času na                 na
+                                         T,                      základě
+                                         kadence                 kontroly
+                                                                 T-zóny v
+                                         ,                       okamžiku
+                                                                 úderu49.
+                                                                 Hodnota:
+                                         výměn
+                                                                 Odstraně
+                                         vyhranýc
+                                                                 ní
+                                         h přes
+                                                                 determini
+                                         delší
+                                                                 stické
+                                         běh3.
+                                                                 chyby,
+                                                                 kde hráč
+                                                                 s menším
+                                                                 během
+                                                                 vyhrává
+                                                                 100 %
+                                                                 výměn6.
+<PARSED TEXT FOR PAGE: 43 / 50>
+                            Biografick                Výpočet      Omezeno
+ S10:          R001                                                              Výstup:
+                            é profily a   elitních    mediánu      na
+ Odhad                                                                           Dvoukom
+                            historické    hráčů a     a            úspěšné
+ trajektori                                                                      ponentní
+                            seznamy       bývalých    mezikvart    hráče
+ e rané                                                                          prior pro
+                            vítězů        juniorský   ilového      (vyžaduje
+ kariéry a                                                                       generová
+                            MS            ch mistrů   rozpětí      doplnění
+ efektu                                                                          ní
+                            juniorů       světa za    (IQR) pro    o
+ juniorsk                                                                        kariérních
+                            (World        posledníc   věk          kontrolní
+ ých                                                                             oblouků
+                            Squash        h 20 let    prvního      vzorek
+ šampion                                                                         (Early
+                            Library       (vč.        titulu PSA   neúspěšn
+ ů                                                                               Prodigy
+                            Worldwid      Asala,      (např.       ých
+                                                                                 vs.
+                            e             Faraga,     Pajares      juniorský
+                                                                                 Physical
+                            Winners       ElShorba    ve 20        ch
+                                                                                 Late
+                            Resource      gyho,       letech v     finalistů z
+                                                                                 Bloomer).
+                            , Squash      Elíase)2.   Praze        listin
+                                                                                 Hodnota:
+                            Stats                     201682),     WSL)18.       Realistick
+                            blog,                     věk                        á
+                            profily                   vstupu do                  diverzita
+                            hvězd)18.                 Top 10 a                   věkových
+                                                      věk                        profilů v
+                                                      dosažení                   generátor
+                                                      #1;                        u nových
+                                                      srovnání                   hráčů
+                                                      mezi                       (R001).
+                                                      juniorský
+                                                      mi
+                                                      šampiony
+                                                      a „late
+                                                      bloomery
+                                                      “ (např.
+                                                      Coll,
+                                                      Makin)81.
+
+Závěrečné vyhodnocení hlavní výzkumné otázky
+Na základě provedeného auditu datových zdrojů, licenčních omezení, historických metodických
+zlomů a recenzované literatury lze na hlavní výzkumnou otázku — které části realismu Squash
+Engine lze skutečně empiricky ověřit a které zatím stojí pouze na odůvodněných předpokladech
+— odpovědět jednoznačným rozdělením parametrů do tří epistemologických kategorií.
+1. Plně a přímo empiricky ověřitelné části (Tvrdá kalibrace již nyní)
+Do první kategorie spadají makrostruktury okruhu, pravidlové mechanismy a časově-
+fyziologické konstanty zápasu, které jsou stoprocentně deterministicky nebo klinicky
+zdokumentovány. V oblasti architektury okruhu, bodových zisků a rankingové matematiky
+(moduly R003 a R004) jsou celá pyramida 14 turnajových kategorií od World Championship s 3
+<PARSED TEXT FOR PAGE: 44 / 50>
+500 body pro vítěze po Challenger 3 s 65 body, velikosti pavouků (64, 48, 32, 24, 8),
+mechanismus klouzavého průměru s minimálním dělitelem 11, kvalifikační uzly pro PSA Squash
+Tour Finals (automatický postup vítězů Diamond a MS doplněný žebříčkem Race to the Finals)
+a procentuální rozpad prize money plně známy a přímo ověřitelné z primárních dokumentů
+PSA2. Stejně tak jsou v oblasti dlouhodobých dynastií a distribuce moci na vrcholu (moduly
+R003 a R001) kompletně empiricky zdokumentovány délky panování všech světových jedniček
+od ledna 1975 v měsících a dnech, koncoroční složení Top 10 od roku 1996, bodové poměry
+uvnitř současné Top 10, kde světová jednička drží přibližně čtyřnásobek bodového průměru
+desátého hráče, i přesné datum přechodu z měsíčních na týdenní žebříčky dne 29. srpna
+20222.
+Na úrovni makro-časové a fyziologické obálky elitního zápasu (modul R002) jsou exaktně
+změřeny v recenzovaných studiích průměrná doba trvání elitního zápasu BO5 v éře PAR-11 (
+   až                     ), průměrné skóre (       ), trvání výměny (                 ), trvání
+pauzy mezi výměnami (                ), čistý hrací čas (                             ), poměr
+práce a odpočinku (     ), kadence úderů (                  ), ustálená tepová frekvence (
+                                 ), spotřeba kyslíku (                                , tj.
+                               ) a dynamika krevního laktátu (                    s poklesem z
+    na                   v pátém setu)3. Rovněž základní prostorové zákony taktiky a
+epidemiologie zranění (moduly R005 a R006) — konkrétně podíl času stráveného na T (
+                   ), statistická významnost obsazení T-zóny v okamžiku úderu soupeře,
+průměrný rozdíl v uběhnuté vzdálenosti vítěze a poraženého výměny (                   při
+                inverzních případů), podíl úderů z předního kurtu (                 ), celková
+roční frekvence zranění profesionálního hráče (                              dle 11leté studie) a
+incidence tréninkových time-loss zranění (                       ) — představují vědecky
+prokázané benchmarky6.
+2. Nepřímo ověřitelné části vyžadující statistickou rekonstrukci
+(Sekundární kalibrace)
+Druhou kategorii tvoří parametry, které nejsou přímo vytištěny v jedné souhrnné tabulce, ale lze
+je spolehlivě a reprodukovatelně odvodit pomocí navržených empirických mikro-studií S01 až
+S10. Patří sem přesný tvar rozdělení (vyšší statistické momenty) délky výměn a zápasů v
+modulu R002, který je rekonstruovatelný proložením Weibullova či Gamma rozdělení
+publikovanými kvantily, podle nichž 49 % výměn trvá méně než 10 sekund a 80 % méně než 20
+sekund8. Dále sem spadá míra předčasného ukončení zápasu (retirement a walkover rate) v
+turnajích pro modul R005, odvoditelná manuálním vzorkováním veřejných turnajových pavouků
+(studie S07) a jejím napojením na klinický podíl zranění dolních končetin (
+)29, a konečně rozdíl v míře překvapení (upset rate) a mezisetové autokorelaci mezi formáty
+BO3 a BO5 v modulu R002, který lze ověřit srovnáním výsledků základních skupin a semifinále
+PSA Squash Tour Finals (BO3) s hlavními soutěžemi World Events (BO5)81.
+<PARSED TEXT FOR PAGE: 45 / 50>
+3. Části stojící pouze na odůvodněných předpokladech a heuristikách
+(Empiricky neidentifikovatelné z veřejných dat)
+Třetí kategorii představují parametry, které nelze v současném datovém ekosystému squashe
+empiricky verifikovat na populační úrovni bez přístupu k interním proprietárním databázím PSA
+a SquashTV nebo bez masivního komerčního rozpočtu, a proto v simulátoru nutně zůstávají v
+rovině expertních předpokladů. Na prvním místě jde o plošné statistiky vítězných úderů a
+nevynucených chyb (Winners vs. Unforced Errors) a sekvence bod po bodu v modulech R002 a
+R006, neboť neexistuje žádná veřejná databáze, která by u zápasů PSA archivovala počty
+winnerů, chyb do tinu a rozhodnutí rozhodčích (let/stroke); hodnoty jako 3 až 5 winnerů a 1 až 3
+nevynucené chyby na set vycházejí pouze z neformálních pozorování komunity90. Na druhém
+místě jde o individuální taktické a pohybové profily konkrétních hráčů PSA v modulu R006.
+Protože systémy počítačového vidění (SmartSquash AI, SAGIT) poskytují buď placenou
+analýzu vlastního nahraného videa, nebo anonymizované průměry malých akademických
+vzorků (             )6, rozdělení 1 200 reálných hráčů PSA do taktických archetypů stojí na
+expertním hodnocení, nikoliv na objektivní telemetrii. Na třetím místě zůstávají empiricky
+neidentifikovatelné skryté mechanismy přihlašování, odhlašování před uzávěrkou a finanční
+startovné v modulu R004, jelikož veřejné výsledky ukazují až finální vylosovaný pavouk, nikoliv
+historii hráčů, kteří se přihlásili a před uzávěrkou odhlásili, ani bilaterální finanční dohody
+promotérů s hvězdami Top 5. Konečně na čtvrtém místě stojí kariérní dynamika a míra odchodu
+(attrition rate) hráčů mimo Top 100 v historických dekádách pro modul R001, kde kvůli silnému
+cenzurování výsledků kvalifikací a nižších turnajů v minulosti a přísnému zákazu scrapingu na
+SquashInfo9 nelze exaktně kvantifikovat základnu pyramidy neúspěšných profesionálů.
+Respektováním této trojí hranice — tedy pevným ukotvením ověřitelných parametrů v
+navrženém katalogu SE-BDC, provedením deseti rekonstrukčních mikro-studií a explicitním
+přiznáním heuristické povahy nepozorovatelných proměnných — dosáhne projekt Squash
+Engine maximální možné vědecké integrity, jakou současný stav světových dat o
+profesionálním squashi umožňuje.
+
+Citovaná díla
+
+  1. https://github.com/Jasmetk0/squash-tour-beta
+  2. Men's Squash World Rankings - Wikipedia,
+       https://en.wikipedia.org/wiki/Men%27s_Squash_World_Rankings
+  3.   Audio-based performance evaluation of squash players | PLOS One,
+       https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0194394
+  4.   Sportradar Squash v2 | Get Started | Postman API Network,
+       https://www.postman.com/sportradar-media-apis/sportradar-media-apis/
+       collection/asueioh/sportradar-squash-v2
+  5.   Overview - Sportradar API documentation,
+       https://developer.sportradar.com/squash/reference/squash-overview
+  6.   Goran Vučković*1 - University of Ljubljana Press Journals, https://journals.uni-
+       lj.si/kinsi/article/download/29463/22136/112034
+  7.   Specific incremental test in elite squash players - ResearchGate,
+       https://www.researchgate.net/publication/7461412_Specific_incremental_test_in_
+<PARSED TEXT FOR PAGE: 46 / 50>
+    elite_squash_players
+8. game structure analysis in adolescent squash players - EPrints USM,
+    http://eprints.usm.my/56957/1/CHOE%20XIAO%20WEI-OCR.pdf
+9. Terms & Conditions Squash Info, https://www.squashinfo.com/terms-
+    conditions.php
+10. HaydenMacDonald/squashinformr: Politely web scrape ... - GitHub,
+    https://github.com/HaydenMacDonald/squashinformr
+11. How the PSA Squash Tour Works: Diamond, Platinum, Gold,
+    https://racquets.me/indoor/competitions/psa-squash-tour-tiers-explained/
+12. Squash Under Strain: A Systematic Review and Meta-Analysis of,
+    https://www.mdpi.com/2075-4663/14/2/79
+13. Northumbria Research Link - SciSpace, https://scispace.com/pdf/reproducibility-
+    of-physiological-and-performance-measures-tvdm7fsusx.pdf
+14. logical responses during match play in four popular racquet sports,
+    https://sport.ruhr-uni-bochum.de/sites/sport.ruhr-uni-bochum.de/files/2023-07/
+    Edel_2019.pdf
+15. PSA Tour Rule Book,
+    https://www.ffsquash.com/medias/fichiers/Competition%20F%C3%A9d%C3%A9r
+    ales/R%C3%A9glement%20sportif%20et%20divers/PSA_Tour_Rule_Book.pdf
+16. Squash Match and Ranking Rules | PDF - Scribd,
+    https://www.scribd.com/document/1007025814/Squash-Match-and-Ranking-Rules
+17. Professional Squash Association - Wikipedia,
+    https://en.wikipedia.org/wiki/Professional_Squash_Association
+18. World Squash Library Launches Worldwide Winners Resource,
+    https://www.worldsquash.sport/world-squash-library-launches-worldwide-winners-
+    resource/
+19. Terms of Use - World Squash, https://www.worldsquash.sport/terms-of-use/
+20. Squash Info Event Services, https://www.squashinfo.com/event_services.php
+21. Why does the squash world put all historical results and statistics,
+    https://www.reddit.com/r/squash/comments/1mgdw8g/why_does_the_squash_wor
+    ld_put_all_historical/
+22. SQUASH STATS – Advancing Squash Through Statistics,
+    https://squashstats.com/
+23. Marcus Kennedy - ScienceOpen,
+    https://www.scienceopen.com/document_file/39848794-03db-4e61-98e1-
+    f2ee095c018a/ScienceOpen/
+    %E2%80%98Squash%E2%80%99ing%20Philadelphia%27s%20Health%20Defici
+    t-
+    %20How%20Squash%20Can%20Bridge%20the%20Fitness%20Disparity%20Bet
+    ween%20Philadelphia%20and%20Other%20Major%20Cities%20.pdf
+24. Prize Money & Ranking Points in PSA World Tour Tournaments,
+    https://squashstats.com/2020/01/30/prize-money-ranking-points-in-psa-world-tour-
+    tournaments/
+25. SquashLevels: Home, https://squashlevels.com/
+26. I built a squash stats platform for tracking ratings, matches, rankings,
+    https://www.reddit.com/r/squash/comments/1vkybga/i_built_a_squash_stats_platf
+<PARSED TEXT FOR PAGE: 47 / 50>
+    orm_for_tracking/
+27. Squash Stats Scorer - Download, https://squash-stats-scorer.updatestar.com/
+28. Squash Stats – Match Log – Aplikace na Google Play,
+    https://play.google.com/store/apps/details?id=app.squashstats&hl=cs
+29. Squash Stats – Match Log - Google Playত এপ্,
+    https://play.google.com/store/apps/details?id=app.squashstats&hl=as
+30. Squash Stats Scorer - Herunterladen, https://squash-stats-
+    scorer.updatestar.com/de
+31. Chart Gallery - Squash Stats, https://stats.squashplayers.app/charts
+32. History of Squash | World Squash Library | England,
+    https://www.squashlibrary.info/
+33. World Squash Library - Sporting Heritage,
+    https://www.sportingheritage.org.uk/content/collection/world-squash-library
+34. WORLD SQUASH LIBRARY CIC | Company Profile | TinyTax,
+    https://tinytax.co.uk/company/world-squash-library-cic-12188524
+35. ANNEXURE B1 | World Squash,
+    https://www.worldsquash.sport/wp-content/uploads/2023/10/ANNEXURE-B1.pdf
+36. ANNEXURE C - World Squash,
+    https://www.worldsquash.sport/wp-content/uploads/2025/06/Annexure-C-
+    Regulation-Changes.pdf
+37. Championship Regulations | World Squash, https://www.worldsquash.sport/wp-
+    content/uploads/2026/07/250901-Championship-Regulations-V11.4.pdf
+38. 1 January 2025 Version 10.5 - World Squash, https://www.worldsquash.sport/wp-
+    content/uploads/2025/07/250101-Championship-Regulations-V10.5.pdf
+39. World Squash Quality Programme, https://www.worldsquash.sport/world-squash-
+    quality-programme/
+40. SquashAI: Video Analytics for Squash - Tommy Mullaney,
+    http://tommymullaney.com/projects/squash-ai
+41. SquashAI | mmkaram, https://www.mmkaram.dev/projects/squashai/
+42. Smart Squash AI - YouTube, https://www.youtube.com/watch?v=JP7EUJqNR4w
+43. SmartSquash AI - AI-Powered Squash Performance Analytics,
+    https://www.smartsquash.ai/
+44. Squash AI | Connect IQ Store - Garmin,
+    https://apps.garmin.com/en-US/apps/63d73d93-c1ce-4424-bfbe-bbe2939f6704
+45. Player Tracking in Squash with Computer Vision and Deep Learning,
+    https://parkerdixon.github.io/Squash-Vision/
+46. Walter Herold Veedla Automatic analysis of squash straight drives,
+    https://dspace.cuni.cz/bitstream/handle/20.500.11956/179608/130351741.pdf?
+    sequence=1&isAllowed=y
+47. KAPAO is an efficient single-stage human pose estimation model,
+    https://github.com/wmcnally/kapao
+48. DavidHurst/ai-umpire - GitHub, https://github.com/DavidHurst/ai-umpire
+49. Tactical use of the T area in squash by players of differing standard,
+    https://www.researchgate.net/publication/26315971_Tactical_use_of_the_T_area
+    _in_squash_by_players_of_differing_standard
+50. A new method for assessing squash tactics using 15 court areas for,
+<PARSED TEXT FOR PAGE: 48 / 50>
+    https://www.researchgate.net/publication/260231404_A_new_method_for_assessi
+    ng_squash_tactics_using_15_court_areas_for_ball_locations
+51. The Effect of Court Location and Available Time on the Tactical Shot,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC3761750/
+52. Evaluation of Open-Source and Pre-Trained Deep Convolutional,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC8271826/
+53. Quantitative analysis of playing efficiency in squash - Alto Rendimiento,
+    https://altorendimiento.com/quantitative-analysis-of-playing-efficiency-in-squash/
+54. Refactoring squashinformr | Needle in the Hay,
+    https://needleinthehay.ca/post/refactoring-squashinformr/
+55. squashinformr package - RDocumentation,
+    https://www.rdocumentation.org/packages/squashinformr/versions/0.2.0
+56. [R-pkgs] squashinformr: Politely web scrape data from SquashInfo in R,
+    https://stat.ethz.ch/pipermail/r-packages/2020/001708.html
+57. FAQs - Sportradar API documentation,
+    https://developer.sportradar.com/squash/reference/squash-faq
+58. Season Links - Sportradar API documentation,
+    https://developer.sportradar.com/squash/reference/squash-season-links
+59. Sport Event Timeline - Sportradar API documentation,
+    https://developer.sportradar.com/squash/reference/squash-sport-event-timeline
+60. Seasons - Sportradar API,
+    https://developer.sportradar.com/squash/reference/squash-seasons
+61. CropAndWeedAndLeaf - Zenodo, https://zenodo.org/records/20116408
+62. DiaMOS Plant: A Dataset for Diagnosis and Monitoring Plant Disease,
+    https://zenodo.org/records/5557313/files/Description_DIaMOS_Plant_dataset.pdf?
+    download=1
+63. PlantDoc Yolo 26 Dataset - Kaggle,
+    https://www.kaggle.com/datasets/nirmalsankalana/plantdoc-yolo-26-dataset
+64. Plant Leaf Disease Classification Dataset Split - Kaggle,
+    https://www.kaggle.com/datasets/memohussein/plant-leaf-disease-classification-
+    dataset-split
+65. Role of abscisic acid in regulating fruit set and ripening in squash,
+    https://tandf.figshare.com/articles/dataset/Role_of_abscisic_acid_in_regulating_fru
+    it_set_and_ripening_in_squash_i_Cucurbita_pepo_i_L_/3569334
+66. Test-re-test reliability of the SQUASH questionnaire.,
+    https://plos.figshare.com/articles/dataset/Test-re-
+    test_reliability_of_the_SQUASH_questionnaire_/3797124
+67. SQuASH Surrogate Benchmark Dataset for Quantum Architecture,
+    https://zenodo.org/records/15230565
+68. Item - Audio 2 (lively situation) part 1 - figshare - Figshare,
+    https://figshare.com/articles/media/Audio_2_lively_situation_part_1/5962114
+69. Game Analysis and Energy Requirements of Elite Squash,
+    https://www.researchgate.net/publication/6153257_Game_Analysis_and_Energy_
+    Requirements_of_Elite_Squash
+70. Adrian Lees - D. - Science and Racket Sports IV-Routledge (2008),
+    https://www.scribd.com/document/599522794/Adrian-Lees-D-Science-and-
+<PARSED TEXT FOR PAGE: 49 / 50>
+    Racket-Sports-IV-Routledge-2008
+71. (PDF) Match and Game Performance Structure Variables in Elite,
+    https://www.researchgate.net/publication/304673347_Match_and_Game_Perform
+    ance_Structure_Variables_in_Elite_and_Youth_International_Badminton_Players
+72. Game Analysis and Energy Requirementsl of Elite Squash,
+    https://www.researchgate.net/publication/232198296_Game_Analysis_and_Energ
+    y_Requirementsl_of_Elite_Squash
+73. Developing Nutritional Considerations for Elite Squash Players,
+    https://shura.shu.ac.uk/36703/1/Turner_2024_PhD_DevelopingNutritionalConside
+    rations.pdf
+74. Epidemiology of squash injuries requiring hospital treatment,
+
+    https://www.researchgate.net/publication/8969536_Epidemiology_of_squash_injur
+    ies_requiring_hospital_treatment
+75. An epidemiologic study of squash injuries - PubMed,
+    https://pubmed.ncbi.nlm.nih.gov/7223918/
+76. World Squash: Home, https://www.worldsquash.sport/
+77. PSA announces switch to weekly ranking lists - Squash Mad,
+    https://squashmad.com/breaking-news/psa-announces-switch-to-weekly-ranking-
+    lists/
+78. Squash Project | PDF - Scribd,
+    https://www.scribd.com/document/1012488785/Squash-Project
+79. Professional Squash Association - Grokipedia,
+    https://grokipedia.com/page/Professional_Squash_Association
+80. The Boast - March Edition by Squash New Zealand - Issuu,
+    https://issuu.com/squashnewzealand/docs/the_boast_-_march_edition
+81. How the PSA Squash Tour Finals Work: Qualification, Format, and,
+    https://racquets.me/indoor/competitions/how-psa-squash-tour-finals-work/
+82. Rising Stars In Professional Squash: Players to Watch,
+    https://squashchamps.com/article/rising-stars-in-professional-squash-players-to-
+    watch
+83. [Solved] Who among the following won the men's singles title at,
+    https://testbook.com/question-answer/who-among-the-following-won-the-mens-
+    single--6877cc5d98893087100bde15
+84. Is there no 'I' in team? Strategic effects in multi-battle team competition,
+    https://lingbohuang.com/uploads/2019-bestofthree-field.pdf
+85. Competitiveness of the PSA World Tour : r/squash - Reddit,
+    https://www.reddit.com/r/squash/comments/1b0nadn/competitiveness_of_the_psa
+    _world_tour/
+86. Great International Squash Players Biographies (GISPB),
+    https://www.ispsquash.com/Biographies_Great_International_Squash_Players.ht
+    m
+87. The Egyptian Machine: How One Country Took Over Squash,
+    https://racquets.me/indoor/culture/egypt-squash-machine/
+88. Squash Tournament Software and Free Scoreboard | JudgeMate,
+    https://www.judgemate.com/en/sports/squash
+89. Untitled - MOOIdesign,
+<PARSED TEXT FOR PAGE: 50 / 50>
+    https://mooidesign.co.uk/wp-content/uploads/2025/07/SquashPlayer_Iss24.1.pdf
+90. In professional Squash, generally or statistically speaking ... - Reddit,
+    https://www.reddit.com/r/squash/comments/mfs3r1/in_professional_squash_gener
+    ally_or_statistically/
+91. Epidemiology and prevention of injuries in young sportsmen. A 35, https://sems-
+    journal.ch/5109/
+92. The Prevalence of Musculoskeletal Injuries in Junior Elite Squash,
+    https://brieflands.com/journals/asjsm/articles/84495
+93. Championship Regulations V11.1 | PDF - Scribd,
+    https://www.scribd.com/document/1007025883/251209-Championship-
+    Regulations-V11-1-2
+94. Physiological demands of racket sports: a systematic review - Frontiers,
+    https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2023.11492
+    95/pdf
+
+----- END SEARCHABLE RESEARCH TEXT -----

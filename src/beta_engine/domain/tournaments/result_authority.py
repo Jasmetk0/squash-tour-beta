@@ -23,6 +23,7 @@ from beta_engine.application.season_event_results_service import (
 )
 from beta_engine.application.season_match_service import SeasonEventMatchPackage
 from beta_engine.domain.rankings.official import FrozenInput, RankingWeek
+from beta_engine.domain.rankings.points import knockout_loss_point_stage
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
 from beta_engine.domain.tournaments.models import CalendarEvent
 
@@ -82,6 +83,7 @@ class TournamentResultAuthority(FrozenInput):
         "tournament_result_authority.v1",
         "tournament_result_authority.v2",
         "tournament_result_authority.v3",
+        "tournament_result_authority.v4",
     ] = "tournament_result_authority.v1"
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
@@ -93,6 +95,11 @@ class TournamentResultAuthority(FrozenInput):
         exclude_if=lambda value: value is None,
     )
     match_package_fingerprint: str | None = Field(
+        default=None,
+        pattern=r"^[0-9a-f]{64}$",
+        exclude_if=lambda value: value is None,
+    )
+    native_feeder_plan_fingerprint: str | None = Field(
         default=None,
         pattern=r"^[0-9a-f]{64}$",
         exclude_if=lambda value: value is None,
@@ -114,7 +121,7 @@ class TournamentResultAuthority(FrozenInput):
     matches: tuple[TournamentMatchResultAuthority, ...]
 
     @model_validator(mode="after")
-    def validate_result(self) -> "TournamentResultAuthority":
+    def validate_result(self) -> TournamentResultAuthority:
         player_ids = tuple(player.player_id for player in self.players)
         if len(player_ids) != len(set(player_ids)):
             raise ValueError("Tournament Result contains duplicate player identity")
@@ -142,6 +149,11 @@ class TournamentResultAuthority(FrozenInput):
         hybrid_match_metadata = any(
             match.draw_type in {"group", "knockout"} for match in self.matches
         )
+        if (
+            self.schema_version != "tournament_result_authority.v4"
+            and self.native_feeder_plan_fingerprint is not None
+        ):
+            raise ValueError("Only native Tournament Result v4 carries feeder provenance")
         if self.schema_version == "tournament_result_authority.v1":
             if (
                 self.draw_authority_fingerprint is None
@@ -223,7 +235,7 @@ class TournamentResultAuthority(FrozenInput):
                 raise ValueError(
                     "Hybrid Tournament Result v2 match references unknown player"
                 )
-        else:
+        elif self.schema_version == "tournament_result_authority.v3":
             if (
                 self.draw_authority_fingerprint is not None
                 or self.match_package_fingerprint is not None
@@ -279,6 +291,22 @@ class TournamentResultAuthority(FrozenInput):
             if not match_players <= set(by_id):
                 raise ValueError(
                     "Pure-groups Tournament Result v3 match references unknown player"
+                )
+        else:
+            if (
+                self.native_feeder_plan_fingerprint is None
+                or self.draw_authority_fingerprint is None
+                or self.match_package_fingerprint is not None
+                or self.group_standings_authority_fingerprint is not None
+                or self.hybrid_knockout_bracket_authority_fingerprint is not None
+                or hybrid_player_metadata
+                or hybrid_match_metadata
+                or any(player.draw_type == "group" for player in self.players)
+                or not self.matches
+                or any(not match.result_fingerprint for match in self.matches)
+            ):
+                raise ValueError(
+                    "Native Tournament Result v4 requires Draw, feeder and match evidence only"
                 )
         return self
 
@@ -420,26 +448,65 @@ def build_tournament_result_authority(
     ):
         raise ValueError("Tournament Result requires every canonical match completed")
 
-    draw_node_ids = {
-        node.node_id
-        for node in (
-            *(
-                node
-                for bracket in draw.qualification_brackets
-                for node in bracket.nodes
-            ),
-            *draw.main.nodes,
-        )
+    return assemble_knockout_tournament_result(
+        run_id=run_id,
+        branch_id=branch_id,
+        week=week,
+        draw=draw,
+        matches=tuple(
+            TournamentMatchResultAuthority(
+                match_id=match.match_id,
+                draw_type=match.draw_type,
+                round_number=match.round_number,
+                bracket_position=match.bracket_position,
+                winner_player_id=match.winner_player_id,
+                loser_player_id=match.loser_player_id,
+                scoreline=match.scoreline,
+                result_fingerprint=match.result_fingerprint,
+            )
+            for match in all_matches
+        ),
+        match_package_fingerprint=package.metadata.build_fingerprint,
+    )
+
+
+def assemble_knockout_tournament_result(
+    *,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    draw: TournamentDrawAuthority,
+    matches: tuple[TournamentMatchResultAuthority, ...],
+    match_package_fingerprint: str | None = None,
+    native_feeder_plan_fingerprint: str | None = None,
+) -> TournamentResultAuthority:
+    """Summarize authenticated knockout evidence from either results owner."""
+    draw_nodes = {
+        node.node_id: (bracket.draw_type, node.round_number)
+        for bracket in (*draw.qualification_brackets, draw.main)
+        for node in bracket.nodes
     }
-    if {match.match_id for match in all_matches} != draw_node_ids:
-        raise ValueError("completed MatchPackage universe differs from canonical Draw")
+    if (
+        len(matches) != len(draw_nodes)
+        or {match.match_id for match in matches} != draw_nodes.keys()
+        or any(
+            draw_nodes.get(match.match_id) != (match.draw_type, match.round_number)
+            for match in matches
+        )
+    ):
+        raise ValueError("completed match universe differs from canonical Draw")
+
+    qualification_matches = tuple(
+        match for match in matches if match.draw_type == "qualification"
+    )
+    main_matches = tuple(match for match in matches if match.draw_type == "main")
 
     main_terminal = max(
         draw.main.nodes,
         key=lambda node: (node.round_number, node.round_sequence),
     )
     main_final = next(
-        match for match in package.main_draw_matches if match.match_id == main_terminal.node_id
+        match for match in main_matches if match.match_id == main_terminal.node_id
     )
     if main_final.loser_player_id is None:
         raise ValueError("canonical Main terminal lacks a finalist")
@@ -456,7 +523,7 @@ def build_tournament_result_authority(
             )
             q_final = next(
                 match
-                for match in package.qualification_matches
+                for match in qualification_matches
                 if match.match_id == q_terminal.node_id
             )
             winners.append(q_final.winner_player_id)
@@ -485,13 +552,13 @@ def build_tournament_result_authority(
 
     stats: dict[str, dict[str, object]] = {}
     q_final_round = max(
-        (match.round_number for match in package.qualification_matches),
+        (match.round_number for match in qualification_matches),
         default=0,
     )
-    main_final_round = max(match.round_number for match in package.main_draw_matches)
+    main_final_round = max(match.round_number for match in main_matches)
 
     for match in sorted(
-        all_matches,
+        matches,
         key=lambda item: (
             item.draw_type != "qualification",
             item.round_number,
@@ -548,7 +615,7 @@ def build_tournament_result_authority(
             loser["last_round"] = match.round_number
             loser["last_draw"] = match.draw_type
             loser["eliminated_by"] = match.winner_player_id
-            loser["stage"] = _loss_stage(
+            loser["stage"] = knockout_loss_point_stage(
                 draw_type=match.draw_type,
                 round_number=match.round_number,
                 final_round=(
@@ -605,18 +672,8 @@ def build_tournament_result_authority(
         )
 
     match_results = tuple(
-        TournamentMatchResultAuthority(
-            match_id=match.match_id,
-            draw_type=match.draw_type,
-            round_number=match.round_number,
-            bracket_position=match.bracket_position,
-            winner_player_id=match.winner_player_id,
-            loser_player_id=match.loser_player_id,
-            scoreline=match.scoreline,
-            result_fingerprint=match.result_fingerprint,
-        )
-        for match in sorted(
-            all_matches,
+        sorted(
+            matches,
             key=lambda item: (
                 item.draw_type != "qualification",
                 item.round_number,
@@ -626,12 +683,18 @@ def build_tournament_result_authority(
         )
     )
     return TournamentResultAuthority(
+        schema_version=(
+            "tournament_result_authority.v4"
+            if native_feeder_plan_fingerprint is not None
+            else "tournament_result_authority.v1"
+        ),
         run_id=run_id,
         branch_id=branch_id,
         event_id=draw.event_id,
         completed_week=week,
         draw_authority_fingerprint=draw.fingerprint,
-        match_package_fingerprint=package.metadata.build_fingerprint,
+        match_package_fingerprint=match_package_fingerprint,
+        native_feeder_plan_fingerprint=native_feeder_plan_fingerprint,
         champion_player_id=champion_id,
         finalist_player_id=finalist_id,
         qualification_winner_ids=qualification_winners,
@@ -795,26 +858,6 @@ def project_tournament_result_legacy_dto(
         validation_warnings=[],
         validation_errors=[],
     )
-
-
-def _loss_stage(*, draw_type: str, round_number: int, final_round: int) -> str:
-    distance = final_round - round_number
-    if draw_type == "qualification":
-        if distance == 0:
-            return "qualification_final"
-        if distance == 1:
-            return "qualification_semifinal"
-        return "qualification_round"
-    mapping = {
-        0: "finalist",
-        1: "semifinal",
-        2: "quarterfinal",
-        3: "round_of_16",
-        4: "round_of_32",
-        5: "round_of_64",
-        6: "round_of_128",
-    }
-    return mapping.get(distance, "main_draw_participant")
 
 
 def _hash(value: object) -> str:

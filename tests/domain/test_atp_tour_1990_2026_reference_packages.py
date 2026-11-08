@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 from collections import Counter
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import pytest
 
@@ -18,6 +19,12 @@ SOURCE = ROOT / "config" / "reference_packages" / "atp_tour_1990_2026"
 
 def _source(kind: str) -> dict:
     return json.loads((SOURCE / f"{kind}.json").read_text(encoding="utf-8"))
+
+
+def _source_host(source_url: str) -> str | None:
+    """Compare the actual host, ignoring only the conventional www alias."""
+    hostname = urlsplit(source_url).hostname
+    return hostname.removeprefix("www.") if hostname is not None else None
 
 
 def _host_by_year(payload: dict) -> dict[int, str]:
@@ -252,8 +259,8 @@ def test_2024_2025_atp_250_intervals_are_backed_by_official_atp_archives() -> No
     assert provenance["singles_main_tour_250_count_by_year"] == {
         "2024": 38, "2025": 30
     }
-    assert "atptour.com" in provenance["source_2024"]
-    assert "atptour.com" in provenance["source_2025"]
+    assert _source_host(provenance["source_2024"]) == "atptour.com"
+    assert _source_host(provenance["source_2025"]) == "atptour.com"
     for year in (2024, 2025):
         active = [
             e for e in source["entities"]
@@ -283,7 +290,7 @@ def test_2023_played_tour_250_and_500_roster_matches_official_archive() -> None:
     assert evidence["singles_main_tour_250_count"] == 38
     assert evidence["atp_500_count"] == 13
     assert evidence["masters_count"] == 9
-    assert "atptour.com" in evidence["source_2023"]
+    assert _source_host(evidence["source_2023"]) == "atptour.com"
 
 
 def test_2023_two_adelaide_events_and_2024_venue_moves_keep_stable_identity() -> None:
@@ -369,7 +376,7 @@ def test_2022_all_played_atp_250_and_cancelled_scheduled_entries_are_distinct() 
     assert evidence["scheduled_250_identity_count"] == 44
     assert evidence["played_atp_500_count"] == 13
     assert evidence["played_masters_count"] == 8
-    assert "atptour.com" in evidence["archive_source_url"]
+    assert _source_host(evidence["archive_source_url"]) == "atptour.com"
     assert (
         sum(cat == "atp_250" and id not in row["known_not_held_series_ids"]
             for id, cat in current.items())
@@ -456,7 +463,7 @@ def test_pune_to_hong_kong_retains_one_series_id_from_2022_to_2026() -> None:
     assert hosts[2017] == "Chennai"
     assert hosts[2018] == hosts[2020] == hosts[2023] == "Pune"
     assert hosts[2024] == "Hong Kong"
-    assert "atptour.com" in hong_kong["historical_licence_source_url"]
+    assert _source_host(hong_kong["historical_licence_source_url"]) == "atptour.com"
 
 
 def test_belgrade_2022_to_banja_luka_2023_is_one_series() -> None:
@@ -472,7 +479,7 @@ def test_belgrade_2022_to_banja_luka_2023_is_one_series() -> None:
     assert [x["city"] for x in source["payload"]["historical_host_change"]] == [
         "Belgrade", "Banja Luka"
     ]
-    assert "atptour.com" in source["payload"]["historical_licence_source_url"]
+    assert _source_host(source["payload"]["historical_licence_source_url"]) == "atptour.com"
 
 
 def test_2020_played_tour_tier_roster_from_official_atp_archive() -> None:
@@ -496,7 +503,7 @@ def test_2020_played_tour_tier_roster_from_official_atp_archive() -> None:
     assert source["played_atp_250_count"] == 18
     assert source["played_atp_500_count"] == 7
     assert source["played_masters_count"] == 3
-    assert "atptour.com" in source["results_archive_url"]
+    assert _source_host(source["results_archive_url"]) == "atptour.com"
     assert y2020["edition_assertion"].startswith("none;")
 
 
@@ -634,7 +641,7 @@ def test_2018_atp_official_calendar_reconciles_all_64_atp_series() -> None:
         "played_tour_tiers_reconciled_to_atp_results_archive"
     )
     source = _source("series")["provenance"]["calendar_validation_2018"]
-    assert "atptour.com" in source["official_calendar_url"]
+    assert _source_host(source["official_calendar_url"]) == "atptour.com"
     assert source["played_atp_250_count"] == 40
     assert source["played_atp_500_count"] == 13
 
@@ -705,7 +712,7 @@ def test_2016_2017_atp_tour_archive_complete_rosters(
     provenance = _source("series")["provenance"][f"calendar_validation_{year}"]
     assert provenance["played_atp_250_count"] == atp250
     assert provenance["played_atp_500_count"] == 13
-    assert "atptour.com" in provenance["archive_source_url"]
+    assert _source_host(provenance["archive_source_url"]) == "atptour.com"
 
 
 def test_2016_2017_licence_moves_are_explicit_not_fabricated_separate_events() -> None:
@@ -824,7 +831,7 @@ def test_2014_atp_tour_official_results_9_masters_11_500_39_250() -> None:
         "atp_masters_1000": 9, "atp_500": 11, "atp_250": 39,
     }
     evidence = _source("series")["provenance"]["calendar_validation_2014"]
-    assert "atptour.com" in evidence["archive_source_url"]
+    assert _source_host(evidence["archive_source_url"]) == "atptour.com"
     assert evidence["played_atp_500_count"] == 11
     assert evidence["played_atp_250_count"] == 39
 
@@ -961,7 +968,7 @@ def test_2012_real_atp_tour_roster_9_masters_11_500_40_250() -> None:
         "played_tour_tiers_reconciled_to_atp_results_archive"
     )
     evidence = _source("series")["provenance"]["calendar_validation_2012"]
-    assert "atptour.com" in evidence["archive_source_url"]
+    assert _source_host(evidence["archive_source_url"]) == "atptour.com"
     assert evidence["played_atp_250_count"] == 40
     assert evidence["played_atp_500_count"] == 11
 
@@ -1013,7 +1020,7 @@ def test_2011_played_atp_tour_9_masters_11_500_40_250() -> None:
     assert evidence["played_atp_masters_1000_count"] == 9
     assert evidence["played_atp_500_count"] == 11
     assert evidence["played_atp_250_count"] == 40
-    assert "atptour.com" in evidence["archive_source_url"]
+    assert _source_host(evidence["archive_source_url"]) == "atptour.com"
 
 
 def test_2011_event_families_before_2012_relocations_remain_distinct() -> None:
@@ -1061,7 +1068,7 @@ def test_2010_atp_tour_61_played_events_and_no_challengers() -> None:
         "atp_masters_1000": 9, "atp_500": 11, "atp_250": 40,
     }
     evidence = _source("series")["provenance"]["calendar_validation_2010"]
-    assert "atptour.com" in evidence["archive_source_url"]
+    assert _source_host(evidence["archive_source_url"]) == "atptour.com"
     assert evidence["played_atp_250_count"] == 40
     assert evidence["played_atp_500_count"] == 11
     assert evidence["played_atp_masters_1000_count"] == 9
@@ -1080,9 +1087,9 @@ def test_2010_new_haven_is_same_licence_as_2011_winston_salem() -> None:
     host_rows = {p["year"]: p["city"] for p in
                  by_id["winston_salem"]["historical_host_change"]}
     assert host_rows[2010] == "New Haven"
-    assert "nhregister.com" in by_id["winston_salem"]["historical_licence_source_url"]
+    assert _source_host(by_id["winston_salem"]["historical_licence_source_url"]) == "nhregister.com"
     evidence = source["provenance"]["calendar_validation_2010"]
-    assert "godeacs.com" in evidence["atp_ustatour_licence_transfer_url"]
+    assert _source_host(evidence["atp_ustatour_licence_transfer_url"]) == "godeacs.com"
     assert evidence["specific_transfer"]["source_id"] == "winston_salem"
 
 
@@ -1118,7 +1125,7 @@ def test_2009_inaugural_1000_500_250_roster_matches_atp_archive() -> None:
         "atp_masters_1000": 9, "atp_500": 11, "atp_250": 40,
     }
     source = _source("series")["provenance"]["calendar_validation_2009"]
-    assert "atptour.com" in source["archive_source_url"]
+    assert _source_host(source["archive_source_url"]) == "atptour.com"
     assert source["played_atp_250_count"] == 40
     assert source["played_atp_500_count"] == 11
     assert source["played_atp_masters_1000_count"] == 9
@@ -1134,7 +1141,7 @@ def test_2009_indianapolis_to_2010_atlanta_is_same_tour_sanction() -> None:
              if e["source_entity_id"] == "atlanta")
     hosts = {row["year"]: row["city"] for row in s["historical_host_change"]}
     assert hosts[2009] == "Indianapolis"
-    assert "ajc.com" in s["historical_licence_source_url"]
+    assert _source_host(s["historical_licence_source_url"]) == "ajc.com"
 
 
 def test_2009_lyon_indoor_to_2010_montpellier_not_other_lyons() -> None:
@@ -1186,7 +1193,7 @@ def test_2008_international_series_gold_has_nine_historic_tier_members() -> None
     provenance = _source("series")["provenance"]["calendar_validation_2008_partial"]
     assert provenance["documented_played_gold_count"] == 9
     assert provenance["lower_international_series_census_status"] == "COMPLETE_2008_PLAYED"
-    assert "atptour.com" in provenance["official_results_archive_url"]
+    assert _source_host(provenance["official_results_archive_url"]) == "atptour.com"
 
 
 def test_2008_historic_gold_cannot_be_retroactively_called_2009_500() -> None:
@@ -1228,7 +1235,7 @@ def test_2008_original_atp_masters_gold_and_international_played_census() -> Non
     source = _source("series")["provenance"]["calendar_validation_2008"]
     assert source["played_international_series_count"] == 42
     assert source["scheduled_international_series_identity_count"] == 43
-    assert "atptour.com" in source["official_played_results_archive_url"]
+    assert _source_host(source["official_played_results_archive_url"]) == "atptour.com"
     assert ".pdf" in source["official_calendar_snapshot_url"]
 
 
@@ -1246,7 +1253,7 @@ def test_2008_warsaw_not_prospective_sopot_and_bangalore_cancelled() -> None:
         assert excluded not in rows[2008]["series_category_ids"]
     by = {e["source_entity_id"]: e["payload"] for e in source["entities"]}
     assert by["bangalore_2008"]["not_held_years_known"] == [2008]
-    assert "skysports.com" in by["bangalore_2008"]["known_nonheld_source"]
+    assert _source_host(by["bangalore_2008"]["known_nonheld_source"]) == "skysports.com"
 
 
 def test_2008_amersfoort_to_2009_belgrade_and_adelaide_to_brisbane() -> None:
@@ -1664,7 +1671,7 @@ def test_2001_stuttgart_masters_vs_clay_gold_and_sydney_finals() -> None:
     source = series["provenance"]["calendar_validation_2001"]["indoor_masters_license_transition"]
     assert source["source_id_2001"] == "stuttgart_indoor_masters"
     assert source["source_id_2002"] == "madrid"
-    assert "emol.com" in source["source_url"]
+    assert _source_host(source["source_url"]) == "emol.com"
 
 
 def test_2001_false_bogota_cancellation_rejected() -> None:
@@ -1724,7 +1731,7 @@ def test_2000_original_hosts_and_two_distinct_london_events() -> None:
     p = src["provenance"]["calendar_validation_2000"]
     assert p["played_international_series_gold_count"] == 11
     assert p["doubles_only_world_championship_host"] == "Bengaluru"
-    assert "independent.co.uk" in p["verified_london_gold_to_milan_international_url"]
+    assert _source_host(p["verified_london_gold_to_milan_international_url"]) == "independent.co.uk"
 
 
 def test_2000_cancelled_brighton_should_fail_category_census() -> None:

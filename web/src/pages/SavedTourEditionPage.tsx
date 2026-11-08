@@ -12,6 +12,7 @@ import type {SavedTourDrawBracket,SavedTourScheduledMatch} from '../api/savedTou
 import {verifiedCountryReturn} from './runWorldCountryTournaments'
 import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
 import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
+import {SavedEditionShortcuts} from '../components/SavedEditionShortcuts'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -246,6 +247,11 @@ export function SavedTourEditionPage():JSX.Element {
       'Invalid or stale Edition identity.'}</p>}
     {e&&<><p className="status">{e.season} · {cs?'Týden':'Week'} {e.season_week} · {e.host_country}
       {' · '}{cs?'Kanonicky publikovaný výsledek':'Canonical published result'}: {e.result_published?'✓':'—'}</p>
+      <SavedEditionShortcuts
+        key={[runId,branch,revision,season,eventId].join('|')}
+        runId={runId} branchId={branch!} revisionId={revision!}
+        seasonIndex={season!} eventId={eventId} eventName={e.event_name||eventId}
+        tab={tab} matchSearch={matchSearch} cs={cs}/>
       <nav className="saved-tour-edition-tabs" aria-label={cs?"Oddíly edice":"Edition sections"}>
         {tabs.map((name,i)=><button key={name} type="button" aria-current={tab===name?'page':undefined}
           className={tab===name?'active':''} onKeyDown={event=>onTabKeyDown(event,name)}

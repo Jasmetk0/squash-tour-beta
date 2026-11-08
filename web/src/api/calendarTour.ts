@@ -7,11 +7,13 @@ export type TourSavedProjection = {schema_version:'calendar_tour_saved_projectio
 export type TourSaveReceipt = {schema_version:'calendar_tour_save_receipt.v1';run_id:string;branch_id:string;saved_revision:{revision_id:string;run_id:string;branch_id:string;content_hash:string};saved_projection?:TourSavedProjection|null;working_draft?:{status:string;change_count:number;draft_version:number;base_saved_revision_id:string}}
 export type TourPlayer = {run_id:string;branch_id:string;saved_head_revision_id:string;checkpoint_fingerprint:string;record:{player_id:string;attributes:[string,number][];current_form:number;match_sharpness:number;long_term_fatigue:number};lifecycle:null|{age:number;status:string}}
 export type TourRanking = {week:{season_index:number;week:number};policy:{best_n:number;policy_id:string};rows:{rank:number;player_id:string;points:number;counted_results:TourResult[]}[]}
+export type TourDrawSlot = {slot_index:number;player_id:string|null;entrant_kind?:string;placeholder_id?:string|null}
 export type TourEdition = {
   edition:{schema_version?:string;simulation_seed?:number;edition_id:string;name:string;week:TourWeek;announcement_week:TourWeek;start_slot:number;main_entrant_count:number;point_table:Record<string,number>;validity_weeks:number}
   submissions:{application_id:string;player_id:string}[]
   field:{direct_main_player_ids:string[];below_qualification_cut_player_ids:string[]}|null
-  draw:{main?:{slots:{slot_index:number;player_id:string}[]};topology?:{group_slots:{group_index:number;slot_index:number;player_id:string}[]}}|null
+  draw:{main?:{slots:TourDrawSlot[]};topology?:{group_slots:{group_index:number;slot_index:number;player_id:string}[]}}|null
+  canonical_binding?:{saved_revision_id:string;draw_input:{qualification_player_ids:string[]};schedule:{qualification:number[];main:number[]}}
   tournament_fingerprint:string|null;result_confirmed:boolean
 }
 export type GlobalSlotView = {blockers?:string[];conflicts?:{player_id:string;match_ids:string[]}[];schema_version:'calendar_global_slot_inspection.v1';number:number;snapshot_fingerprint:string|null;completed:number;remaining:number;matches:{edition_id:string;match_id:string;player_a_id:string|null;player_b_id:string|null;winner_player_id?:string;completion?:"walkover";completed:boolean}[]}

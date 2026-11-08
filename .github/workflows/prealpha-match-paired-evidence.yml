@@ -1,0 +1,61 @@
+name: Paired MatchEngine Scientific Evidence
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [buuk]
+    paths:
+      - '.github/workflows/prealpha-match-paired-evidence.yml'
+      - 'tools/validate_match_seed_blocks.py'
+      - 'tests/tools/test_validate_match_seed_blocks.py'
+      - 'docs/MATCH_PAIRED_SEED_VALIDATION_2026_11_01.md'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  paired-match-seeds:
+    name: Real MatchEngine paired seed/replay evidence (8 blocks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install application and test dependencies
+        run: python -m pip install -e ".[dev]"
+      - name: Real independent MatchEngine replay test
+        run: python -m pytest -q tests/tools/test_validate_match_seed_blocks.py
+      - name: Produce all 48 original MatchEngine observations (plus 48 reversed replays)
+        run: |
+          mkdir -p artifacts
+          python tools/validate_match_seed_blocks.py --blocks 8 --root-seed 20261101 --output artifacts/match-seed-blocks.json
+      - name: Verify report boundaries and exact observation fingerprint
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          from pathlib import Path
+          report = json.loads(Path("artifacts/match-seed-blocks.json").read_text(encoding="utf-8"))
+          rows = report["observations"]
+          expected = hashlib.sha256(json.dumps(rows, sort_keys=True, ensure_ascii=False,
+                         allow_nan=False, separators=(",", ":")).encode("utf-8")).hexdigest()
+          assert report["schema_version"] == "match_paired_seed_validation.v1"
+          assert report["blocks"] == 8
+          assert report["replay_checked"] is True and report["replay_mismatches"] == 0
+          assert len(rows) == 48 and len({(r["block"], r["seat"], r["arm"]) for r in rows}) == 48
+          assert report["observations_sha256"] == expected
+          assert all(report["summary"]["arms"][a]["matches"] == 16
+                     for a in ("equal", "x_stronger", "y_stronger"))
+          print("PAIRED_MATCH_EXPERIMENT_COMPLETE (NOT PRE-ALPHA RELEASE PROOF)")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: match-paired-scientific-evidence
+          path: artifacts/match-seed-blocks.json
+          if-no-files-found: error
+          retention-days: 30

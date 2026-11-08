@@ -3374,8 +3374,8 @@ describe('Module 17 pages through routes', () => {
 
     await waitFor(() => expect(api.cloneWorldPackage).toHaveBeenCalledWith('official_fax_world', expect.objectContaining({ new_world_id: 'my_custom_world', dry_run: false })))
     expect(await screen.findByText(/Custom World package created/i)).toBeInTheDocument()
-    expect(screen.getByLabelText('Created package summary')).toHaveTextContent('custom_config')
-    expect(screen.getByLabelText('Created package summary')).toHaveTextContent('4 countries')
+    expect(screen.getByLabelText('Clone package summary')).toHaveTextContent('custom_config')
+    expect(screen.getByLabelText('Clone package summary')).toHaveTextContent('Countries: 4')
     expect(screen.getByLabelText('Clone validation summary')).toHaveTextContent('valid')
     expect(screen.getByRole('link', { name: 'Open new Custom World detail' })).toHaveAttribute('href', '/admin/world/library/my_custom_world')
   })
@@ -3500,7 +3500,7 @@ describe('Module 17 pages through routes', () => {
       viewer_branch_id: 'branch-product-run-a',
       season_index: 27,
       week: 9,
-      week_ordinal: 1656,
+      week_ordinal: 27 * 61 + 9 - 1,
       snapshot_fingerprint: 'a'.repeat(64),
       policy_id: 'best-15',
       best_n: 15,
@@ -3510,12 +3510,12 @@ describe('Module 17 pages through routes', () => {
 
     renderAppAt('/viewer/rankings')
     expect(await screen.findByRole('heading', { name: 'MSA Rankings' })).toBeInTheDocument()
-    const panel = await screen.findByLabelText('MSA Rankings current Official Ranking')
-    expect(panel).toHaveTextContent('product-run-a')
+    const panel = await screen.findByRole('article', { name: 'Currently published ranking' })
+    await waitFor(() => expect(panel).toHaveTextContent('product-run-a'))
     expect(panel).toHaveTextContent('branch-product-run-a')
     expect(panel).not.toHaveTextContent('legacy-run-a')
     expect(api.getViewerOfficialRanking).toHaveBeenCalledWith('product-run-a')
-    expect(screen.getByRole('link', { name: 'Open active run rankings' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings')
+    expect(screen.getByRole('link', { name: 'Open full publication history' })).toHaveAttribute('href', '/viewer/runs/product-run-a/rankings')
     expect(screen.queryByRole('link', { name: /View latest ranking snapshot/i })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Viewer active run quick links' })).not.toBeInTheDocument()
   })

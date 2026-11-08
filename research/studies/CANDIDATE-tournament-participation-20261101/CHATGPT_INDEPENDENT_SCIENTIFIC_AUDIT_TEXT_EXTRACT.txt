@@ -1,0 +1,1058 @@
+# ChatGPT Deep Research — Independent audit of Gemini Tournament Participation (R004 candidate)
+
+Original source: user-provided 26-page DOCX, "Nezávislý vědecký audit výzkumu turnajové účasti pro Squash Engine.docx" (received 2026-11-01).
+
+**Status:** INDEPENDENT AI SCIENTIFIC AUDIT; evidence contribution, not final peer review, product authority or permission to implement/merge.
+**Fidelity:** Searchable text extraction. The original DOCX is not committed; document formulas/tables/embedded figures can be lost. The 26-page auditor itself could access only the *GitHub text extraction* of the 42-page Gemini report rather than original Gemini DOCX. The limitation affects exact reproduction of Gemini formulas and tables, even though the factual claims were cross-checked against external sources.
+**Governance:** Master and user-approved product decisions override all research; historically dated PSA rules are not automatically FAX policies.
+
+----- BEGIN FULL AVAILABLE TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 26>
+Nezávislý vědecký audit výzkumu turnajové
+účasti pro Squash Engine
+Executive Summary
+Tento audit dochází k podstatně střízlivějšímu závěru než původní 42stránkový
+Gemini research. Výzkum obsahuje několik velmi dobrých architektonických
+principů — zejména rozhodování pouze z informací dostupných hráči v daném
+okamžiku, společné vyhodnocení alternativních turnajů, explicitní možnost
+„nehrát“, diagnostiku informačního look-aheadu a deterministicky seedovanou
+variabilitu. Tyto principy jsou navíc z velké části kompatibilní s již existujícím
+Masterem Squash Engine. Gemini však opakovaně přechází od obecné
+plausibility k numerické jistotě, kterou zdroje nepodporují. [1]
+
+Nejzávažnější faktická chyba se týká rankingového systému. V pravidlech PSA
+2024/25 skutečně existuje minimální počet jedenácti započítávaných výsledků a
+při 16.–24. odehraném turnaji roste počet započítávaných výsledků postupně z 12
+na 20. Neexistuje ale zvláštní skok při 24. turnaji: mezi 23. a 24. startem je
+přesně stejný přírůstek jmenovatele o jednu jednotku jako mezi 22. a 23., 21. a 22.
+atd. Gemini z kontinuální schodové řady vytvořilo narativ o „skokové penalizaci
+na 24“, který pravidla nepodporují. [2]
+
+Současně je zásadní nerozšiřovat pravidla 2024/25 na rok 2026 bez důkazu.
+Historie PSA ukazuje, že rankingový mechanismus se měnil velmi výrazně: v
+pravidlech 2022 byl mužský minimální divisor 10 a následně rostl jiným
+schématem; v dubnu 2023 PSA přešla na prostý součet deseti nejlepších
+mužských výsledků, nikoli na průměr; v sezóně 2024/25 se zavedl opět jiný
+systém s minimem 11 a progresivním počtem counting tournaments. [3] PSA
+registrační formulář dostupný na podzim 2026 stále odkazuje na „PSA Squash
+Tour Rule Book“, přičemž jeho odkaz míří na dokument z srpna 2025; tento PDF
+soubor se mi nepodařilo přes nástroj bezpečně načíst a nenalezl jsem
+autoritativní veřejný dokument označený jako 2026 rulebook. Proto považuji
+přesnou podobu rankingového vzorce platného právě 1. listopadu 2026 za
+neověřenou, nikoli automaticky totožnou s 2024/25. [4]
+
+Druhá závažná chyba je fyziologická. Hodnoty +430,1 % kreatinkinázy
+bezprostředně po soutěžním dni a +160,4 % po 24 hodinách nepocházejí z
+profesionálních squashistů. Pocházejí ze studie 20 elitních juniorských
+badmintonistů průměrného věku přibližně 17 let, kteří odehráli dva
+<PARSED TEXT FOR PAGE: 2 / 26>
+badmintonové zápasy v jednom dni. Použít tato čísla jako numerický recovery
+parametr profesionálního mužského squashe by bylo vědecky neobhajitelné. [5]
+
+Stejně slabé je tvrzení, že profesionální squashista může dosáhnout „100 % formy
+pouze třikrát ročně“ a jinak hraje přibližně na „80 %“. Periodizační literatura
+připouští mono-, dvoj-, troj- i vícicyklické modely a výslovně zdůrazňuje závislost
+na sportu, kalendáři a individuálním sportovci. Nenašel jsem squashovou studii,
+která by měřila univerzální tři vrcholy nebo 80% běžný výkon. Tato čísla mají být
+z modelu odstraněna, dokud nebudou empiricky kalibrována. [6]
+
+Tvrzení o ekonomickém break-even přibližně na 150. místě pochází z
+profesionálního tenisu, kde novější studie skutečně nachází přibližný break-
+even kolem ATP/WTA 150. Starší ekonomická práce přitom umisťovala obtížnost
+pokrytí nákladů spíše pod přibližně 250. místem. To dokládá ekonomický
+mechanismus, nikoli squashový práh. Pro squash jsem nenašel publikovanou
+studii, která by identifikovala světové pořadí 150 jako break-even. Přenést číslo
+„150“ do Squash Engine jako target by tedy bylo nesprávné. [7]
+
+Také „75% overconfidence“ není zjištění o squashistech. Číslo pochází ze
+známého laboratorního experimentu Niederle a Vesterlund: 75 % mužských
+účastníků se domnívalo, že jsou nejlepší ze skupiny čtyř, zatímco objektivně
+nejlepší mohla být jen čtvrtina. Studie se zabývala genderovým rozdílem ve
+vstupu do experimentální soutěže; nešlo o profesionální sportovce ani o výběr
+squashových turnajů. [8]
+
+Random Utility / Multinomial Logit s Gumbelovým šumem je matematicky
+legitimní kandidát, nikoli však empiricky potvrzené „optimální řešení“.
+Standardní MNL implikuje IIA — poměr pravděpodobností dvou alternativ se
+nemění přidáním třetí — což je právě u podobných a geograficky
+substituovatelných turnajů potenciálně problematické. Mixed Logit tuto restrikci
+může zmírnit, ale za cenu více parametrů, horší identifikovatelnosti a simulace
+latentní heterogenity. Pro pre-alphu není prokázáno, že toto zlepšení převáží nad
+složitostí. [9]
+
+Můj hlavní závěr pro produkt je proto: nepřidávat nyní Mixed Logit, MDP,
+biologické recovery konstanty, „sniper/grinder“ archetypy ani ekonomický
+rank-150 práh. Nejvyšší prioritu mají diagnostické experimenty nad současnou
+Entry AI: zda respektuje historickou informační množinu, frozen snapshot,
+deadline semantics, konflikt turnajů, rezervy a uloženou provenance; zda
+současný jednoduchý model už nevytváří přijatelné rozdělení účasti; a zda je
+<PARSED TEXT FOR PAGE: 3 / 26>
+reprodukovatelný při stejném seedu a vstupu. Tím lze zjistit, zda vůbec existuje
+problém, který složitější rozhodovací model řeší.
+
+Metodická limitace tohoto auditu je důležitá: originální DOCX mi v této
+konverzaci nebyl zpřístupněn jako soubor. PR #1705 výslovně uvádí, že GitHub
+obsahuje pouze textovou extrakci a že původní DOCX včetně tabulek, rovnic a
+grafické struktury není v repozitáři uložen. Proto jsem jako reprezentaci
+původního výzkumu musel použít archivovanou textovou extrakci a externí
+primární zdroje. Vizuální věrnost původních tabulek a rovnic tedy nemohu
+certifikovat. [10]
+
+Ověření faktických tvrzení
+Následující klasifikace rozlišuje potvrzené, částečně doložené, spekulativní,
+chybné a neověřitelné tvrzení. „Potvrzené“ zde neznamená „vhodné
+automaticky pro FAX“; znamená pouze, že tvrzení odpovídá ověřenému zdroji v
+příslušném historickém období.
+
+Tvrzení Gemini         Verdikt                Nezávislý audit
+PSA používá            Potvrzené pouze        Pravidla 2024/25
+52týdenní              pro 2024/25; pro       uvádějí 52 týdnů, při
+rankingový průměr      2026 neověřeno         ≤15 odehraných
+a minimum 11                                  turnajích 11
+                                              counting
+                                              tournaments a
+                                              následně 12, 13… 20
+                                              při 16–24. Historicky
+                                              však 2022 i 2023
+                                              používaly jiné
+                                              systémy. [11]
+Na 24. turnaji         Chybné                 Přechod 23→24
+nastává výrazná                               znamená divisor
+„skoková                                      19→20; stejný krok
+penalizace“                                   +1 nastává již 15→16,
+                                              16→17 atd. Žádná
+                                              zvláštní
+                                              diskontinuita na 24
+                                              není. [2]
+Další turnaj pod       Chybné / příliš silné Při fixním počtu
+minimem vždy                                 započítávaných
+<PARSED TEXT FOR PAGE: 4 / 26>
+Tvrzení Gemini      Verdikt   Nezávislý audit
+zlepší ranking                výsledků další nízký
+                              výsledek nemusí
+                              vstoupit mezi
+                              nejlepší counting
+                              scores, takže ranking
+                              může zůstat stejný.
+                              Nad minimem může
+                              nový counting score
+                              průměr zvýšit nebo
+                              snížit podle jeho
+                              vztahu k
+                              dosavadnímu
+                              průměru a k
+                              výsledku, který nově
+                              vstupuje do
+                              započítávané sady.
+                              [12]
+Dva zápasy v        Chybné    2024/25 pravidla
+jednom dni nejsou             výslovně upravují
+dovoleny                      dvě utkání v jednom
+                              dni s minimem 4 h
+                              45 min mezi začátky
+                              utkání. Aktuální
+                              registrační formulář
+                              PSA navíc uvádí, že
+                              dvě kola v jednom
+                              dni smějí Challenger
+                              3; Challenger 6+
+                              pouze jedno kolo
+                              denně. [13]
+Mezi zápasy v       Chybné    2024/25 pravidla
+různých dnech je              stanovují 18 hodin
+pevně 24 h                    mezi začátky zápasů
+                              na různých dnech, s
+                              možností PSA
+                              schválit odlišný
+                              harmonogram. [14]
+<PARSED TEXT FOR PAGE: 5 / 26>
+Tvrzení Gemini         Verdikt              Nezávislý audit
+Všechny Medical,       Chybné               Disciplinary Zero: 52
+Penalty a                                   týdnů a counting.
+Disciplinary Zero                           Penalty Zero: 13
+zabírají counting slot                      týdnů a counting.
+52 týdnů                                    První Medical Zero
+                                            není tournament
+                                            played ani counting;
+                                            druhé je played, ale
+                                            ne counting; až třetí
+                                            a další mohou
+                                            dočasně být
+                                            counting. [15]
+World Champs 64,       Částečně správné,    2024/25 tabulka
+Diamond „48“,          terminologicky       uvádí World Champs
+Platinum 32, Gold–     zavádějící           64; Diamond má 64-
+Copper 24                                   slot draw, ale 48
+                                            total entries;
+                                            Platinum 32;
+                                            Gold/Silver/Bronze/C
+                                            opper mají 32-slot
+                                            draw, ale 24 total
+                                            entries. Zaměňovat
+                                            „draw size“ a „total
+                                            entries“ je chyba
+                                            modelování. [16]
+Gold SF=720,           Potvrzené pro       Hodnoty odpovídají
+QF=450; Silver         historickou tabulku bodovací tabulce
+SF=540, QF=337,5 v     2024/25             dané historické
+daném systému                              verze. Nelze je bez
+                                           nového rulebooku
+                                           prohlásit za aktuální
+                                           2026 parametry. [17]
+CK +430,1 % a +160,4   Chybné               Čísla jsou z 20
+% jsou důkaz                                elitních juniorských
+recovery                                    badmintonistů,
+profesionálního                             nikoli
+squashe                                     profesionálních
+<PARSED TEXT FOR PAGE: 6 / 26>
+Tvrzení Gemini          Verdikt               Nezávislý audit
+                                              squashistů. [18]
+Hráč může vrcholit      Spekulativní /        Periodizační
+přesně třikrát ročně    nepodložené           literatura připouští
+a jinak je na ~80 %                           několik strategií a
+                                              individuální
+                                              přizpůsobení;
+                                              squashové měření
+                                              univerzálního
+                                              „3×100 %, jinak 80
+                                              %“ jsem nenalezl.
+                                              [19]
+Break-even              Částečně doložené     Novější tenisová
+profesionála je okolo   pouze extrapolací z   studie nachází
+ranku 150               tenisu                přibližně ATP/WTA
+                                              150; nejde o squash.
+                                              Starší tenisové
+                                              odhady byly odlišné.
+                                              [7]
+75 % hráčů trpí         Chybné zobecnění      75 % bylo procento
+overconfidence          zdroje                mužských účastníků
+                                              laboratorního
+                                              ekonomického
+                                              experimentu, kteří
+                                              se považovali za
+                                              nejlepší ve
+                                              čtyřčlenné skupině.
+                                              Nešlo o squashisty.
+                                              [20]
+Random Utility +        Spekulativní          Jde o rozumnou
+Rolling Horizon je                            kandidátní rodinu
+„optimální“ řešení                            modelů, nikoli o
+                                              empiricky
+                                              potvrzenou
+                                              architekturu pro
+                                              profesionální
+                                              squash. [21]
+<PARSED TEXT FOR PAGE: 7 / 26>
+Rankingový mechanismus a skutečný účinek dalšího turnaje
+Historický vývoj je pro Squash Engine velmi důležitý. V pravidlech 2022 se
+mužský ranking počítal jako průměr s minimálním divisorem 10; například 10–
+13 turnajů mělo divisor 10, 14–15 divisor 11, 16–17 divisor 12 atd. [22] V
+pravidlech z dubna 2023 už PSA výslovně uváděla kumulativní součet deseti
+nejlepších mužských výsledků a devíti ženských výsledků, takže rankingový
+model byl strukturálně odlišný. [23] V pravidlech 2024/25 se znovu objevuje
+průměrování, nyní s počtem counting tournaments 11 při nejvýše 15 odehraných
+akcích a pak každým dalším turnajem o jednu vyšším. [12]
+
+To znamená, že „hráčova strategie“ není stabilní vlastnost profesionálního
+squashe; může být vedlejším produktem konkrétní historické rankingové
+formule. Model Squash Engine nesmí kalibrovat univerzální osobnostní archetyp
+„Selective Sniper“ proti „Volume Grinder“ z jednoho období a následně tento
+behaviorální vzorec přenášet do odlišných pravidel FAX.
+
+Matematicky lze efekt dodatečného započítaného výsledku při zvýšení dělitele z
+na vyjádřit jednoduchým způsobem. Má-li současný součet counting scores
+hodnotu , současný průměr je . Po přidání nově započítaného výsledku je nový
+průměr . Zlepší se právě tehdy, když ; zhorší, když . To není zvláštní efekt 24.
+turnaje, ale obecná vlastnost každého přechodu, při němž se zvýší počet
+započítávaných výsledků.
+
+Ještě důležitější je, že Gemini tuto matematiku kombinuje s neprokázaným
+chováním. Z toho, že nízký výsledek může snížit průměr, automaticky neplyne, že
+profesionál strategicky odmítne turnaj. Může sledovat prize money, rankingovou
+volatilitu, povinné starty, očekávanou kvalitu pole, cestovní plán, budoucí
+expirace výsledků nebo jiný cíl. Samotná rankingová formule určuje incentivu,
+ne empirickou elasticitu reakce.
+
+Entry, Confirmation, Withdrawals, Wildcards, Reserves a Lucky
+Losers
+Pravidla 2024/25 potvrzují, že před confirmation deadline lze entry stáhnout bez
+sankce; po ní jsou entries finalizované a pozdější withdrawal podléhá dalším
+pravidlům. Hráči na reserve list mohou odejít bez sankce, pokud ještě nejsou ve
+final confirmed entry list. [24]
+
+Code of Conduct této historické verze navíc rozlišuje časové intervaly.
+Withdrawal do 18 hodin po confirmation deadline vedl k Penalty Zero; mezi
+tímto bodem a 48 hodinami před turnajem k Disciplinary Zero; v posledních 48
+<PARSED TEXT FOR PAGE: 8 / 26>
+hodinách navíc mohl přijít spot fine. Nejde tedy o jeden univerzální „48h
+withdrawal mechanism“. [25]
+
+Wildcard systém je rovněž procedurální, nikoli jen „lokální hráč dostane bonus“.
+Po potvrzení entries lze reserve wildcard použít za stanovených okolností; pokud
+se původní wildcard díky withdrawals dostane do draw vlastní rankingovou
+pozicí, uvolněné místo jde nejprve reserve wildcard, poté dalšímu hráči na
+reserve list a případně se stává bye. [16] To je důležité pro model: „wildcard
+utility“ hráče a procedurální alokace wildcard místa jsou dvě odlišné věci.
+
+Lucky Loser mechanismus je rovněž přesně proceduralizovaný. V historických
+24/48 draw byl způsobilý poražený z prvního kola za stanovených podmínek;
+výběr mohl proběhnout náhodně přes zabezpečený PSA systém a existovaly
+časové limity před dalším kolem. Mechanismus se navíc nevztahoval stejně na
+všechny velikosti pavouku. [26]
+
+Pro Squash Engine z toho plyne jedno robustní pravidlo: stav hráče musí
+rozlišovat minimálně applied / confirmed direct entry / reserve / wildcard /
+withdrawn / ineligible / never applied, protože tyto stavy mají rozdílné procesní
+důsledky. Sloučit je do binárního entered/not entered znemožní věrně
+reprodukovat historické deadline a následné kaskády.
+
+Vědecká kvalita, zdroje a oddělení toho, co Gemini má
+správně
+Nejlepší část výzkumu je jeho orientace na skutečné constrainty místo čisté
+maximalizace rankingu. Výzkum správně upozorňuje, že turnajová volba je
+diskrétní a omezená kalendářem, konflikty, cestou, entry cut-offem, únavou a
+informacemi dostupnými v okamžiku rozhodnutí. To je vhodnější rámec než
+globální optimalizace celé sezóny s dokonalou znalostí budoucích výsledků. [27]
+
+Squashová fyziologická literatura také skutečně podporuje obecný obraz
+extrémně náročného, intervalového sportu s vysokými aerobními a anaerobními
+požadavky. Systematický přehled Turner et al. zahrnul 35 studií, ale pouze 14 z
+nich pracovalo s elite/world-class populací a autoři označili většinu studií za poor
+nebo fair quality. To je přesně důvod, proč je nebezpečné převádět obecný
+fyziologický závěr do přesné simulační konstanty. [28] Studie profesionálního
+squashového tréninkového mikrocyklu existují, například práce s 15
+profesionálními hráči, ale měří tréninkové zatížení, nikoli pravděpodobnost
+účasti na dalším PSA turnaji. [29]
+
+Gemini je nejslabší tam, kde slučuje tři různé úrovně evidence:
+<PARSED TEXT FOR PAGE: 9 / 26>
+Biologická plausibilita: dva těžké zápasy mohou způsobit únavu a svalové
+poškození.
+Empirické zjištění v jiném sportu: juniorští badmintonisté měli konkrétní
+změnu CK.
+Simulační parametr pro profesionální squash: hráč po dlouhém utkání
+dostane konkrétní fatigue penalty.
+
+První tvrzení může být velmi rozumné, druhé může být korektně změřené, ale
+třetí z nich neplyne. Přesně tento skok výzkum dělá u CK +430,1/+160,4 %. [18]
+
+Totéž se děje v ekonomii. Tenis poskytuje velmi dobrý důkaz, že profesionální
+individuální sport může mít strmou ekonomickou nerovnost a že nižší ranking
+ovlivňuje finanční udržitelnost. Nová práce nachází tenisový break-even zhruba
+kolem 150; jiná literatura dříve upozorňovala na problémy pod 250. místem. [7]
+To ospravedlňuje proměnnou typu financial pressure / travel cost sensitivity.
+Neospravedlňuje to ale squashový parametr „rank 150 = break-even“.
+
+Stejná chyba se opakuje v behaviorální ekonomii. Niederle a Vesterlund poskytují
+důležitý důkaz, že subjektivní přesvědčení, riziko a preference soutěživosti
+mohou ovlivňovat volbu vstoupit do soutěže. Jejich 75% hodnota ale pochází z
+experimentální mužské populace a znamená něco velmi specifického: tři čtvrtiny
+mužů očekávaly nejlepší výkon ve čtyřčlenné skupině. [8] Profesionální squash
+má naopak studie o situačním rozhodování během hry, nikoli důkaz o 75%
+overconfidence při volbě turnajů. [30]
+
+Silnou stránkou Gemini je tedy seznam proměnných. Slabou stránkou je
+kalibrace jejich koeficientů. Pro Squash Engine bych zachoval kandidátní
+faktory jako ranking opportunity, strength of field, travel, home/region, fatigue,
+cost, calendar conflict a player preference; odstranil bych z pre-alphy všechny
+přesné biologické a psychologické konstanty, které nebyly odhadnuty z
+relevantních dat.
+
+Další vědecký problém je selektivní práce s historickými pravidly. Gemini
+správně pracuje s některými detaily PSA 2024/25, ale prezentuje je jako obecnou
+realitu profesionálního squashe. Historické rulebooky přitom dokazují velmi
+zásadní změny mezi 2022, 2023 a 2024/25. [3] Pro historickou simulaci je proto
+potřeba chápat pravidla jako versioned regime, nikoli jako konstantu modelu.
+
+Výzkum také správně upozorňuje na informační omezení. To je podle mě jeho
+nejhodnotnější produktový závěr. Hráč v okamžiku entry nesmí vidět budoucí
+withdrawal, budoucí draw, budoucí ranking ani jiný stav, který ještě nebyl
+veřejný. Tento princip je nejen vědecky rozumný, ale je již zabudován do
+<PARSED TEXT FOR PAGE: 10 / 26>
+Masteru přes frozen decision-slot snapshot a zveřejnění předběžných listů až po
+společném dokončení rozhodovacího slotu. [31]
+
+Matematický audit rozhodovacího modelu
+Gemini navrhuje Random Utility Model, v němž hráč volí mezi dostupnými
+turnaji a alternativou „odpočívat/trénovat“, deterministická část utility
+kombinuje očekávané body, ekonomiku, únavu, riziko a další faktory a
+idiosynkratická složka má Type-I Extreme Value neboli Gumbelovo rozdělení.
+Poté navrhuje rolling-horizon rozšíření a případně hierarchickou heterogenitu
+hráčů. [32]
+
+Samotný Gumbel/MNL mechanismus je matematicky standardní. Při nezávislých
+Gumbelových errorech vznikne logitová volba; podstatnou vlastností tohoto
+modelu je IIA. [33] Právě IIA je však pro turnajovou volbu potenciálně nevhodná.
+Představme si dvě velmi podobné evropské Bronze akce A a B a jednu vzdálenou
+Diamond C. Přidání téměř duplikátní Bronze B by v čistém MNL mechanicky
+přerozdělilo část pravděpodobnosti ze všech alternativ, přestože intuitivně by
+mělo hlavně kanibalizovat A. To je typický důvod, proč se v aplikacích testují
+nested nebo mixed specifikace. [34]
+
+To ale neznamená, že Squash Engine má rovnou použít Mixed Logit. Smíšené
+modely jsou flexibilnější právě proto, že obsahují další latentní heterogenitu;
+McFadden a Train ukázali jejich velmi obecnou aproximační schopnost. [35]
+Flexibilita je výhoda při dostatečně bohatých datech, ale pro pre-alphu zároveň
+znamená vyšší riziko, že model bude reprodukovat konstrukční představy
+vývojáře místo pozorovaného chování.
+
+Identifikovatelnost
+Gemini navrhuje současně očekávané body, sílu soupeřů, ranking opportunity,
+risk aversion, overconfidence, finanční cushion, fatigue, travel a individual
+preference coefficients. [32] Tyto veličiny budou v reálných datech silně
+provázané. Vyšší kategorie obvykle znamená více bodů, více prize money a
+silnější pole; vyšší ranking zároveň ovlivňuje acceptance probability, seed
+expectation a expected progression. Bez velkého počtu skutečných choice
+observations s nezávislou variací nelze očekávat čisté oddělení těchto efektů.
+
+Discrete-choice modely navíc vždy vyžadují normalizaci utility: absolutní úroveň
+a scale utility nejsou z choices přímo identifikovatelné. [36] Pokud by tedy Squash
+
+Engine „kalibroval“ desítku koeficientů z ručně zvolených targetů, nevznikl by
+<PARSED TEXT FOR PAGE: 11 / 26>
+empiricky identifikovaný model — vznikla by elegantnější parametrizace
+designérských preferencí.
+
+Rolling horizon a znalost budoucnosti
+Rolling Horizon řeší jiný problém než Random Utility. První určuje, jak daleko
+dopředu hráč plánuje; druhý, jak volí mezi alternativami. Gemini je místy spojuje
+do jednoho balíku, přestože jde o oddělená designová rozhodnutí. [32]
+
+Pro pre-alphu není MDP nutný k zabránění look-aheadu. To lze zajistit přímo
+definicí vstupního snapshotu: hráč dostane pouze veřejně známý kalendář,
+historický ranking snapshot, stav vlastních entries, současnou únavu a právě
+publikované entry lists. To je již koncept Masteru. [37]
+
+MDP navíc vytváří stavový prostor zahrnující ranking, fatigue, lokaci, současné
+entries, budoucí turnaje a případně pravděpodobné výsledky. Pro 1 000+ hráčů
+není hlavním problémem samotný počet hráčů — jednoduché skórování všech
+dostupných alternativ je levné — ale větvení budoucích stavů a potřeba oceňovat
+výsledky, které hráč v okamžiku rozhodnutí nezná. Tím může model nenápadně
+reintrodukovat právě „omniscience“, kterou se Gemini snaží odstranit.
+
+Deterministická reprodukovatelnost
+Náhodný model nemusí být nedeterministický. Je plně reprodukovatelný, pokud
+každé náhodné rozhodnutí používá stabilní seed odvozený například z identity
+hráče, eventu, season/week a typu rozhodnutí a pokud výsledek nezávisí na
+pořadí iterace. To je kompatibilní s požadavkem Masteru na frozen joint decision
+slot a stabilní tie-break token. [37]
+
+To je důležitější než samotná volba distribuce. Gumbel noise generovaný jedním
+globálním PRNG streamem může být reprodukovatelný při jednom pořadí
+výpočtu, ale změna technického pořadí hráčů by mohla změnit, kdo dostane
+který draw. Pro uloženou integritu rozhodnutí je vhodnější „keyed randomness“
+spojená s konkrétním rozhodnutím.
+
+Doporučená matematická architektura pro pre-alphu
+Pro aktuální fázi bych preferoval constrained scored-choice model:
+
+
+
+ale bez předstírání, že koeficienty jsou zatím empiricky odhadnuté. Nejdříve by
+měla být jednoduchá a auditovatelná; alternativy by měly být společně
+vyhodnoceny a obsahovat explicitní „none/rest“. Procedurální eligibility,
+<PARSED TEXT FOR PAGE: 12 / 26>
+deadline, clash a reserve rules musí být hard constraints mimo utility, nikoli
+penalizační váhy. Randomness může být nulová nebo malá a deterministicky
+keyovaná.
+
+Teprve když historická nebo syntetická diagnostika ukáže konkrétní systematický
+problém — například příliš homogenní choices mezi podobnými hráči, špatnou
+substituci podobných turnajů nebo chybějící persistentní player heterogeneity —
+má smysl testovat logit, nested logit či mixed logit. Složitost má být odpovědí na
+pozorovanou chybu, ne výchozím cílem.
+
+Srovnání s Masterem a aktuálně ověřitelnou implementací
+Master na většinu nejdůležitějších architektonických otázek již odpovídá.
+Aktuálně dostupný dokument se označuje jako v86 a uvádí, že Master je
+kanonický produktový zdroj, zatímco stav implementace je evidován odděleně.
+[38] To je důležité, protože Gemini na několika místech prezentuje své návrhy
+jako nové řešení problémů, které už Master řeší.
+
+Již rozhodnuto: Entry AI má v každém decision slotu společně přehodnotit
+všechny veřejně známé turnajové možnosti; jednotlivé kandidátní decisions v
+rámci slotu nejsou ostatním hráčům postupně odhalovány; všichni používají
+stejný frozen snapshot; teprve po dokončení slotu se publikuje stav. AI může
+preliminary applications držet, přidat, odebrat a prioritizovat. Master současně
+výslovně nechává přesné faktory, váhy a kalibraci otevřené. [31]
+
+Již rozhodnuto: pro tournament entry/draw proces existuje jeden Tournament
+Ranking Snapshot. Default je ranking z týdne bezprostředně před Main Entry
+Closing Week; snapshot je použit pro main entry, qualification, reserves, seeding i
+lucky-loser ranking. [39] Tím je významná část Gemini „historical ranking
+information set“ návrhu už product canon, nikoli nový výzkumný závěr.
+
+Již rozhodnuto: snapshot je immutable; oprava má vytvořit nový snapshot,
+nikoli přepsat historii. Master rozlišuje Official Ranking a Live Ranking a uvádí,
+že Live Ranking není pro pre-alphu nutný. [40] To přímo podporuje experimenty
+zaměřené na provenance a historickou reprodukovatelnost.
+
+Již rozhodnuto: preliminary applications nejsou omezeny jednoduchým hard
+capem; smysluplnost má vyplývat z AI, eligibility a konfliktů. [31] Proto bych
+nedoporučoval přidávat Geminiho „optimální počet turnajů“ jako umělou kvótu.
+
+Otevřené / deferred: Master podle vlastních poznámek ponechává přesné AI
+weights, sankce, některé deadlines, travel thresholds, logistické hodnoty a
+<PARSED TEXT FOR PAGE: 13 / 26>
+některé budoucí výjimky jako otevřené nebo odložené otázky. [41] To je správné
+místo pro budoucí empirickou kalibraci.
+
+COUNTRY_ATTRIBUTES_V1.md je rovněž důležitá brzda proti přehnanému
+finančnímu modelování. Dokument říká, že struktura atributů země je V1
+decision, ale přesná kalibrace zůstává otevřená; atributy mají ovlivňovat pipeline
+a prostředí, nikoli vytvářet vrozený talent. elite_support může zahrnovat
+financování a podporu, ale není to empiricky zkalibrovaný roční budget
+profesionála. [42] Geminiho návrh využít country attributes jako kvantitativní
+finanční cushion tedy není zatím validovaný parametr.
+
+Co jsem nemohl bezpečně ověřit
+Neměl jsem v tomto prostředí spolehlivě dostupný celý aktuální source tree tak,
+abych mohl provést řádkový audit skutečně běžící Entry AI. Vyhledávání
+veřejného GitHubu neposkytlo dostatečnou jistotu konkrétních implementačních
+funkcí a kontejner neměl přímý síťový clone. Proto netvrdím, že výše popsané
+rozhodnuté Master chování je celé implementováno.
+
+CURRENT_STATE.md potvrzuje, že aktuální práce směřuje k explicitním Edition
+Entry windows, Save/preflight a bindingu historického Tournament Ranking
+Snapshot a zároveň upozorňuje, že některé části ještě nejsou automaticky
+validované v admin flow. [43] Z toho lze bezpečně říci:
+
+Stav                              Auditní závěr
+Rozhodnuto                        Frozen joint decision slots,
+                                  společné reevaluation
+                                  alternativ, Tournament Ranking
+                                  Snapshot, informační hranice,
+                                  absence jednoduchého hard
+                                  capu entries. [37]
+Prokazatelně implementováno Nemohu certifikovat bez
+na úrovni celé aktuální     auditu současného source
+aplikace                    tree.
+Částečně implementováno /         Saved Entry timing/preflight a
+rozpracováno dle                  historical ranking-source
+CURRENT_STATE                     binding jsou aktuálně aktivní
+                                  implementační oblast. [44]
+Skutečně chybějící výzkumná       Empirická kalibrace Entry AI a
+vrstva                            diagnostika rozdělení choices;
+<PARSED TEXT FOR PAGE: 14 / 26>
+Stav                                 Auditní závěr
+                                     nikoli automaticky Mixed
+                                     Logit/MDP.
+Nové produktové rozhodnutí           Zavést finanční účet hráče do
+                                     utility, konkrétní
+                                     overconfidence, recovery
+                                     křivku, „3 peaks“, ACWR injury
+                                     mechanism nebo strategické
+                                     archetypy.
+Budoucí verze                        Mixed/hierarchical choice
+                                     model, explicitní dlouhodobé
+                                     plánování, kalibrovaná
+                                     economics/fatigue behavior,
+                                     pokud je data skutečně podpoří.
+
+Z hlediska integrity uložených rozhodnutí je důležitější dokončit
+snapshot/provenance pipeline než přidávat další utility coefficients. Pokud
+pozdější model nedokáže přesně určit, co hráč v okamžiku rozhodnutí věděl,
+není možné validně interpretovat jeho volbu bez ohledu na sofistikovanost
+matematického modelu.
+
+Audit šestnácti experimentů a opravený experimentální
+program
+Geminiho experimentální sekce je užitečná jako brainstorming, nikoli jako
+schválený validation plan. Některé experimenty jsou výborné
+invariance/diagnostic tests; jiné obsahují čísla, která vypadají vědecky, ale nebyla
+odvozena z dat. Samotný archiv je správně označuje jako neprovedené návrhy,
+nikoli výsledky. [45]
+
+                                           Riziko
+Experiment Vědecká          Data /         umělé
+Gemini     hodnota          target         rovnováhy      Verdikt
+EXP-01        Střední       Targety        Vysoké,        Zachovat
+Seasonal                    Top10 11–      pokud se AI    pouze jako
+activity/di                 15, Top11–     ladí na tato   deskriptivn
+visor                       100 13–19 a    čísla.         í
+                            <5 % nad                      diagnostiku
+                            24 nejsou                     bez targetů.
+<PARSED TEXT FOR PAGE: 15 / 26>
+                                           Riziko
+Experiment Vědecká         Data /          umělé
+Gemini     hodnota         target          rovnováhy    Verdikt
+                           doloženy.
+EXP-02       Vysoká        Potřebuje       Nízké.       Zachovat,
+Clashing                   historické                   ale měřit
+Silver/Bro                 entry lists a                substitutio
+nze self-                  rankings,                    n bez
+selection                  jinak jen                    předem
+                           syntetický                   daného
+                           test.                        směru/velik
+                                                        osti.
+EXP-03    Střední až       Empiricky       Střední.     Zachovat
+Home      vysoká           testovateln                  jako
+tournamen                  é, pokud                     observační
+t premium                  jsou                         analýzu;
+                           location +                   oddělit
+                           entries +                    wildcard
+                           WC data.                     mechanism
+                                                        us od
+                                                        preference
+                                                        hráče.
+EXP-04       Střední       Nemáme          Vysoké při   Nejprve
+Marathon                   validovano      mechanick    pouze
+→ next-                    u               ém           korelační
+week                       squashovo       zavedení.    diagnostika
+withdrawa                  u recovery                   ; žádný
+l/upset                    funkci.                      fatigue
+                                                        coefficient.
+EXP-05       Nízká         Stojí na        Velmi        Vyřadit.
+Forced 25                  chybném         vysoké.
+events vs                  „24th cliff“
+14–16                      narativu a
+                           umělé
+                           intervenci.
+EXP-06       Vysoká        „Zero           Střední.     Zachovat
+Category     diagnostick   unfilled                     cut-off
+cutoff       y             draws“                       distribution
+<PARSED TEXT FOR PAGE: 16 / 26>
+                                       Riziko
+Experiment Vědecká      Data /         umělé
+Gemini     hodnota      target         rovnováhy   Verdikt
+monotonic               není                       ; odstranit
+ity                     vědecky                    absolutní
+                        odvozený                   monotonic/
+                        target.                    zero-empty
+                                                   requireme
+                                                   nt.
+EXP-07        Velmi     Procedurál     Nízké.      Priorita
+Withdraw      vysoká    ně                         pre-alpha,
+al/reserve/             validovatel                ale verzi
+WC                      ná proti                   pravidel
+cascade                 pravidlům.                 explicitně
+                                                   parametriz
+                                                   ovat.
+EXP-08        Střední   Matem.      Střední.       Zachovat
+Newcomer                incentivní                 jako
+ramp-up                 mechanism                  emergent
+                        us existuje                diagnostic,
+                        v některých                ne
+                        ranking                    povinnost
+                        regimes;                   AI.
+                        behaviorál
+                        ní target
+                        ne.
+EXP-09        Nízká     Archetypy      Velmi       Vyřadit.
+Sniper vs               a              vysoké.
+Grinder                 požadovan
+                        ý vítěz jsou
+                        vytvořené.
+EXP-10        Vysoká    Dá se          Nízké.      Zachovat,
+Geographi               testovat na                ale
+c                       skutečných                 nekalibrov
+clustering              kalendáříc                 at na
+                        h/entries.                 předem
+                                                   zvolenou
+                                                   velikost
+<PARSED TEXT FOR PAGE: 17 / 26>
+                                          Riziko
+Experiment Vědecká          Data /        umělé
+Gemini     hodnota          target        rovnováhy    Verdikt
+                                                       efektu.
+EXP-11         Střední      Silně         Střední.     Rozdělit na
+Breakthro                   endogenní:                 ranking-
+ugh →                       ranking                    opportunit
+fatigue +                   rise a                     y test a
+higher                      selection                  samostatno
+category                    zároveň.                   u fatigue
+                                                       hypotézu.
+EXP-12         Vysoká       Gemini        Vysoké,      Přepsat na
+Medical vs     procedural   nesprávně     pokud se     rule-regime
+Penalty        ně, nízká    modeluje      chování      test, ne
+Zero           behaviorál   zero typy.    „vynutí“.    psychology
+               ně                                      test.
+EXP-13         Nízká pro    Závisí na    Vysoké.       Budoucí
+Race-to-       současný     konkrétní                  verze,
+Finals late-   FAX          sezónní                    pouze
+season                      kvalifikační               pokud FAX
+participati                 mechanice.                 takový
+on                                                     systém
+                                                       rozhodne.
+EXP-14         Nízká v      Číslo         Velmi        Vyřadit
+Financial      navržené     extrapolov    vysoké.      numerický
+break-         podobě       áno z                      target;
+even rank                   tenisu;                    případně
+100–160                     squashový                  test
+                            target                     sensitivity
+                            chybí.                     to travel
+                                                       cost.
+EXP-15 No-     Velmi        Nepotřebuj    Minimální.   Jedna z
+lookahead      vysoká       e                          nejvyšších
+counterfac                  realistický                priorit.
+tual                        behaviorál
+                            ní target k
+                            ověření
+                            invariantu.
+<PARSED TEXT FOR PAGE: 18 / 26>
+                                         Riziko
+Experiment Vědecká         Data /        umělé
+Gemini     hodnota         target        rovnováhy    Verdikt
+EXP-16 Bit-   Velmi        Přímý         Žádné.       Nejvyšší
+level         vysoká       invariant.                 priorita;
+determinis    technicky                               nejde o
+tic                                                   realism
+reproduci                                             validation,
+bility                                                ale o
+                                                      integrity
+                                                      test.
+
+Největší chyba experimentální sekce je zaměnění validation targetu za design
+target. Pokud například model dostane úkol „Top 10 musí hrát 11–15 turnajů“ a
+následně se weights upravují, dokud tento výsledek nevznikne, experiment
+nepotvrdil realismus. Pouze vynutil předem zvolenou distribuci.
+
+Opravená sada nejvýše deseti experimentů
+Doporučuji osm experimentů, v tomto pořadí:
+
+   1. Information-set / no-lookahead audit. Změna stavu, která nastane až po
+      decision deadline, nesmí změnit již učiněná rozhodnutí. Testovat rankings,
+      withdrawals, future results, draw a pozdější applications. To ověřuje
+      základní kauzální integritu modelu a přímo odpovídá Masteru. [37]
+
+   2. Same-input deterministic replay. Stejný branch/state, seed, calendar,
+      ranking snapshot a decision-slot inputs musí vytvořit identický uložený
+      výsledek. Současně změna technického iteration order nesmí měnit
+      výsledek, pokud Master ordering nepovažuje za sportovní informaci.
+
+   3. Entry-state provenance audit. Pro každý event/player ověřit přechody
+      never applied → applied → confirmed/reserve/wildcard/withdrawn a jejich
+      timestamp/source. Žádný stav nesmí být rekonstruován zpětně z
+      budoucích informací.
+
+   4. Rule-regime regression suite. Samostatné fixtures pro historické
+      rankingové režimy 2022, 2023, 2024/25 a budoucí FAX pravidlo. Cílem není
+      kopírovat PSA, ale zabránit tomu, aby jedna historická formule
+      kontaminovala jinou. [3]
+<PARSED TEXT FOR PAGE: 19 / 26>
+   5. Choice-set sanity test. Při dvou kolidujících turnajích a alternativě rest
+      musí AI volit z celého setu současně a nikdy vytvořit procedurálně
+      nemožnou kombinaci. Změna atributu jedné alternativy má být lokálně
+      vysvětlitelná.
+
+   6. Entry cutoff distribution diagnostic. Bez targetu typu „musí být
+      monotónní“ sledovat ranking distribution direct entries, reserves,
+      wildcards, unfilled spots a rejections podle kategorií. Outliery se nejprve
+      vysvětlí, teprve pak kalibrují.
+
+   7. Geographic substitution diagnostic. Přidat blízký versus vzdálený
+      alternativní turnaj a měřit, zda model reaguje smysluplně. Tento test je
+      zároveň dobrým indikátorem, zda jednoduchý score model trpí herdingem
+      nebo zda MNL případně trpí nevhodnou substitucí.
+
+   8. Sensitivity / ablation audit současné Entry AI. Vypnout po jednom travel,
+      fatigue, ranking opportunity, region/home a stochastic variation a zjistit,
+      které proměnné skutečně mění výsledky. Pokud faktor téměř nic nedělá,
+      není důvod jej komplikovat; pokud jeden faktor dominuje vše, je to
+      varovný signál.
+
+Teprve po těchto testech bych přidal skutečnou historickou kalibraci proti PSA
+entry datům. Bez kvalitních historical entry lists včetně lidí, kteří se nepřihlásili,
+ale mohli, nelze korektně odhadnout choice model. Pozorovat jen účastníky
+finálního draw znamená selection bias: nevidíme zamítnuté, odhlášené ani
+never-applied alternativy.
+
+Doporučení pro pre-alphu, hlavního koordinátora a
+bibliografie
+Pro pre-alphu doporučuji zmrazit rozsah nových behaviorálních mechanik.
+Gemini research neposkytuje dostatečný důkaz pro implementaci MDP, Mixed
+Logitu, ACWR injury modelu, explicitní overconfidence, rank-150 financial cutoff,
+tří peaků ročně, 80% performance floor ani strategických archetypů. Jejich
+zavedení by nyní zvýšilo počet neověřených stupňů volnosti a ztížilo pozdější
+zjištění, proč AI něco udělala.
+
+Koordinátor ChatGPT Work by měl především chránit rozdíl mezi research
+finding, product decision, implementation evidence a future hypothesis.
+AGENTS.md výslovně stanoví precedence Masteru a požaduje nerozmazávat
+<PARSED TEXT FOR PAGE: 20 / 26>
+statusy. [46] Geminiho text proto nemá být převáděn přímo do backlogu
+mechanik; má se rozdělit na tvrzení, invariants a hypotézy.
+
+Nejvyšší prioritu bych dal tomu, aby každý Entry AI decision šel zpětně vysvětlit
+pomocí: decision slotu, exact ranking snapshot ID, známých eventů, public entry-
+list snapshotu, player state, relevantních deadlines, zvolených alternatives,
+výsledné utility/score decomposition a random key, pokud existuje. Tím vznikne
+datová základna, na níž se později dá objektivně rozhodnout, zda jednoduchý
+model selhává.
+
+Druhým úkolem koordinátora má být oddělení PSA historical research od FAX
+product canon. PSA pravidla jsou velmi užitečná jako reálný benchmark a zdroj
+procedurálních mechanismů; historická změna 2022→2023→2024/25 ale zároveň
+ukazuje, proč je nebezpečné vydávat konkrétní reálný systém za věčný zákon
+sportu. [3] FAX může legitimně zvolit jiný ranking či deadline model — musí to
+však být explicitní produktové rozhodnutí, nikoli nepozorované dědictví Gemini
+research.
+
+Třetím úkolem je získání lepších dat dříve než složitější matematiky. Nejvyšší
+hodnotu by měla datová sada s historickými kalendáři, entry closing timestamps,
+ranking snapshots, původními applications, confirmation state, reserves,
+withdrawals, final draws a pokud možno prize money a lokaci. Bez ní lze model
+testovat na procedurální konzistenci, nikoli vědecky kalibrovat preference.
+
+Celkově tedy Gemini research hodnotím jako dobrý generátor hypotéz a
+užitečný architektonický podnět, ale ne jako dostatečně spolehlivý vědecký
+základ pro numerické parametry nebo rozsáhlé nové mechaniky. Jeho
+nejcennější výsledky — bounded information, simultaneous alternative
+evaluation, no-lookahead, procedural statefulness a reproducibility — jsou navíc
+z velké části již slučitelné s Masterem. Největší přínos další práce nebude
+„realističtější AI“, ale měřitelnější, auditovatelnější a historicky správně
+kontextualizovaná současná AI.
+
+Bibliografie a primární odkazy
+Squash Engine / auditované dokumenty
+
+      Squash Tour Beta, Draft PR #1705, Tournament participation Gemini
+       research — provisional archive and critical review: GitHub PR #1705. Archiv
+
+       výslovně uvádí, že originální DOCX není v repozitáři a textová extrakce
+       může ztrácet rovnice, tabulky a grafiku. [47]
+<PARSED TEXT FOR PAGE: 21 / 26>
+     Gemini, Deep Research — Tournament Participation, Scheduling and AI
+      Player Decision-Making, textová extrakce: raw text. [27]
+     Squash Engine, SQUASH_ENGINE_MASTER_VISION.md: Master. [48]
+     Squash Engine, AGENTS.md: AGENTS. [46]
+     Squash Engine, COUNTRY_ATTRIBUTES_V1.md: Country Attributes. [42]
+     Squash Engine, CURRENT_STATE.md: Current State. [49]
+
+PSA pravidla a procedury
+
+     Professional Squash Association, PSA Squash Tour Rule Book August
+      2024/25: official PDF. Ranking, rest, zero scores, draw sizes, withdrawals a
+      wildcards jsou v auditu citovány z tohoto historického dokumentu. [50]
+     Professional Squash Association, PSA Tour Rule Book April 2023: official
+      PDF. [23]
+     Professional Squash Association, PSA Rule Book 2022: official PDF. [22]
+     Professional Squash Association, PSA Challenger and World Events
+      Registration Form, živý registrační formulář dostupný v říjnu/listopadu
+      2026: registration form. Obsahuje aktuálně zveřejněné omezení, že dva
+      rounds/day mohou pouze Challenger 3, zatímco Challenger 6+ mají jeden
+      round/day. [51]
+
+Squashová fyziologie a performance science
+
+     Turner, A. et al., Physiological and Nutritional Considerations for Elite
+      Squash: A Systematic Review, 2024. Systematický přehled 35 studií a
+      omezená kvalita části evidence. [28]
+     Quantifying Training Demands of a 2-Week In-Season Squash Microcycle,
+      profesionální squashová populace, 2021: PubMed. [29]
+     Physiological and Performance Correlates of Squash Physical Performance,
+      studie squashových hráčů včetně světově rankovaných závodníků. [52]
+     Analysis of Tactical, Decisional and Executional Behaviour according to the
+      Level of Expertise in Squash: PubMed. Studie se týká rozhodování během
+      hry, nikoli turnajové entry. [53]
+     Using a situation awareness approach to determine decision-making
+      behaviour in squash: PubMed. [54]
+
+Badmintonový původ CK tvrzení
+
+     Studie elitních juniorských badmintonistů, n=20, která reportuje CK +430,1
+      % po soutěžním dni a +160,4 % po 24 h: PubMed PMID 32508387. Tato
+      práce není squashová ani profesionální dospělá populace. [18]
+<PARSED TEXT FOR PAGE: 22 / 26>
+Periodizace
+
+     Platonov review, Sports Training Periodization. General Theory and its
+      Practical Application: PMC. Popisuje mono-, dvou-, tří- a vícicyklické
+      strategie podle sportu a kalendáře; neposkytuje univerzální squashové
+      „3×100 % + 80 %“. [55]
+     Stone et al., Periodization and Block Periodization in Sports, Journal of
+      Strength and Conditioning Research, 2021: PubMed. [56]
+
+Ekonomika profesionálního sportu
+
+     Schoettl, K., Keiner, M., Metz, V., Kainz, F., The Financial Break Even in
+      Professional Tennis – From Which Ranking Can You Afford Your Life from
+      Professional Tennis, 2025: SSRN. Přibližný ATP/WTA break-even kolem
+      ranku 150 je tenisový, nikoli squashový výsledek. [57]
+     Towards a sustainable financial model for professional tennis players,
+      ekonomická analýza nákladů a příjmů profesionálních tenistů, která
+      nachází obtížnost pokrytí nákladů pod přibližně 250. místem. [58]
+
+Behaviorální ekonomie
+
+     Niederle, M. & Vesterlund, L., Do Women Shy Away From Competition? Do
+      Men Compete Too Much?, Quarterly Journal of Economics, 2007: Stanford-
+      hosted paper. Hodnota 75 % se týká mužských účastníků laboratorního
+      experimentu, nikoli profesionálních squashistů. [20]
+     Niederle & Vesterlund, související práce o ability beliefs a tournament
+      entry: Stanford PDF. [59]
+     Novější práce Gender Differences in Tournament Choices: Risk Preferences,
+      Overconfidence, or Competitiveness? ukazuje, že vztah mezi risk attitudes,
+      beliefs a competitiveness je složitější než jednoduchý „overconfidence
+      coefficient“. [60]
+
+Discrete choice a Random Utility
+
+     McFaddenova conditional-logit tradice a axiomatické vyjádření vazby
+      logitu na IIA: An axiomatic foundation of conditional logit, Economic
+      Theory. [61]
+     Hausman & McFadden / navazující literatura, specification tests pro IIA v
+      multinomial logitu. [62]
+     McFadden & Train, mixed-logit literatura; mixed logit umožňuje podstatně
+      flexibilnější substituční strukturu za cenu složitějšího modelu. [63]
+<PARSED TEXT FOR PAGE: 23 / 26>
+      Train, Discrete Choice Methods with Simulation, kapitola Logit; vazba iid
+       extreme-value errors a logit probabilities. [64]
+
+
+[1] [2] [10] [21] [27] [32] [45] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/docs/tournament-
+participation-gemini-research-provisional-20261101/research/studies/
+CANDIDATE-tournament-participation-20261101/
+GEMINI_DEEP_RESEARCH_TEXT_EXTRACT.txt
+
+[3] [22] d2h2jicm4ii9y.cloudfront.net
+
+https://d2h2jicm4ii9y.cloudfront.net/wp-content/uploads/2022/04/psa-rule-
+book.pdf
+
+[4] [51] PSA Challenger and World Events Registration Form
+
+https://form.jotform.com/250123377819055
+
+[5] [18] The influence of a badminton competition with two matches in a day on
+muscle damage and physical performance in elite junior badminton players.
+
+https://pubmed.ncbi.nlm.nih.gov/32508387/?utm_source=chatgpt.com
+
+[6] [19] [55] Review of Platonov’s “Sports Training Periodization. General Theory
+and its Practical Application” – Kiev: Olympic Literature, 2013 (part two)
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC4519218/?utm_source=chatgpt.com
+
+[7] [57] The Financial Break Even in Professional Tennis - From Which Ranking
+Can You Afford Your Life from Professional Tennis by Katharina Schoettl, Prof.
+Dr. Michael Keiner, Valentina Metz, Prof. Dr. Florian Kainz :: SSRN
+
+https://papers.ssrn.com/sol3/papers.cfm?
+abstract_id=5206641&utm_source=chatgpt.com
+
+[8] [59] Microsoft Word - Ability.finalaccepted.doc
+
+https://web.stanford.edu/~niederle/Niederle.Vesterlund.Ability.pdf?
+utm_source=chatgpt.com
+
+[9] [33] [61] An axiomatic foundation of conditional logit | Economic Theory |
+Springer Nature Link
+<PARSED TEXT FOR PAGE: 24 / 26>
+https://link.springer.com/article/10.1007/s00199-020-01281-1?
+utm_source=chatgpt.com
+
+[11] [12] [13] [14] [15] [16] [24] [25] [26] [50] d2h2jicm4ii9y.cloudfront.net
+
+https://d2h2jicm4ii9y.cloudfront.net/wp-content/uploads/2024/08/PSA-Squash-
+Tour-Rule-Book-August-24.25.pdf
+
+[17] PSA Squash Tour Rule Book July 2024-2-1 1 | PDF | Tournament |
+Information Privacy
+
+https://www.scribd.com/document/1007025838/PSA-Squash-Tour-Rule-Book-
+July-2024-2-1-1?utm_source=chatgpt.com
+
+[20] GENDER DIFFERENCES IN COMPETITIVENESS 1087
+
+https://web.stanford.edu/~niederle/Niederle.Vesterlund.QJE.2007.pdf?
+utm_source=chatgpt.com
+
+[23] Microsoft Word - PSA Tour Rule Book 2023 (Clean)
+
+https://d2h2jicm4ii9y.cloudfront.net/wp-content/uploads/2023/05/PSA-Tour-Rule-
+Book_April-2023.pdf
+
+[28] Physiological and Nutritional Considerations for Elite Squash: A Systematic
+Review | Journal of Science in Sport and Exercise | Springer Nature Link
+
+https://link.springer.com/article/10.1007/s42978-024-00313-9?
+utm_source=chatgpt.com
+
+[29] Quantifying Training Demands of a 2-Week In-Season Squash Microcycle.
+
+https://pubmed.ncbi.nlm.nih.gov/33547264/?utm_source=chatgpt.com
+
+[30] [53] Analysis of Tactical, Decisional and Executional Behaviour according to
+the Level of Expertise in Squash.
+
+https://pubmed.ncbi.nlm.nih.gov/29599875/?utm_source=chatgpt.com
+
+[31] [37] [38] [39] [40] [41] [48] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[34] [62] Regression-based specification tests for the multinomial logit model -
+ScienceDirect
+<PARSED TEXT FOR PAGE: 25 / 26>
+https://www.sciencedirect.com/science/article/pii/0304-4076%2887%2990067-4?
+utm_source=chatgpt.com
+
+[35] [63] Mixed logit with a flexible mixing distribution - ScienceDirect
+
+https://www.sciencedirect.com/science/article/pii/S1755534516300136?
+utm_source=chatgpt.com
+
+[36] Flexible discrete choice modeling using a multinomial probit model, part 1 -
+The Stata Blog
+
+https://blog.stata.com/2016/06/28/flexible-discrete-choice-modeling-using-a-
+multinomial-probit-model-part-1/?utm_source=chatgpt.com
+
+[42] squash-tour-beta/docs/COUNTRY_ATTRIBUTES_V1.md at buuk ·
+Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/master/docs/
+COUNTRY_ATTRIBUTES_V1.md
+
+[43] [44] [49] GitHub
+
+https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/buuk/
+CURRENT_STATE.md
+
+[46] squash-tour-beta/AGENTS.md at buuk · Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/master/AGENTS.md
+
+[47] docs(research): archive and critically audit Gemini tournament participation
+study (provisional R004) by Jasmetk0 · Pull Request #1705 · Jasmetk0/squash-tour-
+beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/pull/1705
+
+[52] Physiological and Performance Correlates of Squash Physical Performance -
+PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC8851109/?utm_source=chatgpt.com
+
+[54] Using a situation awareness approach to determine decision-making
+behaviour in squash.
+
+https://pubmed.ncbi.nlm.nih.gov/28990852/?utm_source=chatgpt.com
+
+[56] Periodization and Block Periodization in Sports: Emphasis on Strength-Power
+Training-A Provocative and Challenging Narrative - PubMed
+<PARSED TEXT FOR PAGE: 26 / 26>
+https://pubmed.ncbi.nlm.nih.gov/34132223/?utm_source=chatgpt.com
+
+[58] Towards a sustainable financial model for professional tennis players
+
+https://ideas.repec.org/p/ant/wpaper/2017006.html?utm_source=chatgpt.com
+
+[60] Gender Differences in Tournament Choices: Risk Preferences,
+Overconfidence, or Competitiveness? | Journal of the European Economic
+Association | Oxford Academic
+
+https://doi.org/10.1093/jeea/jvac031?utm_source=chatgpt.com
+
+[64] Logit (Chapter 3) - Discrete Choice Methods with Simulation
+
+https://www.cambridge.org/core/books/abs/discrete-choice-methods-with-
+simulation/logit/957AE41EA000543CB07031602059C6AD?
+utm_source=chatgpt.com
+
+----- END FULL AVAILABLE TEXT EXTRACTION -----

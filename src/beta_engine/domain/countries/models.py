@@ -12,6 +12,9 @@ from beta_engine.domain.countries.rating_history import (
     CountryRatingHistory, GAME_ATTRIBUTE_NAMES, LEGACY_RATING_SCALE, RATING_SCALE_V2, RATING_RESOLUTION_LINEAR_V3, validate_rating_v2,
 )
 
+AUTHORED_POPULATION_MIN_YEAR = 1955
+AUTHORED_POPULATION_MAX_YEAR = 2050
+
 def _validate_country_rating(value: Any) -> float:
     """Accept only finite JSON-style numbers on the inclusive V1 scale."""
 
@@ -219,7 +222,7 @@ class Country(BaseModel):
         normalized: dict[int, int | None] = {}
         for year, population in value.items():
             year_int = int(year)
-            if not 1955 <= year_int <= 2050:
+            if not AUTHORED_POPULATION_MIN_YEAR <= year_int <= AUTHORED_POPULATION_MAX_YEAR:
                 raise ValueError("population_by_year years must be between 1955 and 2050")
             if population is not None and population <= 0:
                 raise ValueError("population_by_year values must be positive integers or null")

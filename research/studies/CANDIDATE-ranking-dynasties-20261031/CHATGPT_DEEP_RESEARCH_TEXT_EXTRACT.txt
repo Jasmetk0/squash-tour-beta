@@ -1,0 +1,907 @@
+# Ranking dynamics, dynasties and competitive balance — user-supplied Deep Research (text-only archive)
+
+Source: original 22-page DOCX uploaded by the owner on 31 October 2026: SQUASH ENGINE — nezávislý hluboký výzkum rankingové dynamiky, dynastií a konkurenční rovnováhy.docx
+
+Status: RESEARCHED / UNVERIFIED. Provisional research candidate (permanent ID not yet assigned by Work/owner).
+
+Fidelity warning: searchable text extraction ONLY, with page markers. Mathematical equation objects, tables, page breaks and hyperlinks may be degraded or lost in the extraction; the original DOCX is NOT committed. Consult original DOCX before quoting or implementing mathematics.
+
+Authority warning: AI-authored research claims are **not product requirements**, not a scientific verification, not a Master change or an implementation instruction. Historical empirical aggregates described below originate mainly from Squash Stats analyses of SquashInfo data and have not been independently reconstructed from full raw ranking archives.
+
+----- BEGIN TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 22>
+SQUASH ENGINE — nezávislý hluboký výzkum
+rankingové dynamiky, dynastií a konkurenční
+rovnováhy
+Executive Summary
+Nejdůležitější závěr tohoto výzkumu je, že realistická dlouhodobá historie
+squashe nemá vypadat vyrovnaně. Historický mužský squash od zavedení
+počítačového žebříčku v roce 1975 obsahuje extrémně dlouhé vlády jednotlivců,
+celé dekády národní koncentrace, generace hráčů vstupujících do elity téměř
+současně, ale také období bez jasného hegemona. Současně se ukazuje, že
+dominance světové jedničky, dominance Top 10 a národní šířka nejsou totéž.
+Austrálie například ovládala mužskou Top 10 v letech 1985–1994, přesto světová
+jednička zůstávala převážně pákistánská; Egypt má naopak v moderní éře
+zároveň mimořádnou šířku i několik světových jedniček. [1]
+
+Pro Squash Engine z toho plyne zásadní validační princip: nevalidovat
+konkrétní historický výsledek, ale distribuci možných historií. Není chyba,
+pokud jeden seed vytvoří osmiletého šampiona a jiný dvacet let bez podobné
+osobnosti. Chyba by byla, kdyby dlouhé hegemonie téměř nikdy nevznikaly,
+kdyby každý seed produkoval stejný počet jedniček, kdyby všechny země
+konvergovaly ke stejné síle nebo kdyby dominance jedné země byla vždy
+způsobena jediným hráčem.
+
+Empiricky je extrémní individuální persistence zcela reálná. Od počátku
+mužských rankingů bylo do 26. října 2026 pouze 23 různých mužských
+světových jedniček. Jansher Khan strávil na vrcholu 422 týdnů a Jahangir Khan
+409 týdnů; starší měsíční rekonstrukce zároveň ukazují Jahangirův nepřerušený
+72měsíční úsek a Geoff Huntových 59 měsíců. [2]
+
+Top 10 je mnohem prostupnější než No. 1, ale stále velmi perzistentní. Od ledna
+2000 do října 2026 se do mužské Top 10 dostalo 57 hráčů; 18 z nich, tedy 32 %, se
+později stalo světovou jedničkou. Medián kumulativního času v Top 10 byl 2,8
+roku, 21 % hráčů zde strávilo méně než rok a Mohamed ElShorbagy měl
+nepřerušený pobyt dlouhý 15,4 roku. John White do Top 10 vstoupil jedenáctkrát
+odděleně. [3]
+<PARSED TEXT FOR PAGE: 2 / 22>
+Dlouhá dominance navíc statisticky „poškozuje“ současníky. Tarek Momen strávil
+10,7 roku v Top 10 a získal titul mistra světa, ale nikdy nebyl No. 1; během částí
+kariéry jej blokovali především Ali Farag a Mohamed ElShorbagy. Podobně
+moderní data ukazují mnoho hráčů, kteří jsou dlouhodobě světovou špičkou, aniž
+by jejich oficiální maximum odpovídalo kvalitě celé kariéry. Proto musí Squash
+Engine oddělovat rankingový úspěch, skutečnou výkonnost a titulovou
+úspěšnost. [4]
+
+Národní dynastie mají obvykle podobu kohort, nikoli permanentního národního
+bonusu. Australská, anglická a egyptská mužská období vznikala, když několik
+mladých hráčů proniklo do Top 10 v krátkém časovém okně; končila, když
+kohorta zestárla nebo chyběla další vlna a současně nastoupila generace
+konkurenta. Squash Stats přímo upozorňuje, že data ukazují, jak Egypt dominuje
+— hloubkou, mládím a kontinuální produkcí špičkových juniorů — nikoli proč.
+Historická korelace generací a dominance tedy není důkazem jednoho
+kauzálního mechanismu. [5]
+
+Pro 50–100sezónní validaci proto doporučuji sledovat současně mobilitu,
+persistenci, survival křivky kariér, délky vlád, koncentraci titulů, HHI a
+entropii zemí, waiting time na extrémního šampiona, rozptyl mezi RNG
+seedy a strukturální drift. Jediné globální „správné procento“ světových
+jedniček nebo dominantních zemí by bylo metodologicky chybné: reálná historie
+sama vykazuje velmi silnou nestacionaritu.
+
+Nejsilnějším výsledkem pro současnou pre-alphu není nová herní mechanika, ale
+observační validační vrstva. Již dnes lze měřit turnover, mobilitu, návraty do
+Top N, délky dominance, koncentraci zemí, vztah ranking–výsledky a rozdíly
+mezi seedy, aniž by se jediná z těchto metrik používala jako umělý balancing
+constraint. Repository výslovně požaduje historicky verzované rankingové
+politiky, determinismus a oddělení simulace od analytického vysvětlení;
+současný stav už obsahuje historicky efektivní Best-N ranking v omezené Tour
+cestě, ale celý projekt stále není certifikovanou pre-alpha verzí. [6]
+
+Rozsah, data a omezení přístupu
+Výzkum začal kontrolou veřejného repozitáře Squash Engine. Veřejný README
+popisuje projekt jako deterministický, data-driven simulátor alternativního
+mužského profesionálního FAX světa a výslovně stanovuje, že rankingové
+politiky a snapshoty mají být historicky verzované, nikoli globálně hard-coded.
+[7] AGENTS.md potvrzuje autoritu Masteru a říká, že Official Run začíná v sezoně
+2000/01 s Best 15; následující sezony přebírají předchozí efektivní Best N, ale
+<PARSED TEXT FOR PAGE: 3 / 22>
+zůstávají nezávisle konfigurovatelné. Stejný dokument zakazuje redukovat
+národní potenciál na vrozené „národní DNA“ a odděluje authored country
+attributes od odvozené aktuální síly. [8]
+
+CURRENT_STATE.md je k 30. říjnu 2026 označen jako implementační checkpoint
+Masteru v86, nikoli jako oficiálně vydaná pre-alpha. Dokument uvádí již
+sloučenou calendar-aware ranking matematiku/staging a v pozdějších integracích
+historicky efektivní Best-N ranking v konfigurované Tour cestě; zároveň
+opakovaně rozlišuje dílčí green workflow od úplné pre-alpha/50sezónní
+certifikace. [9]
+
+Omezení přístupu k Masteru: veřejná GitHub stránka potvrzuje soubor
+SQUASH_ENGINE_MASTER_VISION.md, jeho větev buuk a velikost přibližně 7 219
+řádků, ale webová vrstva použitá při tomto výzkumu neposkytla jeho velké tělo
+jako normálně indexovatelný text; relevantní pravidla jsem proto ověřoval
+triangulací přes AGENTS.md, README.md a auditovaný CURRENT_STATE.md. [10] To
+je omezení této studie: netvrdím, že jsem mohl provést úplný line-by-line
+audit celého Masteru nebo všech zdrojových modulů.
+
+Ještě důležitější omezení se týká historických squashových dat. SquashInfo
+deklaruje historické PSA rankingy od roku 1975, ale plný historický přístup je
+součástí prémiových účtů; veřejné profily hráčů typicky ukazují maximum
+žebříčku, zatímco celé historické seznamy jsou zamčené. [11] Proto jsem
+neprovedl vlastní kompletní rekonstrukci každého mužského Top
+100/50/20/10/5 seznamu 1975–2026. Kde níže uvádím historické agregáty z
+rozsáhlejších rankingových seznamů, označuji je jako sekundární výpočty
+Squash Stats založené na SquashInfo. Vlastní nezávislé přepočty jsou omezeny na
+veřejně dostupné aktuální tabulky a jednoduché odvozené statistiky.
+
+Existuje navíc zásadní problém s frekvencí dat. Squash Stats v analýze vzestupu k
+No. 1 uvádí, že rankingy byly měsíční do roku 2022 a poté týdenní; současné
+historické pravidlo PSA potvrzuje týdenní publikaci každé pondělí. Dobový
+článek z 23. srpna 2022 dokumentuje změnu z měsíčních rankingů na týdenní od
+29. srpna 2022. [12] Jiný aktualizovaný článek Squash Stats však tvrdí „one a
+week since 2017“. [3] Tyto dvě formulace nejsou kompatibilní jako popis oficiální
+publikace. Pro longitudinální studii proto považuji za bezpečný základ: oficiální
+cadence byla měsíční do srpna 2022 a týdenní poté, přičemž jakákoli hustší
+data před změnou musejí být explicitně označena jako
+rekonstruované/interpolované nebo jinak získané.
+<PARSED TEXT FOR PAGE: 4 / 22>
+Ještě horší je rané období. Analýza národních dynastií používá pouze rankingové
+listy, na nichž je známa kompletní Top 10; před přibližně rokem 2000 jsou takové
+seznamy dostupné jen několikrát ročně. Autoři proto sami varují, že raná období
+stojí na menším počtu pozorování. [13] To znamená, že rozdíl mezi „52 týdny v
+Top 10“, „12 měsíčními snapshoty v Top 10“ a „dvěma dochovanými seznamy v
+daném roce“ nesmí být v validačním benchmarku zkolabován do jedné stejné
+jednotky.
+
+Další selection bias je strukturální: výzkum pouze hráčů, kteří dosáhli No. 1,
+neříká pravděpodobnost, že běžný profesionál No. 1 dosáhne. Studie
+nejrychlejšího vzestupu například obsahuje pouze 14 světových jedniček, jejichž
+úplná cesta je viditelná v dostatečně hlubokých listech; její medián 92 měsíců u
+mužů je tedy medián mezi úspěšnými No. 1, nikoli čekací doba náhodně
+vybraného profesionála na No. 1. [14]
+
+Ověřené historické statistiky a dynamika žebříčku
+Následující tabulka odděluje to, co lze z veřejných zdrojů ověřit, od toho, co by
+vyžadovalo licencovaný raw dataset.
+
+Jev                           Mužský squash Status důkazu
+Počet světových No.                        23 Sekundární úplná
+1 od počátku                                  historie založená na
+rankingů do 26. 10.                           SquashInfo. [15]
+2026
+Nejdéle kumulativně        Jansher Khan 422 Aktualizovaný
+No. 1                        týdnů, Jahangir sekundární výpočet.
+                             Khan 409 týdnů [15]
+Nejdelší historicky      Jahangir 72 měsíců; Sekundární
+doložené mužské                Geoff Hunt 59 historická
+nepřerušené vlády v          měsíců; Jansher rekonstrukce. [16]
+měsíční éře              přibližně 53 měsíců
+Unikátní muži v Top                        57 Sekundární, každá
+10 od ledna 2000                              dostupná
+                                              rankingová
+                                              publikace. [3]
+Z těchto Top-10                18 / 57 = 32 % Sekundární. Nejde o
+hráčů později No. 1                           pravděpodobnost
+                                              pro všechny
+<PARSED TEXT FOR PAGE: 5 / 22>
+Jev                          Mužský squash Status důkazu
+                                               profesionály. [3]
+Medián                              2,8 roku Sekundární survival-
+kumulativního času                           style summary;
+v Top 10                                     aktivní hráči
+                                             zahrnuti. [3]
+Podíl hráčů s <1                        21 % Sekundární. [3]
+rokem v Top 10
+Nejdelší                          Mohamed Sekundární. [3]
+nepřerušená Top-10         ElShorbagy 15,4
+série od 2000          roku, prosinec 2010–
+                                duben 2026
+Nejvíce oddělených             John White 11 Sekundární. [3]
+vstupů do Top 10
+Unikátní země s                            16 Sekundární. [3]
+mužem v Top 10 od
+2000
+Nejvíce různých          Egypt 19, Anglie 11, Sekundární. [3]
+mužských Top-10                  Austrálie 6
+hráčů od 2000
+Maximum hráčů           Egypt 7, na 21 listech Sekundární. [3]
+jedné země v Top 10        mezi 2016 a 2022
+současně od 2000
+
+Úplné počty unikátních Top 100, Top 50, Top 20 a Top 5 hráčů 1975–2026 nelze
+z veřejně dostupných raw dat v tomto výzkumu spolehlivě přepočítat. Bylo
+by metodologicky špatné je odhadovat z profilových maxim nebo z aktuálních
+seznamů. SquashInfo deklaruje historické rankingy, ale jejich plná hloubka je
+placená; Squash Stats navíc výslovně upozorňuje, že hlubší historické listy nejsou
+ve starších obdobích kompletní. [17]
+
+Pro Top 10 však existuje dostatečně silná moderní série. Distribuce pobytu je
+silně pravostranná: značná část hráčů pouze krátce navštíví elitu, zatímco malý
+počet zůstává deset a více let. Třináct ze šestnácti hráčů s alespoň deseti lety v
+Top 10 se stalo No. 1. [3] To je přesně struktura, kterou by simulace měla umět
+emergentně generovat: mnoho normálních elitních kariér, málo extrémních
+kariér, velmi dlouhý ocas.
+<PARSED TEXT FOR PAGE: 6 / 22>
+Návraty nejsou rarita a nemají být interpretovány jako anomálie. John White měl
+jedenáct Top-10 stintů; Gregory Gaultier nasbíral svůj dlouhý Top-10 čas v šesti
+oddělených obdobích. [3] V simulační diagnostice je proto samotný ukazatel
+„počet nových hráčů Top 10 za sezonu“ nedostatečný. Musí se rozlišovat první
+vstup, re-entry a pokračující membership.
+
+Milníky cesty k No. 1 jsou velmi heterogenní. Z moderních No. 1 s viditelnou
+plnou cestou byl medián od zvolené hluboké rankingové hranice k No. 1
+přibližně 92 měsíců u mužů. Mostafa Asal přešel z oblasti No. 250 k No. 1 za 57
+měsíců; z Top 50 do Top 10 mu přitom trvalo přibližně dva a půl roku, zatímco z
+Top 10 do Top 5 šest měsíců a následně dosáhl No. 1 v lednu 2023. [18] To
+ukazuje, že cesta kariérou není dobře popsána jedním lineárním „talent → rank“
+gradientem.
+
+Věk milníků je stejně různorodý. Jahangir Khan byl při prvním No. 1 přibližně
+18,1 roku, Jansher 18,6; Mostafa Asal 21,7. Moderní mužský medián věku prvního
+No. 1 se od 2000s pohybuje přibližně mezi 26–27 lety, ale existují výrazné
+výjimky, například John White kolem 30,7 roku. [19] Data Top 10 od roku 2000
+zároveň ukazují nejmladšího moderního mužského člena Top 10 Mohamada
+Zakariu ve věku 18,3 roku. [3]
+
+Top-10 populace navíc nestárne konstantně. Medián věku mužské Top 10 byl
+podle rekonstrukce 27,0 v roce 2000, dosáhl 31,3 v roce 2024, poté klesl na 29,4 v
+roce 2026; prudký dřívější pokles kolem 2014–2017 souvisel s příchodem mladší
+egyptské generace. [3] Pro dlouhodobou simulaci je proto užitečná nejen
+průměrná věková křivka kariéry, ale také věková struktura celé elity.
+
+Oficiální ranking přitom měří kumulované turnajové výsledky, nikoli přímo
+latentní schopnost. Aktuální pravidla publikovaná PSA používají průměr bodů z
+určitého počtu „counting tournaments“, body zůstávají typicky 52 týdnů a počet
+započítávaných výsledků závisí na aktivitě; v pravidlech 2024/25 je při ≤15
+odehraných turnajích divisor 11. [20] Starší systémy používaly jiné minimální
+počty a před srpnem 2022 měsíční publikaci, což znamená, že historické změny
+žebříčku nelze časově porovnávat bez respektování konkrétní rankingové
+politiky. [21]
+
+Dominance jednotlivců, rivality, generační výměna a
+národní dynastie
+Historie světové jedničky ukazuje dvě qualitativně odlišné struktury. První je
+hegemonický režim: Geoff Hunt, Jahangir Khan, Jansher Khan nebo později
+<PARSED TEXT FOR PAGE: 7 / 22>
+dlouhé bloky Petera Nicola drží jedničku dlouhou dobu s minimálním počtem
+střídání. Druhý je kompetitivní elitní režim, ve kterém se No. 1 střídá mezi
+několika hráči; v mužské hře byl výrazný například po roce 2008, kdy se na
+špičce střídali Karim Darwish, Ramy Ashour, Nick Matthew, James Willstrop,
+Gregory Gaultier a další. [16]
+
+Tato dvě období nelze rozlišit pouze počtem světových jedniček za dekádu.
+Potřebujeme současně délku spellů, podíl času No. 1 vlastněný jedním hráčem,
+koncentraci titulů, head-to-head strukturu a hloubku ostatních pozic. Například
+historická dominance může mít podobu „jeden šampion + mnoho silných
+soupeřů“ nebo „jeden šampion + slabší homogenní pole“. Ranking samotný tyto
+světy nerozliší.
+
+Data rivalit potvrzují, že vysoce kvalitní elita může existovat i při výrazných
+head-to-head asymetriích. Gregory Gaultier a Nick Matthew se od roku 2000
+utkali 36krát s bilancí 19–17; Ali Farag a Mohamed ElShorbagy měli 15
+společných finále, 8–7 pro Faraga. Naproti tomu Farag vedl Diega Eliase v
+dostupné sérii výrazněji, přesto jejich rankingová vzdálenost a četnost pozdních
+kol dokazují dlouhodobou společnou přítomnost v elitě. [22] Pro simulaci proto
+není „těsná rivalita“ synonymem 50:50 head-to-head.
+
+Dominantní hráč může systematicky snížit historický status svých konkurentů.
+Tarek Momen měl 10,7 roku v Top 10, vyhrál World Championship 2019 a v
+dlouhodobém rankingovém ratingu Squash Stats překonal několik bývalých No.
+1, přesto nikdy No. 1 nebyl; proti Ali Faragovi měl v citované databázi 4–26 a
+proti Mohamedu ElShorbagymu 7–25. [4] Historický engine tedy nesmí vyvozovat
+latentní schopnost zpětně jen z peak ranku.
+
+Stejný princip platí pro tituly. Momen je v moderním období od roku 2000 jediný
+mužský mistr světa, který se během kariéry nestal světovou jedničkou; před
+rokem 2000 existovali další mistři světa s maximem No. 2. [4] Výsledková
+dominance, titulová dominance a rankingová dominance jsou proto tři různé
+měřitelné dimenze.
+
+Národní historie je ještě názornější. Sekundární rekonstrukce všech použitelných
+mužských Top-10 listů od roku 1975 přiděluje Egyptu 1 392 player-months v Top
+10, Austrálii 1 193, Anglii 1 139 a Pákistánu 878. Egypt, Austrálie i Anglie dostaly
+do Top 10 po 23 různých mužích, zatímco Pákistán dosáhl svého vysokého
+kumulativního zastoupení pouze s 12 hráči. [23] To velmi dobře ilustruje rozdíl
+mezi breadth a elite efficiency: stejnou národní dominanci lze vyrobit mnoha
+<PARSED TEXT FOR PAGE: 8 / 22>
+hráči středně dlouhé kvality nebo menším počtem mimořádně perzistentních
+osobností.
+
+Mužský pákistánský režim byl na úplných seznamech 1975–1980 charakterizován
+pěti až šesti Pákistánci v Top 10, přesto byl světovou jedničkou velkou část tohoto
+úseku Australan Geoff Hunt. Austrálie následně vedla Top 10 přibližně 1985–1994
+a v roce 1988 dosáhla 55 % dostupných Top-10 player-months, zatímco Jahangir a
+Jansher Khan dohromady vlastnili 83 % týdnů No. 1 v 80. letech a 79 % v 90.
+letech. [23] Národní Top-10 dominance tedy není totéž jako národnost No. 1.
+
+Anglie vyskočila z přibližně 5 % mužské Top 10 v roce 1992 na 45 % v roce 1995
+díky skupině hráčů vstupujících do elity v krátkém okně. Egypt přešel z nulového
+mužského zastoupení Top 10 v roce 2002 k přibližně 30 % v roce 2007; první
+generaci tvořili mimo jiné Karim Darwish, Amr Shabana a Ramy Ashour a druhá
+vlna kolem Mohameda ElShorbagyho příchod dále prodloužila. [23]
+
+Egypt pak držel alespoň polovinu mužské Top 10 každý rok 2016–2024 a vrcholil
+65 % player-months v roce 2021. V roce 2026 podíl klesl přibližně na 41 %, ale část
+tohoto poklesu je účetní změna národnosti Mohameda a Marwana
+ElShorbagyových z Egypta na Anglii v roce 2022; egyptský podíl Top 50 přitom
+zůstal přibližně deset let kolem 29 %. [24] To je důležitý argument pro ukládání
+národnosti v okamžiku výsledku, nikoli dnešní národnosti hráče.
+
+Aktuální veřejný ranking z 26. října 2026 má v mužské Top 10 čtyři Egypťany, dva
+Angličany a po jednom hráči z Nového Zélandu, Peru, Francie a Walesu. [25] Z
+tohoto jednoho snapshotu jsem nezávisle přepočítal HHI národního podílu:
+
+
+
+tedy efektivní počet zemí
+
+
+
+To není historický benchmark ani cílové číslo; je to pouze ukázka, proč je „šest
+zastoupených zemí“ informačně slabší než koncentrace jejich podílů.
+
+Sekundární studie národních ér pozoruje opakující se kohortní mechanismus: při
+vzniku éry obvykle proniklo několik hráčů stejné země do Top 10 během dvou až
+tří let, často ve věku přibližně 18–22 let. Konce ér byly často spojeny se stárnutím
+skupiny, nedostatkem další vlny a příchodem jiné mladé kohorty. [23] To však
+není kauzální důkaz. Stejná studie výslovně říká, že její čísla ukazují strukturu
+egyptské dominance, nikoli její příčinu. [24] Pro Squash Engine je tedy vhodné
+testovat, zda se podobné kohorty emergentně objevují z pipeline, developmentu a
+<PARSED TEXT FOR PAGE: 9 / 22>
+konkurence, nikoli implementovat „po 12 letech musí přijít nová dominantní
+země“.
+
+Ranking versus skutečná výkonnost
+Oficiální ranking je časově filtrovaný produkt soutěžního systému. Současná PSA
+metodika používá výsledky z rolling období přibližně 52 týdnů, turnajové body
+podle kategorie a kola a divisor založený na počtu započítávaných turnajů.
+Turnaje World Championship, Diamond a Platinum mohou kvůli kalendářnímu
+umístění zůstat platné 49–55 týdnů. [20] Ranking proto přirozeně obsahuje
+setrvačnost.
+
+Ta má několik důsledků. Hráč, který právě utrpěl zranění, může být stále vysoko
+díky starším výsledkům; vracející se špičkový hráč může být naopak
+výkonnostně výrazně silnější než jeho současná pozice. SquashInfo uvádí
+například kariérní rankingový propad Aliho Faraga během univerzitního období
+a výrazný pokles Gregoryho Gaultiera po zranění; starší analýza Top-10 hráčů
+tuto nesynchronizaci ranking–aktuální schopnost explicitně zachycuje. [26]
+
+PSA navíc používá ochranné/pegged ranking mechanismy pro návrat po delší
+absenci v kontextu tournament entry, což dále ukazuje, že sportovní systém
+sám rozlišuje světový ranking a praktické zacházení s hráčem po zdravotní
+pauze. [27] Pro Squash Engine to není instrukce kopírovat současnou PSA
+politiku; je to empirický důvod nezaměňovat „official rank“ za „skill“.
+
+Aktivita může ranking ovlivňovat asymetricky. Historické a současné systémy
+používají nejlepší výsledky a minimální divisory, takže další turnaj může vytvořit
+nový silný započítávaný výsledek, ale také měnit divisor podle konkrétní
+historické politiky. V roce 2022 při zavedení týdenního systému PSA uváděla
+deset nejlepších výsledků pro muže a devět pro ženy; pravidla 2024/25 už
+používají novou tabulku counting tournaments s minimem 11. [28] To je přesně
+typ změny, kterou Master správně řeší historicky verzovanými rankingovými
+politikami. [8]
+
+Seeding pak vytváří zpětnou vazbu. Ranking se používá k entries a seedingu
+turnajů, takže dva stejně silní hráči s odlišným rankingem nemusí dostávat stejně
+obtížnou cestu draw. PSA tuto roli rankingu uvádí přímo. [20] Výsledná korelace
+mezi rankem a dalšími výsledky tedy není čistě měřením schopnosti; ranking je
+částečně i vstupem do prostředí, které generuje budoucí výsledky.
+
+Match-based rating je proto užitečná diagnostická druhá osa. Universal Squash
+Rating například aktualizuje rating podle výsledku, očekávaného výsledku a
+<PARSED TEXT FOR PAGE: 10 / 22>
+reliability hráčova ratingu a více váží novější výsledky. [29] Nezávislý squashový
+Elo experiment používající historické zápasy demonstruje stejný princip:
+výsledek proti konkrétnímu soupeři obsahuje informaci, kterou round-based PSA
+body ignorují. Tento projekt však není peer-reviewed validační standard, a proto
+jej beru jako důkaz vhodnosti metodiky pro diagnostiku, nikoli jako „lepší
+správný ranking“. [30]
+
+Existuje i formálnější squashová literatura. Stochastické a Markovské modely
+squashových zápasů mají tradici nejméně od konce 80. a 90. let; práce McGarryho
+a Frankse současně upozornila, že chování bylo stabilnější proti témuž soupeři
+než napříč různými soupeři, tedy že jednoduchá extrapolace předchozího výkonu
+nemusí být univerzální. [31] Novější Bayesovská studie profesionálního squashe
+navíc na datech 2018–2024 odhaduje významný home-country effect, což je další
+příklad informace nevysvětlené samotnou rankingovou pozicí. [32]
+
+Pro Squash Engine bych proto oddělil tři observační veličiny:
+
+Vrstva                 Co měří                 Typická diagnostika
+Official ranking       Historicky              rank, body, Top-N
+                       definovanou             survival, movement
+                       soutěžní úspěšnost v
+                       rolling okně
+Result strength        Sílu podle toho, koho   Elo/Glicko/Bradley–
+                       hráč reálně poráží      Terry-like rating
+                                               pouze jako offline
+                                               analytika
+Championship           Konverzi schopnosti     titles, finals, win
+production             do titulů a velkých     rate, major share
+                       výsledků
+
+Správně fungující simulace nemusí dávat těmto třem vrstvám stejné pořadí.
+Naopak příliš vysoká shoda může být podezřelá: znamenala by, že turnajová
+aktivita, injuries, draw, variance a časová setrvačnost rankingu nemají téměř
+žádný efekt.
+
+Statistické modely pro svět po deseti až sto sezonách
+Top-N turnover má být měřen jako změna množiny, nikoli jen jako změna pozic:
+<PARSED TEXT FOR PAGE: 11 / 22>
+Samostatně je vhodné sledovat první vstupy , návraty a exits . Reálná Top 10 totiž
+obsahuje jak dlouhé kontinuální série, tak opakované návraty. [3]
+
+Ranking mobility lze měřit Spearmanovým/Kendallovým pořadovým vztahem
+mezi a , průměrnou absolutní změnou ranku a transition matrix . Literatura o
+dynamice rankingů používá obdobně rank diversity, change probability, rank
+entropy a system closure — počet entit vstupujících do a opouštějících ranking.
+[33] Pro Squash Engine je zvlášť důležitá mobility podmíněná věkem a kariérní
+fází: stabilní No. 3 není totéž jako stagnující No. 80.
+
+Persistence a kariérní délka mají být analyzovány survival metodami. Aktivní
+hráč na konci simulovaného okna je pravostranně cenzorovaný, nikoli „kariéra
+dlouhá právě X let“. Kaplan–Meierův estimator je standardní neparametrický
+nástroj pro right-censored time-to-event data. [34] Stejným způsobem lze
+modelovat čas do prvního Top 100, čas z Top 100 do Top 10, dobu do definitivního
+opuštění Top 10 nebo dobu do retirementu.
+
+U postupných milestoneů je vhodný multi-state model:
+
+
+
+doplněný o zpětné přechody. To odstraní chybu, kdy je dlouhé čekání mezi Top 5
+a No. 1 interpretováno jako stejný proces jako začátečnická cesta do Top 100.
+
+Dominance jednotlivce by neměla být jediná veličina. Minimální sada je:
+kumulativní čas No. 1, longest continuous reign, počet oddělených reigns, podíl
+všech No.1 týdnů v pětiletém/desetiletém okně, podíl major titulů, celkový title
+share a dominance vůči bezprostředním rivalům. Historie Khans ukazuje, proč se
+kumulativní a souvislá dominance liší. [35]
+
+Národní koncentrace může být popsána HHI:
+
+
+
+kde je podíl země na player-weeks/player-months v Top N. HHI je standardní
+koncentrace, kde vyšší hodnota znamená větší nerovnost; v literatuře
+competitive balance se používá právě pro koncentraci sportovního výkonu. [36]
+
+Jeho intuitivní inverze,
+
+
+
+říká „kolik stejně silných zemí“ odpovídá pozorované koncentraci. Squash Stats
+používá právě koncept efektivního počtu zemí a nachází mužská 2000s jako
+<PARSED TEXT FOR PAGE: 12 / 22>
+otevřenější období blížící se pěti efektivním zemím, zatímco nedávná období se
+opět přiblížila přibližně třem. [24]
+
+Druhou nezávislou mírou je Shannonova entropie
+
+
+
+Sportovní literatura ukazuje, že entropie dokáže citlivě zachytit změny celkové
+competitiveness a není ekvivalentní jedinému concentration indexu. [37]
+Prakticky doporučuji počítat HHI i entropii: HHI více penalizuje velkou
+dominantní zemi; entropie lépe zachytí strukturu menších aktérů.
+
+Waiting time na mimořádného šampiona je pro 100 sezon zásadní. Definice
+„mimořádný“ však nemá být pevné číslo převzaté z historie. Lze vytvořit
+parametrický event typu „reign delší než empirické nebo ensemble distribuce“ a
+sledovat intervaly mezi těmito událostmi. Tím lze zjistit, zda model generuje
+dlouhý ocas nebo jen stále stejné středně silné šampiony.
+
+Seed variance je třeba oddělit od parametrické citlivosti. Pro jednu konfiguraci
+spusťte mnoho deterministických seedů a analyzujte distribuci metrik; teprve
+potom změňte modelový parametr. Jinak nelze poznat, zda změna 100letého
+výsledku pochází z mechaniky nebo pouze z náhodné realizace.
+
+Strukturální drift znamená, že distribuce v pozdější historii systematicky
+odchází od rané, aniž by existovala explicitní historická konfigurace, která by
+změnu vysvětlovala. Sledoval bych metriky po rolling dekádách: věk Top 10,
+počet aktivních profesionálů, Top-N turnover, HHI zemí, variance schopností,
+title concentration, retirement age a ranking mobility. Porovnání segmentů 1–25,
+26–50, 51–75 a 76–100 sezon odhalí například runaway accumulation nebo
+postupné homogenizování světa.
+
+Tento přístup odpovídá širší literatuře competitive balance:
+konkurenceschopnost není jednodimenzionální a dispersion výkonu a
+persistence pořadí jsou různé vlastnosti. [38] Právě proto nestačí, aby screenshot
+rankingové tabulky „vypadal realisticky“.
+
+Diagnostický a validační program Squash Engine
+Níže je šestnáct reprodukovatelných experimentů. „Pre-alpha: ano“ znamená, že
+experiment vyžaduje především logy/rankingové snapshoty, nikoli novou
+schválenou mechaniku; neznamená to, že aktuální build už poskytuje pohodlný
+batch runner pro všechny uvedené horizonty. Současný repozitář je stále
+<PARSED TEXT FOR PAGE: 13 / 22>
+implementační checkpoint a úplné dlouhé release acceptance zůstává
+samostatným cílem. [39]
+
+                            Přesná         Bias a
+           Hypotéza a       metrika /      signál
+Experiment vstupy           horizont       chyby          Pre-alpha
+Top-10       Elita má       , první        Týdenní        Ano
+turnover     vysokou        vstupy,        snapshoty
+             persistenci,   exits; 10,     nafukují
+             ale ne         25, 50         závislost.
+             nulovou        sezon.         Chyba:
+             obměnu.                       téměř
+             Vstup:                        nulový
+             každý                         nebo téměř
+             Official                      úplný
+             Ranking                       turnover
+             snapshot.                     každou
+                                           sezonu.
+Top-N        Mobility se    ; 25+ sezon.   Různá          Ano, pokud
+gradient     má měnit s                    velikost       je ranking
+             N. Vstup:                     tour.          dost
+             Top 100                       Chyba:         hluboký
+             snapshoty.                    všechny
+                                           vrstvy mají
+                                           téměř
+                                           totožnou
+                                           persistence.
+Re-entry     Hráči se       Počet stintů   Krátké         Ano
+test         mohou po       Top 10/20;     týdenní
+             výpadku        distribuce     oscillace.
+             vracet.        gap            Použít
+                            lengths; 25–   minimální
+                            50 sezon.      gap definici
+                                           v reportu.
+                                           Chyba:
+                                           návraty
+                                           prakticky
+                                           neexistují.
+Top-10       Elitní         Kaplan–        Right          Ano
+<PARSED TEXT FOR PAGE: 14 / 22>
+                             Přesná         Bias a
+           Hypotéza a        metrika /      signál
+Experiment vstupy            horizont       chyby         Pre-alpha
+survival      kariéry        Meier doba     censoring
+              mají long-     od prvního     aktivních
+              tail           vstupu do      hráčů.
+              distribuci.    definitivníh   Chyba:
+                             o exit; 50     velmi úzká
+                             sezon.         doba všech
+                                            kariér.
+Milestone     Cesta          Transition     Selection     Ano
+multi-state   100→50→20      hazards a      bias při
+              →10→5→1        waiting        analýze
+              není           times mezi     pouze No.
+              lineární.      stavy; 50      1. Chyba:
+                             sezon.         téměř
+                                            determinist
+                                            ické stejné
+                                            intervaly.
+Age-at-       Existují       Distribuce     Aktivní/      Ano
+milestone     teenage        věku           cohort
+              phenoms i      prvního        censoring.
+              late           Top            Chyba:
+              bloomers.      100/50/10/5/   velmi úzké
+                             1; 50 sezon.   peak ages.
+No.1 reign    Hegemonic      Continuous     Weekly vs     Ano
+distributio   ké i           spell,         seasonal
+n             střídavé       cumulative     sampling.
+              epochy         reign, počet   Chyba:
+              mají           reignů; 50–    prakticky
+              vznikat        100 sezon.     vždy
+              přirozeně.                    podobně
+                                            dlouhá
+                                            vláda.
+Dominanc      Ranking        Korelace       Elo model     Ano
+e             No.1, tituly   rank-          dependenc
+triangulati   a match        duration,      e. Chyba:
+on            strength se    title share,   korelace
+<PARSED TEXT FOR PAGE: 15 / 22>
+                           Přesná          Bias a
+           Hypotéza a      metrika /       signál
+Experiment vstupy          horizont        chyby         Pre-alpha
+             nemusejí      offline Elo;    ≈1 v
+             shodovat.     25+ sezon.      každém
+                                           seedu.
+Blocked-     Supercham     Pro hráče       Survivor    Ano
+rival test   pion          rank 2–5:       selection.
+             snižuje       čas za          Chyba: No.1
+             peak rank     stejným         nemá
+             kvalitních    No.1, H2H,      statisticky
+             rivalů.       titles; 50      identifikov
+                           sezon.          atelné
+                                           rivaly.
+Country      Národní       Top10/50/1      Velikost   Ano
+breadth vs   síla může     00 share +      populace.
+champion     být široká    počet           Chyba:
+             nebo          unikátních      každá
+             založená na   hráčů +         dominantní
+             výjimce.      No.1 share;     země
+                           50 sezon.       dominuje
+                                           všemi
+                                           třemi
+                                           stejným
+                                           způsobem.
+Country      Svět střídá   HHI,            Malé N u      Ano
+concentrat   koncentrov    Shannon H,      Top 10.
+ion          ané a         ; rolling       Chyba:
+             otevřenější   5/10 sezon;     koncentrac
+             epochy.       100 sezon.      e téměř
+                                           konstantní.
+Generatio    Národní       Ripley-like /   Velké země    Spíše
+nal          vzestupy      variance-       mají více     budoucí
+clustering   často tvoří   to-mean         hráčů         analytika,
+             kohorty.      clustering      mechanick     data lze
+                           prvních         y. Chyba:     sbírat nyní
+                           Top-10          vstupy jsou
+                           vstupů          téměř
+<PARSED TEXT FOR PAGE: 16 / 22>
+                          Přesná         Bias a
+           Hypotéza a     metrika /      signál
+Experiment vstupy         horizont       chyby          Pre-alpha
+                          podle země     Poissonově
+                          a birth        rovnoměrn
+                          cohort; 100    é nebo
+                          sezon.         naopak
+                                         periodické
+                                         podle
+                                         pevného
+                                         cyklu.
+Era-change Konec          Cross-         Korelace ≠     Později
+alignment dominance       correlation    kauzalita.
+           souvisí s      změny          Chyba:
+           odchodem       Top-10         dominance
+           kohorty        share s        končí vždy
+           a/nebo         věkem          po
+           příchodem      vlastní        podobném
+           soupeře, ne    kohorty a      počtu let
+           s timerem.     first-entry    bez
+                          rate           strukturáln
+                          konkurenc      í změny.
+                          e; 100
+                          sezon.
+Ranking–     Official     Lead/lag       Elo            Ano
+latent lag   rank         cross-         specificatio
+             reaguje se   correlation    n. Chyba:
+             zpožděním    official       nulový lag
+             na výkon.    rank vs        za všech
+                          Elo/result     okolností
+                          strength; 25   včetně
+                          sezon.         injuries.
+Seed         Jedna        Distribuce     Málo seedů.    Technicky
+dispersion   konfigurac   všech výše     Chyba:         později
+             e má         uvedených      téměř          pro velkou
+             generovat    statistik      identické      batch
+             různorodé,   přes           dynastie       škálu
+             ale          ≥desítky       nebo
+<PARSED TEXT FOR PAGE: 17 / 22>
+                            Přesná        Bias a
+           Hypotéza a       metrika /     signál
+Experiment vstupy           horizont      chyby         Pre-alpha
+              strukturáln   seedů; 50–    extrémně
+              ě příbuzné    100 sezon.    nestabilní
+              světy.                      makrostruk
+                                          tura.
+Structural    Bez           Porovnání     Počáteční     Později,
+drift         explicitní    sezon 1–      burn-in.      100 sezon
+              změny         25/26–        Chyba:
+              konfigurac    50/51–        monotónní
+              e se          75/76–100:    homogeniz
+              základní      age, HHI,     ace,
+              distribuce    turnover,     runaway
+              nemá          Elo spread,   talent nebo
+              nekontrolo    career        kolaps
+              vaně          length.       mobility.
+              posouvat.
+
+Nejdůležitější vlastností tohoto programu je, že žádný experiment neurčuje, co
+musí simulátor udělat v jednom konkrétním runu. Výstupem jsou distribuce,
+confidence/quantile bands a anomálie. To umožňuje vznik Jahangir-like
+šampiona i světa bez něj.
+
+Při porovnávání se skutečností bych používal intervaly a empirické tvary, ne
+hard thresholds. Například historický fakt, že 32 % mužů, kteří od 2000 dosáhli
+Top 10, později dosáhlo No. 1, je vhodný jako kontext pro plausibility, nikoli jako
+pravidlo „simulace musí být 32 %“. [3] Reálných 26 let je jediná realizace jednoho
+sportovního systému, nikoli true generative distribution.
+
+Doporučení pro pre-alphu a budoucí verze, hlavní rizika a
+otevřené otázky
+Pro současnou pre-alphu je nejvyšší priorita observační validace bez zásahu do
+mechanik. Squash Engine již koncepčně uchovává historické rankingové
+policy/snapshoty a deterministickou replay logiku a současný audit potvrzuje
+rankingovou matematiku v nativní Tour cestě. [40] Proto lze bez rozhodnutí o
+nových herních pravidlech začít ukládat a analyzovat Top-N membership, první
+vstupy, re-entry, věk milníků, kontinuitu No. 1, národní share, HHI, title
+concentration a seed-to-seed rozdíly.
+<PARSED TEXT FOR PAGE: 18 / 22>
+Současně bych už v pre-alphě vytvořil analytické rozlišení official ranking ≠
+performance rating ≠ titles, ale pouze jako validační koncept mimo autoritativní
+sportovní pravidla. To přímo odpovídá empirickému chování reálného rankingu
+a současně respektuje Master: AI/analytika může vysvětlovat a analyzovat, ale
+nemá rozhodovat autoritativní outcomes. [41]
+
+Pro budoucí verze jsou důležité multiseed batch testy 50–100 sezon, survival
+modely, kohortní analýza, cross-generation country dynamics, structural drift a
+sensitivity analysis. Zejména dlouhý horizont je nezbytný pro odhalení závad,
+které 5–10 sezon neukážou: kumulace elite support, postupné vymizení malých
+zemí, stárnutí/omlazování celé elity, zacyklení seedingu nebo postupný kolaps
+variance.
+
+Za největší dlouhodobá rizika modelu považuji následujících šest typů selhání:
+příliš rychlou ergodicitu, kdy každá země časem dostane svůj „turn“ na vrcholu;
+příliš krátkou paměť, kdy dominance jednotlivce nemůže přetrvat více
+kariérních fází; runaway positive feedback, kdy úspěch země automaticky
+zvyšuje vrozený talent další generace a vytvoří permanentní monopol; přílišnou
+vazbu ranku na latentní skill, která odstraní injuries, activity a ranking lag;
+příliš úzkou distribuci kariér, kde všichni peakují a odcházejí podobně; a
+strukturální drift, kdy 80. sezona má jiný sportovní režim než 10. sezona bez
+historicky efektivní změny konfigurace. První tři jsou obzvlášť důležité vzhledem
+k repository pravidlu, že národnost nemá přímo vyrábět větší vrozený/generační
+potenciál. [8]
+
+Historie poskytuje velmi dobrý kvalitativní test. Přesvědčivý simulátor musí být
+schopný vytvořit svět, kde má jedna země pět hráčů v Top 10, ale světovou
+jedničku drží jiná země; svět, kde má země jednoho fenomenálního šampiona bez
+hluboké Top 50; svět, kde několik teenagerů jedné generace změní národní
+rovnováhu; svět, kde světový šampion nikdy nebude No. 1; i svět, kde rival
+světové jedničky stráví deset let v Top 10 a historicky bude vypadat „slabší“, než
+skutečně byl. Všechny tyto struktury mají reálné analogie. [42]
+
+Naopak bych nedoporučil stanovit povinný maximální reign No. 1, periodický
+generační reset, cílový počet šampionů za dekádu, minimum zastoupených zemí
+v Top 10 ani pravidlo „dominantní země po X letech oslabí“. Nic v historických
+datech takový mechanismus nevyžaduje. Historie obsahuje dlouhé bloky Geoffa
+Hunta, Jahangira a Janshera i mnohem otevřenější období; jsou to výstupy
+systému, ne timer. [16]
+<PARSED TEXT FOR PAGE: 19 / 22>
+Neuzavřenou empirickou otázkou zůstává kompletní mužská historie Top
+100/50/20/5. Veřejné zdroje ji pro tento výzkum neposkytly v podobě, ze které by
+šlo bez licenčního a completeness problému spolehlivě přepočítat unikátní hráče,
+survival a milestone waiting times pro celé období 1975–2026. SquashInfo uvádí,
+že plné rankingové archivy jsou dostupné v placené historické vrstvě. [43] Pokud
+by se tento dataset někdy použil jako oficiální benchmark projektu, bylo by
+potřeba zvlášť ověřit jeho licenci, přístupová práva, snapshot completeness a
+možnost uchovávat odvozené agregáty.
+
+Druhou otevřenou otázkou je přesná historická změna rankingových formulí.
+Máme dobře dokumentovaný současný rolling/divisor systém a starší pravidla s
+odlišnými minimálními divisory, stejně jako jasnou změnu měsíční →týdenní v
+srpnu 2022. [44] Pro přesnou rekonstrukci 1975–2026 by však bylo nutné vytvořit
+časovou osu všech relevantních PSA politik z dobových rulebooků. Pro FAX to
+není implementační požadavek — Master už vlastní své historicky verzované
+politiky — ale je to důležité při interpretaci reálných benchmarků.
+
+Třetí otevřenou otázkou je kausalita národních dynastií. Egyptská juniorská
+dominance předcházela seniornímu vzestupu a generační shluky velmi dobře
+korespondují se začátky i konci několika národních ér. [45] Samotná rankingová
+data ale neumějí oddělit coaching, popularitu, ekonomické podmínky, dostupnost
+kurtů, rodinné sítě, tournament hosting, výběr talentů a další mechanismy. To je
+přesně důvod, proč by Squash Engine měl nechat dynastie vznikat ze základních
+systémů a poté je pozorovat, nikoli historickou korelaci přepsat do skrytého
+„dynasty bonusu“.
+
+Konečný validační standard tedy není „vypadá tato Top 10 věrohodně?“. Je jím
+otázka: produkuje stejná mechanika napříč mnoha deterministickými seedy
+dostatečně bohatou třídu světů — se superšampiony i bez nich, s národními
+dynastiemi i rozptýlenou elitou, s generačními vlnami, návraty,
+blokovanými rivaly a rankingovým zpožděním — aniž by musela vědět, že
+historie skutečného squashe obsahovala Pákistán, Austrálii, Anglii nebo
+Egypt? Empirická historie 1975–2026 ukazuje, že právě tato kombinace extrémní
+persistence a dlouhodobé strukturální proměnlivosti je charakteristickým rysem
+přesvědčivého profesionálního squashového světa. [46]
+
+
+
+[1] [5] [13] [23] [24] [42] [45] [46] Squash: A Game of Thrones – SQUASH STATS
+
+https://squashstats.com/2026/10/14/squash-a-game-of-thrones/?
+utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 20 / 22>
+[2] [15] Ranking – SQUASH STATS
+
+https://squashstats.com/category/ranking/?utm_source=chatgpt.com
+
+[3] Life in the World Top 10 Since 2000 – SQUASH STATS
+
+https://squashstats.com/2020/10/11/analysis-10-psa-ranks-00-20/
+
+[4] The Best Never to Be World No.1 – SQUASH STATS
+
+https://squashstats.com/2026/10/22/the-best-never-to-be-world-no-1/?
+utm_source=chatgpt.com
+
+[6] [8] [40] [41] squash-tour-beta/AGENTS.md at buuk · Jasmetk0/squash-tour-beta
+· GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/AGENTS.md
+
+[7] GitHub - Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta
+
+[9] [39] squash-tour-beta/CURRENT_STATE.md at buuk · Jasmetk0/squash-tour-
+beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/CURRENT_STATE.md
+
+[10] squash-tour-beta/SQUASH_ENGINE_MASTER_VISION.md at buuk ·
+Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/
+SQUASH_ENGINE_MASTER_VISION.md
+
+[11] [17] [43] Squash Info | Squash Info Sign Up | Squash
+
+https://www.squashinfo.com/signup?utm_source=chatgpt.com
+
+[12] [14] [18] [19] The Fastest Rise to World No.1 – SQUASH STATS
+
+https://squashstats.com/2026/10/12/the-fastest-rise-to-world-no-1/?
+utm_source=chatgpt.com
+
+[16] [35] A Graphical History of the PSA Number 1 (1975 – 2020) – SQUASH STATS
+
+https://squashstats.com/2020/06/15/number-1/?utm_source=chatgpt.com
+
+[20] [44] 7. PSA World Rankings
+<PARSED TEXT FOR PAGE: 21 / 22>
+https://d2h2jicm4ii9y.cloudfront.net/wp-content/uploads/2024/08/PSA-Squash-
+Tour-Rule-Book-August-24.25.pdf?utm_source=chatgpt.com
+
+[21] PSA Tour Rule Book
+
+https://ffsquash.com/medias/fichiers/Competition%20F%C3%A9d%C3%A9rales/
+R%C3%A9glement%20sportif%20et%20divers/PSA_Tour_Rule_Book.pdf?
+utm_source=chatgpt.com
+
+[22] Greatest Squash Rivalries of the Modern Era (2000–2026) – SQUASH STATS
+
+https://squashstats.com/2026/10/18/greatest-rivalries-in-squash/?
+utm_source=chatgpt.com
+
+[25] Squash Info | PSA World Squash Rankings (26 October 2026) | Squash
+
+https://www.squashinfo.com/rankings?utm_source=chatgpt.com
+
+[26] PSA Rank Variation in the Top 10 Ranks for Season 2018-2019 – SQUASH
+STATS
+
+https://squashstats.com/2020/03/13/top-10-ranks-2018-2019/?
+utm_source=chatgpt.com
+
+[27] PSA Squash Tour
+
+https://psa-images.ptsportsuite.media/wp-content/uploads/2024/08/PSA-Squash-
+Tour-Rule-Book-August-24.25.pdf?utm_source=chatgpt.com
+
+[28] PSA announces switch to weekly ranking lists - Squash Mad
+
+https://squashmad.com/breaking-news/psa-announces-switch-to-weekly-ranking-
+lists/?utm_source=chatgpt.com
+
+[29] Ratings | US Squash
+
+https://ussquash.org/ratings/?utm_source=chatgpt.com
+
+[30] Using data to improve professional squash rankings | Lovkush Agarwal
+
+https://lovkush-a.github.io/data%20science/2021/10/12/squash_elo.html?
+utm_source=chatgpt.com
+
+[31] A stochastic approach to predicting competition squash match‐play: Journal
+of Sports Sciences: Vol 12, No 6
+<PARSED TEXT FOR PAGE: 22 / 22>
+https://www.tandfonline.com/doi/abs/10.1080/02640419408732208?
+utm_source=chatgpt.com
+
+[32] 1. Introduction
+
+https://thesquashsite.com/wp-content/uploads/2025/05/main.pdf?
+utm_source=chatgpt.com
+
+[33] Statistical Properties of Rankings in Sports and Games
+
+https://arxiv.org/abs/2111.03599?utm_source=chatgpt.com
+
+[34] Statistical issues and methods in designing and analyzing survival studies -
+PMC
+
+https://pmc.ncbi.nlm.nih.gov/articles/PMC7941573/?utm_source=chatgpt.com
+
+[36] The Uncertainty-of-Outcome Hypothesis and Competitive Balance in Sports
+
+https://noah.nrw/ulbmshsnoah/download/pdf/4286778?utm_source=chatgpt.com
+
+[37] A model for competitiveness level analysis in sports competitions:
+Application to basketball - ScienceDirect
+
+https://www.sciencedirect.com/science/article/pii/S0378437112000246?
+utm_source=chatgpt.com
+
+[38] The multi-dimensionality of competitive balance: evidence from European
+football - ScienceDirect
+
+https://www.sciencedirect.com/science/article/pii/S2042678X22000117?
+utm_source=chatgpt.com
+
+----- END TEXT EXTRACTION -----

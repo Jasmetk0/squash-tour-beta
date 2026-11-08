@@ -1,19 +1,95 @@
-# Current pre-alpha dependency path — 30 October 2026
+# Native Q/Main dependency checkpoint after #1746 — 6 November 2026
 
-Baseline: `buuk` `d45b7d3b3aa7e585e3c777cb166c6c5f2bb2f81d`; #1661–#1672
-merged, no open PRs at audit start. The single active requirement/evidence matrix
-is [the post-merge checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md), including
-all original PAQ ranges and later scope. This short list is not another registry.
+Base `buuk` `c7bb53eb893dceb2cb603bc0d312b71070489a0e` contains owner merge #1746.
+The bounded native consumer keeps results in the existing v13 shared slot ledger.
 
-1. Finish this evidence checkpoint, then repair the confirmed stale Edition fixture
-   (4 failed/2 passed in the summary unit module), preserving negative assertions.
-   The two actual Run/Save/restart spot checks passed. Do not claim release.
-2. Implement the selected Saved Edition Entry timing/preflight/ranking-source slice
-   using already decided 2+1-week defaults and explicit Edition inputs/overrides.
-3. Resolve only concrete remaining policy/data prerequisites, then use existing
-   validation → field → draw → matches → points → manual Save/reopen boundaries.
-4. Progress §36.5: complete week, N/N+1, multiple weeks without repairs, complete
-   reference season/Finals/Season Transition, multiple seasons, required 50 seasons.
+1. Complete/review actual Unranked source-sized HTTP/SQLite Q/Main acceptance,
+   public announcement, partial Save/restart/retry, real feeder winners and
+   independent terminal confirmation. Final-head applicable gates must run green.
+2. Complete original Entry/complete Ranked awards/operational chronology and
+   owner-level adoption. Do not infer readiness from an explicitly authored
+   disposable fixture. Fork/revised Draw/multi-week consumers remain versioned work.
+3. Prove multiple Editions, original full season/Finals/transition, then existing
+   50-season/recovery/performance gates and complete Master release requirements.
+
+Use the single [integration evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+ATP package PRs #1731 → #1741 → #1742 remain separate and untouched.
+
+---
+
+# Historical checkpoint before #1746 merge
+
+Base `buuk` `7620b89ab53b93780216955a72bd5e4c91f6d691` includes owner merge #1745.
+The next bounded candidate adds Saved-bound initial Draw feeder plans and a
+stateless existing-ledger projection. Actual MatchEngine component proofs cover
+Gold35/Platinum51; explicit Save/reopen/source-isolation has real SQLite evidence.
+This still does not enable the native public Q/Main execution path.
+
+1. Review the feeder kernel on its final head, keeping ATP package Drafts separate.
+2. Integrate with **versioned native Edition / frozen global-slot / terminal result**
+   contracts. Keep existing result ownership; preserve legacy schemas, seed paths,
+   shared snapshot inputs, partial Next Match handling and explicit Save/restart.
+   Consume real Q winners through the established node plan, not fake Main entries.
+3. Audit source-bound operational scheduling and existing Entry/complete award
+   prerequisites. Prove one actual public Gold/Platinum Run flow, then multiple
+   Editions/full season/Finals/transition and the required 50-season recovery and
+   performance gates. Feeder readiness is not sporting authorization or release.
+
+The complete Master scope remains. The single requirement/evidence map stays in
+[the integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+
+---
+
+# Historical checkpoint before #1745 merge
+
+Base `buuk` `1800697b978a33f6895d2e6a3fa3e77bfb066954` includes the owner merge
+of #1744; frontend baseline repair is complete. The source-sized player Draw
+candidate now keeps Q24 admission separate from four eight-position sections,
+reuses canonical seeding/BYEs/WC and passes persisted initial Draw mechanics.
+See the single [integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+
+1. Review this bounded Draw candidate on its final head; keep the ATP package
+   Drafts separate. Its authenticated source projection does not create a new
+   Saved authority or decide automatic Entry eligibility.
+2. Next connect the established real-player Main/Q Draw to **versioned global-slot
+   feeder, round and match-result acceptance**, including correct BYE advancement
+   and Q winner → Q1–Q4 replacement. Preserve old v2/v3 execution seeds and fail
+   closed on unsupported withdrawal/replacement paths rather than changing history.
+3. Resolve only genuinely open Entry/award/source chronology prerequisites; then
+   prove one actual Gold and one Platinum through Q/Main/points/explicit Save and
+   reopen, followed by multiple Editions, a full reference season and the required
+   50-season/recovery/performance gates. Draw success is not sporting execution.
+
+The complete Master scope is retained. Earlier dated roadmap entries are history.
+
+---
+
+# Historical dependency checkpoint before #1744 merge
+
+Baseline: `buuk` `b666c109b9dc596a6d226025500ceb462a4fff8b`; all 38 reviewed
+non-package PRs are merged with no feature-content loss. ATP package Drafts
+#1731 → #1741 → #1742 remain separate. The single active evidence matrix is
+[the existing checkpoint, updated 6 November](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+Its older dated rows are history; the complete Master still owns release scope.
+
+1. Review/merge the isolated frontend regression repair after final-head gates:
+   **3,423/3,423 tests in 364 files and production build pass locally**. It
+   replaces retired legacy reader mocks/preview expectations, corrects malformed
+   positive fixtures and stabilizes inventory test ordering; production is
+   unchanged. The earlier 88 failures are historical, not current local results.
+   Do not infer a full release or sporting integration pass from these contracts.
+2. Build on the merged source-bound Gold24/Platinum32 + four Qualification-section
+   geometry. Connect real player/seed-aware field/Draw and versioned execution,
+   preserving BYEs, historical schemas, simultaneous slots and original sources.
+   The current exact-source audit finds **80/80 blocked**, not a played season.
+3. Audit the existing automatic Entry eligibility policy and original Category
+   points/preannouncement prerequisites at the consuming boundary. Present only
+   genuinely unresolved PRODUCT decisions; the already implemented 2+1-week
+   timing/ranking preparation is not itself automatic eligibility or live Q play.
+4. Prove an actual Gold and Platinum flow through Entry/Q/Main/points/manual
+   Save/reopen, then multiple Editions/weeks, the complete reference season and
+   Finals/Season Transition, then the required 50 seasons with performance,
+   RSS and physical/history growth observations from those same actual Runs.
 5. Close all retained side requirements (historical initial cohort/intake, portable
    archives/recovery, minimum Reconstruction/three Labs, Records/notifications,
    CS/EN Admin, Earth Package scope) and run the complete assigned release gate.
@@ -22,6 +98,9 @@ Do not substitute W80 for 80 Editions or 1,000 players for initial historical-co
 behavior. Unknown coverage is not an approved deferral. Team/doping/extraordinary
 Edition lifecycle, complete Viewer and other explicit exclusions remain excluded.
 Detailed tuning and new Viewer work do not outrank the supported Admin flow.
+Existing stale Viewer "Official Branch" labels and English-only context copy
+need alignment with the canonical Viewer Branch/CS-EN contract during frontend
+repair; internal legacy field names do not create a privileged sporting Branch.
 
 ---
 

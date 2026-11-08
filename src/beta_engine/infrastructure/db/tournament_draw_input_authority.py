@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
     TournamentDrawInputAuthorityBuilder,
+    requires_padded_qualification_sections,
 )
 from beta_engine.infrastructure.db.models import (
     RunBranchModel,
@@ -479,8 +480,8 @@ class TournamentDrawInputAuthorityStore:
                 else None
             )
 
-            # New ranking-sourced commitments use v3 when canonical WC authority is
-            # required, otherwise they retain the Master-aligned v2 contract.
+            # Non-binary Q admission sizes use v12 without expanding the Entry cut.
+            # Historical binary sections retain v3 (WC) / v2 (no WC) byte semantics.
             proposed = TournamentDrawInputAuthorityBuilder.build(
                 authority=ranking_authority,
                 field=field,
@@ -490,7 +491,9 @@ class TournamentDrawInputAuthorityStore:
                 main_seed_count=main_seed_count,
                 qualification_seed_count=qualification_seed_count,
                 schema_version=(
-                    "tournament_draw_input_authority.v3"
+                    "tournament_draw_input_authority.v12"
+                    if requires_padded_qualification_sections(field.capacity)
+                    else "tournament_draw_input_authority.v3"
                     if field.capacity.wild_card_slots
                     else "tournament_draw_input_authority.v2"
                 ),

@@ -141,8 +141,43 @@ def main():
         processes.append(duplicate)
         assert duplicate.wait(timeout=30) != 0, "Second engine unexpectedly started"
         assert get_json(revision_path) == revision
+        # A backup must refuse a live engine before touching its data or ZIP.
+        backup_zip = work / "Portable snapshot český.zip"
+        backup_cmd = [str(package / "SquashEnginePreview.exe"), "--backup",
+                      "--data-dir", str(data), "--backup-output", str(backup_zip)]
+        active_backup = subprocess.run(backup_cmd, cwd=work, env=child_env(),
+                                       capture_output=True, timeout=30)
+        assert active_backup.returncode != 0, "Backup unexpectedly bypassed the live engine lock"
+        assert not backup_zip.exists(), "An unsafe live-engine backup was published"
         stop(first)
         assert (data / "beta_engine.db").stat().st_size > 0
+        # True frozen Windows EXE in a nondeveloper PATH: snapshot, verify,
+        # inspect the actual archived SQLite and preserve the source Run.
+        completed_backup = subprocess.run(backup_cmd, cwd=work, env=child_env(),
+                                          capture_output=True, timeout=180)
+        assert completed_backup.returncode == 0, completed_backup.stdout.decode("utf-8", errors="replace")
+        assert backup_zip.is_file()
+        verified_backup = subprocess.run(
+            [str(package / "SquashEnginePreview.exe"), "--verify-backup", str(backup_zip)],
+            cwd=work, env=child_env(), capture_output=True, timeout=180)
+        assert verified_backup.returncode == 0
+        assert b"BACKUP VERIFIED" in verified_backup.stdout
+        import zipfile
+        with zipfile.ZipFile(backup_zip) as archived:
+            owner = json.loads(archived.read("data/preview-owner.json"))
+            assert owner["source_commit"] == metadata["source_commit"]
+            assert "data/beta_engine.db" in archived.namelist()
+            assert not any(name.endswith(("-wal", "-shm")) for name in archived.namelist())
+            extracted_db = work / "Verified backup SQLite.db"
+            extracted_db.write_bytes(archived.read("data/beta_engine.db"))
+        import sqlite3
+        with sqlite3.connect(extracted_db) as backup_db:
+            assert backup_db.execute("PRAGMA quick_check").fetchone() == ("ok",)
+        (evidence / "offline-backup-proof.json").write_text(json.dumps({
+            "source_commit": metadata["source_commit"],
+            "live_lock_rejected": True, "frozen_backup_verified": True,
+            "database_integrity": "ok", "original_data_retained": True
+        }, indent=2), encoding="utf-8")
         # Restart from another CWD using the EXE directly; same build, same world.
         other_cwd = work / "Other working directory"
         other_cwd.mkdir()

@@ -17,7 +17,7 @@ const unsafeTemplateRoutePatterns = [
 ]
 const forbiddenMutationLabelText = />\s*(?:Simulate|Generate|Persist|Apply|Execute|Delete|Edit|Import|Rollover|Rebuild|Override|Save changes|Commit|Regenerate|Repair|Merge|Overwrite)\s*</i
 const forbiddenMutationCalls = /\b(?:useMutation|mutate\s*\(|fetch\s*\([\s\S]{0,160}method\s*:\s*['\"](?:POST|PUT|PATCH|DELETE)['\"]|axios\.[a-z]+\s*\([\s\S]{0,160}['\"](?:POST|PUT|PATCH|DELETE)['\"])/i
-const forbiddenFakeClaims = /(?:fake winner|fake champion|invented winner|invented standings|final score|match result|fixture tournament|fake tournament|standings table)/i
+const forbiddenFakeClaims = /(?:fake winner|fake champion|invented winner|invented standings|fixture tournament|fake tournament|standings table)/i
 
 function expectNoUnsafeRouteTemplates(source: string): void {
   for (const pattern of unsafeTemplateRoutePatterns) {
@@ -69,34 +69,29 @@ describe('Calendar/tournament Viewer route source guard', () => {
 
   })
 
-  it('keeps calendar scalar-safe helpers present', () => {
+  it('keeps calendar reads on source-fenced canonical Saved projections', () => {
     for (const helperName of [
-      'safeText',
-      'safeWeekLabel',
-      'safeOrderedEvents',
-      'safeCompletedEventIds',
-      'safeEventRecords',
-      'safeSnapshotRecords',
+      'getViewerRunCalendar',
+      'getViewerTournamentHistory',
+      'matchesViewerSource',
+      'canonicalPublishedResults',
       'parseViewerWeekParam'
     ]) {
       expect(viewerRunCalendarSource).toContain(helperName)
     }
   })
 
-  it('keeps tournament scalar-safe helpers present', () => {
+  it('keeps tournament data on canonical Saved readers rather than raw event payloads', () => {
     for (const helperName of [
-      'buildPlannedContext',
-      'safeText',
-      'safeNumber',
-      'safeEventRecords',
-      'safeCompletedEventIds',
-      'safeSnapshotRecords',
-      'eventWeek',
-      'eventSeason',
+      'getViewerRunCalendar',
+      'getViewerTournamentHistory',
+      'getViewerTournamentResult',
       'displayWeekDetailLink'
     ]) {
       expect(viewerRunTournamentsSource).toContain(helperName)
     }
+    expect(viewerRunTournamentsSource).not.toContain('getEvent(')
+    expect(viewerRunTournamentsSource).not.toContain('listEvents(')
   })
 
   it('keeps calendar/tournament links backed by Viewer route helpers', () => {
@@ -106,7 +101,7 @@ describe('Calendar/tournament Viewer route source guard', () => {
       'viewerWeekDetailPath',
       'viewerTournamentDetailPath',
       'viewerRankingSnapshotPath',
-      'viewerRaceSnapshotPath'
+      'viewerRacePath'
     ]) {
       expect(viewerRunCalendarSource).toContain(helperName)
     }

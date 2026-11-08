@@ -1,4 +1,172 @@
-# Portable Windows preview candidate — 31 October 2026
+# Native canonical Q/Main candidate — 6 November 2026
+
+Merged base `buuk` **`c7bb53eb893dceb2cb603bc0d312b71070489a0e`** is the owner
+merge of #1746 and preserves its exact reviewed tree. This candidate consumes its
+pure domain feeder through Edition v4, frozen canonical match / GlobalSlot v4 and
+the existing v13 checkpoint. Actual results remain accepted continuation records;
+the terminal tournament result is derived, never another persisted result ledger.
+
+`adopt-saved-draw` explicitly selects the exact current Saved Calendar/Draw/Input
+and a complete strictly increasing Q/Main round-slot schedule. The source supplies
+`event_level_overrides.native_announcement_week` on its original Run clock.
+Adoption must precede that week; normal Week Transition publishes the public event
+and a whole week passes before play. No date, eligibility, points or rest calibration
+is invented. Physical reachable Saved-envelope/hash/Draw validation is separate
+from mathematical replay and still runs with warmed prefix reads.
+
+Scope: source-authored **Unranked single-week FAX reference geometry**, preserving
+Main24/Q16 and Main32/Q24 capacities and actual BYEs. Original Ranked 80-Edition
+source is NOT enabled through zero-point awards. Inherited native fork remapping,
+revised Draws/replacements, multi-week execution and complete Ranked awards remain
+unsupported. Old schemas, seeds, legacy index bounds and pure domain boundaries stay.
+
+Dedicated real HTTP/SQLite cases exercise actual Q/Main, public announcement,
+partial Next Match Save/reopen, exact retry, terminal confirmation and transition.
+Their disposable sources explicitly author Unranked status/week/announcement;
+they do not prove original full season or 50-season acceptance. Small contract and
+old-golden regressions remain separate. Candidate final-head local/hosted results
+must be recorded in PR; Draft skips are not passing acceptance.
+
+Next finish original Entry/publication/complete Ranked awards/chronology and
+owner-level Admin adoption, then multiple Editions/full season and existing
+50-season/recovery/performance gates. No Master, source Package, canon or calibration
+change. ATP package PRs are separate. Owner alone merges.
+
+---
+
+# Historical Saved-bound feeder kernel — owner-merged as #1746
+
+Current merged base: `buuk` **`7620b89ab53b93780216955a72bd5e4c91f6d691`**
+(owner merge of #1745). Its tree exactly preserves the reviewed player Draw.
+The next candidate derives immutable initial feeder plans from an explicit,
+hash-verified Branch-owned Saved head, its copied Calendar and saved Draw/Input.
+Unsaved live Draws cannot supply that plan; later live edits do not reinterpret it.
+Reload authenticates the original reachable source after further explicit Saves,
+rejecting unreachable or altered serialized plans instead of rebinding to new data.
+
+The canonical node planner shares the existing legacy BYE/Q resolver. It emits
+35 actual Gold match nodes or 51 Platinum nodes; eight BYE nodes are advances,
+not MatchResults. A stateless projection consumes existing continuation records,
+requires the complete Qualification before Main, resolves exact Q1–Q4 opponents,
+and rejects foreign, duplicate, premature, stale-source and wrongly seeded records.
+It does not own a second ledger. New seed v1 uses the saved draw seed, Edition,
+season and canonical node; old native seeds and old topology bytes are unchanged.
+
+Kernel tests play actual MatchEngine Gold35/Platinum51, preserve frozen wave
+inputs, apply existing player effects, and check opposite acceptance order.
+Real SQLite tests explicitly Save/reopen, reject stale heads/corruption and prove
+isolation from changed live data. This is component/kernel + Saved-source evidence,
+**not a native Next Slot/Next Match, season or ranking release pass**. Readiness is
+explicitly `feeder_dependencies_only`, with native execution still false.
+
+Next: bind this plan to versioned native Edition/global-slot/result models and
+existing v13 result ownership, then prove real public Save/resume/restart and
+existing Entry/award/schedule prerequisites. Do not widen legacy match indexes or
+remove the Main4/8 guard. No sporting canon, calibration, Package or Master change.
+ATP package Drafts #1731 → #1741 → #1742 remain separate and untouched. Final-head
+hosted gates and owner merge remain required. See the existing evidence checkpoint.
+
+---
+
+# Historical source-sized player Draw — merged as #1745
+
+Current merged base: `buuk` **`1800697b978a33f6895d2e6a3fa3e77bfb066954`**
+(owner merge of #1744). The complete frontend regression repair is merged; the
+candidate wording in its historical entry below is no longer current.
+
+This isolated candidate connects original Gold Main24/Q16 and Platinum Main32/Q24
+geometry to real-player canonical Entry Field, reviewed WC, Draw Input and Draw.
+Draw Input v12 / `padded_qualification_sections.v3` separates Q admission count
+from physical bracket positions: Platinum admits 24, distributes six per Q1–Q4,
+and places two BYEs per eight-position section. Gold keeps historical v3 input /
+v2 Draw bytes. Main remains 32 physical positions, eight Main BYEs only for Gold,
+and four unresolved Q placeholders. No Q winner or match result is invented.
+
+The source-bound reader loads the copied Run Calendar and authenticated stored
+input/Draw. Focused evidence covers all 80 original source geometries with named
+test players, real HTTP/SQLite commit/retry, Saved component restore, physical
+connection reopen and adversarial source/replay rejection. Test eligibility and
+WC nominations are explicit fixtures, not a new automatic selection policy.
+Candidate tests and exact-head hosted gates are recorded in its PR.
+
+The complete Gold/Platinum sporting path remains blocked on versioned global-slot
+match/result execution, source awards and existing Entry prerequisites. This is
+not a played 80-Edition season, owner-level Save/browser acceptance or a 50-season
+release pass. ATP package Drafts #1731 → #1741 → #1742 are untouched. The sole
+active evidence map remains the existing integration checkpoint below.
+
+---
+
+# Historical frontend regression repair — merged as #1744
+
+Base: merged `buuk` **`7e92ad5ee714092263335420e0f6e8ed0b79a045`**
+(owner merge of the integrated audit #1743). The isolated frontend test repair
+now passes **all 3,423 tests / 364 files**, with zero failures, plus the production
+TypeScript/Vite build. The prior 3,326-pass/88-failure result below is historical.
+These are mocked frontend/component contracts, not new sporting browser or
+HTTP/SQLite execution evidence. No production code, API, fixture source data,
+sporting rule, timeout, CI selector or test-policy gate is changed.
+
+Legacy read mocks, stale labels and removed preview expectations now follow the
+current canonical Saved readers. Ranking ordinals and Race fixture totals are
+internally consistent; exact-player comparisons use actual detail mocks rather
+than the first-50 discovery sample. Nine additional negative/boundary cases cover
+current source contracts. The historical Lab selector test awaits loaded options
+and resets one-shot mocks between cases instead of racing asynchronous inventory.
+
+The candidate still requires final-head hosted checks and owner merge. The next
+functional dependency remains the real source-bound FAX Main/Qualification path;
+the 80-Edition, full season, 50-season, recovery and full-backend release gates
+are not satisfied by this frontend result. Retain the rest of the Master scope.
+See the existing integration checkpoint for the preserved audit and correction.
+
+---
+
+# Historical integrated audit — 6 November 2026
+
+Audited merged `buuk`: **`b666c109b9dc596a6d226025500ceb462a4fff8b`**.
+All 38 reviewed non-package PRs (#1700–#1740, excluding already merged #1701/#1704)
+are present with their exact reviewed heads. All 144 feature-changed files match
+their reviewed feature contents; no merge loss was found. Only ATP package
+Drafts #1731 → #1741 → #1742 remained open at audit time and were not modified.
+
+The single current requirement/evidence map remains
+[the existing integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
+Its 6 November section supersedes older implementation status and task ordering,
+not the complete Master v86 or newer explicit owner decisions. This audit is
+not an internal release declaration.
+
+- Production frontend build passed. The **complete** local frontend suite has
+  **3,326 passes / 88 failures in 13 files**. The pre-batch `a07c5154` suite has
+  3,213 passes / 92 failures; all 88 current failure identities already failed
+  there. No newly failing test was found in that comparison. Failures still
+  require triage and repair; unchanged failures are not release permission.
+- **193 selected backend/tool/domain/HTTP tests passed**, including atomic Save
+  rollback, archive boundaries, backup checks, the three production Labs and
+  paired Match Lab. The separate real one-Edition operator module passed its
+  **two tests**, including MatchEngine, points, manual Save, physical SQLite
+  reopen and exact command retries. This was not the complete backend suite.
+- Current-base Python/Actions/TypeScript CodeQL passed. Sonar remains advisory
+  and red; this audit is not a repository-wide security clearance.
+- The exact current FAX source audit still reports **80/80 Editions blocked**
+  for native execution. The separate topology builds all 80 source-bound graphs;
+  its **3,440 potential matches are a plan, not played matches**. Current native
+  knockout execution still accepts only full ranked Main 4/8; qualification,
+  Gold24/Platinum32, source points and early announcements need real integration.
+- Existing read-only Admin/Viewer helpers, isolated Labs and Windows preview
+  are useful bounded features, not proof of full-season or 50-season completion.
+
+**Next technical work:** triage the 13 failing frontend modules without weakening
+their actual safety contracts, refresh stale test fixtures/guards where proven,
+then prioritize the exact source-bound FAX Main/Qualification execution path.
+Locate genuinely unresolved automatic Entry policy/content decisions before
+their consumer; do not invent awards, silently reduce fields or waive Save/replay.
+No further Viewer expansion or speculative realism tuning outranks this path.
+Retain the rest of the decided pre-alpha scope and full release/recovery gates.
+
+---
+
+# Historical candidate — portable Windows preview, 31 October 2026
 
 Verified base `buuk`: `7a08ff441dd185189638c05dfc3bd33401407b7d`.
 This isolated delivery slice adds a bundled Windows runtime, compiled UI and

@@ -1,0 +1,942 @@
+# SQUASH ENGINE — R008: independent scientific validation methodology
+
+Original source: user-supplied 23-page DOCX "SQUASH ENGINE — R008_ Nezávislá vědecká metodika validace deterministické sportovní simulace.docx", received on 2026-11-01.
+
+**STATUS: RESEARCH / PROPOSAL ONLY. NOT A PASSED VALIDATION OR NEW RELEASE GATE.**
+
+Searchable **text-only extraction** of the DOCX. Original binary DOCX is not committed. Mathematical Word equations, figures, tables, page breaks and source footnote layout may lose fidelity in extraction. Consult the original document if a mathematical formula or value needs exact verification.
+
+The study proposes 15 experiments and a tiered validation methodology; none of those experiments was executed as part of this research archival PR. Any budgets, target metrics, thresholds, pass/fail proposals and baseline descriptions must be checked against current Master, latest `buuk`, existing PR/test coverage and available actual Saved/run data. Only the owner/Work can approve new work scope and product decisions.
+
+----- BEGIN SEARCHABLE REPORT TEXT -----
+
+<PARSED TEXT FOR PAGE: 1 / 23>
+SQUASH ENGINE — R008: Nezávislá vědecká
+metodika validace deterministické sportovní
+simulace
+Co znamená, že je simulátor „realistický“
+Vědecká validace Squash Engine nesmí být postavena na otázce „vypadá výstup
+dobře?“, ale na otázce „jaké konkrétní pozorovatelné důsledky modelu by mohly
+ukázat, že jeho mechanismy jsou špatně?“. To odpovídá klasickému rozlišení
+verification a validation v literatuře o simulacích. Verification zkoumá, zda byl
+zamýšlený model správně implementován; validation zkoumá, zda je zamýšlený
+model dostatečně věrohodnou reprezentací systému pro zamýšlené použití.
+Sargent navíc odděluje konceptuální validitu, verifikaci implementace, validitu
+dat a provozní validitu, takže úspěšný software test ještě není důkazem
+realistického sportovního modelu. [1]
+
+Pro Squash Engine je toto rozlišení mimořádně důležité. Projekt explicitně
+požaduje deterministický modulární engine, injektovanou RNG hierarchii,
+reprodukovatelnost typu (world_state + historicky účinné konfigurace + RNG seed
+hierarchy + command) => identical result, order-independence simultánních
+událostí, historické snapshoty, replay a odmítnutí „ambient randomness“. To jsou
+silné verifikační vlastnosti, nikoli samy o sobě důkazy sportovní validity. [2]
+Repozitář současně sám upozorňuje, že jde o beta/pre-alpha systém v migraci a že
+cílový model a aktuálně implementované schopnosti se nesmějí zaměňovat;
+současný stav stále uvádí neúplné oblasti, například některé Health mechaniky,
+intake, full simulation a kompletní dlouhodobou certifikaci. [3]
+
+Pro tento projekt doporučuji čtyřvrstvou validační hierarchii:
+
+                                                    Typický
+Úroveň           Hlavní otázka    Typický důkaz     způsob selhání
+Pravidla a       Dělá engine      deterministick    výpočet
+algoritmy        přesně to, co    é                 žebříčku je off-
+                 specifikace      unit/integratio   by-one, dvojité
+                 říká?            n/replay testy,   odečtení
+                                  invarianty,       fatigue, jiný
+                                  boundary tests    replay po
+                                                    restartu
+<PARSED TEXT FOR PAGE: 2 / 23>
+                                                     Typický
+Úroveň           Hlavní otázka      Typický důkaz    způsob selhání
+Strukturální     Mají kauzální      monotonicita,    lepší stamina
+sportovní        vztahy             kontrafaktuáln   paradoxně
+plausibilita     správný směr       í experimenty,   zvyšuje
+                 a řád velikosti?   ablace,          zranění;
+                                    elasticity       silnější pole
+                                                     generuje více
+                                                     ranking points
+                                                     bez
+                                                     mechanismu
+Distribuční      Produkuje          empirické CDF,   průměr sedí,
+shoda            model              quantily,        ale model
+                 rozumné            survival         nemá žádné
+                 statistické        curves,          upsety nebo
+                 distribuce?        distance         extrémně
+                                    metrics, held-   těžké chvosty
+                                    out data
+Emergentní       Vzniká ze          ensemble běhů    runaway
+dlouhodobá       subsystémů         10–100 sezón,    feedback,
+věrohodnost      uvěřitelný         generational     zamrzlé
+                 sportovní          tests,           národní
+                 ekosystém?         dominance,       hierarchie,
+                                    mobilita         permanentní
+                                    rankingu         dynastie
+                                                     způsobená
+                                                     mechanickou
+                                                     smyčkou
+
+Model může uspět na kterékoliv vrstvě a selhat na další. Například perfektně
+implementovaný ranking algoritmus může být napájen nerealistickou účastí v
+turnajích. Distribuce délky zápasů může přesně odpovídat datům, přestože
+vzniká nesprávnou kompenzací dvou chybných mechanismů. A padesátiletá
+historie může vizuálně působit přesvědčivě, i když její dynamika závisí na
+jediném extrémně citlivém parametru. To je obecný problém model
+misspecification: dobrý fit některých výstupů neimplikuje správnou datově-
+generující strukturu. White ukázal, že při chybně specifikovaném statistickém
+modelu mohou odhady konvergovat k dobře definovanému, ale nikoli
+„pravdivému“ cíli; analogický princip je zásadní i pro komplexní simulátor. [4]
+<PARSED TEXT FOR PAGE: 3 / 23>
+Nejvyšší validační standard proto není „model reprodukuje PSA“, ale model
+opakovaně přežívá pokusy o falsifikaci na různých úrovních a tam, kde data
+neposkytují jednoznačnou identifikaci, explicitně přiznává nejistotu.
+
+Statistické metody vhodné a nevhodné pro současný engine
+Posterior predictive checks a simulation-based calibration
+Posterior predictive check má přesný Bayesovský význam. Má-li model
+parametr , data a posterior , generuje se
+
+
+
+a pozorované discrepancy se porovnávají s replikovanými . Gelman, Meng a
+Stern formulovali posterior predictive assessment jako nástroj model criticism,
+nikoli jako automatický absolutní „pass/fail“ test. [5]
+
+Současný Squash Engine sám o sobě posterior predictive check nemá. Seed
+není posterior draw parametru. Opakování deterministického programu s
+různými seedy aproximuje distribuci modelových trajektorií pod pevnou
+konfigurací, nikoli posterior predictive distribution. PPC začne být korektní
+teprve tehdy, pokud bude definován statistický calibration model s explicitním
+likelihoodem nebo jinou pravděpodobnostní inferencí nad nejistými parametry.
+
+Totéž ještě silněji platí pro simulation-based calibration. SBC podle Talts et al.
+ověřuje implementaci Bayesovské inferenční procedury tak, že se parametry
+generují z prioru, data z modelu a následně se kontroluje rank-calibration
+posteriorních vzorků. Bez prioru, generativního statistického modelu a posterior
+sampleru není SBC testem Squash Engine. [6]
+
+Je tedy vhodné terminologicky rozlišit:
+
+                        Lze použít přímo na
+                                     dnešní
+                            deterministický
+Metoda                              engine? Poznámka
+Seed ensemble /                           Ano měří variability
+Monte Carlo over                              trajektorií při
+RNG                                           fixních parametrech
+Sensitivity analysis                      Ano parametry lze řízeně
+                                              perturbovat
+Ablace                                    Ano subsystem/effect lze
+<PARSED TEXT FOR PAGE: 4 / 23>
+                       Lze použít přímo na
+                                    dnešní
+                           deterministický
+Metoda                             engine? Poznámka
+                                             vypnout nebo
+                                             neutralizovat
+Bootstrap                              Ano bootstrapuje
+empirických dat                            data/metriky, nikoli
+                                           engine posterior
+Held-out historical                    Ano musí respektovat čas
+evaluation                                 a zabránit leakage
+Distributional                         Ano vhodné pro
+distances                                  univariační i
+                                           multivariační
+                                           výstupy
+Survival analysis                      Ano vhodné pro kariéry,
+                                           injuries, absences
+Rare-event Monte                       Ano s předem
+Carlo                                      definovanou
+                                           událostí a budgetem
+Posterior predictive    Ne bez Bayesovské vyžaduje posterior
+checks                           kalibrace
+Simulation-based        Ne bez Bayesovské testuje posterior
+calibration              inferenční vrstvy inference, ne jen
+                                           simulaci
+
+Sensitivity analysis a identifikovatelnost
+Pro , kde jsou konfigurační parametry a RNG realizace, je potřeba oddělit
+aleatorní variabilitu způsobenou od parametrické nejistoty v . Lokální
+derivace
+
+
+
+je užitečná pro malé perturbace, ale u nelineárních systémů může skrýt
+interakce. Morris elementary-effects design je vhodný jako levný screening
+mnoha vstupů; byl původně navržen právě pro komplikované deterministické
+výpočetní modely. [7] Pro menší množinu důležitých parametrů jsou vhodnější
+variance-based Sobol-type indexy. První řád měří podíl variance výstupu
+<PARSED TEXT FOR PAGE: 5 / 23>
+přiřaditelný jednomu parametru, total-effect index zahrnuje také jeho interakce.
+[8]
+
+Tím vzniká přímo test na double counting. Jestliže parametr injury susceptibility
+sám vysvětluje 10 % variance career length, workload multiplier 8 %, ale jejich
+total-effect indexy jsou například 45 % a 42 %, model obsahuje velmi silnou
+interakci. To nemusí být chyba, ale je to signál k rozebrání kauzální cesty.
+
+Identifikovatelnost je jiná otázka než sensitivity. Parametr může mít silný vliv,
+ale nemusí být identifikovatelný, pokud jiný parametr vytvoří téměř stejný
+výstup. Formálně mohou existovat , ale
+
+
+
+Raue et al. rozlišují strukturální neidentifikovatelnost — více kombinací
+parametrů je matematicky ekvivalentních — a praktickou neidentifikovatelnost
+způsobenou omezenými nebo hlučnými daty. [9]
+
+Pro Squash Engine jsou vysoce rizikové například páry talent variance ×
+development variance, match skill weight × form weight, fatigue
+accumulation × recovery rate, injury incidence × injury duration, country
+participation × player-pool size a ranking-decay × tournament frequency.
+Pokud lze dramaticky měnit jednotlivé parametry a přitom udržet prakticky
+stejné agregáty, nesmí být jejich zvolená hodnota prezentována jako „empiricky
+validovaná“.
+
+Kennedy a O'Hagan ukázali ještě hlubší problém kalibrace deterministických
+computer models: discrepancy mezi realitou a simulátorem může být zaměněna
+za kalibrační parametry. Jinými slovy, model může kompenzovat chybějící
+mechanismus posunem jiného parametru. [10] To je jeden z hlavních důvodů,
+proč R008 doporučuje kalibrovat co nejméně parametrů současně a vždy
+nechávat část observables jako nezávislé validační cíle.
+
+Bootstrap, intervaly, distributional distances a multiplicita
+Jedna simulovaná hodnota není odhad uncertainty. Pro metriky jako průměrná
+délka kariéry, upset rate nebo počet unikátních světových jedniček je vhodné
+reportovat seed-ensemble estimate
+
+
+
+případně quantilové intervaly. Empirická data mohou být bootstrapována;
+bootstrap byl formálně zaveden Efronem jako obecný resamplingový způsob
+<PARSED TEXT FOR PAGE: 6 / 23>
+odhadu sampling distribution statistik. [11] U hierarchických sportovních dat ale
+není vhodné slepě bootstrapovat jednotlivé zápasy, protože výsledky stejného
+hráče nejsou nezávislé. Vhodnější je podle cíle cluster bootstrap po hráčích,
+turnajích nebo sezónách.
+
+Pro distribuční shodu není vhodné optimalizovat jedinou metriku. Praktický
+panel by měl obsahovat CDF/quantile rozdíly a alespoň jednu globální distance
+metric. Energy distance je nulová právě při shodě distribucí a funguje i
+multivariačně. [12] MMD porovnává distribuce přes rozdíl očekávání funkcí v
+reproducing-kernel Hilbert space a poskytuje obecný two-sample framework.
+[13] Wasserstein distance navíc respektuje geometrii hodnot: posun výsledku 3–
+2 na 3–1 je „bližší“ než úplně jiný region distribuce. [14]
+
+Žádná z těchto metrik by ale neměla být používána jako univerzální score pro
+„realism“. Agregací do jediného čísla se ztrácí informace o tom, zda nesoulad
+vzniká ve středu distribuce, v chvostu, u slabých hráčů nebo u elitní špičky.
+
+Při desítkách diagnostik hrozí multiple-comparison fishing. Pokud se například
+provede 100 testů na hladině 0,05, falešné „anomálie“ vzniknou i při správném
+modelu. Benjamini–Hochbergův postup řídí očekávaný false discovery rate a je
+vhodnější než naivní hodnocení každého p-value zvlášť, pokud se skutečně
+používá inferenční testování. [15] Pro Squash Engine je ale ještě lepší předem
+specifikovat několik primárních diagnostik a ostatní označit jako exploratory.
+
+Survival data a rare events
+Kariéry, injuries a absence jsou survival procesy. Hráč aktivní na konci 50leté
+simulace nemá „career length = 50 minus start“; jeho kariéra je right-censored.
+Kaplan–Meierův estimator byl navržen právě pro neúplná survival pozorování a
+umožňuje odhadnout bez označení censored pozorování za skutečné události.
+[16] Stejný princip je nutný při porovnávání času do retirement, času do prvního
+Top 10 nebo délky injury absence. Pro probabilistické survival predikce existují i
+censoring-adjusted Brier-type metriky. [17]
+
+Vzácné události — například 20letá vláda světové jedničky, extrémně dlouhý
+zápas, deset současných zranění v jednom elitním poli nebo malá země
+produkující několik po sobě jdoucích šampionů — nemají být validovány tím, že
+„se v 20 seedech nestaly“. Pro pravděpodobnost je obyčejný Monte Carlo
+extrémně neefektivní. Literatura rare-event simulation proto používá importance
+sampling, splitting a další variance-reduction postupy. [18] V pre-alphě ale není
+nutné tyto sofistikované metody hned implementovat: důležitější je explicitně
+<PARSED TEXT FOR PAGE: 7 / 23>
+označit, že pravděpodobnost extrémně vzácných událostí zatím není statisticky
+identifikována.
+
+Determinismus, RNG a kontrafaktuální experimenty
+Determinismus je pro vědecké testování Squash Engine výhoda, pokud je
+interpretován správně. Pro jednu konfiguraci, jeden kompletní vstupní svět a
+jednu seed hierarchy musí být jedna trajektorie reprodukovatelná. Projekt tuto
+vlastnost uvádí jako architektonický non-negotiable a vyžaduje replay, order-
+independence simultánních událostí a explicitní RNG. [2] Aktuální implementace
+již na různých částech používá deterministic roundtrip, exact
+replay/restart/restore a seed-locked preflight testy, takže tento validační směr
+odpovídá existující architektuře. [19]
+
+Klíčové ale je oddělit reproducibility od fair counterfactual pairing.
+
+Máme-li dva gameplany a , intuitivní experiment používá stejný seed:
+
+
+
+To je princip common random numbers. CRN může výrazně snížit varianci
+rozdílu, pokud odpovědi obou variant zůstávají pozitivně korelované; literatura
+jej používá právě pro porovnávání alternativních simulačních politik. [20] Není
+ale automaticky bezpečný. Glasserman a Yao ukazují, že účinnost CRN závisí
+mimo jiné na strukturálních vlastnostech a timing/event recursions. [21]
+
+Ve Squash Engine vzniká zásadní problém tehdy, když alternativní gameplan
+změní délku rally nebo zápasu. Pokud RNG funguje jako jediný sekvenční proud,
+varianta A může na „náhodu č. 81“ rozhodovat interference, zatímco varianta B
+na stejné číslo rozhoduje únavu nebo úplně jinou rally. Formálně je seed stejný,
+ale latentní experimentální jednotka už spárovaná není.
+
+Proto doporučuji RNG streamy adresovat podle sémantického klíče, ne podle
+pořadí spotřeby:
+
+
+
+„Mechanism“ může rozlišovat například serve outcome, rally control noise,
+officiating, injury hazard, development innovation nebo participation choice.
+Změna délky jednoho zápasu pak nesmí posunout randomness budoucího
+turnaje. Tento návrh přímo podporuje projektový požadavek, aby logicky
+simultánní události nebyly order-dependent. [2]
+<PARSED TEXT FOR PAGE: 8 / 23>
+Ani tak však není správné násilně spárovat všechno. Když gameplan B prodlouží
+zápas o pět rally, rally 61–65 nemají kontrafaktuální protějšek v A. Pro
+výsledkové metriky lze stále porovnávat match-level paired outcome pod
+společným ex ante randomness, ale nelze tvrdit, že každá pozdější rally je „stejná
+náhoda“.
+
+Férový protokol proto potřebuje tři vrstvy párování. Exogenní společná náhoda
+— talent draws, určité injury susceptibility draws, turnajové losy — může být
+sdílena. Endogenně vzniklé události — počet rally, dosažení dalšího kola, nová
+injury exposure — se nesmějí uměle synchronizovat. Post-treatment variables
+— fatigue po zápase, ranking po změně výsledků — se už nesmí používat k
+dodatečnému párování, protože tím by se odstranila část skutečného kauzálního
+efektu.
+
+Branch comparison musí vycházet ze stejného Saved ancestor snapshotu a
+explicitně zaznamenat: ancestor revision hash, configuration fingerprint, seed-
+root fingerprint, seznam sdílených RNG namespaces a seznam namespaces
+vznikajících teprve po branchi. Branch A a B pak mají být analyzovány jako
+paired experimental units, nikoli jako dva nezávislé vzorky.
+
+Saved/Restart invariance je tvrdší požadavek: pokud je stav v čase uložen a
+engine pokračuje do , musí být výsledek bitově nebo canonical-serialization
+identický s nepřerušeným během, pokud se nezměnila konfigurace ani command
+sequence. Totéž platí pro fork vytvořený z historické Saved Revision. Repozitář již
+klade na historickou lineage, immutable Saved Revisions a replay velmi silné
+požadavky, takže toto je především validační formalizace existujícího produktu,
+nikoli návrh nové herní mechaniky. [22]
+
+Hierarchická nejistota musí být reportována podle úrovně, na níž vzniká.
+Hráčská RNG vytváří mezi-player heterogenitu; match RNG vytváří within-player
+match variance; tournament RNG vytváří draw/field variance; season RNG
+vytváří dlouhodobou path dependence. Prostá směrodatná odchylka přes
+všechny zápasy tyto zdroje zamíchá a vytvoří pseudoreplikaci. Experimentální
+jednotkou musí být podle otázky hráč, zápas, turnaj, sezóna nebo celý world seed.
+
+Ekosystém, zpětné vazby a alternativní svět
+Největší riziko komplexního sportovního simulátoru není špatný jednotlivý
+koeficient, ale dvojí nebo trojí započítání téhož efektu v různých
+subsystémech. Squash Engine již propojuje nebo plánuje propojit population, 57-
+backed player state, MatchEngine, Health, Entry, ranking, career a historické
+<PARSED TEXT FOR PAGE: 9 / 23>
+stavy; aktuální repository state zároveň výslovně rozlišuje, co je dnes skutečně
+implementováno a co ještě není plně hotové. [23]
+
+Kritické kauzální řetězce jsou
+
+
+
+
+a na makroúrovni
+
+
+
+Poslední šipka je zvlášť citlivá. V Master/AGENTS je výslovně řečeno, že country
+attributes mohou ovlivňovat sampling, development nebo professional
+conversion, ale nemají přímo vyrábět vyšší innate/generational potential podle
+národnosti ani národní „technical/mental/style DNA“. [2] To je velmi vhodná
+ochrana proti samoposilující národní essentialistické smyčce.
+
+Double counting je potřeba hledat kauzální ablační maticí. Pokud například
+fatigue snižuje rally performance a současně přímo zvyšuje loss probability
+mimo rally engine, je stejný účinek pravděpodobně započten dvakrát. Pokud
+injury susceptibility ovlivní injury incidence, zranění sníží availability a ranking
+pak ještě explicitně penalizuje „injury“ mimo ztracené výsledky, mohou se
+multiplicativně skládat tři sankce. Takové modely mohou pořád reprodukovat
+průměrné ranking mobility, protože jiné parametry se proti nim nakalibrují.
+
+Nejlepší kontrola není kontrolovat každý parametr izolovaně, ale rozložit total
+causal effect přes intervence. Pro mechanismus porovnat:
+
+
+
+a potom postupně neutralizovat jednotlivé mediátory. V deterministickém
+simulátoru to lze prakticky aproximovat paired-branch ablací se stejnou
+exogenní seed strukturou. Pokud součet údajně nezávislých cest výrazně
+přesahuje total effect nebo jedna cesta existuje bez logického mechanismu, je to
+kandidát na double counting.
+
+Horizonty musí být interpretovány odlišně. Jedna sezóna testuje lokální
+mechanismy: rally, match, injury, entry, ranking update. Deset sezón testuje
+career development, retirement, ranking mobility a krátké dynastie. Padesát
+sezón testuje generační obnovu a path dependence. Sto sezón je stress test
+stationarity, nikoli automaticky realistická historická predikce. Pokud se po 80
+<PARSED TEXT FOR PAGE: 10 / 23>
+sezónách zkolabuje player pool nebo koncentrace rankingů diverguje, jde o
+systémovou vlastnost, kterou 5letý test neodhalí.
+
+Co lze a nelze přenést z reálného PSA světa
+Cílem alternativního FAX světa není minimalizovat vzdálenost od všech agregátů
+PSA. To by bylo metodicky chybné, protože podle projektového modelu je svět
+záměrně jiný a i kalendář může mít jiný počet týdnů; repository target například
+podporuje Run-specific počet týdnů s Earth defaultem 52 a FAX referencí 61. [22]
+
+Relativně přenositelné jsou především lokální biologické a sportovní vztahy, ne
+nutně jejich populační agregáty: typický efekt relative skill gap na match win
+probability, vztah dlouhého zápasu k load, pravděpodobnost upsetu podmíněná
+rozdílem výkonnosti, důsledky absence pro odehraný počet zápasů či obecný
+věkový tvar kariérní výkonnosti. I zde je vhodná kalibrace s intervaly, nikoli
+dogmatický copy.
+
+Naopak počet profesionálů, hustota elitního talentu, počet hráčů z jedné
+země v Top 50, počet velkých turnajů, průměrný počet startů za sezonu a
+koncentrace titulů závisejí na velikosti hráčské populace, geografii,
+profesionalizaci a kalendáři. Jejich mechanické kopírování z PSA by mohlo učinit
+alternativní svět méně, ne více konzistentní.
+
+Výrazně závislé na rankingových pravidlech jsou rank turnover, volatilita, čas
+potřebný k Top 10, výhoda aktivních hráčů, důsledky absence a field
+composition. Projekt proto správně deklaruje historicky versioned/configurable
+ranking policies a Best-N inheritance místo jediného globálně natvrdo zapsaného
+rankingu. [2]
+
+Výrazně závislé na kalendáři jsou workload, opportunity count, frequency of
+rematches, injury exposure, ranking point availability a délka effective season.
+Proto není legitimní například požadovat identický počet profesionálních zápasů
+za rok v 61týdenním FAX světě a ve 52týdenním empirickém světě bez
+normalizace na opportunities.
+
+Dlouhá dominance sama o sobě není chyba. V malé elitní populaci s
+persistentním latentním talentem a kumulativními kariérními výhodami může
+být dlouhá série titulů pravděpodobná. Chybou by byla dominance, která vzniká
+kvůli runaway loop — například ranking → lepší entry → výrazně lehčí cesta →
+více ranking → ještě lepší entry — bez dostatečných protivah. Rozdíl lze zjistit
+intervencí, ne pohledem na jednu historii.
+<PARSED TEXT FOR PAGE: 11 / 23>
+A právě proto jeden krásný 50letý run není vědecký důkaz. Je to jedna
+realizace . Nemůže odlišit typický výstup od jednoho šťastného seedu, nemůže
+charakterizovat tail risk a neříká nic o sensitivity na parametry. Prakticky je
+cenný jako exploratory case study, nikoli jako statistická validace.
+
+Experimentální metodika, identifikovatelnost a patnáct
+falsifikačních testů
+Všechny experimenty by měly používat předem zmrazený validation manifest:
+engine commit, config/package hashes, world initial-state fingerprint, seed-set,
+experimentální varianty, primární metriky, tolerance a pass/fail pravidla. Seed-
+set se nesmí dodatečně měnit po zhlédnutí výsledků. Held-out historická evaluace
+má respektovat chronologii; pro time-dependent data je vhodnější rolling-origin
+nebo více historických cutoffs než náhodné promíchání budoucnosti do tréninku.
+[24]
+
+Rozsahy níže nejsou míněny jako nekonečné Monte Carlo benchmarky. U
+drahých 50–100letých runů je statisticky lepší mít desítky nezávislých world
+seeds a rozumné intervaly než požadovat tisíce simulací, které pre-alpha
+nedokáže provozně udržet.
+
+   1. Replay a Saved/Restart invariance. Hypotéza: přerušení, Save, restart a
+      restore nemění sportovní budoucnost. Měřit canonical hash stavů,
+      výsledků, rally logs, ranking snapshots a RNG namespaces před/po restartu.
+      Kontrolní model je nepřerušený běh stejného command sequence. Vstupy:
+      10 reprezentativních světů, běžný zápas, tournament, week boundary a
+      season boundary. Rozsah: přibližně 50–100 párovaných scénářů, bez
+      potřeby dlouhého world simulation. Vyhodnocení: požadovat nulový rozdíl
+      v authoritative state; zde není statistická tolerance správným nástrojem.
+      Bias: testování pouze happy path. Falsifikace: jediný reprodukovatelný
+      rozdíl hypotézu vyvrací. Náročnost nízká až střední. Pre-alpha: kritická.
+      Nové produktové rozhodnutí: ne, jde přímo o existující deterministický
+      kontrakt. [25]
+
+   2. RNG namespace isolation. Hypotéza: nesouvisející mechanismus
+      neovlivní náhodu jiného subsystému pouze změnou počtu RNG calls. Měřit
+      změny budoucích výsledků po vložení inertního RNG-consuming
+      mechanismu nebo po variantě s delším zápasem. Kontrola: semanticky
+      adresované izolované streamy versus současné pořadí spotřeby. Vstupy:
+      stejné player states a seeds. Rozsah: 200–500 match pairs a několik 1-season
+      runs. Vyhodnocení: budoucí non-descendant events mají být identické;
+<PARSED TEXT FOR PAGE: 12 / 23>
+
+   descendant events smějí divergovat. Bias: nesprávná klasifikace toho, co je
+   descendant. Falsifikace: změna nesouvisejícího budoucího eventu je jasné
+   selhání. Náročnost střední. Pre-alpha vysoká. Produktové rozhodnutí: ne,
+   pokud pouze zpřesňuje existující seed-hierarchy invariant.
+
+3. Gameplan paired counterfactual. Hypotéza: změna gameplanu ovlivňuje
+   výsledek přes deklarované mediátory — control, pace, closure pressure a
+   workload — nikoli skrytý přímý bonus. Měřit win probability difference,
+   rally length, load, fatigue a jednotlivé mediated shifts. Kontrola: neutral
+   gameplan a sham gameplan se stejnými deklarovanými parametry. Vstupy:
+   stratifikovaný grid skill gaps × style matchups × fatigue. Rozsah: 500–1 000
+   paired matches na variantu; protože pairing s CRN redukuje varianci, není
+   třeba desítky tisíc. Vyhodnocení: paired effect, interval a dose-response.
+   Bias: CRN může při divergentní délce zápasů ztrácet correlation.
+   Falsifikace: efekt přežije neutralizaci všech deklarovaných mediatorů nebo
+   mění opačný mechanismus. Náročnost střední. Pre-alpha vysoká.
+   Produktové rozhodnutí: ne, pokud se pouze testuje současná V1 kalibrace.
+   [26]
+
+4. Match-engine skill monotonicity a upset calibration. Hypotéza: při
+   ostatních faktorech fixních roste win probability monotonně s latentní
+   výkonnostní výhodou a model stále dovoluje nenulové upsety. Měřit ,
+   match-score distribution a rally-margin distribution. Kontrola: jednoduchý
+   Bradley–Terry/logistic benchmark fitted pouze pro diagnostiku, nikoli jako
+   nový engine. Vstupy: grid 15–20 skill gaps, neutral states. Rozsah: 500
+   matches per grid cell nebo adaptivně méně, pokud intervaly už jsou úzké.
+   Vyhodnocení: monotonicity violations, calibration curve, empirical
+   intervals. Bias: skill gap nemusí zachytit styles. Falsifikace: robustní non-
+   monotonicita bez explicitního matchup mechanismu. Náročnost střední.
+   Pre-alpha velmi vysoká. Produktové rozhodnutí: ne.
+
+5. Rally-to-match aggregation test. Hypotéza: match-level distribuce vzniká
+   skutečně z rally mechanismu, nikoli z agregované kompenzace. Měřit joint
+   distribution rally count, game scores, five-game frequency, point
+   differential a duration/load proxies. Kontrolní model: jednoduchý
+   independent-rally model s konstantní point probability nastavenou tak,
+   aby měl stejnou match win probability. Vstupy: neutral and unequal
+   players. Rozsah: 2 000–5 000 levných match simulations rozdělených přes
+   několik skill strata. Vyhodnocení: energy distance nebo MMD na
+   multivariačním vektoru plus cílené quantily. Bias: kontrolní model je
+<PARSED TEXT FOR PAGE: 13 / 23>
+   záměrně jednoduchý. Falsifikace: engine se od baseline neliší tam, kde by
+   jeho rally state měl vytvářet odlišnou dynamiku, nebo produkuje
+   nerealistické chvosty. Náročnost střední. Pre-alpha vysoká. Produktové
+   rozhodnutí: ne. [27]
+
+6. Fatigue–recovery–load conservation. Hypotéza: fyzická zátěž se
+   započítává právě jednou a recovery nemůže vytvořit energii nad validní
+   baseline. Měřit load increments, recovery trajectory a match-performance
+   changes po kontrolovaných sekvencích. Kontrola: analytický „zero-load“ a
+   „one-match impulse“ scénář. Vstupy: identický hráč, různé délky zápasů a
+   rest intervals. Rozsah: stovky krátkých trajectories, nikoli dlouhé kariéry.
+   Vyhodnocení: conservation/invariant checks a monotonicity. Bias: možné
+   legitimní nelinearity. Falsifikace: dvojitý jump loadu, recovery závislá na
+   nepříbuzném eventu nebo kratší odpočinek systematicky přináší více
+   recovery. Náročnost nízká. Pre-alpha kritická. Produktové rozhodnutí: ne;
+   repo již explicitně požaduje physical work/recovery započítat přesně
+   jednou. [28]
+
+7. Health causal-chain ablation. Hypotéza: zranění ovlivňuje kariéru
+   prostřednictvím deklarovaných kanálů — availability, performance,
+   recovery — a nedochází k redundantní extra sankci. Měřit total effect
+   injury na matches played, ranking, earnings/points proxy a career duration
+   a porovnat jej s mediovanými ablacemi. Kontrola: stejný svět se „health
+   disabled“, dále varianty incidence-only a duration-only. Vstupy: 20–30
+   paired season seeds se stejnými exogenous player draws. Rozsah: 5–10
+   sezón každý; dlouhý horizont zatím není nutný. Vyhodnocení:
+   decomposition of effects a interaction residual. Bias: disabling health může
+   změnit tournament fields a tím celou equilibrium path. Falsifikace:
+   výrazná ranking sankce zůstává i po neutralizaci všech deklarovaných
+   health-mediated cest. Náročnost střední až vysoká. Pre-alpha střední,
+   dokud nejsou numerické Health mechaniky plně implementované.
+   Produktové rozhodnutí: ne pro metodiku, ale test některých větví musí
+   čekat na dokončení mechanismu. Aktuální stav skutečně uvádí numeric
+   Health/healing mezi nedokončenými oblastmi. [23]
+
+8. Ranking policy invariance versus sporting strength. Hypotéza: změna
+   Best-N nebo obdobného ranking pravidla mění ranking a Entry, ale nemění
+   latentní sportovní schopnost hráčů mimo explicitní downstream
+   mechanismy. Měřit rank correlation, Top-N churn, tournament fields a
+   samotné latent performance states. Kontrola: dvě ranking policies nad
+<PARSED TEXT FOR PAGE: 14 / 23>
+   identickými frozen sporting results; druhá fáze dovolí downstream Entry
+   feedback. Vstupy: 10–20 sezonních histories. Rozsah: nejprve deterministic
+   replay bez nových match draws, následně 20 paired 5-season worlds.
+   Vyhodnocení: v první fázi se nesmí měnit sporting facts; v druhé se změny
+   musejí objevit až od Entry descendants. Bias: ranking a scheduling mohou
+   být historicky provázané. Falsifikace: policy rewrite mění pre-existing
+   performance state. Náročnost střední. Pre-alpha vysoká. Produktové
+   rozhodnutí: ne, protože ranking je již historicky versionovaný. [2]
+
+9. Entry–ranking feedback stress test. Hypotéza: ranking advantage
+   nevytváří neomezený positive feedback, který dlouhodobě zamkne elitu.
+   Měřit rank autocorrelation, mobility matrix, probability of Top-10 exit,
+   time-to-Top-10 a koncentraci entry opportunities. Kontrola: random-entry
+   baseline zachovávající field size a slabší „rank-softened“ diagnostic variant.
+   Vstupy: standard population a tournament calendar. Rozsah: 30–50 paired
+   10-season worlds. Vyhodnocení: transition matrices, survival curves a
+   elasticity rank persistence na změnu Entry strength. Bias: random-entry
+   baseline není sportovní návrh, pouze diagnostický kontrolní model.
+   Falsifikace: drobné zvýhodnění rankingu vede k superlineárnímu
+   zamrzání bez jiného mechanismu. Náročnost vysoká. Pre-alpha střední až
+   vysoká. Produktové rozhodnutí: ne, pokud baseline slouží pouze jako
+   experimentální kontrola.
+
+10. Career survival a censoring test. Hypotéza: retirement/career-length
+    mechanismus produkuje stabilní a interpretovatelnou survival dynamiku a
+    závěr simulačního horizontu není mylně považován za retirement. Měřit
+    Kaplan–Meier , hazard podle věku, age-at-peak a censored fraction.
+    Kontrola: analytická nebo jednoduchá age-only hazard baseline. Vstupy:
+    alespoň několik tisíc simulated player careers agregovaných přes 30–50
+    world seeds. Rozsah: 30–50 sezón, protože shorter horizon nedá dostatečný
+    retirement signal. Vyhodnocení: survival curves s intervaly, nikoli průměr
+    samotný. Bias: left truncation u hráčů existujících na začátku Runu.
+    Falsifikace: hraniční spikes způsobené horizontem, patologický hazard
+    nebo nevysvětlitelné cohort differences. Náročnost vysoká. Pre-alpha
+    střední. Produktové rozhodnutí: ne. [16]
+
+11. Parameter identifiability ridge search. Hypotéza: klíčové kalibrační
+    parametry jsou alespoň prakticky rozlišitelné pomocí zvolených
+    observables. Měřit vector discrepancy přes 6–10 orthogonal outputs pro
+    grid nebo Latin-hypercube samples parametrů; hledat vzdálené s
+<PARSED TEXT FOR PAGE: 15 / 23>
+   podobným output vector. Kontrola: známý synthetic model s
+   identifikovatelnými parametry nebo locked-one-parameter fits. Vstupy:
+   například fatigue/recovery, form persistence, talent dispersion,
+   development variance a injury parameters podle aktuálně dostupných
+   modulů. Rozsah: Morris screening cca desítky trajectories; poté 100–300
+   design points pro 4–6 hlavních parametrů, každý s malým seed ensemble.
+   Vyhodnocení: profile plots, equifinality clusters a local condition numbers;
+   ne pouze nejlepší fit. Bias: zvolené summaries mohou zničit identifikační
+   informaci. Falsifikace: široké parameter ridges s téměř shodným score.
+   Náročnost střední až vysoká. Pre-alpha velmi vhodná, protože může
+   zabránit falešné kalibraci před dalšími mechanikami. Produktové
+   rozhodnutí: ne. [29]
+
+12. Global sensitivity and interaction map. Hypotéza: dlouhodobé výstupy
+    nejsou dominovány jedním neintuitivním koeficientem ani skrytými
+    extrémními interakcemi. Měřit sensitivity of Top-10 concentration,
+    champion count, career length, injury burden, ranking turnover a national
+    concentration. Kontrola: Morris screening; pro 5–8 prioritních parametrů
+    následně variance-based first/total effects. Vstupy: definované realistické
+    parameter ranges, ne arbitrární ±100 %. Rozsah: Morris řádově 100–300
+    evaluations; Sobol analysis pouze na zredukované sadě, typicky stovky až
+    nízké tisíce levnějších 10-season evaluations podle runtime. Vyhodnocení:
+    versus , interaction gap . Bias: výsledky závisejí na rozsahu parameter
+    uncertainty. Falsifikace: klíčová realističnost stojí na extrémně úzké
+    hodnotě jednoho parametru nebo interakci bez sportovního zdůvodnění.
+    Náročnost vysoká. Pre-alpha vhodná ve screening verzi; full Sobol později.
+    Produktové rozhodnutí: ne. [30]
+
+13. Held-out historical mechanism test. Hypotéza: parametry odvozené z
+    jedné historické éry zachovají predikční/strukturální kvalitu v jiné éře po
+    normalizaci pravidel a kalendáře. Měřit conditional upset curves, career-
+    age curves, match-score distributions a absence-related observables na
+    předem odděleném období. Kontrola: jednoduché empirical/null models
+    fitted na training period. Vstupy: historická squash data, jejichž definice
+    jsou kompatibilní v čase. Rozsah: několik rolling historical cutoffs; simulace
+    řádově 100–300 season-equivalent replicates podle observablu.
+    Vyhodnocení: out-of-sample discrepancy versus in-sample discrepancy a
+    baseline. Bias: rule/regime changes a selection bias historických databází.
+    Falsifikace: mechanismus fituje pouze období, na kterém byl kalibrován.
+    Náročnost datově vysoká, výpočetně střední. Pre-alpha vhodná pro několik
+<PARSED TEXT FOR PAGE: 16 / 23>
+   stabilních lokálních mechanismů, nikoli pro kompletní FAX agregáty.
+   Produktové rozhodnutí: ne. Rolling-origin validace je standardní způsob,
+   jak zabránit budoucím informacím kontaminovat historickou evaluaci. [31]
+
+14. Generational and national-dynasty stress test. Hypotéza: národní
+    dominance může emergovat, ale nevzniká z přímého nationality→innate-
+    potential shortcut ani nevratného positive feedbacku. Měřit country share
+    of Top 10/50, dynasty length, Herfindahl-type concentration, generational
+    persistence a conditional talent distribution by nationality after controlling
+    population inputs. Kontrola: shuffle nationality labels při zachování všech
+    individual attributes; druhá kontrola neutralizuje country development
+    modifiers. Vstupy: reference FAX population, country attributes a intake.
+    Rozsah: 30–50 world seeds × 50 seasons; pro 100-season stress test 10–20
+    seeds stačí jako diagnostika. Vyhodnocení: empirical distribution of
+    concentration a dynasty duration, ne jediný run. Bias: country population
+    sizes jsou záměrně rozdílné. Falsifikace: innate potential se systematicky
+    liší podle nationality po podmínění na povolené faktory nebo dominance
+    exploduje při malé perturbaci. Náročnost velmi vysoká. Pre-alpha střední;
+    kratší 10–20season proxy může běžet dříve. Produktové rozhodnutí: ne,
+    protože Master již zakazuje national innate/style DNA. [2]
+
+15. Whole-ecosystem 1/10/50/100-season validation ladder. Hypotéza: žádná
+    lokálně validní komponenta nevytváří v dlouhém horizontu nestabilní
+    makrochování. Měřit předem zmrazený panel přibližně 20 ukazatelů:
+    player counts, age structure, starts/player, match-length quantiles, injury
+    burden, rank turnover, Top-N concentration, champion entropy, dynasty
+    length, career survival, national concentration a extreme-event counts.
+    Kontrola: současný engine proti předchozímu release candidate a proti
+    několika transparentním diagnostic baselines; nikoli proti „ideální PSA
+    kopii“. Vstupy: standard reference Run a frozen configuration. Rozsah: 1
+    season 100 seeds; 10 seasons 50 seeds; 50 seasons 30 seeds; 100 seasons 10–
+    20 seeds jako stress-test budget. Vyhodnocení: ensemble distributions,
+    confidence intervals, tail flags, drift v čase a předem definované red/amber
+    zones; nevytvářet jedno composite realism score. Bias: dlouhé runs jsou
+    computationally expensive a parameter uncertainty může být větší než
+    seed variance. Falsifikace: runaway concentration, population
+    collapse/explosion, neomezené career lengths, ranking freeze nebo
+    systematický drift bez mechanického důvodu. Náročnost velmi vysoká,
+    proto má běžet jako release/nightly science gate, ne každé PR. Pre-alpha:
+    ano v omezené 1/10season variantě, 50/100season později. Produktové
+<PARSED TEXT FOR PAGE: 17 / 23>
+      rozhodnutí: pouze tehdy, pokud test odhalí chování, které nelze
+      klasifikovat bez stanovení normativní sportovní tolerance.
+
+Doporučení pro pre-alphu a dlouhodobá validační strategie
+Pro současnou fázi by bylo metodickou chybou zahájit „velkou kalibraci
+realismu“ všech parametrů. Repository state z října 2026 stále uvádí několik
+mechanismů a full simulation jako nedokončené, zatímco deterministické
+match/tournament/ranking/Save/replay schopnosti jsou podstatně dál. [23]
+Nejúčinnější pre-alpha strategie je proto validovat nejprve invarianty a
+kauzální strukturu existujících komponent a teprve potom kalibrovat jejich
+hodnoty.
+
+Priorita má být replay/restart invariance, RNG isolation, match monotonicity,
+rally→match aggregation, fatigue conservation, ranking-policy isolation,
+gameplan counterfactuals a parameter-identifiability screening. Tyto testy
+mohou odhalit hluboké chyby bez toho, aby bylo potřeba mít dokončenou
+100letou ekonomiku sportu.
+
+Druhá vlna by měla začít, jakmile jsou Health, intake, dlouhodobá career AI a
+complete Entry/Tour lifecycle skutečně stabilní. Teprve zde dávají smysl survival
+curves, health ablations, 10season feedback tests a generational dynamics.
+
+Třetí vlna je release science gate: 30–50world ensemble pro padesát sezón,
+vybrané 100season stress tests, global sensitivity, rare-event catalogue a historical
+held-out comparison. Tyto testy by neměly blokovat každý malý PR; měly by být
+verzované stejně jako engine, aby bylo možné říci „release X změnil rank
+mobility o tolik“ místo neurčitého „teď to vypadá realističtěji“.
+
+Empirická validace by měla používat princip separace kalibračních a
+validačních targets. Pokud jsou například match win curves, five-game
+frequency a rally counts použity k ladění match engine, nesmějí být všechny tři
+následně prezentovány jako nezávislý důkaz jeho validity. Alespoň část
+observables musí zůstat held out. Kennedy–O'Haganův calibration framework
+dobře ukazuje, proč fit parametrů sám neřeší model inadequacy. [32]
+
+Pro každý release doporučuji „validation card“ obsahující scope, immutable
+engine/config fingerprint, calibrated parameters, empirical datasets použité ke
+kalibraci, held-out datasets, seeds, diagnostics, známé failures a oblasti, které
+nejsou identifikovatelné. Výsledkem vědecké validace nemá být razítko
+REALISTIC, ale verze tvrzení typu: „Match Engine v85 přežil diagnostiky A–F v
+<PARSED TEXT FOR PAGE: 18 / 23>
+definovaném rozsahu; career Health nebyla validována; national dynasty tail je
+zatím příliš nejistý.“
+
+Velmi důležité je také zavést negative controls. Model, který projde pouze proto,
+že diagnostika je slabá, není validovaný. Každý klíčový experiment by měl být
+zkusmo aplikován na záměrně rozbitou konfiguraci — například 2× fatigue
+accumulation, nulový skill effect, extrémní ranking persistence — a musí tuto
+chybu odhalit. To přímo testuje schopnost diagnostiky falsifikovat, ne pouze
+engine.
+
+Parameter ranges pro sensitivity analysis by neměly být voleny jen technicky.
+Jsou-li rozsahy příliš úzké, sensitivity bude uměle nízká; jsou-li nereálně široké,
+bude dominována nepodstatnými regiony. Literatura variance-based sensitivity
+výslovně chápe sensitivity jako vlastnost modelu společně s distribucí vstupů,
+nikoli absolutní vlastnost parametru. [8]
+
+U dlouhodobé validity je vhodné rozlišovat tři druhy uncertainty:
+
+
+
+tedy variability mezi seedy při fixní konfiguraci a variability způsobené nejistými
+parametry. Později lze přidat třetí složku — structural/model-form uncertainty,
+například dvě plausibilní injury architectures. Ta se nedá legitimně redukovat na
+další random seed.
+
+Otevřené vědecké otázky a závěr výzkumu
+Nejtěžší otevřená otázka Squash Engine není „kolik seedů stačí“, ale které
+vlastnosti světa jsou vůbec identifikovatelné z reálných squashových dat.
+Výsledky zápasů mohou poměrně dobře informovat relative strength, ale
+mnohem hůře oddělují innate talent, development quality, form, hidden injury a
+tactical matchup, pokud všechny ovlivňují stejné výsledky. Profile-likelihood
+literatura ukazuje, že kvalitní fit dat sám o sobě neznamená úzkou identifikaci
+parametrů. [33]
+
+Druhá otázka je, jak silně lze použít reálný sport jako validation target
+alternativního světa. Odpověď by měla být založena na invariancích
+mechanismu, nikoli na kopírování marginals. Přenosnější jsou conditional
+vztahy a fyziologické či soutěžní mechanismy. Méně přenositelné jsou prevalence
+a agregáty silně závislé na velikosti populace, počtu turnajů, entry policy a
+ranking rules.
+<PARSED TEXT FOR PAGE: 19 / 23>
+Třetí otázka je, jak charakterizovat „plausibilní extrém“. Ani dlouhá dominance,
+ani národní dynastie, ani extrémně dlouhá kariéra nejsou automaticky bug.
+Potřebujeme distribuci těchto událostí přes ensemble a mechanistickou diagnózu
+jejich příčiny. Rare-event literature zároveň varuje, že běžný Monte Carlo je pro
+velmi malé pravděpodobnosti neefektivní; absence události v malém vzorku není
+důkazem nemožnosti. [34]
+
+Čtvrtá otázka je nonstationarity. Pokud se world population, tournament density
+nebo ranking policy historicky mění, nelze vyžadovat jednu stacionární distribuci
+pro 100 sezón. Je však možné vyžadovat, aby změny následovaly z explicitních,
+historicky versionovaných příčin. To dobře odpovídá projektové filozofii, která
+odmítá zpětně recomputovat historii z dnešních defaults a ukládá historicky
+účinné konfigurace a snapshoty. [2]
+
+Pátá otázka je model discrepancy. Pokud žádná kombinace parametrů současné
+architektury nedokáže současně reprodukovat několik nezávislých
+mechanismálních targets, správný vědecký závěr není „najít agresivnější
+optimizer“, ale připustit structural misspecification. Whiteho práce i Kennedy–
+O'Haganova kalibrace z různých perspektiv ukazují, proč nelze automaticky
+interpretovat nejlepší fit jako správný model. [35]
+
+Konečný validační standard pro Squash Engine by proto měl být asymetrický:
+realismus nelze definitivně dokázat, ale konkrétní tvrzení o realismu lze
+systematicky vystavovat možnosti selhání. Engine je vědecky silnější tehdy,
+když jeho validační infrastruktura umí jednoznačně říci „toto je špatně“, než
+když umí vytvořit působivou alternativní historii.
+
+Z původní metodologické literatury jsou pro R008 nejdůležitější zejména: R. G.
+Sargent, Verification and Validation of Simulation Models, Journal of Simulation 7,
+12–24, DOI 10.1057/jos.2012.20, který systematizuje verification, conceptual
+validation a operational validation. [36] Andrew Gelman, Xiao-Li Meng a Hal
+Stern, Posterior Predictive Assessment of Model Fitness via Realized Discrepancies,
+Statistica Sinica 6, 733–807, 1996, jako základ posterior predictive checking. [37]
+Sean Talts, Michael Betancourt, Daniel Simpson, Aki Vehtari a Andrew Gelman,
+Validating Bayesian Inference Algorithms with Simulation-Based Calibration, 2018,
+jako základ SBC. [38] Marc Kennedy a Anthony O'Hagan, Bayesian Calibration of
+Computer Models, JRSS B 63, 425–464, 2001, pro calibration a model discrepancy
+deterministických simulátorů. [32] Max Morris, Factorial Sampling Plans for
+Preliminary Computational Experiments, Technometrics 33, 161–174, 1991, pro
+elementary-effects screening. [7] Andrea Saltelli et al., Variance Based Sensitivity
+Analysis of Model Output: Design and Estimator for the Total Sensitivity Index,
+<PARSED TEXT FOR PAGE: 20 / 23>
+Computer Physics Communications 181, 259–270, 2010, pro variance
+decomposition a total effects. [39] Andreas Raue et al., Structural and Practical
+Identifiability Analysis of Partially Observed Dynamical Models by Exploiting the
+Profile Likelihood, Bioinformatics 25, 1923–1929, 2009, DOI
+10.1093/bioinformatics/btp358. [33] Bradley Efron, Bootstrap Methods: Another
+Look at the Jackknife, Annals of Statistics 7, 1–26, 1979, DOI
+10.1214/aos/1176344552. [11] E. L. Kaplan a Paul Meier, Nonparametric Estimation
+from Incomplete Observations, JASA 53, 457–481, 1958. [16] Yoav Benjamini a
+Yosef Hochberg, Controlling the False Discovery Rate: A Practical and Powerful
+Approach to Multiple Testing, JRSS B 57, 289–300, 1995. [15] Gábor Székely a Maria
+Rizzo, Energy Statistics: A Class of Statistics Based on Distances, Journal of
+Statistical Planning and Inference 143, 1249–1272, 2013. [40] Arthur Gretton et al.,
+A Kernel Two-Sample Test, JMLR 13, 723–773, 2012. [41] R. D. Wright a T. E.
+Ramsay, On the Effectiveness of Common Random Numbers, Management Science
+25, 649–662, 1979, a Paul Glasserman a David Yao, Some Guidelines and
+Guarantees for Common Random Numbers, Management Science 38, 884–908,
+1992, pro paired stochastic simulation. [26] Leonard Tashman, Out-of-Sample
+Tests of Forecasting Accuracy: An Analysis and Review, International Journal of
+Forecasting 16, 437–450, 2000, pro temporally poctivou held-out evaluaci. [42]
+Halbert White, Maximum Likelihood Estimation of Misspecified Models,
+Econometrica 50, 1–25, 1982, pro důsledky model misspecification. [4]
+
+Nejsilnější doporučení R008 je proto jednoduché: před další snahou „doladit
+realismus“ vybudovat validační režim, v němž má každý důležitý
+mechanismus definovaný falsifikační test, každý dlouhodobý výstup
+ensemble nejistotu a každý kalibrovaný parametr explicitně uvedeno, zda je
+skutečně identifikovatelný. Pak může Squash Engine věrohodně tvrdit nejen to,
+kde se podobá profesionálnímu squashi, ale především kde zatím nevíme, zda se
+mu podobá — a kde experimenty ukazují, že se mu nepodobá.
+
+
+
+[1] [36] Verification and validation of simulation models: Journal of Simulation:
+Vol 7, No 1
+
+https://www.tandfonline.com/doi/abs/10.1057/jos.2012.20?
+utm_source=chatgpt.com
+
+[2] [25] squash-tour-beta/AGENTS.md at buuk · Jasmetk0/squash-tour-beta ·
+GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/AGENTS.md
+<PARSED TEXT FOR PAGE: 21 / 23>
+[3] [22] [28] GitHub - Jasmetk0/squash-tour-beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta
+
+[4] [35] ECONOMETRICA
+
+https://faculty.utrgv.edu/diego.escobari/teaching/Econ8370/Papers/
+White%281982%29Econometrica-Corey.pdf?utm_source=chatgpt.com
+
+[5] [37] Gelman, A., Meng, X.-L. and Stern, H. (1996). Posterior predictive
+assessment of model fitness via realized discrepancies. Vol.6, No.4.
+
+https://www3.stat.sinica.edu.tw/statistica/j6n4/j6n41/j6n41.htm?
+utm_source=chatgpt.com
+
+[6] [38] Validating Bayesian Inference Algorithms with Simulation-Based
+Calibration
+
+https://arxiv.org/abs/1804.06788?utm_source=chatgpt.com
+
+[7] [29] Factorial Sampling Plans for Preliminary Computational Experiments:
+Technometrics: Vol 33, No 2
+
+https://doi.org/10.1080/00401706.1991.10484804?utm_source=chatgpt.com
+
+[8] [30] [39] Variance based sensitivity analysis of model output. Design and
+estimator for the total sensitivity index - ScienceDirect
+
+https://doi.org/doi%3A10.1016/j.cpc.2009.09.018?utm_source=chatgpt.com
+
+[9] OPUS 4 | Structural and practical identifiability analysis of partially observed
+dynamical models by exploiting the profile likelihood
+
+https://opus.bibliothek.uni-augsburg.de/opus4/frontdoor/index/index/docId/
+113236?utm_source=chatgpt.com
+
+[10] [32] Abstract: Bayesian Calibration of Computer Models
+
+https://www.tonyohagan.co.uk/academic/abs/calib.html?utm_source=chatgpt.com
+
+[11] Vol. 7, No. 1, Jan., 1979 of The Annals of Statistics | JSTOR
+
+https://www.jstor.org/stable/i348796?utm_source=chatgpt.com
+
+[12] [27] [40] Author's personal copy
+
+https://pages.stat.wisc.edu/~wahba/stat860public/pdf4/Energy/JSPI5102.pdf?
+utm_source=chatgpt.com
+<PARSED TEXT FOR PAGE: 22 / 23>
+[13] [41] A Kernel Two-Sample Test
+
+https://www.jmlr.org/papers/v13/gretton12a.html?utm_source=chatgpt.com
+
+[14] Statistical Aspects of Wasserstein Distances | Annual Reviews
+
+https://www.annualreviews.org/content/journals/10.1146/annurev-
+statistics-030718-104938?utm_source=chatgpt.com
+
+[15] J. R. Statist. Soc. B (1995)
+
+https://botanika.prf.jcu.cz/suspa/vyuka/materialy/FDR.pdf?
+utm_source=chatgpt.com
+
+[16] Nonparametric Estimation from Incomplete Observations
+
+https://jhanley.biostat.mcgill.ca/bios601/SurvivalAnalysis/KaplanMeier1958.pdf?
+utm_source=chatgpt.com
+
+[17] Assessment and comparison of prognostic classification schemes for survival
+data.
+
+https://pubmed.ncbi.nlm.nih.gov/10474158/?utm_source=chatgpt.com
+
+[18] [34] Introduction to Rare Event Simulation | Springer Nature Link
+
+https://link.springer.com/book/10.1007/978-1-4757-4078-3?
+utm_source=chatgpt.com
+
+
+[19] [23] squash-tour-beta/CURRENT_STATE.md at buuk · Jasmetk0/squash-tour-
+beta · GitHub
+
+https://github.com/Jasmetk0/squash-tour-beta/blob/buuk/CURRENT_STATE.md
+
+[20] [26] On the Effectiveness of Common Random Numbers | Management
+Science
+
+https://pubsonline.informs.org/doi/pdf/10.1287/mnsc.25.7.649?
+utm_source=chatgpt.com
+
+[21] Some Guidelines and Guarantees for Common Random Numbers |
+Management Science
+
+https://doi.org/10.1287%2Fmnsc.38.6.884?utm_source=chatgpt.com
+
+[24] [31] [42] Out-of-sample tests of forecasting accuracy: an analysis and review -
+ScienceDirect
+<PARSED TEXT FOR PAGE: 23 / 23>
+https://www.sciencedirect.com/science/article/pii/S0169207000000650?
+utm_source=chatgpt.com
+
+[33] Structural and practical identifiability analysis of partially observed
+dynamical models by exploiting the profile likelihood - PubMed
+
+https://pubmed.ncbi.nlm.nih.gov/19505944/?utm_source=chatgpt.com
+
+----- END SEARCHABLE REPORT TEXT -----

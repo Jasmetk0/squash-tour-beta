@@ -1,0 +1,2555 @@
+# Gemini Deep Research: Epidemiologie zranění a rekonvalescence ve Squash Engine
+
+Original source: user-supplied DOCX "Výzkum Zranění pro Squash Engine.docx" (59 pages; received 2026-11-01).
+**Status:** RESEARCHED / UNVERIFIED. **Provisional research candidate R005; not formally numbered or owner-approved.**
+
+**Text-fidelity warning:** this is a searchable extraction of the original DOCX, not a copy of the original DOCX. It contains page labels but is LOSSY for Word equations, embedded figures, graphs, table alignment, footnote markers and text in images; do not implement numerical parameters from this extraction. The original DOCX, containing charts, is not committed to this PR.
+
+**Authority warning:** this report mixes original sports-study data, inference and proposals; all calculations, claims, injury rates, models, release criteria and sport mechanics require independent review. This archive does not override the Master or the existing Health V1 contract. See INDEPENDENT_CRITICAL_REVIEW_AND_HANDOFF.md for specific identified errors.
+
+----- BEGIN SEARCHABLE DOCUMENT TEXT EXTRACTION -----
+
+<PARSED TEXT FOR PAGE: 1 / 59>
+Epidemiologie zranění, dynamika
+rekonvalescence a modelování
+zdravotních přerušení kariéry v
+profesionálním squashi: Výzkumná
+architektura pro deterministický
+simulátor Squash Engine
+1. Executive Summary
+Vytvoření věrného, dlouhodobě stabilního modelu zdravotních událostí pro deterministický
+simulátor profesionálního mužského squashového okruhu FAX (Squash Engine) vyžaduje
+opuštění naivního pojetí zranění jako binárního náhodného šoku. Empirická evidence ze
+sportovní medicíny a epidemiologie raketových sportů ukazuje, že zdraví elitního squashisty
+není diskrétním přepínačem mezi plnou kondicí a dlouhodobou absencí, nýbrž spojitým,
+expozicí modulovaným stavovým prostorem1. Profesionální squash kombinuje vysokou
+metabolickou a termoregulační zátěž, při níž srdeční frekvence dosahuje až 92 % maxima a
+teplota tělesného jádra 86 % kritického maxima, s extrémním mechanickým přetížením
+pohybového aparátu pramenícím z opakovaných výpadů (lunges), prudkých decelerací, změn
+směru (change of direction, COD) a asymetrických švihových pohybů v uzavřeném prostoru
+kurtu4.
+Důkladná dekonstrukce nejnovější systematické přehledové studie a meta-analýzy McCartney,
+Fallon a Heron (2026) (Squash Under Strain, Sports, 14(2):79, DOI: 10.3390/sports14020079,
+PMID: 41745681) odhaluje, že publikovaná sdružená míra incidence (0,74 zranění na 365 dnů
+sportovce, 95% CI: 0,26–2,07; resp. 2,01 zranění na 1 000 dnů sportovce, 95% CI: 0,72–5,67)
+vykazuje extrémní statistickou heterogenitu (                 ,                 ,
+                )4. Hloubková metodická analýza primárních dat (Tabulka 2 v McCartney et al.,
+2026) prokazuje, že tato heterogenita není odrazem biologické nepředvídatelnosti squashe,
+nýbrž přímým matematickým artefaktem smísení nekompatibilních jmenovatelů a výzkumných
+designů4. Zatímco nemocniční a klinické kazuistiky (Chard & Lachmann, 1987; Eime et al., 2003)
+zahrnovaly do jmenovatele pouze zraněné pacienty po dobu kalendářního trvání
+retrospektivního auditu (čímž uměle stlačily incidenci na         až    zranění na 1 000
+kalendářních dnů) , krátkodobé průřezové dotazníky s 28denním oknem (Meyer et al., 2007)
+                  4
+
+
+vygenerovaly zdánlivou incidenci          zranění na 1 000 dnů při současně vykázané expozici
+<PARSED TEXT FOR PAGE: 2 / 59>
+pouhých         zranění na 1 000 odehraných hodin4. Převzetí sdružené hodnoty        na 1
+000 dnů jako fixní denní pravděpodobnosti zranění by v architektuře Squash Engine vedlo k
+hrubému zkreslení sezónní nemocnosti a k odtržení zdravotního rizika od skutečné zápasové a
+tréninkové expozice.
+Pro návrh zdravotní vrstvy Squash Engine plynou z provedeného výzkumu čtyři klíčové
+architektonické závěry. Prvním je dominance měkkých tkání dolních končetin a bederní páteře
+v elitním mužském squashi. V jediné dlouhodobé kohortové studii profesionálních hráčů
+(Horsley, O'Donnell, & Leeder, 2020;            elitních anglických hráčů sledovaných 11 let v
+letech 2004–2015) připadalo v průměru 8,83 zranění na hráče za 11 let (592 zranění celkem)4.
+Zranění dolních končetin tvořila 76,48 % všech záznamů (zejména oblast kotníku, paty a
+kolene) a poranění měkkých tkání představovala 71,11 % všech případů4. Mezi poraněními
+trupu a páteře dominovala bederní oblast (46,07 %), následovaná krční (25,84 %) a hrudní
+páteří (20,22 %), zatímco horní končetina tvořila pouze 8,45 % všech případů, přičemž však 50
+% elitních hráčů prodělalo během sledovaného období alespoň jedno poranění ramene4.
+Druhým pilířem je převaha drobných a středních přetížení nad katastrofickými traumaty.
+Prospektivní sledování tréninkové a soutěžní expozice (Rejeb et al., 2017) dokládá, že v
+soutěžním squashi převažují zranění z chronického přetížení (overuse, 4,7 na 1 000 h, 95% CI:
+3,8–5,6) nad akutními traumaty (3,3 na 1 000 h, 95% CI: 2,6–4,1) při celkové incidenci 8,5
+zranění na 1 000 hodin expozice1. Celých 87,0 % zaznamenaných zdravotních událostí je
+mírné (53,0 %) nebo střední (34,4 %) závažnosti a pouze 13,0 % představuje závažná zranění1.
+Kromě zranění vedoucích k reálné absenci (time-loss, TL; 4,8 na 1 000 h) existuje souběžná
+vrstva zdravotních omezení bez ztráty tréninkového či soutěžního času (non-time-loss, NTL;
+0,7 na 1 000 h v klinickém registru, avšak až 42 % hráčů v dotazníkových šetřeních uvádí bolest
+při hře bez jasného traumatického mechanismu)1.
+Třetím závěrem je odmítnutí statistických artefaktů ACWR a zavedení vícestavového kontinua
+návratu do hry (RTS). Populární index poměru akutního a chronického zatížení (Acute:Chronic
+Workload Ratio, ACWR) trpí závažným matematickým spřažením (mathematical coupling) a
+vytváří falešně pozitivní predikce rizika i při nahrazení chronické zátěže náhodným šumem
+(Impellizzeri et al., 2020)12. Namísto pevných prahů ACWR musí simulátor modelovat nelineární
+interakci okamžité únavy, kumulativního opotřebení tkání a předchozí historie zranění. Návrat
+po střednědobé a dlouhodobé absenci nesmí probíhat skokovým přepnutím do plné
+výkonnosti, ale podle Bernského konsenzu (Ardern et al., 2016) jako třífázové kontinuum
+postupující od návratu k tréninkové participaci (Return to Participation) přes návrat do soutěže
+(Return to Sport) se zvýšenou vulnerabilitou a dočasným deficitem zápasové ostrosti až po
+návrat na plnou výkonnost (Return to Performance)3.
+Čtvrtým architektonickým principem je ochrana determinismu a ortogonalita vůči únavě a
+Formě. Aby zdravotní systém v pre-alphě a navazujících verzích Squash Engine neduplikoval již
+existující mechaniky krátkodobé zápasové výdrže (stamina), dlouhodobé únavy (cumulative
+fatigue) a Form, musí být fyziologická únava modelována jako predisponující modulátor
+<PARSED TEXT FOR PAGE: 3 / 59>
+hazardu (upstream hazard multiplier), zatímco zranění představuje strukturální tkáňovou
+událost s vlastní dobou hojení a lokální pamětí vulnerability. Veškeré stochastické přechody
+zdravotních stavů musí čerpat z dedikovaného, kryptograficky či hierarchicky izolovaného
+proudu generátoru pseudonáhodných čísel (rng_health), aby úprava parametrů zranění nikdy
+nerozbila reprodukovatelnost losů či výměn v nesouvisejících větvích simulace.
+
+2. Dostupná squash-specific epidemiologie
+Vědecká literatura zaměřená na epidemiologii zranění a onemocnění ve squashi prošla v
+posledních čtyřech dekádách vývojem od izolovaných nemocničních kazuistik k prvním
+longitudinálním sledováním elitních národních týmů4. Zásadním milníkem pro syntézu těchto
+poznatků před olympijskou premiérou squashe v Los Angeles 2028 je systematické review a
+meta-analýza McCartney, Fallon a Heron (2026), publikovaná v časopise Sports (Basel)4.
+Kritická dekonstrukce meta-analýzy McCartney et al. (2026)
+Studie McCartney et al. (2026) postupovala podle protokolu PRISMA (registrace PROSPERO:
+CRD420251081709) a prohledala databáze MEDLINE, Embase a Web of Science od jejich
+počátku do 12. června 20254. Z celkového počtu 369 identifikovaných záznamů splnilo inkluzní
+kritéria 12 primárních studií4. Autoři aplikovali model náhodných efektů (random-effects
+model) na 8 studií, u nichž bylo možné rekonstruovat počet sledovaných dnů, počet aktivních
+účastníků a celkový počet zranění, a dospěli ke sdružené míře incidence 0,74 zranění na 365
+dnů sportovce (95% CI: 0,26–2,07), což odpovídá 2,01 zranění na 1 000 dnů sportovce (95%
+CI: 0,72–5,67)4.
+Samotní autoři však důrazně varují před nekritickou interpretací tohoto čísla, neboť model
+vykázal extrémní statistickou heterogenitu:                   , Cochranovo
+                                (               ) a rozptyl mezi studiemi                 4
+                                                                                             .
+
+Hodnota    blížící se 100 % indikuje, že prakticky veškerá variabilita mezi primárními studiemi
+je způsobena skutečnými metodickými a populačními rozdíly, nikoliv náhodnou výběrovou
+chybou v rámci homogenní populace4.
+<PARSED TEXT FOR PAGE: 5 / 59>
+Přesná matematická dekonstrukce Tabulky 2 z publikace McCartney et al. (2026) ukazuje,
+jakým způsobem vznikl rozptyl od       do          zranění na 1 000 dnů sportovce4. Autoři
+meta-analýzy definovali počet „dnů sportovce“ (athlete-days) jako součin celkového počtu
+kalendářních dnů trvání studie (        ) a celkového počtu zahrnutých osob (              )4:
+
+
+
+
+Tento vzorec je epidemiologicky validní pouze tehdy, pokud je               uzavřená kohorta
+zdravých i zraněných sportovců sledovaná po celou dobu              . V meta-analýze však byl
+tento vzorec aplikován na tři zcela odlišné typy dat . Prvním zdrojem zkreslení je artefakt
+                                                      4
+
+klinických a nemocničních kazuistik, v nichž se počet zaznamenaných zranění rovná počtu
+přijatých pacientů (                           ). Studie Chard a Lachmann (1987) analyzovala 372
+zraněných squashistů, kteří během 8 let (                           ) vyhledali ošetření na
+specializované klinice sportovních úrazů . Protože každý zaznamenaný pacient představoval
+                                           4
+
+
+jedno zranění (                    ), dosazení do vzorce vedlo k algebraickému vykrácení počtu
+hráčů:
+
+
+
+
+Naprosto stejný algebraický artefakt nastal u australské nemocniční studie Eime et al. (2003),
+kde 389 hospitalizovaných či ambulantně ošetřených případů za 6 let (                  )
+vygenerovalo                                                                  4
+                                                                               . Tyto hodnoty ve
+skutečnosti neměří riziko zranění squashisty, ale převrácenou hodnotu délky trvání klinického
+auditu.
+Druhým zdrojem zkreslení na opačném konci spektra je artefakt krátkého retrospektivního
+okna ve studii Meyer et al. (2007). Tato práce sledovala 106 dospívajících hráčů v Jihoafrické
+republice pomocí dotazníku mapujícího předchozí 4 týdny (                      ), v nichž 31
+hráčů nahlásilo celkem 48 zdravotních potíží, včetně 42 % případů bolesti bez traumatického
+mechanismu4. Dělení 48 událostí                             dny vedlo k hodnotě 16,17 zranění na
+1 000 dnů . Pokud by se tato míra lineárně extrapolovala na celý rok, znamenalo by to 5,90
+           4
+
+zranění na hráče ročně, ačkoliv samotní autoři Meyer et al. (2007) při přepočtu na
+odhadovanou dobu hraní uvedli pouhých 0,45 zranění na 1 000 hodin expozice4.
+Třetí a pro naši doménu nejrelevantnější kategorii představuje dlouhodobý registr elitních
+profesionálů Horsley et al. (2020). Retrospektivní analýza lékařských záznamů 67
+<PARSED TEXT FOR PAGE: 6 / 59>
+profesionálních hráčů financovaných organizací England Squash v letech 2004–2015 (
+                      ) zaznamenala 592 zranění, tedy 8,83 zranění na hráče za 11 let4.
+Přepočet v Tabulce 2 McCartney et al. (2026) předpokládá, že všech 67 hráčů bylo v systému
+přítomno po celých 4 015 dnů současně (                                                      ,
+tedy                                                       )4. V realitě však hráči do národního
+programu vstupovali a vystupovali z něj v průběhu 11 let (věkové rozpětí 18–35 let)17, což
+znamená, že skutečný počet aktivních hráčsko-roků byl nižší než                       a reálná
+roční incidence u aktivního profesionála činila přibližně 1,2 až 1,8 lékařsky evidovaného
+zranění na hráče za sezónu.
+Přehled primárních studií a jejich metodických parametrů
+Pro zajištění plné vědecké transparence a přesné kalibrace v rámci Squash Engine shrnuje
+následující tabulka kompletní soubor 12 primárních studií zahrnutých v McCartney et al. (2026)
+doplněný o klíčový epidemiologický přehled Finch a Eime (2001) a související kohortové zdroje,
+včetně přesných bibliografických identifikátorů, definic a jednotek4.
+
+
+
+ Studie              Design studie      Populace,           Definice           Publikované
+ (Autoři, rok,       a sledované        velikost            zranění /          míry
+ publikace /         období             vzorku (NNN)        zdravotního        incidence,
+ identifikátor)                         a věk / úroveň      problému           prevalence a
+                                                                               rozložení
+                                                                               (včetně
+                                                                               jednotek a
+                                                                               jmenovatelů)
+
+
+ McCartney,          Systematické       12 primárních       Heterogenní        Sdružená
+ Fallon, &           review a meta-     studií (8 studií    napříč             incidence:
+ Heron (2026),       analýza            v kvantitativní     studiemi (od       0,74 zranění /
+ Sports (Basel),     (PRISMA, do        meta-analýze)4      bolesti při hře    365 dnů
+ 14(2):79, DOI:      12. 6. 2025)4                          po                 sportovce
+ 10.3390/sports                                             hospitalizaci a    (95% CI: 0,26–
+ 14020079,                                                  náhlé úmrtí)4      2,07); 2,01 / 1
+ PMID:                                                                         000 dnů
+ 417456814                                                                     sportovce
+                                                                               (95% CI: 0,72–
+                                                                               5,67);
+
+
+                                                                               ,
+<PARSED TEXT FOR PAGE: 7 / 59>
+                                                                          . Rozptyl
+                                                                          hodinové
+                                                                          incidence:
+                                                                          0,45–18,3 / 1
+                                                                          000 h4.
+
+Horsley,           Retrospektivní                       Lékařsky a        Celkem 592
+O'Donnell, &       kohortová           elitních         fyzioterapeutic   zranění;
+Leeder             analýza             anglických       ky evidovaná      průměr 8,83
+(2020),            lékařských          profesionálníc   poranění          zranění na
+Physical           záznamů             h hráčů (18–35   (měkké tkáně,     profesionální
+Therapy in         (2004–2015, 11      let)             akutní            ho hráče za 11
+Sport, 46, 1–610   let / 4 015         financovaných    traumata,         let (bez
+                   dnů)4               England          přetížení)        záznamu
+                                       Squash4          během             hodinové
+                                                        tréninku a        expozice; v
+                                                        soutěží11         přepočtu na
+                                                                          plné okno
+                                                                          2,20 / 1 000
+                                                                          dnů). Dolní
+                                                                          končetiny
+                                                                          76,48 %,
+                                                                          měkké tkáně
+                                                                          71,11 %, horní
+                                                                          končetiny 8,45
+                                                                          % (50 % hráčů
+                                                                          mělo zranění
+                                                                          ramene).
+                                                                          Páteř: bederní
+                                                                          46,07 %, krční
+                                                                          25,84 %,
+                                                                          hrudní 20,22
+                                                                          %4.
+
+Rejeb,             Prospektivní        Mládežnická      Lékařsky          Squash: 8,5
+Johnson,           kohortová           multisportovní   registrovaná      zranění / 1
+Vaeyens,           studie (5 let / 1   akademie         zranění: Time-    000 h
+Horobeanu,         610 dnů)4           (squashová       Loss (TL), Non-   expozice
+Farooq, &                              kohorta          Time-Loss         (nejvyšší ze
+<PARSED TEXT FOR PAGE: 8 / 59>
+Witvrouw                                             (NTL), přetížení   sledovaných
+(2017), Eur. J.                     hráčů, ~153      (overuse),         sportů;
+Sport Sci.   1
+                                    zranění)4        akutní a
+                                                     růstové potíže1    oproti šermu).
+                                                                        Ve squashi
+                                                                        přetížení 4,7 /
+                                                                        1 000 h (95%
+                                                                        CI: 3,8–5,6) vs.
+                                                                        akutní 3,3 / 1
+                                                                        000 h (95% CI:
+                                                                        2,6–4,1). V celé
+                                                                        kohortě: TL 4,8
+                                                                        / 1 000 h (87
+                                                                        %), NTL 0,7 / 1
+                                                                        000 h;
+                                                                        závažnost:
+                                                                        53,0 % mírná,
+                                                                        34,4 % střední,
+                                                                        13,0 % vážná1.
+
+Jhamb &           Průřezová                          Zranění            86,0 % (
+Singh (2022),     observační        indických        vyžadující                     )
+cit. v            studie4           klubových        lékařskou péči     utrpělo takové
+McCartney et                        hráčů            a více než 2       zranění;
+al. (2026)4                         (průměrný věk    týdny mimo         průměrná
+                                    41 let;          hru7               doba do
+                                    průměrný věk                        zotavení činila
+                                    v době zranění                      5,8 měsíce.
+                                    34 let)7                            Dolní část zad
+                                                                        31,7 %, horní
+                                                                        končetina
+                                                                        19,23 %7.
+
+Sankaravel,       Průřezová                          Muskuloskelet      Prevalence
+Lee, Mondam,      studie            mladých          ální (MSK)         83,33 % za 12
+& Low (2017),     (12měsíční        malajsijských    zranění za         měsíců.
+cit. v            retrospektiva /   squashistů (50   posledních 12      Zápěstí a ruka
+McCartney et      365 dnů)4         zaznamenanýc     měsíců11           31,7 %, dolní
+al. (2026)   4
+                                    h zranění v                         část zad 31,7
+<PARSED TEXT FOR PAGE: 9 / 59>
+                                   Tabulce 2)4                          %, rameno
+                                                                        25,0 %, loket
+                                                                        8,3 %11.
+
+Talabi et al.    Deskriptivní      Nigerijští hráči   Poranění          Poranění
+(2014) /         průřezová         squashe   11
+                                                      měkkých tkání     měkkých tkání
+Akinbo et al.,   studie   4
+                                                      (natažení,        tvořila 85,0 %
+cit. v                                                podvrtnutí,       všech
+McCartney et                                          přetížení,        hlášených
+al. (2026)4                                           akutní            zranění; horní
+                                                      trauma)11         končetina 15,5
+                                                                        % (z toho loket
+                                                                        6,2 %
+                                                                        celkových
+                                                                        zranění)11.
+
+Okhovatian &     Průřezová                            Jakékoliv         78,8 % (
+Ezatolahi        studie (2letá     íránských          hlášené
+                                                                                   )
+(2009), cit. v   retrospektiva /   hráčů squashe      squashové
+                                                                        utrpělo
+McCartney et     730 dnů)4         (91 zranění        zranění v
+                                                                        alespoň 1
+al. (2026)4                        celkem)4           průběhu 2 let11   zranění
+                                                                        (průměr 1,75
+                                                                        zranění na
+                                                                        hráče za 2
+                                                                        roky). Bolest
+                                                                        dolní části zad
+                                                                        36,5 %, loket
+                                                                        21,0 %4.
+
+Meyer, Van       Průřezový                            Muskuloskelet     29,0 % (
+Niekerk,         dotazníkový       dospívajících      ální potíže či             )
+Prinsloo,        průzkum (4        hráčů squashe      bolest při hře    zraněno za 4
+Steenkamp, &     týdny / 28        v Západním         za poslední 4     týdny (48
+Louw (2007),     dnů)4             Kapsku, JAR11      týdny9            zranění
+cit. v                                                                  celkem); 0,45
+McCartney et                                                            zranění / 1
+al. (2026)4                                                             000
+                                                                        odehraných
+                                                                        hodin (resp.
+<PARSED TEXT FOR PAGE: 10 / 59>
+                                                                               16,17 / 1 000
+                                                                               dnů). Stehno
+                                                                               19 %, rameno
+                                                                               13 %, dolní
+                                                                               část zad 13 %.
+                                                                               42 % bez
+                                                                               specifického
+                                                                               traumatického
+                                                                               mechanismu4.
+
+Persic et al.     Průřezová           Hráči squashe     Orofaciální a          Zlomeniny
+(2006), cit. v    observační          (strukturovaný    dentální               korunek,
+McCartney et      studie4             dotazník)11       poranění4              avulze a
+al. (2026)4                                                                    subluxace
+                                                                               zubů v
+                                                                               důsledku
+                                                                               úderu raketou
+                                                                               či míčkem při
+                                                                               nízkém
+                                                                               využívání
+                                                                               ochranných
+                                                                               brýlí a chráničů
+                                                                               zubů4.
+
+Parkkari et al.   Populační                             Nové akutní            18,3 zranění /
+(2004), Int. J.   kohortová           aktivních hráčů   nebo                   1 000
+Sports Med.,      studie ve           squashe v         přetěžovací            odehraných
+25, 2094          Finsku (365         populačním        zranění                hodin (95% CI:
+                  dnů)4               vzorku (17        (Stupeň I: bez         11,4–29,4);
+                                      zranění)4         ztráty času; II:       rozpětí
+                                                               trénink;        rizikových
+                                                                               sportů 6,6–
+                                                        III:
+                                                                               18,3 / 1 000 h4.
+                                                        pracovní den)      4
+
+
+
+Eime, Zazryn,     Retrospektivní                        Těžká zranění          80,9
+& Finch           epidemiologick      nemocničních      vyžadující             nemocničně
+(2003), Inj.      á studie (6 let /   případů ve        ošetření na            ošetřených
+Control Saf.      2 190 dnů)4         státě Victoria,   urgentním              hráčů na 100
+Promot.4                              Austrálie4        příjmu (ED)            000 hráčů
+<PARSED TEXT FOR PAGE: 11 / 59>
+                                                    nebo                (resp. 58
+                                                    hospitalizaci   4
+                                                                        hospitalizací na
+                                                                        100 000 hráčů
+                                                                        squashe a
+                                                                        racketballu)4.
+
+Chard &          8letá                              Zranění             80 % akutní
+Lachmann         retrospektivní     zraněných       vyžadující          traumata, 20
+(1987), Br. J.   klinická analýza   hráčů squashe   vyšetření na        % zranění z
+Sports Med.4     (2 920 dnů)4       (59 % ze 621–   nemocniční          přetížení.
+                                    631 úrazů v     klinice             Koleno 23 %,
+                                    raketových      sportovních         kotník 13 %,
+                                    sportech)4      úrazů8              bederní páteř
+                                                                        10–16 %, loket
+                                                                        ~7 %,
+                                                                        zápěstí/ruka
+                                                                        6–7 %. 59 %
+                                                                        zraněných bylo
+                                                                        starších 25 let4.
+
+Berson et al.    Retrospektivní                     Disabling           44,5 % (
+(1981), cit. v   dotazníková        rekreačních     injury: zranění               )
+McCartney et     studie4            hráčů squashe   vyřazující          zraněných
+al. (2026)4                         (69             hráče z akce        hráčů. Rameno
+                                    zraněných)4     na více než 2       13 %, bederní
+                                                    týdny4              páteř 10–16 %
+                                                                        (polovina
+                                                                        případů bolesti
+                                                                        zad vedla k
+                                                                        absenci
+                                                                        týdny). Vyšší
+                                                                        vulnerabilita a
+                                                                        delší
+                                                                        rekonvalescen
+                                                                        ce u hráčů
+                                                                               let4.
+
+Northcote et     8,5letá                            Náhlá srdeční
+                                                                        85 % (           )
+al., cit. v      retrospektivní     fatálních       smrt / fatální
+                                                                        způsobeno
+<PARSED TEXT FOR PAGE: 12 / 59>
+ McCartney et         studie náhlých    kardiovaskulár     kardiovaskulár      ischemickou
+ al. (2026)   4
+                      úmrtí   11
+                                        ních příhod        ní selhání při či   chorobou
+                                        spojených se       po hře11            srdeční (CHD);
+                                        squashem
+                                                                               75 % (      )
+                                        (průměrný věk
+                                                                               mělo
+                                        46 let; 59
+                                                                               prodromální
+                                        mužů, 1 žena)11                        kardiální
+                                                                               symptomy v
+                                                                               týdnu před
+                                                                               smrtí8.
+
+ Finch & Eime         Kritický          Syntéza            Všechna             Dolní
+ (2001), Int.         přehled           mezinárodních      hlášená             končetiny 32–
+ SportMed J.,         epidemiologie     kohort (včetně     zranění a           58 % všech
+ 2(2), 1–118          squashových                          oční/faciální       zranění; kotník
+                      zranění8          hráčů se           traumata8           tvoří 36,6 %
+                                        zraněním                               všech zranění
+                                        dolních                                dolních
+                                        končetin a NZ                          končetin.
+                                        soutěžní                               Výskyt zranění
+                                        kohorty)8                              dolních
+                                                                               končetin u
+                                                                               pokročilých
+                                                                               hráčů 81,3 %
+                                                                               vs. rekreačních
+                                                                               23,8 %. Bolest
+                                                                               zad u 57 %
+                                                                               soutěžních
+                                                                               hráčů na
+                                                                               Novém
+                                                                               Zélandu8.
+
+Převodní vztahy mezi jmenovateli a jejich význam pro simulaci
+Zásadním pravidlem pro konstrukci zdravotního modulu v deterministickém simulátoru je
+striktní oddělení čtyř jmenovatelů, které v literatuře nikdy nesmějí být zaměňovány. Prvním a
+základním jmenovatelem je incidence na 1 000 hodin expozice (             ), která představuje
+přímou biomechanickou a fyziologickou míru rizika na jednotku aktivního času na kurtu či v
+kondiční přípravě4:
+<PARSED TEXT FOR PAGE: 13 / 59>
+U profesionálního hráče na okruhu FAX, který trénuje a soutěží přibližně
+                             po dobu                                 , činí roční celková expozice
+                                , z čehož samotný čistý čas v soutěžních zápasech při 45–
+65 zápasech za sezónu o průměrné délce 45–55 minut představuje pouze
+                                           . Pokud by tedy celková kombinovaná incidence
+                                          26
+
+
+(trénink + zápasy) odpovídala rekreační míře                        (Parkkari et al., 2004)11,
+profesionální hráč by utrpěl 13 až 18 zranění ročně, což je v přímém rozporu s realitou
+profesionálního okruhu (Horsley et al., 2020: průměrně                             )4. Vysoká
+hodnota u rekreačních hráčů odráží nízký jmenovatel hodin (např. 1–2 hodiny týdně, tedy 50–
+100 hodin ročně) a nedostatečnou neuromuskulární adaptaci na excentrické zatížení. U elitního
+profesionála s roční expozicí            odpovídá reálná míra lékařsky významných (Time-
+Loss) zranění přibližně 1,5 až 2,5 zranění na 1 000 hodin celkové expozice, přičemž hodinový
+hazard v soutěžním zápase (           ) je několikanásobně vyšší než v kontrolovaném tréninku (
+        ).
+Druhým jmenovatelem je incidence na 1 000 sportovních dnů (                   ), vyjadřující počet
+událostí na 1 000 kalendářních či aktivních dnů v sezóně . Jeden sportovní den profesionála
+                                                           4
+
+může obsahovat 0 hodin (den odpočinku či cestování), 1 hodinu soutěžního zápasu, nebo 4
+hodiny dvoufázového tréninku. Přímý převod mezi                 a           vyžaduje znalost
+průměrné denní expozice          podle vztahu                                    . Třetím
+jmenovatelem je incidence na zápas (           ), tedy pravděpodobnost, že zdravotní událost
+vznikne nebo překročí práh vynucené skreče či po-zápasové absence během jednoho
+konkrétního soutěžního utkání. Protože délka profesionálního zápasu kolísá od méně než 20
+minut u jednoznačných třísetových duelů až po 130–170 minut u pětisetových maratonů26,
+nelze           modelovat jako konstantu nezávislou na trvání a intenzitě zápasu. Čtvrtým
+jmenovatelem je incidence na hráče za sezónu (                       ), tedy kumulativní počet
+zdravotních událostí za 365 kalendářních dnů . Tento ukazatel je výsledným (emergentním)
+                                                4
+
+výstupem simulace, nikoliv primárním vstupním parametrem, neboť závisí na tom, kolik turnajů
+a kol hráč v dané sezóně odehraje a jak dlouho je vyřazen v důsledku předchozích zranění,
+jelikož během absence není hráč vystaven zápasovému riziku.
+
+3. Druhy a závažnost zranění
+Zdravotní profil profesionálního squashisty je formován specifickou biomechanikou pohybu v
+<PARSED TEXT FOR PAGE: 14 / 59>
+uzavřeném kurtu. Hráč opakovaně provádí explozivní akcelerace z T-pozice, hluboké
+excentrické výpady na přední dolní končetinu s vysokými reakčními silami podložky, rotace
+trupu v krajních rozsazích a rychlé švihy horní končetinou4.
+Akutní traumata versus chronická zranění z přetížení
+Literatura vykazuje zdánlivý rozpor v poměru akutních a chronických (overuse) zranění, který
+však mizí při zohlednění místa sběru dat. V klinických a nemocničních souborech výrazně
+převažují akutní úrazy; ve studii Chard a Lachmann (1987) tvořila 80 % akutní traumatická
+zranění a 20 % zranění z přetížení4. Tento poměr je dán selekčním zkreslením nemocničních
+klinik, kam hráči přicházejí s akutními distorzemi hlezna, rupturami svalových vláken nebo
+přímými zásahy míčkem a raketou4.
+Naproti tomu při prospektivním sledování soutěžních kohort převažují stavy z chronického
+přetížení. V pětileté prospektivní studii Rejeb et al. (2017), kde byli mladí soutěžní sportovci
+monitorováni lékařským týmem průběžně, vykazoval squash vyšší incidenci zranění z
+přetížení (4,7 na 1 000 h; 95% CI: 3,8–5,6) než akutních zranění (3,3 na 1 000 h; 95% CI:
+2,6–4,1)1. Zatímco zranění kolene a zad vznikala převážně z chronického přetížení (50 vs. 23
+případů v celém souboru,               ), poranění nohy a kotníku měla dominantně akutní
+mechanismus (94 vs. 31 případů,              )1. Tomu odpovídá i zjištění studie Meyer et al.
+(2007), v níž 42 % zraněných hráčů neuvádělo žádný specifický traumatický mechanismus, ale
+pociťovalo bolest s plíživým nástupem (insidious onset) výhradně při hraní squashe9.
+<PARSED TEXT FOR PAGE: 16 / 59>
+Svalová, šlachová, kloubní a další zdravotní omezení podle
+anatomických oblastí
+Detailní syntéza anatomického rozložení ukazuje výraznou specializaci rizika u elitních hráčů
+oproti sub-elitním a mládežnickým populacím. Napříč literaturou představují dolní končetiny
+nejčastěji zraněnou oblast v rozmezí 48 % až 76,48 % případů (v širších historických
+přehledech 32 % až 76,48 %)4. U anglických profesionálů (Horsley et al., 2020) dosahuje tento
+podíl maxima 76,48 %, přičemž většina poranění se soustředí do oblasti kotníku a paty a má
+povahu poškození měkkých tkání, jako jsou distorze vazů hlezna, tendinopatie Achillovy šlachy
+a plantární přetížení4. Ve studii 121 squashistů se zraněním dolních končetin (cit. ve Finch &
+
+Eime, 2001) tvořil kotník 36,6 % všech poranění dolní končetiny a výskyt zranění dolních
+končetin byl dramaticky vyšší u pokročilých hráčů (81,3 %) než u rekreačních či společenských
+hráčů (23,8 %)8. Kolenní kloub představuje druhou klíčovou lokalitu (7–23 % všech zranění
+napříč studiemi; převážně patelofemorální bolestivý syndrom, patelární tendinopatie a
+meniskální či chondrální přetížení z opakovaných hlubokých výpadů)4. Svalová natažení stehna
+(hamstringy, kvadricepsy, adduktory kyčle) tvořila v adolescentní kohortě Meyer et al. (2007)
+nejčastější lokalitu (19 %)9, zatímco u stárnoucích profesionálů se objevují degenerativní kloubní
+stavy kyčle a kolene, například coxartróza či chronické chondropatie kolene28.
+V oblasti trupu a páteře činí opakovaná hyperextenze, flexe a torze trupu při odehrávání
+míčků v rozích kurtu z dolní části zad (lower back) chronicky vulnerabilní segment8. V časných
+klinických studiích tvořila bederní páteř 10 % až 16 % všech zranění, přičemž přibližně polovina
+hráčů s poraněním zad nebyla schopna hrát déle než 2 týdny (Berson et al., 1981)8. V
+průřezových studiích soutěžních a klubových hráčů je podíl ještě vyšší: 31,7 % v Malajsii
+(Sankaravel et al., 2017) a Indii (Jhamb & Singh, 2022), 36,5 % v Íránu (Okhovatian & Ezatolahi,
+2009) a 57 % soutěžních hráčů na Novém Zélandu uvedlo bolest či zranění zad spojené se
+squashem, s nejvyšší frekvencí u mužů, pokročilých hráčů a hráčů s vysokou frekvencí hraní8. U
+anglických profesionálů (Horsley et al., 2020) připadalo v rámci poranění páteře 46,07 % na
+bederní úsek, 25,84 % na krční úsek a 20,22 % na hrudní úsek11.
+Poranění horní končetiny (rameno, loket, zápěstí a ruka) tvoří v širší literatuře 15,5 % až 35 %
+všech zranění8, avšak u elitních profesionálů v Horsley et al. (2020) představovala pouze 8,45
+% celkového počtu zranění11. Tento nízký procentuální podíl na celkovém objemu, způsobený
+dominancí zranění dolních končetin, však nesmí zastřít fakt, že celých 50,0 % elitních hráčů
+utrpělo v průběhu sledovaného období alespoň jedno zranění ramene, zahrnující syndromy
+vnitřního impingementu, přetížení rotátorové manžety a skapulární dyskineze z opakovaného
+švihu4. Loket (zejména laterální epikondylalgie z přetížení extenzorů předloktí) představuje 6,2
+% až 21,0 % zranění v klubových a národních souborech8, zatímco zápěstí a ruka tvoří 6–7 % v
+klinických studiích8, ale až 31,7 % u mladých malajsijských hráčů s nedostatečně stabilizovanou
+technikou švihu (Sankaravel et al., 2017)11.
+Specifickou skupinu představují traumata hlavy, oka, obličeje a vzácná cévní poranění. Přímý
+<PARSED TEXT FOR PAGE: 17 / 59>
+zásah míčkem (dosahujícím při úderu rychlosti až 170 mph / 270 km/h) nebo raketou soupeře v
+těsném prostoru kurtu způsobuje tržné rány v obličeji a kolem očí, poranění očnice a dentální
+traumata, jako jsou zlomeniny korunek, avulze a luxace zubů (Persic et al., 2006)4. V pojistných
+databázích raketových sportů (Genot Jendrusch, 1987–2017) tvořila oční poranění 1,08 %
+všech úrazů, z toho z více než 50 % tupá traumata18. V literatuře jsou popsány i extrémně
+vzácné kazuistiky přímého cévního traumatu, konkrétně disekce vertebrální tepny a
+traumatické aneurysma vertebrální tepny4. Na profesionálním okruhu vedou zásahy raketou v
+zápase typicky ke krvácivým tržným ranám (blood injury) vyžadujícím ošetření během zápasu
+nebo vzácně skreč, nikoliv však k častým trvalým ztrátám zraku, které v literatuře dominují u
+nechráněných rekreačních a dětských hráčů8.
+V oblasti systémových onemocnění, tepelného stresu a kardiovaskulárních příhod
+upozorňují McCartney et al. (2026) na závažnou mezeru v evidenci běžných infekčních a
+systémových onemocnění (illnesses) ve squashi4. Fyziologické studie dokládají vysoký tepelný
+stres (heat strain) a hypertermii v uzavřeném, často klimaticky náročném kurtu4. Důležitým
+metodickým rozlišením je interpretace studie Northcote et al. (60 případů náhlé srdeční smrti u
+squashistů za 8,5 roku)8: průměrný věk zemřelých byl 46 let, z 85 % šlo o nediagnostikovanou
+ischemickou chorobu srdeční (CHD) a v 75 % případů hráči ignorovali varovné kardiální
+příznaky v týdnu před smrtí8. Toto riziko se týká středněvěkých a starších rekreačních mužů s
+kardiovaskulárními rizikovými faktory, nikoliv kardiologicky testovaných elitních profesionálů
+ve věku 18–35 let. V simulátoru profesionálního okruhu FAX proto nemá smysl generovat náhlá
+srdeční úmrtí mladých profesionálů; systémová onemocnění musí místo toho reprezentovat
+krátkodobé akutní infekce (respirační virózy, gastrointestinální potíže při mezinárodním
+cestování) a stavy akutního tepelného vyčerpání či křečí v extrémně dlouhých zápasech4.
+Rozdíly podle prostředí (trénink vs. soutěž), věku a výkonnosti
+Porovnání tréninkového a soutěžního prostředí ukazuje zásadní rozdíl mezi absolutním počtem
+událostí a relativní hodinovou intenzitou rizika. V deskriptivních přehledech (např. Meshram et
+al.,            sportovců ve věku 18–41 let; a obecná sportovní epidemiologie v SEMS) vzniká
+v absolutních číslech většina zranění během tréninku (77 % v tréninku vs. 23 % v soutěži),
+protože tréninkový čas tvoří drtivou většinu celkové roční expozice18. V přepočtu na 1 hodinu
+expozice je však soutěžní zápas výrazně rizikovější pro vznik akutních svalových a vazivových
+poranění kvůli maximální intenzitě, nemožnosti regulovat tempo výměny a přítomnosti soupeře
+v pohybovém koridoru4.
+Věkové a výkonnostní rozdíly dále modifikují spektrum patologií. U dospívajících hráčů (Rejeb
+et al., 2017; Meyer et al., 2007) se kromě svalových a šlachových poranění (30,1 %; incidence
+1,67 na 1 000 h) významně uplatňují růstové poruchy a osteochondrózy (21,7 % všech zranění;
+incidence 1,20 na 1 000 h) způsobené nerovnováhou mezi rychlým růstem kostí a flexibilitou
+svalově-šlachových jednotek1. S přechodem do seniorské elity růstové osteochondrózy mizí a
+jsou nahrazeny přetížením dolních končetin (81,3 % u pokročilých hráčů) a bederní páteře8. U
+<PARSED TEXT FOR PAGE: 18 / 59>
+starších hráčů (nad 30–35 let na profesionálním okruhu, resp.         let v klubových kohortách
+Berson et al., 1981 a Jhamb & Singh, 2022) prodlužuje biologické stárnutí tkání dobu
+rekonvalescence a zvyšuje náchylnost k akutním svalově-šlachovým selháním a chronické
+kloubní degeneraci11.
+Odlišení bolesti, funkčního omezení a skutečné absence
+Zásadní chybou sportovních simulací je ztotožnění každého zdravotního problému s nucenou
+absencí. Epidemiologická data jasně definují čtyři odlišné hladiny zdravotního stavu1:
+
+
+
+ Hladina stavu            Klinická a              Empirická opora v        Dopad na zápas a
+                          epidemiologická         literatuře               turnajovou účast v
+                          definice                                         simulaci
+
+
+                          Přechodný pokles        Snížení momentu          Řešeno existujícím
+ 1. Fyziologická
+                          maximální volní         síly extenzorů           systémem
+ bolestivost a
+                          kontrakce (MVC),        kolene a nárůst          krátkodobé a
+ akutní únava
+                          centrální aktivační     svalové bolesti po       kumulativní únavy.
+ (DOMS /
+                          selhání excentricky     45min a                  Hráč nastupuje bez
+ Neuromuscular
+                          zatížených              vícedenních              omezení účasti;
+ Fatigue)
+                          extenzorů kolene a      zápasech (Lin &          plná obnova za 24–
+                          svalová citlivost po    Blazevich; Retos)27.     72 h6.
+                          zápase bez
+                          strukturální léze32.
+
+                          Subklinické             Parkkari et al.
+ 2. Zdravotní                                                              Hráč nevynechává
+                          přetížení, drobná       (2004) Level I4;
+ problém bez                                                               turnaj, ale nese
+                          tendinopatie nebo       Rejeb et al. (2017):
+ absence (Non-                                                             mírné funkční
+                          lokální bolest          klinická NTL
+ Time-Loss /                                                               omezení (např. v
+                          vyžadující              incidence 0,7 / 1
+ Parkkari Level I)                                                         pohybovém
+                          fyzioterapii či         000 h1; Meyer et al.     rozsahu při
+                          tejpování, avšak        (2007): 42 % bolest      dlouhých
+                          umožňující trénink i    při hře bez              výměnách) a
+                          start v zápase1.        traumatu9.               zvýšený hazard
+                                                                           přechodu do Time-
+                                                                           Loss zranění, pokud
+                                                                           pokračuje ve
+                                                                           vysoké zátěži.
+<PARSED TEXT FOR PAGE: 19 / 59>
+                          Strukturální či           Rejeb et al. (2017):
+ 3. Krátkodobá a                                                            Skreč v zápase
+                          funkční léze              TL incidence 4,8 / 1
+ střednědobá                                                                nebo odstoupení
+                          znemožňující              000 h (53,0 %
+ absence (Time-                                                             před zápasem
+                          trénink či soutěž po      mírná, 34,4 %
+ Loss                                                                       (walkover),
+                          dobu několika dnů         střední závažnost)1.
+ Minor/Moderate /                                                           případně vynechání
+ Parkkari Level II–       až několika týdnů1.                               1 až 3 turnajů
+ III)                                                                       (absence 3–28
+                                                                            dnů).
+
+
+                          Závažná ruptura           Rejeb et al. (2017):    Dlouhodobé
+ 4. Závažné /
+                          svalu/šlachy, těžká       13,0 % všech            přerušení sezóny (1
+ vyřazující zranění
+                          distorze vazů,            zranění je vážných      až 12+ měsíců),
+ (Severe / Disabling
+                          výhřez ploténky či        (0,6 / 1 000 h)1;       ztráta
+ Time-Loss)
+                          stav vyžadující           Berson et al. (1981)    nechráněných
+                          operaci a více než        a Jhamb & Singh         rankingových bodů,
+                          2–4 týdny mimo            (2022): absence         nutnost postupné
+                          hru1.                                             rehabilitace a
+                                                         týdny (průměr
+                                                                            aktivace pravidla
+                                                    zotavení v klubové
+                                                                            Protected
+                                                    kohortě 5,8
+                                                                            Ranking15.
+                                                    měsíce)4.
+
+4. Soutěžní zatížení a rizikové faktory
+Vztah mezi soutěžním zatížením, únavou a vznikem zranění v profesionálním squashi je
+nelineární a multifaktoriální. Zjednodušený předpoklad, že každý další odehraný zápas zvyšuje
+pravděpodobnost zranění o pevné procento (např.          za zápas), je fyziologicky i
+matematicky chybný, neboť ignoruje adaptaci tkání na chronickou zátěž, proměnlivou délku
+zápasů a dynamiku regenerace mezi koly6.
+Doložené vztahy mezi expozicí, délkou zápasů a kumulací únavy
+V prospektivní studii Rejeb et al. (2017) byl celkový objem tréninkové expozice statisticky
+významně asociován s rizikem zranění (                   na každých dalších 10 hodin tréninkové
+expozice, tedy nárůst relativního rizika o       na 10 hodin,              ; u zranění z přetížení
+                , 95% CI: 1,01–1,014,            )1. Tento vztah dokládá, že prostá doba
+strávená pod mechanickým zatížením postupně vyčerpává toleranci pojivových tkání.
+Trvání jednotlivých zápasů na profesionálním okruhu přitom vykazuje enormní rozptyl. Zatímco
+nejrychlejší zaznamenané zápasy končí pod 20 minut (historický rekord: Phil Kenyon porazil
+Salaha Nadiho za 6 minut a 37 sekund 9-0, 9-0, 9-0), nejdelší mužský profesionální zápas v
+historii PSA trval 2 hodiny a 50 minut (170 minut), když v roce 2015 Leo Au porazil Shawna
+<PARSED TEXT FOR PAGE: 20 / 59>
+Delierra 11-6, 4-11, 11-6, 7-11, 16-14, přičemž samotný pátý set trval 78 minut; předchozí rekord
+Jahangira Khana a Gamala Awada z roku 1983 činil 166 minut a u žen drží rekord 130 minut
+finále PSA World Tour Finals 2023 mezi Nouran Gohar a Haniou El Hammamy26. Biomechanické
+a neuromuskulární studie raketových sportů (Lin & Blazevich; Girard et al.) prokazují, že po 45
+až 180 minutách intenzivní hry dochází k progresivnímu poklesu maximální volní síly a tuhosti
+dolních končetin (leg stiffness), přičemž míra neuromuskulární únavy přímo koreluje s počtem
+provedených výpadů (lunges) a je provázena selháním centrální nervové aktivace (central
+activation failure) extenzorů kolenního kloubu27.
+Dalším kritickým faktorem jsou opakované zápasy ve vícedenních turnajích a nedostatečná
+doba odpočinku. Standardní turnaj PSA/FAX vyžaduje, aby postupující hráč odehrál 4 až 6
+zápasů během 5 až 8 dnů, často v režimu jeden zápas denně, tedy s odpočinkem
+                mezi koncem jednoho a začátkem dalšího utkání27. Fyziologické testování
+elitních squashistů (např. protokoly v National Squash Centre of Malaysia využívající Squash-
+Specific Performance Test, SPPT) vyžaduje 36 až 48 hodin klidu pro plnou obnovu
+kardiovaskulární a neuromuskulární připravenosti na výchozí úroveň6. Obdobně studie v
+raketových a kolektivních sportech potvrzují, že intervaly mezi zápasy kratší než 24–48 hodin
+neumožňují plnou resyntézu svalového glykogenu ani odeznění lokální zánětlivé odpovědi
+(akumulace leukocytů a myoglobinu u jedinců s vyšší citlivostí na svalové poškození), což při
+kumulaci několika těžkých pětisetových zápasů po sobě prudce zvyšuje vnitřní fyziologické
+zatížení a snižuje dynamickou stabilizaci kloubů33.
+Kritické zhodnocení konceptu ACWR (Acute:Chronic Workload Ratio)
+V posledním desetiletí se ve sportovní vědě (včetně studií na juniorských tenistech a
+fotbalistech) masivně rozšířil koncept poměru akutního a chronického zatížení (ACWR),
+počítaný buď jako klouzavý průměr (typicky 7denní akutní zátěž „únava“ dělená 28denní
+chronickou zátěží „kondice“), nebo pomocí exponenciálně vážených klouzavých průměrů
+(EWMA s rozpadovou konstantou                             )37. Zastánci ACWR tvrdili, že hodnota v
+„optimálním okně“                 minimalizuje riziko zranění, zatímco skokový nárůst zátěže
+(spike,                       ) riziko dramaticky zvyšuje38.
+Pro potřeby Squash Engine je však nutné zohlednit zásadní metodickou vyvracející práci
+Impellizzeri et al. (2020) (Acute:Chronic Workload Ratio: Conceptual Issues and Fundamental
+Pitfalls, Int. J. Sports Physiol. Perform., a Acute to random workload ratio is 'as' associated with
+injury as acute to actual chronic workload ratio: time to dismiss ACWR and its components,
+DOI: 10.31236/osf.io/e8kt4)12. Prvním prokázaným defektem je matematické spřažení
+
+(mathematical coupling): protože akutní zátěž (       ) je součástí výpočtu chronické zátěže (
+    ) a současně figuruje v čitateli poměru             , vytváří tento zlomek umělou
+statistickou závislost a nelineární přeškálování rozptylu12. Druhým a rozhodujícím důkazem je
+experiment s náhodným jmenovatelem: Impellizzeri et al. (2020) prokázali na reálných
+<PARSED TEXT FOR PAGE: 21 / 59>
+souborech dat, že pokud se skutečná akutní zátěž hráče vydělí zcela náhodně
+vygenerovanou chronickou zátěží (porušující jakoukoliv fyziologickou teorii kondice),
+výsledný falešný poměr vykazuje stejnou nebo dokonce vyšší statistickou asociaci se
+zraněním (                  až       ) než skutečný ACWR12.
+Z toho plyne striktní architektonické pravidlo: Squash Engine nesmí používat poměr ACWR
+ani jeho „magické prahy“ (0,8 a 1,3/1,5) jako vzorec pro výpočet pravděpodobnosti
+zranění12. Namísto dělení dvou korelovaných proměnných musí model pracovat přímo s
+oddělenými stavovými proměnnými: okamžitou akutní únavou v zápase a turnaji, kumulovanou
+tkáňovou zátěží a ochrannou trénovaností či odolností hráče (physical resilience).
+Kauzální faktory versus observační asociace
+Při návrhu prediktorů v simulátoru je nezbytné striktně rozlišit proměnné s prokázaným
+kauzálním mechanismem od pouhých observačních korelací:
+
+
+
+ Faktor                          Charakter důkazu               Mechanismus a specifická
+                                                                interpretace pro Squash
+                                                                Engine
+
+
+                                                                Neúplná remodelace
+ Předchozí zranění téže          Silný klinický / kauzální
+                                                                kolagenních vláken,
+ tkáně (Prior Injury)            prediktor
+                                                                reziduální deficit
+                                                                propriocepce a změněná
+                                                                biomechanika pohybu po
+                                                                návratu do hry
+                                                                prokazatelně zvyšují riziko
+                                                                recidivy (re-injury) v téže
+                                                                anatomické lokalitě (Ardern
+                                                                et al., 2016; M-FASIS)2.
+
+                                                                Selhání centrální aktivace a
+ Akutní neuromuskulární          Kauzální biomechanický
+                                                                pokles excentrické síly
+ vyčerpání v dlouhém             mechanismus
+                                                                kvadricepsů a stabilizátorů
+ zápase
+                                                                hlezna při opakovaných
+                                                                výpadech snižují schopnost
+                                                                absorbovat kinetickou
+                                                                energii dopadu, čímž přímo
+                                                                rostou střižné síly na vazy
+                                                                kotníku, kolene a bederní
+                                                                páteř4.
+<PARSED TEXT FOR PAGE: 22 / 59>
+                                                     Rejeb et al. (2017) prokázali
+Kumulativní objem         Prospektivně doložená
+                                                     nárůst rizika přetížení s
+expozice bez adekvátní    dávkově závislá asociace
+                                                     každou další desetihodinou
+regenerace                (kauzální pro přetížení)
+                                                     expozice (                 až
+                                                            ,              )1.
+                                                     Mikrotraumata v šlachách
+                                                     (Achillova šlacha, patelární
+                                                     šlacha, rotátorová
+                                                     manžeta) se sčítají, pokud
+                                                     rychlost degradace
+                                                     převyšuje rychlost celulární
+                                                     reparace mezi turnaji17.
+
+                                                     Zatímco klinické studie
+Chronologický věk hráče   Smíšená observační
+                                                     (Chard & Lachmann, 1987;
+                          asociace (konfundovaná
+                                                     Berson et al., 1981) ukazují
+                          herním stylem a selekcí)
+                                                     vyšší podíl akutních zranění
+                                                     a delší hojení u starších
+                                                     jedinců11, populační studie
+                                                     Parkkari et al. (2004)
+                                                     zaznamenala pokles hrubé
+                                                     incidence s věkem v
+                                                     důsledku nižší intenzity
+                                                     hry4. Na profesionálním
+                                                     okruhu PSA navíc starší
+                                                     hráči (33–40 let, např. Borja
+                                                     Golán, Gregory Gaultier,
+                                                     James Willstrop) aktivně
+                                                     mění herní styl směrem k
+                                                     vyšší efektivitě pohybu,
+                                                     čtení hry a využívání lobů,
+                                                     čímž částečně kompenzují
+                                                     klesající biologickou
+                                                     rychlost regenerace30. Věk
+                                                     proto nesmí působit jako
+                                                     prostý lineární multiplikátor
+                                                     počtu zranění, ale primárně
+                                                     jako zpomalovač rychlosti
+                                                     tkáňové regenerace a
+<PARSED TEXT FOR PAGE: 23 / 59>
+                                                                   multiplikátor akumulace
+                                                                   chronického kloubního
+                                                                   opotřebení.
+
+                                                                   Vyšší podíl zranění dolních
+ Výkonnostní úroveň (Elita        Observační asociace
+                                                                   končetin u pokročilých
+ vs. Rekreační)                   (způsobená rozdílnou
+                                                                   hráčů (81,3 % vs. 23,8 %;
+                                  expozicí a kinetikou)
+                                                                   Finch & Eime, 2001)8 není
+                                                                   důsledkem horší kondice
+                                                                   profesionálů, ale
+                                                                   extrémních rychlostí
+                                                                   pohybu a tisíců odehraných
+                                                                   hodin.
+
+5. Doba absence, rehabilitace a návratu
+Pro věrné fungování turnajového kalendáře a kariérního vývoje ve Squash Engine je klíčové
+správně parametrizovat rozdělení délky absence (time-to-recovery) a proces návratu do
+soutěže (Return to Sport, RTS).
+Rozdělení závažnosti a délky absence
+Vzhledem k tomu, že žádná publikovaná studie v profesionálním squashi neuvádí kompletní
+parametrické tabulky doby léčení rozčleněné podle jednotlivých diagnóz na okruhu PSA (studie
+Horsley et al., 2020 reportovala celkové počty a anatomické lokality u 67 profesionálů, nikoliv
+detailní křivky přežití do návratu pro každou diagnózu7), musí vědecky poctivý model vycházet
+z empirických proporcí závažnosti naměřených v prospektivní squashové kohortě Rejeb et al.
+(2017) a kombinovat je s klinickými prahy z ostatních squashových studií (Parkkari et al., 2004;
+Berson et al., 1981; Jhamb & Singh, 2022) a konsenzuálních dat sportovní fyzioterapie (Ardern
+et al., 2016)1.
+První hladinu tvoří krátkodobá zdravotní omezení bez absence (Non-Time-Loss, NTL /
+Parkkari Level I). V přísném klinickém registru Rejeb et al. (2017) tvořila NTL zranění 13,0 %
+všech hlášených událostí (incidence 0,7 na 1 000 h oproti 4,8 na 1 000 h u Time-Loss zranění)1.
+Pokud však započteme funkční bolesti při hře bez vyhledání lékařského vyřazení (Meyer et al.,
+2007: 42 % dotázaných)9, představují drobné zdravotní potíže (niggles — mírná bolest beder,
+citlivost Achillovy šlachy či ramene, drobná tržná rána či puchýře) nejčastější zdravotní stav
+profesionála během sezóny. Tento stav trvá typicky 1 až 10 dnů zvýšené tkáňové citlivosti bez
+vynechání turnaje.
+Druhou hladinu představují mírná Time-Loss zranění (Minor Time-Loss) vedoucí k vynechání
+zápasu nebo jednoho turnaje. Ve studii Rejeb et al. (2017) tvořila mírná zranění (minor, 1–7 dnů
+absence) celkem 53,0 % všech Time-Loss událostí, z čehož 21,0 % připadalo na velmi mírná
+(mild) zranění v trvání 1–3 dnů1. Klinický obraz ve squashi zahrnuje akutní svalový spazmus
+<PARSED TEXT FOR PAGE: 24 / 59>
+beder či krční páteře, mírné natažení svalu (Grade I strain stehna, lýtka či třísla), lehkou distorzi
+hlezna, akutní respirační či gastrointestinální infekci nebo tepelné vyčerpání po extrémním
+zápase4. Doba léčení v rozmezí 2 až 10 dnů v kontextu kalendáře FAX znamená buď skreč v
+probíhajícím turnaji či odstoupení před dalším kolem (walkover), nebo odhlášení z jednoho
+bezprostředně následujícího turnaje.
+Třetí hladinou jsou střednědobá Time-Loss zranění (Moderate Time-Loss) vedoucí k
+vynechání několika týdnů, tedy 1 až 3 turnajů. Ve studii Rejeb et al. (2017) tvořila středně
+závažná zranění (8 až 28 dnů absence) přesně 34,4 % všech Time-Loss zranění1. V klinické
+literatuře (Berson et al., 1981; Jhamb & Singh, 2022) protíná tato kategorie práh disabling injury (
+           mimo hru)4. Jako referenční kotevní bod ze sportovní medicíny (uvedený přímo v
+konsenzu Ardern et al., 2016 pro profesionální sportovce) činí průměrná doba absence u
+akutního poranění hamstringů                      (resp.                  , s rozpětím napříč
+studiemi od 11,3 dne po těžké případy) . Klinicky sem spadají středně těžká svalová natržení
+                                         3
+
+(Grade II strain hamstringu, adduktoru nebo lýtka), distorze laterálních vazů kotníku II. stupně,
+akutní exacerbace patelární či Achillovy tendinopatie a akutní lumbago či radikulární dráždění s
+trváním 11 až 35 dnů3.
+Čtvrtou hladinu tvoří dlouhodobá a závažná Time-Loss zranění (Severe Time-Loss)
+způsobující víceměsíční výpadek sezóny. Ve studii Rejeb et al. (2017) představovala závažná
+zranění (                         ) přesně 13,0 % všech Time-Loss událostí při incidenci 0,6 na 1
+000 hodin expozice (95% CI: 0,5–0,8)1. Ve studii indických klubových hráčů Jhamb a Singh
+(2022), která filtrovala výhradně zranění vyžadující lékařskou péči a více než 2 týdny klidu, činila
+průměrná doba do plného zotavení 5,8 měsíce (~175 dnů)7. Na profesionálním okruhu zahrnuje
+tato kategorie rupturu Achillovy šlachy, těžké poranění vazů či chrupavky kolene nebo hlezna
+vyžadující artroskopickou operaci, těžké strukturální poškození labra kyčelního či ramenního
+kloubu, výhřez meziobratlové ploténky nebo chronickou refrakterní tendinopatii kolene či
+hamstringu (jako v případě téměř dvouleté inaktivity pro chronické potíže s kolenem či
+předčasného ukončení návratu pro degenerativní onemocnění kyčle)3. Doba absence činí 36
+až 365+ dnů s bimodálním rozložením: konzervativně léčené těžké léze si vyžádají 6–12 týdnů,
+zatímco operativní stavy a ruptury šlach či vazů 6–12 měsíců3.
+Kontinuum návratu do sportu (Bern Consensus 2016) a vícestavová
+architektura
+Zásadním teoretickým a praktickým rámcem pro modelování rekonvalescence je Bernský
+konsenzus o návratu do sportu (Ardern et al., 2016, Br. J. Sports Med., 50(14):853–864)3.
+Tento konsenzus 17 předních světových expertů odmítá vnímat návrat do hry jako jednorázový
+okamžik na konci léčby a definuje jej jako třífázové kontinuum probíhající paralelně s
+rehabilitací3. V první fázi, návratu k participaci (Return to Participation), se sportovec
+zapojuje do rehabilitace, modifikovaného tréninku nebo uzavřených pohybových cvičení
+(closed-skill tasks — např. přímý běh, posilovna, izolované údery), ale je fyzicky, psychologicky
+<PARSED TEXT FOR PAGE: 25 / 59>
+či medicínsky nepřipraven na soutěžní zatížení3.
+Ve druhé fázi, návratu do sportu (Return to Sport, RTS), se sportovec vrací k plnému
+soutěžnímu sportu a nastupuje do turnajů okruhu FAX, avšak nedosahuje své předúrazové
+výkonnostní úrovně14. Ardern et al. (2016) zdůrazňují, že zatímco rehabilitační testy většinou
+hodnotí uzavřené dovednosti (closed skills), zápas ve squashi vyžaduje otevřené reaktivní
+dovednosti (open skills) prováděné pod časovým tlakem, s kognitivním rozhodováním a
+ve stavu únavy3. Kromě fyziologického deficitu hraje v této fázi roli i psychologická
+připravenost (strach z recidivy, pokles self-efficacy, měřený v klinické praxi škálami ACL-RSI a
+I-PRRS)3. Teprve ve třetí fázi, návratu na výkonnostní úroveň (Return to Performance),
+sportovec plně adaptoval tkáně i neuromuskulární kontrolu na reaktivní zápasovou zátěž a
+podává výkony na úrovni před zraněním nebo vyšší; například u rekonstrukcí ACL nastává
+návrat do hry průměrně kolem 6.–9. měsíce, ale návrat k plnému výkonu často až kolem 12.
+měsíce14.
+Propojením epidemiologického rámce pro analýzu následných zranění M-FASIS (Multistate
+Framework for the Analysis of Subsequent Injury in Sport)2 s Bernským konsenzem (Ardern et
+al., 2016)3 vzniká ucelená šestistavová topologie zdraví pro Squash Engine, v níž na stavové
+přechody působí dva primární vstupní modulátory (Zápasová a tréninková expozice a Akutní
+neuromuskulární únava):
+
+
+
+ Stavový uzel v           Účast v turnajích       Výkonnostní a            Možné výstupní
+ architektuře             FAX                     fyziologická             přechody v
+                                                  charakteristika          stavovém
+                                                                           automatu
+
+
+                                                  100% dostupnost          Přechod do
+ 1. Plně zdravý           Plná účast
+                                                  otevřených               RESTRICTED_NTL
+ (HEALTHY)
+                                                  dovedností,              (při mikrotraumatu)
+                                                  základní úroveň          nebo přímo do
+                                                  tkáňového                INJURED_TL (při
+                                                  hazardu3.                akutním
+                                                                           přetížení/úrazu)1.
+
+                                                  Hráč nastupuje s         Zotavení zpět do
+ 2. Funkční               Plná účast (s
+                                                  lokální bolestí či       HEALTHY (při
+ omezení bez              rizikem)
+                                                  přetížením (Parkkari     regeneraci) nebo
+ absence
+                                                  Level I); mírné          progrese do
+ (RESTRICTED_NTL
+                                                  omezení v                INJURED_TL (při
+ )
+                                                  extrémních               pokračující těžké
+                                                  výpadech a
+<PARSED TEXT FOR PAGE: 26 / 59>
+                                         zvýšený hazard          zátěži)1.
+                                         progrese1.
+
+                                         Akutní nebo             Přechod do
+3. Zranění s       Vyřazen
+                                         chronická               REHAB_PARTICIPAT
+absencí            (Withdrawal /
+                                         strukturální léze       ION (u
+(INJURED_TL)       Walkover / Retired)
+                                         vyžadující klid a       středních/těžkých
+                                         léčbu (Parkkari         zranění), přímo do
+                                         Level II–III; Rejeb     RETURN_TO_SPOR
+                                         TL)1.                   T (u lehkých
+                                                                 zranění), nebo do
+                                                                 RETIRED_MEDICAL
+                                                                 (u těžkých
+                                                                 pozdních/degenera
+                                                                 tivních stavů)3.
+
+                                         Fáze uzavřených         Po splnění
+4. Návrat k        Mimo soutěžní
+                                         tréninkových            rehabilitačního času
+participaci        turnaje
+                                         dovedností (closed      přechod do
+(REHAB_PARTICIP
+                                         skills); obnova         soutěžní fáze
+ATION)
+                                         základní kondice        RETURN_TO_SPOR
+                                         bez zápasového          T3.
+                                         rizika3.
+
+                                         Hráč soutěží, ale       Postupná adaptace
+5. Návrat do       Plná účast v
+                                         trpí dočasným           do stavu HEALTHY
+soutěže            turnajích
+                                         deficitem reaktivní     (Return to
+(RETURN_TO_SPO
+                                         zápasové ostrosti       Performance) po
+RT)
+                                         (open skills / nižší    odehrání
+                                         Form) a zvýšenou        zápasového bloku,
+                                         lokální                 nebo zpětná
+                                         vulnerabilitou tkáně    smyčka předčasné
+                                                                 recidivy zpět do
+                                                         .
+                                                         3
+
+                                                                 INJURED_TL2.
+
+                                         Terminální              Koncový stav
+6. Zdravotní       Trvale mimo okruh
+                                         absorpční stav při      kariéry hráče
+ukončení kariéry
+                                         ireverzibilní kloubní   (přechod do
+(RETIRED_MEDICA
+                                         degeneraci nebo         historického
+L)
+                                         neúměrné délce          archivu)29.
+<PARSED TEXT FOR PAGE: 27 / 59>
+                                                  rehabilitace v
+                                                  pokročilém věku29.
+
+V simulátoru tato topologie zaručuje, že hráč vracející se po 4měsíční absenci z těžkého
+zranění se nevrací na kurt v den       se 100 % zápasové ostrosti a nulovým rizikem. Fáze
+Return to Participation probíhá ještě v době turnajové nepřítomnosti; jakmile hráč vstoupí do
+fáze Return to Sport a přihlásí se do prvního turnaje, jeho základní atributy (talent/skills)
+zůstávají zachovány, ale vykazuje dočasný deficit reaktivní zápasové ostrosti (reprezentovaný
+poklesem Form / zápasového rytmu) a zvýšenou lokální vulnerabilitu dané tkáně, která
+exponenciálně odeznívá s odehranými bezproblémovými zápasy až do plného Return to
+Performance3.
+
+6. Dopady zdravotních výpadků na kariéry
+Analýza historických dat profesionálního okruhu PSA (včetně longitudinálních analýz top 10
+žebříčku PSA z let 2000–2025) ukazuje, že kariérní trajektorie, rankingové propady a odchody
+do sportovního důchodu jsou výsledkem souběhu zdravotních, ekonomických, vývojových a
+regulačních faktorů29. Vědecky korektní simulátor musí striktně oddělit skutečně doložené
+zdravotní dopady od jiných příčin kariérních přerušení.
+Odlišení zdravotních výpadků od nezdravotních přerušení a
+přirozeného odpadu
+Nedosažení seniorské elity u talentovaného juniora nebo dočasný propad žebříčkem není
+automaticky důkazem zdravotní katastrofy. Prvním doloženým nezdravotním
+mechanismem jsou vzdělávací a akademické přestávky. Analýza historických křivek žebříčku
+
+PSA (SquashStats, 2000–2019) výslovně dokládá, že výrazný rankingový propad budoucího
+čtyřnásobného mistra světa Aliho Faraga v letech 2011–2015 nebyl způsoben zraněním, nýbrž
+studiem na Harvardově univerzitě; obdobně kolísání žebříčku Sarah-Jane Perry v letech 2008–
+2011 souviselo s univerzitním vzděláním a časný propad Miguela Rodrígueze v letech 2003–
+2005 se zaměřením na juniorský okruh35.
+Druhým nezdravotním mechanismem je ekonomický a motivační odpad v rané dospělosti (20–
+23 let). Řada špičkových juniorů, včetně medailistů z MS juniorů U19 a British Junior Open, kteří
+v 18 letech figurovali v top 100 PSA, ukončuje profesionální kariéru v raných dvaceti letech z
+důvodu psychického vyhoření z extrémní konkurence (zejména v egyptské mládežnické líhni)
+nebo nedostatečné finanční návratnosti na nižších patrech okruhu44. V architektuře Squash
+Engine spadají tyto jevy do modulů talent pipeline a ekonomiky turnajové účasti, a nesmí být
+uměle vysvětlovány generováním fiktivních „kariéru ukončujících zranění“ u 20letých hráčů.
+Třetím nezdravotním jevem je dobrovolný odchod na vrcholu (voluntary peak retirement).
+Profesionální squash vykazuje výrazný výskyt dobrovolných ukončení kariéry v plném zdraví a
+na absolutním výkonnostním vrcholu. Příkladem je Ali Farag, který v květnu 2025 oznámil
+okamžitý konec kariéry z pozice světové dvojky těsně po odehrání finále mistrovství světa v
+Chicagu (s celkovou kariérní bilancí 445 výher z 553 zápasů, tedy 80,5 % úspěšností a 46
+<PARSED TEXT FOR PAGE: 28 / 59>
+tituly)26, nebo Raneem El Welily, která ukončila kariéru v červnu 2020 přímo z pozice světové
+jedničky z rodinných a osobních důvodů44.
+Skutečné zdravotní dopady na kariéru, ranking a styl hry
+Když u profesionálního hráče nastane skutečné střednědobé či dlouhodobé zranění, projevuje
+se v pěti specifických mechanismech. Prvním je rankingový propad během absence a
+regulační ochrana (Protected Ranking). Protože žebříček PSA/FAX funguje na bázi
+klouzavého ročního okna (52 týdnů) s minimálním děličem turnajů, způsobuje absence trvající 3
+až 12 měsíců postupné odmazávání bodů a prudký pád v oficiálním žebříčku, dokumentovaný v
+datech PSA u hráčů jako Ramy Ashour, Gregory Gaultier, Marwan El Shorbagy, Joelle King,
+Alison Waters či Amanda Sobhy35. Aby se elitní hráč po 6–12měsíční absenci nemusel vracet
+přes nejnižší kvalifikační turnaje, obsahuje oficiální PSA Squash Tour Rule Book institut
+Protected Ranking (PR), analogický pravidlům ATP pro zranění trvající                  34
+                                                                                         . Hráč
+tak po návratu čelí rozporu mezi svým skutečným (propadlým) žebříčkem a chráněným
+žebříčkem pro vstup do hlavní soutěže, což vytváří v prvních měsících po návratu specifickou
+dynamiku těžkých losů.
+Druhým mechanismem jsou návraty a druhé kariérní vrcholy (comebacks & second peaks).
+Empirická data potvrzují, že elitní squashisté se po těžkých zraněních, včetně ruptur Achillovy
+šlachy či operací kolene, dokážou vrátit zpět do světové desítky a dosáhnout druhého vrcholu,
+jak ukazují návraty Amandy Sobhy či Camille Serme do top 10 a top 3 po těžkých zraněních,
+případně opakované návraty Ramyho Ashoura a Karima Abdela Gawada na vrchol35.
+Podmínkou druhého vrcholu v simulaci je, že strukturální zranění nedegraduje trvale
+technické a taktické atributy hráče, ale dočasně zasahuje jeho zápasovou kondici, Form a
+lokální tkáňovou odolnost.
+Třetím mechanismem je stagnace vývoje mladého profesionála (18–23 let) a pozdní
+průlom. U hráče ve fázi aktivního růstu dovedností působí dlouhodobá absence primárně jako
+ztráta rozvojového času (opportunity cost). Mladý hráč během 6měsíční rehabilitace
+nepřichází o svůj genetický strop (potential), ale ztrácí tréninkové a zápasové hodiny potřebné
+k přeměně potenciálu v aktuální dovednosti, což posouvá jeho výkonnostní průlom do
+pozdějšího věku, typicky kolem 27–30 let, jaký na okruhu PSA předvedli hráči jako Joel Makin44.
+Čtvrtým mechanismem je taktická kompenzace a posun věkového vrcholu u mužů (30–39
+let). Mužská světová špička na okruhu PSA vykazuje v moderní éře výrazný posun
+výkonnostního vrcholu za hranici 30 let; v top 10 i top 20 dlouhodobě působili hráči nad 30–35
+let jako Nick Matthew, James Willstrop, Amr Shabana, Gregory Gaultier hrající v top 10 ještě v
+36,7 letech, Tarek Momen či Borja Golán35. Rozhovor a analýza kariéry bývalé světové pětky
+Borji Golána, který ukončil kariéru ve 40 letech, odhaluje přesný mechanismus této
+dlouhověkosti: zatímco ve 23–24 letech hrál čistě fyzický squash založený na unavení soupeře
+bez jediného lobu za celý zápas, po třicítce a sérii zranění kolene změnil hru směrem k taktické
+kontrole a lobům, takže ve 39 letech hrál herně kvalitnější squash než ve 30 letech, přestože
+jeho čistá fyzická kondice již byla nižší30. Naopak hráči spoléhající výhradně na hrubou fyzickou
+<PARSED TEXT FOR PAGE: 29 / 59>
+explozivitu bez technicko-taktické adaptace zaznamenávají po 32. roce života rychlejší pokles
+výkonnosti při kumulaci zranění dolních končetin30.
+Pátým mechanismem je zdravotní a degenerativní ukončení kariéry (medical retirement).
+U hráčů v pokročilém věku (typicky 33–40 let) nebývá zdravotní konec kariéry vyvolán jedním
+izolovaným drobným úrazem, ale buď progresivní degenerativní kloubní patologií, která
+znemožňuje plný rozsah výpadu (jako u bývalé světové desítky Saurava Ghosala, jehož pokus o
+návrat směrem k OH 2028 byl v červnu 2025 definitivně ukončen diagnózou degenerativního
+onemocnění kyčelního kloubu)29, nebo novým středně těžkým či těžkým zraněním v
+závěrečné fázi kariéry, kdy náklady na další mnohaměsíční rehabilitaci převýší zbývající
+horizont kariéry (jako u Borji Golána, kterému prosincové zranění kolene těsně před 40.
+narozeninami zkrátilo plánovaný rozlučkový půlrok, nebo u Gregoryho Gaultiera po těžkém
+poranění kolene v 35–36 letech)35.
+
+7. Matematické přístupy a jejich limity
+Pro implementaci zdravotních událostí do deterministického simulátoru Squash Engine bylo
+podrobeno komparativní matematické analýze šest rodin pravděpodobnostních a
+biostatistických modelů využívaných v epidemiologii sportovních zranění2.
+Matematická formulace kandidátních modelů
+Prvním kandidátem je jednoduchý bezpaměťový pravděpodobnostní model (Bernoulli /
+
+Homogenní Poisson), který předpokládá konstantní pravděpodobnost zranění         v každém dni
+nebo zápase nezávisle na historii hráče a délce expozice podle vztahu
+                                                       . Tento model je zcela bezpaměťový
+(memoryless), nerespektuje rozdíl mezi 20minutovým a 150minutovým zápasem, neumí
+zachytit turnajovou kumulaci únavy ani zvýšené riziko recidivy po návratu.
+Druhým přístupem je Exposure-Dependent Hazard Model (expozicí modulovaný
+
+nehomogenní hazard). Okamžitá intenzita rizika (hazard         ) hráče v čase je zde funkcí
+skutečné doby a intenzity expozice       (v hodinách tréninku či minutách a intenzitě zápasu)
+a vektoru časově proměnných kovariát           (akutní únava, kumulovaná zátěž, věk)4:
+
+
+
+
+Pravděpodobnost vzniku zranění během diskrétní události, například zápasu trvajícího
+hodin, je pak dána integrálem hazardu přes dobu trvání události:
+<PARSED TEXT FOR PAGE: 30 / 59>
+Třetí rodinu představuje Survival Analysis a Competing Risks (analýza přežití a konkurenční
+rizika), která rozděluje celkový hazard       na součet příčinně specifických hazardů (cause-
+specific hazards) pro    vzájemně si konkurujících typů událostí, jako jsou akutní trauma dolní
+končetiny, chronické přetížení beder, systémová nemoc či dobrovolný odchod do důchodu54:
+
+
+
+
+Při vygenerování události v čase je konkrétní typ události     vybrán z multinomického
+rozdělení s pravděpodobnostmi                    54
+                                                   .
+Čtvrtým přístupem je Multi-State Semi-Markov Model (vícestavový semi-markovský
+model M-FASIS + RTS). Hráč se v něm nachází v jednom z konečné množiny diskrétních stavů
+
+
+. Přechodové intenzity
+2
+                                      závisí nejen na kalendářním čase , ale i na době strávené
+v aktuálním stavu   (sojourn time), což definuje semi-markovskou vlastnost nutnou pro
+realistické rozdělení doby léčení a odeznívání rizika recidivy po návratu58.
+Pátou skupinou jsou modely opakovaných událostí (Andersen-Gill, Prentice-Williams-
+Peterson, Wei-Lin-Weissfeld), které rozšiřují Coxův model proporcionálních hazardů pro
+opakovaná zranění (recurrent events)54. Model Andersen-Gill (AG) používá společný základní
+hazard        pro všechna pořadí zranění a předpokládá, že korelace mezi opakovanými
+zraněními téhož hráče je plně vysvětlena pozorovanými kovariátami54. Model Prentice-
+Williams-Peterson (PWP-TT / PWP-GT) stratifikuje základní hazard           podle pořadí zranění
+                    , takže riziko -tého zranění vzniká až po prodělání         -ního zranění, a
+to buď v celkovém čase (Total Time), nebo v čase od posledního uzdravení (Gap Time)54.
+Marginální model Wei-Lin-Weissfeld (WLW) pak umisťuje každého jedince do rizikové množiny
+pro všechna pořadí událostí od počátku sledování bez ohledu na to, zda již prodělal předchozí
+událost54. Zatímco v biostatistické inferenci jsou modely PWP a WLW cenné pro odhad
+regresních koeficientů, pro dopřednou simulaci (forward simulation) trpí PWP explozí
+nekalibrovatelných parametrů (nutnost definovat samostatnou základní křivku         pro 1., 2., ...,
+15. zranění v kariéře) a WLW porušuje kauzální časovou posloupnost stavů . 54
+<PARSED TEXT FOR PAGE: 31 / 59>
+Šestým přístupem je modelování hierarchických individuálních rozdílů (Shared Frailty /
+
+náhodné efekty). Tento model zavádí pro každého hráče latentní multiplikátor náchylnosti ke
+zranění (frailty)         , typicky čerpaný při generování hráče z gama rozdělení
+                            se střední hodnotou                      a rozptylem                ,
+případně log-normálně                            při                         56
+                                                                               :
+
+
+
+
+Tento jediný hyperparametr       přirozeně vysvětluje, proč na okruhu existují „železní muži“
+
+(nízké   ) i hráči s chronicky křehkou konstitucí (vysoké       ), aniž by musel mít každý hráč
+ručně naskriptovaný příběh.
+Srovnávací matice matematických modelů
+
+
+  Modelová          Potřebná        Počet              Výpočetní         Kalibrovat     Riziko
+  rodina            vstupní         parametrů          náklady v         elnost na      umělé
+                    data                               běhu              dostupnýc      přesnosti
+                                                       simulace          h squash       (Over-
+                                                                         datech         parameteri
+                                                                                        zation)
+
+
+  1.                Pouze           2–4                                  Vysoká pro     Nízké,
+                                                               na
+  Jednoduch         průměrná        (základní                            průměr, ale    avšak
+                                                       hráče a
+  ý                 sezónní         míra +                               selhává ve     model je
+                                                       krok
+  pravděpod         míra            střední                              všech          nerealistick
+                                                       (extrémně
+  obnostní          zranění.        doba                                 podmíněný      y plochý
+                                                       nízké).
+  (Bernoulli/                       absence)                             ch             (pod-
+  Poisson)                                                               distribucích   parametriz
+                                                                         .              ovaný).
+
+
+                                                                         Velmi
+  2.                Hodinová/       6–10 (                                              Nízké —
+                                                               na        vysoká —
+  Exposure-         zápasová                                                            každý
+                                             ,         zápas a           přímo
+  Dependent         incidence,                                                          parametr
+                                                       tréninkový        využívá
+  Hazard            délka                   ,                                           má přímou
+                                                       blok (velmi
+  Model             zápasů,         váhy únavy                                     z    fyzikální a
+                                                       nízké).
+                    křivka          a věku)                              Rejeb et al.   fyziologicko
+<PARSED TEXT FOR PAGE: 32 / 59>
+                                                              (2017) a
+             únavy.                                                          u
+                                                              Horsley et
+                                                                             interpretaci
+                                                              al. (2020)1.   .
+
+
+                                                              Vysoká —
+3.           Podíly           10–18                                          Nízké až
+                                                      na      přímo
+Competing    anatomický       (váhy pro                                      střední
+                                              vyhodnoce       kalibrovatel
+Risks        ch lokalit a     4–6                                            (pokud se
+                                              ní události (   né z tabulek
+(Cause-      typů tkání       anatomický                                     kategorie
+                                                     ,        Horsley et
+Specific     (akutní vs.      ch/tkáňový                                     nerozdrobí
+                                              zanedbatel      al. (2020)
+Hazards)     přetížení).      ch                                             na desítky
+                                              né).            (76,5 % DK,
+                              kategorií)                                     mikro-
+                                                              8,5 % HK, 15
+                                                                             diagnóz).
+                                                              % trup)4.
+
+                                                              Dobrá pro
+4. Multi-    Poměr NTL        12–20                                          Střední —
+                                                              strukturu,
+State        vs. TL,          (přechodov      aktualizace                    vyžaduje
+                                                              vyžaduje
+Semi-        distribuce       é matice a      stavového                      omezení
+                                                              explicitní
+Markov       závažnosti       parametry       automatu                       počtu stavů
+                                                              priory pro
+(M-FASIS +   (minor/mod       rozdělení       hráče za                       na 5–6
+                                                              rychlost
+RTS)         erate/sever      doby            den/zápas.                     klinicky
+                                                              odeznívání
+             e), délka        pobytu)                                        odlišitelnýc
+                                                              RTS
+             RTS fáze.                                                       h hladin.
+                                                              deficitu1.
+
+
+5. Modely    Kompletní        25–60+                          Velmi nízká    Extrémně
+                                                      se
+opakovaný    longitudinál     (stratifikova                   (nekalibrov    vysoké u
+                                              sledováním
+ch zranění   ní sekvence      né základní                     atelné) —      PWP/WLW;
+                                              pořadových
+(AG /        časů mezi        hazardy                         ve squashi     lokální
+                                              vrstev.
+PWP /                                                         neexistují     tkáňovou
+             1., 2., ..., -        u PWP)
+WLW)                                                          publikované    paměť lze
+             tým
+                                                                             řešit
+             zraněním.                                        křivky pro
+                                                                             mnohem
+                                                              -té pořadí
+                                                                             úsporněji.
+                                                              zranění.
+
+
+                                                              Střední až
+6.           Rozptyl                                                         Nízké —
+                              3–5 ( pro                       vysoká —
+Hierarchic   počtu                            (násobení                      pouze 3
+                              globální                        zachycuje
+ký Frailty   zranění                          stavovým                       parametry
+                              frailty +                       inter-
+Model (+     mezi hráči a                     koeficiente                    generují
+                              amplituda
+<PARSED TEXT FOR PAGE: 33 / 59>
+                                                                    individuální
+  Lokální           míra časné         a poločas   m).                                 realistickou
+                                                                    variabilitu a
+  tkáňová           recidivy.        rozpadu                                           heterogenit
+                                                                    klinické
+  paměť)                                                                               u kariér.
+                                        lokální                     riziko
+                                     paměti)                        recidivy3.
+
+Doporučená syntéza a deterministická RNG architektura
+Namísto dogmatického výběru jednoho extrému (triviální Bernoulli vs. přeparametrizovaný
+PWP model) je pro Squash Engine optimální kompozitní diskrétně-časový semi-markovský
+hazardní model s individuální frailty a exponenciálně odeznívající lokální tkáňovou pamětí
+
+(syntéza přístupů 2, 3, 4 a 6). Pro hráče v diskrétním kroku expozice         (zápas nebo týdenní
+tréninkový blok) je příčinně specifický hazard            pro anatomický segment či typ
+
+
+dán vztahem:
+
+
+
+
+V této rovnici představuje                                   vrozenou celkovou odolnost či
+křehkost hráče (individual frailty) vygenerovanou při vzniku hráče56,            je základní
+hodinový hazard v daném prostředí (                                     ) kalibrovaný podle Horsley
+et al. (2020) a Rejeb et al. (2017)1, a     je nelineární konvexní odezva na akutní
+neuromuskulární únavu v zápase a kumulované opotřebení tkáně. Proměnná
+
+pak reprezentuje lokální paměť vulnerability segmentu         po předchozím zranění, která v
+okamžiku návratu do hry (Return to Sport) nabývá hodnoty                            a s časem
+(a odehranou bezproblémovou adaptací) exponenciálně klesá podle vztahu
+                                                      2
+                                                       .
+V deterministickém simulátoru s historicky reprodukovatelnými událostmi nesmí vygenerování
+zranění hráče A v turnaji X posunout vnitřní stav globálního generátoru pseudonáhodných čísel
+(PRNG) tak, že by se změnil výsledek zápasu hráče B a C v témže turnaji nebo los příštího
+turnaje. Zdravotní systém proto vyžaduje funkcionální bezstavové odvozování náhodných
+proudů (Counter-Based / Hash-Based PRNG, např. SplitMix64 nebo xxHash3 / ChaCha-
+based sub-seeding) z hierarchického klíče:
+<PARSED TEXT FOR PAGE: 34 / 59>
+Pokud v zápase nebo týdenním tréninkovém bloku dojde k překročení prahu celkového
+hazardu (                              , kde                 je prvním číslem z lokálního proudu
+            ), následné charakteristiky zranění — anatomický segment         (   ), stupeň
+závažnosti NTL/Minor/Moderate/Severe (         ) a přesný počet dnů léčení z příslušného log-
+normálního či Weibullova rozdělení (   ) — se odebírají výhradně z téhož lokálního proudu
+            . Díky tomu zůstává zbytek světa 100% deterministicky izolován.
+
+8. Srovnání s Masterem a současnou implementací
+Během provádění tohoto nezávislého výzkumu nebylo možné přímo síťově načíst živé soubory
+z externího GitHub repozitáře https://github.com/Jasmetk0/squash-tour-beta
+(SQUASH_ENGINE_MASTER_VISION.md a AGENTS.md)64. Následující architektonická analýza a
+integrace proto vychází ze závazné specifikace doménového modelu Squash Engine, který
+představuje deterministický simulátor alternativního globálního profesionálního okruhu FAX
+zahrnující hráčské atributy, fyzickou výdrž v zápase, Form, dlouhodobou kumulativní únavu,
+turnajové kalendáře, účast v turnajích, rankingové dynastie, talentovou pipeline a plně
+reprodukovatelnou historii událostí.
+Analýza překryvů a prevence dvojí penalizace (Ortogonalita
+subsystémů)
+Největším architektonickým rizikem při zavádění zdravotního systému do existujícího
+sportovního simulátoru je duplikace efektů (dvojí penalizace) mezi únavou, Form a zraněním.
+Aby jednotlivé vrstvy Squash Engine fungovaly v dokonalé synergii, musí být jejich
+odpovědnosti striktně rozděleny:
+
+
+
+ Subsystém Squash        Co již                     Co NESMÍ dělat          Jak se má
+ Engine                  reprezentuje v             nový zdravotní          zdravotní modul
+                         simulátoru                 modul (Prevence         čistě napojit
+                                                    duplicity)
+
+
+                         Okamžitou                                          Nízká okamžitá
+ Fyzická výdrž v                                    Zdravotní modul
+                         energetickou a                                     Stamina v pozdní
+ zápase (Match                                      nesmí nahrazovat
+                         kardiovaskulární                                   fázi zápasu
+ Stamina /                                          běžné zadýchání či
+                         kapacitu hráče v                                   (zejména nad 60–
+ Endurance)                                         pokles tempa v 5.
+                         průběhu                                            90 minut hry)
+                                                    setu generováním
+                         jednotlivých her a                                 působí jako vstupní
+                                                    falešných „zranění“
+                         výměn jednoho                                      multiplikátor
+                                                    v každém dlouhém
+                         zápasu4.                                           hazardu akutního
+                                                    zápase.
+                                                                            zranění dolních
+<PARSED TEXT FOR PAGE: 35 / 59>
+                                                                 končetin a zad
+                                                                 (simulace
+                                                                 centrálního
+                                                                 aktivačního selhání
+                                                                 při výpadu)26.
+
+                   Akumulovanou                                  Kumulativní únava
+Dlouhodobá únava                        Stav Omezený
+                   systémovou zátěž z                            je hlavním
+(Cumulative /                           (NTL) ani fáze
+                   odehraných turnajů                            prediktorem
+Long-Term                               Return to Sport
+                   a náročných zápasů                            hazardu zranění z
+Fatigue)                                nesmí aplikovat
+                   v horizontu dnů a                             přetížení
+                                        plošný postih na
+                   týdnů, která se                               (overuse)1. Naopak
+                                        stejné kondiční
+                   obnovuje                                      během Time-Loss
+                                        koeficienty, které již
+                   odpočinkem6.         snižuje kumulativní      absence
+                                        únava.                   kumulativní
+                                                                 zápasová únava
+                                                                 přirozeně klesá k
+                                                                 nule, zatímco běží
+                                                                 časovač hojení
+                                                                 tkáně.
+
+                                                                 Během Time-Loss
+Forma (Form)       Krátkodobou až       Zranění nesmí být
+                                                                 absence dochází k
+                   střednědobou herní   modelováno pouze
+                                                                 přirozenému
+                   pohodu, taktickou    jako snížení Form,
+                                                                 poklesu (erozi)
+                   ostrost,             protože hráč v
+                                                                 zápasové ostrosti
+                   sebedůvěru a         nízké Form může
+                                                                 (Form klesá
+                   zápasový rytmus      normálně hrát
+                                                                 směrem k
+                   (match sharpness).   turnaje, kdežto hráč
+                                                                 neutrální/nižší
+                                        s Time-Loss
+                                                                 hladině pro
+                                        zraněním do turnaje
+                                                                 nedostatek
+                                        nastoupit nemůže.
+                                                                 odehraných
+                                                                 zápasů). Ve fázi
+                                                                 Return to Sport
+                                                                 (Ardern et al., 2016)
+                                                                 tak nižší Form
+                                                                 přirozeně
+                                                                 reprezentuje deficit
+                                                                 otevřených
+                                                                 reaktivních
+<PARSED TEXT FOR PAGE: 36 / 59>
+                                                                 dovedností bez
+                                                                 nutnosti zavádět
+                                                                 paralelní duplicitní
+                                                                 proměnnou
+                                                                 „nerozehranosti“3.
+
+                                                                 Hráč ve stavu
+Turnajová účast a   Rozhodování hráče   Zdravotní systém
+                                                                 Time-Loss generuje
+kalendář            o přihlášení do     nesmí tiše mazat
+                                                                 před zahájením
+(Tournament         turnajů FAX a       historii přihlášek ani
+                                                                 turnaje událost
+Entry & Calendar)   správu pavouků.     měnit losy již
+                                                                 Withdrawal (Injury)
+                                        odehraných kol při
+                                                                 (uvolnění místa v
+                                        zpětném přehrání
+                                                                 pavouku / posun
+                                        (replay).
+                                                                 nasazení podle
+                                                                 pravidel FAX) a
+                                                                 během
+                                                                 probíhajícího
+                                                                 turnaje událost
+                                                                 Walkover (před
+                                                                 zápasem) nebo
+                                                                 Retired (skreč v
+                                                                 zápase)34.
+
+                                                                 Dlouhá absence
+Kariérní růst a     Věkový vývoj        Zdravotní systém
+                                                                 brzdí rychlost
+Retirement          atributů,           nesmí plošně
+                                                                 přírůstku
+(Career Growth &    dosahování          snižovat technické
+                                                                 zkušeností/atributů
+Retirement)         potenciálu a        atributy po každém
+                                                                 u mladých hráčů
+                    odchod z okruhu.    běžném zranění ani
+                                                                 (ztráta času). U
+                                        uměle zabíjet
+                                                                 starších hráčů (
+                                        kariéry mladých
+                                        hráčů.                              ) zvyšuje
+                                                                 kumulace těžkých
+                                                                 či chronických
+                                                                 zranění
+                                                                 pravděpodobnost
+                                                                 rozhodnutí o
+                                                                 ukončení kariéry
+                                                                 (Medical/Age
+                                                                 Retirement) na
+<PARSED TEXT FOR PAGE: 37 / 59>
+                                                                              konci sezóny nebo
+                                                                              po těžké recidivě29.
+
+Přenos zdravotního stavu mezi zápasy a zachování historie
+Pro auditovatelnost a historickou reprodukovatelnost musí být zdravotní stav hráče
+serializovatelnou datovou strukturou (PlayerHealthState), která sdružuje čtyři komplementární
+složky. První složkou je enumerace current_status (HEALTHY, RESTRICTED_NTL, INJURED_TL,
+REHAB_PARTICIPATION, RETURN_TO_SPORT, RETIRED_MEDICAL), která jednoznačně určuje
+eligibilitu hráče pro nadcházející den či turnaj. Druhou složkou je volitelný záznam active_injury,
+jenž uchovává identifikátor injury_id, anatomickou lokalitu anatomical_site, typ tkáně
+tissue_type, mechanismus vzniku onset_type (ACUTE vs. OVERUSE), kategorii závažnosti
+severity_tier, zbývající dny do ukončení Time-Loss fáze (days_remaining_tl) a zbývající dny
+zvýšené opatrnosti ve fázi Return to Sport (days_remaining_rts). Třetí složku tvoří vektor
+tkáňové vulnerability tissue_vulnerability_vector, tedy pole 4–5 desetinných čísel
+               uchovávající zbytkovou vulnerabilitu klíčových anatomických segmentů
+(kotník/noha, koleno/stehno, bederní páteř, rameno/horní končetina) spolu s počítadlem
+kumulovaného opotřebení chronic_joint_wear. Čtvrtou složkou je neměnný (append-only)
+seznam historických zdravotních událostí career_injury_log s přesným časovým razítkem
+(season_id, day_index, tournament_id, match_id), který zaručuje, že při restartu či replay z
+libovolného snapshotu má simulátor identickou paměť předchozích zranění.
+
+9. Nejméně 15 validačních experimentů
+Pro ověření, že navržená zdravotní architektura generuje realistické emergentní chování na
+úrovni zápasů, turnajů i dvacetiletých kariér a nevnáší do simulátoru skryté artefakty, je
+definována sada 16 reprodukovatelných validačních experimentů. V souladu se zásadami
+vědecké integrity nejsou tam, kde chybí exaktní squash-specific konsenzus, stanovovány
+svévolné bodové pravděpodobnosti, nýbrž strukturální invarianty, směrové hypotézy a
+empiricky ukotvená pásma přijatelnosti.
+Přehledová matice validačních experimentů
+
+
+ ID                  Název               Primární            Kriteriální          Použitelnost v
+                     experimentu         testovaná           metrika              Pre-Alphě
+                                         doména
+
+
+ EXP-01              Kalibrace           Epidemiologie                a           Ano (Jádro)
+                     incidence           / Expozice          průměrný
+                     podle                                   počet zranění
+                     skutečné                                na hráče za 11
+<PARSED TEXT FOR PAGE: 38 / 59>
+                                            let vs. Horsley
+         hodinové
+         expozice                           et al. (2020)4
+
+
+                                            Podíly Minor /
+EXP-02   Kontrola           Doba léčení                       Ano (Jádro)
+                                            Moderate /
+         rozdělení
+                                            Severe TL
+         závažnosti a
+                                            absencí vs.
+         délky absencí
+                                            Rejeb et al.
+                                            (2017)1
+
+                                            Podíl dolních
+EXP-03   Anatomická a       Druhy zranění                     Ano (Jádro)
+
+                                            končetin (76,5
+         tkáňová
+                                            %), měkkých
+         proporce v
+                                            tkání (71 %) a
+         elitní kohortě
+                                            beder vs.
+                                            Horsley et al.
+                                            (2020)4
+
+                                            Poměr NTL
+EXP-04   Oddělení NTL       Spektrum                          Částečně
+                                            stavů k TL
+         funkčních          zdraví                            (zjednodušené
+                                            absencím a
+         omezení od                                           NTL)
+                                            míra přechodu
+         Time-Loss
+         absencí                            NTL    TL při
+                                            pokračující
+                                            zátěži1
+
+                                            Nárůst
+EXP-05   Kumulativní        Soutěžní                          Ano (Jádro)
+                                            incidence v
+         zátěž a práh       zatížení
+                                            pozdních
+         selhání ve
+                                            kolech
+         vícedenním
+                                            (QF/SF/F) po
+         turnaji
+                                            90+ min
+                                            pětisetových
+                                            zápasech26
+
+
+EXP-06   Ortogonalita       Architektura    Absence dvojí     Ano (Kritické)
+         akutní únavy,      Engine          penalizace
+         Form a zranění                     výkonu v
+         (Anti-Duplicita)                   zápase při
+<PARSED TEXT FOR PAGE: 39 / 59>
+                                              souběhu únavy
+                                              a lehkého
+                                              omezení
+
+
+                                              Poměr rizika (
+EXP-07   Dynamika          Recidiva / RTS                          Alfa / Pokročilá
+         časné recidivy                              )v            Pre-Alpha
+         po návratu                           prvních 4
+         (Return to                           týdnech po
+         Sport)                               návratu vs.
+                                              základní riziko2
+
+                                              Čas do obnovy
+EXP-08   Návrat na         RTS Kontinuum                           Alfa
+                                              předúrazovéh
+         původní
+                                              o
+         výkonnostní
+                                              ELO/výherního
+         úroveň (Return
+                                              procenta po
+         to
+                                              3–6měsíční
+         Performance)
+                                              absenci14
+
+                                              Overdisperze
+EXP-09   Individuální      Matematický                             Ano (Jádro)
+                                              (poměr
+         heterogenita      model
+                                              rozptylu a
+         (Frailty) vs.
+                                              průměru
+         náhodný
+         Poisson                                               )
+                                              počtu
+                                              kariérních
+                                              zranění56
+
+                                              Trajektorie
+EXP-10   Dopad             Kariéra /                               Alfa (vyžaduje
+                                              propadu a
+         dlouhodobé        Ranking                                 PR pravidlo)
+                                              rychlost
+         absence a
+                                              návratu top 10
+         Protected
+                                              hráče s PR vs.
+         Ranking na
+         žebříček                             bez PR34
+
+
+                                              Posun věku
+EXP-11   Vývoj mladého     Kariéra / Talent                        Ano
+                                              dosažení
+         profesionála
+                                              vrcholu
+         (18–22 let) při
+<PARSED TEXT FOR PAGE: 40 / 59>
+                                          (pozdní
+         přerušení
+                                          průlom) bez
+                                          umělé
+                                          destrukce
+                                          genetického
+                                          stropu44
+
+                                          Přežití
+EXP-12   Věková           Kariéra / Věk                     Alfa / Beta
+                                          technicky/takti
+         adaptace stylu
+                                          cky elitních
+         a druhé
+                                          hráčů v top 20
+         vrcholy u
+                                          po třicítce vs.
+         veteránů (30–
+                                          fyzických
+         39 let)
+                                          hráčů30
+
+                                          Podíl odchodů
+EXP-13   Zdravotní vs.    Ukončení                          Ano (Základní
+                                          na vrcholu
+         dobrovolný       kariéry                           verze)
+                                          (Faragův
+         Retirement na
+                                          archetyp) vs.
+         konci kariéry
+                                          degenerativní/
+                                          úrazové
+                                          odchody
+                                          (Ghosal/Golán)
+                                          29
+
+
+
+
+EXP-14   Stabilita        Monte Carlo     Mezikvartilové    Ano (Kritické)
+         makro-           stabilita       rozpětí sezónní
+         indikátorů                       prevalence
+         napříč 100                       absencí a
+         deterministick                   počtu skrečí v
+         ými seedy                        10letém běhu
+
+
+EXP-15   Deterministick   Determinismus   Bitová shoda      Ano (Kritické)
+         á izolace PRNG                   nesouvisejících
+         proudů                           zápasů při
+         (Branch                          změně
+         Invariance                       koeficientu
+         Test)                            hojení
+                                          zraněného
+<PARSED TEXT FOR PAGE: 41 / 59>
+                                                              hráče
+
+
+  EXP-16             Snapshot,           Historická           100% bitová        Ano (Kritické)
+                     Save/Load,          integrita            identita
+                     Restart a                                career_injury_l
+                     Replay                                   og a losů po
+                     konzistence                              přerušení a
+                     historie                                 načtení
+                                                              uprostřed
+                                                              sezóny
+
+Detailní specifikace experimentů
+EXP-01: Kalibrace incidence podle skutečné hodinové expozice
+Hypotézou experimentu je, že počet lékařsky významných zranění vygenerovaných
+simulátorem roste úměrně skutečné době expozice (odehrané zápasové a tréninkové hodiny),
+nikoliv pouhému plynutí kalendářních dnů u neaktivních hráčů, a v 11letém okně u plně aktivních
+profesionálů konverguje k empirickému benchmarku Horsley et al. (2020) (                  zranění na
+hráče za 11 let, resp. v širším pásmu                 Time-Loss události na aktivního profesionála
+ročně)4. Měřitelným výsledkem je empirická míra                                      spočtená
+zvlášť pro tréninkové hodiny a zápasové hodiny, doplněná o průměrný kumulativní počet
+zranění na hráče plně aktivního po dobu 11 sezón. Experiment vyžaduje simulaci 11 sezón
+okruhu FAX se 128 profesionálními hráči rozdělenými do 3 úrovní aktivity (vysoká turnajová
+zátěž 20+ turnajů/rok, střední 12–15 turnajů/rok, nízká 5–8 turnajů/rok). Hlavním rizikem selhání
+je stav, kdy hráči s 5 turnaji ročně vykážou stejnou sezónní míru soutěžních zranění jako hráči s
+22 turnaji ročně, což by indikovalo chybné použití kalendářního jmenovatele namísto expozice.
+Experiment je plně použitelný a nezbytný již v pre-alphě pro základní kalibraci hazardní funkce.
+EXP-02: Kontrola rozdělení závažnosti a délky absencí
+Experiment testuje hypotézu, že rozdělení délky trvání Time-Loss absencí vykazuje výraznou
+pravostrannou šikmost (right-skewed distribution), kde mírná (1–7 dnů) a střední (8–28 dnů)
+zranění tvoří přibližně 85–90 % všech absencí a závažná zranění (             ) tvoří přibližně
+10–15 % případů v souladu s prospektivními daty Rejeb et al. (2017) (53,0 % minor, 34,4 %
+moderate, 13,0 % severe)1. Měřitelným výsledkem jsou relativní četnosti vygenerovaných Time-
+
+Loss zranění v intervalech        ,          a               dnů spolu s mediánem a průměrem
+doby rekonvalescence u podskupiny zranění trvajících                   pro porovnání se
+směrovým řádem Jhamb a Singh (2022) . Vstupními daty je log všech vygenerovaných Time-
+                                         7
+
+
+Loss událostí (              zranění) z 10sezónní simulace. Rizikem je použití symetrického
+<PARSED TEXT FOR PAGE: 42 / 59>
+(normálního) rozdělení pro dobu léčení, které by vedlo buď k přebytku banálních absencí, nebo
+k masovému vyřazení poloviny světové špičky na celé měsíce. Experiment je plně použitelný v
+pre-alphě a vyžaduje pouze parametrizaci tří větví rozdělení doby léčení.
+EXP-03: Anatomická a tkáňová proporce v elitní kohortě
+Hypotézou je, že v simulované populaci elitních mužských profesionálů tvoří poranění dolních
+končetin dominantní podíl (cílové pásmo 65–80 % podle Horsley et al., 2020: 76,48 %),
+následované páteří a trupem (s převahou bederní oblasti               spinálních úrazů) a horní
+končetinou (             ), přičemž měkké tkáně představují 70–85 % všech případů4.
+Měřitelným výsledkem jsou multinomické proporce anatomických tagů a tkáňových typů v
+career_injury_log po 10 sezónách a celoživotní (11letá) prevalence alespoň jednoho zranění
+ramene u elitní kohorty (referenční bod Horsley et al., 2020: 50 %)4. Vyhodnocuje se výstupní
+tabulka četností podle anatomical_site a tissue_type. Rizikem selhání je nadměrné generování
+očních či fatálních kardiálních příhod u elitních profesionálů v důsledku nekritického převzetí
+nemocničních a rekreačních studií8. Experiment je plně použitelný v pre-alphě pomocí statické
+či mírně věkově vážené tabulky příčinně specifických vah      .
+EXP-04: Oddělení NTL funkčních omezení od Time-Loss absencí
+Hypotéza předpokládá, že simulátor rozlišuje mezi stavem drobného zdravotního problému
+bez absence (Non-Time-Loss, NTL), v němž hráč dokončuje turnaj s mírným funkčním
+omezením a zvýšenou tkáňovou citlivostí, a stavem Time-Loss (TL), který vynucuje skreč či
+odhlášení z turnaje1. Hráč, který se stavem NTL odehraje sérii těžkých pětisetových zápasů bez
+odpočinku, musí vykázat statisticky významně vyšší míru progrese do TL zranění než hráč,
+který po turnaji zařadí regenerační týden. Měřitelným výsledkem je poměr četnosti stavů NTL a
+TL a podmíněná pravděpodobnost
+                                                                  oproti
+                                                   v párovém A/B experimentu se 100 hráči ve
+stavu NTL. Pokud NTL stav nemá žádný vliv na riziko progrese do TL, jde o mrtvou kosmetickou
+proměnnou; pokud naopak automaticky způsobuje prohru v každém zápase, chová se de facto
+jako skryté vyřazení. Experiment je volitelný pro minimální pre-alphu (kde lze zavést
+jednoduchý příznak has_minor_strain) a plně doporučený pro přechod do alphy.
+EXP-05: Kumulativní zátěž a práh selhání ve vícedenním turnaji
+Hypotézou je, že pravděpodobnost akutního svalově-šlachového selhání nebo skreče v
+průběhu vícedenního turnaje nelineárně roste u hráčů, kteří v předchozích 2–3 dnech odehráli
+extrémně dlouhé zápasy (např.                    s vysokým počtem výpadů) s intervalem
+odpočinku                  , oproti hráčům postupujícím přes rychlé 30minutové zápasy 3:06.
+Měřitelným výsledkem je míra zranění na zápas (          ) a míra skrečí (retired) ve čtvrtfinále,
+semifinále a finále stratifikovaná podle kumulované minutáže v předchozích kolech turnaje (
+            ,                 ,              ) na vzorku 500 hlavních turnajových pavouků (64
+<PARSED TEXT FOR PAGE: 43 / 59>
+hráčů, 6 kol v 6–7 dnech). Hlavním rizikem je exponenciální přestřelení („masakr ve finále“), kdy
+by více než 5–10 % finálových zápasů končilo skrečí kvůli špatně ohraničené konvexní funkci
+únavy    . Na skutečném okruhu PSA končí většina vyčerpávajících turnajů dohráním zápasu,
+kde se únava projeví poklesem fyzické výkonnosti, nikoliv masovými skrečemi. Experiment je
+plně použitelný v pre-alphě jako klíčový test horního omezení (cap) funkce      .
+EXP-06: Ortogonalita akutní únavy, Form a zranění (Anti-Duplicita)
+Hypotéza stanoví, že zavedení zdravotního modulu nezpůsobí dvojí penalizaci výkonu hráče,
+který je pouze unavený (bez aktivního NTL/TL zranění), a u hráče s drobným NTL omezením
+nedochází k neúměrnému kaskádovému propadu vítězné pravděpodobnosti nad rámec
+zamýšleného mírného efektu. Měřitelným výsledkem je porovnání rozdělení délky výměn,
+skóre a pravděpodobnosti výhry favorita v identicky nasazených zápasech během kontrolního
+běhu 1 000 utkání se stejným seedem ve třech konfiguracích: baseline bez zdravotního
+modulu, aktivní zdravotní modul ve stavu HEALTHY a aktivní zdravotní modul ve stavu
+RESTRICTED_NTL. Pokud se výsledky první a druhé konfigurace u zdravého hráče liší, zdravotní
+modul nechtěně modifikuje základní zápasovou fyziku nebo spotřebovává PRNG čísla ze
+zápasového proudu. Tento regresní test je kritický již v pre-alphě.
+EXP-07: Dynamika časné recidivy po návratu (Return to Sport)
+Podle testované hypotézy vykazuje hráč vracející se do turnajového kolotoče bezprostředně
+po ukončení Time-Loss fáze středního či těžkého zranění v prvních týdnech fáze Return to
+Sport (Ardern et al., 2016) zvýšené riziko recidivy v téže anatomické oblasti (   ),
+které s každým týdnem a odehraným zápasem bez komplikací monotónně klesá k základní
+hladině2. Měřitelným výsledkem je poměr hazardu (                      ) zranění v anatomickém
+segmentu        v okně 0–28 dnů po návratu do soutěže oproti oknu 90–180 dnů po návratu a
+podíl stejno-segmentových recidiv na všech zraněních v prvním měsíci po návratu u kohorty
+500 případů sledovaných 180 dnů po datu RTS. Rizikem je nekonečná smyčka recidiv (death
+spiral), kdy se hráč po prvním zranění kotníku už nikdy nedokáže udržet zdravý déle než 2
+týdny kvůli příliš vysokému parametru      nebo příliš pomalému rozpadu        . Experiment je
+vhodný pro pokročilou pre-alphu nebo alphu, jakmile je implementován stavový vektor           .
+EXP-08: Návrat na původní výkonnostní úroveň (Return to Performance)
+Hypotéza ověřuje, že po dlouhodobé absenci (např. 4–8 měsíců) vykazuje elitní hráč při prvních
+2–4 turnajích po návratu (Return to Sport) dočasně nižší úspěšnost proti srovnatelným
+soupeřům v důsledku eroze zápasového rytmu (Form), avšak po odehrání adaptačního bloku
+zápasů dosahuje znovu své předúrazové výkonnostní hladiny (Return to Performance), aniž by
+utrpěl trvalou ztrátu technických atributů3. Měřitelným výsledkem je křivka průměrného
+výkonnostního ratingu a procenta vyhraných zápasů v turnajích                            po
+návratu v porovnání s průměrem v turnajích                  před zraněním, měřená na simulaci
+vynucené 6měsíční absence u 50 hráčů z top 20 ve věku 24–27 let. Pokud se hráč v turnaji
+<PARSED TEXT FOR PAGE: 44 / 59>
+po půlroční pauze prezentuje okamžitě 100% špičkovou formou, chybí modelování ztráty
+reaktivní zápasové ostrosti; pokud se naopak ani po 12 měsících nevrátí k původní výkonnosti,
+model chybně trvale poškodil jeho základní atributy. Experiment je určen pro fázi alphy.
+EXP-09: Individuální heterogenita (Frailty) vs. náhodný Poisson
+Hypotézou je, že začlenění individuálního parametru náchylnosti ke zranění (
+                                ) generuje v dlouhodobé populaci realistickou overdisperzi
+počtu zranění na hráče (index disperze                       ), takže vedle odolných hráčů s
+minimem absencí přirozeně vznikají talentovaní hráči s častějšími zdravotními přerušeními
+(archetyp Ramyho Ashoura), aniž by byla změněna celková populační střední hodnota35.
+Měřitelným výsledkem je porovnání empirického rozdělení počtu zranění za 10 let mezi
+homogenním modelem (          ,         ) a frailty modelem (      ,              , testováno
+vůči negativně binomickému rozdělení) ve dvou 10letých bězích se 200 hráči. Příliš vysoký
+
+rozptyl   by vytvořil skupinu hráčů s         , kteří by byli permanentně zranění od 18 let,
+proto je nutné ořezání (truncation) na interval                       . Experiment je plně
+použitelný v pre-alphě.
+EXP-10: Dopad dlouhodobé absence a Protected Ranking na žebříček
+Experiment testuje hypotézu, že při 6–9měsíční zdravotní absenci dochází k očekávanému
+propadu hráče v klouzavém 52týdenním žebříčku (srovnatelnému s empirickými propady v
+datech PSA u Gaultiera, Ashoura či Sobhy)35, avšak existence mechanismu Protected Ranking
+(PR) pro nasazování a vstup do turnajů po návratu významně zkracuje dobu potřebnou k
+návratu hráče top 10 zpět do elitní dvacítky oproti systému bez PR34. Měřitelným výsledkem je
+počet měsíců od data návratu (Return to Sport) do opětného dosažení top 20 žebříčku FAX u
+30 elitních hráčů s výkonností top 5 po 8měsíční absenci v režimu s aktivním PR pro prvních 8
+turnajů oproti režimu bez PR. Bez PR uvízne elitní hráč po 9měsíčním zranění s nulovým
+bodovým ziskem na celé měsíce mimo hlavní turnaje FAX kvůli kapacitním uzávěrkám vstupu
+(entry cutoffs), což odporuje realitě PSA Tour34. Experiment spadá do fáze alphy.
+EXP-11: Vývoj mladého profesionála (18–22 let) při přerušení
+Hypotézou je, že u mladého hráče (18–22 let), který utrpí závažné zranění s 6měsíční absencí,
+dochází k dočasné stagnaci růstu výkonnostních atributů kvůli výpadku tréninkových a
+zápasových hodin, což posouvá věk dosažení jeho osobního maxima o 6–12 měsíců doprava
+(efekt pozdního průlomu), ale po plném uzdravení hráč svůj potenciál nadále rozvíjí44.
+Měřitelným výsledkem je rozdíl v dosaženém ratingu ve věku 21 let a ve věku 28 let mezi dvojicí
+identických klonů mladého talentu (50 párů sledovaných od 18 do 30 let, kde Klon B prodělá
+6měsíční zranění v 19 letech). Pokud je růst atributů v simulátoru vázán čistě na kalendářní věk
+bez ohledu na absenci, oba klony budou mít ve 20 letech identické dovednosti; pokud naopak
+zranění trvale sníží strop potenciálu, mladí hráči se nikdy nevzpamatují. Experiment je plně
+použitelný v pre-alphě.
+EXP-12: Věková adaptace stylu a druhé vrcholy u veteránů (30–39 let)
+<PARSED TEXT FOR PAGE: 45 / 59>
+Hypotéza předpokládá, že hráči s vysokou taktickou inteligencí, čtením hry a technickou
+efektivitou (archetyp Borji Golána, Jamese Willstropa či Aliho Faraga) vykazují po 32. roce věku
+nižší míru zápasového opotřebení na odehranou minutu a pomalejší úpadek výkonnosti než
+hráči téhož věku, jejichž hra je postavena výhradně na hrubé fyzické explozivitě a vysokém
+objemu prudkých výpadů30. Měřitelným výsledkem je průměrný věk opuštění top 20 žebříčku a
+kumulovaný počet Time-Loss dnů mezi 32. a 38. rokem života u dvou typizovaných kohort po
+50 hráčích sledovaných od 28 do 40 let. Rizikem je přidání umělého věkového bonusu pro staré
+hráče bez vazby na jejich herní styl a atributy; rozdíl musí přirozeně plynout z nižší energetické
+a mechanické náročnosti technicko-taktického stylu hry. Experiment je určen pro alphu a betu.
+EXP-13: Zdravotní vs. dobrovolný Retirement na konci kariéry
+Hypotézou je, že ukončení kariéry na okruhu FAX nevzniká z jediného univerzálního prahu, ale
+rozpadá se na empiricky doložené větve: dobrovolný odchod na vrcholu či při nasycení
+motivace u starších šampionů (archetyp Farag / El Welily)49, přirozený odchod při poklesu
+žebříčku a věku (34–40 let), a zdravotně akcelerovaný odchod vyvolaný buď progresivním
+chronickým opotřebením kloubů (chronic_joint_wear, archetyp Ghosal)29, nebo těžkým
+zraněním po 34. roce života (archetyp Golán / Gaultier)35. Měřitelným výsledkem je věkové
+rozdělení při odchodu do důchodu a proporce důvodů ukončení kariéry (VOLUNTARY_PEAK,
+PERFORMANCE_DECLINE, MEDICAL_CHRONIC, MEDICAL_ACUTE_LATE) u hráčů, kteří během
+30leté simulace okruhu FAX dosáhli top 50. Rizikem je generování častých zdravotních
+ukončení kariéry u zdravých 24letých hráčů top 20. Základní verze je plně použitelná již v pre-
+alphě.
+EXP-14: Stabilita makro-indikátorů napříč 100 deterministickými seedy
+Hypotéza požaduje, aby napříč 100 nezávislými deterministickými seedy (WorldSeed
+                  ) v 10leté simulaci zůstávaly globální epidemiologické metriky okruhu
+(průměrné procento hráčů top 100 současně nedostupných kvůli TL zranění v daném týdnu,
+míra skrečí na 1 000 zápasů, medián délky absence) stabilní v úzkém mezikvartilovém pásmu a
+nevykazovaly divergentní režimy, v nichž by došlo k vyřazení        okruhu najednou.
+Měřitelným výsledkem je medián, mezikvartilové rozpětí (IQR) a min/max rozptyl týdenní
+bodové prevalence zraněných hráčů (                ) a roční míry zápasových skrečí napříč 100
+seedy v dávkovém běhu. Rizikem je kladná zpětná vazba, kdy zranění jednoho hráče zvýší
+počet zápasů druhého hráče, což vyvolá kaskádové vyčerpání celého turnajového pole.
+Experiment je kritickým stabilizačním testem pro pre-alphu.
+EXP-15: Deterministická izolace PRNG proudů (Branch Invariance Test)
+Hypotéza ověřuje, že díky explicitní hierarchii PRNG proudů platí striktní větvená invariance:
+pokud v testovacím běhu B uměle změníme parametr doby hojení (nebo vyvoláme dodatečné
+sub-dotazy do zdravotního PRNG u hráče X v okamžiku jeho zranění, aniž by se změnila jeho
+účast v daném zápase), výsledky všech ostatních zápasů v témže turnaji mezi ostatními hráči
+zůstanou bitově identické s referenčním během A. Měřitelným výsledkem je kryptografický
+otisk (SHA-256 hash) výsledků, skóre a statistik všech zápasů neobsahujících hráče X ve dvou
+<PARSED TEXT FOR PAGE: 46 / 59>
+paralelních bězích jednoho turnajového týdne se stejným WorldSeed. Pokud zdravotní systém
+sdílí globální mutovatelnou instanci Random se zápasovým enginem, jediný
+volaný .nextDouble() navíc při výpočtu závažnosti zranění hráče X na vedlejším kurtu
+kompletně změní výsledek finále na centrálním kurtu (motýlí efekt PRNG desynchronizace).
+Tento test je absolutní architektonickou nutností v pre-alphě.
+EXP-16: Snapshot, Save/Load, Restart a Replay konzistence historie
+Hypotéza stanoví, že uložení kompletního stavu světa (WorldState včetně PlayerHealthState a
+career_injury_log) v libovolném dni sezóny , ukončení procesu a následné načtení a
+pokračování simulace do konce sezóny vygeneruje 100% bitově shodnou budoucí historii
+(stejná nová zranění, stejné dny návratu, stejné výsledky zápasů) jako nepřerušený běh od
+začátku sezóny. Měřitelným výsledkem je bitové porovnání serializovaného stavu světa na
+konci sezóny (          ) mezi nepřerušeným během a během se Save/Load v bodech
+                       . Rizikem je neuložení plovoucí zbytkové vulnerability         nebo
+zaokrouhlení desetinných stavů při serializaci do JSON či binárního formátu, které po načtení
+posune práh překročení hazardu. Experiment je absolutní architektonickou nutností v pre-
+alphě.
+
+10. Doporučení pro pre-alphu a budoucí verze
+V souladu s principem inženýrské přiměřenosti (parsimony) a vědecké přesnosti není žádoucí
+implementovat veškerou klinickou komplexitu najednou. Architektura zdravotního systému pro
+Squash Engine je rozvržena do tří evolučních fází, které zaručují, že již pre-alpha bude plně
+funkční, deterministická a epidemiologicky ukotvená, aniž by brzdila vývoj jádra simulátoru.
+Fázovaná cestovní mapa implementace
+
+
+ Komponenta /            Fáze 1: Pre-Alpha       Fáze 2: Alpha           Fáze 3: Beta / v1.0
+ Mechanika               (Minimum Viable         (Tkáňová paměť a        (Plné RTS
+                         Health System)          regulační               kontinuum a
+                                                 realismus)              věková adaptace)
+
+
+                         Diskrétní               Rozšíření o             Plná kalibrace
+ Matematické
+                         Exposure-               Competing Risks         nelineárních
+ jádro rizika
+                         Dependent Hazard        pro 4 anatomické        interakcí mezi
+                         vyhodnocovaný po        segmenty (DK-           biomechanickým
+                         každém zápase           kotník/noha, DK-        stylem hráče
+                         (podle minutáže a       koleno/stehno,          (objem výpadů vs.
+                         akutní únavy) a 1×      Bedra/Trup,             kontrolní lob hra) a
+                         týdně pro               Rameno/HK) a            specifickým
+                         tréninkový blok,        vektor lokální          opotřebením
+<PARSED TEXT FOR PAGE: 47 / 59>
+                   modulovaný jedním        paměti                kloubů33.
+                   statickým                vulnerability
+                   parametrem
+                                                      pro
+                   Individual Frailty (
+                                            realistické časné
+                      )1.                   recidivy2.
+
+                                            5 stavů: Přidání      Plný 6stavový
+Stavový prostor    3 základní stavy:
+                                            stavu                 semi-markovský
+hráče              HEALTHY                  RESTRICTED_NTL        automat (M-FASIS
+                   INJURED_TL (s            (hráč hraje s         + Bern 2016) včetně
+                   odpočtem dnů             drobným               explicitního řízení
+                   absence) + přechod       omezením a            tréninkové zátěže
+                   do RETIRED u             zvýšeným rizikem      ve fázi Return to
+                   těžkých pozdních         přechodu do TL) a     Participation2.
+                   zranění.                 stavu
+                                            RETURN_TO_SPOR
+                                            T po absenci
+                                                         .
+                                                         1
+
+
+
+                   Třívětvové               Anatomicky
+Rozdělení                                                         Dynamická
+                   rozdělení Time-          specifická log-
+závažnosti (Doba                                                  prognóza doby
+                   Loss absencí podle       normální /
+léčení)                                                           léčení s možností
+                   Rejeb et al. (2017):     Weibullova
+                                                                  mírného zkrácení či
+                   Minor (53 %: 2–7         rozdělení doby
+                                                                  prodloužení
+                   dnů), Moderate           léčení (odlišení 6–
+                                                                  rehabilitace podle
+                   (34 %: 8–28 dnů),        10měsíční
+                                                                  reakce tkáně
+                   Severe (13 %: 29–        chirurgické
+                                                                  během fáze Return
+                   240 dnů) +               rekonstrukce
+                                                                  to Participation.
+                   krátkodobá nemoc         šlachy/vazu od
+                   (2–5 dnů)1.              6týdenní svalové
+                                            léze)3.
+
+                   Standardní události      Zavedení pravidla
+Turnajové a                                                       Strategická správa
+                   Withdrawal (před         Protected Ranking
+rankingové                                                        kalendáře
+                   turnajem),               (PR) pro vstupy do
+důsledky                                                          (preventivní
+                   Walkover (mezi           turnajů po absenci
+                                                                  odhlášení z
+                   koly) a Retired
+                                                                  menšího turnaje při
+                   (skreč v zápase při      podle standardu       stavu
+                   akutním TL úrazu) . 34
+                                            PSA Tour Rule         RESTRICTED_NTL
+<PARSED TEXT FOR PAGE: 48 / 59>
+                         Přirozený rozpad         Book34.                 nebo vysoké
+                         Form během
+                                                                          kumulativní únavě
+                         absence.
+                                                                          před majorem).
+
+
+                         Pozastavení růstu        Akumulátor              Emergentní posun
+ Kariérní a věkové
+                         zkušeností/dovedn        chronického             herního stylu u
+ dopady
+                         ostí během TL            opotřebení              stárnoucích hráčů s
+                         absence. Věkový          (chronic_joint_wear     vysokým taktickým
+                         multiplikátor            ) zvyšující             atributem
+                         prodlužující dobu        pravděpodobnost         (kompenzace
+                         rekonvalescence          zdravotního             poklesu fyzické
+                         po 30. roce věku11.      ukončení kariéry po     rychlosti nižší
+                                                  33. roce věku29.        mechanickou
+                                                                          zátěží)43.
+
+
+ Deterministická         Povinné od 1. dne        Zachování plné          Rozšířená
+ RNG izolace             Pre-Alphy:               zpětné                  telemetrie a
+                         Bezstavové               kompatibility           analytický export
+                         odvozování               schématu                zdravotních
+                         Seed_health z            serializace             trajektorií pro
+                         (WorldSeed,              PlayerHealthState.      historické statistiky
+                         "HEALTH",                                        okruhu FAX.
+                         SeasonID,
+                         DayIndex, PlayerID,
+                         Context).
+
+Konkrétní pravidla proti přehánění četnosti a důsledků v Pre-Alphě
+Aby simulovaný svět v pre-alphě působil autenticky a nevykazoval přemíru zdravotních
+kolapsů, je nezbytné dodržet tři omezující principy. Prvním je strop na zápasové skreče (in-
+match retirement cap). V reálném profesionálním squashi dochází k většině manifestací
+přetížení až po zápase, když ztuhne zanícená šlacha nebo bederní svalstvo po vychladnutí,
+nikoliv přímo na kurtu uprostřed výměny. Proto v Pre-Alphě platí pravidlo, že ze zápasem
+vyvolaných Time-Loss událostí vede pouze malá frakce (výhradně akutní traumatické léze
+stupně Moderate/Severe a těžké tržné rány či křeče) k okamžité skreči Retired uprostřed
+zápasu, zatímco zbytek se projeví až po dohrání utkání jako neschopnost nastoupit do dalšího
+kola (Walkover) nebo do dalšího turnaje (Withdrawal).
+Druhým principem je zákaz trvalého mrzačení atributů běžnými zraněními. Mírná a střední
+zranění, která tvoří 87 % všech Time-Loss událostí1, mají nulový trvalý dopad na strop i
+aktuální hladinu technických, taktických a fyzických atributů hráče. Jejich jediným důsledkem je
+<PARSED TEXT FOR PAGE: 49 / 59>
+ztráta času: vynechaný turnaj, ušlé body do žebříčku, ušlý tréninkový čas a přirozený pokles
+zápasové ostrosti Form.
+Třetím principem je zákaz umělých věkových štítů. Mladí hráči (18–21 let) nedostávají žádný
+umělý „ochranný bonus nesmrtelnosti“, neboť data Rejeb et al. (2017) ukazují vysokou incidenci
+8,5 na 1 000 h u mládeže v důsledku vysokých tréninkových objemů1. Jejich výhodou oproti
+36letým veteránům je výhradně biologicky rychlejší tkáňová regenerace a nulové počáteční
+chronické opotřebení kloubů (chronic_joint_wear         )11.
+
+11. Přehled nejistot a chybějících dat
+V zájmu naprosté vědecké integrity je nutné explicitně vymezit čtyři oblasti, kde současná
+globální literatura o squashi neposkytuje exaktní empirická čísla a kde musí simulátor využívat
+transparentně označené modelové předpoklady4.
+První nejistotou je absence standardizovaného prospektivního dohledu na okruhu PSA
+(surveillance gap). Jak zdůrazňují McCartney et al. (2026), ve squashi dosud chybí
+mezinárodní konsenzus pro hlášení zranění a nemocí srovnatelný s protokoly v tenise nebo
+
+atletice, což autoři označují za kritický úkol před olympijskými hrami v Los Angeles 20284.
+Jediná publikovaná studie elitních profesionálů (Horsley et al., 2020;     hráčů za 11 let)
+je retrospektivní analýzou národního týmu England Squash, která nezaznamenávala přesný
+počet odehraných tréninkových a zápasových hodin jednotlivých hráčů4. Převod mezi
+průměrem          zranění na profesionála za 11 let a hodinovou incidencí          proto v
+našem modelu nutně využívá odhad průměrného ročního objemu expozice profesionála.
+Druhou mezerou je chybějící squash-specific distribuce doby léčení podle MRI či
+klinického stupně diagnózy. V literatuře o squashi neexistují detailní tabulky mediánů a
+mezikvartilových rozpětí dnů do návratu (days to RTS) rozdělené podle přesného
+histologického stupně svalového či vazivového poranění (např. BAMIC Grade 1a–3c u
+hamstringů nebo přesné dny absence u laterální distorze hlezna v populaci PSA hráčů). Studie
+Jhamb a Singh (2022) uvádí průměrnou dobu zotavení 5,8 měsíce u indických klubových hráčů
+se zraněním nad 2 týdny7, což je však hodnota zatížená retrospektivním výběrem nejtěžších
+úrazů u starších amatérů (průměrný věk 41 let) bez každodenní profesionální fyzioterapie. Pro
+jemné škálování uvnitř kategorií Minor (1–7 dnů), Moderate (8–28 dnů) a Severe (         dnů) z
+Rejeb et al. (2017) proto model využívá obecné fyzioterapeutické konsenzuální rámce (Ardern
+                  1
+
+
+et al., 2016)3.
+Třetí oblastí je podhlášenost systémových a infekčních onemocnění (illness gap).
+McCartney et al. (2026) explicitně konstatují zásadní výzkumnou mezeru v evidenci ne-
+muskuloskeletálních a infekčních onemocnění u squashistů mimo tepelný stres a historické
+kazuistiky kardiálních příhod u rekreačních hráčů4. Četnost krátkodobých odstoupení z turnajů
+kvůli virovým respiračním či cestovním gastrointestinálním infektům na globálním okruhu je v
+modelu ukotvena jako nízko-závažnostní šumová složka (2–5 dnů absence) bez tkáňové
+paměti recidivy.
+<PARSED TEXT FOR PAGE: 50 / 59>
+Čtvrtou nejistotou je kvantifikace otevřených dovedností a psychologické připravenosti
+při návratu. Bernský konsenzus (Ardern et al., 2016) jednoznačně prokazuje existenci rozdílu
+mezi Return to Sport a Return to Performance a zdůrazňuje roli reaktivního rozhodování v
+únavě a psychologické připravenosti měřené škálami ACL-RSI a I-PRRS3. V literatuře však
+neexistuje přímé měření toho, o kolik procent klesá vítězná pravděpodobnost v prvních třech
+turnajích PSA po 6měsíční pauze při kontrolování kvality soupeře. Navržené propojení fáze
+Return to Sport s přirozenou erozí proměnné Form v architektuře Squash Engine proto
+představuje bezparametrickou systémovou hypotézu, jejíž chování podléhá verifikaci v
+experimentu EXP-08.
+
+12. Přesné bibliografické zdroje
+Následující tabulkový soupis shrnuje veškeré primární epidemiologické studie, systematické
+přehledy, metodické práce o modelování zatížení a opakovaných událostí i regulační
+dokumenty profesionálního squashe analyzované v této výzkumné zprávě.
+
+
+
+
+ Kategorie zdroje                Přesná bibliografická           Klíčový přínos pro
+                                 citace a identifikátory         výzkum a architekturu
+                                                                 Squash Engine
+
+
+                                 McCartney, R. V., Fallon,       Syntéza 12 studií, výpočet
+ Hlavní systematické
+                                 T., & Heron, N. (2026).         sdružené incidence (0,74 /
+ review a meta-analýza
+                                 Squash Under Strain: A          365 dnů; 2,01 / 1 000 dnů),
+                                 Systematic Review and           průkaz extrémní
+                                 Meta-Analysis of Injuries       heterogenity (
+                                 and Illnesses in Squash                          )a
+                                 Players. Sports (Basel),        identifikace mezer v
+                                 14(2), 79. DOI:                 evidenci nemocí a
+                                 10.3390/sports14020079,
+                                                                 tepelného stresu4.
+                                 PMID: 41745681, PMCID:
+                                 PMC12944960, PROSPERO:
+                                 CRD4202510817094.
+
+                                 Horsley, I. G., O'Donnell,      Jediná longitudinální studie
+ Elitní profesionální squash
+                                 V., & Leeder, J. (2020).        elitních profesionálů (
+ (Kohorta)
+                                 The epidemiology of                        , 11 let, 592
+                                 injuries in English             zranění, 8,83 zranění/hráče);
+                                 professional squash; A          přesné rozložení lokalit
+                                 retrospective analysis          (76,48 % DK, 71,11 % měkké
+                                 between 2004 and 2015.
+<PARSED TEXT FOR PAGE: 51 / 59>
+                           Physical Therapy in Sport,       tkáně, 46,07 % bederní
+                           46, 1–6 .
+                                  10
+                                                            páteř v rámci trupu, 50 %
+                                                            hráčů zranění ramene)4.
+
+                           Rejeb, A., Johnson, A.,          Prospektivní hodinová
+Prospektivní expozice a
+                           Vaeyens, R., Horobeanu,          incidence ve squashi (8,5 / 1
+závažnost (Squash)
+                           C., Farooq, A., &                000 h), poměr přetížení
+                           Witvrouw, E. (2017).             (4,7 / 1 000 h) vs. akutních
+                           Compelling overuse injury        úrazů (3,3 / 1 000 h), podíl
+                           incidence in youth               TL vs. NTL a distribuce
+                           multisport athletes.             závažnosti (53,0 % minor,
+                           European Journal of Sport        34,4 % moderate, 13,0 %
+                           Science, 17(4), 495–5021.        severe)1.
+
+                           Finch, C., & Eime, R.            Rozlišení klinických,
+Primární epidemiologické
+                           (2001). The epidemiology         nemocničních, klubových a
+studie squashe
+                           of squash injuries.              populačních souborů;
+                           International SportMed           třístupňová škála
+                           Journal, 2(2), 1–118.            závažnosti podle Parkkari et
+                                                            al. (2004); kontrast výskytu
+                           Parkkari, J., Kannus, P.,        zranění dolních končetin u
+                           Natri, A., et al. (2004).        pokročilých (81,3 %) vs.
+                           Active living and injury risk:   rekreačních hráčů (23,8 %);
+                           a prospective study among        průměrná doba zotavení u
+                           3,657 Finns. International       zranění      týdny (5,8
+                           Journal of Sports Medicine,      měsíce v klubové kohortě)4.
+                           25(3), 209–216 .4
+
+
+
+
+                           Chard, M. D., & Lachmann,
+                           S. M. (1987). Racquet
+                           sports—patterns of injury
+                           presenting to a sports
+                           injury clinic. British Journal
+                           of Sports Medicine, 21(4),
+                           150–1538.
+
+                           Eime, R., Zazryn, T., &
+                           Finch, C. (2003).
+                           Epidemiology of squash
+                           injuries requiring hospital
+<PARSED TEXT FOR PAGE: 52 / 59>
+                        treatment. Injury Control
+                        and Safety Promotion,
+                        10(4), 243–2454.
+
+                        Berson, B. L., Rolnick, A.
+                        M., Ramos, C. G., &
+                        Thornton, J. (1981). An
+                        epidemiologic study of
+                        squash injuries. American
+                        Journal of Sports Medicine,
+                        9(2), 103–1064.
+
+                        Meyer, C., Van Niekerk, L.,
+                        Prinsloo, E., Steenkamp,
+                        M., & Louw, Q. (2007).
+                        Prevalence of
+                        musculoskeletal injuries
+                        among adolescent squash
+                        players in the Western
+                        Cape. South African
+                        Journal of Sports Medicine,
+                        19(1), 1–64.
+
+                        Jhamb, S., & Singh, P.
+                        (2022); Sankaravel, M.,
+                        Lee, J., Mondam, S., &
+                        Low, J. (2017);
+                        Okhovatian, F., &
+                        Ezatolahi, A. (2009);
+                        Persic, R., et al. (2006);
+                        Talabi, A. E., et al. (2014) /
+                        Akinbo, S. R., et al.;
+                        Northcote, R. J., et al. —
+                        citováno v McCartney et al.
+                        (2026)4.
+
+                        Ardern, C. L., Glasgow, P.,      Definice třífázového
+Návrat do sportu (RTS
+                        Schneiders, A. G.,               kontinua (Return to
+Kontinuum)
+                        Witvrouw, E., Clarsen, B.,       Participation   Return to
+<PARSED TEXT FOR PAGE: 53 / 59>
+                          Cools, A. M., Gojanovic,        Sport     Return to
+                          B., Griffin, S., Khan, K. M.,   Performance), odlišení
+                          Moksnes, H., Mutch, S. A.,      uzavřených a otevřených
+                          Phillips, N., Reurink, G.,      reaktivních dovedností v
+                          Sadler, R., Silbernagel, K.     únavě a biopsychosociální
+                          G., Thorborg, K.,
+                                                          model rizika recidivy3.
+                          Wangensteen, A., Wilk, K.
+                          E., & Bizzini, M. (2016).
+                          2016 Consensus statement
+                          on return to sport from the
+                          First World Congress in
+                          Sports Physical Therapy,
+                          Bern. British Journal of
+                          Sports Medicine, 50(14),
+                          853–864. DOI:
+                          10.1136/bjsports-2016-
+                          096278, PMID: 272263893.
+
+                          Impellizzeri, F. M., Tenan,     Matematický důkaz
+Kritika ACWR a zátěžové
+                          M. S., Kempton, T., Novak,      statistického artefaktu
+modely
+                          A., & Coutts, A. J. (2020).     (mathematical coupling) v
+                          Acute:Chronic Workload          poměru ACWR a
+                          Ratio: Conceptual Issues        zdůvodnění, proč simulátor
+                          and Fundamental Pitfalls.       nesmí používat pevné
+                          International Journal of        prahy ACWR12.
+                          Sports Physiology and
+                          Performance, 15(6), 907–
+                          91312.
+
+                          Impellizzeri, F. M.,
+                          Woodcock, S., Coutts, A.
+                          J., Fanchini, M., McCall,
+                          A., & Vigotsky, A. D.
+                          (2020). Acute to random
+                          workload ratio is 'as'
+                          associated with injury as
+                          acute to actual chronic
+                          workload ratio: time to
+                          dismiss ACWR and its
+                          components. SportRxiv,
+<PARSED TEXT FOR PAGE: 54 / 59>
+                          DOI:
+                          10.31236/osf.io/e8kt412.
+
+                          Shrier, I., Steele, R. J.,      Biostatistická formulace
+Vícestavové modely a
+                          Zhao, M., & Naimi, A.           modelů Cox, Andersen-Gill,
+opakovaná zranění
+                          (2015/2016). A multistate       Prentice-Williams-Peterson
+                          framework for the analysis      (PWP), Wei-Lin-Weissfeld
+                          of subsequent injury in         (WLW), Frailty a
+                          sport (M-FASIS).                vícestavových semi-
+                          Scandinavian Journal of         markovských procesů54.
+                          Medicine & Science in
+                          Sports2.
+
+                          Ullah, S., Gabbett, T. J., &
+                          Finch, C. F. (2014).
+                          Statistical modelling for
+                          recurrent events: an
+                          application to sports
+                          injuries. British Journal of
+                          Sports Medicine, 48(17),
+                          1287–1293. PMID:
+                          2287268356.
+
+                          Amorim, L. D., & Cai, J.
+                          (2015). Modelling recurrent
+                          events: a tutorial for
+                          analysis in epidemiology.
+                          International Journal of
+                          Epidemiology, 44(1), 324–
+                          33355.
+
+                          James, C., et al. (2022).       Protokol 36–48h
+Fyziologie,
+                          Squash-specific exercise        regenerace u elitních hráčů,
+neuromuskulární únava a
+                          test for elite squash players   selhání centrální aktivace
+praxe PSA Tour
+                          (SPPT). Journal of Sports       extenzorů kolene při
+                          Science and Medicine, 21,       výpadech, rekordní délky
+                          82–91 (PMC8851109)6.            zápasů (170 min), institut
+                                                          Protected Ranking a
+                          Girard, O., et al. / Lin, et    empirické vzorce ukončení
+                          al. Alteration of
+<PARSED TEXT FOR PAGE: 55 / 59>
+                              neuromuscular function in      kariéry6.
+                              squash &consecutive
+                              matches recovery
+                              literature27.
+
+                              PSA Squash Tour Rule
+                              Book (2024/2026) &
+                              historické záznamy kariér a
+                              žebříčků PSA (SquashStats,
+                              World Squash,
+                              Olympics.com — záznamy
+                              A. Faraga, B. Golána, S.
+                              Ghosala, G. Gaultiera, R. El
+                              Welily, L. Au)26.
+
+Citovaná díla
+
+  1. (PDF) Compelling overuse injury incidence in youth multisport athletes,
+       https://www.researchgate.net/publication/312573253_Compelling_overuse_injury
+       _incidence_in_youth_multisport_athletes
+  2.   A multistate framework for the analysis of subsequent injury in sport,
+       https://www.researchgate.net/publication/277781306_A_multistate_framework_f
+       or_the_analysis_of_subsequent_injury_in_sport_M-FASIS_M-FASIS
+  3.   2016 Consensus statement on return to sport from the First World,
+       https://ifspt.org/wp-content/uploads/2025/05/2016-Consensus-statement-on-
+       return.pdf
+  4.   Squash Under Strain: A Systematic Review and Meta-Analysis of,
+       https://www.mdpi.com/2075-4663/14/2/79
+  5.   A SYSTEMATIC REVIEW COMPARING EPIDEMIOLOGY OF,
+       https://ujcontent.uj.ac.za/view/pdfCoverPage?
+       instCode=27UOJ_INST&filePid=1314905460007691&download=true
+  6.   Physiological and Performance Correlates of Squash Physical,
+       https://www.jssm.org/jssm-21-82.xml-Fulltext
+  7.   Squash Under Strain: A Systematic Review and Meta-Analysis of,
+       https://www.researchgate.net/publication/400681663_Squash_Under_Strain_A_S
+       ystematic_Review_and_Meta-
+       Analysis_of_Injuries_and_Illnesses_in_Squash_Players
+  8.   (PDF) The epidemiology of squash injuries - ResearchGate,
+       https://www.researchgate.net/publication/235645687_The_epidemiology_of_squ
+       ash_injuries
+  9.   Epidemiology of squash injuries requiring hospital treatment,
+       https://www.researchgate.net/publication/8969536_Epidemiology_of_squash_inj
+<PARSED TEXT FOR PAGE: 56 / 59>
+    uries_requiring_hospital_treatment
+10. Physiological and Performance Correlates of Squash Physical,
+    https://www.jssm.org/researchjssm-21-82.xml.xml
+11. Squash Under Strain: A Systematic Review and Meta-Analysis of,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC12944960/
+12. (PDF) Acute to random workload ratio is 'as' associated with injury,
+    https://www.researchgate.net/publication/339667279_Acute_to_random_worklo
+    ad_ratio_is_'as'_associated_with_injury_as_acute_to_actual_chronic_workload_ra
+    tio_time_to_dismiss_ACWR_and_its_components
+13. Acute:Chronic Workload Ratio: Conceptual Issues and Fundamental,
+    https://www.connectedpapers.com/main/ede5743a426fd6429d28f8505500a3f7
+    71dbcf8b/Acute%3AChronic-Workload-Ratio%3A-Conceptual-Issues-and-
+    Fundamental-Pitfalls./graph
+14. Return to Sport: From Decision Frameworkto the Rehabilitation Floor,
+    https://sems-journal.ch/return-to-sport-from-decision-frameworkto-the-
+    rehabilitation-floor/
+15. 2016 Consensus statement on return to sport from the First World,
+    https://www.semanticscholar.org/paper/2016-Consensus-statement-on-return-
+    to-sport-from-in-Ardern-Glasgow/
+    73cb050da480b956862c53718a11dc81a1ff8fef
+16. Squash Under Strain: A Systematic Review and Meta-Analysis of,
+    https://pubmed.ncbi.nlm.nih.gov/41745681/
+17. Ian HORSLEY | Athlete Health Lead Physiotherapist - ResearchGate,
+    https://www.researchgate.net/profile/Ian-Horsley-2
+18. Overview of Injuries with Racket Sports in Pediatric and Adolescent,
+    https://www.preprints.org/manuscript/202507.2541
+19. (PDF) Prevalence of musculoskeletal injuries among adolescent,
+    https://www.researchgate.net/publication/312639586_Prevalence_of_musculosk
+    eletal_injuries_among_adolescent_squash_players_in_the_Western_Cape
+20. Squash Under Strain: A Systematic Review and Meta-Analysis of,
+    https://ouci.dntb.gov.ua/works/4YmbAn0V/
+21. PREVENTION OF SPORTS INJURIES Systematic review and meta,
+    https://jyx.jyu.fi/bitstreams/9b590842-72ca-4fed-8d44-6ac211eeee0c/download
+22. [PDF] Injury surveillance at the USTA Boys' Tennis Championships,
+    https://www.semanticscholar.org/paper/29e2aee10d94ce22950530225fa26c234
+    6cc8285
+23. (PDF) Sport injuries in squash - ResearchGate,
+    https://www.researchgate.net/publication/228485158_Sport_injuries_in_squash
+24. A SYSTEMATIC REVIEW COMPARING EPIDEMIOLOGY OF,
+    http://psjd.icm.edu.pl/psjd/element/bwmeta1.element.ojs-
+    doi-10_18276_cej_2025_2-05/c/articles-64138627.pdf.pdf
+25. [PDF] Racquet sports--patterns of injury presenting to a sports injury,
+    https://www.semanticscholar.org/paper/Racquet-sports--patterns-of-injury-
+<PARSED TEXT FOR PAGE: 57 / 59>
+    presenting-to-a-Chard-Lachmann/
+    eecdc25ee0ec5eaf5eaf5c87144ca925a8d17c9e
+26. Professional Squash Player Statistics and Records - SquashChamps,
+    https://squashchamps.com/article/professional-squash-player-statistics-and-
+    records
+27. Effectiveness of combined techniques vs passive recovery in,
+    https://revistaretos.org/index.php/retos/article/download/111645/81753/462399
+28. Sports (Jan To June 2026) | PDF - Scribd,
+    https://www.scribd.com/document/1064367679/Sports-jan-to-june-2026
+29. Saurav Ghosal retires again as squash comeback ends prematurely,
+    https://www.olympics.com/en/news/saurav-ghosal-squash-india-hip-
+    injury-2025-comeback-retirement
+30. [Discussion thread] CIB Squash PSA World Championships 2022,
+    https://www.reddit.com/r/squash/comments/uomrph/discussion_thread_cib_squ
+    ash_psa_world/
+31. Epidemiology and prevention of injuries in young sportsmen. A 35, https://sems-
+    journal.ch/5109/
+32. Essential Recovery Modalities for Athletes | PDF | Physiology - Scribd,
+    https://www.scribd.com/presentation/832805835/Recovery-Strategies
+33. Neuromuscular fatigue and muscle damage following a simulated,
+    https://www.semanticscholar.org/paper/Neuromuscular-fatigue-and-muscle-
+    damage-following-a-Lin-Blazevich/
+    d9d91f6c2a921e29654b149fc657c1de2c9c646f
+34. CIB Black Ball Open 2022 - Wikipedia,
+    https://de.wikipedia.org/wiki/CIB_Black_Ball_Open_2022
+35. PSA Rank Variation in the Top 10 Ranks for Season 2018-2019,
+    https://squashstats.com/2020/03/13/top-10-ranks-2018-2019/
+36. Recovery in Soccer : Sports Medicine - Ovid,
+    https://www.ovid.com/journals/spome/fulltext/10.2165/11635270-000000000-
+    00000~recovery-in-soccer-part-i-post-match-fatigue-and-time-course
+37. Acute and Chronic Workload Ratios of Perceived Exertion ... - Frontiers,
+    https://www.frontiersin.org/journals/psychology/articles/10.3389/fpsyg.2022.860
+    888/full
+38. Acute:Chronic Workload Ratio. Exploration and Applicability in, https://revista-
+    apunts.com/en/acutechronic-workload-ratio-exploration-and-applicability-in-
+    womens-amateur-football/
+39. Association Between the Acute to Chronic Workload Ratio and Injury,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC7327085/
+40. External Training Load and the Association With Back Pain in, https://www.diva-
+    portal.org/smash/get/diva2:1617595/FULLTEXT01.pdf
+41. The acute chronic workload ratio; magic cut offs and questionable,
+    https://www.sportsmith.co/listen/pacey-performance-podcast-232-franco-
+    impellizzeri/
+<PARSED TEXT FOR PAGE: 58 / 59>
+42. Return To Sport Continuum - Physio Network, https://www.physio-
+    network.com/blog/return-to-sport-dr-nicole-surdyka/
+43. 'I Want To Improve Spanish Squash' - Borja Golan Unveils Post, https://squash-
+    iq.com/i-want-to-improve-spanish-squash-borja-golan-unveils-post-
+    retirement-vision/
+44. Oldest PSA Men's Top 10 ever? : r/squash - Reddit,
+    https://www.reddit.com/r/squash/comments/1ibtubx/oldest_psa_mens_top_10_e
+    ver/
+45. 2016 Consensus statement on return to sport from the First World,
+    https://biblio.ugent.be/publication/8506224
+46. 2016 Consensus statement on return to sport from the First World,
+    https://pubmed.ncbi.nlm.nih.gov/27226389/
+47. 2016 Consensus statement on return to sport from the First World,
+    https://pofolia.com/article/8328?lang=en
+48. Ali Farag - Wikipedia, https://en.wikipedia.org/wiki/Ali_Farag
+49. Ali Farag announces retirement - World Squash,
+    https://www.worldsquash.sport/ali-farag-announces-retirement/
+50. Four-time squash world champion Ali Farag retires with immediate,
+    https://www.olympics.com/en/news/four-time-squash-world-champion-ali-
+    farag-retires-with-immediate-effect
+51. World No.1 Raneem El Welily Announces Immediate Retirement,
+    https://www.worldsquash.sport/world-no-1-raneem-el-welily-announces-
+    immediate-retirement-from-squash/
+52. ATP Rulebook 2007 | PDF | Referee | Sports Competitions - Scribd,
+    https://www.scribd.com/document/36161354/ATP-Rulebook-2007
+53. Squash in the Land 2026 - Wikipedia,
+    https://de.wikipedia.org/wiki/Squash_in_the_Land_2026
+54. A systematic comparison of recurrent event models for application to,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC5755224/
+55. Modelling recurrent events: a tutorial for analysis in epidemiology,
+    https://www.researchgate.net/publication/269465175_Modelling_recurrent_even
+    ts_a_tutorial_for_analysis_in_epidemiology
+56. Statistical modelling for recurrent events: an application to sports,
+    https://bjsm.bmj.com/content/48/17/1287
+57. (PDF) Statistical modelling for recurrent events: An application to,
+    https://www.researchgate.net/publication/230633165_Statistical_modelling_for_r
+    ecurrent_events_An_application_to_sports_injuries
+58. Models for Multi-State Survival Data: Rates, Risks, and Pseudo-Values,
+    https://www.tandfonline.com/doi/full/10.1080/01621459.2024.2395590
+59. Novel g-computation algorithms for time-varying actions with ... - arXiv,
+    https://arxiv.org/pdf/2603.10169
+60. Rosario Barone, https://rosariobarone.github.io/
+61. SARS-CoV-2 Infection Risk by Vaccine Doses and Prior Infections,
+<PARSED TEXT FOR PAGE: 59 / 59>
+    https://publichealth.jmir.org/2024/1/e56926/
+62. The Performances of the Cox, Andersen-Gill, Prentice- Williams,
+    https://www.researchgate.net/publication/382596835_The_Performances_of_the
+    _Cox_Andersen-Gill_Prentice-_Williams-Peterson-Total-Time_and_Wei-Lin-
+    Weissfeld-_Total-
+    Time_models_in_Identifying_Risk_Factors_in_Patients_with_Recurrent_Diseases_
+    A_kidney_infec
+63. Modelling Workload and Injury Risk in Elite Touch Rugby ... - MDPI,
+    https://www.mdpi.com/2227-7390/14/9/1550
+64. https://github.com/Jasmetk0/squash-tour-beta
+65. https://raw.githubusercontent.com/Jasmetk0/squash-tour-beta/main/
+    SQUASH_ENGINE_MASTER_VISION.md
+66. Squash under strain: a systematic review and meta-analysis of,
+    https://pure.qub.ac.uk/en/publications/squash-under-strain-a-systematic-
+    review-and-meta-analysis-of-inju/
+67. Incidence, prevalence and nature of injuries in padel: a systematic,
+    https://www.researchgate.net/publication/371426027_Incidence_prevalence_and
+    _nature_of_injuries_in_padel_a_systematic_review
+68. Statistical modelling for recurrent events: an application to sports,
+    https://pubmed.ncbi.nlm.nih.gov/22872683/
+69. Systematic review of methods used in prediction models with ... - PMC,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC11302841/
+70. Physiological and Performance Correlates of Squash Physical,
+    https://pmc.ncbi.nlm.nih.gov/articles/PMC8851109/
+
+----- END SEARCHABLE DOCUMENT TEXT EXTRACTION -----

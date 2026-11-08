@@ -1,4 +1,4 @@
-"""Pure validation and normalization of authored ranking point tables."""
+"""Pure validation and stage mapping for authored ranking point tables."""
 
 from typing import Any
 
@@ -16,6 +16,10 @@ CANONICAL_RANKING_POINT_STAGES = frozenset({
 })
 
 
+def is_valid_ranking_point(value: object) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool) and value >= 0
+
+
 def normalize_ranking_points_table(values: dict[str, Any]) -> dict[str, int]:
     """Validate authored points and normalize legacy names at an input boundary."""
     normalized: dict[str, int] = {}
@@ -25,7 +29,28 @@ def normalize_ranking_points_table(values: dict[str, Any]) -> dict[str, int]:
             raise ValueError(f"unknown ranking point stage '{raw_key}'")
         if key in normalized:
             raise ValueError(f"ranking point stage '{key}' was authored more than once")
-        if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+        if not is_valid_ranking_point(value):
             raise ValueError(f"ranking point '{key}' must be an integer greater than or equal to zero")
         normalized[key] = value
     return normalized
+
+
+def knockout_loss_point_stage(*, draw_type: str, round_number: int, final_round: int) -> str:
+    """Canonical loss stage measured against the physical bracket final."""
+    distance = final_round - round_number
+    if draw_type == "qualification":
+        if distance == 0:
+            return "qualification_final"
+        if distance == 1:
+            return "qualification_semifinal"
+        return "qualification_round"
+    mapping = {
+        0: "finalist",
+        1: "semifinal",
+        2: "quarterfinal",
+        3: "round_of_16",
+        4: "round_of_32",
+        5: "round_of_64",
+        6: "round_of_128",
+    }
+    return mapping.get(distance, "main_draw_participant")

@@ -2,6 +2,7 @@
 
 import itertools
 import json
+from urllib.parse import urlencode
 
 import pytest
 from sqlalchemy import select
@@ -31,7 +32,7 @@ from beta_engine.infrastructure.db.tournament_ranking_snapshot_authority import 
 from beta_engine.infrastructure.db.tournament_wild_card_authority import (
     TournamentWildCardAuthorityStore,
 )
-from tests.api.test_saved_revision_history_api import ApiServer, _create_run
+from tests.api.test_saved_revision_history_api import ApiServer, _create_run, _request
 from tests.application.test_run_working_draft_save import _repository
 from tests.infrastructure import test_fax_reference_player_draw as fax_inputs
 
@@ -43,14 +44,67 @@ def fax_source(tmp_path_factory):
     return fax_inputs.fax_source.__wrapped__(tmp_path_factory)
 
 
-@pytest.mark.parametrize("main_size", [24, 32])
+@pytest.mark.parametrize(
+    ("main_size", "table_kind"),
+    [
+        (24, "original"),
+        (32, "original"),
+        (32, "authored"),
+        (32, "invalid"),
+        (24, "unranked"),
+    ],
+)
 def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
-    tmp_path, fax_source, main_size
+    tmp_path, fax_source, main_size, table_kind
 ):
     path = tmp_path / "source-saved.db"
     url = f"sqlite:///{path}"
     server = ApiServer(database_url=url)
     event = next(e for e in fax_source[0].events if e.main_draw_size == main_size)
+    document = fax_source[1]
+    main_stages = (
+        "champion",
+        "finalist",
+        "semifinal",
+        "quarterfinal",
+        "round_of_16",
+        "round_of_32",
+    )
+    q_stages = (
+        "qualification_winner",
+        "qualification_final",
+        "qualification_semifinal",
+    )
+    if main_size == 32:
+        q_stages += ("qualification_round",)
+    if table_kind != "original":
+        table = (
+            {stage: 0 for stage in (*main_stages, *q_stages)}
+            if table_kind != "unranked"
+            else {}
+        )
+        if table_kind == "invalid":
+            table["qualification_final"] = False
+        document = document.model_copy(
+            update={
+                "entities": tuple(
+                    entity.model_copy(
+                        update={
+                            "payload": {
+                                **entity.payload,
+                                "ranking_status": "unranked"
+                                if table_kind == "unranked"
+                                else "ranked",
+                                "ranking_points_table": table,
+                            }
+                        }
+                    )
+                    if entity.source_entity_id == event.event_id
+                    else entity
+                    for entity in document.entities
+                )
+            }
+        )
     with server:
         run_id, branch_id, initial_revision = _create_run(
             server, display_name="Saved feeder source"
@@ -60,7 +114,7 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
         ranking = fax_inputs.ranking_snapshot(fax_inputs.PLAYERS).model_copy(
             update={"run_id": run_id, "branch_id": branch_id}
         )
-        packages = fax_inputs.copied_state(fax_source[1]).model_copy(
+        packages = fax_inputs.copied_state(document).model_copy(
             update={"run_id": run_id, "branch_id": branch_id}
         )
         with repo._session_factory.begin() as session:
@@ -97,10 +151,23 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
             )
             TournamentDrawAuthorityStore(session).generate(**scope, command_id="draw")
         service = SavedFaxKnockoutFeederService(repo)
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
+            f"/tournaments/{event.event_id}/draw/saved-native-preflight"
+        )
+
+        def preflight(revision_id):
+            query = urlencode(
+                {"season": "2000/2001", "expected_saved_revision_id": revision_id}
+            )
+            return _request("GET", f"{root}?{query}")
+
         with pytest.raises(ValueError, match="Save the copied"):
             service.prepare(
                 **scope, season="2000/2001", expected_saved_revision_id=initial_revision
             )
+        status, blocked = preflight(initial_revision)
+        assert status == 409 and "Save the copied" in blocked["detail"]["message"]
         ids = itertools.count()
         owner_save = RunWorkingDraftService(
             repository=repo, id_factory=lambda kind: f"feeder-{kind}-{next(ids)}"
@@ -119,6 +186,35 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
         assert plan.source_saved_revision_id == saved_id
         assert plan.source_saved_content_hash == saved_state.saved_revision.content_hash
         assert len(plan.topology.plans) == (35 if main_size == 24 else 51)
+        status, report = preflight(saved_id)
+        assert status == 200, report
+        assert report["source_plan_fingerprint"] == plan.fingerprint
+        assert report["saved_revision_id"] == saved_id
+        assert report["draw_fingerprint"] == plan.source.draw.fingerprint
+        assert report["required_point_stages"] == (
+            [] if table_kind == "unranked" else [*main_stages, *q_stages]
+        )
+        assert report["missing_point_stages"] == (
+            list(q_stages) if table_kind == "original" else []
+        )
+        assert report["invalid_point_stages"] == (
+            ["qualification_final"] if table_kind == "invalid" else []
+        )
+        assert (
+            report["point_table_status"]
+            == {
+                "original": "incomplete",
+                "authored": "complete",
+                "invalid": "incomplete",
+                "unranked": "not_required",
+            }[table_kind]
+        )
+        assert report["native_execution_status"] == (
+            "requires_adoption_preview"
+            if table_kind == "unranked"
+            else "ranked_not_supported"
+        )
+        assert repo.get_branch_revision_state(branch_id=branch_id) == saved_state
         with pytest.raises(ValueError, match="source changed"):
             service.prepare(**dict(kwargs, expected_saved_revision_id=initial_revision))
         with pytest.raises(ValueError, match="source changed"):
@@ -140,6 +236,7 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
         )
         with repo._session_factory.begin() as session:
             put_run_package_state(session, edited)
+        assert preflight(saved_id) == (200, report)
         draft = owner_save.get_viewer_branch_draft(run_id=run_id, branch_id=branch_id)
         owner_save.save(
             run_id=run_id,
@@ -152,6 +249,8 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
         )
         with pytest.raises(ValueError, match="source changed"):
             service.prepare(**kwargs)
+        status, stale = preflight(saved_id)
+        assert status == 409 and "source changed" in stale["detail"]["message"]
         assert service.reload(plan) == plan
         with pytest.raises(ValueError, match="differs from authenticated Saved"):
             service.reload(

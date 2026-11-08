@@ -3,7 +3,7 @@
 import json
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import text
 from pydantic import ValidationError
 
@@ -22,6 +22,10 @@ from beta_engine.application.authoritative_tournament_draw import (
     CanonicalTournamentDrawService,
     CanonicalTournamentDrawState,
 )
+from beta_engine.application.saved_fax_draw_preflight import (
+    SavedFaxDrawPreflight,
+    inspect_saved_fax_draw_preflight,
+)
 
 
 router = APIRouter(
@@ -32,6 +36,34 @@ router = APIRouter(
 
 def _service(runtime: ApiRuntime) -> CanonicalTournamentDrawService:
     return CanonicalTournamentDrawService(runtime.repository._session_factory)
+
+
+@router.get("/saved-native-preflight", response_model=SavedFaxDrawPreflight)
+def inspect_saved_native_draw(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    season: Annotated[str, Query(min_length=1)],
+    expected_saved_revision_id: Annotated[str, Query(min_length=1)],
+) -> SavedFaxDrawPreflight:
+    """Inspect the current Saved Draw before preparing native adoption."""
+    try:
+        return inspect_saved_fax_draw_preflight(
+            runtime.repository,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            season=season,
+            expected_saved_revision_id=expected_saved_revision_id,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "saved_native_draw_conflict", "message": str(exc)},
+        ) from exc
 
 
 @router.get("", response_model=CanonicalTournamentDrawState)

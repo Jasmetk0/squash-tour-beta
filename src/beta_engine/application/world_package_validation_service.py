@@ -5,9 +5,27 @@ from dataclasses import dataclass
 from typing import Literal
 from beta_engine.application.world_package_registry_service import WorldPackageRegistryService
 from beta_engine.application.country_history_validation import country_history_errors
+from beta_engine.domain.countries.models import AUTHORED_POPULATION_MAX_YEAR, AUTHORED_POPULATION_MIN_YEAR
 from beta_engine.domain.timezone_areas import TimezoneArea, validate_timezone_areas
 from beta_engine.infrastructure.world_package_storage import ATTRIBUTE_NAMES, COUNTRIES_INDEX_SCHEMA, PACKAGE_FORMAT_VERSION, WorldPackageCountryStore
 ValidationSeverity=Literal['info','warning','error']; ValidationCheckStatus=Literal['passed','warning','failed']; ValidationStatus=Literal['valid','warnings','errors']
+
+
+def _declared_population_years(declaration: object) -> range:
+    first = declaration.get("from") if isinstance(declaration, dict) else None
+    last = declaration.get("to") if isinstance(declaration, dict) else None
+    if (
+        type(first) is not int
+        or type(last) is not int
+        or not AUTHORED_POPULATION_MIN_YEAR <= first <= last <= AUTHORED_POPULATION_MAX_YEAR
+    ):
+        raise ValueError(
+            "world.json population_years must declare an ordered integer interval "
+            f"within {AUTHORED_POPULATION_MIN_YEAR}–{AUTHORED_POPULATION_MAX_YEAR}"
+        )
+    return range(first, last + 1)
+
+
 @dataclass(frozen=True)
 class WorldPackageValidationCheck: code:str; severity:ValidationSeverity; status:ValidationCheckStatus; message:str; path:str|None=None; field:str|None=None
 @dataclass(frozen=True)
@@ -23,11 +41,16 @@ class WorldPackageValidationService:
   def bad(code,msg,path):checks.append(WorldPackageValidationCheck(code,'error','failed',f'{world_id}: {msg}',str(path)))
   world_path=root/'world.json'
   try:
-   world=json.loads(world_path.read_text()); assert isinstance(world,dict)
+   world=json.loads(world_path.read_text(encoding='utf-8'))
+   if not isinstance(world,dict): raise ValueError('metadata must be a JSON object')
    if world.get('world_id')!=world_id: bad('world_metadata_valid',f'world.json world_id does not match {world_id}',world_path)
    elif world.get('package_format_version')!=PACKAGE_FORMAT_VERSION: bad('package_format_supported',f"unsupported package format {world.get('package_format_version')!r}",world_path)
    else: ok('world_metadata_valid','world.json metadata and package format are valid.',world_path)
   except Exception as exc: bad('world_metadata_json_valid',f'world.json is malformed: {exc}',world_path); world={}
+  required_population_years=None
+  if 'population_years' in world:
+   try: required_population_years=_declared_population_years(world['population_years'])
+   except ValueError as exc: bad('population_coverage_valid',str(exc),world_path)
   store=WorldPackageCountryStore(root); index_path=store.index_path; countries=[]
   try:
    raw=json.loads(index_path.read_text()); codes=raw.get('country_codes') if isinstance(raw,dict) else None
@@ -67,11 +90,11 @@ class WorldPackageValidationService:
    if country.region not in region_codes: bad('country_region_reference',f'{country.code}/attributes/region.json references unknown Region {country.region}',root/'countries'/country.code/'attributes/region.json')
    if country.timezone_area is not None and country.timezone_area not in timezone_codes: bad('country_timezone_area_reference',f'{country.code}/attributes/timezone_area.json references unknown Timezone Area {country.timezone_area}',root/'countries'/country.code/'attributes/timezone_area.json')
    if country.travel_region is not None and country.travel_region not in travel_codes: bad('country_travel_region_reference',f'{country.code}/attributes/travel_region.json references unknown Travel Region {country.travel_region}',root/'countries'/country.code/'attributes/travel_region.json')
-   coverage=world.get('population_years')
-   if isinstance(coverage,dict):
-    required=set(range(coverage.get('from',0),coverage.get('to',-1)+1))
-    if not required.issubset(country.population_by_year):bad('population_coverage_valid',f'{country.code}/attributes/population.json lacks declared population years {sorted(required-set(country.population_by_year))}',root/'countries'/country.code/'attributes/population.json')
-  if isinstance(world.get('population_years'),dict) and not any(c.code=='population_coverage_valid' and c.status=='failed' for c in checks):
+   if required_population_years is not None:
+    observations=country.population_by_year or {}
+    missing=[year for year in required_population_years if observations.get(year) is None]
+    if missing: bad('population_coverage_valid',f'{country.code}/attributes/population.json lacks declared population years {missing}',root/'countries'/country.code/'attributes/population.json')
+  if required_population_years is not None and codes and len(countries)==len(codes) and not any(c.code=='population_coverage_valid' and c.status=='failed' for c in checks):
    ok('population_coverage_valid','All countries preserve the declared population timeline.',store.countries_root)
   for message in country_history_errors(root,world,countries):
    bad('country_rating_history_valid',message,root/'generation/country_rating_sources.json')

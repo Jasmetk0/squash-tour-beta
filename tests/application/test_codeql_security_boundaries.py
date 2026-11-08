@@ -236,6 +236,44 @@ def test_package_evidence_rejects_symlink_root(tmp_path: Path) -> None:
         safe_package_file(link, "world.json")
 
 
+@pytest.mark.parametrize("reader_kind", ["evidence", "rating-history"])
+def test_package_metadata_paths_are_portable_before_os_normalization(tmp_path, reader_kind):
+    from beta_engine.infrastructure.world_package_storage import _safe_package_owned_file
+
+    read = safe_package_file if reader_kind == "evidence" else _safe_package_owned_file
+    generation = tmp_path / "generation"
+    generation.mkdir()
+    source = generation / "source.json"
+    source.write_text("{}", encoding="utf-8")
+    assert read(tmp_path, "generation/source.json") == source.resolve()
+
+    for spelling in (
+        "generation/./source.json", "generation//source.json", "generation/source.json/",
+        "C:/source.json", "C:source.json", "generation/source.json:stream",
+        "generation/source.json.", "generation/source.json ", "generation/NUL.json",
+    ):
+        with pytest.raises(ValueError, match="unsafe"):
+            read(tmp_path, spelling)
+
+
+@pytest.mark.parametrize("reader_kind", ["evidence", "rating-history"])
+def test_package_file_lookup_rejects_linked_intermediate_directory(tmp_path, reader_kind):
+    from beta_engine.infrastructure.world_package_storage import _safe_package_owned_file
+
+    read = safe_package_file if reader_kind == "evidence" else _safe_package_owned_file
+    package = tmp_path / "package"
+    package.mkdir()
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    (outside / "source.json").write_text("{}", encoding="utf-8")
+    try:
+        (package / "generation").symlink_to(outside, target_is_directory=True)
+    except (OSError, NotImplementedError):
+        pytest.skip("directory symlinks are not available on this platform")
+    with pytest.raises(ValueError, match="symlink"):
+        read(package, "generation/source.json")
+
+
 
 def test_country_deletion_backup_rejects_linked_countries_root(tmp_path: Path) -> None:
     outside = tmp_path / "external_countries"

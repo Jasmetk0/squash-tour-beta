@@ -521,7 +521,9 @@ class CalendarTourService:
                         {**r.model_dump(mode="json"), "stage": award.reached_stage}
                         for r, award in zip(
                             edition_results(a, event),
-                            event.prepared_awards,
+                            event.ranking_awards
+                            if event.schema_version == "native_canonical_tournament_result.v2"
+                            else event.prepared_awards,
                             strict=True,
                         )
                     ],

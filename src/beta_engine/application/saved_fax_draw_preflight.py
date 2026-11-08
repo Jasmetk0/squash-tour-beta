@@ -7,9 +7,13 @@ from pydantic import BaseModel
 from beta_engine.application.saved_fax_knockout_feeders import (
     SavedFaxKnockoutFeederService,
 )
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.rankings.points import is_valid_ranking_point
 from beta_engine.domain.tournaments.fax_reference_bracket_topology import (
     build_fax_reference_bracket_topology,
+)
+from beta_engine.domain.tournaments.native_canonical_knockout import (
+    validate_ranked_publication_week,
 )
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
 
@@ -24,7 +28,7 @@ class SavedFaxDrawPreflight(BaseModel):
     missing_point_stages: tuple[str, ...]
     invalid_point_stages: tuple[str, ...]
     native_execution_status: Literal[
-        "ranked_not_supported", "requires_adoption_preview"
+        "ranked_not_supported", "ranked_points_incomplete", "requires_adoption_preview"
     ]
 
 
@@ -63,6 +67,26 @@ def inspect_saved_fax_draw_preflight(
     status: Literal["complete", "incomplete", "not_required"] = "not_required"
     if ranked:
         status = "incomplete" if missing or invalid else "complete"
+    execution = "requires_adoption_preview"
+    if ranked:
+        week = RunWeekPosition(
+            calendar=plan.calendar,
+            season_index=int(str(event.season).split("/")[0])
+            - plan.calendar.start_year,
+            week=event.season_week,
+        )
+        try:
+            validate_ranked_publication_week(week)
+        except ValueError:
+            execution = "ranked_not_supported"
+        if (
+            event.duration_in_season_weeks != 1
+            or event.start_season_week != event.season_week
+            or event.end_season_week != event.season_week
+        ):
+            execution = "ranked_not_supported"
+        if execution == "requires_adoption_preview" and status == "incomplete":
+            execution = "ranked_points_incomplete"
     return SavedFaxDrawPreflight(
         saved_revision_id=plan.source_saved_revision_id,
         source_plan_fingerprint=plan.fingerprint,
@@ -72,7 +96,5 @@ def inspect_saved_fax_draw_preflight(
         required_point_stages=required,
         missing_point_stages=missing,
         invalid_point_stages=invalid,
-        native_execution_status="ranked_not_supported"
-        if ranked
-        else "requires_adoption_preview",
+        native_execution_status=execution,
     )

@@ -1,8 +1,8 @@
-"""Real HTTP/SQLite canonical Q/Main on an explicitly authored disposable source.
+"""Real HTTP/SQLite canonical Q/Main on explicitly authored disposable sources.
 
 The source retains Gold24/Q16 or Platinum32/Q24 geometry, but explicitly changes
-this test Edition to Unranked, one week and a recorded prior announcement. This
-is NOT the original Ranked 80-Edition / 50-season acceptance.
+the Edition to one week with a recorded prior announcement. Only the Ranked case
+authors extra test points. This is not the original 80-Edition / 50-season acceptance.
 """
 
 import itertools
@@ -62,7 +62,7 @@ def fax_source(tmp_path_factory):
     return fax.fax_source.__wrapped__(tmp_path_factory)
 
 
-def authored_source(server, repo, source, size):
+def authored_source(server, repo, source, size, *, ranked=False):
     view = inspect(server)
     clock = view["state"]["week"]["calendar"]
     event = next(e for e in source[0].events if e.main_draw_size == size)
@@ -75,9 +75,16 @@ def authored_source(server, repo, source, size):
         duration_in_season_weeks=1,
         calendar_year=2000,
         year_week=40,
-        ranking_status="unranked",
+        ranking_status="ranked" if ranked else "unranked",
         ranking_configuration_legacy=False,
-        ranking_points_table={},
+        ranking_points_table={
+            **event.ranking_points_table,
+            "qualification_winner": 17,
+            "qualification_final": 11,
+            "qualification_semifinal": 3,
+        }
+        if ranked
+        else {},
         point_distribution=None,
         event_level_overrides={
             **raw["event_level_overrides"],
@@ -91,7 +98,7 @@ def authored_source(server, repo, source, size):
     entity = next(e for e in source[1].entities if e.source_entity_id == event.event_id)
     document = source[1].model_copy(
         update={
-            "provenance": {"fixture": "explicit disposable Unranked same-week source"},
+            "provenance": {"fixture": "explicit disposable same-week source"},
             "entities": tuple(
                 e.model_copy(update={"payload": raw}) if e is entity else e
                 for e in source[1].entities
@@ -167,16 +174,23 @@ def authored_source(server, repo, source, size):
     return plan
 
 
-@pytest.mark.parametrize("size", [24, 32])
+@pytest.mark.parametrize(
+    ("size", "ranked"),
+    [
+        pytest.param(24, False, id="24"),
+        pytest.param(32, False, id="32"),
+        pytest.param(24, True, id="ranked-gold"),
+    ],
+)
 def test_actual_q_main_partial_save_restart_and_terminal(
-    tmp_path, fax_source, size, monkeypatch
+    tmp_path, fax_source, size, ranked, monkeypatch
 ):
     db = f"sqlite:///{tmp_path / 'native-q-main.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(
             server, RunCalendar(61, 37, 2000, 3), count=40 if size == 24 else 56
         )
-        plan = authored_source(server, repo, fax_source, size)
+        plan = authored_source(server, repo, fax_source, size, ranked=ranked)
         if size == 24:
             from tests.api.test_calendar_sporting_horizon_extension import (
                 extend,
@@ -362,7 +376,8 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         assert authority["tournament_fingerprint"]
         evidence = view["edition_evidence"][plan.source.draw.event_id]
         assert len(evidence["matches"]) == (35 if size == 24 else 51)
-        assert not evidence["results"]
+        assert bool(evidence["results"]) is ranked
+        assert all(row["points"] == 0 for row in view["state"]["rankings"][-1]["rows"])
         from beta_engine.application.calendar_continuation_service import (
             CalendarContinuationService,
         )
@@ -379,19 +394,50 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         assert len({m["match_id"] for m in evidence["matches"]}) == len(
             evidence["matches"]
         )
-        execute(
+        confirmed, confirm_request = execute(
             server,
             command(view, "confirm-result", edition_id=plan.source.draw.event_id),
         )
+        if ranked:
+            assert _request("POST", tour_url(server) + "/execute", confirm_request) == (
+                201,
+                confirmed,
+            )
+            assert all(
+                row["points"] == 0
+                for row in inspect(server)["state"]["rankings"][-1]["rows"]
+            )
         save_tour(server)
         execute(server, command(inspect(server), "transition"))
         save_tour(server)
         assert inspect(server)["state"]["week"]["week"] == 5
         final_view = inspect(server)
-        assert all(
-            row["points"] == 0 for row in final_view["state"]["rankings"][-1]["rows"]
-        )
+        ranking = final_view["state"]["rankings"][-1]["rows"]
+        if ranked:
+            resolved = {
+                row["player_id"]: row["main_points"] + row["qualification_points"]
+                for row in evidence["results"]
+            }
+            assert len(resolved) == 36
+            assert all(
+                row["points"] == resolved.get(row["player_id"], 0) for row in ranking
+            )
+            assert all(len(row["counted_results"]) <= 1 for row in ranking)
+            assert (
+                sum(row["qualification_points"] == 17 for row in evidence["results"])
+                == 4
+            )
+            assert any(
+                row["main_points"] == 0 and row["qualification_points"] == 11
+                for row in evidence["results"]
+            )
+            published_snapshot = final_view["state"]["rankings"][-1]
+        else:
+            assert all(row["points"] == 0 for row in ranking)
         status, public = _request(
             "GET", server.base_url + "/viewer/runs/run/calendar-tour"
         )
         assert status == 200 and public["editions"][0]["completed"] is True, public
+    if ranked:
+        with ApiServer(database_url=db) as restarted:
+            assert inspect(restarted)["state"]["rankings"][-1] == published_snapshot

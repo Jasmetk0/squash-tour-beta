@@ -17,6 +17,8 @@ from beta_engine.domain.tournaments.native_canonical_knockout import (
     NativeCanonicalDrawBinding,
     NativeCanonicalRoundSchedule,
     canonical_announcement_week,
+    saved_ranked_point_table,
+    validate_ranked_publication_week,
 )
 
 
@@ -111,6 +113,9 @@ def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
         raise ValueError(
             "Canonical Draw contains participants absent from the owned sporting checkpoint"
         )
+    ranked = event.ranking_status == "ranked"
+    if ranked:
+        validate_ranked_publication_week(week)
     edition = CalendarTourEdition(
         schema_version="calendar_tournament_edition.v4",
         edition_id=event.event_id,
@@ -119,8 +124,8 @@ def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
         announcement_week=canonical_announcement_week(binding),
         start_slot=binding.schedule.qualification[0],
         main_entrant_count=event.main_draw_size,
-        ranked=event.ranking_status != "unranked",
-        point_table={},
+        ranked=ranked,
+        point_table=saved_ranked_point_table(event) if ranked else {},
         validity_weeks=clock.weeks_per_year,
         simulation_seed=source.draw_input.draw_seed,
     )

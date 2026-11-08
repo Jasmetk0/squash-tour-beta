@@ -13,15 +13,14 @@ from beta_engine.domain.players.calendar_continuation_match import (
     CalendarContinuationMatch,
 )
 from beta_engine.domain.rankings.official import RankingWeek
-from beta_engine.domain.rankings.points import is_valid_ranking_point
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.canonical_knockout_feeders import (
     CanonicalKnockoutFeederPlan,
 )
-from beta_engine.domain.tournaments.fax_reference_bracket_topology import (
-    build_fax_reference_bracket_topology,
+from beta_engine.domain.tournaments.native_canonical_knockout import (
+    native_progress,
+    saved_ranked_point_table,
 )
-from beta_engine.domain.tournaments.native_canonical_knockout import native_progress
 from beta_engine.domain.tournaments.point_award_authority import (
     TournamentPointAwardAuthority,
 )
@@ -79,18 +78,7 @@ def prepare_native_canonical_ranked_awards(
             "Canonical point authority requires its existing 61-week ranking clock"
         )
 
-    required = build_fax_reference_bracket_topology(event).ranked_point_stages
-    table = event.ranking_points_table
-    missing = [stage for stage in required if stage not in table]
-    invalid = [
-        stage
-        for stage in required
-        if stage in table and not is_valid_ranking_point(table[stage])
-    ]
-    if missing or invalid:
-        raise ValueError(
-            f"Saved Ranked point table incomplete; missing={missing}, invalid={invalid}"
-        )
+    table = saved_ranked_point_table(event)
 
     progress = native_progress(plan, matches)
     if progress.champion_player_id is None or len(progress.accepted_match_ids) != len(
@@ -160,7 +148,7 @@ def prepare_native_canonical_ranked_awards(
         result=result,
         point_authority=FrozenPointAwardAuthority(
             ranking_status="ranked",
-            point_distribution={stage: table[stage] for stage in required},
+            point_distribution=table,
             point_distribution_source="saved_native_fax_draw.ranking_points.v1",
         ),
         seed=plan.source.draw_input.draw_seed,

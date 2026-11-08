@@ -244,7 +244,11 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
             "fingerprint": event.fingerprint,
             "winner_player_id": event.winner_player_id if hasattr(event, "winner_player_id") else event.matches[-1].result.winner_player_id,
             "prepared_awards": [
-                a.model_dump(mode="json") for a in event.prepared_awards
+                a.model_dump(mode="json") for a in (
+                    event.ranking_awards
+                    if event.schema_version == "native_canonical_tournament_result.v2"
+                    else event.prepared_awards
+                )
             ],
             "match_ids": [m.match_id for m in event.matches],
         }

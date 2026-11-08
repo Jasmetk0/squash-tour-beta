@@ -187,12 +187,16 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                     "Edition lacks authentic played event and Saved origin"
                 )
             results = edition_results(authority, event)
-            if results and getattr(results[0], "schema_version", None) in {"calendar_terminal_edition_result.v1", "calendar_terminal_edition_result.v2"}:
+            if event.schema_version == "native_canonical_tournament_result.v2" or (
+                results and getattr(results[0], "schema_version", None) in {
+                    "calendar_terminal_edition_result.v1", "calendar_terminal_edition_result.v2"
+                }
+            ):
                 receipts = confirmations.get(authority.edition.edition_id, [])
                 if authority.result_confirmed != bool(receipts) or len(receipts) > 1 or (
                     receipts and receipts[0].result.get("results") != [r.model_dump(mode="json") for r in results]
                 ):
-                    raise ValueError("Terminal confirmation differs from actual Edition results")
+                    raise ValueError("Confirmation differs from actual Edition results")
     advances = {e.command_id: e for e in checkpoint.weekly_advances}
     if {
         e.command_id

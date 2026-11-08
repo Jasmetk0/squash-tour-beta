@@ -17,6 +17,8 @@ from beta_engine.domain.tournaments.native_canonical_knockout import (
     NativeCanonicalDrawBinding,
     NativeCanonicalRoundSchedule,
     canonical_announcement_week,
+    saved_ranked_point_table,
+    validate_ranked_publication_week,
 )
 
 
@@ -25,6 +27,35 @@ class SavedDrawAdoptionInput(FrozenInput):
     event_id: str = Field(min_length=3)
     source_plan_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     schedule: NativeCanonicalRoundSchedule
+
+
+def require_ranked_draw_tour_entry(authority, state, lifecycle):
+    """The adopted Draw is sporting evidence, not native first-Entry authority."""
+    if lifecycle is None or (
+        lifecycle.run_id,
+        lifecycle.branch_id,
+        lifecycle.week.ordinal,
+        lifecycle.fingerprint,
+    ) != (
+        state.run_id, state.branch_id, state.week.ordinal, state.lifecycle_fingerprint,
+    ):
+        raise ValueError("Ranked Saved Draw requires the current owned Tour lifecycle")
+    source = authority.canonical_binding.draw_input
+    entrants = {
+        *source.direct_main_player_ids,
+        *source.wild_card_player_ids,
+        *source.qualification_player_ids,
+    }
+    entered = {
+        p.player_id
+        for p in lifecycle.players
+        if getattr(p, "tour_entry_week", None) is not None
+    }
+    if missing := entrants - entered:
+        raise ValueError(
+            f"Ranked Saved Draw requires prior native Tour Entry for {len(missing)} "
+            "participant(s); the Saved Draw cannot establish first Entry"
+        )
 
 
 def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
@@ -111,6 +142,9 @@ def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
         raise ValueError(
             "Canonical Draw contains participants absent from the owned sporting checkpoint"
         )
+    ranked = event.ranking_status == "ranked"
+    if ranked:
+        validate_ranked_publication_week(week)
     edition = CalendarTourEdition(
         schema_version="calendar_tournament_edition.v4",
         edition_id=event.event_id,
@@ -119,8 +153,8 @@ def adopt_saved_draw(repository, ctx, state, command, *, replay_plan=None):
         announcement_week=canonical_announcement_week(binding),
         start_slot=binding.schedule.qualification[0],
         main_entrant_count=event.main_draw_size,
-        ranked=event.ranking_status != "unranked",
-        point_table={},
+        ranked=ranked,
+        point_table=saved_ranked_point_table(event) if ranked else {},
         validity_weeks=clock.weeks_per_year,
         simulation_seed=source.draw_input.draw_seed,
     )

@@ -211,8 +211,8 @@ def test_preparation_requires_manual_save_and_reopens_exact_frozen_source(
         )
         assert report["native_execution_status"] == (
             "requires_adoption_preview"
-            if table_kind == "unranked"
-            else "ranked_not_supported"
+            if table_kind in {"unranked", "authored"}
+            else "ranked_points_incomplete"
         )
         assert repo.get_branch_revision_state(branch_id=branch_id) == saved_state
         with pytest.raises(ValueError, match="source changed"):

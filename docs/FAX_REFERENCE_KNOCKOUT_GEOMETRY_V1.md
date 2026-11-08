@@ -187,3 +187,20 @@ This is an in-memory bridge for the existing 61-week ranking authority. It does
 not persist a terminal result, publish standings or enable Ranked adoption.
 Disposable Gold and Platinum tests play real matches with explicitly authored test
 tables. They do not fill the original Qualification tables or prove a Ranked Run.
+
+### Ranked confirmation and weekly publication
+
+The native slot owner can adopt a same-week Ranked Saved Draw with an explicit
+complete point table, on W61 within the supported ranking horizon. It requires a
+following in-Run week; terminal Closing Ranking and other calendar widths are
+separate boundaries. The adoption preview requires a recorded native Tour Entry
+for every Main, Qualification and wild-card participant in the current lifecycle.
+The Saved Draw alone does not supply native first-Entry evidence. First Entry
+through applications or definitive wild cards for this same canonical Edition
+still needs integration with its source authority.
+
+The existing Unranked result v1 remains unchanged. Ranked
+result v2 derives awards from the played records without storing a second ledger.
+The explicit confirmation binds the exact rows; they reach Official Ranking on
+the next normal Week Transition. Qualification and Main contributions stay
+separate. The original reference tables and announcement dates remain unchanged.

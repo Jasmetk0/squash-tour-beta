@@ -521,7 +521,9 @@ class CalendarTourService:
                         {**r.model_dump(mode="json"), "stage": award.reached_stage}
                         for r, award in zip(
                             edition_results(a, event),
-                            event.prepared_awards,
+                            event.ranking_awards
+                            if event.schema_version == "native_canonical_tournament_result.v2"
+                            else event.prepared_awards,
                             strict=True,
                         )
                     ],
@@ -1344,8 +1346,25 @@ class CalendarTourService:
                 rankings=(ranking,),
             )
         elif command.action == "adopt-saved-draw":
-            from beta_engine.application.native_canonical_draw_adoption import adopt_saved_draw
-            adopted = adopt_saved_draw(self.repository, ctx, state, command, replay_plan=_native_inputs[2] if session is None and _native_inputs else None)
+            from beta_engine.application.native_canonical_draw_adoption import (
+                adopt_saved_draw,
+                require_ranked_draw_tour_entry,
+            )
+
+            adopted = adopt_saved_draw(
+                self.repository, ctx, state, command,
+                replay_plan=_native_inputs[2] if session is None and _native_inputs else None,
+            )
+            if adopted.edition.ranked:
+                lifecycle = (
+                    _native_inputs[0]
+                    if _native_inputs is not None
+                    else get_lifecycle(
+                        session, run_id=state.run_id, branch_id=state.branch_id,
+                        week=state.week,
+                    )
+                )
+                require_ranked_draw_tour_entry(adopted, state, lifecycle)
             state = state.model_copy(update={"editions": (*state.editions, adopted)})
             result["adopted_source_plan_fingerprint"] = adopted.canonical_binding.source_plan_fingerprint
         elif command.action == "create-edition":

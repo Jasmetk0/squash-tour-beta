@@ -171,3 +171,19 @@ clock values remain frozen; the new consumer allows only compatible extensions.
 Admin hides inappropriate Entry mutations and displays explicit Q/BYE positions,
 with separate terminal confirmation. Adoption itself is currently an explicit API
 command; no complete adoption wizard or owner-level Chromium pass is claimed.
+
+### Ranked result and award projection
+
+`prepare_native_canonical_ranked_awards` consumes an authenticated Saved plan and
+the exact accepted BO5 records for a completed same-week Q/Main Draw. The native
+slot owner remains responsible for authentication and replay. Result authority v4
+binds the Draw and feeder fingerprints and each accepted continuation fingerprint.
+Automatic BYE advances have their own derived evidence and never count as matches
+played. The existing canonical award builder applies Main and Qualification points
+from the explicit Saved table, including the existing BYE adjustment. It rejects
+missing or invalid reachable stages before deriving any awards.
+
+This is an in-memory bridge for the existing 61-week ranking authority. It does
+not persist a terminal result, publish standings or enable Ranked adoption.
+Disposable Gold and Platinum tests play real matches with explicitly authored test
+tables. They do not fill the original Qualification tables or prove a Ranked Run.

@@ -3,6 +3,8 @@
 CodeQL #14-#33: external identifiers must never select or delete paths
 outside their owning package, even when directories are symlinks.
 """
+import json
+import os
 from pathlib import Path
 
 import pytest
@@ -14,6 +16,112 @@ from beta_engine.infrastructure.world_package_storage import WorldPackageCountry
 
 
 pytestmark = pytest.mark.pr_critical
+
+
+def _aggregate_import_fixture(tmp_path: Path):
+    from beta_engine.application.countries_service import CountriesConfigService
+    from beta_engine.application.manual_player_overrides_service import ManualPlayerOverridesService
+    from beta_engine.application.world_package_service import WorldPackageService
+
+    countries = tmp_path / "countries.json"
+    overrides = tmp_path / "overrides.json"
+    config = CountriesConfig(countries=[_country_for_relative_root("AAA")])
+    countries.write_bytes(config.model_dump_json(indent=2).replace("\n", "\r\n").encode() + b"\r\n")
+    overrides.write_bytes(b'{ "overrides": [] }\r\n')
+    service = WorldPackageService(CountriesConfigService(config_path=countries), ManualPlayerOverridesService(config_path=overrides))
+    package = json.loads(service.export_package_text())
+    package["countries_dataset"]["countries"][0]["name"] = "Updated Country"
+    return service, countries, overrides, json.dumps(package)
+
+
+@pytest.mark.parametrize("link_kind", ["symlink", "hardlink"])
+@pytest.mark.parametrize("operation", ["aggregate", "countries", "overrides"])
+def test_legacy_writes_ignore_planted_fixed_temporary_link(tmp_path: Path, link_kind: str, operation: str) -> None:
+    from beta_engine.domain.players import ManualPlayerOverride
+
+    service, countries, overrides, package = _aggregate_import_fixture(tmp_path)
+    destination = overrides if operation == "overrides" else countries
+    outside = tmp_path / "unrelated.txt"
+    outside.write_bytes(b"untouched")
+    fixed_temp = destination.with_suffix(".json.tmp")
+    try:
+        if link_kind == "symlink":
+            fixed_temp.symlink_to(outside)
+        else:
+            fixed_temp.hardlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip(f"{link_kind} unavailable")
+
+    if operation == "aggregate":
+        assert service.import_package_text(package_text=package, dry_run=False).ok
+    elif operation == "countries":
+        service.countries_service.replace_dataset(CountriesConfig.model_validate(json.loads(package)["countries_dataset"]))
+    else:
+        service.manual_overrides_service.create_override(ManualPlayerOverride(
+            override_id="new", season=2027, country_code="AAA", player_name="New Player", age=19, profile_tier="strong",
+        ))
+    assert outside.read_bytes() == b"untouched"
+    assert fixed_temp.samefile(outside)
+    assert not destination.is_symlink()
+    if operation == "overrides":
+        assert service.manual_overrides_service.get_override("new").player_name == "New Player"
+    else:
+        assert service.countries_service.get_country("AAA").name == "Updated Country"
+
+
+def test_aggregate_import_rejects_linked_destination_before_changing_other_file(tmp_path: Path) -> None:
+    service, countries, overrides, package = _aggregate_import_fixture(tmp_path)
+    previous = countries.read_bytes()
+    outside = tmp_path / "unrelated.json"
+    overrides.rename(outside)
+    try:
+        overrides.symlink_to(outside)
+    except (OSError, NotImplementedError):
+        pytest.skip("symlinks are not available on this platform")
+
+    with pytest.raises(ValueError, match="regular file"):
+        service.import_package_text(package_text=package, dry_run=False)
+
+    assert countries.read_bytes() == previous
+    assert outside.read_bytes() == b'{ "overrides": [] }\r\n'
+    assert overrides.is_symlink()
+
+
+def test_aggregate_import_restores_exact_bytes_after_second_replace_fails(tmp_path: Path, monkeypatch) -> None:
+    from beta_engine.infrastructure import atomic_json_file
+
+    service, countries, overrides, package = _aggregate_import_fixture(tmp_path)
+    if os.name == "posix":
+        countries.chmod(0o640)
+    before = {p: p.read_bytes() for p in (countries, overrides)}
+    original_replace = Path.replace
+
+    def no_more_staging(*args, **kwargs):
+        raise OSError("no space for another staging file")
+
+    def fail_second_replace(self, target):
+        if target == overrides:
+            monkeypatch.setattr(atomic_json_file.tempfile, "NamedTemporaryFile", no_more_staging)
+            raise OSError("injected second dataset replacement failure")
+        return original_replace(self, target)
+
+    monkeypatch.setattr(Path, "replace", fail_second_replace)
+    with pytest.raises(OSError, match="injected second dataset"):
+        service.import_package_text(package_text=package, dry_run=False)
+
+    assert {p: p.read_bytes() for p in before} == before
+    assert set(tmp_path.iterdir()) == set(before)
+    if os.name == "posix":
+        assert countries.stat().st_mode & 0o777 == 0o640
+
+
+def test_aggregate_import_can_create_missing_override_file(tmp_path: Path) -> None:
+    service, countries, overrides, package = _aggregate_import_fixture(tmp_path)
+    overrides.unlink()
+    assert service.import_package_text(package_text=package, dry_run=False).ok
+    assert json.loads(overrides.read_bytes()) == {"overrides": []}
+    assert service.countries_service.get_country("AAA").name == "Updated Country"
+    assert set(tmp_path.iterdir()) == {countries, overrides}
 
 
 @pytest.mark.parametrize("world_id", [

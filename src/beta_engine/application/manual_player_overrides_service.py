@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import csv
 import io
-import json
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -16,6 +15,7 @@ from beta_engine.domain.players import (
     ManualPlayerOverride,
     ManualPlayerOverridesRegistry,
 )
+from beta_engine.infrastructure.atomic_json_file import replace_json_file
 from beta_engine.infrastructure.world_config import (
     MANUAL_PLAYER_OVERRIDE_TABULAR_FIELDS,
     load_manual_player_overrides_config,
@@ -317,13 +317,7 @@ class ManualPlayerOverridesService:
                 raise ValueError(f"duplicate override id '{item.override_id}' in dataset")
             seen.add(item.override_id)
 
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        target = self.config_path
-        tmp_path = target.with_suffix(f"{target.suffix}.tmp")
-        with tmp_path.open("w", encoding="utf-8") as fh:
-            json.dump(payload.model_dump(mode="json"), fh, indent=2)
-            fh.write("\n")
-        tmp_path.replace(target)
+        replace_json_file(self.config_path, payload.model_dump(mode="json"))
 
     def _to_tabular_row(self, item: ManualPlayerOverride) -> dict[str, object]:
         attributes = item.attribute_overrides.model_dump(mode="json") if item.attribute_overrides else {}

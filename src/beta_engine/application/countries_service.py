@@ -12,6 +12,7 @@ from pathlib import Path
 from pydantic import ValidationError
 
 from beta_engine.domain.countries import CountriesConfig, Country
+from beta_engine.infrastructure.atomic_json_file import replace_json_file
 from beta_engine.infrastructure.world_config import COUNTRY_EXPORT_TABULAR_FIELDS, COUNTRY_TABULAR_FIELDS, load_countries_config
 from beta_engine.infrastructure.world_package_storage import WorldPackageCountryStore
 
@@ -306,10 +307,4 @@ class CountriesConfigService:
                 raise PermissionError(f"World Package at {self.package_root} is built-in or not editable")
             WorldPackageCountryStore(self.package_root).replace_dataset(payload)
             return
-        self.config_path.parent.mkdir(parents=True, exist_ok=True)
-        target = self.config_path
-        tmp_path = target.with_suffix(f"{target.suffix}.tmp")
-        with tmp_path.open("w", encoding="utf-8") as fh:
-            json.dump(payload.model_dump(mode="json"), fh, indent=2)
-            fh.write("\n")
-        tmp_path.replace(target)
+        replace_json_file(self.config_path, payload.model_dump(mode="json"))

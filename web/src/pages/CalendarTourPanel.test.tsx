@@ -1,4 +1,4 @@
-import {act,fireEvent,render,screen} from '@testing-library/react'
+import {act,fireEvent,render,screen,within} from '@testing-library/react'
 import {StrictMode} from 'react'
 import {QueryClient,QueryClientProvider,useQuery} from '@tanstack/react-query'
 import {MemoryRouter} from 'react-router-dom'
@@ -35,6 +35,38 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zkontrolovat výsledky':'Review results'}))
     await screen.findByLabelText('Confirm Tour command')
     expect(api.previewCalendarTour.mock.calls[api.previewCalendarTour.mock.calls.length-1]?.[2]).toMatchObject({action:'confirm-result',edition_id:'canonical'})
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+
+  it.each(['en','cs'])('shows qualification and Main points before confirming a Ranked result in %s',async language=>{
+    localStorage.setItem('squash-engine-language-v1',language)
+    const cs=language==='cs',current=slotView(),week=current.state!.week
+    current.players=[{player_id:'p1',name:'Alex'},{player_id:'p2',name:'Robin'}]
+    current.state!.editions=[{edition:{schema_version:'calendar_tournament_edition.v4',edition_id:'ranked',name:'Ranked Gold',week,announcement_week:{...week,week:3},start_slot:1,main_entrant_count:24,point_table:{champion:100,qualification_winner:17,qualification_final:11},validity_weeks:61},submissions:[],field:null,
+      draw:{main:{slots:[{slot_index:1,player_id:'p1'},{slot_index:2,player_id:null,placeholder_id:'Q1'}]}},
+      canonical_binding:{saved_revision_id:'original-source',draw_input:{qualification_player_ids:['p1','p2']},schedule:{qualification:[1,2],main:[4,5,6,7,8]}},tournament_fingerprint:'d'.repeat(64),result_confirmed:false}]
+    const result={edition_id:'ranked',validity_weeks:61,completed_week:{season_index:0,week:4},first_publication_week:{season_index:0,week:5}}
+    const awards=[
+      {...result,player_id:'p1',source_fingerprint:'1'.repeat(64),main_points:100,qualification_points:17,stage:'champion'},
+      {...result,player_id:'p2',source_fingerprint:'2'.repeat(64),main_points:0,qualification_points:11,stage:'qualification_final'},
+    ]
+    current.edition_evidence.ranked={results:awards,matches:[]}
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewCalendarTour.mockImplementation((_r,_b,c)=>Promise.resolve({...preview(c),impact:{results:awards}}))
+    render(panel())
+    const table=await screen.findByRole('table',{name:'Edition results ranked'})
+    const total=cs?'117 (kvalifikace 17 + hlavní los 100)':'117 (qualification 17 + main draw 100)'
+    const qualification=cs?'11 (kvalifikace 11 + hlavní los 0)':'11 (qualification 11 + main draw 0)'
+    expect(within(table).getByRole('row',{name:/Alex/})).toHaveTextContent(total)
+    expect(within(table).getByRole('row',{name:/Robin/})).toHaveTextContent(qualification)
+    expect(within(table).getByText(cs?'Finále kvalifikace':'Qualification final')).toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Verify both awards'}})
+    fireEvent.click(screen.getByRole('button',{name:cs?'Zkontrolovat výsledky':'Review results'}))
+    await screen.findByLabelText('Confirm Tour command')
+    const review=screen.getByLabelText('Tour command review')
+    expect(review).toHaveTextContent(`Alex: ${total}`)
+    expect(review).toHaveTextContent(`Robin: ${qualification}`)
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
     expect(api.saveCalendarTour).not.toHaveBeenCalled()
   })

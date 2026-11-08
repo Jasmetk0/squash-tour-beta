@@ -172,6 +172,23 @@ Admin hides inappropriate Entry mutations and displays explicit Q/BYE positions,
 with separate terminal confirmation. Adoption itself is currently an explicit API
 command; no complete adoption wizard or owner-level Chromium pass is claimed.
 
+### Saved first Tour Entry evidence
+
+`GET /admin/runs/{run_id}/branches/{branch_id}/tournaments/{event_id}/draw/saved-entry-evidence`
+uses the same `season` and `expected_saved_revision_id` as the Draw preflight.
+It authenticates the Branch-owned current Saved Draw and reports the role and
+original first-Entry trigger for each actual Main, Qualification and wild-card
+participant. A trigger must match its exact Saved valid submission or definitive
+assignment; the latter must also match the original Saved wild-card resolution.
+A trigger may refer to an earlier Edition. `first_entry: null` means the Saved
+revision does not establish first Entry for that player. A slot in the Draw,
+seeding, a field cut or a WC resolution on its own supplies no trigger.
+
+The response preserves the recorded calendar and timing. It does not certify
+compatibility with native lifecycle replay, create Tour Entry, or change
+rankings, eligibility, or the Saved revision. An unsaved change cannot appear
+until the owner explicitly Saves it.
+
 ### Ranked result and award projection
 
 `prepare_native_canonical_ranked_awards` consumes an authenticated Saved plan and

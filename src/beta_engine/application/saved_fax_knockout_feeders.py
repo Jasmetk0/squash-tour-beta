@@ -21,7 +21,10 @@ from beta_engine.domain.tournaments.draw_input_authority import (
 from beta_engine.domain.tournaments.fax_reference_player_draw import (
     FaxReferencePlayerDraw,
 )
-from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository
+from beta_engine.infrastructure.db.repositories import (
+    BranchSavedRevisionRecord,
+    SimulationPersistenceRepository,
+)
 from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 from beta_engine.infrastructure.db.simulation_slot_state import (
     load_saved_simulation_slot_component,
@@ -41,6 +44,22 @@ class SavedFaxKnockoutFeederService:
         event_id: str,
         expected_saved_revision_id: str,
     ) -> CanonicalKnockoutFeederPlan:
+        plan, _ = self.prepare_with_revision(
+            run_id=run_id, branch_id=branch_id, season=season, event_id=event_id,
+            expected_saved_revision_id=expected_saved_revision_id,
+        )
+        return plan
+
+    def prepare_with_revision(
+        self,
+        *,
+        run_id: str,
+        branch_id: str,
+        season: str,
+        event_id: str,
+        expected_saved_revision_id: str,
+    ) -> tuple[CanonicalKnockoutFeederPlan, BranchSavedRevisionRecord]:
+        """Return the exact envelope used to build the plan for companion reads."""
         state = self.repository.get_branch_revision_state(branch_id=branch_id)
         revision = state.saved_revision
         if (state.run_id, state.saved_head_revision_id, revision.branch_id) != (
@@ -51,13 +70,14 @@ class SavedFaxKnockoutFeederService:
             raise ValueError(
                 "FAX feeder source changed or requires a materialized Branch-owned Saved root"
             )
-        return self._from_revision(
+        plan = self._from_revision(
             revision=revision,
             run_id=run_id,
             branch_id=branch_id,
             season=season,
             event_id=event_id,
         )
+        return plan, revision
 
     def reload(self, plan: CanonicalKnockoutFeederPlan) -> CanonicalKnockoutFeederPlan:
         """Reauthenticate the original reachable Saved source after later Saves.

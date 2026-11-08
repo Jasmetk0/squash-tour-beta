@@ -114,6 +114,8 @@ Pythonu pro sestavení na Windows x64 s CPythonem 3.12. Workflow je instaluje do
 odpovídají požadavkům projektu. Před zabalením také běží testy hranic cest World
 Package na Windows včetně skutečného junction a obnovy původních bajtů při chybě
 druhého zápisu.
+Frontend při sestavení odmítá kolize názvů souborů a modulů, které na Windows
+nelze jednoznačně rozlišit.
 
 `build-info.json` určuje commit a otisk manifestu závislostí;
 `build-dependencies.txt` eviduje sestavovací prostředí a

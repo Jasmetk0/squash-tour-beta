@@ -5,7 +5,7 @@ import { useLanguage } from '../i18n/LanguageContext'
 import {
   inspectBranchReadinessComparison, serializeBranchReadinessComparison,
   type BranchReadinessComparison
-} from './runBranchReadinessComparison'
+} from './runBranchReadinessModel'
 
 const copy = {
   cs: {

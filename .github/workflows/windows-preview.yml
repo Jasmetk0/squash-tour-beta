@@ -7,6 +7,9 @@ on:
       - '.github/workflows/windows-preview.yml'
       - '.github/requirements/windows-preview-win-amd64.lock.txt'
       - 'pyproject.toml'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/scripts/checkPortableModuleNames.mjs'
       - 'tools/desktop/**'
       - 'tools/tests/test_desktop_preview.py'
       - 'tools/tests/test_desktop_backup.py'
@@ -25,6 +28,9 @@ on:
       - '.github/workflows/windows-preview.yml'
       - '.github/requirements/windows-preview-win-amd64.lock.txt'
       - 'pyproject.toml'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/scripts/checkPortableModuleNames.mjs'
       - 'tools/desktop/**'
       - 'tools/tests/test_desktop_preview.py'
       - 'tools/tests/test_desktop_backup.py'
@@ -82,11 +88,10 @@ jobs:
           & $python -m tools.desktop.check_build_dependencies
           Add-Content -Path $env:GITHUB_PATH -Value $scripts -Encoding utf8
       - name: Launcher, backup and World Package filesystem checks (also on draft PRs)
-        env:
-          GITHUB_EVENT_NAME: windows_preview_acceptance
-        run: >-
-          python -m pytest tools/tests/test_desktop_preview.py tools/tests/test_desktop_backup.py
-          tests/application/test_codeql_security_boundaries.py --maxfail=1
+        shell: pwsh
+        run: |
+          $env:GITHUB_EVENT_NAME = "windows_preview_acceptance"
+          python -m pytest tools/tests/test_desktop_preview.py tools/tests/test_desktop_backup.py tests/application/test_codeql_security_boundaries.py --maxfail=1
       - name: Build the existing frontend
         run: |
           npm --prefix web ci --ignore-scripts

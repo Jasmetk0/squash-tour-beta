@@ -8,6 +8,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+from tools.desktop.check_build_dependencies import LOCK, verify_build_dependencies
+
 
 def tracked_copy(root: Path, destination: Path, prefix: str) -> None:
     paths = subprocess.check_output(["git", "ls-files", "-z", "--", prefix], cwd=root)
@@ -31,6 +33,7 @@ def main():
     # Build outputs are ignored; a dirty source checkout is never labelled as HEAD.
     if subprocess.run(["git", "diff", "--quiet", "HEAD"], cwd=root, check=False).returncode:
         raise SystemExit("Commit source changes before building an identified package.")
+    verify_build_dependencies()
     subprocess.run([sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
                     str(root / "tools/desktop/preview.spec")], cwd=root, check=True)
     package = root / "dist/SquashEnginePreview"
@@ -48,11 +51,14 @@ def main():
     # Fingerprint the exact shipped bytes; Windows text writes would change LF
     # to CRLF after hashing and make the manifest's on-disk checksum disagree.
     (package / "build-dependencies.txt").write_bytes(dependencies.encode("utf-8"))
+    lock_bytes = LOCK.read_bytes()
+    (package / "build-dependencies.lock.txt").write_bytes(lock_bytes)
     metadata = {
         "format": "squash-desktop-preview.v1", "source_commit": commit,
         "label": "Internal test build; not a certified pre-alpha release",
         "python": sys.version, "platform": sys.platform,
         "dependency_fingerprint": hashlib.sha256(dependencies.encode()).hexdigest(),
+        "dependency_lock_fingerprint": hashlib.sha256(lock_bytes).hexdigest(),
     }
     (package / "build-info.json").write_text(json.dumps(metadata, indent=2), encoding="utf-8")
     print("Prepared " + str(package))

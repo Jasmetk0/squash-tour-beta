@@ -5,6 +5,7 @@ outside their owning package, even when directories are symlinks.
 """
 import json
 import os
+import subprocess
 from pathlib import Path
 
 import pytest
@@ -220,6 +221,33 @@ def test_package_evidence_rejects_traversal_and_symlink(tmp_path: Path) -> None:
         pytest.skip("file symlinks are not available on this platform")
     with pytest.raises(ValueError, match="symlink"):
         safe_package_file(root, "generation/link.json")
+
+
+@pytest.mark.skipif(os.name != "nt", reason="requires an actual Windows junction")
+def test_package_evidence_rejects_real_windows_junction(tmp_path: Path) -> None:
+    outside = tmp_path / "unrelated directory"
+    outside.mkdir()
+    marker = outside / "source.json"
+    marker.write_text("outside", encoding="utf-8")
+    root = tmp_path / "world package"
+    root.mkdir()
+    (root / "owned.json").write_text("owned", encoding="utf-8")
+    junction = root / "generation"
+    subprocess.run(
+        ["cmd.exe", "/d", "/c", "mklink", "/J", str(junction), str(outside)],
+        check=True,
+        capture_output=True,
+    )
+    try:
+        assert (junction / "source.json").samefile(marker)
+        assert safe_package_file(root, "owned.json") == (root / "owned.json").resolve()
+        with pytest.raises(ValueError, match="junction"):
+            safe_package_file(root, "generation/source.json")
+        with pytest.raises(ValueError, match="junction"):
+            safe_package_file(junction, "source.json")
+    finally:
+        junction.rmdir()
+    assert marker.read_text(encoding="utf-8") == "outside"
 
 
 

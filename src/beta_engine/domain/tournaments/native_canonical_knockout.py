@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+from functools import cached_property
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -13,6 +14,7 @@ from beta_engine.domain.players.calendar_continuation_match import (
     CalendarContinuationMatch,
 )
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.rankings.points import is_valid_ranking_point
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.canonical_knockout_feeders import (
     CanonicalKnockoutFeederPlan,
@@ -22,6 +24,9 @@ from beta_engine.domain.tournaments.canonical_knockout_feeders import (
 from beta_engine.domain.tournaments.draw_authority import TournamentDrawAuthority
 from beta_engine.domain.tournaments.draw_input_authority import (
     TournamentDrawInputAuthority,
+)
+from beta_engine.domain.tournaments.fax_reference_bracket_topology import (
+    build_fax_reference_bracket_topology,
 )
 from beta_engine.domain.tournaments.fax_reference_player_draw import (
     FaxReferencePlayerDraw,
@@ -117,6 +122,31 @@ def is_canonical_edition(authority):
     return authority.edition.schema_version == "calendar_tournament_edition.v4"
 
 
+def saved_ranked_point_table(event):
+    """Validate the exact reachable stages; never infer awards from defaults."""
+    if event.ranking_status != "ranked":
+        raise ValueError("Native canonical point projection requires a Ranked source")
+    required = build_fax_reference_bracket_topology(event).ranked_point_stages
+    table = event.ranking_points_table
+    missing = [stage for stage in required if stage not in table]
+    invalid = [
+        stage for stage in required
+        if stage in table and not is_valid_ranking_point(table[stage])
+    ]
+    if missing or invalid:
+        raise ValueError(
+            f"Saved Ranked point table incomplete; missing={missing}, invalid={invalid}"
+        )
+    return {stage: table[stage] for stage in required}
+
+
+def validate_ranked_publication_week(week):
+    if week.calendar.weeks_per_year != 61 or week.season_index >= 50:
+        raise ValueError("Canonical Ranked awards require the existing 61-week ranking clock")
+    if week.ordinal + 1 == week.calendar.weeks_per_year * week.calendar.season_count:
+        raise ValueError("Canonical Ranked awards require a following publication week")
+
+
 def canonical_edition_plan(authority, matches):
     plan = authority.canonical_binding.plan(authority.draw)
     # Edition IDs can share a prefix. Only exact executable nodes belong here.
@@ -151,7 +181,7 @@ def canonical_edition_plan(authority, matches):
 
 
 class NativeCanonicalTournamentResult(FrozenInput):
-    schema_version: Literal["native_canonical_tournament_result.v1"] = (
+    schema_version: Literal["native_canonical_tournament_result.v1", "native_canonical_tournament_result.v2"] = (
         "native_canonical_tournament_result.v1"
     )
     run_id: str
@@ -201,14 +231,29 @@ class NativeCanonicalTournamentResult(FrozenInput):
             raise ValueError(
                 "Canonical native terminal is incomplete or detached from its source"
             )
-        if (
-            self.prepared_awards
-            or self.binding.source_event.ranking_status != "unranked"
+        ranked = self.schema_version == "native_canonical_tournament_result.v2"
+        if self.prepared_awards or self.binding.source_event.ranking_status != (
+            "ranked" if ranked else "unranked"
         ):
             raise ValueError(
-                "This canonical native version supports only source-authored Unranked results"
+                "Canonical native result version differs from its Saved ranking status"
             )
+        if ranked:
+            validate_ranked_publication_week(self.week)
         return self
+
+    @cached_property
+    def ranking_awards(self):
+        """Derived on demand from the exact ledger; no second persisted award store."""
+        if self.schema_version != "native_canonical_tournament_result.v2":
+            return ()
+        from beta_engine.application.native_canonical_ranked_awards import (
+            prepare_native_canonical_ranked_awards,
+        )
+
+        return prepare_native_canonical_ranked_awards(
+            plan=self.binding.plan(self.draw), matches=self.matches
+        ).awards.awards
 
     @property
     def winner_player_id(self):
@@ -249,6 +294,11 @@ def completed_canonical_result(authority, slots, *, owner=None):
             "Canonical native fork continuation requires its versioned source remapping"
         )
     return NativeCanonicalTournamentResult(
+        schema_version=(
+            "native_canonical_tournament_result.v2"
+            if authority.edition.ranked
+            else "native_canonical_tournament_result.v1"
+        ),
         run_id=first.run_id,
         branch_id=first.branch_id,
         tournament_id=authority.edition.edition_id,

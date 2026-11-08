@@ -49,6 +49,7 @@ from beta_engine.domain.tournaments.ranking_snapshot_authority import (
 
 from beta_engine.domain.tournaments.native_canonical_knockout import (
     NativeCanonicalDrawBinding, is_canonical_edition, canonical_announcement_week,
+    saved_ranked_point_table, validate_ranked_publication_week,
 )
 
 def ranking_week(week):
@@ -116,7 +117,12 @@ class CalendarTourEdition(FrozenInput):
             if self.group_configuration is not None:
                 raise ValueError("Historical knockout Edition cannot carry group configuration")
             stages = required_stages(self.capacity.main_draw_size)
-        if self.ranked and (
+        if self.ranked and self.schema_version == "calendar_tournament_edition.v4":
+            # Reachable stages and exact values are verified against the Saved
+            # source in CalendarEditionAuthority, not the legacy Main-only table.
+            if not self.point_table or any(type(v) is not int or v < 0 for v in self.point_table.values()):
+                raise ValueError("Canonical Ranked Edition requires a complete Saved point table")
+        elif self.ranked and (
             set(self.point_table) != set(stages)
             or any(type(v) is not int or v < 0 for v in self.point_table.values())
             or any(
@@ -191,8 +197,12 @@ class CalendarEditionAuthority(FrozenInput):
             event = binding.source_event
             if self.edition.announcement_week != canonical_announcement_week(binding):
                 raise ValueError("Canonical announcement differs from its Saved source")
-            if self.edition.ranked or event.ranking_status != "unranked" or self.edition.point_table:
-                raise ValueError("Canonical native Ranked awards need their explicit versioned consumer; no zero-point fallback")
+            if self.edition.ranked != (event.ranking_status == "ranked"):
+                raise ValueError("Canonical Edition ranking status differs from its Saved source")
+            if self.edition.ranked:
+                validate_ranked_publication_week(self.edition.week)
+                if self.edition.point_table != saved_ranked_point_table(event):
+                    raise ValueError("Canonical Edition changes its Saved point table")
             if event.duration_in_season_weeks != 1 or event.start_season_week != event.season_week or event.end_season_week != event.season_week:
                 raise ValueError("Canonical native v4 requires an explicit same-week source; multi-week execution is not yet supported")
             if (self.edition.name, self.edition.start_slot, self.edition.simulation_seed, self.edition.validity_weeks) != (event.event_name, binding.schedule.qualification[0], binding.draw_input.draw_seed, binding.calendar.weeks_per_year):
@@ -473,13 +483,46 @@ def edition_results(authority, event):
     """One authoritative result per player; immutable Edition table is the source."""
     played_fingerprint = event.fingerprint
     if is_canonical_edition(authority):
-        if (authority.edition.ranked or event.schema_version != "native_canonical_tournament_result.v1"
+        expected_schema = (
+            "native_canonical_tournament_result.v2"
+            if authority.edition.ranked else "native_canonical_tournament_result.v1"
+        )
+        if (event.schema_version != expected_schema
             or authority.tournament_fingerprint != played_fingerprint
             or event.edition_authority_fingerprint != authority.execution_fingerprint
+            or event.binding != authority.canonical_binding
+            or event.draw != authority.draw
+            or event.week.ordinal != authority.edition.week.ordinal
             or event.prepared_awards):
-            raise ValueError("Canonical Unranked result differs from its exact terminal source")
+            raise ValueError("Canonical result differs from its exact terminal source")
         event.actual_terminal()
-        return ()
+        if not authority.edition.ranked:
+            return ()
+        target = event.week.calendar.position_at_ordinal(event.week.ordinal + 1)
+        published = CalendarRankingWeek(season_index=target.season_index, week=target.season_week)
+        completed = ranking_week(event.week)
+        results = []
+        for award in event.ranking_awards:
+            qualification = (
+                award.ranking_points_awarded
+                if award.reached_stage.startswith("qualification_")
+                else (award.qualification_points_awarded or 0)
+            )
+            results.append(CalendarRankingResult(
+                edition_id=event.tournament_id,
+                player_id=award.player_id,
+                source_fingerprint=canonical_hash({
+                    "edition": authority.edition.fingerprint,
+                    "played": played_fingerprint,
+                    "award": award.award_fingerprint,
+                }),
+                completed_week=completed,
+                first_publication_week=published,
+                qualification_points=qualification,
+                main_points=award.ranking_points_awarded - qualification,
+                validity_weeks=authority.edition.validity_weeks,
+            ))
+        return tuple(results)
     if authority.tournament_fingerprint != played_fingerprint:
         raise ValueError("Edition result is detached from played MatchEngine evidence")
     if (

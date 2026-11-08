@@ -1,7 +1,6 @@
 """Validate persisted history declarations and their complete portable provenance."""
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from beta_engine.application.earth_research_observations import (
@@ -11,7 +10,11 @@ from beta_engine.application.earth_research_observations import (
     observation_dataset_id,
     observation_dataset_sha256,
 )
-from beta_engine.application.package_evidence_files import load_json_object, safe_package_file
+from beta_engine.application.package_evidence_files import (
+    load_json_object,
+    load_optional_legacy_history_catalog,
+    safe_package_file,
+)
 from beta_engine.domain.countries import Country
 from beta_engine.domain.countries.rating_history import RATING_SCALE_V2
 
@@ -43,7 +46,9 @@ def _load_sources(root: Path, errors: list[str]) -> dict:
                 safe_path = safe_package_file(root, path.relative_to(root).as_posix())
                 sources[source_id] = EarthSource.model_validate(load_json_object(safe_path))
         else:
-            legacy = load_json_object(root / "generation/country_rating_sources.json")
+            legacy = load_json_object(
+                safe_package_file(root, "generation/country_rating_sources.json")
+            )
             sources = {
                 source_id: EarthSource.model_validate(value)
                 for source_id, value in legacy.items()
@@ -70,7 +75,9 @@ def _load_manifests(root: Path, sources: dict, errors: list[str]) -> dict[str, E
                 for path in sorted(manifest_root.glob("*.json"))
             ]
         else:
-            legacy = load_json_object(root / "generation/country_rating_observation_datasets.json")
+            legacy = load_json_object(
+                safe_package_file(root, "generation/country_rating_observation_datasets.json")
+            )
             entries = list(legacy.items())
         if not entries:
             raise ValueError("observation dataset catalogue must be non-empty")
@@ -123,9 +130,10 @@ def _load_calibration_models(root: Path, metadata: dict, errors: list[str]) -> d
                     continue  # Ignore definitions belonging to another Earth sport.
                 models[model_id] = model
         else:
-            catalog_path = root / "generation/country_rating_calibration_models.json"
-            if catalog_path.is_file():
-                catalog = load_json_object(catalog_path)
+            catalog = load_optional_legacy_history_catalog(
+                root, "country_rating_calibration_models.json"
+            )
+            if catalog is not None:
                 raw_models = catalog.get("models")
                 if not isinstance(raw_models, dict):
                     raise ValueError("calibration catalogue models must be an object")

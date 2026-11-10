@@ -6,7 +6,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.rankings.official import (
     FrozenInput,
@@ -21,10 +21,28 @@ from beta_engine.domain.calendar.season_weeks import (
 )
 
 
+TourEntryRule = Literal["turn_pro.v87"]
+
+
 class PlayerLifecyclePolicy(FrozenInput):
     policy_id: str = Field(min_length=1)
     automatic_retirement_age: int = Field(ge=16, le=120)
     provenance: str = Field(min_length=1)
+    # None is the historical v57 rule: first valid application or definitive WC.
+    # It is omitted from serialization so every earlier policy keeps its bytes.
+    tour_entry_rule: TourEntryRule | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_historical_entry_rule(self, handler):
+        data = handler(self)
+        if self.tour_entry_rule is None:
+            data.pop("tour_entry_rule", None)
+        return data
+
+    @property
+    def requires_turn_pro(self) -> bool:
+        """Master v87: Tour entry is a separate Turn Pro event, not an application."""
+        return self.tour_entry_rule == "turn_pro.v87"
 
 
 def derive_birth_year_from_age(season_start_year: int, age: int) -> int:
@@ -82,6 +100,10 @@ class PlayerLifecycleWeekState(FrozenInput):
 
     @model_validator(mode="after")
     def canonical_roster(self):
+        if self.policy.requires_turn_pro:
+            # The legacy 61-week lifecycle has no Turn Pro authority; refuse rather
+            # than silently follow the historical application trigger.
+            raise ValueError("Legacy lifecycle does not support the v87 Turn Pro rule")
         ids = [p.player_id for p in self.players]
         tokens = [p.tie_break_token for p in self.players]
         if ids != sorted(set(ids)) or len(tokens) != len(set(tokens)):

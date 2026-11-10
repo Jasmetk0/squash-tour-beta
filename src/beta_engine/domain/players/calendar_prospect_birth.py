@@ -235,8 +235,13 @@ def advance_calendar_lifecycle_with_prospects(
     predecessor: CalendarPlayerLifecycleState | CalendarTourLifecycleState,
     event: CalendarProspectBirthEvent,
     submissions=(),
+    turn_pro=(),
 ) -> CalendarTourLifecycleIntakeState:
-    """Pure birth + retirement + previous Entry, with no DB or Tour writes."""
+    """Pure birth + retirement + previous Entry, with no DB or Tour writes.
+
+    A newborn cannot turn pro in its own birth week: Turn Pro decisions apply only
+    to players already in the predecessor lifecycle.
+    """
     if (
         (event.run_id, event.branch_id) != (predecessor.run_id, predecessor.branch_id)
         or event.predecessor_fingerprint != predecessor.fingerprint
@@ -244,7 +249,7 @@ def advance_calendar_lifecycle_with_prospects(
     ):
         raise ValueError("Native birth event does not match lifecycle predecessor")
     advanced = advance_calendar_lifecycle(
-        predecessor, event.target_week, submissions,
+        predecessor, event.target_week, submissions, turn_pro,
     )
     current = {p.player_id for p in advanced.players}
     if any(b.player_id in current for b in event.births):

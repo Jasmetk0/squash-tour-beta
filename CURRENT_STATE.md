@@ -1,3 +1,16 @@
+# Turn Pro lifecycle kernel candidate (Master v87) — 10 November 2026
+
+Base `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`; the v87 decision itself is
+in Draft PR #1765. This candidate adds the pure domain kernel only: an opt-in
+`tour_entry_rule="turn_pro.v87"` lifecycle policy (historical bytes unchanged),
+the `PlayerTurnProDecision` contract, native lifecycle advance driven by Turn Pro
+instead of applications, and the pre-entry gate. No runtime selects v87 yet, so
+behavior of every Run is unchanged. Persistence, player AI, ranking roster and
+application/WC wiring are listed in
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Saved FAX Entry evidence candidate — 8 November 2026
 
 Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed

@@ -322,6 +322,8 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
             "/authoritative-simulation"
         )
+        # Isolated copy: never rewrite the shared built-in config/balance file.
+        entry_service.entry_tuning_path = tmp_path / "entry_tuning.json"
         entry_service.entry_tuning_path.write_text(
             json.dumps(
                 {

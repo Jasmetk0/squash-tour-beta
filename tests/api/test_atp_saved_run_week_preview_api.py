@@ -8,6 +8,7 @@ import pytest
 from test_simulation_api import ApiServer, _request
 from beta_engine.domain.run_packages import RunPackageState
 from beta_engine.application.atp_saved_snapshot_week_preview import (
+    audit_saved_atp_tour_bindings,
     build_saved_atp_reference_week_mapping,
 )
 
@@ -233,6 +234,19 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         assert saved_bound["source_mapping_fingerprint"] != projected["source_mapping_fingerprint"]
         assert saved_bound["summary"]["mapped_occurrences"] == projected["summary"]["mapped_occurrences"]
         assert saved_bound["events"] == projected["events"]
+        audit_url = _saved_url(server, run_id, branch_id, "?year=2025&validate_tour_bindings=true")
+        code, audited = _request("GET", audit_url)
+        assert code == 200, audited
+        bindings = audited["source_tour_bindings"]
+        assert bindings["verified_occurrences"] == 2407
+        assert len(bindings["occurrences_by_category"]) == 11
+        assert bindings["occurrences_by_category"]["atp_250"] == 670
+        assert len(bindings["selected_occurrences"]) == 57
+        chengdu = bindings["selected_occurrences"]["atp_2025_chengdu"]
+        assert chengdu["series_id"] == "chengdu"
+        assert chengdu["category_id"] == "atp_250"
+        assert chengdu["historical_category_label"] == "ATP Tour 250"
+        assert audited["events"] == saved_bound["events"]
         assert all(e["source_finish_is_not_sporting_result_closure"] is True
                    for e in saved_bound["events"])
         assert saved_bound["no_sporting_install"] is True
@@ -251,6 +265,31 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         )})
         with pytest.raises(ValueError, match="locally edited"):
             build_saved_atp_reference_week_mapping(bad)
+        series = next(e for e in state.entities if e.entity_kind == "tennis.series.reference.v1")
+        missing_series = state.model_copy(update={"entities": tuple(
+            e for e in state.entities if e is not series
+        )})
+        with pytest.raises(ValueError, match="incomplete"):
+            audit_saved_atp_tour_bindings(missing_series, selected_occurrences=frozenset())
+        edited_series = series.model_copy(update={"provenance": "manual"})
+        tampered_series = state.model_copy(update={"entities": tuple(
+            edited_series if e is series else e for e in state.entities
+        )})
+        with pytest.raises(ValueError, match="locally edited"):
+            audit_saved_atp_tour_bindings(tampered_series, selected_occurrences=frozenset())
+        altered_occurrence = victim.model_copy(update={
+            "payload": {**victim.payload, "category_id": "atp_500"},
+            "references": tuple(
+                ref.model_copy(update={"source_entity_id": "atp_500"})
+                if ref.expected_entity_kind == "tennis.category.reference.v1" else ref
+                for ref in victim.references
+            ),
+        })
+        inconsistent = state.model_copy(update={"entities": tuple(
+            altered_occurrence if e is victim else e for e in state.entities
+        )})
+        with pytest.raises(ValueError, match="does not match the Series year"):
+            audit_saved_atp_tour_bindings(inconsistent, selected_occurrences=frozenset())
         assert projected["calendar"]["weeks_per_year"] == 52
         assert projected["no_sporting_install"] is True
         assert projected["run_mutated"] is False
@@ -273,6 +312,9 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         )
         assert code == 200, saved_reread
         assert saved_reread == saved_bound
+        assert _request("GET", _saved_url(
+            server, run_id, branch_id, "?year=2025&validate_tour_bindings=true",
+        )) == (200, audited)
         assert saved_reread["uses_saved_run_package_snapshot"] is True
         assert reread["uses_current_server_reference_not_run_snapshot"] is True
         assert _request("GET", packages) == before_packages

@@ -175,3 +175,19 @@ Unlike the original `source-atp-reference-calendar/run-week-preview`, this route
 The returned `source_mapping_fingerprint` now includes `source_origin=immutable_saved_run_package_state.v1` and `saved_source_state_fingerprint`. The synthetic date-source reconstruction removes `source_file` / `source_calendar_dates_sha256` instead of misleadingly claiming current server files are the Saved source. `saved_package_origin_branch_id`, `saved_head_revision_id` and `uses_saved_run_package_snapshot=true` distinguish this from the old server-reference endpoint, which remains available as an **unbound, read-only comparison**.
 
 Both routes are strictly **reference-only** and do not install playable Editions, Matches, Simulation Slots or Ranking closure; no source results, licensing proof, historical date completion or Save consent is inferred. The Saved route cannot preview an empty Run or a Package merely confirmed to an uncommitted Working Draft. API/SQLite/restart tests verify the no-fallback distinction, preserved original dates and replay.
+
+### Check the Saved Tour source links before sporting conversion
+
+Add `validate_tour_bindings=true` to the Saved preview query. The response
+`source_tour_bindings` checks every one of the 2,407 occurrences against the
+11 Category and 164 Series entities in the same immutable revision. Each
+occurrence must reference its exact Category and Series. Both must be
+effective in the source year, and the Series year must agree with the
+Calendar tier. The check rejects missing, locally edited or inconsistent
+source entities. It reports the source category counts and the Category and
+Series identities for the selected years.
+
+The default date-only preview can still be used with just the Saved
+Calendar source. The optional check verifies the links needed for conversion.
+Sporting conversion still needs effective event draw and Qualification
+geometry, round points, and validated native scheduling.

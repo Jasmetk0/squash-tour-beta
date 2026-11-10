@@ -22,7 +22,10 @@ from beta_engine.application.world_package_run_adapter import WorldPackageRunAda
 from beta_engine.application.atp_reference_package_adapter import ATPReferencePackageAdapter
 from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
 from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_earth_weeks_on_run
-from beta_engine.application.atp_saved_snapshot_week_preview import build_saved_atp_reference_week_mapping
+from beta_engine.application.atp_saved_snapshot_week_preview import (
+    audit_saved_atp_tour_bindings,
+    build_saved_atp_reference_week_mapping,
+)
 from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
 from beta_engine.domain.run_revisions import CONTENT_HASH_ALGORITHM, saved_revision_content_hash
@@ -370,12 +373,14 @@ def preview_saved_atp_reference_against_saved_run_calendar(
     run_id: str,
     branch_id: str,
     year: list[int] | None = Query(default=None),
+    validate_tour_bindings: bool = Query(default=False),
     runtime: ApiRuntime = Depends(get_runtime),
 ):
     """Read exact immutable Saved ATP Package entities on a verified W52 clock.
 
     This endpoint does NOT fall back to server-installed source files or a
-    mutable Working Draft. It is reference evidence, not playable scheduling.
+    mutable Working Draft. Optionally verify the full Saved Tour source links
+    needed for sporting conversion, alongside the date-only preview.
     """
     if year is not None and any(not 1990 <= item <= 2026 for item in year):
         raise HTTPException(422, "ATP source year must be in 1990–2026")
@@ -421,6 +426,13 @@ def preview_saved_atp_reference_against_saved_run_calendar(
             report = preview_atp_earth_weeks_on_run(
                 calendar=clock, mapping=mapping, years=year
             )
+            if validate_tour_bindings:
+                report["source_tour_bindings"] = audit_saved_atp_tour_bindings(
+                    state,
+                    selected_occurrences=frozenset(
+                        event["source_identity"] for event in report["events"]
+                    ),
+                )
         return {
             **report,
             "run_id": run_id,

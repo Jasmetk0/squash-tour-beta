@@ -7,6 +7,7 @@ A reference projection is not an executable Tour calendar or ranking closure.
 """
 from __future__ import annotations
 
+from collections import Counter
 from datetime import date
 from typing import Any
 
@@ -14,9 +15,14 @@ from beta_engine.application.atp_historical_calendar_adapter import (
     CALENDAR_COVERAGE_KIND,
     CALENDAR_OCCURRENCE_KIND,
 )
-from beta_engine.domain.run_packages import PackageType, RunPackageState
+from beta_engine.application.atp_reference_package_adapter import (
+    CATEGORY_ID, CATEGORY_KIND, CATEGORY_SCOPE, SERIES_ID, SERIES_KIND, SERIES_SCOPE,
+)
+from beta_engine.domain.run_packages import (
+    PackageType, RunPackageEntity, RunPackageState, SourceReference,
+)
 from scripts.audit_atp_earth_week_mapping_v1 import build_projection
-from scripts.build_atp_historical_calendar import CALENDAR_ID
+from scripts.build_atp_historical_calendar import CALENDAR_ID, iso_weeks_touched
 
 
 def build_saved_atp_reference_week_mapping(state: RunPackageState) -> dict[str, Any]:
@@ -78,7 +84,6 @@ def build_saved_atp_reference_week_mapping(state: RunPackageState) -> dict[str, 
             try:
                 start = date.fromisoformat(p["start_date"])
                 end = date.fromisoformat(p["end_date"])
-                from scripts.build_atp_historical_calendar import iso_weeks_touched
                 occupied = iso_weeks_touched(start, end)
             except (KeyError, TypeError, ValueError) as exc:
                 raise ValueError("Saved ATP occurrence has invalid original dates") from exc
@@ -141,3 +146,104 @@ def build_saved_atp_reference_week_mapping(state: RunPackageState) -> dict[str, 
     report["saved_calendar_package_fingerprint"] = version.source_fingerprint
     report["source_only_no_sporting_authority"] = True
     return report
+
+
+
+def _original_source_entities(
+    state: RunPackageState, package_id: str, package_type: PackageType, *,
+    entity_kind: str, scope: str, expected_count: int,
+) -> dict[str, RunPackageEntity]:
+    versions = [item for item in state.package_versions if item.package_id == package_id]
+    if len(versions) != 1 or versions[0].package_type != package_type or versions[0].source_version != 1:
+        raise ValueError(f"Saved ATP source Package is missing or unsupported: {package_id}")
+    version = versions[0]
+    entities = {e.source_entity_id: e for e in state.entities if e.source_package_id == package_id}
+    if len(entities) != expected_count:
+        raise ValueError(f"Saved ATP source Package is incomplete: {package_id}")
+    for entity in entities.values():
+        if (
+            entity.source_package_version != version.source_version
+            or entity.source_package_fingerprint != version.source_fingerprint
+            or entity.entity_kind != entity_kind
+            or entity.entity_schema_version != 1
+            or entity.scope != scope
+            or entity.payload.get("not_squash_rules") is not True
+            or entity.provenance != "package"
+            or entity.source_baseline_fingerprint != entity.content_fingerprint
+        ):
+            raise ValueError(f"Saved ATP source was locally edited or is invalid: {entity.source_entity_id}")
+    return entities
+
+
+def _effective_period(entity: RunPackageEntity, year: int) -> dict[str, Any]:
+    periods = entity.payload.get("history_periods")
+    if not isinstance(periods, list) or any(
+        not isinstance(period, dict)
+        or type(period.get("from")) is not int or type(period.get("to")) is not int
+        or period["from"] > period["to"]
+        for period in periods
+    ):
+        raise ValueError(f"Invalid Saved ATP history: {entity.source_entity_id}")
+    effective = [period for period in periods if period["from"] <= year <= period["to"]]
+    if len(effective) != 1:
+        raise ValueError(f"Ambiguous or missing Saved ATP history: {entity.source_entity_id} in {year}")
+    return effective[0]
+
+
+def audit_saved_atp_tour_bindings(
+    state: RunPackageState, *, selected_occurrences: frozenset[str],
+) -> dict[str, Any]:
+    """Verify Tour links after the Saved Calendar mapping has been validated."""
+    categories = _original_source_entities(
+        state, CATEGORY_ID, PackageType.CATEGORY,
+        entity_kind=CATEGORY_KIND, scope=CATEGORY_SCOPE, expected_count=11,
+    )
+    series = _original_source_entities(
+        state, SERIES_ID, PackageType.SERIES,
+        entity_kind=SERIES_KIND, scope=SERIES_SCOPE, expected_count=164,
+    )
+    counts: Counter[str] = Counter()
+    selected: dict[str, dict[str, Any]] = {}
+    for event in state.entities:
+        if event.source_package_id != CALENDAR_ID or event.entity_kind != CALENDAR_OCCURRENCE_KIND:
+            continue
+        year = event.payload["atp_season_year"]
+        category_id = event.payload.get("category_id")
+        series_id = event.payload["series_id"]
+        category = categories.get(category_id) if isinstance(category_id, str) else None
+        tournament = series.get(series_id)
+        if category is None or tournament is None:
+            raise ValueError(f"Unresolved Saved ATP Category or Series: {event.source_entity_id}")
+        expected_refs = {
+            SourceReference(
+                source_package_id=CATEGORY_ID, source_entity_id=category_id,
+                expected_entity_kind=CATEGORY_KIND,
+            ),
+            SourceReference(
+                source_package_id=SERIES_ID, source_entity_id=series_id,
+                expected_entity_kind=SERIES_KIND,
+            ),
+        }
+        if len(event.references) != 2 or set(event.references) != expected_refs:
+            raise ValueError(f"Saved ATP Calendar references disagree: {event.source_entity_id}")
+        series_period = _effective_period(tournament, year)
+        category_period = _effective_period(category, year)
+        if series_period.get("category_id") != category_id:
+            raise ValueError(f"Saved ATP Category does not match the Series year: {event.source_entity_id}")
+        counts[category_id] += 1
+        if event.source_entity_id in selected_occurrences:
+            selected[event.source_entity_id] = {
+                "series_id": series_id,
+                "series_name": tournament.payload["name"],
+                "category_id": category_id,
+                "historical_category_label": category_period["historical_label"],
+            }
+    if sum(counts.values()) != 2407:
+        raise ValueError("Saved ATP Tour bindings do not cover all 2,407 occurrences")
+    if set(selected) != selected_occurrences:
+        raise ValueError("Selected ATP occurrences do not match the verified Saved source")
+    return {
+        "verified_occurrences": sum(counts.values()),
+        "occurrences_by_category": dict(sorted(counts.items())),
+        "selected_occurrences": dict(sorted(selected.items())),
+    }

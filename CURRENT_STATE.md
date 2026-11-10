@@ -1,3 +1,19 @@
+# ATP Earth W52 Saved Package preview — 10 November 2026
+
+On base `buuk` `04c9879c4`, the historical ATP Calendar source (#1741) is
+available. This candidate brings the W52 mapping and Saved snapshot source
+validation from #1742 and #1748 into a single PR against that base.
+
+The Admin Packages page can preview a chosen ATP year from the exact Saved
+Run Package and verified W52 clock. A partial-year Run horizon displays
+conflicting occurrences separately with their original dates and weeks.
+The full 1990–2026 source maps 2,407 occurrences. The three source intervals
+touching three weeks remain flagged for sporting review. This read prepares
+calendar decisions; executable ATP draws, slots and ranking policy remain
+separate. See [mapping and validation](docs/ATP_EARTH_WEEK_MAPPING_V1.md).
+
+---
+
 # Saved FAX Entry evidence candidate — 8 November 2026
 
 Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed

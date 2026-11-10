@@ -10,7 +10,10 @@ import {
 import type { ATPCalendarReferenceCatalog } from '../../api/atpCalendarReferencePackages'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { formatApiError } from '../../utils/apiErrors'
+import { ATPSavedRunWeekDetails } from './ATPSavedRunWeekDetails'
 import { ATPSourceApplyPage } from './ATPSourceApplyPage'
+
+const ATP_REFERENCE_YEARS = Array.from({length:37},(_,i)=>1990+i)
 
 /** Compact only genuinely consecutive source-dated historical years.
  * The caller must use the actual canonical year partition, never assume it. */
@@ -49,7 +52,7 @@ function CalendarYearDetails({ catalog, sourceReady }: {
       <label>{cs?'Ročník':'ATP season'}
         <select aria-label="ATP Calendar Year" value={sourceYear}
           onChange={e=>setSourceYear(Number(e.target.value))}>
-          {Array.from({length:37},(_,i)=>1990+i).reverse().map(y=>
+          {[...ATP_REFERENCE_YEARS].reverse().map(y=>
             <option key={y} value={y}>{y}</option>)}
         </select>
       </label>
@@ -117,5 +120,9 @@ export function ATPCalendarReferenceApplyPage(): JSX.Element {
           : `Dated seasons: ${datedYearRanges(catalog.dated_years)} · undated seasons: ${catalog.undated_years.length}. 2026 is provisional. ISO week ≠ Run Week.`}</p>
     )}
     renderSourceDetails={(catalog, sourceReady) => <CalendarYearDetails catalog={catalog} sourceReady={sourceReady} />}
+    renderSavedTargetDetails={(runId, branchId, revisionId) =>
+      <ATPSavedRunWeekDetails key={JSON.stringify([runId, branchId, revisionId])}
+        runId={runId} branchId={branchId} revisionId={revisionId}
+        years={ATP_REFERENCE_YEARS} />}
   />
 }

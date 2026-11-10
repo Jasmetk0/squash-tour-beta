@@ -158,3 +158,65 @@ export function validATPCalendarYearView(
     return true
   })
 }
+
+type ATPYearWeek = {calendar_year:number;year_week:number}
+type ATPRunWeek = ATPYearWeek & {season_index:number;season_week:number}
+type ATPWeekSource = {
+  source_identity:string
+  source_start_date:string
+  source_end_date:string
+  review_flags:string[]
+}
+
+export type SavedATPRunWeekPreview = {
+  events:(ATPWeekSource & {
+    run_weeks:ATPRunWeek[]
+    source_finish_run_week:ATPRunWeek
+  })[]
+  outside_horizon:(ATPWeekSource & {outside_year_weeks:ATPYearWeek[]})[]
+  source_tour_bindings:{
+    selected_occurrences:Record<string,{series_name:string;historical_category_label:string}>
+  }
+}
+
+const earthWeek=(v:unknown):v is number=>positiveInt(v)&&v>=1&&v<=52
+const yearWeek=(v:unknown):v is ATPYearWeek=>
+  record(v)&&positiveInt(v.calendar_year)&&earthWeek(v.year_week)
+const runWeek=(v:unknown):v is ATPRunWeek=>
+  record(v)&&positiveInt(v.season_index)&&earthWeek(v.season_week)&&yearWeek(v)
+
+export function validSavedATPRunWeekPreview(
+  v:unknown,runId:string,branchId:string,revisionId:string,year:number
+):v is SavedATPRunWeekPreview {
+  if(!record(v)||v.schema_version!=='atp_earth_run_week_preview.v1'||
+    v.run_id!==runId||v.branch_id!==branchId||v.saved_head_revision_id!==revisionId||
+    v.saved_run_calendar_verified!==true||v.uses_saved_run_package_snapshot!==true||
+    v.saved_package_source_verified!==true||v.no_sporting_install!==true||v.run_mutated!==false||
+    !record(v.calendar)||v.calendar.weeks_per_year!==52||
+    !Array.isArray(v.selected_atp_years)||v.selected_atp_years.length!==1||
+    v.selected_atp_years[0]!==year||
+    !Array.isArray(v.events)||!Array.isArray(v.outside_horizon)||
+    !record(v.source_tour_bindings)||v.source_tour_bindings.verified_occurrences!==2407||
+    !record(v.source_tour_bindings.selected_occurrences))return false
+  const selected=v.source_tour_bindings.selected_occurrences
+  const identities=new Set<string>()
+  function verifiedSource(row:unknown):row is Record<string,unknown> {
+    if(!record(row)||typeof row.source_identity!=='string'||
+      !row.source_identity.startsWith(`atp_${year}_`)||identities.has(row.source_identity)||
+      !dateString(row.source_start_date)||!dateString(row.source_end_date)||
+      row.source_start_date>row.source_end_date||
+      !Array.isArray(row.review_flags)||!row.review_flags.every(flag=>typeof flag==='string'))
+      return false
+    const binding=selected[row.source_identity]
+    if(!record(binding)||typeof binding.series_name!=='string'||
+      typeof binding.historical_category_label!=='string')return false
+    identities.add(row.source_identity)
+    return true
+  }
+  return v.events.every(row=>verifiedSource(row)&&
+      Array.isArray(row.run_weeks)&&row.run_weeks.length>=1&&row.run_weeks.length<=3&&
+      row.run_weeks.every(runWeek)&&runWeek(row.source_finish_run_week))&&
+    v.outside_horizon.every(row=>verifiedSource(row)&&
+      Array.isArray(row.outside_year_weeks)&&row.outside_year_weeks.length>=1&&
+      row.outside_year_weeks.every(yearWeek))&&identities.size===Object.keys(selected).length
+}

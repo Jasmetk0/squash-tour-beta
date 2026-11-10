@@ -3892,6 +3892,22 @@ export async function getATPCalendarReferenceYear(
     throw new Error('ATP Calendar year view failed source fingerprint validation.')
   return result
 }
+
+export async function getSavedATPRunWeekPreview(
+  runId:string,branchId:string,revisionId:string,year:number
+):Promise<import('./atpCalendarReferencePackages').SavedATPRunWeekPreview> {
+  const path = `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}`
+    + '/packages/saved-source-atp-reference-calendar/run-week-preview'
+  const query = new URLSearchParams({
+    year:String(year),validate_tour_bindings:'true',report_outside_horizon:'true',
+  })
+  const result = await request<unknown>(`${path}?${query}`)
+  const {validSavedATPRunWeekPreview} = await import('./atpCalendarReferencePackages')
+  if(!validSavedATPRunWeekPreview(result,runId,branchId,revisionId,year))
+    throw new Error('ATP week preview does not match the selected Saved revision.')
+  return result
+}
+
 export function previewATPCalendarReference(
   runId:string,branchId:string
 ):Promise<import('./atpReferencePackages').ATPReferencePreview> {

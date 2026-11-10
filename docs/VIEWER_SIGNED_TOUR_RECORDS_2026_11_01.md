@@ -33,7 +33,7 @@ The existing Title Leaders placeholder for the general records system remains de
 Focused checkout commands:
 
     npm --prefix web ci
-    npm --prefix web run test -- src/pages/viewer/stats/viewerSignedTourRecords.test.ts src/pages/viewer/stats/ViewerSignedTourRecords.test.tsx src/pages/viewer/stats/ViewerRecordsPage.test.tsx
+    npm --prefix web run test -- src/pages/viewer/stats/viewerSignedTourRecordsModel.test.ts src/pages/viewer/stats/ViewerSignedTourRecords.test.tsx src/pages/viewer/stats/ViewerRecordsPage.test.tsx
     npm --prefix web run build
 
 Mocked frontend tests do not prove real HTTP/SQLite/Chromium. Actual Viewer browser acceptance, a Saved Viewer Branch switch, restart and all applicable pre-alpha gates must run against the final PR head before merge consideration. Draft CI skips are not passes. Only the owner merges; the PR remains Draft.

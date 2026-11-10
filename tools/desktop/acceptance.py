@@ -103,6 +103,12 @@ def main():
     before = config_digest(package)
     metadata = json.loads((package / "build-info.json").read_text(encoding="utf-8"))
     assert hashlib.sha256((package / "build-dependencies.txt").read_bytes()).hexdigest() == metadata["dependency_fingerprint"]
+    lock_bytes = (package / "build-dependencies.lock.txt").read_bytes()
+    assert lock_bytes == (
+        Path(__file__).resolve().parents[2]
+        / ".github/requirements/windows-preview-win-amd64.lock.txt"
+    ).read_bytes(), "Portable package must carry the reviewed lock"
+    assert hashlib.sha256(lock_bytes).hexdigest() == metadata["dependency_lock_fingerprint"]
     processes = []
     passed = False
     try:

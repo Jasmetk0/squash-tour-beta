@@ -108,8 +108,19 @@ je první Save, ukončí proces, znovu jej spustí a porovná uloženou revizi. 
 konflikt portu a zachování zdrojové konfigurace. ZIP se zveřejní jen po úspěchu.
 To nedokazuje celé sportovní průchody ani 50sezonovou akceptaci.
 
+`windows-preview-win-amd64.lock.txt` připíná přesné verze a SHA-256 balíčků
+Pythonu pro sestavení na Windows x64 s CPythonem 3.12. Workflow je instaluje do
+čistého virtuálního prostředí pouze z ověřených wheel souborů a kontroluje, že
+odpovídají požadavkům projektu. Před zabalením také běží testy hranic cest World
+Package na Windows včetně skutečného junction a obnovy původních bajtů při chybě
+druhého zápisu.
+Frontend při sestavení odmítá kolize názvů souborů a modulů, které na Windows
+nelze jednoznačně rozlišit.
+
 `build-info.json` určuje commit a otisk manifestu závislostí;
-`build-dependencies.txt` eviduje sestavovací prostředí. Zdrojové `src` soubory jsou
+`build-dependencies.txt` eviduje sestavovací prostředí a
+`build-dependencies.lock.txt` je přesná kopie zámku použitá při sestavení.
+Akceptační běh ověřuje otisky obou souborů. Zdrojové `src` soubory jsou
 přibaleny pro stávající kontrolu provenance enginu. Spuštění je nepřekládá a
 nestahuje nové závislosti. Vývojářské `run_backend.bat` a `run_frontend.bat`
 zůstávají odděleným postupem vyžadujícím vývojové nástroje.

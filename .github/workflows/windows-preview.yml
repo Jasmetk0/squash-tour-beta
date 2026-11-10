@@ -5,9 +5,20 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/windows-preview.yml'
+      - '.github/requirements/windows-preview-win-amd64.lock.txt'
+      - 'pyproject.toml'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/scripts/checkPortableModuleNames.mjs'
       - 'tools/desktop/**'
       - 'tools/tests/test_desktop_preview.py'
       - 'tools/tests/test_desktop_backup.py'
+      - 'tests/application/test_codeql_security_boundaries.py'
+      - 'src/beta_engine/application/package_evidence_files.py'
+      - 'src/beta_engine/application/world_package_service.py'
+      - 'src/beta_engine/infrastructure/package_owned_paths.py'
+      - 'src/beta_engine/infrastructure/world_package_storage.py'
+      - 'src/beta_engine/infrastructure/atomic_json_file.py'
       - 'Spustit_Squash_Engine.bat'
       - 'Zalohovat_Squash_Engine.bat'
       - 'docs/WINDOWS_PREVIEW.md'
@@ -15,9 +26,22 @@ on:
     branches: [buuk]
     paths:
       - '.github/workflows/windows-preview.yml'
+      - '.github/requirements/windows-preview-win-amd64.lock.txt'
+      - 'pyproject.toml'
+      - 'web/package.json'
+      - 'web/package-lock.json'
+      - 'web/scripts/checkPortableModuleNames.mjs'
       - 'tools/desktop/**'
       - 'tools/tests/test_desktop_preview.py'
+      - 'tools/tests/test_desktop_backup.py'
+      - 'tests/application/test_codeql_security_boundaries.py'
+      - 'src/beta_engine/application/package_evidence_files.py'
+      - 'src/beta_engine/application/world_package_service.py'
+      - 'src/beta_engine/infrastructure/package_owned_paths.py'
+      - 'src/beta_engine/infrastructure/world_package_storage.py'
+      - 'src/beta_engine/infrastructure/atomic_json_file.py'
       - 'Spustit_Squash_Engine.bat'
+      - 'Zalohovat_Squash_Engine.bat'
       - 'docs/WINDOWS_PREVIEW.md'
   workflow_dispatch:
 
@@ -33,35 +57,53 @@ jobs:
     name: Portable Windows build and restart acceptance
     runs-on: windows-latest
     timeout-minutes: 30
+    env:
+      PYTHONPATH: ${{ github.workspace }}/src
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.12'
-      - uses: actions/setup-node@v4
+          architecture: x64
+          cache: pip
+          cache-dependency-path: .github/requirements/windows-preview-win-amd64.lock.txt
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '22'
           cache: npm
           cache-dependency-path: web/package-lock.json
-      - name: Install build and acceptance dependencies
-        run: python -m pip install -e . pytest playwright pyinstaller==6.22.3
-      - name: Launcher failure and isolation tests (also on draft PRs)
-        run: python -m pytest tools/tests/test_desktop_preview.py tools/tests/test_desktop_backup.py --maxfail=1
+      - name: Install and verify locked Windows wheels
+        shell: pwsh
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $venv = Join-Path $env:RUNNER_TEMP "squash-preview-venv"
+          python -m venv $venv
+          $scripts = Join-Path $venv "Scripts"
+          $python = Join-Path $scripts "python.exe"
+          & $python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/windows-preview-win-amd64.lock.txt
+          & $python -m pip check
+          & $python -m tools.desktop.check_build_dependencies
+          Add-Content -Path $env:GITHUB_PATH -Value $scripts -Encoding utf8
+      - name: Launcher, backup and World Package filesystem checks (also on draft PRs)
+        shell: pwsh
+        run: |
+          $env:GITHUB_EVENT_NAME = "windows_preview_acceptance"
+          python -m pytest tools/tests/test_desktop_preview.py tools/tests/test_desktop_backup.py tests/application/test_codeql_security_boundaries.py --maxfail=1
       - name: Build the existing frontend
         run: |
           npm --prefix web ci --ignore-scripts
           npm --prefix web run build
       - name: Build portable executable and tracked resources
-        run: python tools/desktop/build_preview.py
+        run: python -m tools.desktop.build_preview
       - name: Install acceptance browser
         run: python -m playwright install chromium
       - name: Exercise actual frozen application and persisted Run after restart
         run: python tools/desktop/acceptance.py --package dist/SquashEnginePreview --evidence "${{ runner.temp }}/windows-preview-evidence"
       - name: Publish tested portable folder as one ZIP
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: SquashEngine-Windows-Preview
           path: dist/SquashEnginePreview/
@@ -70,7 +112,7 @@ jobs:
           retention-days: 30
       - name: Preserve launcher acceptance evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: Windows-preview-evidence
           path: ${{ runner.temp }}/windows-preview-evidence/

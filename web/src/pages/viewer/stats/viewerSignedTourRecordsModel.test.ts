@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 
 import { signedRecordFixture } from './viewerSignedTourRecordsFixture'
-import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecords'
+import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecordsModel'
 
 
 function valid(data: unknown): boolean {

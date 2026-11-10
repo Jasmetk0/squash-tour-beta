@@ -7,7 +7,7 @@ import { getViewerSignedTourRecords, type ViewerSignedRecordsFilters } from '../
 import type { TourCareerRecords } from '../../../api/calendarTour'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import { viewerCountryProfilePath, viewerPlayerProfilePath } from '../../../viewer/viewerRoutes'
-import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecords'
+import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecordsModel'
 
 const words = {
   title: ['Historické rekordy dokončených sezon', 'Records from completed seasons'],

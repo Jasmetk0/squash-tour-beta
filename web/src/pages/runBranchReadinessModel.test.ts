@@ -4,7 +4,7 @@ import type { RunHomeReadiness } from '../api/runHomeReadiness'
 import { runHomeReadinessFixture } from '../test/runHomeReadinessFixture'
 import {
   inspectBranchReadinessComparison, serializeBranchReadinessComparison
-} from './runBranchReadinessComparison'
+} from './runBranchReadinessModel'
 
 const RUN = 'same-run'
 const LEFT = 'branch-A'

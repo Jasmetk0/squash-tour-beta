@@ -1,38 +1,20 @@
 """1995 original ATP Tour dates, two Tokyos/Stuttgarts and Finals 14–19 Nov."""
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from scripts.audit_atp_calendar_backfill import audit_candidates
-from scripts.build_atp_historical_calendar import SOURCE
 from scripts.promote_atp_calendar_candidate import prepare
+
+from tests.support.atp_calendar_backfill import (
+    audit_canonical_backfill,
+    verify_idempotent_promotion,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
 def test_1995_original_tour_and_finals_80_date_roster() -> None:
-    candidate = json.loads(
-        (SOURCE / "calendar_backfill_1995_candidates_v1.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    seasons = json.loads(
-        (SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8")
-    )
-    dated = json.loads(
-        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
-    )
-    report = audit_candidates(candidate, seasons, dated)
-    assert report["year"] == 1995
-    assert report["candidate_count"] == 80
-    assert report["expected_played_source_count"] == 80
-    assert report["roster_reconciled"] is True
-    assert report["remaining_series_ids"] == []
-    assert report["unresolved_date_conflicts"] == {}
-    assert len(report["canonical_conflicts"]) == 80
-    assert report["ready_for_whole_year_promotion"] is False
+    report = audit_canonical_backfill(1995, 80)
     rows = {e["series_id"]: e for e in report["candidate_events"]}
     assert rows["stuttgart_indoor_feb_1995"]["start_date"] == "1995-02-20"
     assert rows["stuttgart"]["start_date"] == "1995-07-17"
@@ -59,17 +41,7 @@ def test_1995_original_tour_and_finals_80_date_roster() -> None:
 
 
 def test_1995_is_canonical_and_rebuild_is_idempotent() -> None:
-    dated_path = SOURCE / "calendar_dates_v1.json"
-    output_path = SOURCE / "calendar.json"
-    before = (dated_path.read_bytes(), output_path.read_bytes())
-    dated, doc, report = prepare(1995)
-    assert report["candidate_count"] == 80
-    assert len(dated["year_sources"]["1995"]["events"]) == 80
-    assert doc["provenance"]["dated_occurrences"] == 2407
-    assert doc["provenance"]["season_coverage_entries"] == 37
-    assert doc["provenance"]["date_coverage_years"] == (
-        list(range(1990, 2027))
-    )
+    doc = verify_idempotent_promotion(1995, 80)
     lookup = {entity["source_entity_id"]: entity for entity in doc["entities"]}
     assert lookup["atp_1995_atp_finals"]["payload"]["start_year_week"] == {
         "iso_year": 1995,
@@ -78,7 +50,6 @@ def test_1995_is_canonical_and_rebuild_is_idempotent() -> None:
     assert lookup["season_1995_date_coverage"]["payload"][
         "date_coverage_state"
     ] == "verified_complete_known_series_dates"
-    assert (dated_path.read_bytes(), output_path.read_bytes()) == before
 
 
 def test_1995_out_of_scope_events_never_become_playable_athletic_matches() -> None:

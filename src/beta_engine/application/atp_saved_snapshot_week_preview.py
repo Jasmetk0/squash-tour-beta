@@ -21,8 +21,8 @@ from beta_engine.application.atp_reference_package_adapter import (
 from beta_engine.domain.run_packages import (
     PackageType, RunPackageEntity, RunPackageState, SourceReference,
 )
-from scripts.audit_atp_earth_week_mapping_v1 import build_projection
-from scripts.build_atp_historical_calendar import CALENDAR_ID, iso_weeks_touched
+from beta_engine.application.atp_earth_week_mapping import build_projection
+from beta_engine.application.atp_historical_calendar_source import CALENDAR_ID, iso_weeks_touched
 
 
 def build_saved_atp_reference_week_mapping(state: RunPackageState) -> dict[str, Any]:

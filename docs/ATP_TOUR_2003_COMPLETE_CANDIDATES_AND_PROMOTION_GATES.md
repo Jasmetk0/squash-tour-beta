@@ -1,5 +1,7 @@
 # ATP Tour 2003 — complete year-roster date candidates, pending canonical build
 
+> Historical checkpoint before promotion. The current Calendar includes all 63 events for 2003 and preserves both published Finals windows. See the [current Calendar reference](ATP_TOUR_1990_2026_HISTORICAL_CALENDAR_REFERENCE.md).
+
 **Commit scope:** 63 of the 63 year-effective source Series from the established 2003 parent Category/Series package have been matched against the [official ATP Tour 2003 results archive](https://www.atptour.com/en/scores/results-archive?year=2003). The dated, historic-host-identified candidates reside in `config/reference_packages/atp_tour_1990_2026/calendar_backfill_2003_candidates_v1.json`. The existing `calendar_dates_v1.json` and generated `calendar.json` remain unchanged until an atomic, validated canonical promotion.
 
 ## Important boundaries
@@ -13,8 +15,8 @@
 ## Reproduce the candidate audit
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py
-python scripts/audit_atp_calendar_backfill.py --json
+python -m scripts.audit_atp_calendar_backfill
+python -m scripts.audit_atp_calendar_backfill --json
 pytest -q tests/domain/test_atp_calendar_backfill.py
 ```
 
@@ -23,7 +25,7 @@ Expected for the 2003 candidate inventory: 63 candidates, zero unmatched parent 
 ## Next acceptance gates
 
 1. Confirm the 2003 match-venue-to-licence continuity exceptions against sources other than a single ATP results archive index.
-2. Move the fully vetted 2003 rows to the canonical dates source, keeping official evidence links, and regenerate its committed `calendar.json` snapshot with `python scripts/build_atp_historical_calendar.py --write`.
+2. Move the fully vetted 2003 rows to the canonical dates source, keeping official evidence links, and regenerate its committed `calendar.json` snapshot with `python -m scripts.build_atp_historical_calendar --write`.
 3. Run `--check`, all PR-critical and API/FE tests and review final-head hosted CI.
 4. Continue 2002 through 1990 as separate year-specific audited cohorts. Maintain exact dates, annual tier identity and transparent missing/uncertain history.
 
@@ -37,4 +39,3 @@ There are two different **official ATP** 2003 source representations:
 The difference could concern competition/tournament-calendar definition, but that explanation has **not been independently established**. Do not silently prefer one definition while presenting it as resolved historical truth. The candidate data remains source attributed but cannot be promoted to the official final Calendar while this is unresolved.
 
 `scripts/promote_atp_calendar_candidate.py --check --year 2003` therefore currently **fails closed** with the explicit historical date conflict. The script additionally checks complete roster reconciliation and that no existing source-era Calendar occurrence changes during any future promotion.
-

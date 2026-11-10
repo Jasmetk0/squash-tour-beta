@@ -11,8 +11,8 @@ preserved explicitly as distinct evidence. A missing/inconsistent alternate
 official Finals window MUST reject the source.
 
 Usage:
-    python scripts/audit_atp_calendar_full_roster.py --check
-    python scripts/audit_atp_calendar_full_roster.py --json
+    python -m scripts.audit_atp_calendar_full_roster --check
+    python -m scripts.audit_atp_calendar_full_roster --json
 """
 from __future__ import annotations
 

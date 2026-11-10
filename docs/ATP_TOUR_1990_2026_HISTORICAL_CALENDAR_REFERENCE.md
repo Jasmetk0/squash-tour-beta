@@ -30,8 +30,8 @@ All **37** year-effective original ATP Tour 1990–2026 source rosters are **can
 Seven original ATP Finals windows have another officially documented historical range. Rather than discard either, the retained `start_date`/`end_date` correspond consistently to the **ATP annual results-archive event window**, and `finals_date_window_evidence` plus generated Finals-occurrence `alternate_official_finals_window` preserve separately the [ATP Finals heritage](https://www.nittoatpfinals.com/en/heritage/results-1970-1999) interval (2003: [2000–2025 heritage](https://www.nittoatpfinals.com/en/heritage/results-2000-2023)). The distinction is source-specific and does **not** claim an independently verified first/last singles match date. Full original dates, year-specific alternative windows, sources and constraints: [Finals evidence-preserving date-window policy](ATP_TOUR_FINALS_DATE_WINDOW_SEMANTICS.md).
 
 ```bash
-python scripts/audit_atp_calendar_full_roster.py --check
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.audit_atp_calendar_full_roster --check
+python -m scripts.build_atp_historical_calendar --check
 python -m pytest -q tests/domain/test_atp_calendar_finals_date_window_policy.py
 ```
 
@@ -330,7 +330,7 @@ its own separately reviewed date-to-Run-clock policy.
 
 1. Merge parent Category/Series PR first; change this stacked PR's base
    to `buuk` only after the parent is merged.
-2. Run `python scripts/build_atp_historical_calendar.py --check`.
+2. Run `python -m scripts.build_atp_historical_calendar --check`.
 3. Open Packages → **ATP Calendar reference**, inspect source coverage.
 4. Choose writable Run and Branch; inspect read-only Preview and conflicts.
 5. Explicitly Confirm to Working Draft, then independently **Save** the

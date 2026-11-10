@@ -1,39 +1,21 @@
 """1997 exact archived ATP Tour historical dates and safe promotion veto."""
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from scripts.audit_atp_calendar_backfill import audit_candidates
-from scripts.build_atp_historical_calendar import SOURCE
-from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS, prepare
+from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS
+
+from tests.support.atp_calendar_backfill import (
+    audit_canonical_backfill,
+    verify_idempotent_promotion,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
 def test_1997_all_75_original_atp_tour_roster_dates_are_canonical_with_alternate_window() -> None:
-    candidate = json.loads(
-        (SOURCE / "calendar_backfill_1997_candidates_v1.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    seasons = json.loads(
-        (SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8")
-    )
-    dated = json.loads(
-        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
-    )
-    report = audit_candidates(candidate, seasons, dated)
-    assert report["year"] == 1997
-    assert report["candidate_count"] == 75
-    assert report["expected_played_source_count"] == 75
-    assert report["remaining_series_ids"] == []
-    assert len(report["canonical_conflicts"]) == 75
-    assert report["roster_reconciled"] is True
+    report = audit_canonical_backfill(1997, 75)
     assert "atp_finals" in report["preserved_official_date_window_differences"]
-    assert report["ready_for_whole_year_promotion"] is False
-    assert "1997" in dated["year_sources"]
     events = {x["series_id"]: x for x in report["candidate_events"]}
     assert events["doha"]["start_date"] == "1996-12-30"
     assert events["brisbane"]["start_date"] == "1996-12-30"
@@ -56,7 +38,4 @@ def test_1997_finals_official_source_windows_are_preserved() -> None:
     note = PENDING_CONFLICTS[1997]["atp_finals"]
     assert "1997-11-10" in note
     assert "1997-11-11" in note
-    source_years, built, checked = prepare(1997)
-    assert checked["unresolved_date_conflicts"] == {}
-    assert len(source_years["year_sources"]["1997"]["events"]) == 75
-    assert built["provenance"]["dated_occurrences"] == 2407
+    verify_idempotent_promotion(1997, 75)

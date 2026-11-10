@@ -46,9 +46,9 @@ These are year-effective parent *reference identities*, **not independent legal 
 ## Reproducible fail-closed checks
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1990 --json
+python -m scripts.audit_atp_calendar_backfill --year 1990 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1990.py
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.build_atp_historical_calendar --check
 ```
 
 Expected audit: `candidate_count=75`, `expected_played_source_count=75`, `remaining_series_ids=[]`, `roster_reconciled=true`, `canonical_conflicts=[]`, `unresolved_date_conflicts.atp_finals` present, and `ready_for_whole_year_promotion=false`. Both `prepare(1990)` and `--write --year 1990` must reject the unresolved official conflict with no source mutation. The parent Calendar stays **1,892 occurrences + 37 coverages = 1,929 source entities**, **30/37 canonically dated**.

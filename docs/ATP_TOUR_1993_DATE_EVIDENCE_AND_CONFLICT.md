@@ -44,9 +44,9 @@ These are the parent Package's existing Series identity links, not independent p
 ## Read-only verification
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1993 --json
+python -m scripts.audit_atp_calendar_backfill --year 1993 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1993.py
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.build_atp_historical_calendar --check
 ```
 
 The auditor must yield `candidate_count=84`, `expected_played_source_count=84`, `remaining_series_ids=[]`, `roster_reconciled=true`, `unresolved_date_conflicts.atp_finals` present and `ready_for_whole_year_promotion=false`. `prepare(1993)` fails closed even if attempted with `--write` or `--check`. **No approval to change game mechanics, Edition dates or Run clock.** Canonical historical Calendar remains **1,816 occurrences + 37 coverage entries; 29/37 dated seasons**.

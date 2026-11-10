@@ -14,10 +14,10 @@
 ## Verification / promotion gates
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 2002 --json
+python -m scripts.audit_atp_calendar_backfill --year 2002 --json
 pytest -q tests/domain/test_atp_calendar_backfill_2002.py
 pytest -q tests/domain/test_atp_calendar_promotion.py
-python scripts/promote_atp_calendar_candidate.py --check --year 2002
+python -m scripts.promote_atp_calendar_candidate --check --year 2002
 ```
 
 After source review and green tests, an explicit `--write --year 2002` performs source and generated snapshot updates together in the working tree; commit **both** files in one PR. The script performs old-occurrence immutability checks; it has not been run and no generated snapshot has been committed in this contribution.
@@ -34,8 +34,8 @@ week labels, **not** runnable FAX tournament editions or certified legal
 Series transfers. The idempotent verification is:
 
 ```bash
-python scripts/promote_atp_calendar_candidate.py --check --year 2002
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.promote_atp_calendar_candidate --check --year 2002
+python -m scripts.build_atp_historical_calendar --check
 ```
 
 The earlier instructions above describing the 2002 cohort as staged and

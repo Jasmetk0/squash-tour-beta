@@ -26,6 +26,11 @@ from beta_engine.application.saved_fax_draw_preflight import (
     SavedFaxDrawPreflight,
     inspect_saved_fax_draw_preflight,
 )
+from beta_engine.application.saved_fax_entry_evidence import (
+    SavedFaxEntryEvidence,
+    inspect_saved_fax_entry_evidence,
+)
+from beta_engine.infrastructure.db.repositories import BranchRevisionStateNotFoundError
 
 
 router = APIRouter(
@@ -63,6 +68,34 @@ def inspect_saved_native_draw(
         raise HTTPException(
             status_code=409,
             detail={"code": "saved_native_draw_conflict", "message": str(exc)},
+        ) from exc
+
+
+@router.get("/saved-entry-evidence", response_model=SavedFaxEntryEvidence)
+def inspect_saved_draw_entry_evidence(
+    run_id: str,
+    branch_id: str,
+    event_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    season: Annotated[str, Query(min_length=1)],
+    expected_saved_revision_id: Annotated[str, Query(min_length=1)],
+) -> SavedFaxEntryEvidence:
+    """Show which participants have a first Entry backed by this Saved Revision."""
+    try:
+        return inspect_saved_fax_entry_evidence(
+            runtime.repository,
+            run_id=run_id,
+            branch_id=branch_id,
+            event_id=event_id,
+            season=season,
+            expected_saved_revision_id=expected_saved_revision_id,
+        )
+    except (KeyError, BranchRevisionStateNotFoundError) as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail={"code": "saved_fax_entry_evidence_conflict", "message": str(exc)},
         ) from exc
 
 

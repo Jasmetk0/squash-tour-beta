@@ -1,4 +1,17 @@
-# Native canonical Q/Main candidate — 6 November 2026
+# Saved FAX Entry evidence candidate — 8 November 2026
+
+Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed
+Ranked award projection. Separate PR #1758 passed the disposable Ranked Gold
+HTTP/SQLite weekly publication and restart gate; it requires prior native Entry.
+This candidate adds a [Saved Draw Entry evidence read](docs/FAX_REFERENCE_KNOCKOUT_GEOMETRY_V1.md#saved-first-tour-entry-evidence)
+on the merged base. It verifies recorded first applications and definitive wild
+cards against their Saved sources. It does not create native first Entry or
+certify original FAX source chronology. Wiring valid first Entry into the
+native lifecycle remains the next boundary.
+
+---
+
+# Historical native canonical Q/Main candidate — 6 November 2026
 
 Merged base `buuk` **`c7bb53eb893dceb2cb603bc0d312b71070489a0e`** is the owner
 merge of #1746 and preserves its exact reviewed tree. This candidate consumes its

@@ -15,10 +15,10 @@
 ## Reproducible validation
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 2001 --json
+python -m scripts.audit_atp_calendar_backfill --year 2001 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_2001.py
 python -m pytest -q tests/domain/test_atp_calendar_promotion.py
-python scripts/promote_atp_calendar_candidate.py --check --year 2001
+python -m scripts.promote_atp_calendar_candidate --check --year 2001
 ```
 
 Full canonical promotion still requires running `--write --year 2001`, regenerating and committing **both** `calendar_dates_v1.json` and `calendar.json`, checking the resulting source fingerprint and host CI and reviewing unresolved historical legal continuity. Those files were **not** updated as part of these staged data edits; do not describe 2001 as playable or already installed.
@@ -35,8 +35,8 @@ editions** and the 2001 Series lineage is **not independently legally
 certified**. The reproducible read-only check is:
 
 ```bash
-python scripts/promote_atp_calendar_candidate.py --check --year 2001
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.promote_atp_calendar_candidate --check --year 2001
+python -m scripts.build_atp_historical_calendar --check
 ```
 
 The preceding staged-only promotion checklist is a historical record

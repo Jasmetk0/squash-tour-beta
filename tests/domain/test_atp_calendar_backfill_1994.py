@@ -6,25 +6,19 @@ import json
 import pytest
 
 from scripts.audit_atp_calendar_backfill import audit_candidates
-from scripts.build_atp_historical_calendar import SOURCE, build, canonical
-from scripts.promote_atp_calendar_candidate import prepare
+from scripts.build_atp_historical_calendar import SOURCE, canonical
+
+from tests.support.atp_calendar_backfill import (
+    audit_canonical_backfill,
+    read_backfill_inputs,
+    verify_idempotent_promotion,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
 def test_1994_original_tour_finals_and_85_date_roster() -> None:
-    candidate = json.loads((SOURCE / "calendar_backfill_1994_candidates_v1.json").read_text(encoding="utf-8"))
-    seasons = json.loads((SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8"))
-    dated = json.loads((SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8"))
-    report = audit_candidates(candidate, seasons, dated)
-    assert report["year"] == 1994
-    assert report["candidate_count"] == 85
-    assert report["expected_played_source_count"] == 85
-    assert report["remaining_series_ids"] == []
-    assert len(report["canonical_conflicts"]) == 85
-    assert report["roster_reconciled"] is True
-    assert report["ready_for_whole_year_promotion"] is False  # already imported
-    assert report["unresolved_date_conflicts"] == {}
+    report = audit_canonical_backfill(1994, 85)
     rows = {row["series_id"]: row for row in report["candidate_events"]}
     assert rows["oahu_1994"]["historical_host"] == "Oahu"
     assert rows["sydney_2019"]["historical_host"] == "Sydney-1"
@@ -55,18 +49,8 @@ def test_1994_original_tour_finals_and_85_date_roster() -> None:
 
 
 def test_1994_is_canonical_idempotent_and_does_not_mutate_old_events() -> None:
-    dated_path = SOURCE / "calendar_dates_v1.json"
     out_path = SOURCE / "calendar.json"
-    before = (dated_path.read_bytes(), out_path.read_bytes())
-    dated, document, report = prepare(1994)
-    assert report["candidate_count"] == 85
-    assert len(dated["year_sources"]["1994"]["events"]) == 85
-    assert document["provenance"]["dated_occurrences"] == 2407
-    assert document["provenance"]["season_coverage_entries"] == 37
-    assert document["provenance"]["date_coverage_years"] == (
-        list(range(1990, 2027))
-    )
-    assert len(document["entities"]) == 2444
+    document = verify_idempotent_promotion(1994, 85)
     assert document["provenance"]["run_consumption"] == "opaque_reference_only_no_sporting_calendar"
     lookup = {row["source_entity_id"]: row for row in document["entities"]}
     assert lookup["season_1994_date_coverage"]["payload"]["date_coverage_state"] == "verified_complete_known_series_dates"
@@ -76,13 +60,10 @@ def test_1994_is_canonical_idempotent_and_does_not_mutate_old_events() -> None:
         "atp_finals", "indian_wells", "miami", "tokyo", "tokyo_indoor_1995",
     ))
     assert canonical(document) == out_path.read_text(encoding="utf-8")
-    assert (dated_path.read_bytes(), out_path.read_bytes()) == before
 
 
 def test_1994_out_of_scope_or_duplicate_event_is_rejected() -> None:
-    candidate = json.loads((SOURCE / "calendar_backfill_1994_candidates_v1.json").read_text(encoding="utf-8"))
-    seasons = json.loads((SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8"))
-    dated = json.loads((SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8"))
+    candidate, seasons, dated = read_backfill_inputs(1994)
     invalid = json.loads(json.dumps(candidate))
     invalid["events"].append({
         "historical_host": "Australian Open", "series_id": "australian_open",

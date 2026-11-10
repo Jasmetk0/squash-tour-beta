@@ -7,8 +7,8 @@ Calendar start_date/end_date, and separate Finals history/competition windows
 are preserved as explicit sourced evidence. No historical interval is guessed.
 
 Usage:
-    python scripts/promote_atp_calendar_candidate.py --check --year 2003
-    python scripts/promote_atp_calendar_candidate.py --write --year 2003
+    python -m scripts.promote_atp_calendar_candidate --check --year 2003
+    python -m scripts.promote_atp_calendar_candidate --write --year 2003
 
 No source URL or historical legal lineage is independently certified by this
 mechanical promotion. Historical exceptions require separate source review.
@@ -130,29 +130,7 @@ def prepare(year: int):
     return promoted, generated, audit
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__)
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("--check", action="store_true")
-    group.add_argument("--write", action="store_true")
-    parser.add_argument("--year", type=int, required=True)
-    args = parser.parse_args()
-    promoted, generated, audit = prepare(args.year)
-    existing = str(args.year) in json.loads(
-        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
-    )["year_sources"]
-    if existing:
-        print(
-            f"ATP {args.year}: {audit['candidate_count']} dates already "
-            "canonical, source and generated snapshot verified; no changes"
-        )
-        return 0
-    if args.check:
-        print(
-            f"ATP {args.year} eligible: {audit['candidate_count']} dates; "
-            "all old Calendar entities unchanged"
-        )
-        return 0
+def _write_calendar_files(promoted: dict, generated: dict) -> None:
     # The generated content is complete before either file is replaced.
     # Serialize to temporary files in each target directory first.
     targets = [
@@ -181,7 +159,32 @@ def main() -> int:
     finally:
         for _, tmp in staged:
             tmp.unlink(missing_ok=True)
-    print(f"Promoted {audit['candidate_count']} ATP dates in {args.year}")
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--check", action="store_true")
+    group.add_argument("--write", action="store_true")
+    parser.add_argument("--year", type=int, required=True)
+    args = parser.parse_args()
+    promoted, generated, audit = prepare(args.year)
+    existing = str(args.year) in json.loads(
+        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
+    )["year_sources"]
+    if existing:
+        print(
+            f"ATP {args.year}: {audit['candidate_count']} dates already "
+            "canonical, source and generated snapshot verified; no changes"
+        )
+    elif args.check:
+        print(
+            f"ATP {args.year} eligible: {audit['candidate_count']} dates; "
+            "all old Calendar entities unchanged"
+        )
+    else:
+        _write_calendar_files(promoted, generated)
+        print(f"Promoted {audit['candidate_count']} ATP dates in {args.year}")
     return 0
 
 

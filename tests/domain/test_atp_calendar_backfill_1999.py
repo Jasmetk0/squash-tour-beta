@@ -1,41 +1,21 @@
 """1999 original ATP Tour candidate evidence, source-tier and conflict safety."""
 from __future__ import annotations
 
-import json
-
 import pytest
 
-from scripts.audit_atp_calendar_backfill import audit_candidates
-from scripts.build_atp_historical_calendar import SOURCE
-from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS, prepare
+from scripts.promote_atp_calendar_candidate import PENDING_CONFLICTS
+
+from tests.support.atp_calendar_backfill import (
+    audit_canonical_backfill,
+    verify_idempotent_promotion,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
 def test_1999_parent_series_coverage_complete_with_distinct_window_evidence() -> None:
-    candidate = json.loads(
-        (SOURCE / "calendar_backfill_1999_candidates_v1.json").read_text(
-            encoding="utf-8"
-        )
-    )
-    seasons = json.loads(
-        (SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8")
-    )
-    canonical = json.loads(
-        (SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8")
-    )
-    audited = audit_candidates(candidate, seasons, canonical)
-    assert audited["year"] == 1999
-    assert audited["candidate_count"] == 66
-    assert audited["expected_played_source_count"] == 66
-    assert audited["remaining_series_ids"] == []
-    assert len(audited["canonical_conflicts"]) == 66
-    assert audited["roster_reconciled"] is True
+    audited = audit_canonical_backfill(1999, 66)
     assert "atp_finals" in audited["preserved_official_date_window_differences"]
-    assert audited["ready_for_whole_year_promotion"] is False
-    # Completeness of source IDs does not override conflicting official
-    # date definitions for the year-ending ATP World Championship.
-    assert "1999" in canonical["year_sources"]
     events = {row["series_id"]: row for row in audited["candidate_events"]}
     assert events["prague_1999"]["historical_host"] == "Prague"
     assert events["merano_1999"]["historical_host"] == "Meran"
@@ -59,7 +39,4 @@ def test_1999_official_finals_date_disagreement_is_recorded() -> None:
     reason = PENDING_CONFLICTS[1999]["atp_finals"]
     assert "1999-11-22" in reason
     assert "1999-11-23" in reason
-    source_years, built, checked = prepare(1999)
-    assert checked["unresolved_date_conflicts"] == {}
-    assert len(source_years["year_sources"]["1999"]["events"]) == 66
-    assert built["provenance"]["dated_occurrences"] == 2407
+    verify_idempotent_promotion(1999, 66)

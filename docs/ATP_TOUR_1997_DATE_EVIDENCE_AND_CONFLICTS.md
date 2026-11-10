@@ -46,9 +46,9 @@ refuses to publish it as a single definitively correct start date.
 ## Read-only acceptance
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1997 --json
+python -m scripts.audit_atp_calendar_backfill --year 1997 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1997.py
-python scripts/promote_atp_calendar_candidate.py --check --year 1997
+python -m scripts.promote_atp_calendar_candidate --check --year 1997
 ```
 
 The last command **must currently reject the unresolved start-date conflict**.

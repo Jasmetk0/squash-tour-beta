@@ -42,9 +42,9 @@ The source `series_id` tracks the parent reference entity, not proof of legal AT
 ## Read-only verification
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1992 --json
+python -m scripts.audit_atp_calendar_backfill --year 1992 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1992.py
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.build_atp_historical_calendar --check
 ```
 
 The auditor reports `candidate_count=78`, `expected_played_source_count=78`, `remaining_series_ids=[]`, `roster_reconciled=true`, and `ready_for_whole_year_promotion=false` due to the explicit 1992 Finals date-source conflict. Both `prepare(1992)` and `--write --year 1992` must reject with a descriptive error. Canonical **1,816** dates, **37** year ledgers and **29/37** dated seasons remain unchanged. Other unresolved: 1990 staged with a Finals date-window conflict; 1993/1997–1999/2003 Finals date conflicts, partially proven legal licence history, and provisional 2026.

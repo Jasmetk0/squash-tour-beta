@@ -55,12 +55,12 @@ conflicts are encoded in `PENDING_CONFLICTS` and cause
 ## Reproducible tests
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1998 --json
-python scripts/audit_atp_calendar_backfill.py --year 1999 --json
+python -m scripts.audit_atp_calendar_backfill --year 1998 --json
+python -m scripts.audit_atp_calendar_backfill --year 1999 --json
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1998.py
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1999.py
-python scripts/promote_atp_calendar_candidate.py --check --year 1998
-python scripts/promote_atp_calendar_candidate.py --check --year 1999
+python -m scripts.promote_atp_calendar_candidate --check --year 1998
+python -m scripts.promote_atp_calendar_candidate --check --year 1999
 ```
 
 The last two commands **must currently fail with the explicitly disclosed

@@ -1,8 +1,8 @@
 """Build a non-playable ATP Calendar reference Package from dated official evidence.
 
 Usage:
-  python scripts/build_atp_historical_calendar.py --check
-  python scripts/build_atp_historical_calendar.py --write
+  python -m scripts.build_atp_historical_calendar --check
+  python -m scripts.build_atp_historical_calendar --write
 
 For every year 1990–2026, publish explicit DATE COVERAGE (including missing
 dates); do not infer dates from the Category/Series roster, a neighbouring

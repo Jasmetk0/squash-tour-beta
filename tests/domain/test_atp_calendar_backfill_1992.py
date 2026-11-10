@@ -6,27 +6,19 @@ import json
 import pytest
 
 from scripts.audit_atp_calendar_backfill import SOURCE_DATE_CONFLICTS, audit_candidates
-from scripts.build_atp_historical_calendar import SOURCE
-from scripts.promote_atp_calendar_candidate import prepare
+
+from tests.support.atp_calendar_backfill import (
+    audit_canonical_backfill,
+    read_backfill_inputs,
+    verify_idempotent_promotion,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
 def test_1992_year_effective_78_early_cross_year_events_and_finals_conflict() -> None:
-    candidate = json.loads((SOURCE / "calendar_backfill_1992_candidates_v1.json").read_text(encoding="utf-8"))
-    seasons = json.loads((SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8"))
-    dated = json.loads((SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8"))
-    report = audit_candidates(candidate, seasons, dated)
-    assert report["year"] == 1992
-    assert report["candidate_count"] == 78
-    assert report["expected_played_source_count"] == 78
-    assert report["remaining_series_ids"] == []
-    assert report["roster_reconciled"] is True
-    assert len(report["canonical_conflicts"]) == 78
-    assert report["unresolved_date_conflicts"] == {}
+    report = audit_canonical_backfill(1992, 78)
     assert report["preserved_official_date_window_differences"] == SOURCE_DATE_CONFLICTS[1992]
-    assert report["ready_for_whole_year_promotion"] is False
-    assert "1992" in dated["year_sources"]
     rows = {e["series_id"]: e for e in report["candidate_events"]}
     assert rows["brisbane"]["historical_host"] == "Adelaide"
     assert rows["wellington_1992"]["historical_host"] == "Wellington"
@@ -48,24 +40,11 @@ def test_1992_year_effective_78_early_cross_year_events_and_finals_conflict() ->
 
 
 def test_1992_archive_and_alternate_windows_are_idempotent() -> None:
-    before = (
-        (SOURCE / "calendar_dates_v1.json").read_bytes(),
-        (SOURCE / "calendar.json").read_bytes(),
-    )
-    source_years, built, checked = prepare(1992)
-    assert checked["unresolved_date_conflicts"] == {}
-    assert len(source_years["year_sources"]["1992"]["events"]) == 78
-    assert built["provenance"]["dated_occurrences"] == 2407
-    assert (
-        (SOURCE / "calendar_dates_v1.json").read_bytes(),
-        (SOURCE / "calendar.json").read_bytes(),
-    ) == before
+    verify_idempotent_promotion(1992, 78)
 
 
 def test_1992_wrong_source_year_and_duplicate_are_rejected() -> None:
-    candidate = json.loads((SOURCE / "calendar_backfill_1992_candidates_v1.json").read_text(encoding="utf-8"))
-    seasons = json.loads((SOURCE / "seasons_1990_2026.json").read_text(encoding="utf-8"))
-    dated = json.loads((SOURCE / "calendar_dates_v1.json").read_text(encoding="utf-8"))
+    candidate, seasons, dated = read_backfill_inputs(1992)
     forged = json.loads(json.dumps(candidate))
     forged["source_url"] = "https://www.atptour.com/en/scores/results-archive?year=1993"
     with pytest.raises(ValueError, match="year must match"):

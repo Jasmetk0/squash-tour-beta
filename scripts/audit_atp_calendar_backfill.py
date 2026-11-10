@@ -5,8 +5,8 @@ Partial cohorts are useful evidence but must not be silently published as
 complete/verified season calendars.
 
 Run:
-    python scripts/audit_atp_calendar_backfill.py
-    python scripts/audit_atp_calendar_backfill.py --json --year 2002
+    python -m scripts.audit_atp_calendar_backfill
+    python -m scripts.audit_atp_calendar_backfill --json --year 2002
 """
 from __future__ import annotations
 

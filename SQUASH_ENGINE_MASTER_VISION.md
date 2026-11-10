@@ -5,7 +5,7 @@
 **Verze dokumentu:** 87
 **Aktualizováno:** 10. 11. 2026 – samostatný Přechod mezi profesionály (`turn_pro`) jako podmínka první Tour přihlášky nebo wild card; mění dřívější trigger vstupu na Tour (PAQ-042) pro novou verzi Player Lifecycle Policy.
 
-**Nová produktová rozhodnutí v87:** prospect se stává profesionálem (`Tour Player`) samostatnou lifecycle událostí Přechod mezi profesionály, jejíž week určí hráčská AI. Teprve od tohoto weeku smí podat první přihlášku do turnaje MSA Tour nebo dostat definitivní wild card; přihláška ani WC už vstup nespouštějí. Dříve zaznamenaná historie podle pravidla v57 se nepřepisuje. Domyšlené návaznosti (okamžik platnosti, ranking, veřejnost, pravidlo budoucího vstupu, ruční hráči) jsou vedené jako `[PROZATÍMNÍ v87]` do potvrzení vlastníkem. Viz 9.2.
+**Nová produktová rozhodnutí v87:** prospect se stává profesionálem (`Tour Player`) samostatnou lifecycle událostí Přechod mezi profesionály, jejíž week určí hráčská AI. Teprve od tohoto weeku smí podat první přihlášku do turnaje MSA Tour nebo dostat definitivní wild card; přihláška ani WC už vstup nespouštějí. Dříve zaznamenaná historie podle pravidla v57 se nepřepisuje. Každý automaticky generovaný prospect se nakonec stane profesionálem (pro pre-alpha, později se může změnit) a ručně vytvořeného hráče řídí jeho AI. Domyšlené návaznosti (okamžik platnosti, ranking, veřejnost) jsou vedené jako `[PROZATÍMNÍ v87]` do potvrzení vlastníkem. Viz 9.2.
 
 **Historická aktualizace v86:** 30. 10. 2026 – organizační sjednocení přednosti a návaznosti na implementační checkpoint; bez nových produktových nebo sportovních rozhodnutí.
 
@@ -1518,11 +1518,11 @@ Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po za
 
 **[PROZATÍMNÍ v87]** Přechod je veřejná World Event účinná v tomto weeku. Viewer ani AI ostatních hráčů jej předem neznají; pravidlo, že Viewer před vstupem neukazuje plánovaný week vstupu (23.3), platí beze změny.
 
-**[PROZATÍMNÍ v87]** Pravidlo budoucího vstupu se vztahuje na přechod: každý automaticky vygenerovaný prospect se dříve či později stane profesionálem, s výjimkou závažného zdravotního ukončení kariéry před přechodem (v72). Kumulativní tlak proti absurdnímu odkládání podle odstavců níže se uplatní na rozhodnutí o přechodu. Po přechodu volí turnaje běžné turnajové rozhodování AI; povinná první přihláška se nezavádí.
+**[ROZHODNUTO v87 PRO PRE-ALPHA; V POZDĚJŠÍCH VERZÍCH SE MŮŽE ZMĚNIT]** Pravidlo budoucího vstupu se vztahuje na přechod: každý automaticky vygenerovaný prospect se dříve či později stane profesionálem, s výjimkou závažného zdravotního ukončení kariéry před přechodem (v72). Kumulativní tlak proti absurdnímu odkládání podle odstavců níže se uplatní na rozhodnutí o přechodu. Po přechodu volí turnaje běžné turnajové rozhodování AI; povinná první přihláška se nezavádí.
 
-**[PROZATÍMNÍ v87]** U hráče ručně vytvořeného Adminem (9.3) zadá Admin, zda a od kterého weeku je profesionálem, jako explicitní validovaný a auditovaný příkaz.
+**[ROZHODNUTO v87]** Hráče ručně vytvořeného Adminem (9.3) řídí stejně jako všechny ostatní jeho hráčská AI. Ruční vytvoření neznamená, že ho Admin trvale ovládá. Pokud dosud není profesionálem, week přechodu určí jeho AI. Výchozí stav a historie zadané při vytvoření podle 9.2/9.3 zůstávají; další rozhodnutí patří AI. Admin může rozhodnutí konkrétního hráče převzít jen tehdy, když to výslovně chce, a to obecným režimem se zásahy (17.6.1), nikoliv trvalým ručním řízením.
 
-**[OTEVŘENO v87]** Přesný vzorec hráčské AI pro week přechodu, minimální a typické věky a kalibrace; zda a od kdy může již existující Run přejít na policy v87; zda smí Admin u automaticky generovaného prospecta přechod ručně vynutit nebo posunout.
+**[OTEVŘENO v87]** Přesný vzorec hráčské AI pro week přechodu, minimální a typické věky a kalibrace; zda a od kdy může již existující Run přejít na policy v87; zda bude přechod mezi profesionály v pre-alpha podporovaným typem rozhodnutí v režimu se zásahy (17.6.1), a to pro automaticky generované i ručně vytvořené hráče; závisí na tom, zda k tomu budou podmínky.
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI][OFFICIAL RUN DEFAULT]** Nový Tour Player vstupuje s nulou rankingových bodů a zpětně se nevkládá do již publikovaného současného Official MSA Ranking snapshotu. Do vytvoření následujícího Official snapshotu se zobrazuje jako `NR`. V následujícím snapshotu se objeví stejně jako všichni ostatní Tour Players, i kdyby stále měl 0 bodů.
 

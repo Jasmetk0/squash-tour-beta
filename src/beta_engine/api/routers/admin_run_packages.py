@@ -23,6 +23,13 @@ from beta_engine.application.world_package_run_adapter import WorldPackageRunAda
 from beta_engine.application.atp_reference_package_adapter import ATPReferencePackageAdapter
 from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
 from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_earth_weeks_on_run
+from beta_engine.application.atp_saved_snapshot_week_preview import (
+    audit_saved_atp_tour_bindings,
+    build_saved_atp_reference_week_mapping,
+)
+from beta_engine.infrastructure.db.run_package_state import load_saved_run_package_state
+from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunBranchModel
+from beta_engine.domain.run_revisions import CONTENT_HASH_ALGORITHM, saved_revision_content_hash
 from beta_engine.application.run_calendar_read_authority import resolve_saved_run_calendar
 from beta_engine.application.atp_earth_week_mapping import (
     SOURCE_FILE as ATP_DATE_SOURCE_FILE, build_projection,
@@ -381,6 +388,96 @@ def preview_atp_reference_against_saved_run_calendar(
             409,
             detail={
                 "code": "atp_run_week_preview_conflict",
+                "message": str(exc),
+            },
+        ) from exc
+
+
+
+@router.get("/saved-source-atp-reference-calendar/run-week-preview")
+def preview_saved_atp_reference_against_saved_run_calendar(
+    run_id: str,
+    branch_id: str,
+    year: list[int] | None = Query(default=None),
+    validate_tour_bindings: bool = Query(default=False),
+    runtime: ApiRuntime = Depends(get_runtime),
+):
+    """Read exact immutable Saved ATP Package entities on a verified W52 clock.
+
+    This endpoint does NOT fall back to server-installed source files or a
+    mutable Working Draft. Optionally verify the full Saved Tour source links
+    needed for sporting conversion, alongside the date-only preview.
+    """
+    if year is not None and any(not 1990 <= item <= 2026 for item in year):
+        raise HTTPException(422, "ATP source year must be in 1990–2026")
+    try:
+        with runtime.repository._session_factory() as session:
+            session.connection().exec_driver_sql("BEGIN")
+            clock = resolve_saved_run_calendar(
+                session, run_id=run_id, branch_id=branch_id
+            )
+            branch = session.get(RunBranchModel, branch_id)
+            if branch is None or not branch.saved_head_revision_id:
+                raise ValueError("Run Branch has no immutable Saved head")
+            revision = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+            if revision is None or revision.run_id != run_id:
+                raise ValueError("Saved Run Package source revision missing or foreign")
+            payload = json.loads(revision.payload_json)
+            changes = json.loads(revision.change_summary_json)
+            if (
+                not isinstance(payload, dict)
+                or not isinstance(changes, dict)
+                or revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
+                or saved_revision_content_hash(
+                    revision_id=revision.revision_id,
+                    run_id=revision.run_id,
+                    branch_id=revision.branch_id,
+                    sequence=revision.sequence,
+                    parent_revision_id=revision.parent_revision_id,
+                    kind=revision.kind,
+                    payload_schema_version=revision.payload_schema_version,
+                    payload=payload,
+                    change_summary=changes,
+                ) != revision.content_hash
+            ):
+                raise ValueError("Saved ATP source revision failed hash verification")
+            # Shared pre-fork ancestry belongs to the ORIGINAL revision Branch,
+            # not necessarily the requested current Branch.
+            state = load_saved_run_package_state(
+                payload, run_id=run_id, branch_id=revision.branch_id
+            )
+            if state is None:
+                raise ValueError("ATP reference Package is not in Saved Revision")
+            mapping = build_saved_atp_reference_week_mapping(state)
+            report = preview_atp_earth_weeks_on_run(
+                calendar=clock, mapping=mapping, years=year
+            )
+            if validate_tour_bindings:
+                report["source_tour_bindings"] = audit_saved_atp_tour_bindings(
+                    state,
+                    selected_occurrences=frozenset(
+                        event["source_identity"] for event in report["events"]
+                    ),
+                )
+        return {
+            **report,
+            "run_id": run_id,
+            "branch_id": branch_id,
+            "saved_head_revision_id": revision.revision_id,
+            "saved_package_origin_branch_id": revision.branch_id,
+            "saved_run_calendar_verified": True,
+            "saved_package_source_verified": True,
+            "uses_saved_run_package_snapshot": True,
+            "uses_current_server_reference_not_run_snapshot": False,
+            "run_mutated": False,
+            "working_draft_mutated": False,
+            "historical_revision_mutated": False,
+        }
+    except (OSError, TypeError, KeyError, AttributeError, ValueError) as exc:
+        raise HTTPException(
+            409,
+            detail={
+                "code": "atp_saved_run_week_preview_conflict",
                 "message": str(exc),
             },
         ) from exc

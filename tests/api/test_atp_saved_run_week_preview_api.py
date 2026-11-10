@@ -6,6 +6,11 @@ from urllib.parse import quote
 import pytest
 
 from test_simulation_api import ApiServer, _request
+from beta_engine.domain.run_packages import RunPackageState
+from beta_engine.application.atp_saved_snapshot_week_preview import (
+    audit_saved_atp_tour_bindings,
+    build_saved_atp_reference_week_mapping,
+)
 
 pytestmark = pytest.mark.pr_critical
 
@@ -31,6 +36,23 @@ def _url(server, run_id, branch_id, suffix=""):
         f"/branches/{quote(branch_id, safe='')}/packages/"
         "source-atp-reference-calendar/run-week-preview" + suffix
     )
+
+
+def _saved_url(server, run_id, branch_id, suffix=""):
+    return _url(server, run_id, branch_id, suffix).replace(
+        "/source-atp-reference-calendar/",
+        "/saved-source-atp-reference-calendar/",
+    )
+
+
+def test_saved_source_preview_requires_an_actual_saved_atp_package(tmp_path):
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'atp-saved-required.db'}") as server:
+        r, b = _make_run(server, name="Source not applied", start=2025, count=2)
+        code, body = _request("GET", _saved_url(server, r, b, "?year=2025"))
+        assert code == 409, body
+        assert body["detail"]["code"] == "atp_saved_run_week_preview_conflict"
+        # Original endpoint intentionally remains available as a SERVER source preview.
+        assert _request("GET", _url(server, r, b, "?year=2025"))[0] == 200
 
 
 def test_source_week_preview_on_real_saved_earth_clock_is_nondestructive(tmp_path):
@@ -201,6 +223,73 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
             "GET", _url(server, run_id, branch_id, "?year=2025")
         )
         assert code == 200, projected
+        code, saved_bound = _request(
+            "GET", _saved_url(server, run_id, branch_id, "?year=2025")
+        )
+        assert code == 200, saved_bound
+        assert saved_bound["saved_run_calendar_verified"] is True
+        assert saved_bound["saved_package_source_verified"] is True
+        assert saved_bound["uses_saved_run_package_snapshot"] is True
+        assert saved_bound["uses_current_server_reference_not_run_snapshot"] is False
+        assert saved_bound["source_mapping_fingerprint"] != projected["source_mapping_fingerprint"]
+        assert saved_bound["summary"]["mapped_occurrences"] == projected["summary"]["mapped_occurrences"]
+        assert saved_bound["events"] == projected["events"]
+        audit_url = _saved_url(server, run_id, branch_id, "?year=2025&validate_tour_bindings=true")
+        code, audited = _request("GET", audit_url)
+        assert code == 200, audited
+        bindings = audited["source_tour_bindings"]
+        assert bindings["verified_occurrences"] == 2407
+        assert len(bindings["occurrences_by_category"]) == 11
+        assert bindings["occurrences_by_category"]["atp_250"] == 670
+        assert len(bindings["selected_occurrences"]) == 57
+        chengdu = bindings["selected_occurrences"]["atp_2025_chengdu"]
+        assert chengdu["series_id"] == "chengdu"
+        assert chengdu["category_id"] == "atp_250"
+        assert chengdu["historical_category_label"] == "ATP Tour 250"
+        assert audited["events"] == saved_bound["events"]
+        assert all(e["source_finish_is_not_sporting_result_closure"] is True
+                   for e in saved_bound["events"])
+        assert saved_bound["no_sporting_install"] is True
+
+        # Reconstructing the source from Saved bytes must reject local edits,
+        # not silently accept data whose original baseline no longer matches.
+        state = RunPackageState.model_validate(before_packages[1]["state"])
+        mapping = build_saved_atp_reference_week_mapping(state)
+        assert mapping["source_origin"] == "immutable_saved_run_package_state.v1"
+        assert len(mapping["mappings"]) == 2407
+        victim = next(e for e in state.entities if
+                      e.source_entity_id == "atp_2025_chengdu")
+        altered = victim.model_copy(update={"provenance": "manual"})
+        bad = state.model_copy(update={"entities": tuple(
+            altered if e is victim else e for e in state.entities
+        )})
+        with pytest.raises(ValueError, match="locally edited"):
+            build_saved_atp_reference_week_mapping(bad)
+        series = next(e for e in state.entities if e.entity_kind == "tennis.series.reference.v1")
+        missing_series = state.model_copy(update={"entities": tuple(
+            e for e in state.entities if e is not series
+        )})
+        with pytest.raises(ValueError, match="incomplete"):
+            audit_saved_atp_tour_bindings(missing_series, selected_occurrences=frozenset())
+        edited_series = series.model_copy(update={"provenance": "manual"})
+        tampered_series = state.model_copy(update={"entities": tuple(
+            edited_series if e is series else e for e in state.entities
+        )})
+        with pytest.raises(ValueError, match="locally edited"):
+            audit_saved_atp_tour_bindings(tampered_series, selected_occurrences=frozenset())
+        altered_occurrence = victim.model_copy(update={
+            "payload": {**victim.payload, "category_id": "atp_500"},
+            "references": tuple(
+                ref.model_copy(update={"source_entity_id": "atp_500"})
+                if ref.expected_entity_kind == "tennis.category.reference.v1" else ref
+                for ref in victim.references
+            ),
+        })
+        inconsistent = state.model_copy(update={"entities": tuple(
+            altered_occurrence if e is victim else e for e in state.entities
+        )})
+        with pytest.raises(ValueError, match="does not match the Series year"):
+            audit_saved_atp_tour_bindings(inconsistent, selected_occurrences=frozenset())
         assert projected["calendar"]["weeks_per_year"] == 52
         assert projected["no_sporting_install"] is True
         assert projected["run_mutated"] is False
@@ -218,5 +307,14 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         )
         assert code == 200
         assert reread == projected
+        code, saved_reread = _request(
+            "GET", _saved_url(server, run_id, branch_id, "?year=2025")
+        )
+        assert code == 200, saved_reread
+        assert saved_reread == saved_bound
+        assert _request("GET", _saved_url(
+            server, run_id, branch_id, "?year=2025&validate_tour_bindings=true",
+        )) == (200, audited)
+        assert saved_reread["uses_saved_run_package_snapshot"] is True
         assert reread["uses_current_server_reference_not_run_snapshot"] is True
         assert _request("GET", packages) == before_packages

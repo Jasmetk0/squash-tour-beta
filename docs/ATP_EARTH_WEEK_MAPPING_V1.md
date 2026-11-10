@@ -162,3 +162,32 @@ unchanged Run + Working Draft, and also rejects invalid clocks and horizons.
 - Keep original source Package snapshots immutable after explicit Run Save. Do not merge or rewrite the parent Drafts implicitly.
 
 **No Master update, no automatic Run import and no release certification.**
+
+
+## Saved immutable ATP Package source preview — 7 November 2026
+
+A separate read-only endpoint removes the server-source ambiguity:
+
+    GET /admin/runs/{run_id}/branches/{branch_id}/packages/saved-source-atp-reference-calendar/run-week-preview?year=2025
+
+Unlike the original `source-atp-reference-calendar/run-week-preview`, this route **requires** an actually Saved ATP reference Package and reconstructs all 2,407 original dated source occurrences **from the complete hash-verified immutable Saved Revision Run Package state**, never by reading current `calendar_dates_v1.json`. It verifies the exact Saved Revision hash (including Run/Branch/sequence/parent/change-summary identity), Package version and source fingerprints, all 2,444 Calendar entities, original ISO date-window evidence, the 37 complete coverage records, the 24 known-not-held memberships and unchanged source baselines. Modified/incomplete snapshots fail closed. A fork may share an original pre-fork Saved head; the original revision Branch identity remains the source-owner proof.
+
+The returned `source_mapping_fingerprint` now includes `source_origin=immutable_saved_run_package_state.v1` and `saved_source_state_fingerprint`. The synthetic date-source reconstruction removes `source_file` / `source_calendar_dates_sha256` instead of misleadingly claiming current server files are the Saved source. `saved_package_origin_branch_id`, `saved_head_revision_id` and `uses_saved_run_package_snapshot=true` distinguish this from the old server-reference endpoint, which remains available as an **unbound, read-only comparison**.
+
+Both routes are strictly **reference-only** and do not install playable Editions, Matches, Simulation Slots or Ranking closure; no source results, licensing proof, historical date completion or Save consent is inferred. The Saved route cannot preview an empty Run or a Package merely confirmed to an uncommitted Working Draft. API/SQLite/restart tests verify the no-fallback distinction, preserved original dates and replay.
+
+### Check the Saved Tour source links before sporting conversion
+
+Add `validate_tour_bindings=true` to the Saved preview query. The response
+`source_tour_bindings` checks every one of the 2,407 occurrences against the
+11 Category and 164 Series entities in the same immutable revision. Each
+occurrence must reference its exact Category and Series. Both must be
+effective in the source year, and the Series year must agree with the
+Calendar tier. The check rejects missing, locally edited or inconsistent
+source entities. It reports the source category counts and the Category and
+Series identities for the selected years.
+
+The default date-only preview can still be used with just the Saved
+Calendar source. The optional check verifies the links needed for conversion.
+Sporting conversion still needs effective event draw and Qualification
+geometry, round points, and validated native scheduling.

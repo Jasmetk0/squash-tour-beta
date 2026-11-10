@@ -34,9 +34,9 @@ playable FAX Calendar edition.
 ## Reproducible quality gates
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 2000 --json
-python scripts/promote_atp_calendar_candidate.py --check --year 2000
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.audit_atp_calendar_backfill --year 2000 --json
+python -m scripts.promote_atp_calendar_candidate --check --year 2000
+python -m scripts.build_atp_historical_calendar --check
 python -m pytest -q tests/domain/test_atp_calendar_backfill_2000.py
 ```
 

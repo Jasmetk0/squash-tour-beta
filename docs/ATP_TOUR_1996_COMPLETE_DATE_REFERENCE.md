@@ -29,9 +29,9 @@ The [independent official ATP Finals historical results (1996)](https://www.nitt
 ## Reproducibility
 
 ```bash
-python scripts/audit_atp_calendar_backfill.py --year 1996 --json
-python scripts/promote_atp_calendar_candidate.py --check --year 1996
-python scripts/build_atp_historical_calendar.py --check
+python -m scripts.audit_atp_calendar_backfill --year 1996 --json
+python -m scripts.promote_atp_calendar_candidate --check --year 1996
+python -m scripts.build_atp_historical_calendar --check
 python -m pytest -q tests/domain/test_atp_calendar_backfill_1996.py
 ```
 

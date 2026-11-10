@@ -31,8 +31,8 @@ ATP annual year archives: [1990](https://www.atptour.com/en/scores/results-archi
 - All 2,407 source-dated original played Tour parent event identities remain **non-playable**; FIFA/FAX Run clock and Weeks, tournament results, rank points, save history and explicit Save behavior are unchanged.
 - Reproducibility:
   ```bash
-  python scripts/audit_atp_calendar_full_roster.py --check
-  python scripts/build_atp_historical_calendar.py --check
+  python -m scripts.audit_atp_calendar_full_roster --check
+  python -m scripts.build_atp_historical_calendar --check
   python -m pytest -q tests/domain/test_atp_calendar_finals_date_window_policy.py
   ```
 

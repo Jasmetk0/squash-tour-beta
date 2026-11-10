@@ -58,108 +58,22 @@ def test_all_37_original_atp_rosters_are_source_dated_with_finale_windows_preser
         assert cover[y]["dated_series_count"] == cover[y]["roster_series_count"]
         assert cover[y]["undated_series_ids"] == []
         assert cover[y]["no_fabricated_dates"] is True
-    assert cover[1991]["dated_series_count"] == 76
-    assert cover[1991]["undated_series_ids"] == []
-    assert cover[1991]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[1991]["year_source_status"] == "verified_results_archive"
-    assert cover[1994]["dated_series_count"] == 85
-    assert cover[1994]["undated_series_ids"] == []
-    assert cover[1994]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[1994]["year_source_status"] == "verified_results_archive"
-    assert cover[1995]["dated_series_count"] == 80
-    assert cover[1995]["undated_series_ids"] == []
-    assert cover[1995]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[1995]["year_source_status"] == "verified_results_archive"
-    assert cover[1996]["dated_series_count"] == 78
-    assert cover[1996]["undated_series_ids"] == []
-    assert cover[1996]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[1996]["year_source_status"] == "verified_results_archive"
-    assert cover[2000]["dated_series_count"] == 65
-    assert cover[2000]["undated_series_ids"] == []
-    assert cover[2000]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2001]["dated_series_count"] == 65
-    assert cover[2001]["undated_series_ids"] == []
-    assert cover[2001]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2002]["dated_series_count"] == 62
-    assert cover[2002]["undated_series_ids"] == []
-    assert cover[2002]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2004]["dated_series_count"] == 63
-    assert cover[2004]["undated_series_ids"] == []
-    assert cover[2004]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2005]["dated_series_count"] == 63
-    assert cover[2005]["undated_series_ids"] == []
-    assert cover[2005]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2006]["dated_series_count"] == 63
-    assert cover[2006]["undated_series_ids"] == []
-    assert cover[2006]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2007]["dated_series_count"] == 62
-    assert cover[2007]["undated_series_ids"] == []
-    assert cover[2007]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2008]["dated_series_count"] == 61
+    archive_counts = {
+        1991: 76, 1994: 85, 1995: 80, 1996: 78,
+        2000: 65, 2001: 65, 2002: 62, 2004: 63, 2005: 63, 2006: 63, 2007: 62,
+        2008: 61, 2009: 61, 2010: 61, 2011: 61, 2012: 61, 2013: 61, 2014: 60,
+        2015: 62, 2016: 62, 2017: 64, 2018: 64, 2019: 63, 2020: 29,
+        2021: 58, 2022: 65, 2023: 62, 2024: 62, 2025: 57,
+    }
+    for year, dated_count in archive_counts.items():
+        assert cover[year]["dated_series_count"] == dated_count, year
+        assert cover[year]["date_coverage_state"] == "verified_complete_known_series_dates", year
+        assert cover[year]["year_source_status"] == "verified_results_archive", year
     assert cover[2008]["roster_series_count"] == 62
     assert cover[2008]["known_not_held_series_ids"] == ["bangalore_2008"]
-    assert cover[2008]["undated_series_ids"] == []
-    assert cover[2008]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2009]["dated_series_count"] == 61
-    assert cover[2009]["undated_series_ids"] == []
-    assert cover[2009]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2010]["dated_series_count"] == 61
-    assert cover[2010]["undated_series_ids"] == []
-    assert cover[2010]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2011]["dated_series_count"] == 61
-    assert cover[2011]["undated_series_ids"] == []
-    assert cover[2011]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2012]["dated_series_count"] == 61
-    assert cover[2012]["undated_series_ids"] == []
-    assert cover[2012]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2013]["dated_series_count"] == 61
-    assert cover[2013]["undated_series_ids"] == []
-    assert cover[2013]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2014]["dated_series_count"] == 60
-    assert cover[2014]["undated_series_ids"] == []
-    assert cover[2014]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2015]["dated_series_count"] == 62
-    assert cover[2015]["undated_series_ids"] == []
-    assert cover[2015]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2016]["dated_series_count"] == 62
-    assert cover[2016]["undated_series_ids"] == []
-    assert cover[2016]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2017]["dated_series_count"] == 64
-    assert cover[2017]["undated_series_ids"] == []
-    assert cover[2017]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2018]["dated_series_count"] == 64
-    assert cover[2018]["undated_series_ids"] == []
-    assert cover[2018]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2019]["dated_series_count"] == 63
-    assert cover[2019]["undated_series_ids"] == []
-    assert cover[2019]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2019]["year_source_status"] == "verified_results_archive"
-    assert cover[2020]["dated_series_count"] == 29
-    assert cover[2020]["roster_series_count"] == 41
-    assert len(cover[2020]["known_not_held_series_ids"]) == 12
-    assert cover[2020]["undated_series_ids"] == []
-    assert cover[2020]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2021]["dated_series_count"] == 58
-    assert cover[2021]["roster_series_count"] == 65
-    assert len(cover[2021]["known_not_held_series_ids"]) == 7
-    assert cover[2021]["undated_series_ids"] == []
-    assert cover[2021]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2022]["dated_series_count"] == 65
-    assert cover[2022]["roster_series_count"] == 69
-    assert len(cover[2022]["known_not_held_series_ids"]) == 4
-    assert cover[2022]["undated_series_ids"] == []
-    assert cover[2022]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2023]["dated_series_count"] == 62
-    assert cover[2023]["undated_series_ids"] == []
-    assert cover[2023]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2023]["year_source_status"] == "verified_results_archive"
-    assert cover[2024]["dated_series_count"] == 62
-    assert cover[2024]["undated_series_ids"] == []
-    assert cover[2024]["date_coverage_state"] == "verified_complete_known_series_dates"
-    assert cover[2024]["year_source_status"] == "verified_results_archive"
-    assert cover[2025]["dated_series_count"] == 57
-    assert cover[2025]["undated_series_ids"] == []
-    assert cover[2025]["date_coverage_state"] == "verified_complete_known_series_dates"
+    for year, roster_count, not_held_count in [(2020, 41, 12), (2021, 65, 7), (2022, 69, 4)]:
+        assert cover[year]["roster_series_count"] == roster_count, year
+        assert len(cover[year]["known_not_held_series_ids"]) == not_held_count, year
     assert cover[2026]["dated_series_count"] == 56
     assert cover[2026]["undated_series_ids"] == []
     assert cover[2026]["date_coverage_state"] == "provisional_complete_named_schedule"

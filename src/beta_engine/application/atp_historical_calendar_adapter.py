@@ -13,7 +13,7 @@ from beta_engine.application.atp_reference_package_adapter import (
     ATP_SOURCE, ATPReferencePackageAdapter, CATEGORY_SCOPE, SERIES_SCOPE,
 )
 from beta_engine.domain.run_packages import CanonicalPackageDocument, PackageType
-from scripts.build_atp_historical_calendar import CALENDAR_ID, CALENDAR_SCOPE, build, canonical
+from beta_engine.application.atp_historical_calendar_source import CALENDAR_ID, CALENDAR_SCOPE, build, canonical
 
 
 CALENDAR_SETUP_ID = "atp_tour_1990_2026_calendar_reference_setup"

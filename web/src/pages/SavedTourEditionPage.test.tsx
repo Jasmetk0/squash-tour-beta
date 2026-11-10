@@ -6,7 +6,8 @@ import {beforeEach,describe,it,expect,vi} from 'vitest'
 import {SavedTourEditionPage} from './SavedTourEditionPage'
 import type {SavedTourEdition} from '../api/savedTour'
 
-const api=vi.hoisted(()=>({getSavedTourEdition:vi.fn()}))
+const api=vi.hoisted(()=>({getSavedTourEdition:vi.fn(),
+  getSavedDrawNativePreflight:vi.fn(),getSavedDrawEntryEvidence:vi.fn()}))
 const context=vi.hoisted(()=>({
   branch:{run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a'},
   time:{mode:'present',isLoading:false,error:null},
@@ -419,6 +420,51 @@ describe('Saved Edition detail',()=>{
     expect(screen.queryByRole('link',{name:'P2'})).not.toBeInTheDocument()
     expect(screen.getAllByRole('link',{name:'Match detail'})[0]).toHaveAttribute('href',
       expect.stringContaining('revision=rev-old'))
+  })
+  const drawFixture=(revision:string)=>{
+    const source=fixture(false)
+    source.saved_revision_id=revision
+    source.entry_field={
+      schema_version:'viewer_tournament_entry_field.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',field_sequence:1,mode:'initial',
+      main_draw_capacity:2,active_main_entrant_count:2,effective_main_bye_count:0,
+      direct_main_player_ids:['P1','P2'],qualification_player_ids:[],
+      alternate_player_ids:[],withdrawn_player_ids:[]
+    }
+    source.draw={
+      schema_version:'viewer_tournament_draw.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',revision_count:0,
+      main:{draw_type:'main',section_id:null,bracket_size:2,slots:[
+        {slot_index:1,entrant_kind:'player',player_id:'P1',placeholder_id:null,seed_number:1,entry_status:null},
+        {slot_index:2,entrant_kind:'player',player_id:'P2',placeholder_id:null,seed_number:null,entry_status:null}]},
+      qualification_sections:[]
+    }
+    return source
+  }
+  it('reads Saved Draw native readiness only for the current Saved head',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(drawFixture('head-a'))
+    api.getSavedDrawNativePreflight.mockResolvedValue({
+      saved_revision_id:'head-a',source_plan_fingerprint:'a'.repeat(64),draw_fingerprint:'b'.repeat(64),
+      ranking_status:'unranked',point_table_status:'not_required',required_point_stages:[],
+      missing_point_stages:[],invalid_point_stages:[],native_execution_status:'requires_adoption_preview'})
+    api.getSavedDrawEntryEvidence.mockResolvedValue({
+      saved_revision_id:'head-a',source_plan_fingerprint:'a'.repeat(64),event_id:'event-x',
+      entrants:[{player_id:'P1',draw_role:'direct_main',first_entry:null},
+        {player_id:'P2',draw_role:'qualification',first_entry:null}]})
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=head-a&season=2&tab=draw')
+    expect(await screen.findByText('Participants: 2 · with recorded first Entry: 0 · without: 2'))
+      .toBeInTheDocument()
+    expect(api.getSavedDrawNativePreflight).toHaveBeenCalledWith(
+      'run-a','branch-a','event-x','2002/2003','head-a')
+  })
+  it('never asks current-head readiness for a historical Saved revision',async()=>{
+    api.getSavedDrawNativePreflight.mockClear();api.getSavedDrawEntryEvidence.mockClear()
+    api.getSavedTourEdition.mockResolvedValue(drawFixture('rev-old'))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=draw')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Saved Draw native readiness'})).not.toBeInTheDocument()
+    expect(api.getSavedDrawNativePreflight).not.toHaveBeenCalled()
+    expect(api.getSavedDrawEntryEvidence).not.toHaveBeenCalled()
   })
   it('keeps the active Edition tab and exact revision across CS/EN with no refetch',async()=>{
     const view=mount()

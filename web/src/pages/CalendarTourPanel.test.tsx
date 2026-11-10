@@ -7,7 +7,7 @@ import {LanguageProvider} from '../i18n/LanguageContext'
 import {CalendarTourPanel} from './CalendarTourPanel'
 import type {TourCommand,TourPreview,TourView} from '../api/calendarTour'
 
-const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn(),inspectCalendarTourRecords:vi.fn(),inspectNativeTourProspectIntake:vi.fn(),previewCalendarTourNativeBirthSporting:vi.fn()}))
+const api=vi.hoisted(()=>({inspectCalendarTour:vi.fn(),previewCalendarTour:vi.fn(),previewATPNextGenEdition:vi.fn(),executeCalendarTour:vi.fn(),saveCalendarTour:vi.fn(),replayCalendarContinuation:vi.fn(),inspectCalendarTourSeason:vi.fn(),inspectCalendarTourRecords:vi.fn(),inspectNativeTourProspectIntake:vi.fn(),previewCalendarTourNativeBirthSporting:vi.fn()}))
 vi.mock('../api/client',()=>({...api,ApiError:class ApiError extends Error { status=400 }}))
 const view=(run='r',branch='b'):TourView=>({schema_version:'calendar_tour_inspection.v1',run_id:run,branch_id:branch,saved_head_revision_id:'head',draft_version:1,checkpoint_fingerprint:'a'.repeat(64),tour_fingerprint:null,saved:false,can_initialize:true,players:[],transition_blockers:['tour_authority_missing'],season_transition_blockers:['tour_authority_missing'],saved_completed_seasons:[],edition_evidence:{},state:null})
 const panel=(run='r',branch='b')=><QueryClientProvider client={new QueryClient()}><MemoryRouter><LanguageProvider><CalendarTourPanel runId={run} branchId={branch} head="head"/></LanguageProvider></MemoryRouter></QueryClientProvider>
@@ -421,6 +421,31 @@ describe('configured Tour consent (HTTP boundary mocked)',()=>{
     expect(screen.getByRole('button',{name:'Refresh state'})).toBeEnabled()
     expect(screen.queryByLabelText(kind==='season'?'Verified season summary':'Verified career records')).not.toBeInTheDocument()
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(api.executeCalendarTour).not.toHaveBeenCalled()
+    expect(api.saveCalendarTour).not.toHaveBeenCalled()
+  })
+
+  it('reviews the Saved ATP edition before explicit confirmation or Save', async()=>{
+    const current=slotView()
+    current.state!.week.calendar={schema_version:'run_calendar.v1',weeks_per_year:52,
+      season_start_year_week:48,start_year:2025,season_count:2}
+    api.inspectCalendarTour.mockResolvedValue(current)
+    api.previewATPNextGenEdition.mockImplementation((_r,_b,input)=>{
+      const {start_slot,...command}=input
+      return Promise.resolve(preview({...command,action:'create-edition',edition_id:null,
+        data:{edition_id:'atp_2025_next_gen_atp_finals',name:'Next Gen ATP Finals 2025',
+          week:{week:4},main_entrant_count:8,ranked:false,point_table:{},start_slot}}))
+    })
+    render(panel())
+    const button=await screen.findByRole('button',{name:'Review ATP Next Gen 2025 import'})
+    expect(button).toBeDisabled()
+    fireEvent.change(screen.getByLabelText('Tour operation reason'),{target:{value:'Review saved ATP source'}})
+    fireEvent.click(button)
+    await screen.findByText(/2 groups of 4/)
+    expect(api.previewATPNextGenEdition.mock.calls[0][2]).toMatchObject({
+      expected_saved_head:'head',expected_tour_fingerprint:'c'.repeat(64),start_slot:1,
+    })
+    expect(screen.getByRole('button',{name:'Execute confirmed operation'})).toBeDisabled()
     expect(api.executeCalendarTour).not.toHaveBeenCalled()
     expect(api.saveCalendarTour).not.toHaveBeenCalled()
   })

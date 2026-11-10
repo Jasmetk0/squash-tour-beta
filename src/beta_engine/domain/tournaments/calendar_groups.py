@@ -241,7 +241,7 @@ class NativeGroupPointPolicy(FrozenInput):
 def group_point_policy(authority):
     config = authority.edition.group_configuration
     table = tuple(sorted(authority.edition.point_table.items()))
-    if config.format_kind == 'groups_knockout':
+    if authority.edition.ranked and config.format_kind == 'groups_knockout':
         # Reuse the shared explicit hybrid policy, including its composition ID.
         TournamentHybridRankingPolicyAuthority(
             run_id=config.rules.run_id, branch_id=config.rules.branch_id,
@@ -328,7 +328,7 @@ def completed_group_result(authority, slots, *, owner=None):
             played_wins = sum(r.result_kind in {'played', 'retirement'} and r.winner_player_id == row.player_id for r in standings.source_results)
             stage = stages.get(row.player_id, f'group_position_{row.position}')
             components = hybrid_phase_point_components(policy=policy, played_group_wins=played_wins,
-                knockout_reached_stage=stages.get(row.player_id))
+                knockout_reached_stage=stages.get(row.player_id) if authority.edition.ranked else None)
             group_points = components[0].points_awarded
             knockout_points = components[1].points_awarded if len(components) == 2 else 0
             if bracket is None and len(standings.groups) == 1:

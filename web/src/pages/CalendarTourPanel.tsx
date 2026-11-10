@@ -3,7 +3,7 @@ import {tourDrawSlots} from '../api/calendarTour'
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
-import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
+import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,previewATPNextGenEdition,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
 import {confirmedSavedTourView,validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
 import {tourWeekOffset,scheduleTourEdition} from '../api/nativeTourCalendar'
@@ -13,6 +13,7 @@ import {NativeFullSimulationPanel} from '../components/FullSimulationTasksNative
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
 
+const atpNextGenEditionId='atp_2025_next_gen_atp_finals'
 const actionLabels={approve:['Zkontrolovat schválení','Review approval'],draw:['Zkontrolovat los','Review draw'],play:['Zkontrolovat odehrání','Review play'],'confirm-result':['Zkontrolovat výsledky','Review results']}
 const stageLabels:Record<string,string>={champion:'Vítěz',finalist:'Finalista',semifinal:'Semifinále',quarterfinal:'Čtvrtfinále'}
 const withdrawalReasonLabels:Record<string,[string,string]>={injury:['Zranění','Injury'],illness:['Nemoc','Illness'],personal:['Osobní důvod','Personal'],travel:['Cesta nebo víza','Travel or visa'],no_show:['Nedostavení se','No show'],ineligible:['Nezpůsobilost','Ineligible'],other:['Jiné','Other']}
@@ -79,7 +80,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       .finally(()=>{if(valid())setBusy(false)})
     return()=>{active=false;controller.abort()}
   },[scope])
-  const perform=async(action:TourAction|'commit'|'save'|'refresh',id:string|null=null)=>{
+  const perform=async(action:TourAction|'atp-next-gen'|'commit'|'save'|'refresh',id:string|null=null)=>{
     if(!view)return
     const stamp=epoch.current
     const inputStamp=inputs.current
@@ -130,6 +131,26 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
       }
       if(!view.checkpoint_fingerprint||!reason.trim()||!Number.isSafeInteger(Number(seed)))return
       const commandId=newCommandId()
+      if(action==='atp-next-gen'){
+        if(!view.tour_fingerprint)return
+        const input={
+          command_id:commandId,expected_saved_head:view.saved_head_revision_id,
+          expected_checkpoint_fingerprint:view.checkpoint_fingerprint,expected_tour_fingerprint:view.tour_fingerprint,
+          seed:Number(seed),start_slot:Number(slot),operator_label:'Admin',audit_reason:reason.trim(),
+        }
+        const result=await previewATPNextGenEdition(runId,branchId,input)
+        if(!valid())return
+        const proposed=result.command
+        if(proposed?.action!=='create-edition'||proposed.command_id!==input.command_id||
+          proposed.expected_saved_head!==input.expected_saved_head||
+          proposed.expected_checkpoint_fingerprint!==input.expected_checkpoint_fingerprint||
+          proposed.expected_tour_fingerprint!==input.expected_tour_fingerprint||
+          proposed.seed!==input.seed||proposed.data?.start_slot!==input.start_slot||
+          proposed.data.edition_id!==atpNextGenEditionId||proposed.data.ranked!==false)
+          throw Error(cs?'Náhled ATP neodpovídá zvolenému Runu a vstupům.':'ATP preview differs from the selected Run and inputs.')
+        setReview(validateTourPreview(result,proposed,runId,branchId));setConsent(false)
+        return
+      }
       let data:Record<string,unknown>={}
       if(action==='create-edition'){
         if(!view.state)return
@@ -308,6 +329,13 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           {(format==='groups'?[]:pointStages(format==='knockout'?size:groupCount*advancing)).map(stage=><label key={stage}>{cs?stageLabels[stage]??stage:stage}<input aria-label={`Tour points ${stage}`} type="number" value={points[stage]??''} onChange={e=>{setPoints({...points,[stage]:e.target.value});invalidate()}}/></label>)}
           <p>{cs?'Platnost bodů':'Point validity'}: {view.state.week.calendar.weeks_per_year} {cs?'týdnů od prvního oficiálního rankingu':'weeks from first Official ranking'}</p>
           <button disabled={nativeOnly||!ready||!plannedEdition||!editionId.trim()||!name.trim()} onClick={()=>void perform('create-edition')}>{cs?'Zkontrolovat novou Edition':'Review new Edition'}</button>
+          {clock?.calendar.weeks_per_year===52&&
+            clock.calendar.start_year<=2025&&clock.calendar.start_year+clock.calendar.season_count>=2025&&
+            !view.state.editions.some(item=>item.edition.edition_id===atpNextGenEditionId)&&<div>
+            <p>{cs?'Next Gen 2025 použije termín z uloženého ATP balíčku a zvolený první slot. Osm hráčů vybereš při přihlášení.':'Next Gen 2025 uses the date from the Saved ATP Package and the selected first slot. Choose the eight players during entry.'}</p>
+            <button disabled={nativeOnly||!ready||!view.tour_fingerprint||!Number.isSafeInteger(Number(slot))||Number(slot)<1}
+              onClick={()=>void perform('atp-next-gen')}>{cs?'Zkontrolovat import ATP Next Gen 2025':'Review ATP Next Gen 2025 import'}</button>
+          </div>}
         </details>
         {view.next_slot&&<section aria-label="Global Simulation Slot">
           <h3>{cs?'Nejbližší Simulation Slot':'Next Simulation Slot'} {view.next_slot.number}</h3>
@@ -459,6 +487,8 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         {'admitted_player_ids' in review.impact&&Array.isArray(review.impact.admitted_player_ids)&&review.impact.admitted_player_ids.length>0&&<p>{cs?'Nově přijímaní hráči':'Newly admitted players'}: {review.impact.admitted_player_ids.join(', ')}</p>}
         <p>HEAD: <code>{review.command.expected_saved_head}</code></p>
         {review.impact.selected_match_ids&&<p>Simulation Slot {review.impact.slot} · {cs?'Vybrané zápasy':'Selected matches'}: {review.impact.selected_match_ids.join(', ')} · {cs?'Zbývá před operací':'Remaining before operation'}: {review.impact.remaining}</p>}
+        {review.command.action==='create-edition'&&review.command.data.edition_id===atpNextGenEditionId&&
+          <p>{cs?'17.–21. prosince 2025 · 2 skupiny po 4 · semifinále a finále · bez rankingových bodů':'17–21 December 2025 · 2 groups of 4 · semifinals and final · no ranking points'}</p>}
         {review.command.action==='create-edition'&&<p>{String(review.command.data.name)} · W{String((review.command.data.week as {week:number}).week)} · {cs?'Účastníci':'Participants'}: {String(review.command.data.main_entrant_count)} · {Object.entries(review.command.data.point_table as Record<string,number>).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>}
         {review.command.action==='submit'&&<p>{cs?'Přihlášky':'Applications'}: {(review.command.data.player_ids as string[]).map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.approved_field&&<p>{cs?'Schválený field':'Approved field'}: {review.impact.approved_field.direct_main_player_ids.map(id=>names.get(id)??id).join(', ')}</p>}

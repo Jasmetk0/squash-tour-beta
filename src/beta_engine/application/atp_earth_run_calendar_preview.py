@@ -22,6 +22,7 @@ def preview_atp_earth_weeks_on_run(
     calendar: RunCalendar,
     mapping: Mapping[str, Any],
     years: Sequence[int] | None = None,
+    occurrence_id: str | None = None,
 ) -> dict[str, Any]:
     """Project dated source occurrences to real RunCalendarPosition values.
 
@@ -77,6 +78,8 @@ def preview_atp_earth_weeks_on_run(
         identity = row.get("source_identity")
         if not isinstance(identity, str) or not identity.startswith(f"atp_{year}_"):
             raise ValueError("Invalid ATP source occurrence identity")
+        if occurrence_id is not None and identity != occurrence_id:
+            continue
         if identity in seen:
             raise ValueError("Duplicate ATP mapped occurrence")
         seen.add(identity)
@@ -156,8 +159,12 @@ def preview_atp_earth_weeks_on_run(
             "source_status": row["source_year_status"],
         })
     preview.sort(key=lambda r: (r["atp_season_year"], r["source_identity"]))
+    if occurrence_id is not None and not preview:
+        raise ValueError(f"ATP source occurrence was not found in selected years: {occurrence_id}")
     if len(preview) != sum(
-        row.get("atp_season_year") in chosen for row in raw_events
+        row.get("atp_season_year") in chosen
+        and (occurrence_id is None or row.get("source_identity") == occurrence_id)
+        for row in raw_events
     ):
         raise ValueError("ATP year-selection count mismatch")
 

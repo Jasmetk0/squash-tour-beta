@@ -33,6 +33,7 @@ from beta_engine.domain.players.calendar_followup_points import (
     CalendarFollowupPointPolicy,
 )
 from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+from beta_engine.domain.players.turn_pro import require_professional_for_entry
 from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.calendar_official import (
     calculate_calendar_official_ranking,
@@ -1224,7 +1225,9 @@ class CalendarTourService:
         lifecycle = _lifecycle_history(world, target, state)[-1]
         ages = tuple((p.player_id, p.age) for p in lifecycle.players)
         retired = tuple(p.player_id for p in lifecycle.players if p.status == "retired")
-        ranking = calculate_tour_ranking(state, cp, target=target, retired=retired)
+        ranking = calculate_tour_ranking(
+            state, cp, target=target, retired=retired, lifecycle=lifecycle
+        )
         return {
             "completed_week": prepared["advance"]["completed_week"],
             "target_week": target.model_dump(mode="json"),
@@ -1591,20 +1594,25 @@ class CalendarTourService:
                 native_competition = (
                     state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}
                 )
+                current_lifecycle = (
+                    (
+                        _native_inputs[0]
+                        if _native_inputs is not None
+                        else get_lifecycle(
+                            session,
+                            run_id=state.run_id,
+                            branch_id=state.branch_id,
+                            week=cp.week,
+                        )
+                    )
+                    if native_competition
+                    else None
+                )
                 owned = {
                     p.player_id: p
                     for p in (
-                        (
-                            _native_inputs[0]
-                            if _native_inputs is not None
-                            else get_lifecycle(
-                                session,
-                                run_id=state.run_id,
-                                branch_id=state.branch_id,
-                                week=cp.week,
-                            )
-                        ).players
-                        if native_competition
+                        current_lifecycle.players
+                        if current_lifecycle is not None
                         else world.players
                     )
                 }
@@ -1614,6 +1622,21 @@ class CalendarTourService:
                     raise ValueError(
                         "Application player is foreign or already submitted"
                     )
+                entry_policy = (
+                    current_lifecycle.policy
+                    if current_lifecycle is not None
+                    else world.lifecycle_policy
+                )
+                if entry_policy.requires_turn_pro:
+                    # Master v87: only a player who already turned pro may apply.
+                    if current_lifecycle is None:
+                        raise ValueError(
+                            "Turn Pro applications require the native lifecycle"
+                        )
+                    for pid in sorted(ids):
+                        require_professional_for_entry(
+                            current_lifecycle, pid, authority.edition.week
+                        )
                 slot = authority.edition.start_slot
                 submissions = tuple(
                     sorted(

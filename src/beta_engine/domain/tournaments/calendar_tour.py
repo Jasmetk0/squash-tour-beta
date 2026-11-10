@@ -640,7 +640,29 @@ def ranking_players(state, submissions, *, retired=()):
     )
 
 
-def calculate_tour_ranking(state, checkpoint, *, target, retired=()):
+def professional_ranking_players(lifecycle, *, before=None, retired=()):
+    """Master v87 roster: Tour Players come from Turn Pro, not from applications.
+
+    A player whose Turn Pro week precedes ``before`` is in the roster even without
+    any application; like an application entrant, a player who turned pro in the
+    week being published is not inserted into that already-opened snapshot.
+    """
+    if not lifecycle.policy.requires_turn_pro:
+        raise ValueError("Professional roster requires the v87 lifecycle policy")
+    return tuple(
+        CalendarRankingPlayer(
+            player_id=p.player_id,
+            tie_break_token=p.tie_break_token,
+            tour_entry_week=ranking_week(p.tour_entry_week),
+            retired=p.player_id in retired,
+        )
+        for p in sorted(lifecycle.players, key=lambda item: item.player_id)
+        if p.tour_entry_week is not None
+        and (before is None or p.tour_entry_week.ordinal < before.ordinal)
+    )
+
+
+def calculate_tour_ranking(state, checkpoint, *, target, retired=(), lifecycle=None):
     events = {t.tournament_id: t for t in checkpoint.tournaments}
     results = tuple(
         r
@@ -660,7 +682,11 @@ def calculate_tour_ranking(state, checkpoint, *, target, retired=()):
         run_calendar=target.calendar,
         week=ranking_week(target),
         policy=effective_policy(state, target).ranking,
-        players=ranking_players(state, submissions, retired=retired),
+        players=(
+            professional_ranking_players(lifecycle, before=target, retired=retired)
+            if lifecycle is not None and lifecycle.policy.requires_turn_pro
+            else ranking_players(state, submissions, retired=retired)
+        ),
         results=results,
         previous=state.rankings[-1],
     )

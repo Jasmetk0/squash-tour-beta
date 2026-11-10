@@ -1,3 +1,13 @@
+# Turn Pro ranking roster and application gate candidate (Master v87) — 10 November 2026
+
+Stacked on the kernel candidate (#1767). Under the opt-in v87 policy the native
+Tour ranking roster comes from Turn Pro (a pro without any application is ranked
+from the next snapshot) and native `submit` rejects players who have not turned
+pro. Historical-policy rankings keep the application roster byte-for-byte. No
+runtime selects v87 yet; see [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro lifecycle kernel candidate (Master v87) — 10 November 2026
 
 Base `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`; the v87 decision itself is

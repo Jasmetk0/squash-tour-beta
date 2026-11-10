@@ -296,6 +296,12 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 )
         # Rebuild each publication from actual immutable point sources and the
         # then-effective policy. Never take stored snapshot totals as inputs.
+        if world is not None and world.lifecycle_policy.requires_turn_pro:
+            # This replay rebuilds rosters from applications only. A v87 roster
+            # comes from Turn Pro lifecycle, which this reader cannot yet supply.
+            raise ValueError(
+                "Official ranking replay does not yet support the v87 Turn Pro roster"
+            )
         prefix = state.model_copy(update={"rankings": state.rankings[: i + 1]})
         expected = calculate_tour_ranking(
             prefix,

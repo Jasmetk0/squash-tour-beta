@@ -2,8 +2,12 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 86
-**Aktualizováno:** 30. 10. 2026 – organizační sjednocení přednosti a návaznosti na implementační checkpoint; bez nových produktových nebo sportovních rozhodnutí.
+**Verze dokumentu:** 87
+**Aktualizováno:** 10. 11. 2026 – samostatný Přechod mezi profesionály (`turn_pro`) jako podmínka první Tour přihlášky nebo wild card; mění dřívější trigger vstupu na Tour (PAQ-042) pro novou verzi Player Lifecycle Policy.
+
+**Nová produktová rozhodnutí v87:** prospect se stává profesionálem (`Tour Player`) samostatnou lifecycle událostí Přechod mezi profesionály, jejíž week určí hráčská AI. Teprve od tohoto weeku smí podat první přihlášku do turnaje MSA Tour nebo dostat definitivní wild card; přihláška ani WC už vstup nespouštějí. Dříve zaznamenaná historie podle pravidla v57 se nepřepisuje. Domyšlené návaznosti (okamžik platnosti, ranking, veřejnost, pravidlo budoucího vstupu, ruční hráči) jsou vedené jako `[PROZATÍMNÍ v87]` do potvrzení vlastníkem. Viz 9.2.
+
+**Historická aktualizace v86:** 30. 10. 2026 – organizační sjednocení přednosti a návaznosti na implementační checkpoint; bez nových produktových nebo sportovních rozhodnutí.
 
 **Rozsah v86:** Novější pracovní protokol kapitoly 36 je promítnut do úvodního pravidla přednosti. Aktuální stav a mapa důkazů jsou v CURRENT_STATE.md a ROADMAP.md; historické audity a všechny PAQ/statusy zůstávají zachované. Nejde o nový úplný audit všech požadavků, merge otevřených PR ani certifikaci pre-alphy.
 
@@ -1496,9 +1500,29 @@ Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po za
 
 **[ROZHODNUTO]** Nejprve existuje jako junior/prospect.
 
-**[ROZHODNUTO][OFFICIAL RUN DEFAULT]** Prospect se formálně zaregistruje na MSA Tour a získá kariérní status `Tour Player` okamžikem prvního platného podání přihlášky do kteréhokoliv turnaje MSA Tour. Přijetí do Main Draw nebo kvalifikace není podmínkou: i když je hráč pod cutem nebo je přihláška později odmítnuta z kapacitního důvodu, status Tour Player mu zůstane.
+**[NAHRAZENO v87 – PLATÍ PRO HISTORII PODLE DŘÍVĚJŠÍ POLICY]** Prospect se formálně zaregistruje na MSA Tour a získá kariérní status `Tour Player` okamžikem prvního platného podání přihlášky do kteréhokoliv turnaje MSA Tour. Přijetí do Main Draw nebo kvalifikace není podmínkou: i když je hráč pod cutem nebo je přihláška později odmítnuta z kapacitního důvodu, status Tour Player mu zůstane.
 
-**[ROZHODNUTO][OFFICIAL RUN DEFAULT]** U wild card nastane vstup na Tour až definitivním přidělením platné WC do fieldu. Samostatná akce výslovného přijetí se nepoužívá: finální přidělení se považuje za implicitně přijaté, dokud hráč neodstoupí. Pouhá předběžná nabídka nebo vedení mezi WC rezervami vstup nespouští. Účast na juniorském mistrovství světa sama o sobě vstupem na MSA Tour není.
+**[NAHRAZENO v87 JAKO TRIGGER VSTUPU; IMPLICITNÍ PŘIJETÍ WC TRVÁ]** U wild card nastane vstup na Tour až definitivním přidělením platné WC do fieldu. Samostatná akce výslovného přijetí se nepoužívá: finální přidělení se považuje za implicitně přijaté, dokud hráč neodstoupí. Pouhá předběžná nabídka nebo vedení mezi WC rezervami vstup nespouští. Účast na juniorském mistrovství světa sama o sobě vstupem na MSA Tour není.
+
+### Přechod mezi profesionály — rozhodnutí v87
+
+**[ROZHODNUTO v87][OFFICIAL RUN DEFAULT]** Prospect se stává profesionálem, tedy získá kariérní status `Tour Player`, samostatnou lifecycle událostí **Přechod mezi profesionály** (`turn_pro`). Week této události určí hráčská AI. Teprve od tohoto weeku včetně může hráč podat první přihlášku do kteréhokoliv turnaje MSA Tour nebo mu může být definitivně přidělena wild card. Prospect, který dosud profesionálem není, se do turnaje MSA Tour přihlásit nemůže a WC do MSA Tour fieldu nedostane.
+
+**[ROZHODNUTO v87]** První platná přihláška ani definitivní přidělení WC už vstup na Tour nespouštějí; jsou až jeho důsledkem. Dva předchozí odstavce označené `NAHRAZENO v87` zůstávají jako pravidlo historie vzniklé podle dřívější policy. Implicitní přijetí definitivně přidělené WC bez samostatné accept akce a trvalost statusu po neúspěchu pod cutem platí dál. Přechod mezi profesionály není licencí ve smyslu 12.5: nemá poplatek, schválení ani obnovu.
+
+**[ROZHODNUTO v87 – HISTORICKÁ KONTINUITA]** Pravidlo v87 je nová verze Player Lifecycle Policy. Historie zaznamenaná podle dřívějšího pravidla (vstup první platnou přihláškou nebo definitivní WC) se nepřepočítává: zaznamenaný trigger zůstává vstupem na Tour v původním weeku a decision slotu. Současné defaulty nesmějí zpětně měnit starší snapshoty, replay ani uložené revize.
+
+**[PROZATÍMNÍ v87]** Přechod se rozhoduje při Week Transition do daného weeku pouze z informací známých do konce předchozího weeku a platí od začátku weeku. První přihláška nebo WC proto může nastat už ve stejném weeku. Rozhodnutí je deterministické vůči stavu světa a injektovanému RNG.
+
+**[PROZATÍMNÍ v87]** Rankingové postavení se řídí stejnými zásadami jako dosud, jen od weeku přechodu: profesionál vstupuje s 0 body, do již publikovaného Official snapshotu se zpětně nevkládá, do dalšího je `NR` a v následujícím snapshotu se zařadí i s 0 body, i když ještě nehrál žádný turnaj.
+
+**[PROZATÍMNÍ v87]** Přechod je veřejná World Event účinná v tomto weeku. Viewer ani AI ostatních hráčů jej předem neznají; pravidlo, že Viewer před vstupem neukazuje plánovaný week vstupu (23.3), platí beze změny.
+
+**[PROZATÍMNÍ v87]** Pravidlo budoucího vstupu se vztahuje na přechod: každý automaticky vygenerovaný prospect se dříve či později stane profesionálem, s výjimkou závažného zdravotního ukončení kariéry před přechodem (v72). Kumulativní tlak proti absurdnímu odkládání podle odstavců níže se uplatní na rozhodnutí o přechodu. Po přechodu volí turnaje běžné turnajové rozhodování AI; povinná první přihláška se nezavádí.
+
+**[PROZATÍMNÍ v87]** U hráče ručně vytvořeného Adminem (9.3) zadá Admin, zda a od kterého weeku je profesionálem, jako explicitní validovaný a auditovaný příkaz.
+
+**[OTEVŘENO v87]** Přesný vzorec hráčské AI pro week přechodu, minimální a typické věky a kalibrace; zda a od kdy může již existující Run přejít na policy v87; zda smí Admin u automaticky generovaného prospecta přechod ručně vynutit nebo posunout.
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI][OFFICIAL RUN DEFAULT]** Nový Tour Player vstupuje s nulou rankingových bodů a zpětně se nevkládá do již publikovaného současného Official MSA Ranking snapshotu. Do vytvoření následujícího Official snapshotu se zobrazuje jako `NR`. V následujícím snapshotu se objeví stejně jako všichni ostatní Tour Players, i kdyby stále měl 0 bodů.
 
@@ -1512,9 +1536,9 @@ Pokud Tournament Ranking Snapshot předchází jeho vstupu na Tour, je pro danou
 
 **[ROZHODNUTO]** Pro první vstup na Tour neexistuje další pevná maximální věková hranice typu 25 let. Od 15. narozenin může nastat v kterémkoliv weeku; konkrétní okamžik určí hráčské rozhodování a okolnosti.
 
-**[PROZATÍMNÍ SMĚR]** Hráčská AI má okamžik první přihlášky nebo získání wild card odvozovat zejména z aktuálních schopností, věku, osobnosti, ambicí, dostupných příležitostí, očekávané šance na přidělení a předchozího odkládání. S postupem času se má kumulativně zvyšovat tlak na vstup, aby vznikaly přirozené rozdíly mezi hráči, ale nikdo neodkládal vstup absurdně dlouho. První verze může použít jednoduchý model; pravděpodobnosti a inteligence se budou po rozběhnutí aplikace postupně zpřesňovat.
+**[PROZATÍMNÍ SMĚR; OD v87 PRO PŘECHOD MEZI PROFESIONÁLY]** Hráčská AI má okamžik první přihlášky nebo získání wild card (od v87 week Přechodu mezi profesionály) odvozovat zejména z aktuálních schopností, věku, osobnosti, ambicí, dostupných příležitostí, očekávané šance na přidělení a předchozího odkládání. S postupem času se má kumulativně zvyšovat tlak na vstup, aby vznikaly přirozené rozdíly mezi hráči, ale nikdo neodkládal vstup absurdně dlouho. První verze může použít jednoduchý model; pravděpodobnosti a inteligence se budou po rozběhnutí aplikace postupně zpřesňovat.
 
-**[OTEVŘENO]** Přesný vzorec hráčské AI, váhy faktorů, minimální a typické věky, způsob kalibrace a volba prvního konkrétního turnaje. Formální trigger vstupu i pravidlo, že každý automaticky vygenerovaný prospect nakonec vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, jsou již rozhodnuté a samostatná hráčská licence se nezavádí.
+**[OTEVŘENO]** Přesný vzorec hráčské AI, váhy faktorů, minimální a typické věky, způsob kalibrace a volba prvního konkrétního turnaje. Od v87 je formálním vstupem Přechod mezi profesionály (viz výše). Formální trigger vstupu i pravidlo, že každý automaticky vygenerovaný prospect nakonec vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, jsou již rozhodnuté a samostatná hráčská licence se nezavádí.
 
 **[PROZATÍMNÍ]** Na začátku sezony se mohou technicky předgenerovat všichni hráči, kteří v ní dosáhnou 15 let, ale do aktivního světa vstoupí až ve svém `birth_year_week`. Definitivní implementace se ještě dohodne.
 
@@ -2131,7 +2155,7 @@ Pravidlo lze někdy později změnit, ale nyní je platné.
 
 ## 12.5 Bez hráčských licencí
 
-**[ROZHODNUTO]** Squash Engine nebude obsahovat systém hráčských licencí. Způsobilost hráče pro Tour, turnaje a ranking se určuje přímo podle jeho lifecycle stavu, vstupu na Tour, věku, případných trestů a dalších konkrétních pravidel. Při comebacku se žádná licence nezískává ani neobnovuje.
+**[ROZHODNUTO]** Squash Engine nebude obsahovat systém hráčských licencí. Způsobilost hráče pro Tour, turnaje a ranking se určuje přímo podle jeho lifecycle stavu, vstupu na Tour, věku, případných trestů a dalších konkrétních pravidel. Při comebacku se žádná licence nezískává ani neobnovuje. Přechod mezi profesionály (v87, 9.2) je lifecycle událost, nikoliv licence.
 
 ---
 
@@ -5224,7 +5248,7 @@ Následující seznam je rychlá kontrola nejdůležitějších pravidel potvrze
 19. Neuložené změny z Adminu se ve Vieweru nikdy neprojeví.
 20. Nový hráč se objeví přesně ve weeku svých 15. narozenin jako prospect.
 21. Prospect je od té chvíle viditelný v Adminu a v samostatné juniorské Viewer sekci, má profil a je globálně vyhledatelný.
-22. Prospect vstoupí na MSA Tour prvním platným podáním přihlášky do turnaje MSA Tour, i když se nedostane přes cut; u wild card až jejím definitivním přidělením do fieldu, které se považuje za implicitně přijaté bez samostatné accept akce. Pokračuje tentýž profil i trvalá URL. Každý automaticky vygenerovaný prospect nakonec na Tour vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, přičemž od 15 let nemá další pevný maximální vstupní věk. Juniorské mistrovství světa samo vstup nespouští a běžná juniorská zápasová historie se nesimuluje.
+22. **Od v87:** prospect se stane profesionálem samostatným Přechodem mezi profesionály ve weeku určeném hráčskou AI a teprve od něj se smí přihlásit nebo dostat WC (9.2). Historie podle dřívější policy: prospect vstoupí na MSA Tour prvním platným podáním přihlášky do turnaje MSA Tour, i když se nedostane přes cut; u wild card až jejím definitivním přidělením do fieldu, které se považuje za implicitně přijaté bez samostatné accept akce. Pokračuje tentýž profil i trvalá URL. Každý automaticky vygenerovaný prospect nakonec na Tour vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, přičemž od 15 let nemá další pevný maximální vstupní věk. Juniorské mistrovství světa samo vstup nespouští a běžná juniorská zápasová historie se nesimuluje.
 23. Počáteční aktivní hráči mají 15–45 let a již retired předhistorické hráče nepotřebujeme.
 24. Admin může v principu ručně vytvořit hráče ve věku 15–45 let kdykoliv během Runu.
 25. Hráč stárne ve svém birth weeku a ve 46 letech automaticky končí bez možnosti návratu.
@@ -5743,7 +5767,7 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 ## Hráči
 
 15. Kalibrace počátečního poolu a baseline rankingu: minimum FAX testu je 1 000 ne-retired hráčů, kteří dovršili 15 let před prvním Weekem 1; tři předstartovní rankingové varianty a jejich hranice určuje 9.1. Finální FAX canon, rozložení a číselné policy nejsou vybrané.
-16. Přesný model hráčské AI pro okamžik a volbu první platné turnajové přihlášky nebo získání wild card: váhy schopností, věku, osobnosti, příležitostí a kumulativního tlaku. Formální trigger, implicitní přijetí definitivně přidělené WC, trvalost statusu po neúspěchu pod cutem, počáteční `NR`, zařazení až v následujícím Official Ranking snapshotu i pravidlo, že každý automaticky vygenerovaný prospect nakonec vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, jsou rozhodnuté.
+16. Přesný model hráčské AI pro week Přechodu mezi profesionály (v87) a volbu první platné turnajové přihlášky nebo získání wild card: váhy schopností, věku, osobnosti, příležitostí a kumulativního tlaku. Formální trigger, implicitní přijetí definitivně přidělené WC, trvalost statusu po neúspěchu pod cutem, počáteční `NR`, zařazení až v následujícím Official Ranking snapshotu i pravidlo, že každý automaticky vygenerovaný prospect nakonec vstoupí s výjimkou závažného zdravotního ukončení kariéry před vstupem dle 9.2/v72, jsou rozhodnuté.
 17. Přesný název juniorského statusu, grafické rozložení profilu, podoba souhrnných statistik juniorského mistrovství světa a vzhled prázdné juniorské sekce.
 18. Přesná matematika developmentu, růstu, plateau, decline a návratů; hráčská inteligence, scouting, odhad soupeře, paměť, tvorba gameplanu a kariérní i zápasová adaptace stylu. Pevný jediný `peak_week` je vyloučený. Rozhodnuté jsou typy `Early Bloomer / Standard / Late Bloomer`, jejich celoživotní stálost, nezávislost na potenciálu, jednoduchý posun společné křivky o `−3 / 0 / +3` roky a princip dřívějšího poklesu fyzických schopností oproti možnému pozdějšímu růstu technických, taktických a mentálních schopností. Distribuce `16/68/16` a středy `26/29/32` jsou pouze prozatímní; otevřené zůstávají přesné atributové křivky, development matematika, rozhodovací váhy, chyby odhadu a kalibrace.
 19. Přesné kontextové váhy 57 aktivních pre-alpha atributů, konkrétní první OVR váhy a normalizace, pozdější individuální váhové profily, pravděpodobnostní křivka vývoje v okolí a nad Potential OVR, distribuce potenciálových labelů a pokročilá granularita potenciálu. Rozhodnuté jsou atributová škála `0–200`, samostatné uložení všech 57 hodnot, jejich kontextové používání, organizační role kategorií, OVR `0–200` jako normalizovaný vážený průměr, oddělená letter škála potenciálu `L+–F−`, jeden celoživotně pevný měkký Potential OVR bez per-attribute stropů, možnost extrémně vzácného překročení a absolutní OVR cap `200`. Číselná mapa Potential OVR zůstává prozatímní.
@@ -5891,7 +5915,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 39. **PAQ-039 [ČÁSTEČNĚ ROZHODNUTO v70][PA0][CALIBRATION] – Roční country intake?** Country Model V1 s populací roku narození, očekáváním a skutečnou variabilitou; žádné garantované minimum za každou zemi/rok. Přesné počty a distribuce se testují.
 40. **PAQ-040 [PA1][CALIBRATION] – Jaké jsou výchozí distribuce narození, výšky, hmotnosti, rukovosti a základních identit?** Příklad: dvě země mohou používat jiné name pooly, ale ne jiné vrozené squashové nadání jen kvůli národnosti.
 41. **PAQ-041 [PA0][CALIBRATION] – Jaký reprodukovatelný výchozí vzorec použije Country Model V1 od populace po profesionální konverzi?** Příklad: slabší infrastruktura sníží objevení a přechod na Tour, nikoliv maximum potenciálu narozeného hráče.
-42. **PAQ-042 [RESOLVED v57][PA0][PRODUCT] – Jak se určí první formální vstup prospecta na Tour a jeho výchozí soutěžní postavení?** Odpověď: dosavadní trigger první platné přihlášky nebo definitivního přidělení WC zůstává; hráč vstupuje s 0 body, do dalšího Official snapshotu je `NR` a teprve v něm se zařadí. Dokončený Ranked výsledek je vstupem následujícího snapshotu stejně jako u všech ostatních, nikoliv zvláštními body přidělenými před rankingem. Starší snapshot jej vede pod klasifikovanými hráči; více NR řadí entry slot a stabilní turnajový token.
+42. **PAQ-042 [RESOLVED v57; TRIGGER NAHRAZEN v87][PA0][PRODUCT] – Jak se určí první formální vstup prospecta na Tour a jeho výchozí soutěžní postavení?** Odpověď: dosavadní trigger první platné přihlášky nebo definitivního přidělení WC zůstává; hráč vstupuje s 0 body, do dalšího Official snapshotu je `NR` a teprve v něm se zařadí. Dokončený Ranked výsledek je vstupem následujícího snapshotu stejně jako u všech ostatních, nikoliv zvláštními body přidělenými před rankingem. Starší snapshot jej vede pod klasifikovanými hráči; více NR řadí entry slot a stabilní turnajový token. **v87:** trigger vstupu je nahrazen samostatným Přechodem mezi profesionály (9.2); zásady 0 bodů a `NR` do dalšího snapshotu se prozatímně zachovávají, dřívější historie se nepřepisuje.
 43. **PAQ-043 [RESOLVED v57][PA0][PRODUCT] – Která hráčská pole jsou pro pre-alpha povinná a jak se zobrazí shodná jména?** Odpověď: povinné jádro obsahuje stabilní ID a jméno, narození, původ, časově verzovanou Sporting Representation, handedness, fyzické a lifecycle údaje, creation origin, rankingový token, 57 atributů, potenciál, development type a potřebné sportovní stavy; neúplný profil může zůstat Draft. Shodná jména se rozliší reprezentací a rokem, poté birth weekem a stabilním diskriminátorem. Sporting Representation má typy `Country / World / FAX Neutral`; World je dobrovolná globální identita, Neutral regulační status, oba hrají individuální Tour bez národní týmové eligibility a historické výsledky se nepřepisují.
 44. **PAQ-044 [RESOLVED v50][PA1][PRODUCT] – Jak ruční hráč, field-level lock a regenerace ovlivní již existující historii a budoucnost?** Odpověď: okamžitá velká změna dostane varování a alternativu `Dopočítat historický vývoj` přes branch/regeneraci. Pre-alpha nabízí přirozené přegenerování, přesné zachování soutěžního skeletu a výsledků nebo podobnou historii s měkkými cíli; vývoj chrání oranžový možný a červený absolutní limit. Samostatné pokročilé osy rozsahu × zachování jsou odložené.
 
@@ -6199,7 +6223,7 @@ Tato část konsoliduje celý navazující schválený blok. Novější scope m�
 
 6. **[ROZHODNUTO PRO PRE-ALPHA]** Trvalé zdravotní následky mohou omezit relevantní schopnosti po zotavení. Recidiva se opírá o typ/závažnost a historii; náchylnost a trvalé omezení jsou samostatné. Pevný vrozený potenciál se nemění. Přesná síla/četnost/trvání se kalibrují; uzdravený akutní záznam a přetrvávající následky se nesmějí významově slít.
 7. **[ROZHODNUTO PRO PRE-ALPHA]** Vlastní zkušenost s neúspěšným příliš brzkým návratem ovlivní spolu s osobností a odhadem zdraví ochotu riskovat. Neznamená vždy opatrnější volbu. Číselné váhy zůstávají k testování.
-8. **[ROZHODNUTO PRO PRE-ALPHA – ÚZKÁ VÝJIMKA]** Závažné zdravotní následky mohou prospectovi výjimečně zabránit vstupu na Tour a ukončit kariéru ještě před ním. Profil/historie zůstane, nevytvoří se falešný vstup. Jinak trvá pravidlo budoucího vstupu automatických prospectů. Minimum 1 000 ne-retired počátečních hráčů i běžný formální trigger vstupu zůstávají.
+8. **[ROZHODNUTO PRO PRE-ALPHA – ÚZKÁ VÝJIMKA]** Závažné zdravotní následky mohou prospectovi výjimečně zabránit vstupu na Tour (od v87 Přechodu mezi profesionály) a ukončit kariéru ještě před ním. Profil/historie zůstane, nevytvoří se falešný vstup. Jinak trvá pravidlo budoucího vstupu automatických prospectů. Minimum 1 000 ne-retired počátečních hráčů i běžný formální trigger vstupu zůstávají.
 9. **[ROZHODNUTO – NEPOVINNÁ PŘEDHISTORIE]** Před Weekem 1 se nic povinně nesimuluje. Dřívější zranění/zhojení/následky/riziko lze zadat jako označené předstartovní vstupy. Dříve schválené volitelné rankingové testovací varianty se neruší. Nový editor souhrnné nedoložené kariérní minulosti není pro pre-alpha nutný; žádné falešné odehrané zápasy/H2H/statistiky.
 10. **[MIMO PRVNÍ PRE-ALPHA]** Detailní rozhodování o léčbě, operacích a zdravotních postupech. Automatické recovery/následky, load/rest/return AI a explicitní Admin úpravy stavu ano.
 

@@ -1,3 +1,15 @@
+# Master v87 Turn Pro decision — 10 November 2026 (documentation only)
+
+The owner replaced the v57 Tour-entry trigger: a prospect now becomes a `Tour
+Player` through a separate player-AI **Turn Pro** event, and only from that week
+may apply or receive a definitive wild card (Master 9.2). **No runtime support
+exists yet**: the engine still implements the v57 trigger (first valid
+application or definitive WC → `player_tour_entry_trigger`). Implementation must
+add a versioned lifecycle policy so earlier history keeps its recorded triggers.
+Provisional consequences listed in Master 9.2 await owner confirmation.
+
+---
+
 # Saved FAX Entry evidence candidate — 8 November 2026
 
 Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed

@@ -1,0 +1,490 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1995,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+  "as_of": "2026-11-04",
+  "notes": "All 80 year-effective original ATP Tour 1995 played-events including 1995 Frankfurt ATP World Championship matched to the parent historical Series roster. Finals 14–19 Nov 1995 agrees with official ATP Finals heritage. Original Tokyo-1/Tokyo-2, Stuttgart-1 (Feb indoor)/Stuttgart-2 (July outdoor), Nice versus Hong Kong, and Essen Masters are distinct. Out of scope: Grand Slams, World Team Cup, Grand Slam Cup, Davis Cup. Historical legal licence continuity not certified, non-playable reference.",
+  "events": [
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1995-01-02",
+      "end_date": "1995-01-08"
+    },
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1995-01-02",
+      "end_date": "1995-01-08"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1995-01-09",
+      "end_date": "1995-01-15"
+    },
+    {
+      "historical_host": "Jakarta",
+      "series_id": "jakarta_1996",
+      "start_date": "1995-01-09",
+      "end_date": "1995-01-15"
+    },
+    {
+      "historical_host": "Sydney",
+      "series_id": "sydney_2019",
+      "start_date": "1995-01-09",
+      "end_date": "1995-01-15"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1995-02-06",
+      "end_date": "1995-02-12"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1995-02-06",
+      "end_date": "1995-02-12"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "1995-02-06",
+      "end_date": "1995-02-12"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1995-02-13",
+      "end_date": "1995-02-19"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1995-02-13",
+      "end_date": "1995-02-19"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1995-02-20",
+      "end_date": "1995-02-26"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1995-02-20",
+      "end_date": "1995-02-26"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1995-02-27",
+      "end_date": "1995-03-05"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1995-02-27",
+      "end_date": "1995-03-05"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1995-02-27",
+      "end_date": "1995-03-05"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1995-03-06",
+      "end_date": "1995-03-12"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1995-03-06",
+      "end_date": "1995-03-12"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1995-03-13",
+      "end_date": "1995-03-26"
+    },
+    {
+      "historical_host": "St. Petersburg",
+      "series_id": "st_petersburg",
+      "start_date": "1995-03-13",
+      "end_date": "1995-03-26"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1995-03-20",
+      "end_date": "1995-03-26"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1995-04-03",
+      "end_date": "1995-04-09"
+    },
+    {
+      "historical_host": "Johannesburg",
+      "series_id": "johannesburg_1995",
+      "start_date": "1995-04-03",
+      "end_date": "1995-04-09"
+    },
+    {
+      "historical_host": "Tokyo-1 (Japan Open)",
+      "series_id": "tokyo",
+      "start_date": "1995-04-10",
+      "end_date": "1995-04-16"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1995-04-10",
+      "end_date": "1995-04-16"
+    },
+    {
+      "historical_host": "Bermuda",
+      "series_id": "bermuda_1996",
+      "start_date": "1995-04-17",
+      "end_date": "1995-04-23"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1995-04-17",
+      "end_date": "1995-04-23"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1995-04-17",
+      "end_date": "1995-04-23"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1995-04-24",
+      "end_date": "1995-04-30"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1995-04-24",
+      "end_date": "1995-04-30"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1995-05-01",
+      "end_date": "1995-05-07"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1995-05-01",
+      "end_date": "1995-05-07"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1995-05-08",
+      "end_date": "1995-05-14"
+    },
+    {
+      "historical_host": "Pinehurst",
+      "series_id": "houston",
+      "start_date": "1995-05-08",
+      "end_date": "1995-05-14"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1995-05-15",
+      "end_date": "1995-05-21"
+    },
+    {
+      "historical_host": "Coral Springs",
+      "series_id": "delray_beach",
+      "start_date": "1995-05-15",
+      "end_date": "1995-05-21"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1995-05-22",
+      "end_date": "1995-05-28"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1995-06-12",
+      "end_date": "1995-06-18"
+    },
+    {
+      "historical_host": "Porto",
+      "series_id": "porto_1996",
+      "start_date": "1995-06-12",
+      "end_date": "1995-06-18"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1995-06-12",
+      "end_date": "1995-06-18"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "1995-06-19",
+      "end_date": "1995-06-25"
+    },
+    {
+      "historical_host": "St. Polten",
+      "series_id": "poertschach_2008",
+      "start_date": "1995-06-19",
+      "end_date": "1995-06-25"
+    },
+    {
+      "historical_host": "Nottingham",
+      "series_id": "eastbourne",
+      "start_date": "1995-06-19",
+      "end_date": "1995-06-25"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1995-07-10",
+      "end_date": "1995-07-16"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1995-07-10",
+      "end_date": "1995-07-16"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1995-07-10",
+      "end_date": "1995-07-16"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1995-07-17",
+      "end_date": "1995-07-23"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1995-07-17",
+      "end_date": "1995-07-23"
+    },
+    {
+      "historical_host": "Montreal",
+      "series_id": "canadian_open",
+      "start_date": "1995-07-24",
+      "end_date": "1995-07-30"
+    },
+    {
+      "historical_host": "Amsterdam",
+      "series_id": "belgrade_2012",
+      "start_date": "1995-07-24",
+      "end_date": "1995-07-30"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1995-07-31",
+      "end_date": "1995-08-06"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1995-07-31",
+      "end_date": "1995-08-06"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1995-07-31",
+      "end_date": "1995-08-06"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1995-08-07",
+      "end_date": "1995-08-13"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1995-08-07",
+      "end_date": "1995-08-13"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1995-08-14",
+      "end_date": "1995-08-20"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1995-08-14",
+      "end_date": "1995-08-20"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1995-08-21",
+      "end_date": "1995-08-27"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1995-08-21",
+      "end_date": "1995-08-27"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "1995-09-11",
+      "end_date": "1995-09-17"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1995-09-11",
+      "end_date": "1995-09-17"
+    },
+    {
+      "historical_host": "Bogota",
+      "series_id": "bogota_colombia_2001",
+      "start_date": "1995-09-11",
+      "end_date": "1995-09-17"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1995-09-25",
+      "end_date": "1995-10-01"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1995-09-25",
+      "end_date": "1995-10-01"
+    },
+    {
+      "historical_host": "Kuala Lumpur",
+      "series_id": "singapore_1999",
+      "start_date": "1995-10-02",
+      "end_date": "1995-10-08"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1995-10-02",
+      "end_date": "1995-10-08"
+    },
+    {
+      "historical_host": "Valencia",
+      "series_id": "brussels",
+      "start_date": "1995-10-02",
+      "end_date": "1995-10-08"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1995-10-09",
+      "end_date": "1995-10-15"
+    },
+    {
+      "historical_host": "Ostrava",
+      "series_id": "ostrava_1998",
+      "start_date": "1995-10-09",
+      "end_date": "1995-10-15"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1995-10-09",
+      "end_date": "1995-10-15"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1995-10-16",
+      "end_date": "1995-10-22"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1995-10-16",
+      "end_date": "1995-10-22"
+    },
+    {
+      "historical_host": "Beijing",
+      "series_id": "beijing_1997",
+      "start_date": "1995-10-16",
+      "end_date": "1995-10-22"
+    },
+    {
+      "historical_host": "Essen Masters",
+      "series_id": "essen_masters",
+      "start_date": "1995-10-23",
+      "end_date": "1995-10-29"
+    },
+    {
+      "historical_host": "Santiago",
+      "series_id": "santiago_1998",
+      "start_date": "1995-10-23",
+      "end_date": "1995-10-29"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1995-10-30",
+      "end_date": "1995-11-05"
+    },
+    {
+      "historical_host": "Montevideo",
+      "series_id": "montevideo_1995",
+      "start_date": "1995-10-30",
+      "end_date": "1995-11-05"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1995-11-06",
+      "end_date": "1995-11-12"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1995-11-06",
+      "end_date": "1995-11-12"
+    },
+    {
+      "historical_host": "Buenos Aires",
+      "series_id": "buenos_aires_1995",
+      "start_date": "1995-11-06",
+      "end_date": "1995-11-12"
+    },
+    {
+      "historical_host": "ATP Tour World Championship (Frankfurt)",
+      "series_id": "atp_finals",
+      "start_date": "1995-11-14",
+      "end_date": "1995-11-19"
+    }
+  ]
+}

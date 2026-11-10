@@ -3868,6 +3868,44 @@ export function confirmATPReference(
   })
 }
 
+/** Separate, non-playable ATP historic Calendar source with strict 3-child identity. */
+export async function getATPCalendarReferenceCatalog(): Promise<import('./atpCalendarReferencePackages').ATPCalendarReferenceCatalog> {
+  const result=await request<unknown>('/admin/reference-packages/atp-tour-1990-2026-calendar')
+  const {validATPCalendarCatalog}=await import('./atpCalendarReferencePackages')
+  if(!validATPCalendarCatalog(result))throw new Error('ATP Calendar source catalog failed identity validation.')
+  return result
+}
+function atpCalendarReferenceRoot(runId:string,branchId:string):string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-atp-reference-calendar`
+}
+/** Read-only verified per-year dates; the Calendar-child fingerprint is mandatory. */
+export async function getATPCalendarReferenceYear(
+  year:number,calendarFingerprint:string
+):Promise<import('./atpCalendarReferencePackages').ATPCalendarReferenceYearView> {
+  if(!Number.isSafeInteger(year)||year<1990||year>2026)
+    throw new Error('ATP Calendar year must be in the 1990–2026 source span.')
+  const result=await request<unknown>(
+    `/admin/reference-packages/atp-tour-1990-2026-calendar/years/${year}`
+  )
+  const {validATPCalendarYearView}=await import('./atpCalendarReferencePackages')
+  if(!validATPCalendarYearView(result,year,calendarFingerprint))
+    throw new Error('ATP Calendar year view failed source fingerprint validation.')
+  return result
+}
+export function previewATPCalendarReference(
+  runId:string,branchId:string
+):Promise<import('./atpReferencePackages').ATPReferencePreview> {
+  return request(atpCalendarReferenceRoot(runId,branchId)+'/preview',{method:'POST',body:'{}'})
+}
+export function confirmATPCalendarReference(
+  runId:string,branchId:string,
+  requestBody:import('./atpReferencePackages').ATPReferenceConfirm
+):Promise<import('./runPackageSetup').RunSourcePackageApplied> {
+  return request(atpCalendarReferenceRoot(runId,branchId)+'/confirm',{
+    method:'POST',body:JSON.stringify(requestBody)
+  })
+}
+
 export function previewRunSourcePackage(
   runId: string, branchId: string,
   kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string

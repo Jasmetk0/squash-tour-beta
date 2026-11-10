@@ -1,0 +1,466 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1991,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+  "as_of": "2026-11-04",
+  "notes": "76/76 exact official 1991 original ATP World/Championship Series and Frankfurt World Championship year-effective source Series, preserving December 1990 crossover Adelaide/Wellington and two Guaruja, Sydney, Tokyo, Stuttgart events. Annual ATP 1991 archive World Championships 12–17 November agrees with official historical ATP Finals page. Source IDs are parent historical identities, not independently proven legal licence chain. Does not include Grand Slams, World Team Cup, Davis Cup, Grand Slam Cup, Challengers or doubles Finals. Nonplayable reference only; requires explicit separated canonical promotion.",
+  "events": [
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1990-12-31",
+      "end_date": "1991-01-06"
+    },
+    {
+      "historical_host": "Wellington",
+      "series_id": "wellington_1992",
+      "start_date": "1990-12-31",
+      "end_date": "1991-01-06"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1991-01-07",
+      "end_date": "1991-01-13"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1991-01-07",
+      "end_date": "1991-01-13"
+    },
+    {
+      "historical_host": "Guaruja-1",
+      "series_id": "maceio_1992",
+      "start_date": "1991-02-04",
+      "end_date": "1991-02-10"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1991-02-04",
+      "end_date": "1991-02-10"
+    },
+    {
+      "historical_host": "San Francisco",
+      "series_id": "dallas",
+      "start_date": "1991-02-04",
+      "end_date": "1991-02-10"
+    },
+    {
+      "historical_host": "Brussels",
+      "series_id": "brussels_championship_1992",
+      "start_date": "1991-02-11",
+      "end_date": "1991-02-17"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1991-02-11",
+      "end_date": "1991-02-17"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1991-02-18",
+      "end_date": "1991-02-24"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1991-02-18",
+      "end_date": "1991-02-24"
+    },
+    {
+      "historical_host": "Chicago",
+      "series_id": "chicago_1991",
+      "start_date": "1991-02-25",
+      "end_date": "1991-03-03"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1991-02-25",
+      "end_date": "1991-03-03"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1991-03-04",
+      "end_date": "1991-03-10"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1991-03-04",
+      "end_date": "1991-03-10"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1991-03-15",
+      "end_date": "1991-03-24"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1991-04-01",
+      "end_date": "1991-04-07"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1991-04-01",
+      "end_date": "1991-04-07"
+    },
+    {
+      "historical_host": "Orlando",
+      "series_id": "orlando_1991",
+      "start_date": "1991-04-01",
+      "end_date": "1991-04-07"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1991-04-08",
+      "end_date": "1991-04-14"
+    },
+    {
+      "historical_host": "Tokyo-1",
+      "series_id": "tokyo",
+      "start_date": "1991-04-08",
+      "end_date": "1991-04-14"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1991-04-15",
+      "end_date": "1991-04-21"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1991-04-15",
+      "end_date": "1991-04-21"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1991-04-22",
+      "end_date": "1991-04-28"
+    },
+    {
+      "historical_host": "Singapore",
+      "series_id": "singapore_march_1992",
+      "start_date": "1991-04-22",
+      "end_date": "1991-04-28"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid_clay_1994",
+      "start_date": "1991-04-29",
+      "end_date": "1991-05-05"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1991-04-29",
+      "end_date": "1991-05-05"
+    },
+    {
+      "historical_host": "Tampa",
+      "series_id": "houston",
+      "start_date": "1991-04-29",
+      "end_date": "1991-05-05"
+    },
+    {
+      "historical_host": "Charlotte",
+      "series_id": "birmingham_1994",
+      "start_date": "1991-05-06",
+      "end_date": "1991-05-12"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1991-05-06",
+      "end_date": "1991-05-12"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1991-05-13",
+      "end_date": "1991-05-19"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1991-05-13",
+      "end_date": "1991-05-19"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1991-05-20",
+      "end_date": "1991-05-26"
+    },
+    {
+      "historical_host": "Florence",
+      "series_id": "florence_1994",
+      "start_date": "1991-06-10",
+      "end_date": "1991-06-16"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1991-06-10",
+      "end_date": "1991-06-16"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1991-06-10",
+      "end_date": "1991-06-16"
+    },
+    {
+      "historical_host": "Genoa",
+      "series_id": "poertschach_2008",
+      "start_date": "1991-06-17",
+      "end_date": "1991-06-23"
+    },
+    {
+      "historical_host": "Manchester",
+      "series_id": "eastbourne",
+      "start_date": "1991-06-17",
+      "end_date": "1991-06-23"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1991-07-08",
+      "end_date": "1991-07-14"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1991-07-08",
+      "end_date": "1991-07-14"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1991-07-08",
+      "end_date": "1991-07-14"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1991-07-15",
+      "end_date": "1991-07-21"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1991-07-15",
+      "end_date": "1991-07-21"
+    },
+    {
+      "historical_host": "Hilversum",
+      "series_id": "belgrade_2012",
+      "start_date": "1991-07-22",
+      "end_date": "1991-07-28"
+    },
+    {
+      "historical_host": "Montreal (Canadian Open)",
+      "series_id": "canadian_open",
+      "start_date": "1991-07-22",
+      "end_date": "1991-07-28"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1991-07-29",
+      "end_date": "1991-08-04"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1991-07-29",
+      "end_date": "1991-08-04"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1991-07-29",
+      "end_date": "1991-08-04"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1991-08-05",
+      "end_date": "1991-08-11"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1991-08-05",
+      "end_date": "1991-08-11"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1991-08-12",
+      "end_date": "1991-08-18"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1991-08-12",
+      "end_date": "1991-08-18"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1991-08-19",
+      "end_date": "1991-08-25"
+    },
+    {
+      "historical_host": "Schenectady",
+      "series_id": "schenectady_1994",
+      "start_date": "1991-08-19",
+      "end_date": "1991-08-25"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1991-09-09",
+      "end_date": "1991-09-15"
+    },
+    {
+      "historical_host": "Brasilia",
+      "series_id": "brasilia_1991",
+      "start_date": "1991-09-09",
+      "end_date": "1991-09-15"
+    },
+    {
+      "historical_host": "Geneva",
+      "series_id": "cologne_1992_clay",
+      "start_date": "1991-09-09",
+      "end_date": "1991-09-15"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1991-09-23",
+      "end_date": "1991-09-29"
+    },
+    {
+      "historical_host": "Brisbane (autumn)",
+      "series_id": "brisbane_autumn_1992",
+      "start_date": "1991-09-23",
+      "end_date": "1991-09-29"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1991-09-23",
+      "end_date": "1991-09-29"
+    },
+    {
+      "historical_host": "Athens",
+      "series_id": "athens_1994",
+      "start_date": "1991-09-30",
+      "end_date": "1991-10-06"
+    },
+    {
+      "historical_host": "Sydney-2 (indoor)",
+      "series_id": "sydney_indoor_1994",
+      "start_date": "1991-09-30",
+      "end_date": "1991-10-06"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1991-09-30",
+      "end_date": "1991-10-06"
+    },
+    {
+      "historical_host": "Berlin",
+      "series_id": "berlin_1991",
+      "start_date": "1991-10-07",
+      "end_date": "1991-10-13"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1991-10-07",
+      "end_date": "1991-10-13"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1991-10-07",
+      "end_date": "1991-10-13"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1991-10-14",
+      "end_date": "1991-10-20"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1991-10-14",
+      "end_date": "1991-10-20"
+    },
+    {
+      "historical_host": "Guaruja-2",
+      "series_id": "guaruja_1992",
+      "start_date": "1991-10-21",
+      "end_date": "1991-10-27"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1991-10-21",
+      "end_date": "1991-10-27"
+    },
+    {
+      "historical_host": "Buzios",
+      "series_id": "buzios_1992",
+      "start_date": "1991-10-28",
+      "end_date": "1991-11-03"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1991-10-28",
+      "end_date": "1991-11-03"
+    },
+    {
+      "historical_host": "Birmingham (indoor)",
+      "series_id": "birmingham_indoor_1991",
+      "start_date": "1991-11-04",
+      "end_date": "1991-11-10"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1991-11-04",
+      "end_date": "1991-11-10"
+    },
+    {
+      "historical_host": "Sao Paulo",
+      "series_id": "sao_paulo_1993",
+      "start_date": "1991-11-04",
+      "end_date": "1991-11-10"
+    },
+    {
+      "historical_host": "Frankfurt ATP Tour World Championships",
+      "series_id": "atp_finals",
+      "start_date": "1991-11-12",
+      "end_date": "1991-11-17"
+    }
+  ]
+}

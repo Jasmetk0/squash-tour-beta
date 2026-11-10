@@ -1,0 +1,520 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1994,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
+  "as_of": "2026-11-04",
+  "notes": "Complete original 1994 ATP Tour source-tier parent-roster candidate: 85/85 original year-effective ATP World Series, Championship Series, Single-Week Masters and Frankfurt singles ATP Tour World Championships date intervals from official ATP results archive for 1994. ATP archive's inclusive published event-window convention is retained; ATP Finals also agrees with historical ATP tournament record (15–20 November). Excluded: four Grand Slams, World Team Cup, Davis Cup, Grand Slam Cup, Challengers and separate doubles Finals. Original paired distinct events (Tokyo-1/2, Sydney-1/2, Stuttgart-1/2, Atlanta/Indianapolis) remain separately tied to stable parent Series IDs. Parent IDs track historical reference continuity but are NOT certification of legal licence lineage. Still a source-only candidate, not a playable Calendar or automatically installed Run schedule; canonical import requires explicit separate promotion. 2026 is provisional.",
+  "events": [
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Oahu",
+      "series_id": "oahu_1994",
+      "start_date": "1994-01-03",
+      "end_date": "1994-01-09"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Jakarta",
+      "series_id": "jakarta_1996",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1994-01-10",
+      "end_date": "1994-01-16"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "San Jose",
+      "series_id": "dallas",
+      "start_date": "1994-01-31",
+      "end_date": "1994-02-06"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1994-02-07",
+      "end_date": "1994-02-13"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1994-02-07",
+      "end_date": "1994-02-13"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1994-02-14",
+      "end_date": "1994-02-20"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1994-02-14",
+      "end_date": "1994-02-20"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1994-02-21",
+      "end_date": "1994-02-27"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1994-02-28",
+      "end_date": "1994-03-06"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1994-02-28",
+      "end_date": "1994-03-06"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1994-03-07",
+      "end_date": "1994-03-20"
+    },
+    {
+      "historical_host": "Zaragoza",
+      "series_id": "zaragoza_1994",
+      "start_date": "1994-03-07",
+      "end_date": "1994-03-20"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1994-03-14",
+      "end_date": "1994-03-20"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1994-03-28",
+      "end_date": "1994-04-03"
+    },
+    {
+      "historical_host": "Osaka",
+      "series_id": "osaka_1994",
+      "start_date": "1994-03-28",
+      "end_date": "1994-04-03"
+    },
+    {
+      "historical_host": "Sun City",
+      "series_id": "johannesburg_1995",
+      "start_date": "1994-03-28",
+      "end_date": "1994-04-03"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1994-04-04",
+      "end_date": "1994-04-10"
+    },
+    {
+      "historical_host": "Tokyo-1 (Japan Open)",
+      "series_id": "tokyo",
+      "start_date": "1994-04-04",
+      "end_date": "1994-04-10"
+    },
+    {
+      "historical_host": "Birmingham",
+      "series_id": "birmingham_1994",
+      "start_date": "1994-04-11",
+      "end_date": "1994-04-17"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1994-04-11",
+      "end_date": "1994-04-17"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1994-04-11",
+      "end_date": "1994-04-17"
+    },
+    {
+      "historical_host": "Monte Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1994-04-18",
+      "end_date": "1994-04-24"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1994-04-18",
+      "end_date": "1994-04-24"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1994-04-25",
+      "end_date": "1994-05-01"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid_clay_1994",
+      "start_date": "1994-04-25",
+      "end_date": "1994-05-01"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1994-04-25",
+      "end_date": "1994-05-01"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1994-05-02",
+      "end_date": "1994-05-08"
+    },
+    {
+      "historical_host": "Pinehurst",
+      "series_id": "houston",
+      "start_date": "1994-05-02",
+      "end_date": "1994-05-08"
+    },
+    {
+      "historical_host": "Coral Springs",
+      "series_id": "delray_beach",
+      "start_date": "1994-05-09",
+      "end_date": "1994-05-15"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1994-05-09",
+      "end_date": "1994-05-15"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1994-05-16",
+      "end_date": "1994-05-22"
+    },
+    {
+      "historical_host": "Florence",
+      "series_id": "florence_1994",
+      "start_date": "1994-06-06",
+      "end_date": "1994-06-12"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1994-06-06",
+      "end_date": "1994-06-12"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1994-06-06",
+      "end_date": "1994-06-12"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "1994-06-13",
+      "end_date": "1994-06-19"
+    },
+    {
+      "historical_host": "Manchester",
+      "series_id": "eastbourne",
+      "start_date": "1994-06-13",
+      "end_date": "1994-06-19"
+    },
+    {
+      "historical_host": "St. Polten",
+      "series_id": "poertschach_2008",
+      "start_date": "1994-06-13",
+      "end_date": "1994-06-19"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1994-07-04",
+      "end_date": "1994-07-10"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1994-07-04",
+      "end_date": "1994-07-10"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1994-07-04",
+      "end_date": "1994-07-10"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1994-07-18",
+      "end_date": "1994-07-24"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1994-07-18",
+      "end_date": "1994-07-24"
+    },
+    {
+      "historical_host": "Hilversum",
+      "series_id": "belgrade_2012",
+      "start_date": "1994-07-25",
+      "end_date": "1994-07-31"
+    },
+    {
+      "historical_host": "Toronto (Canadian Open)",
+      "series_id": "canadian_open",
+      "start_date": "1994-07-25",
+      "end_date": "1994-07-31"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1994-08-01",
+      "end_date": "1994-08-07"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1994-08-01",
+      "end_date": "1994-08-07"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1994-08-01",
+      "end_date": "1994-08-07"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1994-08-08",
+      "end_date": "1994-08-14"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1994-08-08",
+      "end_date": "1994-08-14"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1994-08-15",
+      "end_date": "1994-08-21"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1994-08-15",
+      "end_date": "1994-08-21"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1994-08-22",
+      "end_date": "1994-08-28"
+    },
+    {
+      "historical_host": "Schenectady",
+      "series_id": "schenectady_1994",
+      "start_date": "1994-08-22",
+      "end_date": "1994-08-28"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1994-08-22",
+      "end_date": "1994-08-28"
+    },
+    {
+      "historical_host": "Bogota",
+      "series_id": "bogota_colombia_2001",
+      "start_date": "1994-09-12",
+      "end_date": "1994-09-18"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1994-09-12",
+      "end_date": "1994-09-18"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "1994-09-12",
+      "end_date": "1994-09-18"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1994-09-26",
+      "end_date": "1994-10-02"
+    },
+    {
+      "historical_host": "Kuala Lumpur",
+      "series_id": "singapore_1999",
+      "start_date": "1994-09-26",
+      "end_date": "1994-10-02"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1994-09-26",
+      "end_date": "1994-10-02"
+    },
+    {
+      "historical_host": "Athens",
+      "series_id": "athens_1994",
+      "start_date": "1994-10-03",
+      "end_date": "1994-10-09"
+    },
+    {
+      "historical_host": "Sydney-2 (indoor)",
+      "series_id": "sydney_indoor_1994",
+      "start_date": "1994-10-03",
+      "end_date": "1994-10-09"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1994-10-03",
+      "end_date": "1994-10-09"
+    },
+    {
+      "historical_host": "Ostrava",
+      "series_id": "ostrava_1998",
+      "start_date": "1994-10-10",
+      "end_date": "1994-10-16"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1994-10-10",
+      "end_date": "1994-10-16"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1994-10-10",
+      "end_date": "1994-10-16"
+    },
+    {
+      "historical_host": "Beijing",
+      "series_id": "beijing_1997",
+      "start_date": "1994-10-17",
+      "end_date": "1994-10-23"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1994-10-17",
+      "end_date": "1994-10-23"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1994-10-17",
+      "end_date": "1994-10-23"
+    },
+    {
+      "historical_host": "Santiago",
+      "series_id": "santiago_1998",
+      "start_date": "1994-10-24",
+      "end_date": "1994-10-30"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1994-10-24",
+      "end_date": "1994-10-30"
+    },
+    {
+      "historical_host": "Montevideo",
+      "series_id": "montevideo_1995",
+      "start_date": "1994-10-31",
+      "end_date": "1994-11-06"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1994-10-31",
+      "end_date": "1994-11-06"
+    },
+    {
+      "historical_host": "Antwerp",
+      "series_id": "antwerp_1998",
+      "start_date": "1994-11-07",
+      "end_date": "1994-11-13"
+    },
+    {
+      "historical_host": "Buenos Aires",
+      "series_id": "buenos_aires_1995",
+      "start_date": "1994-11-07",
+      "end_date": "1994-11-13"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1994-11-07",
+      "end_date": "1994-11-13"
+    },
+    {
+      "historical_host": "Frankfurt ATP World Championships",
+      "series_id": "atp_finals",
+      "start_date": "1994-11-15",
+      "end_date": "1994-11-20"
+    }
+  ]
+}

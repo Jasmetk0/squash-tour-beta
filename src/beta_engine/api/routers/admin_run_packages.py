@@ -1,5 +1,6 @@
 """Narrow Run/Branch Package inspection, preview, and confirm API."""
 
+from collections.abc import Callable
 from typing import Literal
 import json
 from fastapi import APIRouter, Depends, HTTPException
@@ -18,6 +19,7 @@ from beta_engine.application.run_package_service import (
 )
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.application.atp_reference_package_adapter import ATPReferencePackageAdapter
+from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
 from beta_engine.domain.run_packages import CanonicalPackageDocument, canonical_hash, entity_content_fingerprint
 from beta_engine.application.run_edition_entry_timing import RunEditionEntryTimingService
 from beta_engine.domain.tournaments.edition_entry_timing import EditionEntryTiming
@@ -191,15 +193,14 @@ def get_source_atp_reference_catalog():
         raise HTTPException(409, "ATP reference source is invalid or unavailable") from exc
 
 
-@router.post("/source-atp-reference/preview")
-def preview_source_atp_reference(
+def _preview_atp_source(
     run_id: str,
     branch_id: str,
-    service: RunPackageService = Depends(get_run_package_service),
+    service: RunPackageService,
+    build_document: Callable[[], CanonicalPackageDocument],
 ):
-    """Preview both immutable reference types together; never generate Editions."""
     try:
-        document = ATPReferencePackageAdapter().build_document()
+        document = build_document()
         result = service.preview(run_id=run_id, branch_id=branch_id, document=document)
         # Do not transmit the full historical JSON on every read-only
         # preview. The CAS fingerprint still covers the frozen Setup and
@@ -218,18 +219,15 @@ def preview_source_atp_reference(
         raise HTTPException(409, str(exc)) from exc
 
 
-@router.post("/source-atp-reference/confirm")
-def confirm_source_atp_reference(
+def _confirm_atp_source(
     run_id: str,
     branch_id: str,
     request: SourceWorldConfirmRequest,
-    service: RunPackageService = Depends(get_run_package_service),
+    service: RunPackageService,
+    build_document: Callable[[], CanonicalPackageDocument],
 ):
-    """Apply the two source references through existing CAS-guarded Run Packages."""
-    if request.selected_entities is not None:
-        raise HTTPException(409, "ATP reference Setup must be applied atomically")
     try:
-        document = ATPReferencePackageAdapter().build_document()
+        document = build_document()
         result = service.confirm(
             run_id=run_id,
             branch_id=branch_id,
@@ -251,6 +249,111 @@ def confirm_source_atp_reference(
         }
     except (OSError, RunPackageConflictError, RunPackageNotFoundError, ValueError) as exc:
         raise HTTPException(409, str(exc)) from exc
+
+
+@router.post("/source-atp-reference/preview")
+def preview_source_atp_reference(
+    run_id: str,
+    branch_id: str,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Preview both immutable reference types together; never generate Editions."""
+    return _preview_atp_source(
+        run_id, branch_id, service, lambda: ATPReferencePackageAdapter().build_document(),
+    )
+
+
+@router.post("/source-atp-reference/confirm")
+def confirm_source_atp_reference(
+    run_id: str,
+    branch_id: str,
+    request: SourceWorldConfirmRequest,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Apply the two source references through existing CAS-guarded Run Packages."""
+    if request.selected_entities is not None:
+        raise HTTPException(409, "ATP reference Setup must be applied atomically")
+    return _confirm_atp_source(
+        run_id, branch_id, request, service, lambda: ATPReferencePackageAdapter().build_document(),
+    )
+
+
+@atp_reference_catalog_router.get("/atp-tour-1990-2026-calendar")
+@router.get("/source-atp-reference-calendar/catalog")
+def get_source_atp_reference_calendar_catalog():
+    """Reference-only 1990–2026 date provenance and child Package fingerprints."""
+    try:
+        return ATPHistoricalCalendarAdapter().catalog()
+    except (OSError, ValueError) as exc:
+        raise HTTPException(409, "ATP Calendar reference source is invalid or unavailable") from exc
+
+
+@atp_reference_catalog_router.get("/atp-tour-1990-2026-calendar/years/{year}")
+def get_source_atp_reference_calendar_year(year: int):
+    """Read-only dated events for one season; never invent missing Series dates."""
+    if not 1990 <= year <= 2026:
+        raise HTTPException(404, "ATP Calendar source year is outside 1990–2026")
+    try:
+        document = ATPHistoricalCalendarAdapter().build_calendar()
+        coverage = [
+            e for e in document.entities
+            if e.entity_kind == "tennis.calendar.coverage.reference.v1"
+            and e.payload["atp_season_year"] == year
+        ]
+        if len(coverage) != 1:
+            raise ValueError("Invalid ATP historical Calendar year coverage")
+        occurrences = [
+            e.payload for e in document.entities
+            if e.entity_kind == "tennis.calendar.occurrence.reference.v1"
+            and e.payload["atp_season_year"] == year
+        ]
+        events = [{
+            key: e[key] for key in (
+                "series_id", "category_id", "start_date", "end_date",
+                "start_year_week", "end_year_week", "iso_weeks_occupied",
+                "source_url", "year_source_state",
+            )
+        } for e in sorted(occurrences, key=lambda x: (
+            x["start_date"], x["series_id"]
+        ))]
+        return {
+            "year": year,
+            "package_id": document.package_id,
+            "source_fingerprint": document.source_fingerprint,
+            "read_only": True,
+            "run_mutated": False,
+            "coverage": coverage[0].payload,
+            "events": events,
+        }
+    except (OSError, ValueError) as exc:
+        raise HTTPException(409, "ATP Calendar source year is invalid") from exc
+
+
+@router.post("/source-atp-reference-calendar/preview")
+def preview_source_atp_reference_calendar(
+    run_id: str,
+    branch_id: str,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Preview immutable 3-child Setup; omit giant frozen payload from response."""
+    return _preview_atp_source(
+        run_id, branch_id, service, lambda: ATPHistoricalCalendarAdapter().build_document(),
+    )
+
+
+@router.post("/source-atp-reference-calendar/confirm")
+def confirm_source_atp_reference_calendar(
+    run_id: str,
+    branch_id: str,
+    request: SourceWorldConfirmRequest,
+    service: RunPackageService = Depends(get_run_package_service),
+):
+    """Atomically apply Category + Series + Calendar; explicit separate Save."""
+    if request.selected_entities is not None:
+        raise HTTPException(409, "ATP Calendar reference Setup must be applied atomically")
+    return _confirm_atp_source(
+        run_id, branch_id, request, service, lambda: ATPHistoricalCalendarAdapter().build_document(),
+    )
 
 
 @router.post("/source-world/{world_id}/preview")

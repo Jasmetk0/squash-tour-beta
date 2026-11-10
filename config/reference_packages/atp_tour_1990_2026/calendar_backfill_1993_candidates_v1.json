@@ -1,0 +1,514 @@
+{
+  "schema_version": "tennis.atp_tour_calendar_backfill_candidates.v1",
+  "year": 1993,
+  "status": "partial_official_archive_transcription_requires_full_year_reconciliation",
+  "source_url": "https://www.atptour.com/en/scores/results-archive?year=1993",
+  "as_of": "2026-11-04",
+  "notes": "Full 84/84 original year-effective ATP main-tour source Series candidate roster from official ATP 1993 annual results archive. The annual archive dates Frankfurt Finals 15–21 Nov, while separate authoritative ATP Finals tournament history and ITF list actual singles matches 16–21 Nov. This unresolved date-window convention discrepancy MUST block any canonical 1993 import until a versioned source-policy decision; no guessed date correction or bypass. Excludes Australian Open, Roland Garros, Wimbledon, US Open, World Team Cup, Davis Cup, Grand Slam Cup, Challengers and separate doubles Finals. Original two Kuala Lumpur, Sydney, Tokyo, Stuttgart events remain distinct. Stable parent Series IDs do not independently establish legal ATP licence lineage. Staged source-only evidence, nonplayable.",
+  "events": [
+    {
+      "historical_host": "Adelaide",
+      "series_id": "brisbane",
+      "start_date": "1993-01-04",
+      "end_date": "1993-01-10"
+    },
+    {
+      "historical_host": "Doha",
+      "series_id": "doha",
+      "start_date": "1993-01-04",
+      "end_date": "1993-01-10"
+    },
+    {
+      "historical_host": "Kuala Lumpur-1",
+      "series_id": "kuala_lumpur_jan_1993",
+      "start_date": "1993-01-04",
+      "end_date": "1993-01-10"
+    },
+    {
+      "historical_host": "Auckland",
+      "series_id": "auckland",
+      "start_date": "1993-01-11",
+      "end_date": "1993-01-17"
+    },
+    {
+      "historical_host": "Jakarta",
+      "series_id": "jakarta_1996",
+      "start_date": "1993-01-11",
+      "end_date": "1993-01-17"
+    },
+    {
+      "historical_host": "Sydney-1",
+      "series_id": "sydney_2019",
+      "start_date": "1993-01-11",
+      "end_date": "1993-01-17"
+    },
+    {
+      "historical_host": "Dubai",
+      "series_id": "dubai",
+      "start_date": "1993-02-01",
+      "end_date": "1993-02-07"
+    },
+    {
+      "historical_host": "Marseille",
+      "series_id": "lyon",
+      "start_date": "1993-02-01",
+      "end_date": "1993-02-07"
+    },
+    {
+      "historical_host": "San Francisco",
+      "series_id": "dallas",
+      "start_date": "1993-02-01",
+      "end_date": "1993-02-07"
+    },
+    {
+      "historical_host": "Memphis",
+      "series_id": "rio",
+      "start_date": "1993-02-08",
+      "end_date": "1993-02-14"
+    },
+    {
+      "historical_host": "Milan",
+      "series_id": "sofia",
+      "start_date": "1993-02-08",
+      "end_date": "1993-02-14"
+    },
+    {
+      "historical_host": "Philadelphia",
+      "series_id": "philadelphia_1998",
+      "start_date": "1993-02-15",
+      "end_date": "1993-02-21"
+    },
+    {
+      "historical_host": "Stuttgart-1 (indoor)",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "start_date": "1993-02-15",
+      "end_date": "1993-02-21"
+    },
+    {
+      "historical_host": "Mexico City",
+      "series_id": "acapulco",
+      "start_date": "1993-02-22",
+      "end_date": "1993-02-28"
+    },
+    {
+      "historical_host": "Rotterdam",
+      "series_id": "rotterdam",
+      "start_date": "1993-02-22",
+      "end_date": "1993-02-28"
+    },
+    {
+      "historical_host": "Scottsdale",
+      "series_id": "las_vegas_2008",
+      "start_date": "1993-02-22",
+      "end_date": "1993-02-28"
+    },
+    {
+      "historical_host": "Copenhagen",
+      "series_id": "copenhagen_2003",
+      "start_date": "1993-03-01",
+      "end_date": "1993-03-07"
+    },
+    {
+      "historical_host": "Indian Wells",
+      "series_id": "indian_wells",
+      "start_date": "1993-03-01",
+      "end_date": "1993-03-07"
+    },
+    {
+      "historical_host": "Zaragoza",
+      "series_id": "zaragoza_1994",
+      "start_date": "1993-03-08",
+      "end_date": "1993-03-21"
+    },
+    {
+      "historical_host": "Miami",
+      "series_id": "miami",
+      "start_date": "1993-03-12",
+      "end_date": "1993-03-21"
+    },
+    {
+      "historical_host": "Casablanca",
+      "series_id": "marrakech",
+      "start_date": "1993-03-15",
+      "end_date": "1993-03-21"
+    },
+    {
+      "historical_host": "Durban",
+      "series_id": "johannesburg_1995",
+      "start_date": "1993-03-29",
+      "end_date": "1993-04-04"
+    },
+    {
+      "historical_host": "Estoril",
+      "series_id": "estoril",
+      "start_date": "1993-03-29",
+      "end_date": "1993-04-04"
+    },
+    {
+      "historical_host": "Osaka",
+      "series_id": "osaka_1994",
+      "start_date": "1993-03-29",
+      "end_date": "1993-04-04"
+    },
+    {
+      "historical_host": "Barcelona",
+      "series_id": "barcelona",
+      "start_date": "1993-04-05",
+      "end_date": "1993-04-11"
+    },
+    {
+      "historical_host": "Tokyo-1 (Japan Open)",
+      "series_id": "tokyo",
+      "start_date": "1993-04-05",
+      "end_date": "1993-04-11"
+    },
+    {
+      "historical_host": "Charlotte",
+      "series_id": "birmingham_1994",
+      "start_date": "1993-04-12",
+      "end_date": "1993-04-18"
+    },
+    {
+      "historical_host": "Hong Kong",
+      "series_id": "hong_kong_salem_2002",
+      "start_date": "1993-04-12",
+      "end_date": "1993-04-18"
+    },
+    {
+      "historical_host": "Nice",
+      "series_id": "hong_kong",
+      "start_date": "1993-04-12",
+      "end_date": "1993-04-18"
+    },
+    {
+      "historical_host": "Monte-Carlo",
+      "series_id": "monte_carlo",
+      "start_date": "1993-04-19",
+      "end_date": "1993-04-25"
+    },
+    {
+      "historical_host": "Seoul",
+      "series_id": "seoul_1996",
+      "start_date": "1993-04-19",
+      "end_date": "1993-04-25"
+    },
+    {
+      "historical_host": "Atlanta",
+      "series_id": "atlanta_verizon_2001",
+      "start_date": "1993-04-26",
+      "end_date": "1993-05-02"
+    },
+    {
+      "historical_host": "Madrid",
+      "series_id": "madrid_clay_1994",
+      "start_date": "1993-04-26",
+      "end_date": "1993-05-02"
+    },
+    {
+      "historical_host": "Munich",
+      "series_id": "munich",
+      "start_date": "1993-04-26",
+      "end_date": "1993-05-02"
+    },
+    {
+      "historical_host": "Hamburg",
+      "series_id": "hamburg",
+      "start_date": "1993-05-03",
+      "end_date": "1993-05-09"
+    },
+    {
+      "historical_host": "Tampa",
+      "series_id": "houston",
+      "start_date": "1993-05-03",
+      "end_date": "1993-05-09"
+    },
+    {
+      "historical_host": "Coral Springs",
+      "series_id": "delray_beach",
+      "start_date": "1993-05-10",
+      "end_date": "1993-05-16"
+    },
+    {
+      "historical_host": "Rome",
+      "series_id": "rome",
+      "start_date": "1993-05-10",
+      "end_date": "1993-05-16"
+    },
+    {
+      "historical_host": "Bologna",
+      "series_id": "bologna_1998",
+      "start_date": "1993-05-17",
+      "end_date": "1993-05-23"
+    },
+    {
+      "historical_host": "Florence",
+      "series_id": "florence_1994",
+      "start_date": "1993-06-07",
+      "end_date": "1993-06-13"
+    },
+    {
+      "historical_host": "London / Queen's Club",
+      "series_id": "queens_club",
+      "start_date": "1993-06-07",
+      "end_date": "1993-06-13"
+    },
+    {
+      "historical_host": "Rosmalen",
+      "series_id": "s_hertogenbosch",
+      "start_date": "1993-06-07",
+      "end_date": "1993-06-13"
+    },
+    {
+      "historical_host": "Genoa",
+      "series_id": "poertschach_2008",
+      "start_date": "1993-06-14",
+      "end_date": "1993-06-20"
+    },
+    {
+      "historical_host": "Halle",
+      "series_id": "halle",
+      "start_date": "1993-06-14",
+      "end_date": "1993-06-20"
+    },
+    {
+      "historical_host": "Manchester",
+      "series_id": "eastbourne",
+      "start_date": "1993-06-14",
+      "end_date": "1993-06-20"
+    },
+    {
+      "historical_host": "Bastad",
+      "series_id": "bastad",
+      "start_date": "1993-07-05",
+      "end_date": "1993-07-11"
+    },
+    {
+      "historical_host": "Gstaad",
+      "series_id": "gstaad",
+      "start_date": "1993-07-05",
+      "end_date": "1993-07-11"
+    },
+    {
+      "historical_host": "Newport",
+      "series_id": "newport",
+      "start_date": "1993-07-05",
+      "end_date": "1993-07-11"
+    },
+    {
+      "historical_host": "Stuttgart-2 (clay)",
+      "series_id": "stuttgart",
+      "start_date": "1993-07-19",
+      "end_date": "1993-07-25"
+    },
+    {
+      "historical_host": "Washington",
+      "series_id": "washington",
+      "start_date": "1993-07-19",
+      "end_date": "1993-07-25"
+    },
+    {
+      "historical_host": "Hilversum",
+      "series_id": "belgrade_2012",
+      "start_date": "1993-07-26",
+      "end_date": "1993-08-01"
+    },
+    {
+      "historical_host": "Montreal (Canadian Open)",
+      "series_id": "canadian_open",
+      "start_date": "1993-07-26",
+      "end_date": "1993-08-01"
+    },
+    {
+      "historical_host": "Kitzbuhel",
+      "series_id": "kitzbuhel",
+      "start_date": "1993-08-02",
+      "end_date": "1993-08-08"
+    },
+    {
+      "historical_host": "Los Angeles",
+      "series_id": "los_cabos",
+      "start_date": "1993-08-02",
+      "end_date": "1993-08-08"
+    },
+    {
+      "historical_host": "Prague",
+      "series_id": "prague_1999",
+      "start_date": "1993-08-02",
+      "end_date": "1993-08-08"
+    },
+    {
+      "historical_host": "Cincinnati",
+      "series_id": "cincinnati",
+      "start_date": "1993-08-09",
+      "end_date": "1993-08-15"
+    },
+    {
+      "historical_host": "San Marino",
+      "series_id": "san_marino_2000",
+      "start_date": "1993-08-09",
+      "end_date": "1993-08-15"
+    },
+    {
+      "historical_host": "Indianapolis",
+      "series_id": "atlanta",
+      "start_date": "1993-08-16",
+      "end_date": "1993-08-22"
+    },
+    {
+      "historical_host": "New Haven",
+      "series_id": "new_haven_1998",
+      "start_date": "1993-08-16",
+      "end_date": "1993-08-22"
+    },
+    {
+      "historical_host": "Long Island",
+      "series_id": "winston_salem",
+      "start_date": "1993-08-23",
+      "end_date": "1993-08-29"
+    },
+    {
+      "historical_host": "Schenectady",
+      "series_id": "schenectady_1994",
+      "start_date": "1993-08-23",
+      "end_date": "1993-08-29"
+    },
+    {
+      "historical_host": "Umag",
+      "series_id": "umag",
+      "start_date": "1993-08-23",
+      "end_date": "1993-08-29"
+    },
+    {
+      "historical_host": "Bordeaux",
+      "series_id": "bordeaux_1995",
+      "start_date": "1993-09-13",
+      "end_date": "1993-09-19"
+    },
+    {
+      "historical_host": "Bucharest",
+      "series_id": "belgrade_clay_2021",
+      "start_date": "1993-09-13",
+      "end_date": "1993-09-19"
+    },
+    {
+      "historical_host": "Basel",
+      "series_id": "basel",
+      "start_date": "1993-09-27",
+      "end_date": "1993-10-03"
+    },
+    {
+      "historical_host": "Kuala Lumpur-2",
+      "series_id": "singapore_1999",
+      "start_date": "1993-09-27",
+      "end_date": "1993-10-03"
+    },
+    {
+      "historical_host": "Palermo",
+      "series_id": "palermo",
+      "start_date": "1993-09-27",
+      "end_date": "1993-10-03"
+    },
+    {
+      "historical_host": "Athens",
+      "series_id": "athens_1994",
+      "start_date": "1993-10-04",
+      "end_date": "1993-10-10"
+    },
+    {
+      "historical_host": "Sydney-2 (indoor)",
+      "series_id": "sydney_indoor_1994",
+      "start_date": "1993-10-04",
+      "end_date": "1993-10-10"
+    },
+    {
+      "historical_host": "Toulouse",
+      "series_id": "toulouse_2000",
+      "start_date": "1993-10-04",
+      "end_date": "1993-10-10"
+    },
+    {
+      "historical_host": "Bolzano",
+      "series_id": "bolzano_1993",
+      "start_date": "1993-10-11",
+      "end_date": "1993-10-17"
+    },
+    {
+      "historical_host": "Tel Aviv",
+      "series_id": "tel_aviv_1996",
+      "start_date": "1993-10-11",
+      "end_date": "1993-10-17"
+    },
+    {
+      "historical_host": "Tokyo-2 (indoor)",
+      "series_id": "tokyo_indoor_1995",
+      "start_date": "1993-10-11",
+      "end_date": "1993-10-17"
+    },
+    {
+      "historical_host": "Beijing",
+      "series_id": "beijing_1997",
+      "start_date": "1993-10-18",
+      "end_date": "1993-10-24"
+    },
+    {
+      "historical_host": "Lyon",
+      "series_id": "montpellier",
+      "start_date": "1993-10-18",
+      "end_date": "1993-10-24"
+    },
+    {
+      "historical_host": "Vienna",
+      "series_id": "vienna",
+      "start_date": "1993-10-18",
+      "end_date": "1993-10-24"
+    },
+    {
+      "historical_host": "Santiago",
+      "series_id": "santiago_1998",
+      "start_date": "1993-10-25",
+      "end_date": "1993-10-31"
+    },
+    {
+      "historical_host": "Stockholm",
+      "series_id": "stockholm",
+      "start_date": "1993-10-25",
+      "end_date": "1993-10-31"
+    },
+    {
+      "historical_host": "Paris",
+      "series_id": "paris_masters",
+      "start_date": "1993-11-01",
+      "end_date": "1993-11-07"
+    },
+    {
+      "historical_host": "Sao Paulo",
+      "series_id": "sao_paulo_1993",
+      "start_date": "1993-11-01",
+      "end_date": "1993-11-07"
+    },
+    {
+      "historical_host": "Antwerp",
+      "series_id": "antwerp_1998",
+      "start_date": "1993-11-08",
+      "end_date": "1993-11-14"
+    },
+    {
+      "historical_host": "Buenos Aires",
+      "series_id": "buenos_aires_1995",
+      "start_date": "1993-11-08",
+      "end_date": "1993-11-14"
+    },
+    {
+      "historical_host": "Moscow",
+      "series_id": "moscow",
+      "start_date": "1993-11-08",
+      "end_date": "1993-11-14"
+    },
+    {
+      "historical_host": "Frankfurt ATP Tour World Championship (annual archive window)",
+      "series_id": "atp_finals",
+      "start_date": "1993-11-15",
+      "end_date": "1993-11-21"
+    }
+  ]
+}

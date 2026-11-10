@@ -3841,6 +3841,33 @@ export function confirmWorldSelection(
   )
 }
 
+/** ATP-only historic Category/Series references; deliberately not playable sport data. */
+export async function getATPReferenceCatalog(): Promise<import('./atpReferencePackages').ATPReferenceCatalog> {
+  const result=await request<unknown>('/admin/reference-packages/atp-tour-1990-2026')
+  const {validATPCatalog}=await import('./atpReferencePackages')
+  if(!validATPCatalog(result))throw new Error('ATP source catalog failed identity validation.')
+  return result
+}
+
+function atpReferenceRoot(runId:string,branchId:string):string {
+  return `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}/packages/source-atp-reference`
+}
+
+export function previewATPReference(
+  runId:string,branchId:string
+):Promise<import('./atpReferencePackages').ATPReferencePreview> {
+  return request(atpReferenceRoot(runId,branchId)+'/preview',{method:'POST',body:'{}'})
+}
+
+export function confirmATPReference(
+  runId:string,branchId:string,
+  requestBody:import('./atpReferencePackages').ATPReferenceConfirm
+):Promise<import('./runPackageSetup').RunSourcePackageApplied> {
+  return request(atpReferenceRoot(runId,branchId)+'/confirm',{
+    method:'POST',body:JSON.stringify(requestBody)
+  })
+}
+
 export function previewRunSourcePackage(
   runId: string, branchId: string,
   kind: import('./runPackageSetup').RunSourcePackageKind, sourceId: string

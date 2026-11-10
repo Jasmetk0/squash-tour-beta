@@ -9,7 +9,7 @@ export type TourPlayer = {run_id:string;branch_id:string;saved_head_revision_id:
 export type TourRanking = {week:{season_index:number;week:number};policy:{best_n:number;policy_id:string};rows:{rank:number;player_id:string;points:number;counted_results:TourResult[]}[]}
 export type TourDrawSlot = {slot_index:number;player_id:string|null;entrant_kind?:string;placeholder_id?:string|null}
 export type TourEdition = {
-  edition:{schema_version?:string;simulation_seed?:number;edition_id:string;name:string;week:TourWeek;announcement_week:TourWeek;start_slot:number;main_entrant_count:number;point_table:Record<string,number>;validity_weeks:number}
+  edition:{schema_version?:string;simulation_seed?:number;edition_id:string;name:string;week:TourWeek;announcement_week:TourWeek;start_slot:number;main_entrant_count:number;ranked?:boolean;point_table:Record<string,number>;validity_weeks:number}
   submissions:{application_id:string;player_id:string}[]
   field:{direct_main_player_ids:string[];below_qualification_cut_player_ids:string[]}|null
   draw:{main?:{slots:TourDrawSlot[]};topology?:{group_slots:{group_index:number;slot_index:number;player_id:string}[]}}|null

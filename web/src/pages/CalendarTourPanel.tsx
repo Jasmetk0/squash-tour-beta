@@ -13,9 +13,30 @@ import {NativeFullSimulationPanel} from '../components/FullSimulationTasksNative
 import {NativeTourOperatorQueue} from '../components/NativeTourOperatorQueue'
 import {formatApiError} from '../utils/apiErrors'
 import type {RunBranchListResponse} from '../api/types'
+import type {TourResult} from '../api/calendarTour'
 
 const actionLabels={approve:['Zkontrolovat schválení','Review approval'],draw:['Zkontrolovat los','Review draw'],play:['Zkontrolovat odehrání','Review play'],'confirm-result':['Zkontrolovat výsledky','Review results']}
 const stageLabels:Record<string,string>={champion:'Vítěz',finalist:'Finalista',semifinal:'Semifinále',quarterfinal:'Čtvrtfinále'}
+const canonicalStageLabels:Record<string,[string,string]>={
+  qualification_winner:['Vítěz kvalifikace','Qualification winner'],
+  qualification_final:['Finále kvalifikace','Qualification final'],
+  qualification_semifinal:['Semifinále kvalifikace','Qualification semifinal'],
+  qualification_round:['Kolo kvalifikace','Qualification round'],
+  round_of_16:['Osmifinále','Round of 16'],
+  round_of_32:['Kolo 32 hráčů','Round of 32'],
+  round_of_64:['Kolo 64 hráčů','Round of 64'],
+  round_of_128:['Kolo 128 hráčů','Round of 128'],
+}
+function tourStageLabel(stage:string,cs:boolean){
+  return canonicalStageLabels[stage]?.[cs?0:1]??(cs?stageLabels[stage]??stage:stage)
+}
+function tourPointLabel({qualification_points,main_points}:Pick<TourResult,'qualification_points'|'main_points'>,cs:boolean){
+  const total=qualification_points+main_points
+  if(!qualification_points)return String(total)
+  return cs
+    ?`${total} (kvalifikace ${qualification_points} + hlavní los ${main_points})`
+    :`${total} (qualification ${qualification_points} + main draw ${main_points})`
+}
 const withdrawalReasonLabels:Record<string,[string,string]>={injury:['Zranění','Injury'],illness:['Nemoc','Illness'],personal:['Osobní důvod','Personal'],travel:['Cesta nebo víza','Travel or visa'],no_show:['Nedostavení se','No show'],ineligible:['Nezpůsobilost','Ineligible'],other:['Jiné','Other']}
 const pointStatus:Record<string,string>={counted:'Započteno',awaiting_activation:'Čeká na aktivaci',closing_only:'Pouze závěrečná uzávěrka',expired:'Expirováno',excluded_best_n:'Mimo Best N'}
 const blockerLabels:Record<string,[string,string]>={season_transition_required:['Je nutný Season Transition.','Season Transition is required.'],season_transition_requires_last_week:['Season Transition lze provést až po posledním týdnu.','Season Transition requires the last week.'],season_transition_horizon_exhausted:['Další sezóna je mimo horizont Runu; nejprve prodlužte horizont.','The next season is beyond the Run horizon; extend it first.'],saved_health_baseline_missing:['Chybí uložený Health stav.','Saved Health state is missing.'],health_healing_or_permanent_effect_authority_unsupported:['Léčení či trvalé následky vyžadují dosud nepodporovanou autoritu.','Healing or permanent effects require an unsupported authority.'],intake_source_requires_native_calendar_materialization:['Prospect intake vyžaduje nativní kalendářovou materializaci.','Prospect intake requires native calendar materialization.'],disciplinary_source_requires_native_activation_authority:['Disciplinární zdroj vyžaduje nativní aktivaci.','Disciplinary source requires native activation.'],sporting_owner_drift:['Sportovní stav se změnil mimo Tour.','Sporting state changed outside Tour.']}
@@ -331,8 +352,12 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             <h3>{a.edition.name} · S{a.edition.week.season_index+1}/W{a.edition.week.week}</h3>
             {['calendar_tournament_edition.v2','calendar_tournament_edition.v3','calendar_tournament_edition.v4'].includes(a.edition.schema_version??'')&&<p>{cs?'Uložený seed turnaje':'Stored tournament seed'}: {a.edition.simulation_seed}</p>}
             <p>{!canonical&&<>{cs?'Přihlášky':'Applications'}: {a.submissions.length} · {cs?'Schválení':'Approved'}: {a.field?.direct_main_player_ids.length??0} · </>}{a.result_confirmed?(cs?'Výsledky potvrzeny':'Results confirmed'):a.tournament_fingerprint?(cs?'Odehráno':'Played'):a.draw?(cs?'Vylosováno':'Drawn'):(cs?'Příprava':'Preparation')}</p>
-            <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${cs?stageLabels[k]:k} ${v}`).join(' · ')}</p>
-            {canonical&&<p>{cs?'Neměnný uložený los · kvalifikace a Main bez žebříčkových bodů':'Immutable Saved draw · Unranked qualification and Main'} · {cs?'Hráčů v kvalifikaci':'Qualification players'}: {a.canonical_binding?.draw_input.qualification_player_ids.length}</p>}
+            <p>{cs?'Bodová tabulka':'Point table'}: {Object.entries(a.edition.point_table).map(([k,v])=>`${tourStageLabel(k,cs)} ${v}`).join(' · ')}</p>
+            {canonical&&<p>{cs?'Neměnný uložený los':'Immutable Saved draw'} · {a.edition.ranked===true
+              ?(cs?'Kvalifikace a hlavní los s body do žebříčku':'Ranked qualification and Main')
+              :a.edition.ranked===false
+                ?(cs?'Kvalifikace a hlavní los bez bodů do žebříčku':'Unranked qualification and Main')
+                :(cs?'Kvalifikace a hlavní los':'Qualification and Main')} · {cs?'Hráčů v kvalifikaci':'Qualification players'}: {a.canonical_binding?.draw_input.qualification_player_ids.length}</p>}
             {!canonical&&!a.field&&active&&<><select multiple aria-label={`Tour applicants ${id}`} value={selected} onChange={e=>{setSelected(Array.from(e.target.selectedOptions,o=>o.value));invalidate()}}>{view.players.filter(p=>p.status!=='retired'&&!a.submissions.some(s=>s.player_id===p.player_id)).map(p=><option key={p.player_id} value={p.player_id}>{p.name}</option>)}</select>
               <button disabled={nativeOnly||!ready||!selected.length} onClick={()=>void perform('submit',id)}>{cs?'Zkontrolovat přihlášky':'Review applications'}</button></>}
             {a.field&&<p>{cs?'Schválený field':'Approved field'}: {a.field.direct_main_player_ids.map(p=>names.get(p)??p).join(', ')}</p>}
@@ -368,7 +393,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
             {view.edition_evidence[id]&&<>
               <table aria-label={`Played matches ${id}`}><thead><tr><th>Slot</th><th>{cs?'Zápas':'Match'}</th><th>{cs?'Vítěz':'Winner'}</th><th>{cs?'Rally':'Rallies'}</th></tr></thead><tbody>{view.edition_evidence[id].matches.map(m=><tr key={m.match_id}><td>{m.slot}</td><td>{names.get(m.player_a_id)} / {names.get(m.player_b_id)}</td><td>{names.get(m.winner_player_id)}</td><td>{m.rally_count}</td></tr>)}</tbody></table>
               {view.edition_evidence[id].results.some(r=>r.schema_version==='calendar_terminal_edition_result.v1'||r.schema_version==='calendar_terminal_edition_result.v2')&&<p>{cs?'Poslední týden původního Runu: potvrzení a ruční Save uloží výsledek pro Closing Ranking. Žádný další týden ani Official Ranking se neotevře. Závěrečné uzavření vyžaduje samostatné schválení a Save.':'Original Run final week: confirmation and manual Save retain this result for the Closing Ranking. No following week or Official Ranking opens. Final closure requires separate approval and Save.'}</p>}
-              <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)}</td><td>{cs?stageLabels[r.stage]:r.stage}</td><td>{r.main_points}</td></tr>)}</tbody></table>
+              <table aria-label={`Edition results ${id}`}><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Výsledek':'Result'}</th><th>{cs?'Body':'Points'}</th></tr></thead><tbody>{view.edition_evidence[id].results.map(r=><tr key={r.player_id}><td>{names.get(r.player_id)??r.player_id}</td><td>{tourStageLabel(r.stage,cs)}</td><td>{tourPointLabel(r,cs)}</td></tr>)}</tbody></table>
             </>}
             {active&&!a.result_confirmed&&!(next==='play'&&['calendar_tournament_edition.v2','calendar_tournament_edition.v3','calendar_tournament_edition.v4'].includes(a.edition.schema_version??''))&&<button disabled={nativeOnly||!ready||(!view.saved&&(next==='play'||next==='confirm-result'))} onClick={()=>void perform(next,id)}>{actionLabels[next][cs?0:1]}</button>}
             {a.tournament_fingerprint&&finalMatchId&&a.edition.schema_version!=='calendar_tournament_edition.v3'&&<button disabled={busy} onClick={()=>{
@@ -469,7 +494,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
         {review.impact.approved_field&&<p>{cs?'Schválený field':'Approved field'}: {review.impact.approved_field.direct_main_player_ids.map(id=>names.get(id)??id).join(', ')}</p>}
         {review.impact.draw&&<ol>{tourDrawSlots(review.impact.draw).map(s=><li key={s.player_id??`slot:${s.slot_index}`}>{s.player_id?(names.get(s.player_id)??s.player_id):('placeholder_id' in s?s.placeholder_id:null)??(cs?'Volný los':'BYE')}</li>)}</ol>}
         {review.impact.entrant_ids&&<p>{cs?'Účastníci podle uloženého losu':'Participants from Saved draw'}: {review.impact.entrant_ids.map(id=>names.get(id)??id).join(', ')}</p>}
-        {review.impact.results&&<p>{cs?'Výsledné body':'Result points'}: {review.impact.results.map(r=>`${names.get(r.player_id)??r.player_id}: ${r.main_points}`).join(' · ')}</p>}
+        {review.impact.results&&<p>{cs?'Výsledné body':'Result points'}: {review.impact.results.map(r=>`${names.get(r.player_id)??r.player_id}: ${tourPointLabel(r,cs)}`).join(' · ')}</p>}
         {review.impact.ranking&&<p>{cs?'Nový týden':'New week'}: {review.impact.target_week?.season_index!==undefined? `${review.impact.target_week.season_index+1}/W${review.impact.target_week.week}`:review.impact.target_week?.week} · {cs?'Klasifikovaní hráči':'Classified players'}: {review.impact.ranking.rows.length} · {cs?'Změnění hráči':'Changed players'}: {review.impact.sporting?.changed_player_count} · {cs?'Změny atributů':'Attribute changes'}: {review.impact.sporting?.attribute_change_count}</p>}
         {review.impact.sporting?.changes&&<details><summary>{cs?'Dopady na hráče':'Player impacts'}</summary><table><thead><tr><th>{cs?'Hráč':'Player'}</th><th>{cs?'Změny atributů':'Attribute changes'}</th><th>Form</th><th>{cs?'Rozehranost':'Sharpness'}</th><th>{cs?'Únava':'Fatigue'}</th></tr></thead><tbody>{review.impact.sporting.changes.map(p=><tr key={p.player_id}><td>{names.get(p.player_id)??p.player_id}</td><td>{p.changed_attributes}</td><td>{p.form_before} → {p.form_after}</td><td>{p.sharpness_before} → {p.sharpness_after}</td><td>{p.fatigue_before} → {p.fatigue_after}</td></tr>)}</tbody></table></details>}
         <label><input aria-label="Confirm Tour command" type="checkbox" checked={consent} onChange={e=>setConsent(e.target.checked)}/>{review.command.action==='season-transition'?(cs?'Výslovně potvrzuji přechod do další sezóny podle těchto uložených vstupů.':'I explicitly confirm the next season using these saved inputs.'):(cs?'Potvrzuji tuto operaci nad zobrazeným vstupem.':'I confirm this operation over the displayed inputs.')}</label>

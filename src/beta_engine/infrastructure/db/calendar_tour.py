@@ -49,6 +49,25 @@ def put_tour(session, state):
     session.flush()
 
 
+def _turn_pro_replay_lifecycle(world, state, target):
+    from beta_engine.application.calendar_initial_world import (
+        derive_calendar_bootstrap_lifecycle,
+    )
+    from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+    from beta_engine.domain.tournaments.calendar_tour import (
+        lifecycle_calendars,
+        tour_turn_pro_decisions,
+    )
+
+    return calendar_lifecycle_history(
+        derive_calendar_bootstrap_lifecycle(world),
+        target,
+        tuple(s for a in state.editions for s in a.submissions),
+        effective_calendars=lifecycle_calendars(state),
+        turn_pro=tour_turn_pro_decisions(state),
+    )[-1]
+
+
 def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
     if (
         checkpoint is not None
@@ -296,11 +315,14 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 )
         # Rebuild each publication from actual immutable point sources and the
         # then-effective policy. Never take stored snapshot totals as inputs.
+        replay_lifecycle = None
         if world is not None and world.lifecycle_policy.requires_turn_pro:
-            # This replay rebuilds rosters from applications only. A v87 roster
-            # comes from Turn Pro lifecycle, which this reader cannot yet supply.
+            # v87 rosters come from Turn Pro: rebuild the lifecycle from the
+            # original World, actual applications and the recorded decisions.
+            replay_lifecycle = _turn_pro_replay_lifecycle(world, state, transition.target_week)
+        elif any(t.turn_pro_decisions or t.turn_pro_model for t in state.transitions):
             raise ValueError(
-                "Official ranking replay does not yet support the v87 Turn Pro roster"
+                "Turn Pro evidence requires the original World with the v87 lifecycle policy"
             )
         prefix = state.model_copy(update={"rankings": state.rankings[: i + 1]})
         expected = calculate_tour_ranking(
@@ -308,6 +330,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
             checkpoint,
             target=transition.target_week,
             retired=transition.retired_player_ids,
+            lifecycle=replay_lifecycle,
         )
         if expected != state.rankings[i + 1]:
             raise ValueError(

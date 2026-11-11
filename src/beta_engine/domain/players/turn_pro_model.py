@@ -185,3 +185,67 @@ def decide_turn_pro(
                 )
             )
     return tuple(decisions)
+
+
+def readiness_against(prospect_strength: float, reference_strengths: Iterable[float]) -> float:
+    """Share of the reference group the prospect is strictly stronger than."""
+    reference = tuple(reference_strengths)
+    if not reference:
+        raise ValueError("Readiness requires a non-empty reference group")
+    return sum(value < prospect_strength for value in reference) / len(reference)
+
+
+def build_turn_pro_candidates(
+    predecessor,
+    target_lifecycle,
+    strength_by_player: dict[str, float],
+    *,
+    home_opportunity_by_player: dict[str, bool] | None = None,
+) -> tuple[TurnProCandidate, ...]:
+    """Candidates and inputs from information known through the completed week.
+
+    ``predecessor`` is the completed week's lifecycle; ``target_lifecycle`` is the
+    same history advanced to the target week *without* new decisions, used only for
+    ages and retirement at the target. Strength comes from the completed week's
+    sporting state. Readiness compares a prospect with current active Tour Players;
+    while a Run has none yet it falls back to the whole active population.
+    """
+    target_by_id = {p.player_id: p for p in target_lifecycle.players}
+    prospects = []
+    tour = []
+    population = []
+    for player in sorted(predecessor.players, key=lambda p: p.player_id):
+        if player.status != "active":
+            continue
+        strength = strength_by_player.get(player.player_id)
+        if strength is None:
+            raise ValueError("Turn Pro readiness requires every active player's strength")
+        population.append((player.player_id, strength))
+        if getattr(player, "tour_entry_week", None) is not None:
+            tour.append(strength)
+            continue
+        future = target_by_id.get(player.player_id)
+        if future is None or future.status != "active":
+            continue
+        prospects.append((player.player_id, future.age, strength))
+    home = home_opportunity_by_player or {}
+
+    def reference_for(pid):
+        if tour:
+            return tour
+        # Fallback: everyone else in the active population, never the player itself.
+        return [v for other, v in population if other != pid]
+
+    return tuple(
+        TurnProCandidate(
+            player_id=pid,
+            age=age,
+            readiness=(
+                readiness_against(strength, reference_for(pid))
+                if tour or len(population) > 1
+                else 0.0
+            ),
+            home_opportunity=bool(home.get(pid, False)),
+        )
+        for pid, age, strength in prospects
+    )

@@ -33,7 +33,17 @@ from beta_engine.domain.players.calendar_followup_points import (
     CalendarFollowupPointPolicy,
 )
 from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
-from beta_engine.domain.players.turn_pro import require_professional_for_entry
+from beta_engine.domain.players.calendar_lifecycle import advance_calendar_lifecycle
+from beta_engine.domain.players.turn_pro import (
+    PlayerTurnProDecision,
+    require_professional_for_entry,
+)
+from beta_engine.domain.players.turn_pro_model import (
+    TurnProModelPolicy,
+    build_turn_pro_candidates,
+    decide_turn_pro,
+    default_turn_pro_model_policy,
+)
 from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.calendar_official import (
     calculate_calendar_official_ranking,
@@ -57,6 +67,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
     build_draw,
     calculate_tour_ranking,
+    tour_turn_pro_decisions,
     edition_results,
     effective_policy,
     lifecycle_calendars,
@@ -99,7 +110,41 @@ def _lifecycle_history(world, week, state):
         week,
         tuple(s for a in state.editions for s in a.submissions) if state else (),
         effective_calendars=lifecycle_calendars(state) if state else None,
+        turn_pro=tour_turn_pro_decisions(state),
     )
+
+
+def _turn_pro_week(world, state, target, checkpoint, seed):
+    """Master v87: run the player-AI model at this Week Transition.
+
+    Uses only the completed week's lifecycle and sporting checkpoint. Returns the
+    target lifecycle including new decisions, plus the decisions and the policy.
+    Under the historical rule it returns the unchanged lifecycle and no decisions.
+    """
+    history = _lifecycle_history(world, target, state)
+    if not history[-1].policy.requires_turn_pro:
+        return history[-1], (), None
+    predecessor, plain_target = history[-2], history[-1]
+    model = default_turn_pro_model_policy()
+    candidates = build_turn_pro_candidates(
+        predecessor,
+        plain_target,
+        {p.player_id: p.ovr for p in checkpoint.players},
+    )
+    decisions = decide_turn_pro(
+        predecessor=predecessor,
+        target=target,
+        candidates=candidates,
+        policy=model,
+        seed=seed,
+    )
+    lifecycle = advance_calendar_lifecycle(
+        predecessor,
+        target,
+        tuple(s for a in state.editions for s in a.submissions),
+        (*tour_turn_pro_decisions(state), *decisions),
+    )
+    return lifecycle, decisions, model
 
 
 class CalendarTourCommand(FrozenInput):
@@ -1222,7 +1267,9 @@ class CalendarTourService:
             season=command.action == "season-transition",
         )
         target = successor.week
-        lifecycle = _lifecycle_history(world, target, state)[-1]
+        lifecycle, turn_pro_decisions, turn_pro_model = _turn_pro_week(
+            world, state, target, cp, command.seed
+        )
         ages = tuple((p.player_id, p.age) for p in lifecycle.players)
         retired = tuple(p.player_id for p in lifecycle.players if p.status == "retired")
         ranking = calculate_tour_ranking(
@@ -1243,6 +1290,16 @@ class CalendarTourService:
             "health_fingerprint": health.fingerprint,
             "lifecycle": lifecycle.model_dump(mode="json"),
             "lifecycle_fingerprint": lifecycle.fingerprint,
+            **(
+                {
+                    "turn_pro_decisions": [
+                        d.model_dump(mode="json") for d in turn_pro_decisions
+                    ],
+                    "turn_pro_model": turn_pro_model.model_dump(mode="json"),
+                }
+                if turn_pro_model is not None
+                else {}
+            ),
         }, successor
 
     def _apply(
@@ -1514,6 +1571,17 @@ class CalendarTourService:
                 ages=impact["ages"],
                 retired_player_ids=impact["retired_player_ids"],
                 public_event=event,
+                turn_pro_decisions=tuple(
+                    PlayerTurnProDecision.model_validate_json(json.dumps(raw))
+                    for raw in impact.get("turn_pro_decisions", ())
+                ),
+                turn_pro_model=(
+                    TurnProModelPolicy.model_validate_json(
+                        json.dumps(impact["turn_pro_model"])
+                    )
+                    if impact.get("turn_pro_model") is not None
+                    else None
+                ),
             )
             updates = {
                 "schema_version": (

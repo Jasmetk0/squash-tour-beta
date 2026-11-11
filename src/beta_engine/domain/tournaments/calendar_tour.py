@@ -25,6 +25,8 @@ from beta_engine.domain.rankings.calendar_official import (
 from beta_engine.domain.rankings.calendar_terminal_result import (
     CalendarTerminalRankingResult,
 )
+from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
+from beta_engine.domain.players.turn_pro_model import TurnProModelPolicy
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingPolicy
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.application_submission_authority import (
@@ -311,6 +313,43 @@ class CalendarTourTransition(FrozenInput):
     ages: tuple[tuple[str, int], ...]
     retired_player_ids: tuple[str, ...]
     public_event: dict
+    # Master v87: Turn Pro decisions made at this transition and the exact model
+    # policy that made them. Both are omitted when absent so historical
+    # transitions keep their bytes.
+    turn_pro_decisions: tuple[PlayerTurnProDecision, ...] = ()
+    turn_pro_model: TurnProModelPolicy | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_turn_pro(self, handler):
+        body = handler(self)
+        if not self.turn_pro_decisions:
+            body.pop("turn_pro_decisions", None)
+        if self.turn_pro_model is None:
+            body.pop("turn_pro_model", None)
+        return body
+
+    @model_validator(mode="after")
+    def _turn_pro_belongs_to_this_transition(self):
+        if self.turn_pro_decisions and self.turn_pro_model is None:
+            raise ValueError("Turn Pro decisions require the model policy that made them")
+        if any(
+            d.effective_week.ordinal != self.target_week.ordinal
+            for d in self.turn_pro_decisions
+        ):
+            raise ValueError("Turn Pro decision is not effective at its transition week")
+        ids = [d.player_id for d in self.turn_pro_decisions]
+        if ids != sorted(set(ids)):
+            raise ValueError("Turn Pro decisions require canonical distinct players")
+        return self
+
+
+def tour_turn_pro_decisions(state) -> tuple[PlayerTurnProDecision, ...]:
+    """Every Turn Pro decision recorded by this Tour's Week Transitions."""
+    if state is None:
+        return ()
+    return tuple(
+        d for t in getattr(state, "transitions", ()) for d in t.turn_pro_decisions
+    )
 
 
 class CalendarTourState(FrozenInput):

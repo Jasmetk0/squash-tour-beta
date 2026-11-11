@@ -147,10 +147,25 @@ known through the end of the completed week; that wiring is the next slice.
   run in those preparation weeks. Native competition and birth weeks still
   reject v87 explicitly.
 
+## Slice 7: host country and home opportunity
+
+- `CalendarTourEdition.host_country_code` (optional ISO-3 style uppercase code)
+  is accepted by `create-edition`; it is omitted when absent, so every earlier
+  Edition keeps its bytes and fingerprint.
+- At a v87 Week Transition into `target`, a prospect has a home opportunity when
+  some Edition hosted in the prospect's country was announced before `target`
+  (an announcement that becomes public at this very transition is not yet known)
+  and is played at or after `target`. The player's country comes from the
+  original InitialWorld. Opportunity multiplies the annual hazard by the
+  recorded model's `home_opportunity_multiplier`.
+- **PROVISIONAL:** any public upcoming home Edition counts, regardless of its
+  size, level or distance in weeks; "small event" and look-ahead windows are
+  calibration for later versions.
+- Newborn prospects are not in the InitialWorld; birth weeks still reject v87.
+
 ## Not implemented (next slices)
 
 - The public World Event and Viewer news for Turn Pro.
-- Host country on native Editions, so the home opportunity can be derived.
 - Turn Pro in the birth transition and native forks; model re-run in replay.
 - Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

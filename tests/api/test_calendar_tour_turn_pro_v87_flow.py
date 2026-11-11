@@ -10,7 +10,6 @@ from tests.api.test_calendar_continuation_flow import root
 from tests.api.test_calendar_initial_world_adoption import request as population_request
 from tests.api.test_calendar_tour_flow import (
     command,
-    create_edition,
     execute,
     inspect,
     save_tour,
@@ -67,6 +66,34 @@ def _opening_pros(repo):
     }
 
 
+def _country_of(repo, player_id):
+    from beta_engine.infrastructure.db.initial_world_state import get_initial_world
+
+    with repo._session_factory() as session:
+        world = get_initial_world(session, run_id="run", branch_id="branch")
+    return next(p.country_code for p in world.players if p.player_id == player_id)
+
+
+def _create_hosted_edition(server, host):
+    view = inspect(server)
+    week = view["state"]["week"]
+    data = {
+        "edition_id": "first",
+        "name": "Configured home Tour first",
+        "week": {**week, "week": week["week"] + 2},
+        "announcement_week": {**week, "week": week["week"] + 1},
+        "start_slot": 1,
+        "main_entrant_count": 4,
+        "ranked": True,
+        "validity_weeks": week["calendar"]["weeks_per_year"],
+        "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+        # Master v87: a public upcoming home Edition raises a prospect's chance.
+        "host_country_code": host,
+    }
+    execute(server, command(view, "create-edition", name="first:create", data=data))
+    save_tour(server)
+
+
 def _submit(server, name, ids):
     return _request(
         "POST", tour_url(server) + "/preview",
@@ -96,7 +123,10 @@ def test_v87_run_gates_entry_by_turn_pro_and_records_transitions(tmp_path, monke
         pros, everyone = _opening_pros(repo)
         prospects = sorted(everyone - pros)
         assert len(pros) >= 3 and prospects, (pros, prospects)
-        create_edition(server, "first", 4)
+        host = _country_of(repo, prospects[0])
+        _create_hosted_edition(server, host)
+        stored = inspect(server)["state"]["editions"][0]["edition"]
+        assert stored["host_country_code"] == host
 
         decided = {}
         with monkeypatch.context() as eager:

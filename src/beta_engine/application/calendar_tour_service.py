@@ -68,6 +68,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     build_draw,
     calculate_tour_ranking,
     tour_turn_pro_decisions,
+    turn_pro_home_opportunities,
     edition_results,
     effective_policy,
     lifecycle_calendars,
@@ -130,6 +131,11 @@ def _turn_pro_week(world, state, target, checkpoint, seed):
         predecessor,
         plain_target,
         {p.player_id: p.ovr for p in checkpoint.players},
+        home_opportunity_by_player=turn_pro_home_opportunities(
+            state,
+            target,
+            {p.player_id: p.country_code for p in getattr(world, "players", ())},
+        ),
     )
     decisions = decide_turn_pro(
         predecessor=predecessor,

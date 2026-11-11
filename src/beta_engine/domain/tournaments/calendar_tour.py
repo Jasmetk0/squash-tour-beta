@@ -77,6 +77,11 @@ class CalendarTourEdition(FrozenInput):
     point_table: dict[str, int]
     validity_weeks: int = Field(ge=1)
     group_configuration: NativeGroupConfiguration | None = Field(default=None, exclude_if=lambda v: v is None)
+    # Master v87 home opportunity input; omitted when absent so earlier Editions
+    # keep their exact bytes.
+    host_country_code: str | None = Field(
+        default=None, pattern=r"^[A-Z]{3}$", exclude_if=lambda v: v is None
+    )
     best_of: Literal[5] = 5
     games_to: Literal[11] = 11
     win_by: Literal[2] = 2
@@ -677,6 +682,26 @@ def ranking_players(state, submissions, *, retired=()):
         )
         for pid, s in sorted(first.items())
     )
+
+
+def turn_pro_home_opportunities(state, target, country_by_player):
+    """Master v87: players with a public, not-yet-played Edition in their country.
+
+    Only information known through the end of the completed week is used: the
+    Edition must have been announced before ``target`` (an announcement that
+    becomes public at this very transition is not yet known) and must be played
+    at or after ``target``. Editions without a host country never count.
+    """
+    hosts = {
+        a.edition.host_country_code
+        for a in (state.editions if state is not None else ())
+        if a.edition.host_country_code is not None
+        and a.edition.announcement_week.ordinal < target.ordinal
+        and a.edition.week.ordinal >= target.ordinal
+    }
+    return {
+        pid: True for pid, country in sorted(country_by_player.items()) if country in hosts
+    }
 
 
 def professional_ranking_players(lifecycle, *, before=None, retired=()):

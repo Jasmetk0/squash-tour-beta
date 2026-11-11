@@ -1,3 +1,14 @@
+# Turn Pro home opportunity candidate (Master v87) — 11 November 2026
+
+Stacked on the v87 HTTP/SQLite acceptance branch. Editions may record an optional
+`host_country_code` (absent = identical historical bytes). Under v87 a prospect
+with a public, not-yet-played Edition in their country gets the model's home
+opportunity at the Week Transition; announcements that become public at that same
+transition are excluded (no future leak). PROVISIONAL: any such Edition counts.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro v87 HTTP/SQLite acceptance candidate (Master v87) — 11 November 2026
 
 Stacked on #1772. First real production-stack v87 path: opening professionals,

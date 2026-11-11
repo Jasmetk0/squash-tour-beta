@@ -182,7 +182,7 @@ def test_v87_run_gates_entry_by_turn_pro_and_records_transitions(tmp_path, monke
         transition, request = execute(
             server, command(inspect(server), "transition", name="first-to-next")
         )
-        assert transition["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v1"
+        assert transition["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v2"
         ranked = {r["player_id"] for r in transition["impact"]["ranking"]["rows"]}
         assert newcomer in ranked and ranked <= pros | set(decided) | {
             d["player_id"] for d in transition["impact"]["turn_pro_decisions"]

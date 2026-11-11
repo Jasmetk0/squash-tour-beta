@@ -41,15 +41,18 @@ def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions
     for state_ in lifecycle:
         for birth in getattr(getattr(state_, "birth_event", None), "births", ()):
             countries[birth.player_id] = birth.country_code
+    from beta_engine.domain.players.turn_pro_model import traits_from_world
+
     return native_turn_pro_decisions(
         tour_state=state, predecessor=lifecycle[-1], checkpoint=checkpoint,
         countries=countries, target=target, submissions=submissions, seed=seed,
-        model=model,
+        model=model, traits_by_player=traits_from_world(world),
     )
 
 
 def native_turn_pro_decisions(
-    *, tour_state, predecessor, checkpoint, countries, target, submissions, seed, model
+    *, tour_state, predecessor, checkpoint, countries, target, submissions, seed, model,
+    traits_by_player=None,
 ):
     """Master v87 Turn Pro at a native Week Transition (pure; replayed on verify).
 
@@ -58,9 +61,9 @@ def native_turn_pro_decisions(
     the current default. Returns ``((), None)`` under the historical rule.
     """
     from beta_engine.domain.players.turn_pro_model import (
-        build_turn_pro_candidates,
         decide_turn_pro,
         default_turn_pro_model_policy,
+        turn_pro_candidates_for,
     )
     from beta_engine.domain.tournaments.calendar_tour import turn_pro_home_opportunities
 
@@ -75,10 +78,14 @@ def native_turn_pro_decisions(
         target=target,
         policy=model,
         seed=seed,
-        candidates=build_turn_pro_candidates(
+        candidates=turn_pro_candidates_for(
+            model,
             predecessor,
             plain,
-            {p.player_id: p.ovr for p in checkpoint.players},
+            checkpoint.players,
+            seed=seed,
+            target=target,
+            traits_by_player=traits_by_player,
             home_opportunity_by_player=turn_pro_home_opportunities(
                 tour_state, target, countries
             ),

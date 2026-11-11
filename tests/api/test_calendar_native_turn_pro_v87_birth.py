@@ -80,7 +80,7 @@ def test_v87_native_birth_weeks_run_record_and_replay_turn_pro(tmp_path, monkeyp
             restarted,
             command(inspect(restarted), "transition", name="v87-native-after-birth"),
         )
-        assert natural["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v1"
+        assert natural["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v2"
         # The newborn is a candidate from the following week on.
         assert all(
             d["player_id"] not in pros | decided

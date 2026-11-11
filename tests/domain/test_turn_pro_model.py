@@ -11,7 +11,7 @@ from beta_engine.domain.players.turn_pro_model import (
     TurnProCandidate,
     TurnProModelPolicy,
     decide_turn_pro,
-    default_turn_pro_model_policy,
+    true_strength_turn_pro_model_policy_v1,
     turn_pro_draw,
     weekly_turn_pro_chance,
 )
@@ -19,7 +19,8 @@ from tests.domain.test_turn_pro_lifecycle import bootstrap, decision, week
 
 pytestmark = pytest.mark.pr_critical
 
-POLICY = default_turn_pro_model_policy()
+# v1 math stays valid for replaying history recorded with it.
+POLICY = true_strength_turn_pro_model_policy_v1()
 
 
 def chance(age=17, readiness=0.3, home=False, w=52):

@@ -15,11 +15,14 @@ from beta_engine.domain.players.calendar_lifecycle import (
     advance_calendar_lifecycle,
     calendar_lifecycle_history,
 )
+from beta_engine.domain.players.attribute_catalog import CANONICAL_PLAYER_ATTRIBUTES
 from beta_engine.domain.players.turn_pro_model import (
     build_turn_pro_candidates,
     decide_turn_pro,
     default_turn_pro_model_policy,
     readiness_against,
+    true_strength_turn_pro_model_policy_v1,
+    turn_pro_candidates_for,
 )
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
@@ -30,6 +33,16 @@ from tests.domain.test_turn_pro_lifecycle import bootstrap, decision, policy, we
 pytestmark = pytest.mark.pr_critical
 
 MODEL = default_turn_pro_model_policy()
+V1 = true_strength_turn_pro_model_policy_v1()
+
+
+def record(pid, value):
+    """A sporting record with the canonical 57 attributes at one level."""
+    return SimpleNamespace(
+        player_id=pid,
+        attributes=tuple((name, value) for name in CANONICAL_PLAYER_ATTRIBUTES),
+        ovr=value,
+    )
 
 
 def transition(target=2, decisions=(), model=None):
@@ -126,7 +139,7 @@ def _simulate(weeks, seed):
                                  week=position.season_week)
         plain = advance_calendar_lifecycle(states[-1], target, (), tuple(recorded))
         made = decide_turn_pro(
-            predecessor=states[-1], target=target, policy=MODEL, seed=seed,
+            predecessor=states[-1], target=target, policy=V1, seed=seed,
             candidates=build_turn_pro_candidates(states[-1], plain, strengths),
         )
         recorded.extend(made)
@@ -160,16 +173,20 @@ def test_service_week_runs_the_model_only_under_v87(monkeypatch):
                              week=position.season_week)
     state = SimpleNamespace(editions=(), transitions=())
     checkpoint = SimpleNamespace(players=tuple(
-        SimpleNamespace(player_id=p.player_id, ovr=40 + i) for i, p in enumerate(states[0].players)
+        record(p.player_id, 80 + i) for i, p in enumerate(states[0].players)
     ))
     history = calendar_lifecycle_history(states[0], target, ())
     monkeypatch.setattr(service, "_lifecycle_history", lambda world, week, s: history)
     lifecycle, decisions, model = service._turn_pro_week(None, state, target, checkpoint, 9)
     assert model == MODEL
+    candidates = turn_pro_candidates_for(
+        MODEL, history[-2], history[-1], checkpoint.players, seed=9, target=target,
+        traits_by_player={}, home_opportunity_by_player={},
+    )
+    # Model v2: each candidate carries what the prospect perceived about itself.
+    assert candidates and all(c.observation is not None for c in candidates)
     expected = decide_turn_pro(
-        predecessor=history[-2], target=target, policy=MODEL, seed=9,
-        candidates=build_turn_pro_candidates(
-            history[-2], history[-1], {p.player_id: p.ovr for p in checkpoint.players}),
+        predecessor=history[-2], target=target, policy=MODEL, seed=9, candidates=candidates,
     )
     assert decisions == expected
     assert {p.player_id for p in lifecycle.players if p.tour_entry_week == target} == {

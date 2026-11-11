@@ -43,6 +43,8 @@ from beta_engine.domain.players.turn_pro_model import (
     build_turn_pro_candidates,
     decide_turn_pro,
     default_turn_pro_model_policy,
+    traits_from_world,
+    turn_pro_candidates_for,
 )
 from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.calendar_official import (
@@ -128,10 +130,14 @@ def _turn_pro_week(world, state, target, checkpoint, seed):
         return history[-1], (), None
     predecessor, plain_target = history[-2], history[-1]
     model = default_turn_pro_model_policy()
-    candidates = build_turn_pro_candidates(
+    candidates = turn_pro_candidates_for(
+        model,
         predecessor,
         plain_target,
-        {p.player_id: p.ovr for p in checkpoint.players},
+        checkpoint.players,
+        seed=seed,
+        target=target,
+        traits_by_player=traits_from_world(world),
         home_opportunity_by_player=turn_pro_home_opportunities(
             state,
             target,

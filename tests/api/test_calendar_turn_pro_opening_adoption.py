@@ -9,7 +9,7 @@ from beta_engine.application.calendar_initial_world import (
     initial_turn_pro_evidence,
 )
 from beta_engine.domain.calendar.run_calendar import RunCalendar
-from beta_engine.domain.players.turn_pro_model import default_turn_pro_model_policy
+from beta_engine.domain.players.turn_pro_model import true_strength_turn_pro_model_policy_v1
 from tests.api.test_calendar_initial_world_adoption import confirm, request, review, root
 from tests.api.test_player_generation_calendar_gate import _dump, _generation, _world
 from tests.api.test_saved_revision_history_api import ApiServer, _request
@@ -48,11 +48,11 @@ def test_v87_adoption_records_saves_and_forks_opening_professionals(tmp_path):
         state = adopted["state"]
         evidence = state["initial_turn_pro"]
         world = CalendarInitialWorldState.model_validate_json(json.dumps(state))
-        assert world.initial_turn_pro.model == default_turn_pro_model_policy()
+        assert world.initial_turn_pro.model == true_strength_turn_pro_model_policy_v1()
         assert evidence["seed"] == payload["generation"]["seed"]
         assert world.initial_turn_pro == initial_turn_pro_evidence(
             run_id="run", run_calendar=world.run_calendar, players=world.players,
-            model=default_turn_pro_model_policy(), seed=evidence["seed"],
+            model=true_strength_turn_pro_model_policy_v1(), seed=evidence["seed"],
         )
         pros = set(evidence["professional_player_ids"])
         assert reviewed["opening_professional_count"] == len(pros)

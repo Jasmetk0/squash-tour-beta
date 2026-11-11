@@ -240,9 +240,58 @@ known through the end of the completed week; that wiring is the next slice.
   InitialWorld whose lifecycle cannot represent v87; moving that acceptance Run
   to the native calendar population is a separate, larger step.
 
+## Slice 13: model v2 — decisions from the prospect's own imperfect self-view
+
+Owner clarification (11 November 2026): the weekly player-AI decision must not
+read other players' hidden true strength; an estimate from available information
+is required. Owner decisions in the same review: a combination of "no strength"
+and "own imperfect self-perception"; personality counts; Financial Level is an
+explicitly unknown input until the engine models it.
+
+- `turn_pro_perception.py` (`turn_pro_self_perception.v1`): each prospect
+  perceives all 57 of its own attributes. The error has three layers — overall
+  level (largest; biased by `Confidence`), attribute group (Physical/Move easier,
+  Tactics/Mental/Creativity harder) and the single attribute (smallest) — so
+  relative self-knowledge ("my forehand is stronger than my backhand", "my
+  endurance is better than my strength") is right more than 99% of the time
+  while the absolute level is far less certain. Better self-reflection
+  (`Analysis`, `Self Control`) shrinks every error; the strongest group is judged
+  more accurately. Persistent components are keyed by Run and player (identical
+  in every week and fork); a small weekly fluctuation is keyed by the command
+  seed and week.
+- Readiness = logistic((perceived overall − fixed professional threshold) /
+  scale). The threshold (100 on the 0–200 scale, about a typical generated
+  18-year-old; generated OVR medians: age 15 ≈ 78, 18 ≈ 103, pros 24–30 ≈ 140–150)
+  is a stored policy constant, never other players' hidden strength.
+- `turn_pro_model` v2 (`pre-alpha-turn-pro.v2`, the new default) embeds the
+  perception policy and personality weights (`ambition` ×1.2, `professionalism`
+  ×0.4 in hazard space around 0.5). Traits come from the InitialWorld; prospects
+  born later have unknown traits, which stay neutral. Each candidate carries its
+  `TurnProObservation` (perceived overall, groups and attributes, unknown
+  Financial Level, own traits, readiness), so every recorded decision stores
+  exactly what the prospect knew. Non-deciding prospects' observations are not
+  stored but are deterministically recomputable.
+- v1 (true relative strength) remains only to replay history already recorded
+  with it; the v1 policy keeps its exact bytes. The opening-population
+  retrospective check keeps the v1 calibration on purpose: it is part of
+  population generation, where internal attributes are allowed.
+- Provisional calibration (600 synthetic prospects, +8 OVR/year, W52): typical
+  (OVR 78 at 15) median 18.1, 75% by 19, 100% by 22; talent (100 at 15) 17.4;
+  weak (60 at 15) 18.8, 98% by 22; ambition 0.9 → 17.7, 0.1 → 18.7. Neutral
+  inputs reproduce the annual age base for W52/W61/W80.
+
+## Eventual entry is near-certain, not forced (owner decision B)
+
+No age or delay forces Turn Pro. The weekly chance makes never turning pro
+astronomically unlikely but not impossible; the owner chose to keep that and to
+record such a career as an explicit exception in history/audit (Master v87).
+
 ## Not implemented (next slices)
 
 - Viewer UI text and followed-player notifications for Turn Pro.
 - Model re-run for the non-native (pre-v4) Tour replay.
+- Recording a career that ends without Turn Pro as an explicit history/audit
+  exception (decided; implementation next).
+- Financial Level (Master 19.2) as a real self-perception input.
 - Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

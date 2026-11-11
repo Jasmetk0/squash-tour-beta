@@ -1,3 +1,16 @@
+# Turn Pro model v2: own self-perception (Master v87) — 11 November 2026
+
+Stacked on the FAX Saved Draw branch. Following the owner clarification, the
+weekly Turn Pro AI no longer reads other players' hidden strength. A prospect
+perceives its own 57 attributes imperfectly (level/group/attribute errors,
+Confidence bias, Analysis/Self Control reflection, unknown Financial Level),
+compares its perceived level with a fixed professional threshold and adds its own
+ambition/professionalism. Each decision records what the prospect knew. v1
+remains only for replaying recorded history. Owner decision B: eventual entry is
+near-certain, not forced. See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro v87 FAX Saved Draw candidate (Master v87) — 11 November 2026
 
 Stacked on the Admin-default branch. Owner decision: the FAX reference path also

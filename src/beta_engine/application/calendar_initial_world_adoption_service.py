@@ -20,7 +20,9 @@ from beta_engine.application.run_calendar_initial_pool_preview_service import (
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
-from beta_engine.domain.players.turn_pro_model import default_turn_pro_model_policy
+from beta_engine.domain.players.turn_pro_model import (
+    true_strength_turn_pro_model_policy_v1,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -212,7 +214,7 @@ class CalendarInitialWorldAdoptionService:
                     run_id=run_id,
                     run_calendar=calendar,
                     players=players,
-                    model=default_turn_pro_model_policy(),
+                    model=true_strength_turn_pro_model_policy_v1(),
                     seed=request.generation.seed,
                 )
                 if request.lifecycle_policy.requires_turn_pro

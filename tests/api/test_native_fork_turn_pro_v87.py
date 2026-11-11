@@ -41,7 +41,7 @@ def test_v87_native_fork_runs_records_and_replays_turn_pro(tmp_path, monkeypatch
         # The original Branch is untouched by the fork's Turn Pro decisions.
         assert "turned_pro_player_ids" not in str(Tour(server, "branch").view()["state"])
         later, _ = target.execute("transition", "v87-fork-next")
-        assert later["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v1"
+        assert later["impact"]["turn_pro_model"]["model_id"] == "pre-alpha-turn-pro.v2"
         assert not {d["player_id"] for d in later["impact"]["turn_pro_decisions"]} & (
             pros | decided
         )

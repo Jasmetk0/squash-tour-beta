@@ -19,7 +19,7 @@ from beta_engine.domain.players.turn_pro_model import (
     InitialTurnProEvidence,
     InitialTurnProPlayer,
     build_turn_pro_candidates,
-    default_turn_pro_model_policy,
+    true_strength_turn_pro_model_policy_v1,
     initial_professional_ids,
     initial_turn_pro_chance,
 )
@@ -28,7 +28,7 @@ from tests.domain.test_turn_pro_lifecycle import bootstrap, decision, week
 
 pytestmark = pytest.mark.pr_critical
 
-MODEL = default_turn_pro_model_policy()
+MODEL = true_strength_turn_pro_model_policy_v1()
 
 
 def opening(rule="turn_pro.v87", pros=("a",), **token_override):

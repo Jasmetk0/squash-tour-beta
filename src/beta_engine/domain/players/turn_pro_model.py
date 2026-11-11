@@ -23,10 +23,16 @@ import math
 from collections.abc import Iterable
 from typing import Literal
 
-from pydantic import Field, model_validator
+from pydantic import Field, model_serializer, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
+from beta_engine.domain.players.turn_pro_perception import (
+    SelfPerceptionPolicy,
+    TurnProObservation,
+    default_self_perception_policy,
+    perceive_self,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -45,9 +51,31 @@ class TurnProModelPolicy(FrozenInput):
     readiness_reference: float = Field(ge=0, le=1)
     home_opportunity_multiplier: float = Field(ge=1)
     provenance: str = Field(min_length=1)
+    # Model v2 (owner clarification 11 Nov 2026): readiness comes only from the
+    # prospect's own self-perception, never from others' hidden strength, and
+    # the player's own personality scales the hazard. Omitted in v1 policies.
+    perception: SelfPerceptionPolicy | None = None
+    ambition_weight: float | None = Field(default=None, ge=0)
+    professionalism_weight: float | None = Field(default=None, ge=0)
+
+    @model_serializer(mode="wrap")
+    def _omit_v1_absent_fields(self, handler):
+        data = handler(self)
+        for name in ("perception", "ambition_weight", "professionalism_weight"):
+            if getattr(self, name) is None:
+                data.pop(name, None)
+        return data
+
+    @property
+    def uses_self_perception(self) -> bool:
+        return self.perception is not None
 
     @model_validator(mode="after")
     def validate_bases(self):
+        if self.uses_self_perception != (
+            self.ambition_weight is not None and self.professionalism_weight is not None
+        ):
+            raise ValueError("Self-perception model requires its personality weights")
         bases = self.annual_base_by_age
         if any(not 0 < b < 1 for b in bases):
             raise ValueError("Annual Turn Pro bases must be strictly between 0 and 1")
@@ -61,7 +89,26 @@ class TurnProModelPolicy(FrozenInput):
 
 
 def default_turn_pro_model_policy() -> TurnProModelPolicy:
-    """Provisional pre-alpha calibration (Master v87); tune by testing."""
+    """Current default: v2 self-perception model (Master v87, 11 Nov 2026)."""
+    return TurnProModelPolicy(
+        model_id="pre-alpha-turn-pro.v2",
+        annual_base_by_age=(0.05, 0.20, 0.40, 0.55, 0.65, 0.75, 0.85, 0.95),
+        readiness_weight=2.0,
+        readiness_reference=0.5,
+        home_opportunity_multiplier=1.5,
+        perception=default_self_perception_policy(),
+        ambition_weight=1.2,
+        professionalism_weight=0.4,
+        provenance=(
+            "Provisional pre-alpha calibration; readiness from self-perception "
+            "only (owner clarification 11 Nov 2026); age bases from research "
+            "'Přechod mezi profesionály ve sportu'"
+        ),
+    )
+
+
+def true_strength_turn_pro_model_policy_v1() -> TurnProModelPolicy:
+    """Historical v1 calibration (true relative strength); replay only."""
     return TurnProModelPolicy(
         model_id="pre-alpha-turn-pro.v1",
         annual_base_by_age=(0.05, 0.20, 0.40, 0.55, 0.65, 0.75, 0.85, 0.95),
@@ -80,9 +127,27 @@ class TurnProCandidate(FrozenInput):
 
     player_id: str = Field(min_length=1)
     age: int = Field(ge=FIRST_TURN_PRO_AGE, le=120)
-    # Share of current Tour Players this prospect is stronger than.
+    # v1: share of current Tour Players this prospect is stronger than.
+    # v2: the prospect's own perceived readiness (``observation.readiness``).
     readiness: float = Field(ge=0, le=1)
     home_opportunity: bool = False
+    observation: TurnProObservation | None = None
+
+    @model_serializer(mode="wrap")
+    def _omit_absent_observation(self, handler):
+        data = handler(self)
+        if self.observation is None:
+            data.pop("observation", None)
+        return data
+
+    @model_validator(mode="after")
+    def observation_matches(self):
+        if self.observation is not None and (
+            self.observation.player_id != self.player_id
+            or self.observation.readiness != self.readiness
+        ):
+            raise ValueError("Turn Pro candidate differs from its observation")
+        return self
 
 
 def weekly_turn_pro_chance(
@@ -98,6 +163,19 @@ def weekly_turn_pro_chance(
     )
     if candidate.home_opportunity:
         annual_hazard *= policy.home_opportunity_multiplier
+    if policy.uses_self_perception:
+        observation = candidate.observation
+        if observation is None or observation.policy_fingerprint != policy.perception.fingerprint:
+            raise ValueError("Self-perception model requires the matching observation")
+        # Own personality is self-known; unknown traits stay neutral.
+        if observation.ambition is not None:
+            annual_hazard *= math.exp(policy.ambition_weight * (observation.ambition - 0.5))
+        if observation.professionalism is not None:
+            annual_hazard *= math.exp(
+                policy.professionalism_weight * (observation.professionalism - 0.5)
+            )
+    elif candidate.observation is not None:
+        raise ValueError("A true-strength v1 model cannot consume an observation")
     return -math.expm1(-annual_hazard / weeks_per_year)
 
 
@@ -340,3 +418,105 @@ def initial_professional_ids(
         if draw < chance:
             chosen.append(player.player_id)
     return tuple(chosen)
+
+
+def build_observed_turn_pro_candidates(
+    predecessor,
+    target_lifecycle,
+    sporting_by_player,
+    *,
+    policy: TurnProModelPolicy,
+    seed: int,
+    target: RunWeekPosition,
+    traits_by_player=None,
+    home_opportunity_by_player: dict[str, bool] | None = None,
+) -> tuple[TurnProCandidate, ...]:
+    """Model v2 candidates from each prospect's own self-perception only.
+
+    ``sporting_by_player`` holds the completed week's sporting records (own true
+    attributes, which the prospect perceives imperfectly). Other players'
+    strength is never read. ``traits_by_player`` holds own personality traits
+    (``ambition``, ``professionalism``); a missing entry stays unknown/neutral.
+    """
+    if not policy.uses_self_perception:
+        raise ValueError("Observed candidates require the self-perception model")
+    target_by_id = {p.player_id: p for p in target_lifecycle.players}
+    traits = traits_by_player or {}
+    home = home_opportunity_by_player or {}
+    candidates = []
+    for player in sorted(predecessor.players, key=lambda p: p.player_id):
+        if player.status != "active" or getattr(player, "tour_entry_week", None) is not None:
+            continue
+        future = target_by_id.get(player.player_id)
+        if future is None or future.status != "active":
+            continue
+        record = sporting_by_player.get(player.player_id)
+        if record is None:
+            raise ValueError("Turn Pro self-perception requires the prospect's own record")
+        trait = traits.get(player.player_id)
+        observation = perceive_self(
+            policy=policy.perception,
+            run_id=predecessor.run_id,
+            player_id=player.player_id,
+            attributes=record.attributes,
+            seed=seed,
+            week_ordinal=target.ordinal,
+            ambition=None if trait is None else trait.ambition,
+            professionalism=None if trait is None else trait.professionalism,
+        )
+        candidates.append(
+            TurnProCandidate(
+                player_id=player.player_id,
+                age=future.age,
+                readiness=observation.readiness,
+                home_opportunity=bool(home.get(player.player_id, False)),
+                observation=observation,
+            )
+        )
+    return tuple(candidates)
+
+
+def turn_pro_candidates_for(
+    policy: TurnProModelPolicy,
+    predecessor,
+    target_lifecycle,
+    sporting_records,
+    *,
+    seed: int,
+    target: RunWeekPosition,
+    traits_by_player=None,
+    home_opportunity_by_player: dict[str, bool] | None = None,
+) -> tuple[TurnProCandidate, ...]:
+    """Candidates for the model version actually recorded/used.
+
+    v2 (current default) reads only each prospect's own self-perception and
+    personality. v1 (true relative strength) exists only to replay history that
+    was already recorded with it; it is never the default any more.
+    """
+    records = {p.player_id: p for p in sporting_records}
+    if policy.uses_self_perception:
+        return build_observed_turn_pro_candidates(
+            predecessor,
+            target_lifecycle,
+            records,
+            policy=policy,
+            seed=seed,
+            target=target,
+            traits_by_player=traits_by_player,
+            home_opportunity_by_player=home_opportunity_by_player,
+        )
+    return build_turn_pro_candidates(
+        predecessor,
+        target_lifecycle,
+        {pid: record.ovr for pid, record in records.items()},
+        home_opportunity_by_player=home_opportunity_by_player,
+    )
+
+
+def traits_from_world(world) -> dict:
+    """Own personality traits of InitialWorld players (prospects born later: unknown)."""
+    return {
+        p.player_id: p.hidden_career_traits
+        for p in getattr(world, "players", ())
+        if getattr(p, "hidden_career_traits", None) is not None
+    }

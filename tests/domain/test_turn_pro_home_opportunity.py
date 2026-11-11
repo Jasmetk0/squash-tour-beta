@@ -8,10 +8,11 @@ import pytest
 from beta_engine.application import calendar_tour_service as service
 from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
 from beta_engine.domain.players.turn_pro_model import (
-    build_turn_pro_candidates,
     decide_turn_pro,
     default_turn_pro_model_policy,
+    turn_pro_candidates_for,
 )
+from tests.domain.test_turn_pro_week_transition import record
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourEdition,
     turn_pro_home_opportunities,
@@ -72,19 +73,17 @@ def test_service_week_feeds_home_opportunity_into_the_model(monkeypatch):
         SimpleNamespace(player_id="a", country_code="CZE"),
         SimpleNamespace(player_id="b", country_code="SVK"),
     ))
-    checkpoint = SimpleNamespace(players=(
-        SimpleNamespace(player_id="a", ovr=50), SimpleNamespace(player_id="b", ovr=50),
-    ))
+    checkpoint = SimpleNamespace(players=(record("a", 100), record("b", 100)))
     tour = state(edition())
     seen = []
-    real = service.build_turn_pro_candidates
+    real = service.turn_pro_candidates_for
 
     def spy(*args, **kwargs):
         made = real(*args, **kwargs)
         seen.append(made)
         return made
 
-    monkeypatch.setattr(service, "build_turn_pro_candidates", spy)
+    monkeypatch.setattr(service, "turn_pro_candidates_for", spy)
     _, decisions, model = service._turn_pro_week(world, tour, target, checkpoint, 9)
     assert [(c.player_id, c.home_opportunity) for c in seen[0]] == [
         ("a", True), ("b", False),
@@ -92,8 +91,9 @@ def test_service_week_feeds_home_opportunity_into_the_model(monkeypatch):
     expected = decide_turn_pro(
         predecessor=history[-2], target=target, policy=default_turn_pro_model_policy(),
         seed=9,
-        candidates=build_turn_pro_candidates(
-            history[-2], history[-1], {"a": 50, "b": 50},
+        candidates=turn_pro_candidates_for(
+            default_turn_pro_model_policy(), history[-2], history[-1], checkpoint.players,
+            seed=9, target=target, traits_by_player={},
             home_opportunity_by_player={"a": True},
         ),
     )

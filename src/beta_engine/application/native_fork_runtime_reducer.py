@@ -337,6 +337,7 @@ def _advance(runtime, command, sources):
     )
     # Master v87: the same pure Turn Pro step as the original native week. On
     # replay ``sources.turn_pro_model`` carries the recorded model.
+    from beta_engine.domain.players.turn_pro_model import traits_from_world
     from beta_engine.domain.tournaments.calendar_native_tour_week import (
         native_turn_pro_decisions,
     )
@@ -356,6 +357,11 @@ def _advance(runtime, command, sources):
         submissions=submissions,
         seed=command.seed,
         model=getattr(sources, "turn_pro_model", None),
+        traits_by_player=(
+            traits_from_world(sources.world)
+            if runtime.lifecycle.policy.requires_turn_pro
+            else None
+        ),
     )
     life = (
         advance_calendar_lifecycle_with_prospects(

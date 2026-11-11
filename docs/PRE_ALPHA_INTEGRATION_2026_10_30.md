@@ -1,3 +1,162 @@
+# Current AI/PR coordination checkpoint — 11 November 2026
+
+Baseline: `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`, approved Master v86.
+Inventory captured 11 Nov 2026, 20:38 (Europe/Prague), before the new coordination PR.
+There were 18 open PRs. This is a complete metadata/ancestry inventory with
+risk-focused review of changed configuration, Turn Pro inputs and selected
+contracts; it is not an exhaustive line-by-line certification of the whole stack
+or a pre-alpha release. Current owner clarification is in
+[the repair handoff](AI_REVIEW_HANDOFF.md).
+
+## PR inventory and actual dependencies
+
+All these PRs target `buuk` now, except that #1780 originally targeted #1763's
+feature branch and was retargeted during this review. The parent column comes
+from actual Git ancestry, not titles or base-branch labels. File counts are
+own delta / complete delta against baseline `buuk`; inherited files are not
+counted as a new developer contribution.
+
+| PR | Purpose | Closest open ancestor | Files: own / total | Exact reviewed head | Fast CI | Verdict |
+| --- | --- | --- | --- | --- | --- | --- |
+| #1763 | ATP source, profiles and scheduled foundations | buuk | 56 / 56 | [`948d730610`](https://github.com/Jasmetk0/squash-tour-beta/commit/948d730610df1b3985ece737be5e3c33403097b5) | success | READY FOR OWNER MERGE |
+| #1764 | Saved Draw readiness UI | buuk | 8 / 8 | [`4099a5f5ca`](https://github.com/Jasmetk0/squash-tour-beta/commit/4099a5f5caa9c1f0504d2a81edf0ff3ce59eb2c2) | success | INSUFFICIENT EVIDENCE |
+| #1765 | Proposed Master v87 | buuk | 3 / 3 | [`df52812bc5`](https://github.com/Jasmetk0/squash-tour-beta/commit/df52812bc56d1bb11a20a95e8e166f31cef09da7) | success | BLOCKED |
+| #1766 | Signed-intake corruption test repair | buuk | 1 / 1 | [`5ac6413a77`](https://github.com/Jasmetk0/squash-tour-beta/commit/5ac6413a771b996263f67112f41efeab53e818e9) | success | READY FOR OWNER MERGE |
+| #1767 | Turn Pro lifecycle kernel | buuk | 7 / 7 | [`8165894e1e`](https://github.com/Jasmetk0/squash-tour-beta/commit/8165894e1e02f24eaf1f24f8e7d8ad0d2bd6a93b) | success | INSUFFICIENT EVIDENCE |
+| #1768 | Ranking roster and application gate | #1767 | 7 / 12 | [`b0e29a9ff0`](https://github.com/Jasmetk0/squash-tour-beta/commit/b0e29a9ff0c41a7e192ea86d1bb1961a94bc5ecb) | success | INSUFFICIENT EVIDENCE |
+| #1769 | Isolate Entry test tuning | buuk | 3 / 3 | [`8aa0b4d894`](https://github.com/Jasmetk0/squash-tour-beta/commit/8aa0b4d8944fa56b5f2aaa31680268cd13115de7) | failure | CHANGES REQUIRED |
+| #1770 | Provisional Turn Pro model | #1768 | 4 / 14 | [`9ee97c347a`](https://github.com/Jasmetk0/squash-tour-beta/commit/9ee97c347adc28d2118b7f662cdb8cb6d6123e74) | success | INSUFFICIENT EVIDENCE |
+| #1771 | Weekly model decisions and replay input | #1770 | 9 / 17 | [`26652b7e95`](https://github.com/Jasmetk0/squash-tour-beta/commit/26652b7e953480b02a6ce3ea5143aad1dc609eed) | success | CHANGES REQUIRED |
+| #1772 | Opening professionals | #1771 | 10 / 21 | [`d50cdf056c`](https://github.com/Jasmetk0/squash-tour-beta/commit/d50cdf056c340778a49773e0cc63a405209fbaf9) | success | CHANGES REQUIRED |
+| #1773 | First HTTP/SQLite v87 path | #1772 | 4 / 22 | [`cf7cb86585`](https://github.com/Jasmetk0/squash-tour-beta/commit/cf7cb8658579881d673dc7a05305bbd80d1e6681) | success | CHANGES REQUIRED |
+| #1774 | Public home-event opportunity | #1773 | 6 / 23 | [`8cd82e4ddd`](https://github.com/Jasmetk0/squash-tour-beta/commit/8cd82e4ddd49566728a4a1e3b0d5b3cb4fb43454) | success | CHANGES REQUIRED |
+| #1775 | Public Turn Pro World Event | #1774 | 7 / 23 | [`6e5eb61a17`](https://github.com/Jasmetk0/squash-tour-beta/commit/6e5eb61a170cdf001eb5ebb49ae7b1d674e9114e) | success | CHANGES REQUIRED |
+| #1776 | Birth-week integration and model replay | #1775 | 8 / 28 | [`84726500f7`](https://github.com/Jasmetk0/squash-tour-beta/commit/84726500f743eb1df0c59daf1ee6ef7a9ec28662) | success | CHANGES REQUIRED |
+| #1777 | Native fork + accidental config change | #1776 | 7 / 31 | [`041ecfab8b`](https://github.com/Jasmetk0/squash-tour-beta/commit/041ecfab8bf0172e36a400f704342783e1283961) | success | CHANGES REQUIRED |
+| #1778 | Admin v87 default | #1777 | 9 / 36 | [`0fdb677dad`](https://github.com/Jasmetk0/squash-tour-beta/commit/0fdb677dad312a1b22ccfad2bffd1e265b36eab6) | success | CHANGES REQUIRED |
+| #1779 | Professional-only Saved FAX adoption | #1778 | 6 / 39 | [`15ccc56806`](https://github.com/Jasmetk0/squash-tour-beta/commit/15ccc568065a75f3ed90fd4425add3939801a423) | success | CHANGES REQUIRED |
+| #1780 | Horizon-safe ATP continuation | #1763 | 9 / 57 | [`03727d0e82`](https://github.com/Jasmetk0/squash-tour-beta/commit/03727d0e82cec7e28f77af78a8187f767d910b1a) | success | INSUFFICIENT EVIDENCE |
+
+- #1763: 20 applicable workflows and CodeQL passed at the exact head; no conflict.
+  Sonar's single reliability annotation concerns two independent factory calls
+  in a reproducibility test. Faulting only the second build makes the assertion
+  fail; the documented false positive is not reported as a green Sonar check.
+- #1780: 105 local targeted tests and hosted Fast CI passed. Full combined-head
+  Ready acceptance was triggered after retargeting. One first browser attempt
+  failed with `ECONNRESET` on a read-only hybrid policy GET; its server-log artifact
+  was empty. One unchanged-head retry was requested, with no removed assertions.
+  That retry passed. Another workflow's W80 all-week test passed in 3,992 s,
+  but uploading its evidence failed after five invalid-JSON responses from the
+  artifact service (run `43085487952`, job `130748646844`). Only that failed job
+  is being repeated unchanged. The current workflow status is 19 successes and
+  one failed/retrying workflow; it is not approved until the final checks pass.
+- #1766: the complete one-file delta and the exact modified HTTP case were
+  reviewed/executed independently against identical production/config trees.
+  Fast CI, CodeQL and Sonar passed on the pinned head. It was marked Ready.
+- #1769: actual HTTP 409 is `Simulation Slot requires authoritative Health state`.
+  The same isolated test also fails on baseline `buuk`. Preserve the useful
+  config isolation; repair the positive fixture without weakening the Health guard.
+- #1777/#1778/#1779: production Entry tuning is actually polluted, despite green
+  Fast CI. Every other inventoried head retains the baseline config blob.
+- #1771 onward: native Turn Pro reads exact checkpoint OVR. The owner now requires
+  strength estimates from then-available information. Repair the boundary and
+  review opening-world approximation separately from runtime AI knowledge.
+- #1765: accepting separate Turn Pro and professional-only association entry does
+  not approve the entire proposed document, provisional calibration or hidden-OVR
+  access. Existing policy/history remains authoritative for old Runs.
+
+The Turn Pro ancestry is #1767 → #1768 → #1770 → #1771 → #1772 → #1773 →
+#1774 → #1775 → #1776 → #1777 → #1778 → #1779. #1765 and #1769 are separate
+branches, not automatically included in that chain. Stop propagating the bad
+config; stabilise the chain before adding another feature stack.
+
+Draft acceptance skips on Claude's branches are not executed passes. The initial
+workflow inventory found 11 skipped workflows on #1764, four on #1767, and seven
+on #1768/#1770–#1779; counts are control-plane statuses, not comparable amounts
+of delivered functionality. #1769 Fast CI run `42918982448`, failed backend job
+`130188747990`, and both local reproductions identify its incomplete Health fixture.
+
+## Integration order and bounded next work
+
+1. Owner can merge #1763. #1766 is an independent, reviewed test-only repair.
+2. Finish exact-head #1780 acceptance; owner merges it after #1763. No auto-merge.
+3. Claude restores Entry tuning in #1777 and every affected descendant, fixes
+   #1769's positive Health fixture and the observable-strength input boundary.
+4. Review the final v87 product text/remaining model choices, then verify one
+   genuine professional transition → Entry/WC → actual Edition → points → manual
+   Save → SQLite restart and replay/fork. Consolidate/retarget only by an agreed
+   plan; do not merge every cumulative stack head as independent functionality.
+5. Work continues ATP's versioned native scheduled owner and existing GlobalSlot
+   ledger. Prove Q → explicit Save/restart → normal Week Transition → Main →
+   terminal confirmation and following-week ranking on the same actual Run.
+   Copied source dates and an Admin-proposed schedule remain distinct evidence.
+6. Then multiple simultaneous Editions, complete reference season, release
+   performance/recovery/50-season gates, plus retained side requirements below.
+
+Work owns ATP helpers/source integration and the CI/review handoff. Claude owns
+the current lifecycle/Turn Pro/fork repair. Shared Tour/persistence files need one
+active writer and a handoff, avoiding competing implementations. No new sporting
+rule is inferred from a data Package or from a passed component test.
+
+## Pre-alpha requirement/evidence map
+
+This map distinguishes scoped working paths from the entire Master target.
+The 20 passed acceptance suites cited above ran on candidate #1763, not a signed
+release; current `buuk` and the unmerged candidates remain distinct.
+
+| Area | Current implementation/evidence | Remaining boundary |
+| --- | --- | --- |
+| Empty Run / Branch / Saved | Actual immutable Save, lineage, restore, fork and corruption tests exist; selected candidate acceptance passed | Portable archive/recovery and all release combinations require their own proof |
+| Native calendar | W52/W61/W80, offset, actual Week/Season transitions, extension and terminal scenarios covered in scoped gates | Entire multi-season sporting world and full release matrix |
+| Initial population / intake | Native population/birth/intake paths exist with real HTTP/SQLite cases | Complete historical cohort/development/country semantics and whole-Master generator scope remain partial |
+| Player lifecycle / Turn Pro | Current historical policy works on its supported paths; v87 is an unmerged stack | Config, estimated knowledge, pre-Tour/older-replay/materializer gaps and final native acceptance |
+| Entry / wildcard AI | Existing versioned subsystems and actual decision/validation paths | v87 professional prerequisites, genuinely then-known inputs and original-source chronology |
+| Draw / Q / groups | Source-sized geometries, real feeder results, groups/hybrid and partial Save/restart are exercised | Original full reference season, remapping/revised Draws and complete ATP cross-week ownership |
+| Match Engine / Health | Genuine rally MatchEngine and owned Health paths are exercised | Full realism/calibration and complete decided Health scope are not certified |
+| Ranking / Finals | Versioned W-aware result/publication paths and genuine native scenarios; ATP group profiles have separate proofs | Full Race/selection/exception scope and source-complete seasons |
+| ATP Packages | 2,407 mapped source occurrences; two playable group profiles and a sourced Main32/Q16 foundation in #1763 | General playable ATP catalogue, verified Q dates/seed/Entry policies and full native cross-week flow |
+| Saved / replay / fork | Actual selected restart, independent fork and stale/corrupt-source rejection gates | v87 fixes and broader archive/migration/release coverage |
+| Admin / Viewer | Existing actual Chromium scenarios and read-only historically bound views | Complete Master UI/notification/record requirements, CS/EN acceptance and finishing |
+| Labs / Reconstruction | Real Lab workflows exist; selected Lab gate passed | Reconstruction's positive legacy HTTP fixture needs actual Health; release Lab/Reconstruction scope still needs reconciliation |
+| Records / notifications / history | Master targets and partial subsystems exist | Whole-catalog verification and followed-player/country notification scope not audited as complete here |
+| Persistence / performance | Existing profilers measure actual HTTP/SQLite/Saved behaviour | Scale/long-term limits must follow measured evidence, not extrapolated percentages |
+| Release | No release declared by these PRs | Full regression, copied reference FAX season/50 seasons and all retained pre-alpha requirements |
+
+No completion percentages or unmeasured productivity/cost claims are assigned.
+The lightweight monthly ledger and ready-to-paste repair prompt are in
+[AI_REVIEW_HANDOFF.md](AI_REVIEW_HANDOFF.md); [CLAUDE.md](../CLAUDE.md) is only an entry point.
+
+## Measured native W52 baseline
+
+The existing `scripts/profile_native_full_simulation_scenario.py --weeks 52`
+completed on baseline `04c9879...`, Python 3.12.14/Linux x86-64. The actual
+HTTP/SQLite scenario uses four synthetic players, one four-player Tour Edition,
+genuine MatchEngine results, a native fork, 51 Week/Season transitions from
+S1W2 through S2W1, explicit approvals/Saves and cold restart. The Run has W52,
+offset 51, start year 2030 and an initial two-season horizon.
+
+| Measurement | Single instrumented local run |
+| --- | --- |
+| Complete scenario, including fixtures | 1,072.39 s (17 min 52 s) |
+| Execution after review | 1,027.05 s |
+| SQL statements, complete / after review | 39,577 / 37,615 |
+| Peak profiler-process RSS, including final verification | 1,743,120 KiB (1.66 GiB) |
+| Initial / final SQLite file | 11,870,208 / 88,854,528 bytes |
+| Final Saved revisions, original + fork lineage | 63 |
+| Final UTF-8 Saved payload bytes | 80,666,279 |
+| Task reads | 250 calls, 90.20 s wall time |
+
+[Raw metrics, clock, source/config tree hashes and command](evidence/native-w52-baseline-2026-11-11.json)
+are committed separately from binary databases. A retained replay archive contains
+the profiler input, starting/final SQLite databases, steps and sporting digests;
+the existing profiler's `--input` mode can reuse its fixed identities.
+These measurements include instrumentation, API, fixture and restart overhead.
+They show a performance/storage concern worth investigating, without establishing
+a cause or a scaling curve. They do not certify 1,000 players, 80 Editions, a full
+ATP catalogue, 50 seasons or a release budget. Do not extrapolate this small case.
+
+---
+
 # Native canonical consumer candidate after #1746 — 6 November 2026
 
 Merged base `c7bb53eb893dceb2cb603bc0d312b71070489a0e` preserves #1746 exactly.

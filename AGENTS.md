@@ -24,6 +24,8 @@ Development Operating Model: user = product owner and merge decision; Work =
 technical lead/continuity/task preparation; Codex = implementation and review.
 Verify current `buuk`, latest merge and actual code before choosing work. One
 coherent vertical slice per PR; prefer integration blockers over isolated polish.
+For the month-long Claude trial, current repair handoff and review checklist, use
+`docs/AI_REVIEW_HANDOFF.md`; the dated evidence is in the existing integration map.
 Update current-state evidence when its boundary changes, and consolidate Master
 updates at checkpoints/on request. Return the complete Master after changing it.
 Consider an integration checkpoint after 5–10 significant PRs or a subsystem.

@@ -1,3 +1,20 @@
+# Saved ATP scheduled-source loader candidate — 11 November 2026
+
+The scheduled knockout plan can now be prepared from a physical hash-verified
+Saved ATP Package and the canonical Draw Input/Draw in that same revision.
+The loader never falls back to live Draw tables. A read-only Admin feeder preview
+reports exact source/plan fingerprints and initial Q dependencies, with sporting
+execution still false. Uncommitted and revised Draws are rejected.
+
+Reload requires the selected Run/Branch, the consuming owner's reviewed plan
+fingerprint and the original reachable Saved envelope. The proposed schedule is
+not itself part of the source Package; its binding must be retained by that owner.
+Real HTTP/SQLite tests use ordinary simulation Save, later Saved history, live
+data corruption and cold application restart. They prove source preparation and
+recovery, not native Turn Pro/Entry/Week Transition/points or a played Run.
+
+---
+
 # Scheduled knockout MatchEngine consumer candidate — 11 November 2026
 
 The source-neutral feeder rules are shared by the unchanged FAX wrapper and a

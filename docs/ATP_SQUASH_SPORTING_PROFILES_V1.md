@@ -1,5 +1,37 @@
 # Saved ATP squash sporting profiles V1
 
+## Physical Saved source preparation
+
+`SavedATPScheduledFeederService.prepare` authenticates the current Saved Run
+clock, full Saved envelope, copied profile/Calendar bindings and the canonical
+Draw Input/Draw snapshot. Live tables and subsequently changed server files are
+not substitutes. The exact profile, Draw, full field and proposed schedule must
+agree. A source Draw revision/replacement or implicitly inherited foreign owner
+is rejected until its own consumer is supported.
+
+`POST .../calendar-tour/atp-source-editions/{occurrence_id}/feeder-preview`
+uses the same Saved-head/profile/schedule request as schedule preview. It reports
+source hash, plan/Draw/schedule fingerprints, executable-node count and initial
+Qualification dependencies. It is read-only; scope is `scheduled_feeder_only`,
+with sporting execution and real Q-date verification explicitly false.
+
+The source Package must be saved, then canonical Draw Input/Draw saved using the
+existing explicit simulation Save flow. Merely staging a live Draw is insufficient.
+`reload` resolves the original reachable Saved revision after later Saves. It
+requires both selected Run/Branch and the consuming owner's expected reviewed
+plan fingerprint, then rebuilds and compares the full plan. The round schedule
+is an explicit proposal outside the source Package; the eventual native owner
+must persist its confirmed binding. The physical source alone cannot approve it.
+
+The HTTP/SQLite test stages disposable eligible Entry/Draw subsystem inputs,
+performs real manual Saves, authenticates 43 nodes/eight initial Q matches, adds
+another Saved Draw, ignores a corrupt live Draw, and cold-reopens the original
+plan. Wrong owner, stale head, altered reviewed binding, unreachable revision,
+wrong source hash and physical Saved-payload corruption are rejected. Fixture
+ranking/Entry authorities do not certify native W52 eligibility or publication.
+Actual slot ownership, Health, Week Transition, result Save and Official ranking
+integration remain the next boundary; no public knockout simulation is enabled.
+
 ## Scheduled match consumption
 
 `ScheduledKnockoutFeederPlan` is a separate v1 source adapter for a copied ATP

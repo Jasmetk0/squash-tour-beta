@@ -27,24 +27,19 @@ class ATPKnockoutSchedulePreviewRequest(FrozenInput):
         return value
 
 
-def preview_atp_knockout_schedule(repository, *, run_id, branch_id, occurrence_id, request):
-    with repository._session_factory() as session:
-        session.execute(text('BEGIN'))
-        calendar, revision, state = read_saved_atp_source(session, run_id=run_id, branch_id=branch_id)
-        if revision.revision_id != request.expected_saved_head:
-            raise ValueError('Saved ATP source changed; refresh the Tour')
-        profiles = saved_profiles(state, occurrence_id=occurrence_id)
-        if occurrence_id not in profiles:
-            raise ValueError('No Saved sporting configuration for this ATP occurrence')
-        profile, fingerprint = profiles[occurrence_id]
-        if not isinstance(profile, ATPKnockoutProfile):
-            raise ValueError('Round schedule preview requires a knockout profile')
-        if fingerprint != request.expected_profile_fingerprint:
-            raise ValueError('Saved ATP sporting profile fingerprint changed')
-        if request.schedule.calendar != calendar:
-            raise ValueError('Knockout schedule differs from the exact Saved Run calendar')
-        mapping = build_saved_atp_reference_week_mapping(state)
-        source = project_profile(calendar, state, mapping, profile)
+def validate_saved_atp_knockout_schedule(*, calendar, state, occurrence_id, request):
+    profiles = saved_profiles(state, occurrence_id=occurrence_id)
+    if occurrence_id not in profiles:
+        raise ValueError('No Saved sporting configuration for this ATP occurrence')
+    profile, fingerprint = profiles[occurrence_id]
+    if not isinstance(profile, ATPKnockoutProfile):
+        raise ValueError('Round schedule preview requires a knockout profile')
+    if fingerprint != request.expected_profile_fingerprint:
+        raise ValueError('Saved ATP sporting profile fingerprint changed')
+    if request.schedule.calendar != calendar:
+        raise ValueError('Knockout schedule differs from the exact Saved Run calendar')
+    mapping = build_saved_atp_reference_week_mapping(state)
+    source = project_profile(calendar, state, mapping, profile)
     if 'run_ordinals' not in source:
         raise ValueError('ATP Main source is outside the Run horizon')
     geometry = profile.geometry()
@@ -54,6 +49,18 @@ def preview_atp_knockout_schedule(repository, *, run_id, branch_id, occurrence_i
     )
     if any(r.week.ordinal not in source['run_ordinals'] for r in request.schedule.main):
         raise ValueError('Proposed Main rounds leave the Saved ATP Main source weeks')
+    return profile, fingerprint, source, geometry
+
+
+def preview_atp_knockout_schedule(repository, *, run_id, branch_id, occurrence_id, request):
+    with repository._session_factory() as session:
+        session.execute(text('BEGIN'))
+        calendar, revision, state = read_saved_atp_source(session, run_id=run_id, branch_id=branch_id)
+        if revision.revision_id != request.expected_saved_head:
+            raise ValueError('Saved ATP source changed; refresh the Tour')
+        profile, fingerprint, source, geometry = validate_saved_atp_knockout_schedule(
+            calendar=calendar, state=state, occurrence_id=occurrence_id, request=request,
+        )
     result = {'schema_version':'atp_knockout_schedule_preview.v1',
               'run_id':run_id,'branch_id':branch_id,'saved_head_revision_id':revision.revision_id,
               'occurrence_id':occurrence_id,'profile_fingerprint':fingerprint,

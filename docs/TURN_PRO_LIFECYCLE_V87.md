@@ -206,6 +206,21 @@ known through the end of the completed week; that wiring is the next slice.
 - Pre-fork Turn Pro entries are copied into the fork baseline with their
   original Branch tokens; the fork never re-verifies them as its own.
 
+## Slice 11: v87 as the Admin default for new Runs
+
+- Owner direction (11 November 2026, recommended option accepted by "continue"):
+  new Runs created in Admin use the Master v87 Turn Pro rule by default. The
+  population adoption controls show a "Tour entry" choice defaulting to Turn Pro
+  (v87) and keep the historical first-application rule as an explicit option.
+- The Admin request then carries `admin-calendar-population-turn-pro.v87`
+  (`tour_entry_rule = "turn_pro.v87"`, retirement age 46). The historical
+  choice omits the policy, exactly as before. The HTTP API default is unchanged,
+  so existing Runs, scripts and tests keep their behavior and bytes.
+- The review response adds `opening_professional_count` only under v87; the UI
+  requires it exactly for a v87 review and shows "professionals already at Run
+  start: N / total".
+- Reversible: changing the UI default does not reinterpret any adopted World.
+
 ## Not implemented (next slices)
 
 - Viewer UI text and followed-player notifications for Turn Pro.

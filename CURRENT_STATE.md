@@ -1,3 +1,13 @@
+# Turn Pro v87 Admin default candidate (Master v87) — 11 November 2026
+
+Stacked on the native-fork branch. New Runs created through the Admin population
+controls default to the v87 Turn Pro rule (historical rule remains an explicit
+choice); the HTTP API default is unchanged. The review shows how many players are
+already professional at Run start. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro native fork candidate (Master v87) — 11 November 2026
 
 Stacked on the native-weeks branch. Public native forks of a v87 Run now run and

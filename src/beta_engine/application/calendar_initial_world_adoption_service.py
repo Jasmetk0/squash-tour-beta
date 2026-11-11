@@ -239,6 +239,16 @@ class CalendarInitialWorldAdoptionService:
             ).fingerprint,
             "player_count_before": 0,
             "player_count_after": len(world.players),
+            # Master v87 only: players already professional at opening Week 1.
+            **(
+                {
+                    "opening_professional_count": len(
+                        world.initial_turn_pro.professional_player_ids
+                    )
+                }
+                if world.initial_turn_pro is not None
+                else {}
+            ),
         }
 
     def _installed(self, session, *, run_id, branch_id):

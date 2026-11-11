@@ -55,6 +55,7 @@ def test_v87_adoption_records_saves_and_forks_opening_professionals(tmp_path):
             model=default_turn_pro_model_policy(), seed=evidence["seed"],
         )
         pros = set(evidence["professional_player_ids"])
+        assert reviewed["opening_professional_count"] == len(pros)
         assert pros and pros != {p["player_id"] for p in state["players"]}, pros
 
         code, save_preview = _request("GET", root(server) + "/save/preview")
@@ -93,6 +94,8 @@ def test_historical_policy_adoption_has_no_opening_turn_pro_evidence(tmp_path):
         payload = request(
             server, generation=_generation(target_pool_size=12, min_age=15, max_age=30)
         )
-        code, adopted = confirm(server, payload, review(server, payload))
+        reviewed = review(server, payload)
+        assert "opening_professional_count" not in reviewed
+        code, adopted = confirm(server, payload, reviewed)
         assert code == 201, adopted
         assert "initial_turn_pro" not in adopted["state"]

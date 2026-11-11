@@ -1522,7 +1522,15 @@ Výběr a regenerace těchto variant patří před start prvního Weeku 1. Po za
 
 **[ROZHODNUTO v87]** Hráče ručně vytvořeného Adminem (9.3) řídí stejně jako všechny ostatní jeho hráčská AI. Ruční vytvoření neznamená, že ho Admin trvale ovládá. Pokud dosud není profesionálem, week přechodu určí jeho AI. Výchozí stav a historie zadané při vytvoření podle 9.2/9.3 zůstávají; další rozhodnutí patří AI. Admin může rozhodnutí konkrétního hráče převzít jen tehdy, když to výslovně chce, a to obecným režimem se zásahy (17.6.1), nikoliv trvalým ručním řízením.
 
-**[OTEVŘENO v87]** Přesný vzorec hráčské AI pro week přechodu, minimální a typické věky a kalibrace; zda a od kdy může již existující Run přejít na policy v87; zda bude přechod mezi profesionály v pre-alpha podporovaným typem rozhodnutí v režimu se zásahy (17.6.1), a to pro automaticky generované i ručně vytvořené hráče; závisí na tom, zda k tomu budou podmínky.
+**[ROZHODNUTO v87 PRO PRE-ALPHA]** Přechod mezi profesionály znamená, že se hráč stane členem profesionální asociace daného Runu (např. MSA, PSA) a od tohoto weeku smí hrát její turnaje. Samostatný pozdější stav „přechod na plný úvazek“ se v pre-alpha nezavádí; intenzitu profesionální dráhy vyjadřuje jen to, jak často hráčská AI podává přihlášky.
+
+**[ROZHODNUTO v87 PRO PRE-ALPHA]** Pro přechod neexistuje žádná pevná věková podmínka ani věk, kdy by hráč musel přejít povinně. Rozhodnuté pravidlo budoucího vstupu (každý automaticky generovaný prospect se nakonec stane profesionálem) zajišťuje týdenní šance, která s věkem roste k jistotě.
+
+**[ROZHODNUTO v87 PRO PRE-ALPHA – PRINCIP]** První model hráčské AI je **týdenní šance** přechodu. Zvyšuje ji zejména věk (a s ním délka odkládání), síla hráče vůči současným Tour hráčům a příležitost, například blízký menší turnaj asociace v jeho zemi. Další proměnné lze přidat později. Výpočet je deterministický z hierarchie seedů a pro stejný stav dává stejný výsledek; roční základ se na týden převádí podle počtu týdnů Runu `W`, aby Runy s různým `W` nepřecházely různě rychle. Realističnost se bude zlepšovat v dalších verzích; podklady jsou ve výzkumu „Přechod mezi profesionály ve sportu“ (11. 11. 2026).
+
+**[PROZATÍMNÍ v87 – KALIBRACE]** Konkrétní roční základy podle věku, váhy síly a příležitosti a jejich převod jsou výchozí hodnoty k doladění testováním. Výchozí cíl kalibrace: medián věku přechodu přibližně 17,5–19 let, většina hráčů přejde do 19. narozenin a téměř všichni do 22.
+
+**[OTEVŘENO v87]** Přesné váhy a další proměnné modelu, způsob, jakým AI zná sílu Tour hráčů; zda a od kdy může již existující Run přejít na policy v87; zda bude přechod mezi profesionály v pre-alpha podporovaným typem rozhodnutí v režimu se zásahy (17.6.1), a to pro automaticky generované i ručně vytvořené hráče; závisí na tom, zda k tomu budou podmínky.
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA VERZI][OFFICIAL RUN DEFAULT]** Nový Tour Player vstupuje s nulou rankingových bodů a zpětně se nevkládá do již publikovaného současného Official MSA Ranking snapshotu. Do vytvoření následujícího Official snapshotu se zobrazuje jako `NR`. V následujícím snapshotu se objeví stejně jako všichni ostatní Tour Players, i kdyby stále měl 0 bodů.
 

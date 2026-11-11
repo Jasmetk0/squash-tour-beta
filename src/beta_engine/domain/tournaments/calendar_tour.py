@@ -696,7 +696,7 @@ def professional_ranking_players(lifecycle, *, before=None, retired=()):
             retired=p.player_id in retired,
         )
         for p in sorted(lifecycle.players, key=lambda item: item.player_id)
-        if p.tour_entry_week is not None
+        if getattr(p, "tour_entry_week", None) is not None
         and (before is None or p.tour_entry_week.ordinal < before.ordinal)
     )
 

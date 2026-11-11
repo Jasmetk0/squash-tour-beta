@@ -18,6 +18,7 @@ evaluated, so logically simultaneous decisions stay order-independent.
 
 from __future__ import annotations
 
+import bisect
 import math
 from collections.abc import Iterable
 from typing import Literal
@@ -249,3 +250,93 @@ def build_turn_pro_candidates(
         )
         for pid, age, strength in prospects
     )
+
+
+class InitialTurnProPlayer(FrozenInput):
+    """One opening-population player's inputs for the retrospective Run-start check."""
+
+    player_id: str = Field(min_length=1)
+    # Completed Run weeks since birth at opening Week 1 (the stored calendar age).
+    age_weeks: int = Field(ge=0)
+    strength: float
+
+
+class InitialTurnProEvidence(FrozenInput):
+    """Master v87 professionals already present at opening Week 1, with its inputs.
+
+    The opening population has a simulated history before Run start, so the same
+    pre-alpha model is integrated retrospectively from age 15 to opening Week 1:
+    with a constant readiness, ``W`` weekly chances compound to exactly
+    ``1 - exp(-cumulative annual hazard)``. Readiness is relative to the rest of the
+    opening population (there are no earlier Tour Players), and home opportunities
+    are not modelled before the Run. The evidence is recomputable and verified.
+    """
+
+    schema_version: Literal["initial_turn_pro.v1"] = "initial_turn_pro.v1"
+    model: TurnProModelPolicy
+    seed: int
+    professional_player_ids: tuple[str, ...]
+
+    @model_validator(mode="after")
+    def canonical_ids(self):
+        ids = self.professional_player_ids
+        if list(ids) != sorted(set(ids)):
+            raise ValueError("Initial professionals require canonical distinct ids")
+        return self
+
+
+def initial_turn_pro_chance(
+    policy: TurnProModelPolicy, *, age_weeks: int, readiness: float, weeks_per_year: int
+) -> float:
+    """Probability of having turned pro between age 15 and opening Week 1."""
+    if weeks_per_year < 1:
+        raise ValueError("Run weeks per year must be positive")
+    bases = policy.annual_base_by_age
+    scale = math.exp(policy.readiness_weight * (readiness - policy.readiness_reference))
+    exposed = age_weeks - FIRST_TURN_PRO_AGE * weeks_per_year
+    hazard = 0.0
+    year = 0
+    while exposed > 0:
+        weeks = min(exposed, weeks_per_year)
+        base = bases[min(year, len(bases) - 1)]
+        hazard += -math.log1p(-base) * scale * weeks / weeks_per_year
+        exposed -= weeks
+        year += 1
+    return -math.expm1(-hazard)
+
+
+def initial_turn_pro_draw(*, seed: int, run_id: str, player_id: str) -> float:
+    """Opening draw keyed by Run, not Branch: pre-Run history is shared by every fork."""
+    digest = canonical_hash(
+        {"kind": "initial_turn_pro.v1", "seed": seed, "run": run_id, "player": player_id}
+    )
+    return int(digest[:13], 16) / 16**13
+
+
+def initial_professional_ids(
+    *,
+    run_id: str,
+    players: Iterable[InitialTurnProPlayer],
+    policy: TurnProModelPolicy,
+    seed: int,
+    weeks_per_year: int,
+) -> tuple[str, ...]:
+    ordered = tuple(sorted(players, key=lambda p: p.player_id))
+    if len({p.player_id for p in ordered}) != len(ordered):
+        raise ValueError("Duplicate initial Turn Pro player")
+    strengths = sorted(p.strength for p in ordered)
+    chosen = []
+    for player in ordered:
+        # Share of the *other* opening players this one is strictly stronger than.
+        weaker = bisect.bisect_left(strengths, player.strength)
+        readiness = weaker / (len(ordered) - 1) if len(ordered) > 1 else 0.0
+        chance = initial_turn_pro_chance(
+            policy,
+            age_weeks=player.age_weeks,
+            readiness=readiness,
+            weeks_per_year=weeks_per_year,
+        )
+        draw = initial_turn_pro_draw(seed=seed, run_id=run_id, player_id=player.player_id)
+        if draw < chance:
+            chosen.append(player.player_id)
+    return tuple(chosen)

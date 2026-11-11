@@ -100,20 +100,38 @@ known through the end of the completed week; that wiring is the next slice.
   the lifecycle, but does not re-run the model to prove that each decision came
   from the stored inputs.
 
+## Slice 5: selecting v87 and opening professionals
+
+- A new Run selects the rule through the existing calendar population adoption
+  request: `lifecycle_policy.tour_entry_rule = "turn_pro.v87"` (HTTP
+  `POST .../initial-world/calendar-adoption/preview` and confirm). Requests
+  without it keep the historical policy and identical bytes.
+- Under v87 the adopted `CalendarInitialWorldState` must carry
+  `initial_turn_pro` (`initial_turn_pro.v1`): the exact model policy, the
+  generation seed and the canonical ids of players who had already turned pro
+  before opening Week 1. It is omitted for every other policy and is
+  recomputed and compared on every load, so a stored opening set cannot drift.
+- **PROVISIONAL retrospective model:** the opening population has a simulated
+  history before Run start, so the same pre-alpha model is integrated from age
+  15 to opening Week 1. With constant readiness, `W` weekly chances compound to
+  exactly `1 - exp(-cumulative annual hazard)`. Readiness compares the player's
+  current ability with the rest of the opening population (no earlier Tour
+  Players exist); home opportunities are not modelled before the Run.
+- The draw and the opening tie-break token are keyed by Run and player, not by
+  Branch: pre-Run history is shared by every fork, which keeps exactly the same
+  opening professionals.
+- The bootstrap lifecycle represents them with
+  `CalendarInitialProfessionalIdentity` (Tour entry = opening Week 1, Run-keyed
+  token, v87 policy only). Every other identity keeps its population-only bytes.
+  Opening professionals may apply from Week 1, are the readiness reference for
+  the first Week Transition and enter the ranking roster published at Week 2.
+
 ## Not implemented (next slices)
 
-- No runtime can select the v87 policy yet: every production constructor builds
-  the historical policy. Nothing changes for existing or new Runs.
 - The public World Event and Viewer news for Turn Pro.
-- Selecting the v87 policy for a new Run, and Tour Players who are already
-  professional at Run start; until then nobody can apply in the first weeks of a
-  v87 Run.
 - Host country on native Editions, so the home opportunity can be derived.
 - Turn Pro in the birth transition and native forks; model re-run in replay.
-- HTTP/SQLite proof of the gate and roster: impossible until a Run can select
-  v87 and persist Turn Pro decisions (the lifecycle history currently receives
-  no decisions, so under v87 nobody could apply — fail-closed, not usable).
+- HTTP/SQLite proof of the full v87 path (adoption → sporting initialization →
+  applications → Week Transition with Turn Pro → Save/verify). Adoption, Save,
+  restart and fork of the opening professionals are proven over HTTP/SQLite.
 - `verify_tour` Turn Pro replay with the lifecycle as input.
-- Initial-world players who are already professional at Run start (the native v2
-  bootstrap creates no Tour entry; a Turn Pro decision cannot be effective at the
-  opening week).

@@ -34,6 +34,14 @@ def turn_pro_tie_break_token(*, run_id: str, branch_id: str, player_id: str) -> 
     )
 
 
+def opening_turn_pro_tie_break_token(*, run_id: str, player_id: str) -> str:
+    """Token of a player who was already pro at Run start.
+
+    Keyed by Run, not Branch: pre-Run history is shared by every fork.
+    """
+    return canonical_hash({"kind": "initial_turn_pro.v1", "run": run_id, "player": player_id})
+
+
 class PlayerTurnProDecision(FrozenInput):
     """Immutable evidence that one prospect turned professional at a week start."""
 

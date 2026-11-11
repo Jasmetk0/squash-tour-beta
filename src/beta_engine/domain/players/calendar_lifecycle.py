@@ -7,7 +7,10 @@ from pydantic import Field, model_validator
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.calendar.season_weeks import age_at_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
-from beta_engine.domain.players.turn_pro import turn_pro_decisions_by_player
+from beta_engine.domain.players.turn_pro import (
+    opening_turn_pro_tie_break_token,
+    turn_pro_decisions_by_player,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -21,6 +24,16 @@ class CalendarPlayerLifecycleIdentity(FrozenInput):
     source_generation_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class CalendarInitialProfessionalIdentity(CalendarPlayerLifecycleIdentity):
+    """Master v87: an opening player who had already turned pro before Run start.
+
+    A separate type keeps every population-only identity's bytes unchanged.
+    """
+
+    tour_entry_week: RunWeekPosition
+    tie_break_token: str = Field(min_length=1)
+
+
 class CalendarPlayerLifecycleState(FrozenInput):
     schema_version: Literal["player_lifecycle_calendar_state.v2"] = (
         "player_lifecycle_calendar_state.v2"
@@ -28,12 +41,15 @@ class CalendarPlayerLifecycleState(FrozenInput):
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
-    players: tuple[CalendarPlayerLifecycleIdentity, ...]
+    players: tuple[
+        CalendarInitialProfessionalIdentity | CalendarPlayerLifecycleIdentity, ...
+    ]
     source_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     predecessor_fingerprint: None = None
     policy: PlayerLifecyclePolicy
     # Population adoption creates no historical Tour entry or retirement event.
-    # The future ranking/entry migration must initialize those separately.
+    # Exception (Master v87 only): opening players who had turned pro before Run
+    # start carry Tour entry at opening Week 1 from the InitialWorld's evidence.
     initialization_stage: Literal["population_only"] = "population_only"
 
     @model_validator(mode="after")
@@ -60,6 +76,18 @@ class CalendarPlayerLifecycleState(FrozenInput):
                 raise ValueError(
                     "Initial player already reached the stored retirement age"
                 )
+            if isinstance(player, CalendarInitialProfessionalIdentity):
+                if not self.policy.requires_turn_pro:
+                    raise ValueError(
+                        "Opening Tour entry requires the v87 Turn Pro lifecycle policy"
+                    )
+                entry = player.tour_entry_week
+                if (entry.calendar, entry.ordinal) != (self.week.calendar, 0):
+                    raise ValueError("Opening professional must enter at opening Week 1")
+                if player.tie_break_token != opening_turn_pro_tie_break_token(
+                    run_id=self.run_id, player_id=player.player_id
+                ):
+                    raise ValueError("Opening professional has a foreign tie-break token")
         return self
 
     @property

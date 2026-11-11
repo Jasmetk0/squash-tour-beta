@@ -1,3 +1,17 @@
+# Turn Pro opening professionals candidate (Master v87) — 11 November 2026
+
+Stacked on #1771. A new Run selects v87 through the existing calendar population
+adoption request (`lifecycle_policy.tour_entry_rule = "turn_pro.v87"`); earlier
+notes saying no runtime could select v87 missed this path. The adopted InitialWorld
+then records recomputable `initial_turn_pro` evidence (model, seed, opening
+professional ids from a PROVISIONAL retrospective integration of the pre-alpha
+model) and the bootstrap lifecycle gives those players Tour entry at opening Week
+1 with a Run-keyed token, so forks keep them. Proven over HTTP/SQLite for
+adoption, Save, restart and fork; the full v87 sporting path is not yet proven.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro Week Transition candidate (Master v87) — 11 November 2026
 
 Stacked on #1770. Under the opt-in v87 policy the native Week Transition runs the

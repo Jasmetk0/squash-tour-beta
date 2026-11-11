@@ -1,3 +1,13 @@
+# Turn Pro native weeks candidate (Master v87) — 11 November 2026
+
+Stacked on the public-event branch. Native birth/competition Week Transitions run
+the v87 model and record it; Signed replay re-runs the recorded model and must
+reproduce every decision. Proven over HTTP/SQLite for a native birth week, Save,
+a forged-decision rejection, restart and a following native week. Native forks
+still reject v87. See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro public World Event candidate (Master v87) — 11 November 2026
 
 Stacked on the home-opportunity branch. v87 Week Transitions with decisions publish

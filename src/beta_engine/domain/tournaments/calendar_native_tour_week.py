@@ -30,10 +30,54 @@ from beta_engine.domain.tournaments.calendar_tour import (
 )
 
 
+def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions, seed, model):
+    """Master v87 Turn Pro at a native Week Transition (pure; replayed on verify).
+
+    Inputs are the Signed lifecycle and sporting checkpoint of the completed week.
+    Countries come from the InitialWorld and from earlier signed birth events.
+    """
+    from beta_engine.domain.players.turn_pro_model import (
+        build_turn_pro_candidates,
+        decide_turn_pro,
+        default_turn_pro_model_policy,
+    )
+    from beta_engine.domain.tournaments.calendar_tour import turn_pro_home_opportunities
+
+    predecessor = lifecycle[-1]
+    if not predecessor.policy.requires_turn_pro:
+        if model is not None:
+            raise ValueError("Turn Pro model requires the v87 lifecycle policy")
+        return (), None
+    model = model or default_turn_pro_model_policy()
+    countries = {p.player_id: p.country_code for p in world.players}
+    for state_ in lifecycle:
+        for birth in getattr(getattr(state_, "birth_event", None), "births", ()):
+            countries[birth.player_id] = birth.country_code
+    plain = advance_calendar_lifecycle(predecessor, target, submissions)
+    decisions = decide_turn_pro(
+        predecessor=predecessor,
+        target=target,
+        policy=model,
+        seed=seed,
+        candidates=build_turn_pro_candidates(
+            predecessor,
+            plain,
+            {p.player_id: p.ovr for p in checkpoint.players},
+            home_opportunity_by_player=turn_pro_home_opportunities(state, target, countries),
+        ),
+    )
+    return decisions, model
+
+
 def prepare_native_tour_week(
-    *, state, checkpoint, world, source, lifecycle, health, clock, knockout, command
+    *, state, checkpoint, world, source, lifecycle, health, clock, knockout, command,
+    turn_pro_model=None,
 ):
-    """Return None for a pre-birth natural week; preserve the old writer there."""
+    """Return None for a pre-birth natural week; preserve the old writer there.
+
+    ``turn_pro_model`` is the recorded Master v87 model when replaying Signed
+    history; new transitions use the current default calibration.
+    """
     ordinal = checkpoint.week.ordinal + 1
     if ordinal >= clock.season_count * clock.weeks_per_year:
         raise ValueError("Native Tour target exceeds the Run horizon")
@@ -61,10 +105,17 @@ def prepare_native_tour_week(
     ):
         return None
     submissions = tuple(s for a in state.editions for s in a.submissions)
+    decisions, model = _native_turn_pro(
+        state=state, checkpoint=checkpoint, world=world, lifecycle=lifecycle,
+        target=target, submissions=submissions, seed=command["seed"],
+        model=turn_pro_model,
+    )
     successor_life = (
-        advance_calendar_lifecycle_with_prospects(lifecycle[-1], event, submissions)
+        advance_calendar_lifecycle_with_prospects(
+            lifecycle[-1], event, submissions, decisions
+        )
         if event.births
-        else advance_calendar_lifecycle(lifecycle[-1], target, submissions)
+        else advance_calendar_lifecycle(lifecycle[-1], target, submissions, decisions)
     )
     prepared_health = prepare_native_health_history(
         saved_health=health, signed_lifecycle=lifecycle, next_lifecycle=successor_life
@@ -164,4 +215,13 @@ def prepare_native_tour_week(
         ),
         "lifecycle": successor_life.model_dump(mode="json"),
         "lifecycle_fingerprint": successor_life.fingerprint,
+        # Master v87 only, so every historical native impact keeps its bytes.
+        **(
+            {
+                "turn_pro_decisions": [d.model_dump(mode="json") for d in decisions],
+                "turn_pro_model": model.model_dump(mode="json"),
+            }
+            if model is not None
+            else {}
+        ),
     }, successor

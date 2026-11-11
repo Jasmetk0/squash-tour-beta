@@ -1247,11 +1247,6 @@ class CalendarTourService:
                 command=command.model_dump(mode="json"),
             )
             if native is not None:
-                if world.lifecycle_policy.requires_turn_pro:
-                    # Master v87 Turn Pro is not yet wired into the birth transition.
-                    raise ValueError(
-                        "Native birth Week Transition does not yet support v87 Turn Pro"
-                    )
                 if command.data or command.edition_id is not None:
                     raise ValueError(
                         "Native birth transition cannot contain Edition or extra command data"

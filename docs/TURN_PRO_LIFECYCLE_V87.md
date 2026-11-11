@@ -175,9 +175,27 @@ known through the end of the completed week; that wiring is the next slice.
 - Not yet: names or richer news text in the Viewer UI; Notification Center
   items for followed players (Master v85) are a separate system.
 
+## Slice 9: native birth/competition weeks, model re-run on replay
+
+- `prepare_native_tour_week` (shared by execution and Signed replay) runs the
+  model under v87 from the Signed lifecycle and sporting checkpoint of the
+  completed week, with home opportunities from the InitialWorld countries and
+  earlier signed birth events. Decisions feed the lifecycle advance (births are
+  added afterwards, so a newborn cannot turn pro in its own birth week). The
+  impact records `turn_pro_decisions` and `turn_pro_model` only under v87.
+- Signed replay (`verify_native_tour` and native competition verification)
+  passes the *recorded* model back in, so every native v87 decision is
+  re-derived and must match; a later change of the default calibration cannot
+  rewrite or break history. This closes the "model re-run" gap for native weeks.
+- `verify_calendar_native_birth_history` accepts Signed Turn Pro entries under
+  v87 (entry at that week, Turn Pro token, not previously entered) and still
+  rebuilds every other lifecycle fact; the receipt replay above proves them.
+- The service no longer rejects v87 in native birth weeks. Native forks still
+  reject v87 explicitly.
+
 ## Not implemented (next slices)
 
 - Viewer UI text and followed-player notifications for Turn Pro.
-- Turn Pro in the birth transition and native forks; model re-run in replay.
+- Turn Pro in native forks; model re-run for the non-native (pre-v4) replay.
 - Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

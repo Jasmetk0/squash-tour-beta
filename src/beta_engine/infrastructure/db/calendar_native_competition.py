@@ -274,6 +274,10 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                 raise ValueError(
                     "Historical transition was blocked: " + ", ".join(blockers)
                 )
+            from beta_engine.infrastructure.db.calendar_native_tour import (
+                recorded_turn_pro_model,
+            )
+
             impact, next_cp = prepare_native_tour_week(
                 state=previous,
                 checkpoint=cp,
@@ -284,6 +288,8 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                 clock=clock,
                 knockout=getattr(evidence, "knockout", evidence),
                 command=command.model_dump(mode="json"),
+                # Re-run the exact recorded Master v87 model, if any.
+                turn_pro_model=recorded_turn_pro_model(receipt.result),
             )
             if next_cp.events[-1] != event:
                 raise ValueError(

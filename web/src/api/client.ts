@@ -378,6 +378,14 @@ export function previewATPNextGenEdition(
     method:'POST',body:JSON.stringify(input),
   })
 }
+export function inspectATPSourcedEditions(run:string,branch:string):Promise<import('./atpSourcedEditions').ATPSourcedEditionCatalog> {
+  return request(calendarTourRoot(run,branch)+'/atp-source-editions')
+}
+export function previewATPSourcedEdition(run:string,branch:string,occurrence:string,input:import('./calendarTour').ATPNextGenPreviewRequest):Promise<import('./calendarTour').TourPreview> {
+  return request(calendarTourRoot(run,branch)+'/atp-source-editions/'+encodeURIComponent(occurrence)+'/preview',{
+    method:'POST',body:JSON.stringify(input),
+  })
+}
 export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string,includeInspection=false):Promise<unknown> {
   return request(calendarTourRoot(run,branch)+'/execute'+(includeInspection?'?include_inspection=true':''),{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
 }

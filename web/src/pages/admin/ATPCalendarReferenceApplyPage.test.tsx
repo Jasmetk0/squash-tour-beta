@@ -192,6 +192,18 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
         {...original.children[2],entity_count:0}]})).toBe(false)
   })
 
+  it('accepts version 2 only with its separate frozen sporting Category',()=>{
+    const original=source()
+    const current={...original,source_version:2,
+      usage:'saved_reference_calendar_with_explicit_squash_sporting_profiles',
+      children:[...original.children,{package_id:'atp_squash_sporting_profiles',package_type:'Category',
+        source_version:1,source_fingerprint:hash('e'),entity_count:2}]}
+    expect(validATPCalendarCatalog(current)).toBe(true)
+    expect(validATPCalendarCatalog({...current,children:original.children})).toBe(false)
+    expect(validATPCalendarCatalog({...current,source_version:'2'})).toBe(false)
+    expect(validATPCalendarCatalog({...current,usage:original.usage})).toBe(false)
+  })
+
   it('renders sourced ISO year/week dates for earliest ATP 1990 source',async()=>{
     mount()
     await screen.findByText('2026/W01')

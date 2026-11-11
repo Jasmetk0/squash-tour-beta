@@ -221,7 +221,7 @@ def test_reference_package_confirm_save_restart_then_weeks_remain_readonly(tmp_p
         assert code == 201, saved
         before_packages = _request("GET", packages)
         assert before_packages[0] == 200
-        assert len(before_packages[1]["state"]["entities"]) == 2619
+        assert len(before_packages[1]["state"]["entities"]) == 2621
         code, projected = _request(
             "GET", _url(server, run_id, branch_id, "?year=2025")
         )

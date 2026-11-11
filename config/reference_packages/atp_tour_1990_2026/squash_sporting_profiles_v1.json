@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "source_version": 1,
+  "profiles": [
+    {
+      "schema_version": "atp_squash_group_profile.v1",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "group_count": 2,
+      "group_size": 4,
+      "advancing_per_group": 2,
+      "knockout_crossings": [
+        {
+          "match_index": 1,
+          "top": {
+            "group_index": 1,
+            "finishing_position": 1
+          },
+          "bottom": {
+            "group_index": 2,
+            "finishing_position": 2
+          }
+        },
+        {
+          "match_index": 2,
+          "top": {
+            "group_index": 2,
+            "finishing_position": 1
+          },
+          "bottom": {
+            "group_index": 1,
+            "finishing_position": 2
+          }
+        }
+      ],
+      "match_best_of": 5,
+      "knockout_best_of": 5,
+      "scoring_policy_id": "master_group_table_points.v1",
+      "tie_break_policy_id": "wins_points_h2h_ratios_admin_unresolved.v1",
+      "walkover_policy_id": "group_wo_win_max_points_no_fabricated_ratios.v1",
+      "occurrence_id": "atp_2025_atp_finals",
+      "category_id": "atp_finals",
+      "name": "ATP Finals 2025",
+      "source_start_date": "2025-11-09",
+      "source_end_date": "2025-11-16",
+      "ranked": true,
+      "played_group_win_points": 200,
+      "knockout_stage_points": {
+        "champion": 900,
+        "finalist": 400,
+        "semifinal": 0
+      },
+      "source_urls": [
+        "https://www.nittoatpfinals.com/-/media/sites/finals-new/programme/nitto-atp-finals-2025-official-programme.pdf"
+      ],
+      "native_announcement_lead_weeks": 1
+    },
+    {
+      "schema_version": "atp_squash_group_profile.v1",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "group_count": 2,
+      "group_size": 4,
+      "advancing_per_group": 2,
+      "knockout_crossings": [
+        {
+          "match_index": 1,
+          "top": {
+            "group_index": 1,
+            "finishing_position": 1
+          },
+          "bottom": {
+            "group_index": 2,
+            "finishing_position": 2
+          }
+        },
+        {
+          "match_index": 2,
+          "top": {
+            "group_index": 2,
+            "finishing_position": 1
+          },
+          "bottom": {
+            "group_index": 1,
+            "finishing_position": 2
+          }
+        }
+      ],
+      "match_best_of": 5,
+      "knockout_best_of": 5,
+      "scoring_policy_id": "master_group_table_points.v1",
+      "tie_break_policy_id": "wins_points_h2h_ratios_admin_unresolved.v1",
+      "walkover_policy_id": "group_wo_win_max_points_no_fabricated_ratios.v1",
+      "occurrence_id": "atp_2025_next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "name": "Next Gen ATP Finals 2025",
+      "source_start_date": "2025-12-17",
+      "source_end_date": "2025-12-21",
+      "ranked": false,
+      "played_group_win_points": 0,
+      "knockout_stage_points": {},
+      "source_urls": [
+        "https://www.nextgenatpfinals.com/en/event/rules-and-innovations"
+      ],
+      "native_announcement_lead_weeks": 1
+    }
+  ]
+}

@@ -1,3 +1,17 @@
+# ATP Saved sporting profiles candidate — 11 November 2026
+
+The ATP Calendar Setup v2 adds an independent, versioned squash sporting-profile
+Category alongside unchanged historical source documents. A generic Saved-profile
+catalog and preview path consumes ATP Finals and Next Gen 2025 through ordinary
+native group/knockout Tour operations. The Admin can load the available profiles
+and review one before explicit confirmation and manual Save. ATP Finals stores
+200 per played group win plus 900/400/0 knockout components; no duplicate points.
+The source calendar remains reference data for other occurrences. Race/age entry,
+ATP seed placement and ordinary Main/Qualification formats remain follow-up work.
+See [sporting profile contract and evidence](docs/ATP_SQUASH_SPORTING_PROFILES_V1.md).
+
+---
+
 # ATP Earth W52 Saved Package and Next Gen pilot — 11 November 2026
 
 On base `buuk` `04c9879c4`, the historical ATP Calendar source (#1741) is

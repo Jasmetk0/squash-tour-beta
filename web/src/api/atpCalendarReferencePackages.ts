@@ -5,7 +5,8 @@ export const ATP_CALENDAR_REFERENCE_SETUP_ID = 'atp_tour_1990_2026_calendar_refe
 export const ATP_CALENDAR_REFERENCE_CHILD_IDS = [
   'atp_tour_1990_2026_category',
   'atp_tour_1990_2026_series',
-  'atp_tour_1990_2026_calendar'
+  'atp_tour_1990_2026_calendar',
+  'atp_squash_sporting_profiles'
 ] as const
 
 export type ATPCalendarReferenceCatalog = {
@@ -17,7 +18,7 @@ export type ATPCalendarReferenceCatalog = {
   dated_years:number[]
   undated_years:number[]
   provisional_years:number[]
-  usage:'source_reference_only_no_playable_calendar'
+  usage:'source_reference_only_no_playable_calendar'|'saved_reference_calendar_with_explicit_squash_sporting_profiles'
   children:{
     package_id:string
     package_type:'Category'|'Series'|'Calendar'
@@ -43,22 +44,22 @@ const canonicalYearPartition=(dated:unknown,undated:unknown):boolean => {
 
 export function validATPCalendarCatalog(v:unknown):v is ATPCalendarReferenceCatalog {
   if(!record(v)||v.package_id!==ATP_CALENDAR_REFERENCE_SETUP_ID||
-    v.package_type!=='Setup'||v.source_version!==1||
-    !fingerprint(v.source_fingerprint)||v.usage!=='source_reference_only_no_playable_calendar'||
+    v.package_type!=='Setup'||(v.source_version!==1&&v.source_version!==2)||
+    !fingerprint(v.source_fingerprint)||v.usage!==(v.source_version===1?'source_reference_only_no_playable_calendar':'saved_reference_calendar_with_explicit_squash_sporting_profiles')||
     !record(v.reference_span)||v.reference_span.from!==1990||v.reference_span.to!==2026||
     !canonicalYearPartition(v.dated_years,v.undated_years)||
     !Array.isArray(v.provisional_years)||v.provisional_years.length!==1||
     v.provisional_years[0]!==2026||
-    !Array.isArray(v.children)||v.children.length!==3)return false
+    !Array.isArray(v.children)||v.children.length!==(v.source_version===1?3:4))return false
   return v.children.every((item:unknown,i:number)=>{
     if(!record(item))return false
     const validCount=i<2 ? item.entity_count===[11,164][i] :
       typeof item.entity_count==='number' &&
       Number.isSafeInteger(item.entity_count) &&
-      item.entity_count>=37 && item.entity_count<=10000
+      item.entity_count>=(i===3?1:37) && item.entity_count<=10000
     return item.package_id===ATP_CALENDAR_REFERENCE_CHILD_IDS[i] &&
-      item.package_type===['Category','Series','Calendar'][i] &&
-      item.source_version===1 && fingerprint(item.source_fingerprint) &&
+      item.package_type===['Category','Series','Calendar','Category'][i] &&
+      (i===3?typeof item.source_version==='number'&&Number.isSafeInteger(item.source_version)&&item.source_version>=1:item.source_version===1) && fingerprint(item.source_fingerprint) &&
       validCount
   })
 }

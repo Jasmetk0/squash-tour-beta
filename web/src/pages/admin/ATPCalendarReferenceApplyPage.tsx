@@ -107,8 +107,8 @@ export function ATPCalendarReferenceApplyPage(): JSX.Element {
     setupId={ATP_CALENDAR_REFERENCE_SETUP_ID}
     title={{cs: 'ATP Tour 1990–2026 – referenční kalendář', en: 'ATP Tour 1990–2026 – reference Calendar'}}
     subtitle={{
-      cs: 'Historické Category + Series + Calendar v jednom Setup. Termíny jednotlivých ročníků vycházejí z archivů ATP; chybějící data se nedopočítávají odhadem. Rok 2026 zůstává předběžný. Nejde o hratelný kalendář pro squash.',
-      en: 'Historical Category + Series + Calendar in one Setup. Season dates come from ATP archives; missing dates are never guessed. Year 2026 remains provisional. This is not a playable squash Calendar.',
+      cs: 'Historické Category + Series + Calendar a squashové sportovní profily v jednom Setup. Po ručním Save lze v Calendar Tour zkontrolovat import ATP Finals a Next Gen 2025. Ostatní turnaje zatím mají referenční termíny. Rok 2026 zůstává předběžný.',
+      en: 'Historical Category + Series + Calendar and squash sporting profiles in one Setup. After manual Save, Calendar Tour can review ATP Finals and Next Gen 2025 imports. Other tournaments currently provide reference dates. Year 2026 remains provisional.',
     }}
     getCatalog={getATPCalendarReferenceCatalog}
     getPreview={previewATPCalendarReference}

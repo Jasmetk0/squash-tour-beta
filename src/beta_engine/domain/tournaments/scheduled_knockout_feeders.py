@@ -81,24 +81,37 @@ def scheduled_knockout_progress(*, plan: ScheduledKnockoutFeederPlan, matches,
 
     ``positions`` comes from the existing frozen slot ledger, not from inferred
     match sequence numbers. Record order cannot decide a feeder winner.
+    The current position carries the consuming owner's Run clock. Historical
+    slots retain their exact clocks when that Run's horizon has been extended.
     """
     plan.validate_source()
-    if current.week.calendar != plan.calendar:
-        raise ValueError('Current knockout position uses a different Run calendar')
+    plan.schedule.validate_runtime_calendar(current.week.calendar)
     rows = plan_knockout_run_matches(draw=plan.draw,schedule=plan.schedule)['matches']
     expected = {r['match_id']: KnockoutRoundPosition.model_validate_json(json.dumps(r['position'])) for r in rows}
     ids = [m.match_id for m in matches]
     if len(ids) != len(set(ids)) or set(positions) != set(ids) or not set(ids) <= set(expected):
         raise ValueError('Scheduled knockout has duplicate, foreign or missing slot evidence')
+    round_calendars = {}
     for m in matches:
         actual = positions[m.match_id]
-        if actual != expected[m.match_id] or m.week != actual.week:
+        plan.schedule.validate_runtime_calendar(actual.week.calendar)
+        if actual.week.calendar.season_count > current.week.calendar.season_count:
+            raise ValueError('Accepted knockout clock exceeds the consuming Run horizon')
+        if actual.chronological_key != expected[m.match_id].chronological_key or m.week != actual.week:
             raise ValueError('Accepted knockout match differs from its frozen round schedule')
         if actual.chronological_key > current.chronological_key:
             raise ValueError('Scheduled knockout cannot consume future match evidence')
+        clock = round_calendars.setdefault(actual.chronological_key, actual.week.calendar)
+        if clock != actual.week.calendar:
+            raise ValueError('One frozen knockout round cannot contain different Run clocks')
+    horizons = [clock.season_count for _, clock in sorted(round_calendars.items())]
+    if horizons != sorted(horizons):
+        raise ValueError('Accepted knockout rounds cannot shrink the Run horizon')
     if any(mid not in positions and pos.chronological_key < current.chronological_key for mid,pos in expected.items()):
         raise ValueError('An earlier knockout round is incomplete')
     progress = _project_draw_progress(plan=plan,draw=plan.draw,
-        source_season_index=plan.schedule.main[0].week.season_index,matches=matches)
-    due = tuple(m for m in progress.ready_matches if expected[m.match_id] == current)
+        source_season_index=plan.schedule.main[0].week.season_index,matches=matches,
+        runtime_calendar=current.week.calendar)
+    due = tuple(m for m in progress.ready_matches
+                if expected[m.match_id].chronological_key == current.chronological_key)
     return progress, due

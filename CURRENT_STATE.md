@@ -1,3 +1,21 @@
+# Scheduled ATP horizon-continuation repair candidate — 11 November 2026
+
+An explicit compatible Run horizon extension can now be consumed between Q and
+Main, including a partially accepted frozen slot, without rewriting the original
+schedule, Draw, seeds or already played records. Accepted rounds retain their
+actual Saved clocks; rebasing, future horizons, mixed clocks within a frozen
+round and shrinking horizons between rounds are rejected. Completed results use
+the actual final match clock and remain unchanged on a later extension.
+
+Targeted proofs exercise 43 genuine Q/Main matches with extension between phases,
+unchanged sporting outcomes/phase points, and a real HTTP/SQLite source Save,
+explicit Run extension and cold restart preserving the original source envelope.
+The played component proof and source-persistence proof are separate: this does
+not claim a public cross-week native Tour/Entry/Week Transition acceptance pass.
+The repair is stacked on the unchanged, reviewed #1763 head; owner alone merges.
+
+---
+
 # Run-calendar scheduled knockout results and points candidate — 11 November 2026
 
 Completed scheduled matches now derive clock-free knockout facts and the same

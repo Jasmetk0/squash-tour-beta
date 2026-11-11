@@ -17,6 +17,7 @@ from beta_engine.domain.rankings.points import knockout_loss_point_stage
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.result_authority import KnockoutResultFacts, TournamentMatchResultAuthority, assemble_knockout_result_facts
 from beta_engine.domain.tournaments.scheduled_knockout_feeders import ScheduledKnockoutFeederPlan, scheduled_knockout_progress
+from beta_engine.domain.tournaments.knockout_run_schedule import KnockoutRoundPosition
 
 
 class ScheduledKnockoutResult(KnockoutResultFacts):
@@ -43,9 +44,14 @@ class ScheduledKnockoutResult(KnockoutResultFacts):
         return canonical_hash(self.model_dump(mode='json'))
 
 
-def complete_scheduled_knockout_result(*, plan, matches, positions):
+def complete_scheduled_knockout_result(*, plan, matches, positions, runtime_calendar: RunCalendar | None=None):
     plan=ScheduledKnockoutFeederPlan.model_validate_json(plan.model_dump_json())
-    progress,_due=scheduled_knockout_progress(plan=plan,matches=matches,positions=positions,current=plan.schedule.main[-1])
+    clock=runtime_calendar or plan.calendar
+    plan.schedule.validate_runtime_calendar(clock)
+    final=plan.schedule.main[-1]
+    current=KnockoutRoundPosition(week=RunWeekPosition(calendar=clock,
+        season_index=final.week.season_index,week=final.week.week),slot=final.slot)
+    progress,_due=scheduled_knockout_progress(plan=plan,matches=matches,positions=positions,current=current)
     if not progress.champion_player_id or progress.ready_matches or len(progress.accepted_match_ids)!=len(plan.topology.plans):
         raise ValueError('Scheduled result requires every executable knockout match completed')
     accepted={m.match_id:m for m in matches}
@@ -64,7 +70,7 @@ def complete_scheduled_knockout_result(*, plan, matches, positions):
                     'match':node.node_id,'winner':winner})))
     facts=assemble_knockout_result_facts(draw=plan.draw,matches=tuple(rows))
     return ScheduledKnockoutResult(**facts.model_dump(),run_id=plan.draw.run_id,branch_id=plan.draw.branch_id,
-        event_id=plan.draw.event_id,completed_week=plan.schedule.main[-1].week,source_plan_fingerprint=plan.fingerprint)
+        event_id=plan.draw.event_id,completed_week=accepted[plan.topology.terminal_group_id].week,source_plan_fingerprint=plan.fingerprint)
 
 
 def scheduled_point_distribution(profile):
@@ -83,12 +89,8 @@ def scheduled_point_distribution(profile):
 
 def scheduled_knockout_ranking_results(*, plan, matches, positions, runtime_calendar: RunCalendar | None=None):
     plan=ScheduledKnockoutFeederPlan.model_validate_json(plan.model_dump_json())
-    result=complete_scheduled_knockout_result(plan=plan,matches=matches,positions=positions)
     clock=runtime_calendar or plan.calendar
-    if ((clock.weeks_per_year,clock.season_start_year_week,clock.start_year,clock.schema_version)
-            != (plan.calendar.weeks_per_year,plan.calendar.season_start_year_week,plan.calendar.start_year,plan.calendar.schema_version)
-            or clock.season_count < plan.calendar.season_count):
-        raise ValueError('Ranking runtime calendar may only extend the frozen source horizon')
+    result=complete_scheduled_knockout_result(plan=plan,matches=matches,positions=positions,runtime_calendar=clock)
     # The result is valid at the terminal horizon, but this publication adapter
     # requires a next week. It must not invent an out-of-horizon ranking date.
     if result.completed_week.ordinal+1 >= clock.weeks_per_year*clock.season_count:

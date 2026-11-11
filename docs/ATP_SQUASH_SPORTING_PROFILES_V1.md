@@ -1,5 +1,32 @@
 # Saved ATP squash sporting profiles V1
 
+## Run-owned round chronology
+
+`KnockoutRunSchedule` stores explicit Run week + slot for each physical
+Qualification/Main round. It supports different weeks, positive variable Run W,
+and calendar-year rollover within one offset season. All rounds share the same
+exact Run calendar and season; Qualification finishes before Main starts. There
+is no implicit seven-slot week or civil-day/rest interpretation. The geometry
+must have exactly the scheduled physical rounds. BYE nodes retain advancement
+identity and never become executable matches.
+
+The existing native same-week planner reads its old schedule through
+`on_one_week`, so its stored schema and outputs stay unchanged. This does not
+remove its existing native source/Ranked/W61 integration guards.
+
+`POST .../calendar-tour/atp-source-editions/{occurrence_id}/schedule-preview`
+takes the expected Saved head, profile fingerprint and an explicit proposed
+round schedule. It checks the exact Saved clock, bracket sizes and Main source
+weeks. It returns a deterministic, non-mutating planning review with
+`sporting_execution_ready=false` and `qualification_dates_verified=false`.
+Proposing Q in the preceding Run week is an Admin proposal, not evidence of
+the source's real Q dates. The result cannot confirm or start simulation.
+
+Tests use actual canonical Draw nodes with W52/W61/W80 clocks, same-week slots,
+offset year rollover, invalid season/horizon/round chronology and real HTTP/
+SQLite Saved-source reads. They are planning/contract evidence, not a played
+cross-week tournament or publication acceptance pass.
+
 ## Knockout configuration extension
 
 Setup source v3 adds sporting Category v2 with a separate knockout entity kind.

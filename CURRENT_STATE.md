@@ -1,3 +1,21 @@
+# Run-owned cross-week knockout scheduling candidate — 11 November 2026
+
+A separate versioned round schedule stores exact Run week/slot positions for
+Qualification and Main. It validates complete bracket-round coverage, strict
+Q-before-Main chronology, common calendar and one season; it supports W52/W61/W80
+and calendar-year rollover inside an offset season without clipping horizons.
+Canonical match planning retains original node IDs and excludes BYEs. The
+existing native same-week planner now uses this shared validation through an
+ephemeral adapter; old stored schedules and planning output remain unchanged.
+
+An Admin API read validates an explicitly proposed schedule against the exact
+Saved ATP profile/head and Main source weeks. It never commits a sporting
+Edition or verifies unknown real Qualification dates. Actual cross-week native
+execution/Entry/Ranked publication remain follow-up integration, not implied by
+this read-only planning result. See the sporting profile document.
+
+---
+
 # ATP knockout source and shared geometry candidate — 11 November 2026
 
 Setup v3 / sporting Category v2 adds the sourced Rotterdam 2025 Main32/Q16

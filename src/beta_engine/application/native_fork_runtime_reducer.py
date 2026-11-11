@@ -38,6 +38,7 @@ from beta_engine.domain.rankings.calendar_official import (
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
+    turn_pro_public_player_ids,
     effective_policy,
     published_edition_results,
     ranking_week,
@@ -334,13 +335,32 @@ def _advance(runtime, command, sources):
         for a in runtime.tour.editions
         for s in a.submissions
     )
-    if runtime.lifecycle.policy.requires_turn_pro:
-        # Master v87 Turn Pro is not yet wired into native fork continuation.
-        raise ValueError("Native fork Week Transition does not yet support v87 Turn Pro")
+    # Master v87: the same pure Turn Pro step as the original native week. On
+    # replay ``sources.turn_pro_model`` carries the recorded model.
+    from beta_engine.domain.tournaments.calendar_native_tour_week import (
+        native_turn_pro_decisions,
+    )
+
+    countries = {p.player_id: p.country_code for p in sources.world.players}
+    for row in source.records:
+        if type(row.get("prospect_id")) is str and type(row.get("country_code")) is str:
+            countries.setdefault(row["prospect_id"], row["country_code"])
+    turn_pro, turn_pro_model = native_turn_pro_decisions(
+        tour_state=runtime.tour,
+        predecessor=runtime.lifecycle,
+        checkpoint=ForkCompetitionView(runtime, sources.checkpoint),
+        countries=countries,
+        target=target,
+        submissions=submissions,
+        seed=command.seed,
+        model=getattr(sources, "turn_pro_model", None),
+    )
     life = (
-        advance_calendar_lifecycle_with_prospects(runtime.lifecycle, birth, submissions)
+        advance_calendar_lifecycle_with_prospects(
+            runtime.lifecycle, birth, submissions, turn_pro
+        )
         if birth.births
-        else advance_calendar_lifecycle(runtime.lifecycle, target, submissions)
+        else advance_calendar_lifecycle(runtime.lifecycle, target, submissions, turn_pro)
     )
     health = advance_native_health_week(
         previous_health=runtime.health,
@@ -396,6 +416,9 @@ def _advance(runtime, command, sources):
             if a.edition.announcement_week.ordinal == target.ordinal
         ],
     }
+    turned = turn_pro_public_player_ids(turn_pro)
+    if turned:
+        public["turned_pro_player_ids"] = turned
     transition = CalendarTourTransition(
         command_id=command.command_id,
         completed_week=runtime.week,
@@ -408,6 +431,8 @@ def _advance(runtime, command, sources):
             p.player_id for p in life.players if p.status == "retired"
         ),
         public_event=public,
+        turn_pro_decisions=turn_pro,
+        turn_pro_model=turn_pro_model,
     )
     tour = runtime.tour.model_copy(
         update={
@@ -430,6 +455,14 @@ def _advance(runtime, command, sources):
             "health_fingerprint": health.fingerprint,
             "admitted_player_ids": [b.player_id for b in birth.births],
             "native_transition": True,
+            **(
+                {
+                    "turn_pro_decisions": [d.model_dump(mode="json") for d in turn_pro],
+                    "turn_pro_model": turn_pro_model.model_dump(mode="json"),
+                }
+                if turn_pro_model is not None
+                else {}
+            ),
         },
     }
     return cohere(

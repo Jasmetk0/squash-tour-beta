@@ -31,10 +31,26 @@ from beta_engine.domain.tournaments.calendar_tour import (
 
 
 def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions, seed, model):
+    """Countries from the InitialWorld and earlier signed birth events."""
+    countries = {p.player_id: p.country_code for p in world.players}
+    for state_ in lifecycle:
+        for birth in getattr(getattr(state_, "birth_event", None), "births", ()):
+            countries[birth.player_id] = birth.country_code
+    return native_turn_pro_decisions(
+        tour_state=state, predecessor=lifecycle[-1], checkpoint=checkpoint,
+        countries=countries, target=target, submissions=submissions, seed=seed,
+        model=model,
+    )
+
+
+def native_turn_pro_decisions(
+    *, tour_state, predecessor, checkpoint, countries, target, submissions, seed, model
+):
     """Master v87 Turn Pro at a native Week Transition (pure; replayed on verify).
 
-    Inputs are the Signed lifecycle and sporting checkpoint of the completed week.
-    Countries come from the InitialWorld and from earlier signed birth events.
+    Inputs are the lifecycle and sporting checkpoint of the completed week and the
+    players' countries. ``model`` is the recorded policy on replay, else None for
+    the current default. Returns ``((), None)`` under the historical rule.
     """
     from beta_engine.domain.players.turn_pro_model import (
         build_turn_pro_candidates,
@@ -43,16 +59,11 @@ def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions
     )
     from beta_engine.domain.tournaments.calendar_tour import turn_pro_home_opportunities
 
-    predecessor = lifecycle[-1]
     if not predecessor.policy.requires_turn_pro:
         if model is not None:
             raise ValueError("Turn Pro model requires the v87 lifecycle policy")
         return (), None
     model = model or default_turn_pro_model_policy()
-    countries = {p.player_id: p.country_code for p in world.players}
-    for state_ in lifecycle:
-        for birth in getattr(getattr(state_, "birth_event", None), "births", ()):
-            countries[birth.player_id] = birth.country_code
     plain = advance_calendar_lifecycle(predecessor, target, submissions)
     decisions = decide_turn_pro(
         predecessor=predecessor,
@@ -63,7 +74,9 @@ def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions
             predecessor,
             plain,
             {p.player_id: p.ovr for p in checkpoint.players},
-            home_opportunity_by_player=turn_pro_home_opportunities(state, target, countries),
+            home_opportunity_by_player=turn_pro_home_opportunities(
+                tour_state, target, countries
+            ),
         ),
     )
     return decisions, model

@@ -193,9 +193,22 @@ known through the end of the completed week; that wiring is the next slice.
 - The service no longer rejects v87 in native birth weeks. Native forks still
   reject v87 explicitly.
 
+## Slice 10: native fork continuation
+
+- The native fork reducer runs the same pure `native_turn_pro_decisions` step
+  as an original native week: countries from the InitialWorld and the Signed
+  prospect source, strength from the fork's competition view of the completed
+  week. Decisions belong to the fork Branch, are recorded with the model in the
+  transition and impact, and appear in its public event.
+- Fork replay sets `turn_pro_model` from each confirmed command's recorded
+  result, so the fork's decisions are re-derived exactly after a restart even
+  when the default calibration differs.
+- Pre-fork Turn Pro entries are copied into the fork baseline with their
+  original Branch tokens; the fork never re-verifies them as its own.
+
 ## Not implemented (next slices)
 
 - Viewer UI text and followed-player notifications for Turn Pro.
-- Turn Pro in native forks; model re-run for the non-native (pre-v4) replay.
+- Model re-run for the non-native (pre-v4) Tour replay.
 - Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

@@ -1,3 +1,13 @@
+# Turn Pro native fork candidate (Master v87) — 11 November 2026
+
+Stacked on the native-weeks branch. Public native forks of a v87 Run now run and
+record Turn Pro at their Week Transitions and re-run each recorded model on
+replay. Proven over HTTP/SQLite: fork birth week with decisions owned by the fork,
+untouched original Branch, a following default-calibration week and restart.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro native weeks candidate (Master v87) — 11 November 2026
 
 Stacked on the public-event branch. Native birth/competition Week Transitions run

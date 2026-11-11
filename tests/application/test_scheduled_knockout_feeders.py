@@ -30,7 +30,7 @@ pytestmark=pytest.mark.pr_critical
 PLAYERS=tuple(f'P{i:03d}' for i in range(44))
 
 
-def plan():
+def plan(*, clock=None, season=0, q_week=5, main_week=6):
     event='atp_2025_rotterdam'
     ranking=TournamentRankingSnapshotAuthority(run_id='run',branch_id='branch',event_id=event,
         ranking_week=ranking_snapshot(PLAYERS).week,ranking_snapshot=ranking_snapshot(PLAYERS),adopted_by_command_id='ranking')
@@ -42,9 +42,9 @@ def plan():
     inputs=TournamentDrawInputAuthorityBuilder.build(authority=ranking,field=field,field_sequence=1,command_id='input',draw_seed=555,
         main_seed_count=8,qualification_seed_count=None,schema_version='tournament_draw_input_authority.v3',wild_card_authority=wc)
     draw=TournamentDrawAuthorityBuilder.build(draw_input=inputs,command_id='draw')
-    clock=RunCalendar(52,1,2025,2)
-    def position(w,s): return KnockoutRoundPosition(week=RunWeekPosition(calendar=clock,season_index=0,week=w),slot=s)
-    schedule=KnockoutRunSchedule(calendar=clock,qualification=tuple(position(5,s) for s in (1,2)),main=tuple(position(6,s) for s in range(1,6)))
+    clock=clock or RunCalendar(52,1,2025,2)
+    def position(w,s): return KnockoutRoundPosition(week=RunWeekPosition(calendar=clock,season_index=season,week=w),slot=s)
+    schedule=KnockoutRunSchedule(calendar=clock,qualification=tuple(position(q_week,s) for s in (1,2)),main=tuple(position(main_week,s) for s in range(1,6)))
     entity=build_atp_sporting_package().entities[2]
     profile=parse_sporting_profile(entity.payload)
     return ScheduledKnockoutFeederPlan(source_saved_revision_id='saved',source_saved_content_hash='a'*64,
@@ -54,7 +54,10 @@ def plan():
 
 @pytest.fixture(scope='module')
 def played():
-    p=plan()
+    return play_scheduled(plan())
+
+
+def play_scheduled(p):
     profiles={pid:CalendarCanonicalPlayerSource(player=_player(player_id=pid,base=55+i%25),
         source_generation_fingerprint=f'explicit-test-{pid}',potential_ability=90) for i,pid in enumerate(PLAYERS)}
     roster=tuple(derive_bootstrap_record(v,PlayerSportingBootstrapPolicy()) for v in profiles.values())

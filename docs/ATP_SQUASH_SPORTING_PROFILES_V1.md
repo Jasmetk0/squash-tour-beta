@@ -1,5 +1,38 @@
 # Saved ATP squash sporting profiles V1
 
+## Completed results and calendar ranking inputs
+
+`assemble_knockout_result_facts` is shared clock-free sporting assembly. The
+existing legacy result wrapper retains its schema/date representation and JSON
+bytes. `build_knockout_player_point_awards` shares existing exact Q+Main and
+BYE/W/O unlock semantics; the legacy award wrapper retains its serialized shape.
+
+`complete_scheduled_knockout_result` validates the full accepted schedule/feeder
+history and returns a separate `scheduled_knockout_result.v1` projection using
+the real Run clock. It snapshots the plan before calculating. It has no result
+store or publication authority. `scheduled_knockout_ranking_results` derives
+one `CalendarRankingResult` per player, with Q/Main points counted once, the
+following Run week's publication eligibility and W-week validity. All point
+values come from the copied profile, never current server defaults. Distinct
+deep-Q values cannot be silently collapsed into an incompatible shared stage.
+
+This path never converts a W52 result through legacy `RankingWeek`. Its tests
+exercise 43 actual matches, independent points for all 44 players, zero-point
+stages, duplicate rejection, no future publication and expiry at 52 weeks. A
+generic explicitly proposed W80/season55 schedule also works; that is not an
+automatic Earth-to-W80 calendar import.
+
+A completed terminal-horizon result remains valid, but this publication adapter
+requires a following week. An explicit compatible horizon extension can supply
+it without changing the original result/clock/fingerprint. Rebase or shrink is
+rejected. Native terminal closing remains a separate consumer; no phantom week
+or implicit extension is created. These are pure candidate calculations, not
+signed Official publication, Week Transition, result Save or Viewer release.
+
+A separate committed-baseline comparison confirmed byte-identical legacy result
+and award JSON/fingerprints for the same 43-match facts. Existing historical
+point, BYE and feeder regressions remain separate from new calendar acceptance.
+
 ## Physical Saved source preparation
 
 `SavedATPScheduledFeederService.prepare` authenticates the current Saved Run

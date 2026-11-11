@@ -1,3 +1,23 @@
+# Run-calendar scheduled knockout results and points candidate — 11 November 2026
+
+Completed scheduled matches now derive clock-free knockout facts and the same
+shared Q/Main/BYE/W/O point semantics as the unchanged legacy award wrapper.
+A separate versioned result projection retains the actual Run week/clock;
+calendar ranking inputs contain one combined result per player with distinct Q
+and Main components, next-week publication eligibility and W-week validity.
+
+Actual-match tests compare all 44 players' awards to independent elimination
+values, reject future ranking input/duplicates/incomplete tournaments and verify
+52-week expiry. Explicit W80/season55 and terminal-W52 scenarios preserve modern
+clock semantics. A compatible horizon extension permits next-week publication
+without rewriting the frozen completed result; rebasing is rejected. Legacy
+result/award JSON bytes and fingerprints match the committed baseline.
+These are derived results and ranking candidates, not a native publication or
+Week Transition/Save integration pass. Terminal closing and native lifecycle
+ownership remain separate. No legacy calendar/schema guard was loosened.
+
+---
+
 # Saved ATP scheduled-source loader candidate — 11 November 2026
 
 The scheduled knockout plan can now be prepared from a physical hash-verified

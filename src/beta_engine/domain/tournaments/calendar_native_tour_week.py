@@ -32,6 +32,11 @@ from beta_engine.domain.tournaments.calendar_tour import (
 
 def _native_turn_pro(*, state, checkpoint, world, lifecycle, target, submissions, seed, model):
     """Countries from the InitialWorld and earlier signed birth events."""
+    if not lifecycle[-1].policy.requires_turn_pro:
+        # Historical rule: touch no extra inputs, so earlier callers are unchanged.
+        if model is not None:
+            raise ValueError("Turn Pro model requires the v87 lifecycle policy")
+        return (), None
     countries = {p.player_id: p.country_code for p in world.players}
     for state_ in lifecycle:
         for birth in getattr(getattr(state_, "birth_event", None), "births", ()):

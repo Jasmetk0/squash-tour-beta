@@ -341,10 +341,12 @@ def _advance(runtime, command, sources):
         native_turn_pro_decisions,
     )
 
-    countries = {p.player_id: p.country_code for p in sources.world.players}
-    for row in source.records:
-        if type(row.get("prospect_id")) is str and type(row.get("country_code")) is str:
-            countries.setdefault(row["prospect_id"], row["country_code"])
+    countries = {}
+    if runtime.lifecycle.policy.requires_turn_pro:
+        countries = {p.player_id: p.country_code for p in sources.world.players}
+        for row in source.records:
+            if type(row.get("prospect_id")) is str and type(row.get("country_code")) is str:
+                countries.setdefault(row["prospect_id"], row["country_code"])
     turn_pro, turn_pro_model = native_turn_pro_decisions(
         tour_state=runtime.tour,
         predecessor=runtime.lifecycle,

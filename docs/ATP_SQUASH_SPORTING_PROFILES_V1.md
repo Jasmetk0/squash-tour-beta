@@ -1,5 +1,33 @@
 # Saved ATP squash sporting profiles V1
 
+## Scheduled match consumption
+
+`ScheduledKnockoutFeederPlan` is a separate v1 source adapter for a copied ATP
+knockout profile, initial Draw Input/Draw and Run schedule. It reconstructs the
+Draw from its committed input, preserves the profile's capacities/Main seed
+count, and binds the copied payload fingerprint. It does not mark an ATP event
+as a FAX fixture. The old FAX feeder adapter delegates to the same pure graph
+rules while retaining its historical source validation, seed algorithm and hashes.
+
+`scheduled_knockout_progress` reads ordinary accepted match DTOs and their
+positions from the caller's frozen slot ledger. It validates recorded week/slot,
+source, seed, exact feeder opponents and chronology. Missing earlier rounds,
+future evidence, wrong/duplicate records and altered source payloads fail closed.
+It returns only due matches; it owns no second result store. New match seed
+schema is explicit and does not alter the old native seed path.
+
+The caller still owns physical Saved-envelope authentication, Entry eligibility,
+Health/player projection, frozen-slot input integrity, replay, transitions,
+Save and publication. No new public execution route is enabled by this kernel.
+The schedule remains an explicit proposal while real Q dates are unverified.
+
+Component tests play all 43 actual squash matches for Main32/Q16 with 44
+explicitly eligible synthetic players, apply existing match effects from frozen
+round inputs, and feed actual Q winners to Main in the following proposed week.
+They round-trip the frozen plan and ordinary match DTOs between phases, compare
+opposite acceptance order and reject provenance/scheduling corruption. This is
+not a real HTTP/SQLite cross-week native lifecycle or ranking publication proof.
+
 ## Run-owned round chronology
 
 `KnockoutRunSchedule` stores explicit Run week + slot for each physical

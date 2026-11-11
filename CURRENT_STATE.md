@@ -1,3 +1,21 @@
+# Scheduled knockout MatchEngine consumer candidate — 11 November 2026
+
+The source-neutral feeder rules are shared by the unchanged FAX wrapper and a
+new versioned scheduled ATP adapter. The adapter freezes the copied sporting
+profile payload, committed Draw Input/Draw and Run round schedule. It validates
+source capacities/seeds, actual accepted match provenance, schedule positions
+and Q-before-Main dependencies without storing a second result ledger.
+
+A component proof plays the 32/16 Rotterdam geometry with 44 explicit test
+players through real MatchEngine: 12 Qualification matches on the proposed first
+week and 31 Main matches on the second. Actual Q winners feed Main. Frozen
+plan/match DTOs reopen between phases; input-order and source/schedule corruption
+checks remain distinct. This is not a public native Run Save/Week Transition or
+Official ranking acceptance pass. Those consumers and actual source Q dates
+still need integration. No ATP sporting readiness or merge readiness is implied.
+
+---
+
 # Run-owned cross-week knockout scheduling candidate — 11 November 2026
 
 A separate versioned round schedule stores exact Run week/slot positions for

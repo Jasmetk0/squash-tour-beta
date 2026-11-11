@@ -6,6 +6,7 @@ from sqlalchemy import text
 from beta_engine.application.atp_saved_tour_source import read_saved_atp_source
 from beta_engine.application.atp_saved_snapshot_week_preview import build_saved_atp_reference_week_mapping
 from beta_engine.application.atp_sourced_edition import saved_profiles, project_profile
+from beta_engine.application.atp_qualification_week_projection import project_qualification_window
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.atp_knockout_profile import ATPKnockoutProfile
@@ -49,6 +50,12 @@ def validate_saved_atp_knockout_schedule(*, calendar, state, occurrence_id, requ
     )
     if any(r.week.ordinal not in source['run_ordinals'] for r in request.schedule.main):
         raise ValueError('Proposed Main rounds leave the Saved ATP Main source weeks')
+    qualification = project_qualification_window(calendar, profile)
+    if qualification is not None:
+        if 'run_ordinals' not in qualification:
+            raise ValueError('ATP Qualification source is outside the Run horizon or contains ISO week 53')
+        if any(r.week.ordinal not in qualification['run_ordinals'] for r in request.schedule.qualification):
+            raise ValueError('Proposed Qualification rounds leave the Saved ATP Qualification source weeks')
     return profile, fingerprint, source, geometry
 
 
@@ -67,6 +74,8 @@ def preview_atp_knockout_schedule(repository, *, run_id, branch_id, occurrence_i
               'schedule':request.schedule.model_dump(mode='json'),
               'schedule_fingerprint':request.schedule.fingerprint,
               'source_main_projection':source,'actual_match_count':geometry['actual_match_count'],
-              'qualification_dates_verified':False,'sporting_execution_ready':False,
+              'qualification_dates_verified':profile.qualification_date_status == 'verified','sporting_execution_ready':False,
+              **({'source_qualification_projection': project_qualification_window(calendar, profile)}
+                 if profile.qualification_date_evidence is not None else {}),
               'run_mutated':False,'requires_explicit_source_chronology_review':True}
     return {**result,'preview_fingerprint':canonical_hash(result)}

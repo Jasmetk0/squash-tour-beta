@@ -1,15 +1,53 @@
 """Sourced Main/Q configuration; geometry is separate from native readiness."""
 from datetime import date
 from typing import Literal
-from pydantic import BaseModel, ConfigDict, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
 from beta_engine.domain.run_packages import canonical_hash
 
 
+class ATPQualificationDateEvidence(BaseModel):
+    """Copied source facts, distinct from an Admin's proposed round schedule."""
+    model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
+    start_date: str
+    end_date: str
+    source_urls: tuple[str, ...] = Field(min_length=1)
+    published_dates: tuple[str, ...] = Field(min_length=1)
+
+    @field_validator('start_date', 'end_date')
+    @classmethod
+    def canonical_date(cls, value):
+        if date.fromisoformat(value).isoformat() != value:
+            raise ValueError('Qualification dates require YYYY-MM-DD')
+        return value
+
+    @field_validator('published_dates')
+    @classmethod
+    def canonical_publication_dates(cls, values):
+        return tuple(cls.canonical_date(value) for value in values)
+
+    @model_validator(mode="after")
+    def validate_window(self):
+        from urllib.parse import urlsplit
+
+        start, end = date.fromisoformat(self.start_date), date.fromisoformat(self.end_date)
+        if end < start or len(self.source_urls) != len(self.published_dates):
+            raise ValueError("Qualification evidence requires an ordered window and dated sources")
+        if len(set(self.source_urls)) != len(self.source_urls):
+            raise ValueError("Qualification evidence sources must be distinct")
+        for url, published in zip(self.source_urls, self.published_dates, strict=True):
+            parsed = urlsplit(url)
+            if (parsed.scheme != 'https' or not parsed.hostname or parsed.username is not None
+                    or parsed.password is not None or not parsed.path.strip('/')
+                    or date.fromisoformat(published) > start):
+                raise ValueError("Qualification evidence requires dated HTTPS source pages published before play")
+        return self
+
+
 class ATPKnockoutProfile(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, strict=True)
-    schema_version: Literal["atp_squash_knockout_profile.v1"]
+    schema_version: Literal["atp_squash_knockout_profile.v1", "atp_squash_knockout_profile.v2"]
     occurrence_id: str = Field(min_length=1)
     category_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
@@ -18,7 +56,10 @@ class ATPKnockoutProfile(BaseModel):
     source_urls: tuple[str, ...] = Field(min_length=1)
     source_pdf_sha256: dict[str, str]
     # The PDF's event header is the Main window, not evidence of Q dates.
-    qualification_date_status: Literal["not_verified"]
+    qualification_date_status: Literal["not_verified", "verified"]
+    qualification_date_evidence: ATPQualificationDateEvidence | None = Field(
+        default=None, exclude_if=lambda value: value is None,
+    )
     entrant_selection: Literal["admin_selected_no_automatic_race_or_age"]
     main_entrants: int = Field(ge=2, le=128)
     qualification_entrants: int = Field(ge=2, le=128)
@@ -49,6 +90,15 @@ class ATPKnockoutProfile(BaseModel):
         start, end = date.fromisoformat(self.source_start_date), date.fromisoformat(self.source_end_date)
         if end < start or not self.occurrence_id.startswith(f"atp_{start.year}_"):
             raise ValueError("Invalid ATP knockout dates or identity")
+        if self.schema_version.endswith('.v1'):
+            if self.qualification_date_status != 'not_verified' or 'qualification_date_evidence' in self.model_fields_set:
+                raise ValueError("Historical v1 profile cannot acquire verified Qualification dates")
+        else:
+            evidence = self.qualification_date_evidence
+            if (self.qualification_date_status != 'verified' or evidence is None
+                    or date.fromisoformat(evidence.end_date) > end
+                    or date.fromisoformat(evidence.start_date) > start):
+                raise ValueError("Verified v2 Qualification dates must be sourced and fit their event window")
         if self.seeds_count > self.main_entrants:
             raise ValueError("Seeds exceed Main entrants")
         if set(self.source_urls) != set(self.source_pdf_sha256) or any(not u.startswith('https://') for u in self.source_urls):

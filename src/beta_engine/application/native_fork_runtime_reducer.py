@@ -334,6 +334,9 @@ def _advance(runtime, command, sources):
         for a in runtime.tour.editions
         for s in a.submissions
     )
+    if runtime.lifecycle.policy.requires_turn_pro:
+        # Master v87 Turn Pro is not yet wired into native fork continuation.
+        raise ValueError("Native fork Week Transition does not yet support v87 Turn Pro")
     life = (
         advance_calendar_lifecycle_with_prospects(runtime.lifecycle, birth, submissions)
         if birth.births

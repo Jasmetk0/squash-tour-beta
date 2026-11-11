@@ -1,3 +1,14 @@
+# Turn Pro Week Transition candidate (Master v87) — 11 November 2026
+
+Stacked on #1770. Under the opt-in v87 policy the native Week Transition runs the
+pre-alpha player-AI model and records its decisions and model policy in the
+transition; lifecycle history, the Saved lifecycle check and ranking replay rebuild
+the v87 lifecycle from them. Historical-policy Runs are byte-for-byte unchanged.
+Birth transitions and forks reject v87 explicitly. No runtime selects v87 yet; see
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro pre-alpha AI model candidate (Master v87) — 11 November 2026
 
 Stacked on #1768. Adds the pure, deterministic `turn_pro_model.v1`: a weekly

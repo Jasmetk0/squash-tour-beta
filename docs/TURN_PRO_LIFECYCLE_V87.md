@@ -1,4 +1,4 @@
-# Turn Pro lifecycle kernel (Master v87) — slices 1–3
+# Turn Pro lifecycle kernel (Master v87) — slices 1–4
 
 Master v87 (9.2) replaces the v57 Tour-entry trigger: a prospect becomes a
 `Tour Player` through a separate **Turn Pro** event chosen by its player AI, and
@@ -76,14 +76,40 @@ Synthetic-cohort calibration with the default (3,000 players, W52; W61 matches):
 The caller must still supply `readiness` and `home_opportunity` from information
 known through the end of the completed week; that wiring is the next slice.
 
+## Slice 4 — native Week Transition runs and records Turn Pro
+
+- Under the v87 policy, the native Week Transition preview (`_turn_pro_week`)
+  runs `decide_turn_pro` on the completed week's lifecycle and sporting
+  checkpoint with the transition command seed. Strength is the current
+  provisional OVR; readiness compares a prospect with active Tour Players and,
+  while a Run has none, with the rest of the active population (never itself).
+  `home_opportunity` is always false for now: native Editions carry no host
+  country yet.
+- `CalendarTourTransition` records `turn_pro_decisions` and the exact
+  `turn_pro_model` policy. Both are omitted when absent, so historical
+  transitions keep their bytes; decisions must be effective at the transition's
+  own target week, in canonical player order, and require the model policy.
+- `_lifecycle_history`, the Saved lifecycle-history check and `verify_tour`'s
+  ranking replay rebuild the v87 lifecycle from the original World, actual
+  applications and the recorded decisions. Recorded decisions in a Run without
+  the v87 World policy are rejected.
+- Not yet supported under v87, and rejected explicitly instead of silently
+  skipping Turn Pro: the native birth (prospect intake) Week Transition and
+  native fork continuation.
+- **Limitation:** replay checks that the recorded decisions are consistent with
+  the lifecycle, but does not re-run the model to prove that each decision came
+  from the stored inputs.
+
 ## Not implemented (next slices)
 
 - No runtime can select the v87 policy yet: every production constructor builds
   the historical policy. Nothing changes for existing or new Runs.
-- Persistence and Saved capture/restore of Turn Pro decisions, and the public
-  World Event.
-- Week Transition wiring: computing readiness (strength vs Tour Players) and the
-  home opportunity from public, completed-week information, and running the model.
+- The public World Event and Viewer news for Turn Pro.
+- Selecting the v87 policy for a new Run, and Tour Players who are already
+  professional at Run start; until then nobody can apply in the first weeks of a
+  v87 Run.
+- Host country on native Editions, so the home opportunity can be derived.
+- Turn Pro in the birth transition and native forks; model re-run in replay.
 - HTTP/SQLite proof of the gate and roster: impossible until a Run can select
   v87 and persist Turn Pro decisions (the lifecycle history currently receives
   no decisions, so under v87 nobody could apply — fail-closed, not usable).

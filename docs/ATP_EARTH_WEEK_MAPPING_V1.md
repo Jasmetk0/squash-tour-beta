@@ -208,3 +208,28 @@ and name every conflicting week, including a source finish after the last
 Run week. An occurrence stays together across that boundary. Tour binding
 validation covers both groups. Existing API consumers retain strict rejection
 by default. The preview uses the existing W52 clock and remains read-only.
+
+### Play a sourced Next Gen 2025 Edition
+
+On an initialized W52 Run, apply the ATP historical Calendar Setup and Save
+it. Open Calendar Tour → New Tournament Edition and review the Next Gen 2025
+import using the chosen first Simulation Slot. The proposal reads the current
+Saved ATP snapshot, verifies its historical Category and Series and uses the
+Run week mapped from 17–21 December 2025. The normal Tour confirmation stages
+the Edition, and the ordinary manual Save makes it available for tournament
+operations. An outdated Saved head or a date outside the Run horizon blocks
+the proposal.
+
+The ATP edition uses eight players in two groups of four, two advancing from
+each group, crossover semifinals and a final. It awards no ranking points.
+Matches use the engine's squash BO5 rules. The Admin selects entrants during
+the ordinary Entry step. Age and Race eligibility are outside this candidate's
+automated checks. The candidate covers this one sourced edition.
+
+The Admin offers this import only when the projected play week and its
+announcement fit the selected Run and can still be scheduled. This includes
+an offset season starting in 2024 and ending at 2025/W51. It also checks the
+remaining announcement lead in a Run that has already advanced.
+
+- [ATP's 2025 event preview and schedule](https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-2025-history-draw-schedule)
+- [ATP 2025 rulebook, §4.04](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-4_world-championships_17dec25.pdf)

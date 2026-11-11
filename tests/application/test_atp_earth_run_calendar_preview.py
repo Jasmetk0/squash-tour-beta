@@ -193,6 +193,21 @@ def test_wrong_calendar_or_mapping_fails_closed(mapping):
         )
 
 
+def test_selected_occurrence_keeps_partial_horizon_rules(mapping):
+    clock = RunCalendar(52, 39, 2024, 1)
+    selection = {"years": [2025], "occurrence_id": "atp_2025_chengdu"}
+    with pytest.raises(ValueError, match="finish outside Run horizon"):
+        preview_atp_earth_weeks_on_run(calendar=clock, mapping=mapping, **selection)
+
+    report = preview_atp_earth_weeks_on_run(
+        calendar=clock, mapping=mapping, report_outside_horizon=True, **selection,
+    )
+    assert report["events"] == []
+    assert [row["source_identity"] for row in report["outside_horizon"]] == [
+        selection["occurrence_id"]
+    ]
+
+
 @pytest.mark.parametrize("years", [
     [], [2025, 2025], [1989], [2027], [True], [2025, "2026"],
 ])

@@ -1,4 +1,4 @@
-# ATP Earth W52 Saved Package preview — 10 November 2026
+# ATP Earth W52 Saved Package and Next Gen pilot — 11 November 2026
 
 On base `buuk` `04c9879c4`, the historical ATP Calendar source (#1741) is
 available. This candidate brings the W52 mapping and Saved snapshot source
@@ -8,9 +8,15 @@ The Admin Packages page can preview a chosen ATP year from the exact Saved
 Run Package and verified W52 clock. A partial-year Run horizon displays
 conflicting occurrences separately with their original dates and weeks.
 The full 1990–2026 source maps 2,407 occurrences. The three source intervals
-touching three weeks remain flagged for sporting review. This read prepares
-calendar decisions; executable ATP draws, slots and ranking policy remain
-separate. See [mapping and validation](docs/ATP_EARTH_WEEK_MAPPING_V1.md).
+touching three weeks remain flagged for sporting review.
+
+The same candidate integrates the owner-merged #1762 pilot. Calendar Tour can
+review and explicitly confirm the Saved 2025 Next Gen source as an eight-player
+group/knockout Edition. It uses the W52 source date, ordinary Entry/draw, actual
+squash MatchEngine, manual Saves and zero ranking points. The UI checks the
+exact target and announcement weeks against the chosen Run horizon. Admin
+selects the entrants. Automated age/Race eligibility and other ATP sporting
+formats remain follow-up work. See [mapping and validation](docs/ATP_EARTH_WEEK_MAPPING_V1.md).
 
 ---
 

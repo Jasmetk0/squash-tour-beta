@@ -41,4 +41,4 @@ def test_invalid_source_profile_is_rejected(patch):
 
 def test_source_order_and_fingerprints_are_reproducible():
     assert build_atp_sporting_package() == build_atp_sporting_package()
-    assert len(build_atp_sporting_package().entities) == 2
+    assert len(build_atp_sporting_package().entities) == 3

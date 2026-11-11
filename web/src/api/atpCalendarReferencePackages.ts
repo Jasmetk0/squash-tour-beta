@@ -44,7 +44,7 @@ const canonicalYearPartition=(dated:unknown,undated:unknown):boolean => {
 
 export function validATPCalendarCatalog(v:unknown):v is ATPCalendarReferenceCatalog {
   if(!record(v)||v.package_id!==ATP_CALENDAR_REFERENCE_SETUP_ID||
-    v.package_type!=='Setup'||(v.source_version!==1&&v.source_version!==2)||
+    v.package_type!=='Setup'||(v.source_version!==1&&v.source_version!==2&&v.source_version!==3)||
     !fingerprint(v.source_fingerprint)||v.usage!==(v.source_version===1?'source_reference_only_no_playable_calendar':'saved_reference_calendar_with_explicit_squash_sporting_profiles')||
     !record(v.reference_span)||v.reference_span.from!==1990||v.reference_span.to!==2026||
     !canonicalYearPartition(v.dated_years,v.undated_years)||

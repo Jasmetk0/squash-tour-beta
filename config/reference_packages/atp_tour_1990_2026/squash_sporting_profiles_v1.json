@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_version": 1,
+  "source_version": 2,
   "profiles": [
     {
       "schema_version": "atp_squash_group_profile.v1",
@@ -101,6 +101,45 @@
         "https://www.nextgenatpfinals.com/en/event/rules-and-innovations"
       ],
       "native_announcement_lead_weeks": 1
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v1",
+      "occurrence_id": "atp_2025_rotterdam",
+      "category_id": "atp_500",
+      "name": "Rotterdam 2025",
+      "source_start_date": "2025-02-03",
+      "source_end_date": "2025-02-09",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/407/mds.pdf",
+        "https://www.protennislive.com/posting/2025/407/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/407/mds.pdf": "8b58aed4a1fa6a978deba4d44ef33ae968c55efdd9d2d653eb0012103c3b8371",
+        "https://www.protennislive.com/posting/2025/407/qs.pdf": "b09620766c8911775c43d902977034996a3aa5c36acfb4b14c626cde77abbbd4"
+      },
+      "qualification_date_status": "not_verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 4,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      }
     }
   ]
 }

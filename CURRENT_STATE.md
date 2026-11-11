@@ -1,3 +1,18 @@
+# ATP knockout source and shared geometry candidate — 11 November 2026
+
+Setup v3 / sporting Category v2 adds the sourced Rotterdam 2025 Main32/Q16
+configuration, four Q sections, four WC, eight seeds and complete phase points.
+The Main and Qualification PDFs are identified by URL and SHA-256. Shared pure
+bracket construction now supplies both this ATP shape and the existing FAX
+wrapper; all 80 original FAX geometry dumps/fingerprints remain unchanged.
+The Saved catalog exposes 43 actual match nodes and explicit execution blockers.
+Rotterdam is structural data, not a playable Edition: Qualification dates still
+need verification and native Ranked knockout execution remains tied to W61/FAX.
+The UI leaves import disabled and explains this boundary. Group profiles retain
+their existing native path. See the sporting profile contract below.
+
+---
+
 # ATP Saved sporting profiles candidate — 11 November 2026
 
 The ATP Calendar Setup v2 adds an independent, versioned squash sporting-profile

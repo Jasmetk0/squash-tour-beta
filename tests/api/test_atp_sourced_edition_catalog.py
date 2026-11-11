@@ -36,9 +36,20 @@ def test_sporting_catalog_uses_saved_profiles_and_retains_outside_horizon_source
         code, catalog = _request("GET", target)
         assert code == 200, catalog
         assert catalog["run_id"] == r and catalog["branch_id"] == b
-        assert len(catalog["entries"]) == 2
-        assert [e["profile"]["played_group_win_points"] for e in catalog["entries"]] == [200, 0]
+        assert len(catalog["entries"]) == 3
+        assert [e["profile"]["played_group_win_points"] for e in catalog["entries"] if e["execution_supported"]] == [200, 0]
         assert all(e["calendar_projection"]["outside_year_weeks"] for e in catalog["entries"])
+        knockout = catalog['entries'][2]
+        assert knockout['profile']['occurrence_id'] == 'atp_2025_rotterdam'
+        assert knockout['knockout_geometry']['actual_match_count'] == 43
+        assert knockout['execution_supported'] is False
+        code, refused = _request('POST', target + '/atp_2025_rotterdam/preview', {
+            'command_id': 'blocked-knockout', 'expected_saved_head': catalog['saved_head_revision_id'],
+            'expected_checkpoint_fingerprint': 'a'*64, 'expected_tour_fingerprint': 'b'*64,
+            'start_slot':1, 'seed':1, 'operator_label':'Admin', 'audit_reason':'Check unsupported execution',
+        })
+        assert code == 409, refused
+        assert 'verified Qualification dates' in refused['detail']['message']
         code, rejected = _request("POST", target + "/atp_2025_atp_finals/preview", {
             "command_id": "outside-atp", "expected_saved_head": catalog["saved_head_revision_id"],
             "expected_checkpoint_fingerprint": "a" * 64, "expected_tour_fingerprint": "b" * 64,

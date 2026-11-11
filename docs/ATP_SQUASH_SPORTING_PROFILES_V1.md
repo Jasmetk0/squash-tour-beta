@@ -1,5 +1,39 @@
 # Saved ATP squash sporting profiles V1
 
+## Knockout configuration extension
+
+Setup source v3 adds sporting Category v2 with a separate knockout entity kind.
+The earlier group entity schemas/payloads remain unchanged. The original
+historical Category/Series/Calendar documents remain v1. Saved v1/v2 Setups
+continue to use their copied content; updates require explicit Package review.
+
+Rotterdam 2025 is sourced from official Main and Qualification draw PDFs:
+
+- https://www.protennislive.com/posting/2025/407/mds.pdf
+- https://www.protennislive.com/posting/2025/407/qs.pdf
+
+The data records both PDF hashes, 32 Main places (24 other direct places,
+4 WC and 4 Q placeholders), 16 Q entrants in four sections of four, 8 seeds,
+no BYEs and 43 actual match nodes (31 Main + 12 Q). Main stage points are
+500/330/200/100/50/0; Q winner/Q final loss/Q first-round loss are 25/13/0.
+These are source awards, not a new phase-composition or eligibility policy.
+The PDF's 3–9 February event header is not treated as evidence of Q dates.
+Real names, results, withdrawals, Lucky Loser and Special Exempt decisions
+from those PDFs are not imported into simulation.
+
+Shared bracket-part construction supplies the ATP geometry without labelling
+it as a FAX release fixture. The original FAX wrapper retains its source guard
+and serialized shape. A distinct baseline comparison confirms identical dumps
+and fingerprints for all 80 original FAX Editions.
+
+The Saved catalog includes the geometry and explicit execution blockers;
+Admin can inspect the capacities but cannot confirm a fake playable Edition.
+The generic preview rejects unsupported knockout execution without mutation.
+Qualification chronology and native Ranked W52 adoption/Entry/awards still need
+integration. Merely removing the historical Main4/8 or W61 guards is not a fix.
+
+## Original group-profile slice
+
 The ATP Calendar Setup **source version 2** retains the original Category,
 Series and Calendar v1 documents unchanged and adds a separate Category Package
 `atp_squash_sporting_profiles` v1. Its two entities are explicit squash adaptations

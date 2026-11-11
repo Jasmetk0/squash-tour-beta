@@ -199,6 +199,8 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
       children:[...original.children,{package_id:'atp_squash_sporting_profiles',package_type:'Category',
         source_version:1,source_fingerprint:hash('e'),entity_count:2}]}
     expect(validATPCalendarCatalog(current)).toBe(true)
+    expect(validATPCalendarCatalog({...current,source_version:3,children:[...original.children,
+      {...current.children[3],source_version:2,entity_count:3}]})).toBe(true)
     expect(validATPCalendarCatalog({...current,children:original.children})).toBe(false)
     expect(validATPCalendarCatalog({...current,source_version:'2'})).toBe(false)
     expect(validATPCalendarCatalog({...current,usage:original.usage})).toBe(false)

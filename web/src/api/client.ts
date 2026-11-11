@@ -371,6 +371,21 @@ export function inspectCalendarTourPlayer(run:string,branch:string,player:string
 export function previewCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand):Promise<import('./calendarTour').TourPreview> {
   return request(calendarTourRoot(run,branch)+'/preview',{method:'POST',body:JSON.stringify(command)})
 }
+export function previewATPNextGenEdition(
+  run: string, branch: string, input: import('./calendarTour').ATPNextGenPreviewRequest,
+): Promise<import('./calendarTour').TourPreview> {
+  return request(calendarTourRoot(run,branch)+'/atp-next-gen-2025/preview',{
+    method:'POST',body:JSON.stringify(input),
+  })
+}
+export function inspectATPSourcedEditions(run:string,branch:string):Promise<import('./atpSourcedEditions').ATPSourcedEditionCatalog> {
+  return request(calendarTourRoot(run,branch)+'/atp-source-editions')
+}
+export function previewATPSourcedEdition(run:string,branch:string,occurrence:string,input:import('./calendarTour').ATPNextGenPreviewRequest):Promise<import('./calendarTour').TourPreview> {
+  return request(calendarTourRoot(run,branch)+'/atp-source-editions/'+encodeURIComponent(occurrence)+'/preview',{
+    method:'POST',body:JSON.stringify(input),
+  })
+}
 export function executeCalendarTour(run:string,branch:string,command:import('./calendarTour').TourCommand,preview:string,includeInspection=false):Promise<unknown> {
   return request(calendarTourRoot(run,branch)+'/execute'+(includeInspection?'?include_inspection=true':''),{method:'POST',body:JSON.stringify({command,expected_preview_fingerprint:preview,explicit_confirmation:true})})
 }
@@ -3892,6 +3907,22 @@ export async function getATPCalendarReferenceYear(
     throw new Error('ATP Calendar year view failed source fingerprint validation.')
   return result
 }
+
+export async function getSavedATPRunWeekPreview(
+  runId:string,branchId:string,revisionId:string,year:number
+):Promise<import('./atpCalendarReferencePackages').SavedATPRunWeekPreview> {
+  const path = `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}`
+    + '/packages/saved-source-atp-reference-calendar/run-week-preview'
+  const query = new URLSearchParams({
+    year:String(year),validate_tour_bindings:'true',report_outside_horizon:'true',
+  })
+  const result = await request<unknown>(`${path}?${query}`)
+  const {validSavedATPRunWeekPreview} = await import('./atpCalendarReferencePackages')
+  if(!validSavedATPRunWeekPreview(result,runId,branchId,revisionId,year))
+    throw new Error('ATP week preview does not match the selected Saved revision.')
+  return result
+}
+
 export function previewATPCalendarReference(
   runId:string,branchId:string
 ):Promise<import('./atpReferencePackages').ATPReferencePreview> {

@@ -1,0 +1,57 @@
+{
+  "measured_at": "2026-11-11",
+  "scenario": "existing native Full Simulation profiler; 4 synthetic players; one 4-player Tour Edition; genuine fork, 51 Week/Season transitions from S1W2 to S2W1, explicit approvals/Saves and cold restart",
+  "clock": {
+    "weeks_per_year": 52,
+    "season_start_year_week": 51,
+    "start_year": 2030,
+    "season_count": 2
+  },
+  "command": "GITHUB_EVENT_NAME=coordination_benchmark PYTHONPATH=src:.:tests/api python scripts/profile_native_full_simulation_scenario.py --root <fresh-directory> --weeks 52",
+  "scope_limit": "Single instrumented local run, not a 1000-player/80-Edition or 50-season release test. RSS includes the profiler process, API and fixture/restart verification; no cross-machine or scale extrapolation.",
+  "report": {
+    "passed": true,
+    "total_seconds_including_fixture": 1072.388478801,
+    "execution_seconds_after_review": 1027.0537181440004,
+    "sql": {
+      "count": 39577,
+      "statement_bytes": 18595978,
+      "parameter_bytes": 171933171
+    },
+    "execution_sql": {
+      "count": 37615,
+      "statement_bytes": 17888031,
+      "parameter_bytes": 161361732
+    },
+    "native_context_calls": 58,
+    "native_context_seconds": 71.80822859399859,
+    "rss_kib": 1743120,
+    "task_read_cost": {
+      "calls": 250,
+      "wall_seconds": 90.19677302400532,
+      "thread_cpu_seconds": 55.06331361700014
+    },
+    "task_heartbeat_cost": {
+      "calls": 5,
+      "wall_seconds": 0.8731217849995119,
+      "thread_cpu_seconds": 0.055140021
+    },
+    "python": "3.12.14 (main, Aug 25 2026, 14:00:49) [Clang 22.1.3 ]",
+    "platform": "Linux-6.18.57-x86_64-with-glibc2.41",
+    "git_sha": "04c9879c49921865e35240cbcf411426d84ef68d",
+    "production_source_tree": "7f4af99fa81bcbd8367b1aee7f04c146cb424f7e"
+  },
+  "databases": {
+    "start.db": {
+      "bytes": 11870208,
+      "saved_revisions": 9,
+      "saved_payload_bytes": 8415506
+    },
+    "matrix.db": {
+      "bytes": 88854528,
+      "saved_revisions": 63,
+      "saved_payload_bytes": 80666279
+    }
+  },
+  "config_tree": "d3a97ca46ea8b1c9bb3e88d7e786861f791bce57"
+}

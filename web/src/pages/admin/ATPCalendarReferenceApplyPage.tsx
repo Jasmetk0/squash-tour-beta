@@ -10,7 +10,10 @@ import {
 import type { ATPCalendarReferenceCatalog } from '../../api/atpCalendarReferencePackages'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { formatApiError } from '../../utils/apiErrors'
+import { ATPSavedRunWeekDetails } from './ATPSavedRunWeekDetails'
 import { ATPSourceApplyPage } from './ATPSourceApplyPage'
+
+const ATP_REFERENCE_YEARS = Array.from({length:37},(_,i)=>1990+i)
 
 /** Compact only genuinely consecutive source-dated historical years.
  * The caller must use the actual canonical year partition, never assume it. */
@@ -49,7 +52,7 @@ function CalendarYearDetails({ catalog, sourceReady }: {
       <label>{cs?'Ročník':'ATP season'}
         <select aria-label="ATP Calendar Year" value={sourceYear}
           onChange={e=>setSourceYear(Number(e.target.value))}>
-          {Array.from({length:37},(_,i)=>1990+i).reverse().map(y=>
+          {[...ATP_REFERENCE_YEARS].reverse().map(y=>
             <option key={y} value={y}>{y}</option>)}
         </select>
       </label>
@@ -104,8 +107,8 @@ export function ATPCalendarReferenceApplyPage(): JSX.Element {
     setupId={ATP_CALENDAR_REFERENCE_SETUP_ID}
     title={{cs: 'ATP Tour 1990–2026 – referenční kalendář', en: 'ATP Tour 1990–2026 – reference Calendar'}}
     subtitle={{
-      cs: 'Historické Category + Series + Calendar v jednom Setup. Termíny jednotlivých ročníků vycházejí z archivů ATP; chybějící data se nedopočítávají odhadem. Rok 2026 zůstává předběžný. Nejde o hratelný kalendář pro squash.',
-      en: 'Historical Category + Series + Calendar in one Setup. Season dates come from ATP archives; missing dates are never guessed. Year 2026 remains provisional. This is not a playable squash Calendar.',
+      cs: 'Historické Category + Series + Calendar a squashové sportovní profily v jednom Setup. Po ručním Save lze v Calendar Tour zkontrolovat import ATP Finals a Next Gen 2025. Ostatní turnaje zatím mají referenční termíny. Rok 2026 zůstává předběžný.',
+      en: 'Historical Category + Series + Calendar and squash sporting profiles in one Setup. After manual Save, Calendar Tour can review ATP Finals and Next Gen 2025 imports. Other tournaments currently provide reference dates. Year 2026 remains provisional.',
     }}
     getCatalog={getATPCalendarReferenceCatalog}
     getPreview={previewATPCalendarReference}
@@ -117,5 +120,9 @@ export function ATPCalendarReferenceApplyPage(): JSX.Element {
           : `Dated seasons: ${datedYearRanges(catalog.dated_years)} · undated seasons: ${catalog.undated_years.length}. 2026 is provisional. ISO week ≠ Run Week.`}</p>
     )}
     renderSourceDetails={(catalog, sourceReady) => <CalendarYearDetails catalog={catalog} sourceReady={sourceReady} />}
+    renderSavedTargetDetails={(runId, branchId, revisionId) =>
+      <ATPSavedRunWeekDetails key={JSON.stringify([runId, branchId, revisionId])}
+        runId={runId} branchId={branchId} revisionId={revisionId}
+        years={ATP_REFERENCE_YEARS} />}
   />
 }

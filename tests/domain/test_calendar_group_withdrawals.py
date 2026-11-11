@@ -71,7 +71,9 @@ def test_historical_slots_cannot_acquire_nonplayed_data_and_equal_players_are_re
         result=TournamentWalkoverResult(match_id='group:one',winner_player_id='B',loser_player_id='A'))
     for schema in ('calendar_global_slot.v1','calendar_global_slot.v2'):
         with pytest.raises(ValueError, match='Historical slot'):
-            GlobalSlot.model_construct(schema_version=schema,walkovers=(wo,)).canonical_evidence()
+            GlobalSlot.model_construct(
+                schema_version=schema, scheduled=(), authorities=(), walkovers=(wo,),
+            ).canonical_evidence()
     with pytest.raises(ValueError, match='himself'):
         NativeGroupWalkover(**{**{key:getattr(wo,key) for key in type(wo).model_fields},
             'result':TournamentWalkoverResult(match_id='group:one',winner_player_id='A',loser_player_id='A')})

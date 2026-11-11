@@ -177,6 +177,60 @@ class FaxReferenceBracketTopology(BaseModel):
         return canonical_hash(self.model_dump(mode="json"))
 
 
+def build_knockout_bracket_parts(*, event_id: str, main_entrants: int,
+                                 qualification_entrants: int, qualifier_spots: int,
+                                 wild_cards: int, byes: int):
+    """Shared unassigned Main/Q geometry; does not grant sporting authority."""
+    if any(type(n) is not int for n in (main_entrants, qualification_entrants, qualifier_spots, wild_cards, byes)):
+        raise ValueError("Knockout capacities require exact integers")
+    size = main_entrants
+    capacity = bracket_capacity(size)
+    if byes != capacity - size:
+        raise ValueError("Main BYEs do not match the source entrant geometry")
+    if wild_cards < 0 or qualifier_spots < 1:
+        raise ValueError("Knockout configuration must retain nonnegative WC and actual Q spots")
+    if qualification_entrants < 2:
+        raise ValueError("Knockout Qualification source requires at least two real entrants")
+    if qualification_entrants % qualifier_spots:
+        raise ValueError("Original Qualification entrants are not divisible into equal Q sections")
+    entrants_per_section = qualification_entrants // qualifier_spots
+    q_capacity = bracket_capacity(entrants_per_section)
+    if q_capacity > 128:
+        raise ValueError("Qualification bracket exceeds the domain capacity")
+
+    # No hypothetical player identity is allocated: the Main field is an
+    # exact count of direct players, real Wild Cards and unresolved Q winners.
+    direct = size - wild_cards - qualifier_spots
+    if direct < 0:
+        raise ValueError("WC and Qualification places exceed real Main entrants")
+    links = tuple(f"Q{i}" for i in range(1, qualifier_spots + 1))
+    main = FaxMainBracketGeometry(
+        source_main_entrants=size,
+        bracket_capacity=capacity,
+        direct_main_slots=direct,
+        wild_card_slots=wild_cards,
+        qualifier_placeholder_ids=links,
+        unplaced_byes=byes,
+        nodes=_build_nodes(event_id, "main", capacity),
+    )
+    sections = tuple(
+        FaxQualificationSectionGeometry(
+            section_id=section_id,
+            qualifier_placeholder_id=section_id,
+            source_entrant_count=entrants_per_section,
+            bracket_capacity=q_capacity,
+            unplaced_byes=q_capacity - entrants_per_section,
+            nodes=_build_nodes(
+                event_id, "qualification", q_capacity,
+                section_id=section_id, section_ordinal=index,
+                section_count=qualifier_spots,
+            ),
+        )
+        for index, section_id in enumerate(links)
+    )
+    return main, sections
+
+
 def build_fax_reference_bracket_topology(
     event: SeasonCalendarEvent,
 ) -> FaxReferenceBracketTopology:
@@ -199,50 +253,10 @@ def build_fax_reference_bracket_topology(
     ):
         raise ValueError("Source Edition needs its exact versioned Calendar fingerprint")
 
-    size = event.main_draw_size
-    capacity = bracket_capacity(size)
-    if event.byes != capacity - size:
-        raise ValueError("FAX Main BYEs do not match its original 24/32 entrant geometry")
-    if event.wild_cards < 0 or event.qualifier_spots < 1:
-        raise ValueError("FAX fixture must retain nonnegative WC and actual Q spots")
-    if event.qualification_draw_size < 2:
-        raise ValueError("FAX Qualification source requires at least two real entrants")
-    if event.qualification_draw_size % event.qualifier_spots:
-        raise ValueError("Original Qualification entrants are not divisible into equal Q sections")
-    entrants_per_section = event.qualification_draw_size // event.qualifier_spots
-    q_capacity = bracket_capacity(entrants_per_section)
-    if q_capacity > 128:
-        raise ValueError("Qualification bracket exceeds the domain capacity")
-
-    # No hypothetical player identity is allocated: the Main field is an
-    # exact count of direct players, real Wild Cards and unresolved Q winners.
-    direct = size - event.wild_cards - event.qualifier_spots
-    if direct < 0:
-        raise ValueError("FAX WC and Qualification places exceed real Main entrants")
-    links = tuple(f"Q{i}" for i in range(1, event.qualifier_spots + 1))
-    main = FaxMainBracketGeometry(
-        source_main_entrants=size,
-        bracket_capacity=capacity,
-        direct_main_slots=direct,
-        wild_card_slots=event.wild_cards,
-        qualifier_placeholder_ids=links,
-        unplaced_byes=event.byes,
-        nodes=_build_nodes(event.event_id, "main", capacity),
-    )
-    sections = tuple(
-        FaxQualificationSectionGeometry(
-            section_id=section_id,
-            qualifier_placeholder_id=section_id,
-            source_entrant_count=entrants_per_section,
-            bracket_capacity=q_capacity,
-            unplaced_byes=q_capacity - entrants_per_section,
-            nodes=_build_nodes(
-                event.event_id, "qualification", q_capacity,
-                section_id=section_id, section_ordinal=index,
-                section_count=event.qualifier_spots,
-            ),
-        )
-        for index, section_id in enumerate(links)
+    main, sections = build_knockout_bracket_parts(
+        event_id=event.event_id, main_entrants=event.main_draw_size,
+        qualification_entrants=event.qualification_draw_size,
+        qualifier_spots=event.qualifier_spots, wild_cards=event.wild_cards, byes=event.byes,
     )
     return FaxReferenceBracketTopology(
         source_event_id=event.event_id,

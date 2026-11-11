@@ -470,17 +470,16 @@ def build_tournament_result_authority(
     )
 
 
-def assemble_knockout_tournament_result(
-    *,
-    run_id: str,
-    branch_id: str,
-    week: RankingWeek,
-    draw: TournamentDrawAuthority,
-    matches: tuple[TournamentMatchResultAuthority, ...],
-    match_package_fingerprint: str | None = None,
-    native_feeder_plan_fingerprint: str | None = None,
-) -> TournamentResultAuthority:
-    """Summarize authenticated knockout evidence from either results owner."""
+class KnockoutResultFacts(FrozenInput):
+    """Clock-free knockout facts; publication remains a separate owner."""
+    champion_player_id: str
+    finalist_player_id: str
+    qualification_winner_ids: tuple[str, ...]
+    players: tuple[TournamentPlayerResultAuthority, ...]
+    matches: tuple[TournamentMatchResultAuthority, ...]
+
+
+def assemble_knockout_result_facts(*, draw, matches) -> KnockoutResultFacts:
     draw_nodes = {
         node.node_id: (bracket.draw_type, node.round_number)
         for bracket in (*draw.qualification_brackets, draw.main)
@@ -682,6 +681,25 @@ def assemble_knockout_tournament_result(
             ),
         )
     )
+    return KnockoutResultFacts(
+        champion_player_id=champion_id,finalist_player_id=finalist_id,
+        qualification_winner_ids=qualification_winners,
+        players=tuple(sorted(players,key=lambda player:player.player_id)),matches=match_results,
+    )
+
+
+def assemble_knockout_tournament_result(
+    *,
+    run_id: str,
+    branch_id: str,
+    week: RankingWeek,
+    draw: TournamentDrawAuthority,
+    matches: tuple[TournamentMatchResultAuthority, ...],
+    match_package_fingerprint: str | None = None,
+    native_feeder_plan_fingerprint: str | None = None,
+) -> TournamentResultAuthority:
+    """Summarize authenticated knockout evidence from either results owner."""
+    facts=assemble_knockout_result_facts(draw=draw,matches=matches)
     return TournamentResultAuthority(
         schema_version=(
             "tournament_result_authority.v4"
@@ -695,11 +713,11 @@ def assemble_knockout_tournament_result(
         draw_authority_fingerprint=draw.fingerprint,
         match_package_fingerprint=match_package_fingerprint,
         native_feeder_plan_fingerprint=native_feeder_plan_fingerprint,
-        champion_player_id=champion_id,
-        finalist_player_id=finalist_id,
-        qualification_winner_ids=qualification_winners,
-        players=tuple(sorted(players, key=lambda player: player.player_id)),
-        matches=match_results,
+        champion_player_id=facts.champion_player_id,
+        finalist_player_id=facts.finalist_player_id,
+        qualification_winner_ids=facts.qualification_winner_ids,
+        players=facts.players,
+        matches=facts.matches,
     )
 
 

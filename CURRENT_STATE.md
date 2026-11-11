@@ -145,6 +145,134 @@ application/WC wiring are listed in
 
 ---
 
+# Run-calendar scheduled knockout results and points candidate — 11 November 2026
+
+Completed scheduled matches now derive clock-free knockout facts and the same
+shared Q/Main/BYE/W/O point semantics as the unchanged legacy award wrapper.
+A separate versioned result projection retains the actual Run week/clock;
+calendar ranking inputs contain one combined result per player with distinct Q
+and Main components, next-week publication eligibility and W-week validity.
+
+Actual-match tests compare all 44 players' awards to independent elimination
+values, reject future ranking input/duplicates/incomplete tournaments and verify
+52-week expiry. Explicit W80/season55 and terminal-W52 scenarios preserve modern
+clock semantics. A compatible horizon extension permits next-week publication
+without rewriting the frozen completed result; rebasing is rejected. Legacy
+result/award JSON bytes and fingerprints match the committed baseline.
+These are derived results and ranking candidates, not a native publication or
+Week Transition/Save integration pass. Terminal closing and native lifecycle
+ownership remain separate. No legacy calendar/schema guard was loosened.
+
+---
+
+# Saved ATP scheduled-source loader candidate — 11 November 2026
+
+The scheduled knockout plan can now be prepared from a physical hash-verified
+Saved ATP Package and the canonical Draw Input/Draw in that same revision.
+The loader never falls back to live Draw tables. A read-only Admin feeder preview
+reports exact source/plan fingerprints and initial Q dependencies, with sporting
+execution still false. Uncommitted and revised Draws are rejected.
+
+Reload requires the selected Run/Branch, the consuming owner's reviewed plan
+fingerprint and the original reachable Saved envelope. The proposed schedule is
+not itself part of the source Package; its binding must be retained by that owner.
+Real HTTP/SQLite tests use ordinary simulation Save, later Saved history, live
+data corruption and cold application restart. They prove source preparation and
+recovery, not native Turn Pro/Entry/Week Transition/points or a played Run.
+
+---
+
+# Scheduled knockout MatchEngine consumer candidate — 11 November 2026
+
+The source-neutral feeder rules are shared by the unchanged FAX wrapper and a
+new versioned scheduled ATP adapter. The adapter freezes the copied sporting
+profile payload, committed Draw Input/Draw and Run round schedule. It validates
+source capacities/seeds, actual accepted match provenance, schedule positions
+and Q-before-Main dependencies without storing a second result ledger.
+
+A component proof plays the 32/16 Rotterdam geometry with 44 explicit test
+players through real MatchEngine: 12 Qualification matches on the proposed first
+week and 31 Main matches on the second. Actual Q winners feed Main. Frozen
+plan/match DTOs reopen between phases; input-order and source/schedule corruption
+checks remain distinct. This is not a public native Run Save/Week Transition or
+Official ranking acceptance pass. Those consumers and actual source Q dates
+still need integration. No ATP sporting readiness or merge readiness is implied.
+
+---
+
+# Run-owned cross-week knockout scheduling candidate — 11 November 2026
+
+A separate versioned round schedule stores exact Run week/slot positions for
+Qualification and Main. It validates complete bracket-round coverage, strict
+Q-before-Main chronology, common calendar and one season; it supports W52/W61/W80
+and calendar-year rollover inside an offset season without clipping horizons.
+Canonical match planning retains original node IDs and excludes BYEs. The
+existing native same-week planner now uses this shared validation through an
+ephemeral adapter; old stored schedules and planning output remain unchanged.
+
+An Admin API read validates an explicitly proposed schedule against the exact
+Saved ATP profile/head and Main source weeks. It never commits a sporting
+Edition or verifies unknown real Qualification dates. Actual cross-week native
+execution/Entry/Ranked publication remain follow-up integration, not implied by
+this read-only planning result. See the sporting profile document.
+
+---
+
+# ATP knockout source and shared geometry candidate — 11 November 2026
+
+Setup v3 / sporting Category v2 adds the sourced Rotterdam 2025 Main32/Q16
+configuration, four Q sections, four WC, eight seeds and complete phase points.
+The Main and Qualification PDFs are identified by URL and SHA-256. Shared pure
+bracket construction now supplies both this ATP shape and the existing FAX
+wrapper; all 80 original FAX geometry dumps/fingerprints remain unchanged.
+The Saved catalog exposes 43 actual match nodes and explicit execution blockers.
+Rotterdam is structural data, not a playable Edition. Setup v4 / sporting source
+v3 / knockout profile v2 adds organiser-sourced Qualification dates (1–2 February
+2025, W5) before Main (3–9 February, W6). Saved preview validates both phase weeks;
+old profile v1 bytes and date knowledge remain unchanged after cold reopen.
+Native Ranked knockout execution remains tied to W61/FAX and requires a separate
+versioned cross-week consumer; verified dates alone do not grant execution.
+The UI leaves import disabled and explains this boundary. Group profiles retain
+their existing native path. See the sporting profile contract below.
+
+---
+
+# ATP Saved sporting profiles candidate — 11 November 2026
+
+The ATP Calendar Setup v2 adds an independent, versioned squash sporting-profile
+Category alongside unchanged historical source documents. A generic Saved-profile
+catalog and preview path consumes ATP Finals and Next Gen 2025 through ordinary
+native group/knockout Tour operations. The Admin can load the available profiles
+and review one before explicit confirmation and manual Save. ATP Finals stores
+200 per played group win plus 900/400/0 knockout components; no duplicate points.
+The source calendar remains reference data for other occurrences. Race/age entry,
+ATP seed placement and ordinary Main/Qualification formats remain follow-up work.
+See [sporting profile contract and evidence](docs/ATP_SQUASH_SPORTING_PROFILES_V1.md).
+
+---
+
+# ATP Earth W52 Saved Package and Next Gen pilot — 11 November 2026
+
+On base `buuk` `04c9879c4`, the historical ATP Calendar source (#1741) is
+available. This candidate brings the W52 mapping and Saved snapshot source
+validation from #1742 and #1748 into a single PR against that base.
+
+The Admin Packages page can preview a chosen ATP year from the exact Saved
+Run Package and verified W52 clock. A partial-year Run horizon displays
+conflicting occurrences separately with their original dates and weeks.
+The full 1990–2026 source maps 2,407 occurrences. The three source intervals
+touching three weeks remain flagged for sporting review.
+
+The same candidate integrates the owner-merged #1762 pilot. Calendar Tour can
+review and explicitly confirm the Saved 2025 Next Gen source as an eight-player
+group/knockout Edition. It uses the W52 source date, ordinary Entry/draw, actual
+squash MatchEngine, manual Saves and zero ranking points. The UI checks the
+exact target and announcement weeks against the chosen Run horizon. Admin
+selects the entrants. Automated age/Race eligibility and other ATP sporting
+formats remain follow-up work. See [mapping and validation](docs/ATP_EARTH_WEEK_MAPPING_V1.md).
+
+---
+
 # Saved FAX Entry evidence candidate — 8 November 2026
 
 Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed

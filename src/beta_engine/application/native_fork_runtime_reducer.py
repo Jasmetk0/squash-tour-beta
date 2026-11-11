@@ -38,7 +38,7 @@ from beta_engine.domain.rankings.calendar_official import (
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
-    turn_pro_public_player_ids,
+    turn_pro_public_fields,
     effective_policy,
     published_edition_results,
     ranking_week,
@@ -424,9 +424,7 @@ def _advance(runtime, command, sources):
             if a.edition.announcement_week.ordinal == target.ordinal
         ],
     }
-    turned = turn_pro_public_player_ids(turn_pro)
-    if turned:
-        public["turned_pro_player_ids"] = turned
+    public.update(turn_pro_public_fields(turn_pro, life, target))
     transition = CalendarTourTransition(
         command_id=command.command_id,
         completed_week=runtime.week,

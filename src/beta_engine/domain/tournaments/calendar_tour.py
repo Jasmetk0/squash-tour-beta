@@ -694,6 +694,36 @@ def turn_pro_public_player_ids(decisions):
     )
 
 
+def retired_without_turn_pro_player_ids(lifecycle, target):
+    """Master v87 decision B: careers that end at ``target`` without Turn Pro.
+
+    Turn Pro is never forced, so in extremely rare cases a generated prospect
+    retires without ever becoming a professional. Such a career is recorded as
+    an explicit, public exception instead of passing silently.
+    """
+    if lifecycle is None or not lifecycle.policy.requires_turn_pro:
+        return []
+    return sorted(
+        p.player_id
+        for p in lifecycle.players
+        if getattr(p, "retirement_effective_week", None) is not None
+        and p.retirement_effective_week.ordinal == target.ordinal
+        and getattr(p, "tour_entry_week", None) is None
+    )
+
+
+def turn_pro_public_fields(decisions, lifecycle, target):
+    """Optional Master v87 public-event fields; empty under the historical rule."""
+    fields = {}
+    turned = turn_pro_public_player_ids(decisions)
+    if turned:
+        fields["turned_pro_player_ids"] = turned
+    never = retired_without_turn_pro_player_ids(lifecycle, target)
+    if never:
+        fields["retired_without_turn_pro_player_ids"] = never
+    return fields
+
+
 def turn_pro_home_opportunities(state, target, country_by_player):
     """Master v87: players with a public, not-yet-played Edition in their country.
 

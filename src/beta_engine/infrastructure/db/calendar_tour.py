@@ -264,13 +264,17 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 if a.edition.announcement_week.ordinal == transition.target_week.ordinal
             ],
         }
-        if transition.turn_pro_decisions:
+        if world is not None and world.lifecycle_policy.requires_turn_pro:
             from beta_engine.domain.tournaments.calendar_tour import (
-                turn_pro_public_player_ids,
+                turn_pro_public_fields,
             )
 
-            expected_public["turned_pro_player_ids"] = turn_pro_public_player_ids(
-                transition.turn_pro_decisions
+            expected_public.update(
+                turn_pro_public_fields(
+                    transition.turn_pro_decisions,
+                    _turn_pro_replay_lifecycle(world, state, transition.target_week),
+                    transition.target_week,
+                )
             )
         if transition.public_event != expected_public:
             raise ValueError(

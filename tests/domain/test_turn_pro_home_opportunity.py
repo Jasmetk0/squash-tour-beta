@@ -107,3 +107,21 @@ def test_public_turn_pro_ids_are_sorted_and_carry_no_model_evidence():
     assert turn_pro_public_player_ids(made) == ["a", "b"]
     assert turn_pro_public_player_ids([d.model_dump(mode="json") for d in made]) == ["a", "b"]
     assert turn_pro_public_player_ids(()) == []
+
+
+def test_retirement_without_turn_pro_is_an_explicit_public_exception():
+    from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+    from beta_engine.domain.tournaments.calendar_tour import (
+        retired_without_turn_pro_player_ids,
+        turn_pro_public_fields,
+    )
+
+    v87 = calendar_lifecycle_history(bootstrap("turn_pro.v87", retiring_player=True), week(3), ())
+    assert retired_without_turn_pro_player_ids(v87[-1], week(3)) == ["c"]
+    assert retired_without_turn_pro_player_ids(v87[-1], week(4)) == []  # only its own week
+    assert turn_pro_public_fields((), v87[-1], week(3)) == {
+        "retired_without_turn_pro_player_ids": ["c"]
+    }
+    # The historical rule has no Turn Pro, so nothing is flagged.
+    v57 = calendar_lifecycle_history(bootstrap(retiring_player=True), week(3), ())
+    assert turn_pro_public_fields((), v57[-1], week(3)) == {}

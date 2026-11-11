@@ -12,6 +12,13 @@ from beta_engine.domain.tournaments.calendar_native_tour_week import (
 from beta_engine.domain.tournaments.calendar_tour import CalendarTourTransition
 
 
+def _impact_lifecycle(impact):
+    from beta_engine.infrastructure.db.player_lifecycle_state import _parse_lifecycle_json
+
+    raw = impact.get("lifecycle")
+    return None if raw is None else _parse_lifecycle_json(json.dumps(raw))
+
+
 def recorded_turn_pro_model(receipt_result):
     """The exact Master v87 model a Signed native transition ran, if any."""
     from beta_engine.domain.players.turn_pro_model import TurnProModelPolicy
@@ -20,10 +27,11 @@ def recorded_turn_pro_model(receipt_result):
     return None if raw is None else TurnProModelPolicy.model_validate_json(json.dumps(raw))
 
 
-def public_native_event(state, command, target, ranking_fingerprint, turn_pro_decisions=()):
-    from beta_engine.domain.tournaments.calendar_tour import turn_pro_public_player_ids
+def public_native_event(
+    state, command, target, ranking_fingerprint, turn_pro_decisions=(), lifecycle=None
+):
+    from beta_engine.domain.tournaments.calendar_tour import turn_pro_public_fields
 
-    turned = turn_pro_public_player_ids(turn_pro_decisions)
     return {
         "kind": "season_transition_completed"
         if command.action == "season-transition"
@@ -36,7 +44,7 @@ def public_native_event(state, command, target, ranking_fingerprint, turn_pro_de
             for a in state.editions
             if a.edition.announcement_week.ordinal == target.ordinal
         ],
-        **({"turned_pro_player_ids": turned} if turned else {}),
+        **turn_pro_public_fields(turn_pro_decisions, lifecycle, target),
     }
 
 
@@ -148,6 +156,7 @@ def verify_native_tour(state, checkpoint, world, *, payload):
             public_event=public_native_event(
                 previous, command, next_cp.week, impact["ranking_fingerprint"],
                 impact.get("turn_pro_decisions", ()),
+                _impact_lifecycle(impact),
             ),
             turn_pro_decisions=tuple(
                 PlayerTurnProDecision.model_validate_json(json.dumps(raw))

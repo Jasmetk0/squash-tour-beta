@@ -71,7 +71,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     calculate_tour_ranking,
     tour_turn_pro_decisions,
     turn_pro_home_opportunities,
-    turn_pro_public_player_ids,
+    turn_pro_public_fields,
     edition_results,
     effective_policy,
     lifecycle_calendars,
@@ -1578,10 +1578,12 @@ class CalendarTourService:
                     if a.edition.announcement_week.ordinal == successor.week.ordinal
                 ],
             }
-            turned_pro = turn_pro_public_player_ids(impact.get("turn_pro_decisions", ()))
-            if turned_pro:
-                # Master v87 public World Event; omitted when nobody turned pro.
-                event["turned_pro_player_ids"] = turned_pro
+            # Master v87 public World Event fields; omitted when empty.
+            event.update(
+                turn_pro_public_fields(
+                    impact.get("turn_pro_decisions", ()), lifecycle, successor.week
+                )
+            )
             transition = CalendarTourTransition(
                 command_id=command.command_id,
                 completed_week=RunWeekPosition.model_validate_json(

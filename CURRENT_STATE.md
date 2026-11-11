@@ -1,3 +1,13 @@
+# Turn Pro public World Event candidate (Master v87) — 11 November 2026
+
+Stacked on the home-opportunity branch. v87 Week Transitions with decisions publish
+`turned_pro_player_ids` in their public event (absent otherwise, historical bytes
+unchanged), verified on Saved replay and visible in Viewer `public_events` from
+the target week only. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro home opportunity candidate (Master v87) — 11 November 2026
 
 Stacked on the v87 HTTP/SQLite acceptance branch. Editions may record an optional

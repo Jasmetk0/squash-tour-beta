@@ -142,8 +142,30 @@ def test_v87_run_gates_entry_by_turn_pro_and_records_transitions(tmp_path, monke
                     assert decision["player_id"] in prospects
                     assert decision["player_id"] not in decided
                     decided[decision["player_id"]] = decision["effective_week"]
+                event = inspect(server)["state"]["transitions"][-1]["public_event"]
+                ids = sorted(d["player_id"] for d in impact["turn_pro_decisions"])
+                # Public World Event names who turned pro, never the model's draw.
+                assert event.get("turned_pro_player_ids", []) == ids
+                assert "draw" not in str(event)
                 save_tour(server)
         assert decided, "the eager calibration must turn a prospect pro"
+        # Viewer shows the public Turn Pro news from its week, never before it.
+        first_ordinal = min(
+            RunCalendar(52, 35, 2030, 3).ordinal(w["season_index"], w["week"])
+            for w in decided.values()
+        )
+        viewer = server.base_url + "/viewer/runs/run/calendar-tour"
+
+        def public_pros(ordinal):
+            code, body = _request("GET", viewer + f"?week_ordinal={ordinal}")
+            assert code == 200, body
+            return {
+                pid for e in body["public_events"]
+                for pid in e.get("turned_pro_player_ids", ())
+            }
+
+        assert public_pros(first_ordinal) and public_pros(first_ordinal) <= set(decided)
+        assert not public_pros(first_ordinal - 1)
         remaining = [p for p in prospects if p not in decided]
         assert remaining, "the fixture must keep someone who has not turned pro"
         # In the Edition's week, a first application from a player who has not

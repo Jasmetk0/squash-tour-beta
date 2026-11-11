@@ -684,6 +684,16 @@ def ranking_players(state, submissions, *, retired=()):
     )
 
 
+def turn_pro_public_player_ids(decisions):
+    """Public part of a transition's Turn Pro decisions: who turned pro, in order.
+
+    The model's chance, draw and source fingerprint stay Admin-only evidence.
+    """
+    return sorted(
+        d["player_id"] if isinstance(d, dict) else d.player_id for d in decisions
+    )
+
+
 def turn_pro_home_opportunities(state, target, country_by_player):
     """Master v87: players with a public, not-yet-played Edition in their country.
 

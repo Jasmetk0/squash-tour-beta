@@ -264,6 +264,14 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 if a.edition.announcement_week.ordinal == transition.target_week.ordinal
             ],
         }
+        if transition.turn_pro_decisions:
+            from beta_engine.domain.tournaments.calendar_tour import (
+                turn_pro_public_player_ids,
+            )
+
+            expected_public["turned_pro_player_ids"] = turn_pro_public_player_ids(
+                transition.turn_pro_decisions
+            )
         if transition.public_event != expected_public:
             raise ValueError(
                 "Public Week Transition event differs from effective announcements/ranking"

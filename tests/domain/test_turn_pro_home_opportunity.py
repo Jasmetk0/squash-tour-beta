@@ -15,6 +15,7 @@ from beta_engine.domain.players.turn_pro_model import (
 from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourEdition,
     turn_pro_home_opportunities,
+    turn_pro_public_player_ids,
 )
 from tests.domain.test_turn_pro_lifecycle import bootstrap, week
 
@@ -97,3 +98,12 @@ def test_service_week_feeds_home_opportunity_into_the_model(monkeypatch):
         ),
     )
     assert decisions == expected and model == default_turn_pro_model_policy()
+
+
+def test_public_turn_pro_ids_are_sorted_and_carry_no_model_evidence():
+    from tests.domain.test_turn_pro_lifecycle import decision
+
+    made = (decision("b", 2), decision("a", 2))
+    assert turn_pro_public_player_ids(made) == ["a", "b"]
+    assert turn_pro_public_player_ids([d.model_dump(mode="json") for d in made]) == ["a", "b"]
+    assert turn_pro_public_player_ids(()) == []

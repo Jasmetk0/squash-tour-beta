@@ -163,9 +163,21 @@ known through the end of the completed week; that wiring is the next slice.
   calibration for later versions.
 - Newborn prospects are not in the InitialWorld; birth weeks still reject v87.
 
+## Slice 8: public Turn Pro World Event
+
+- When a v87 Week Transition records decisions, its public event gains
+  `turned_pro_player_ids` (sorted). It is omitted when nobody turned pro, so
+  every earlier public event keeps its bytes. The model's chance, draw and
+  source fingerprint stay Admin-only evidence in the transition.
+- `verify_tour` recomputes the expected public event from the recorded
+  decisions. Viewer's existing `public_events` exposes the news from the
+  transition's target week only (no earlier historical week shows it).
+- Not yet: names or richer news text in the Viewer UI; Notification Center
+  items for followed players (Master v85) are a separate system.
+
 ## Not implemented (next slices)
 
-- The public World Event and Viewer news for Turn Pro.
+- Viewer UI text and followed-player notifications for Turn Pro.
 - Turn Pro in the birth transition and native forks; model re-run in replay.
 - Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

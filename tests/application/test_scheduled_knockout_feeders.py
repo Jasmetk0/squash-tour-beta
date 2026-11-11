@@ -57,14 +57,19 @@ def played():
     return play_scheduled(plan())
 
 
-def play_scheduled(p):
+def play_scheduled(p, *, extend_after_qualification_to=None):
     profiles={pid:CalendarCanonicalPlayerSource(player=_player(player_id=pid,base=55+i%25),
         source_generation_fingerprint=f'explicit-test-{pid}',potential_ability=90) for i,pid in enumerate(PLAYERS)}
     roster=tuple(derive_bootstrap_record(v,PlayerSportingBootstrapPolicy()) for v in profiles.values())
     matches=()
     positions={}
     frozen=[]
-    for current in (*p.schedule.qualification,*p.schedule.main):
+    runtime=p.calendar
+    for source_position in (*p.schedule.qualification,*p.schedule.main):
+        if source_position == p.schedule.main[0] and extend_after_qualification_to is not None:
+            runtime=p.calendar.extend_to(extend_after_qualification_to)
+        current=KnockoutRoundPosition(week=RunWeekPosition(calendar=runtime,
+            season_index=source_position.week.season_index,week=source_position.week.week),slot=source_position.slot)
         progress,due=scheduled_knockout_progress(plan=p,matches=matches,positions=positions,current=current)
         assert due
         snapshot=canonical_hash({'plan':p.fingerprint,'position':current.model_dump(mode='json'),

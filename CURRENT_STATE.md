@@ -1,3 +1,13 @@
+# Turn Pro pre-alpha AI model candidate (Master v87) — 11 November 2026
+
+Stacked on #1768. Adds the pure, deterministic `turn_pro_model.v1`: a weekly
+chance by age, strength versus Tour Players and a home opportunity, converted by
+the Run's W, with a hash-derived per-player/week draw. Default calibration gives a
+neutral median of about 17.8 years and 99.7 % by 22. Not yet called by Week
+Transition; see [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro ranking roster and application gate candidate (Master v87) — 10 November 2026
 
 Stacked on the kernel candidate (#1767). Under the opt-in v87 policy the native

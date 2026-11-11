@@ -1,4 +1,4 @@
-# Turn Pro lifecycle kernel (Master v87) — slices 1–2
+# Turn Pro lifecycle kernel (Master v87) — slices 1–3
 
 Master v87 (9.2) replaces the v57 Tour-entry trigger: a prospect becomes a
 `Tour Player` through a separate **Turn Pro** event chosen by its player AI, and
@@ -48,13 +48,42 @@ wild card. This slice implements the pure, deterministic domain kernel only.
 - Native Tour has no definitive wild-card writer; the legacy WC writers belong to
   the 61-week lifecycle, which refuses v87.
 
+## Slice 3 — pre-alpha player-AI model (`turn_pro_model.v1`)
+
+Owner decisions (Master v87, pre-alpha): Turn Pro = joining the Run's professional
+association; no age condition; a weekly chance driven by age, strength relative
+to Tour Players and opportunity.
+
+- `TurnProModelPolicy` is versioned and fingerprinted. The provisional default
+  `pre-alpha-turn-pro.v1` uses annual bases by completed age 15→22+ of
+  0.05/0.20/0.40/0.55/0.65/0.75/0.85/0.95, a readiness hazard multiplier
+  `exp(2.0 × (readiness − 0.3))` and ×1.5 for a home opportunity.
+- `weekly_turn_pro_chance` converts the annual chance with the Run's W, so W52 and
+  W61 produce the same rate per year of age.
+- `turn_pro_draw` is one hash-derived uniform per (seed, Run, Branch, player,
+  week): order-independent and unaffected by which other players are evaluated.
+- `decide_turn_pro` validates candidates against the completed week's lifecycle
+  and returns `PlayerTurnProDecision`s ready for `advance_calendar_lifecycle`.
+
+Synthetic-cohort calibration with the default (3,000 players, W52; W61 matches):
+
+| Readiness | Median age | Before 16 | Before 19 | Before 22 | Latest |
+|---|---|---|---|---|---|
+| 0.0 (weak) | 18.6 | 3 % | 58 % | 96.2 % | 24.6 |
+| 0.3 (neutral) | 17.8 | 6 % | 79 % | 99.7 % | 23.0 |
+| 0.9 (strong) | 16.7 | 18 % | 99 % | 100 % | 20.0 |
+
+The caller must still supply `readiness` and `home_opportunity` from information
+known through the end of the completed week; that wiring is the next slice.
+
 ## Not implemented (next slices)
 
 - No runtime can select the v87 policy yet: every production constructor builds
   the historical policy. Nothing changes for existing or new Runs.
 - Persistence and Saved capture/restore of Turn Pro decisions, and the public
   World Event.
-- Player-AI decision model (the formula is an open Master item).
+- Week Transition wiring: computing readiness (strength vs Tour Players) and the
+  home opportunity from public, completed-week information, and running the model.
 - HTTP/SQLite proof of the gate and roster: impossible until a Run can select
   v87 and persist Turn Pro decisions (the lifecycle history currently receives
   no decisions, so under v87 nobody could apply — fail-closed, not usable).

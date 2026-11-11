@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_version": 2,
+  "source_version": 3,
   "profiles": [
     {
       "schema_version": "atp_squash_group_profile.v1",
@@ -103,7 +103,7 @@
       "native_announcement_lead_weeks": 1
     },
     {
-      "schema_version": "atp_squash_knockout_profile.v1",
+      "schema_version": "atp_squash_knockout_profile.v2",
       "occurrence_id": "atp_2025_rotterdam",
       "category_id": "atp_500",
       "name": "Rotterdam 2025",
@@ -117,7 +117,7 @@
         "https://www.protennislive.com/posting/2025/407/mds.pdf": "8b58aed4a1fa6a978deba4d44ef33ae968c55efdd9d2d653eb0012103c3b8371",
         "https://www.protennislive.com/posting/2025/407/qs.pdf": "b09620766c8911775c43d902977034996a3aa5c36acfb4b14c626cde77abbbd4"
       },
-      "qualification_date_status": "not_verified",
+      "qualification_date_status": "verified",
       "entrant_selection": "admin_selected_no_automatic_race_or_age",
       "main_entrants": 32,
       "qualification_entrants": 16,
@@ -139,6 +139,18 @@
         "qualifier": 25,
         "round_2_loss": 13,
         "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-01",
+        "end_date": "2025-02-02",
+        "source_urls": [
+          "https://www.abnamro-open.nl/nieuws/headlines/52ste-editie/-goffin-en-de-jong-blikvangers-op-kwalificatielijst",
+          "https://www.abnamro-open.nl/nieuws/headlines/52ste-editie/vier-nederlanders-in-actie-kwalificatie-abn-amro-open"
+        ],
+        "published_dates": [
+          "2025-01-15",
+          "2025-01-29"
+        ]
       }
     }
   ]

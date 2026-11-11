@@ -7,7 +7,8 @@ from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_e
 from beta_engine.application.atp_next_gen_edition import ATPNextGenEditionPreviewRequest
 from beta_engine.application.atp_saved_snapshot_week_preview import audit_saved_atp_tour_bindings, build_saved_atp_reference_week_mapping
 from beta_engine.application.atp_saved_tour_source import read_saved_atp_source
-from beta_engine.application.atp_sporting_package_adapter import SPORTING_PACKAGE_ID, SPORTING_KIND, SPORTING_SCOPE, KNOCKOUT_KIND, parse_sporting_profile
+from beta_engine.application.atp_sporting_package_adapter import SPORTING_PACKAGE_ID, SPORTING_KIND, SPORTING_SCOPE, KNOCKOUT_KIND, KNOCKOUT_KIND_V2, parse_sporting_profile
+from beta_engine.application.atp_qualification_week_projection import project_qualification_window
 from beta_engine.domain.tournaments.atp_knockout_profile import ATPKnockoutProfile
 from beta_engine.application.calendar_tour_service import CalendarTourCommand, CalendarTourService
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -25,14 +26,16 @@ def saved_profiles(state, *, occurrence_id=None):
         if (entity.source_package_id != SPORTING_PACKAGE_ID
                 or (occurrence_id is not None and entity.source_entity_id != occurrence_id)):
             continue
-        if (entity.entity_kind not in {SPORTING_KIND, KNOCKOUT_KIND} or entity.entity_schema_version != 1
+        expected_schema = 2 if entity.entity_kind == KNOCKOUT_KIND_V2 else 1
+        if (entity.entity_kind not in {SPORTING_KIND, KNOCKOUT_KIND, KNOCKOUT_KIND_V2} or entity.entity_schema_version != expected_schema
                 or entity.scope != SPORTING_SCOPE or entity.provenance != "package"
                 or entity.source_package_version != version.source_version
                 or entity.source_package_fingerprint != version.source_fingerprint
                 or entity.content_fingerprint != entity.source_baseline_fingerprint):
             raise ValueError("Saved ATP sporting profile was edited or has incompatible provenance")
         profile = parse_sporting_profile(entity.payload)
-        if (entity.entity_kind == KNOCKOUT_KIND) != isinstance(profile, ATPKnockoutProfile):
+        if ((entity.entity_kind in {KNOCKOUT_KIND, KNOCKOUT_KIND_V2}) != isinstance(profile, ATPKnockoutProfile)
+                or (profile.schema_version.endswith('.v2') != (entity.entity_kind == KNOCKOUT_KIND_V2))):
             raise ValueError("Saved ATP profile kind disagrees with its schema")
         if profile.occurrence_id != entity.source_entity_id or profile.occurrence_id in result:
             raise ValueError("Saved ATP sporting profile identity mismatch")
@@ -68,11 +71,15 @@ def inspect_atp_sourced_editions(repository, *, run_id, branch_id):
         for profile, fingerprint in sorted(profiles.values(), key=lambda pair: pair[0].occurrence_id):
             source = project_profile(calendar, state, mapping, profile)
             knockout = isinstance(profile, ATPKnockoutProfile)
+            qualification = project_qualification_window(calendar, profile) if knockout else None
             entries.append({"profile": profile.model_dump(mode="json"),
                             "profile_fingerprint": fingerprint, "calendar_projection": source,
                             "execution_supported": not knockout,
-                            "execution_blockers": ["qualification_dates_not_verified", "native_w52_ranked_knockout_not_connected"] if knockout else [],
-                            "knockout_geometry": profile.geometry() if knockout else None})
+                            "execution_blockers": ((["qualification_dates_not_verified"] if qualification is None else
+                                ["qualification_outside_run_horizon"] if qualification['outside_year_weeks'] else [])
+                                + ["native_w52_ranked_knockout_not_connected"]) if knockout else [],
+                            "knockout_geometry": profile.geometry() if knockout else None,
+                            **({'qualification_calendar_projection': qualification} if qualification is not None else {})})
         return {"run_id": run_id, "branch_id": branch_id, "saved_head_revision_id": revision.revision_id,
                 "entries": entries}
 
@@ -89,7 +96,8 @@ def preview_atp_sourced_edition(repository, *, run_id: str, branch_id: str, occu
             raise ValueError("No Saved sporting configuration for this ATP occurrence")
         profile, fingerprint = profiles[occurrence_id]
         if isinstance(profile, ATPKnockoutProfile):
-            raise ValueError("ATP knockout execution requires verified Qualification dates and native W52 Ranked integration")
+            raise ValueError("ATP knockout execution requires native W52 Ranked integration" if profile.qualification_date_status == 'verified'
+                             else "ATP knockout execution requires verified Qualification dates and native W52 Ranked integration")
         mapping = build_saved_atp_reference_week_mapping(state)
         source = project_profile(calendar, state, mapping, profile)
     if "run_weeks" not in source:

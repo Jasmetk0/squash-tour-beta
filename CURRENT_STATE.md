@@ -79,8 +79,12 @@ The Main and Qualification PDFs are identified by URL and SHA-256. Shared pure
 bracket construction now supplies both this ATP shape and the existing FAX
 wrapper; all 80 original FAX geometry dumps/fingerprints remain unchanged.
 The Saved catalog exposes 43 actual match nodes and explicit execution blockers.
-Rotterdam is structural data, not a playable Edition: Qualification dates still
-need verification and native Ranked knockout execution remains tied to W61/FAX.
+Rotterdam is structural data, not a playable Edition. Setup v4 / sporting source
+v3 / knockout profile v2 adds organiser-sourced Qualification dates (1–2 February
+2025, W5) before Main (3–9 February, W6). Saved preview validates both phase weeks;
+old profile v1 bytes and date knowledge remain unchanged after cold reopen.
+Native Ranked knockout execution remains tied to W61/FAX and requires a separate
+versioned cross-week consumer; verified dates alone do not grant execution.
 The UI leaves import disabled and explains this boundary. Group profiles retain
 their existing native path. See the sporting profile contract below.
 

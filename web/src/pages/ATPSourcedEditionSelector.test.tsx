@@ -51,4 +51,43 @@ describe('Saved ATP sporting profile selection',()=>{
     expect(screen.getByText(/Qualification.*16/)).toHaveTextContent('32')
     expect(screen.getByText(/Simulation awaits/)).toBeInTheDocument()
   })
+  it.each(['en','cs'])('shows sourced v2 Qualification dates without enabling play (%s)',async(language)=>{
+    localStorage.setItem('squash-engine-language-v1',language)
+    const data=catalog()
+    Object.assign(data.entries[0].profile,{
+      schema_version:'atp_squash_knockout_profile.v2',occurrence_id:'atp_2025_rotterdam',name:'Rotterdam 2025',
+      source_start_date:'2025-02-03',source_end_date:'2025-02-09',
+      main_entrants:32,qualification_entrants:16,qualifier_spots:4,qualification_date_status:'verified',
+      qualification_date_evidence:{start_date:'2025-02-01',end_date:'2025-02-02',
+        source_urls:['https://www.abnamro-open.nl/news/qualification'],published_dates:['2025-01-29']},
+    })
+    Object.assign(data.entries[0],{execution_supported:false})
+    api.inspectATPSourcedEditions.mockResolvedValue(data)
+    render(panel())
+    fireEvent.click(screen.getByRole('button',{name:language==='cs'?/Načíst ATP turnaje/:/Load ATP tournaments/}))
+    const label=language==='cs'?'Zkontrolovat import Rotterdam 2025':'Review import Rotterdam 2025'
+    expect(await screen.findByRole('button',{name:label})).toBeDisabled()
+    expect(screen.getByText(/2025-02-01 – 2025-02-02/)).toBeInTheDocument()
+    expect(screen.getByText(language==='cs'?/Simulace tohoto formátu zatím není dostupná/:/Simulation of this format is not available yet/)).toBeInTheDocument()
+  })
+  it('rejects a v2 response that claims verification without its source evidence',async()=>{
+    const data=catalog()
+    Object.assign(data.entries[0].profile,{schema_version:'atp_squash_knockout_profile.v2',qualification_date_status:'verified'})
+    Object.assign(data.entries[0],{execution_supported:false})
+    api.inspectATPSourcedEditions.mockResolvedValue(data)
+    render(panel())
+    fireEvent.click(screen.getByRole('button',{name:/Load ATP tournaments/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid Saved ATP Qualification date evidence')
+    expect(screen.queryByRole('button',{name:'Review import ATP Finals 2025'})).not.toBeInTheDocument()
+  })
+  it.each(['atp_squash_knockout_profile.v1','atp_squash_knockout_profile.v3'])('rejects false or unsupported date knowledge (%s)',async(schema_version)=>{
+    const data=catalog()
+    Object.assign(data.entries[0].profile,{schema_version,qualification_date_status:'verified'})
+    Object.assign(data.entries[0],{execution_supported:false})
+    api.inspectATPSourcedEditions.mockResolvedValue(data)
+    render(panel())
+    fireEvent.click(screen.getByRole('button',{name:/Load ATP tournaments/}))
+    expect(await screen.findByRole('alert')).toHaveTextContent(schema_version.endsWith('.v1')?'Historical ATP profile':'Unsupported Saved ATP')
+    expect(screen.queryByRole('button',{name:'Review import ATP Finals 2025'})).not.toBeInTheDocument()
+  })
 })

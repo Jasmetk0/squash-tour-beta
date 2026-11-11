@@ -27,7 +27,9 @@ def test_verified_rotterdam_keeps_full_main_and_four_independent_q_sections():
     assert p.qualification_points['qualifier'] == 25
     assert p.qualification_points['round_2_loss'] == 13
     assert g['sporting_execution_ready'] is False
-    assert p.qualification_date_status == 'not_verified'
+    assert p.qualification_date_status == 'verified'
+    assert p.qualification_date_evidence.start_date == '2025-02-01'
+    assert p.qualification_date_evidence.end_date == '2025-02-02'
     assert profile().geometry() == g
 
 
@@ -35,7 +37,8 @@ def test_verified_rotterdam_keeps_full_main_and_four_independent_q_sections():
     {'qualification_entrants': 15}, {'qualifier_spots': 0}, {'wild_cards': 29},
     {'byes': 1}, {'seeds_count': 33}, {'main_entrants': True},
     {'main_points': {'champion':500}}, {'qualification_points': {'qualifier':25}},
-    {'source_pdf_sha256': {}}, {'qualification_date_status':'verified'},
+    {'source_pdf_sha256': {}}, {'qualification_date_status':'not_verified'},
+    {'qualification_date_evidence': None},
 ])
 def test_invalid_knockout_configuration_cannot_become_a_ready_profile(patch):
     with pytest.raises(ValueError):

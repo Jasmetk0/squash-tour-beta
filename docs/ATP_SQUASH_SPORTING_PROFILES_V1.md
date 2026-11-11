@@ -213,3 +213,53 @@ and cold restart. The catalog integration test verifies Save-first reads,
 independence from current server files and non-mutating horizon rejection.
 Frontend tests mock HTTP and are component evidence. Required hosted acceptance
 and browser gates remain separate; skipped Draft gates are not executed passes.
+
+
+## Sourced Qualification dates — 11 November 2026
+
+New imports use Setup source v4, sporting Category source v3 and Rotterdam
+knockout profile v2. The historical v1 profile / Category v2 remains readable
+with exactly its original JSON and fingerprints; it still says `not_verified`.
+A new server source never upgrades an existing Run snapshot automatically.
+Main dates, capacities, points, Draw seeds and the two group profiles are unchanged.
+
+Rotterdam Qualification was **1–2 February 2025**, Main **3–9 February**.
+The organiser's dated articles independently identify both Qualification days:
+
+- 15 January 2025: https://www.abnamro-open.nl/nieuws/headlines/52ste-editie/-goffin-en-de-jong-blikvangers-op-kwalificatielijst
+- 29 January 2025: https://www.abnamro-open.nl/nieuws/headlines/52ste-editie/vier-nederlanders-in-actie-kwalificatie-abn-amro-open
+
+The ATP overview at https://www.atptour.com/en/news/rotterdam-2025-history-draw-schedule
+contains a duplicated date in its Sunday Qualification line and unrelated stale
+final-day text. The exact Qualification window comes from the two consistent
+organiser articles, not an inferred correction of that ATP page or the Main-only
+PDF header. Only the date facts/URLs/publication dates are copied.
+
+| Phase | Original dates | ISO week labels | W52 with offset 1 / start 2025 |
+| --- | --- | --- | --- |
+| Qualification | 1–2 February 2025 | 2025 W5 | S1W5 |
+| Main | 3–9 February 2025 | 2025 W6 | S1W6 |
+
+The new evidence is versioned independently of the old PDF hashes. A v2 profile
+requires real ordered dates, distinct dated HTTPS sources published by the first
+Qualification date and a window consistent with Main. V1 cannot acquire v2
+verification fields. Week projection preserves original dates, the Run's actual
+offset and every touched ISO label. A partial horizon or ISO week 53 yields
+explicit conflicts, without a clipped whole-phase schedule or proportional
+conversion to W61/W80.
+
+The ordinary Saved catalog now reports the Qualification window independently
+of Main. Schedule/feeder previews use that exact copied evidence: new v2 rounds
+outside the sourced Q week are rejected, just as Main rounds outside their
+source weeks are rejected. V1 retains its previous explicit-proposal boundary.
+A real HTTP/SQLite copy, manual Save, changed-default and cold-restart proof
+covers both versions, preserving the physical Saved payload/hash. The old
+Category/profile fingerprints are pinned in a compatibility fixture.
+
+Admin shows sourced Q dates in CS/EN and keeps the unsupported knockout import
+disabled. This closes the source-date blocker, not the native cross-week Run
+execution blocker. Slots remain explicitly proposed and reviewed; dates do not
+prove Entry, create a Draw, run MatchEngine, Save or publish ranking. The next
+consumer must retain the original binding across Q Save/restart, ordinary Week
+Transition and Main in the existing global-slot ledger, then confirm/publish
+results through the actual Run commands. No legacy calendar guard is removed.

@@ -49,7 +49,7 @@ def test_sporting_catalog_uses_saved_profiles_and_retains_outside_horizon_source
             'start_slot':1, 'seed':1, 'operator_label':'Admin', 'audit_reason':'Check unsupported execution',
         })
         assert code == 409, refused
-        assert 'verified Qualification dates' in refused['detail']['message']
+        assert 'native W52 Ranked integration' in refused['detail']['message']
         code, rejected = _request("POST", target + "/atp_2025_atp_finals/preview", {
             "command_id": "outside-atp", "expected_saved_head": catalog["saved_head_revision_id"],
             "expected_checkpoint_fingerprint": "a" * 64, "expected_tour_fingerprint": "b" * 64,

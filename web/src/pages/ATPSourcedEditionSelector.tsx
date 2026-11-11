@@ -32,7 +32,8 @@ export function ATPSourcedEditionSelector({runId,branchId,head,clock,existing,di
     {error&&<p role="alert">{error}</p>}
     {entries.map(({profile:p,calendar_projection:projection})=>{
       const target=projection.run_weeks?.[0]
-      const knockout=p.schema_version==='atp_squash_knockout_profile.v1'
+      const knockout=p.schema_version==='atp_squash_knockout_profile.v1'||p.schema_version==='atp_squash_knockout_profile.v2'
+      const qualification=p.qualification_date_evidence
       const possible=!knockout&&target&&projection.run_weeks?.length===1&&!projection.source_finish_after_mapped_occupancy&&
         scheduleTourEdition(clock,target.season_index,target.season_week)&&
         (projection.run_ordinals?.[0]??-1)-p.native_announcement_lead_weeks>
@@ -43,7 +44,10 @@ export function ATPSourcedEditionSelector({runId,branchId,head,clock,existing,di
           <p>{p.group_count} × {p.group_size} · {cs?'Body za výhru ve skupině':'Points per group win'} {p.played_group_win_points}</p>}
         {existing.includes(p.occurrence_id)?<p>{cs?'Edition už existuje.':'Edition already exists.'}</p>:
           <button disabled={busy||disabled||!possible} onClick={()=>onSelect(p.occurrence_id)}>{cs?'Zkontrolovat import':'Review import'} {p.name}</button>}
-        {knockout?<p>{cs?'Struktura je ověřená. Simulace čeká na ověření termínu kvalifikace a napojení bodovaného pavouku na W52.':'Structure verified. Simulation awaits verified Qualification dates and W52 ranked knockout integration.'}</p>:
+        {knockout&&qualification&&<p>{cs?'Ověřený termín kvalifikace':'Verified Qualification dates'}: {qualification.start_date} – {qualification.end_date}</p>}
+        {knockout?<p>{qualification?
+          (cs?'Struktura a termín kvalifikace jsou ověřené. Simulace tohoto formátu zatím není dostupná.':'Structure and Qualification dates verified. Simulation of this format is not available yet.'):
+          (cs?'Struktura je ověřená. Simulace čeká na ověření termínu kvalifikace a napojení bodovaného pavouku na W52.':'Structure verified. Simulation awaits verified Qualification dates and W52 ranked knockout integration.')}</p>:
           !possible&&<p>{cs?'Termín nebo předchozí oznámení není dostupné v tomto Runu.':'The event or preceding announcement is unavailable in this Run.'}</p>}
       </div>
     })}

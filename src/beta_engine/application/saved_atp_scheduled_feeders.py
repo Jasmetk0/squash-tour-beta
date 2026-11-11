@@ -90,4 +90,5 @@ def preview_saved_atp_feeders(repository, *, run_id,branch_id,occurrence_id,requ
         'draw_fingerprint':plan.draw.fingerprint,'schedule_fingerprint':plan.schedule.fingerprint,
         'executable_match_count':len(plan.topology.plans),'initial_round_matches':[m.model_dump(mode='json') for m in due],
         'qualification_blocking_main':progress.main_blocked_by_qualification,'run_mutated':False,
-        'readiness_scope':'scheduled_feeder_only','sporting_execution_ready':False,'qualification_dates_verified':False}
+        'readiness_scope':'scheduled_feeder_only','sporting_execution_ready':False,
+        'qualification_dates_verified':plan.profile.qualification_date_status == 'verified'}

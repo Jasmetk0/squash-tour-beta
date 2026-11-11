@@ -25,7 +25,7 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
         assert code==200,catalog
         profile=catalog['entries'][2]
         clock=profile['calendar_projection']['run_weeks'][0]
-        # This is an explicit Admin proposal, NOT a claim about real Q dates.
+        # Source windows constrain weeks; exact round slots remain an Admin proposal.
         calendar={'schema_version':'run_calendar.v1','weeks_per_year':52,'season_start_year_week':1,'start_year':2025,'season_count':2}
         def position(week,slot):
             return {'week':{'calendar':calendar,'season_index':clock['season_index'],'week':week},'slot':slot}
@@ -40,12 +40,18 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
         assert plan['actual_match_count']==43
         assert plan['schedule']['qualification'][0]['week']['week']==5
         assert plan['schedule']['main'][0]['week']['week']==6
-        assert plan['qualification_dates_verified'] is plan['sporting_execution_ready'] is plan['run_mutated'] is False
+        assert plan['qualification_dates_verified'] is True
+        assert plan['sporting_execution_ready'] is plan['run_mutated'] is False
+        assert plan['source_qualification_projection']['run_ordinals'] == [4]
+        assert plan['source_qualification_projection']['source_start_date'] == '2025-02-01'
         assert _request('POST',url,request)==(code,plan)
         for patch in ({'expected_saved_head':'stale'},{'expected_profile_fingerprint':'a'*64}):
             assert _request('POST',url,{**request,**patch})[0]==409
         shifted={**request['schedule'],'main':[position(7,n) for n in range(1,6)]}
         assert _request('POST',url,{**request,'schedule':shifted})[0]==409
+        wrong_q={**request['schedule'],'qualification':[position(4,1),position(4,2)]}
+        code,rejected=_request('POST',url,{**request,'schedule':wrong_q})
+        assert code==409 and 'Qualification source weeks' in rejected['detail']['message']
         missing_round={**request['schedule'],'qualification':[position(5,1)]}
         assert _request('POST',url,{**request,'schedule':missing_round})[0]==409
         invalid_slot={**request['schedule'],'qualification':[position(5,True),position(5,2)]}

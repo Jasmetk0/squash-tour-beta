@@ -1,3 +1,16 @@
+# Turn Pro v87 FAX Saved Draw candidate (Master v87) — 11 November 2026
+
+Stacked on the Admin-default branch. Owner decision: the FAX reference path also
+follows v87 — turn pro first, then apply. Under a v87 World, Saved Draw adoption
+(Ranked or Unranked) requires every participant to be a professional by the
+adoption week and otherwise fails closed, naming them. Proven over HTTP/SQLite
+(rejected with prospects, adopted and Saved with professionals only). The legacy
+copied-FAX acceptance materializer still uses the legacy 61-week lifecycle; its
+move to the native population is a separate step. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro v87 Admin default candidate (Master v87) — 11 November 2026
 
 Stacked on the native-fork branch. New Runs created through the Admin population

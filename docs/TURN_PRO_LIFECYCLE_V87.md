@@ -221,6 +221,25 @@ known through the end of the completed week; that wiring is the next slice.
   start: N / total".
 - Reversible: changing the UI default does not reinterpret any adopted World.
 
+## Slice 12: Saved FAX Draw admits only professionals
+
+- Owner decision (11 November 2026): the FAX reference path follows Master v87
+  too. A player must first turn pro; only then may they apply or receive a wild
+  card. An application, wild card, seeding or a Saved Draw slot never makes
+  anyone a professional. The earlier "first valid application" bridge (option 1)
+  is intentionally not implemented for this path.
+- Under a v87 World, `adopt-saved-draw` (Ranked or Unranked, because Turn Pro is
+  what allows playing association events) requires every Main, Qualification and
+  wild-card participant to be a professional in the current lifecycle at the
+  adoption week, which precedes announcement and play. Otherwise the command
+  fails closed without writes and names the players who have not turned pro.
+- The historical policy keeps its existing Ranked-only prior Tour Entry check.
+- **Limitation:** the Saved Entry Field records no application week, so the
+  check uses the adoption week (the native consumption of the Saved entries).
+  The legacy copied-FAX acceptance materializer still builds a legacy 61-week
+  InitialWorld whose lifecycle cannot represent v87; moving that acceptance Run
+  to the native calendar population is a separate, larger step.
+
 ## Not implemented (next slices)
 
 - Viewer UI text and followed-player notifications for Turn Pro.

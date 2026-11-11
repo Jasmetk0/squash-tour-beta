@@ -1415,6 +1415,7 @@ class CalendarTourService:
         elif command.action == "adopt-saved-draw":
             from beta_engine.application.native_canonical_draw_adoption import (
                 adopt_saved_draw,
+                require_professional_saved_draw,
                 require_ranked_draw_tour_entry,
             )
 
@@ -1422,7 +1423,8 @@ class CalendarTourService:
                 self.repository, ctx, state, command,
                 replay_plan=_native_inputs[2] if session is None and _native_inputs else None,
             )
-            if adopted.edition.ranked:
+            turn_pro_rule = world is not None and world.lifecycle_policy.requires_turn_pro
+            if adopted.edition.ranked or turn_pro_rule:
                 lifecycle = (
                     _native_inputs[0]
                     if _native_inputs is not None
@@ -1431,7 +1433,11 @@ class CalendarTourService:
                         week=state.week,
                     )
                 )
-                require_ranked_draw_tour_entry(adopted, state, lifecycle)
+                if turn_pro_rule:
+                    # Master v87: Ranked or not, only professionals may play.
+                    require_professional_saved_draw(adopted, state, lifecycle)
+                else:
+                    require_ranked_draw_tour_entry(adopted, state, lifecycle)
             state = state.model_copy(update={"editions": (*state.editions, adopted)})
             result["adopted_source_plan_fingerprint"] = adopted.canonical_binding.source_plan_fingerprint
         elif command.action == "create-edition":

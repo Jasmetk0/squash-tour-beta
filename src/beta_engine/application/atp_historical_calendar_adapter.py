@@ -1,7 +1,7 @@
-"""Fixed ATP historical reference Calendar + linked Category/Series Setup.
+"""Historical ATP references plus separate versioned squash sporting profiles.
 
-Non-playable tennis source data. Deliberately NEVER materialises native FAX
-SeasonCalendarEvent, TournamentEdition, CalendarTourEdition or Ranking inputs.
+Applying the Setup copies data only. Native Editions require a separate explicit
+Tour preview/confirmation after Save. Original Calendar references stay at v1.
 """
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from beta_engine.application.atp_reference_package_adapter import (
 )
 from beta_engine.domain.run_packages import CanonicalPackageDocument, PackageType
 from beta_engine.application.atp_historical_calendar_source import CALENDAR_ID, CALENDAR_SCOPE, build, canonical
+from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package, SPORTING_SCOPE
 
 
 CALENDAR_SETUP_ID = "atp_tour_1990_2026_calendar_reference_setup"
@@ -86,17 +87,17 @@ class ATPHistoricalCalendarAdapter:
         return CanonicalPackageDocument(
             package_type=PackageType.SETUP,
             package_id=CALENDAR_SETUP_ID,
-            source_version=1,
+            source_version=3,
             provenance={
                 "adapter": "server_atp_tour_calendar_reference_setup.v1",
                 "historical_span": {"from": 1990, "to": 2026},
                 "dated_years": list(calendar.provenance["date_coverage_years"]),
                 "dated_2026": "provisional",
-                "run_consumption": "opaque_reference_only_no_sporting_calendar",
+                "run_consumption": "reference_calendar_and_explicit_squash_profiles_no_auto_editions",
                 "no_autosave": True,
             },
-            explicit_scope=(CATEGORY_SCOPE, SERIES_SCOPE, CALENDAR_SCOPE),
-            children=(*parent.children, calendar),
+            explicit_scope=(CATEGORY_SCOPE, SERIES_SCOPE, CALENDAR_SCOPE, SPORTING_SCOPE),
+            children=(*parent.children, calendar, build_atp_sporting_package(self.source_root)),
         )
 
     def catalog(self) -> dict[str, object]:
@@ -107,13 +108,13 @@ class ATPHistoricalCalendarAdapter:
             "source_version": doc.source_version,
             "source_fingerprint": doc.source_fingerprint,
             "reference_span": {"from": 1990, "to": 2026},
-            "dated_years": list(doc.children[-1].provenance["date_coverage_years"]),
+            "dated_years": list(doc.children[2].provenance["date_coverage_years"]),
             "undated_years": [
                 y for y in range(1990, 2027)
-                if y not in doc.children[-1].provenance["date_coverage_years"]
+                if y not in doc.children[2].provenance["date_coverage_years"]
             ],
             "provisional_years": [2026],
-            "usage": "source_reference_only_no_playable_calendar",
+            "usage": "saved_reference_calendar_with_explicit_squash_sporting_profiles",
             "children": [
                 {
                     "package_id": child.package_id,

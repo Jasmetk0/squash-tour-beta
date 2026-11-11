@@ -148,7 +148,17 @@ def validate_ranked_publication_week(week):
 
 
 def canonical_edition_plan(authority, matches):
+    from beta_engine.domain.tournaments.knockout_run_schedule import KnockoutRunSchedule
     plan = authority.canonical_binding.plan(authority.draw)
+    schedule = KnockoutRunSchedule.on_one_week(
+        week=authority.edition.week,
+        qualification=authority.canonical_binding.schedule.qualification,
+        main=authority.canonical_binding.schedule.main,
+    )
+    schedule.validate_capacities(
+        main_capacity=authority.draw.main.bracket_size,
+        qualification_capacities=tuple(q.bracket_size for q in authority.draw.qualification_brackets),
+    )
     # Edition IDs can share a prefix. Only exact executable nodes belong here.
     selected = tuple(
         matches[node.match_id]
@@ -169,10 +179,10 @@ def canonical_edition_plan(authority, matches):
         (
             p.match_id,
             (
-                authority.canonical_binding.schedule.qualification
+                schedule.qualification
                 if metadata[p.match_id][0] == "qualification"
-                else authority.canonical_binding.schedule.main
-            )[metadata[p.match_id][1] - 1],
+                else schedule.main
+            )[metadata[p.match_id][1] - 1].slot,
             ready.get(p.match_id, accepted.get(p.match_id, ())),
             5,
         )

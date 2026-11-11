@@ -5,7 +5,9 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../../i18n/LanguageContext'
 import { ATPCalendarReferenceApplyPage } from './ATPCalendarReferenceApplyPage'
-import { validATPCalendarCatalog } from '../../api/atpCalendarReferencePackages'
+import {
+  validATPCalendarCatalog, validSavedATPRunWeekPreview,
+} from '../../api/atpCalendarReferencePackages'
 
 const hash=(s:string)=>s.repeat(64)
 const ctx=vi.hoisted(()=>({
@@ -20,6 +22,7 @@ const ctx=vi.hoisted(()=>({
 const api=vi.hoisted(()=>({
   getATPCalendarReferenceCatalog:vi.fn(),
   getATPCalendarReferenceYear:vi.fn(),
+  getSavedATPRunWeekPreview:vi.fn(),
   listRunContainers:vi.fn(),
   listRunBranches:vi.fn(),
   getBranchWorkingDraft:vi.fn(),
@@ -67,6 +70,31 @@ function preview(){
     additions:['atp_tour_1990_2026_category/atp_250'],unchanged:[],updates:[],
     not_included:[],unresolved:[],automatically_resolvable:[],invalid:[],
     conflicts:ctx.previewConflicts
+  }
+}
+
+function savedWeekPreview() {
+  return {
+    schema_version:'atp_earth_run_week_preview.v1',
+    run_id:'run/1',branch_id:'branch/1',saved_head_revision_id:'r1',
+    saved_run_calendar_verified:true,saved_package_source_verified:true,
+    uses_saved_run_package_snapshot:true,no_sporting_install:true,run_mutated:false,
+    calendar:{weeks_per_year:52},selected_atp_years:[2025],
+    source_tour_bindings:{verified_occurrences:2407,selected_occurrences:{
+      atp_2025_chengdu:{series_name:'Chengdu Open',historical_category_label:'ATP Tour 250'},
+      atp_2025_brisbane:{series_name:'Brisbane International',historical_category_label:'ATP Tour 250'},
+    }},
+    events:[{
+      source_identity:'atp_2025_chengdu',source_start_date:'2025-09-17',source_end_date:'2025-09-23',
+      review_flags:['single_week_majority_precedes_finish_week'],
+      run_weeks:[{calendar_year:2025,year_week:38,season_index:0,season_week:2}],
+      source_finish_run_week:{calendar_year:2025,year_week:39,season_index:0,season_week:3},
+    }],
+    outside_horizon:[{
+      source_identity:'atp_2025_brisbane',source_start_date:'2024-12-29',source_end_date:'2025-01-05',
+      review_flags:['cross_iso_year'],
+      outside_year_weeks:[{calendar_year:2025,year_week:1}],
+    }],
   }
 }
 describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
@@ -164,6 +192,20 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
         {...original.children[2],entity_count:0}]})).toBe(false)
   })
 
+  it('accepts version 2 only with its separate frozen sporting Category',()=>{
+    const original=source()
+    const current={...original,source_version:2,
+      usage:'saved_reference_calendar_with_explicit_squash_sporting_profiles',
+      children:[...original.children,{package_id:'atp_squash_sporting_profiles',package_type:'Category',
+        source_version:1,source_fingerprint:hash('e'),entity_count:2}]}
+    expect(validATPCalendarCatalog(current)).toBe(true)
+    expect(validATPCalendarCatalog({...current,source_version:3,children:[...original.children,
+      {...current.children[3],source_version:2,entity_count:3}]})).toBe(true)
+    expect(validATPCalendarCatalog({...current,children:original.children})).toBe(false)
+    expect(validATPCalendarCatalog({...current,source_version:'2'})).toBe(false)
+    expect(validATPCalendarCatalog({...current,usage:original.usage})).toBe(false)
+  })
+
   it('renders sourced ISO year/week dates for earliest ATP 1990 source',async()=>{
     mount()
     await screen.findByText('2026/W01')
@@ -212,6 +254,30 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     mount();await selectTarget()
     expect(screen.getByRole('button',{name:'Potvrdit do Working Draftu'})).toBeDisabled()
     expect(api.confirmATPCalendarReference).not.toHaveBeenCalled()
+  })
+
+  it('reads projected weeks from the chosen Saved head and lists outside tournaments separately',async()=>{
+    ctx.savedHead='r1'
+    ctx.previewHead='r1'
+    api.getSavedATPRunWeekPreview.mockResolvedValue(savedWeekPreview())
+    mount();await selectTarget()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'ATP ročník pro Run'}),'2025')
+    expect(api.getSavedATPRunWeekPreview).not.toHaveBeenCalled()
+    await userEvent.click(screen.getByRole('button',{name:'Načíst týdny z uloženého ATP balíčku'}))
+    expect(await screen.findByText('2025/W38 (S1/W02)')).toBeInTheDocument()
+    expect(screen.getByText('2025/W39 (S1/W03)')).toBeInTheDocument()
+    expect(screen.getByText('Turnaje mimo rozsah Runu (1)')).toBeInTheDocument()
+    expect(api.getSavedATPRunWeekPreview).toHaveBeenCalledWith('run/1','branch/1','r1',2025)
+    expect(api.confirmATPCalendarReference).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('rejects a different Saved head and invalid Run week in a preview response',()=>{
+    const data=savedWeekPreview()
+    expect(validSavedATPRunWeekPreview(data,'run/1','branch/1','r1',2025)).toBe(true)
+    expect(validSavedATPRunWeekPreview(data,'run/1','branch/1','r0',2025)).toBe(false)
+    data.events[0].run_weeks[0].year_week=53
+    expect(validSavedATPRunWeekPreview(data,'run/1','branch/1','r1',2025)).toBe(false)
   })
 
   it('requires an explicit decision for locally diverged Category data',async()=>{

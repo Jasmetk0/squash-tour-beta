@@ -29,6 +29,7 @@ type ApplyProps<Catalog extends ApplyCatalog> = {
   isReviewed: (catalog: Catalog, preview: ATPReferencePreview, runId: string, branchId: string) => boolean
   renderSourceSummary?: (catalog: Catalog, cs: boolean) => ReactNode
   renderSourceDetails?: (catalog: Catalog | undefined, sourceReady: boolean) => ReactNode
+  renderSavedTargetDetails?: (runId: string, branchId: string, revisionId: string) => ReactNode
 }
 
 type Resolution = 'keep_run' | 'use_source'
@@ -47,7 +48,7 @@ const writableBranch = (branch:RunBranch,runId:string):boolean =>
  */
 export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
   queryPrefix, setupId, title, subtitle, getCatalog, getPreview, confirmReference,
-  isReviewed, renderSourceSummary, renderSourceDetails,
+  isReviewed, renderSourceSummary, renderSourceDetails, renderSavedTargetDetails,
 }: ApplyProps<Catalog>): JSX.Element {
   const {language}=useLanguage(),cs=language==='cs'
   const dataRouter=useContext(UNSAFE_DataRouterContext)
@@ -365,6 +366,8 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
         <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'?branch='+encodeURIComponent(branchId)}>
           {cs?'Otevřít Run':'Open Run'}</Link></p>
       </section>}
+      {branch?.saved_head_revision_id&&
+        renderSavedTargetDetails?.(runId,branchId,branch.saved_head_revision_id)}
     </section>
   </>
 }

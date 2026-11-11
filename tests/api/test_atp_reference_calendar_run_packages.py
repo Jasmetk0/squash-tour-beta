@@ -18,17 +18,17 @@ from test_simulation_api import ApiServer, _request
 pytestmark = pytest.mark.pr_critical
 
 
-def test_reference_calendar_setup_has_three_children_and_never_runnable_editions():
+def test_reference_calendar_setup_has_frozen_sporting_profiles_without_auto_editions():
     source = ATPHistoricalCalendarAdapter()
     doc = source.build_document()
     assert doc.package_type == PackageType.SETUP
     assert doc.package_id == CALENDAR_SETUP_ID
     assert [child.package_type for child in doc.children] == [
-        PackageType.CATEGORY, PackageType.SERIES, PackageType.CALENDAR
+        PackageType.CATEGORY, PackageType.SERIES, PackageType.CALENDAR, PackageType.CATEGORY
     ]
-    assert [len(child.entities) for child in doc.children] == [11, 164, 2444]
-    assert len(doc.children[-1].entities) == 37 + doc.children[-1].provenance["dated_occurrences"]
-    cal = doc.children[-1]
+    assert [len(child.entities) for child in doc.children] == [11, 164, 2444, 3]
+    assert len(doc.children[2].entities) == 37 + doc.children[2].provenance["dated_occurrences"]
+    cal = doc.children[2]
     assert all(e.scope == "tennis.atp_tour.calendar.reference.1990_2026"
                for e in cal.entities)
     assert cal.provenance["run_consumption"] == (
@@ -80,9 +80,9 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
             "GET", base + "/source-atp-reference-calendar/catalog"
         )
         assert local_status == 200 and catalog == global_catalog
-        expected_calendar_size = catalog["children"][-1]["entity_count"]
+        expected_calendar_size = catalog["children"][2]["entity_count"]
         assert expected_calendar_size == 2444
-        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size]
+        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size, 3]
         assert catalog["dated_years"] == list(range(1990, 2027))
         assert catalog["undated_years"] == []
         assert _request("GET", base)[1]["state"] is None
@@ -91,7 +91,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
             "POST", base + "/source-atp-reference-calendar/preview", {}
         )
         assert status == 200, preview
-        assert len(preview["additions"]) == 11 + 164 + expected_calendar_size
+        assert len(preview["additions"]) == 11 + 164 + expected_calendar_size + 3
         assert not preview["invalid"] and not preview["conflicts"]
         assert "document" not in preview  # avoid transmitting all historical JSON
         assert preview["document_identity"]["source_fingerprint"] == catalog["source_fingerprint"]
@@ -115,7 +115,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         )
         assert status == 200, applied
         assert applied["draft_version"] == 1
-        assert len(applied["state"]["entities"]) == 11 + 164 + expected_calendar_size
+        assert len(applied["state"]["entities"]) == 11 + 164 + expected_calendar_size + 3
         assert {e["entity_kind"] for e in applied["state"]["entities"] if
                 e["source_package_id"] == "atp_tour_1990_2026_calendar"} == {
                     "tennis.calendar.coverage.reference.v1",
@@ -141,7 +141,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         )
         state_status, persisted = _request("GET", base)
         assert state_status == 200
-        assert len(persisted["state"]["entities"]) == 11 + 164 + expected_calendar_size
+        assert len(persisted["state"]["entities"]) == 11 + 164 + expected_calendar_size + 3
         assert _request(
             "GET", reopened.base_url +
             "/admin/reference-packages/atp-tour-1990-2026-calendar"

@@ -133,7 +133,15 @@ def project_knockout_progress(
     owner, source, seed, players and chronological dependencies, not calibration.
     """
     plan.validate_frozen_draw()
+    year = int(str(plan.source.source_event.season).split("/")[0])
+    return _project_draw_progress(
+        plan=plan, draw=plan.source.draw, source_season_index=year-plan.calendar.start_year,
+        matches=matches, runtime_calendar=runtime_calendar,
+    )
 
+
+def _project_draw_progress(*, plan, draw, source_season_index, matches, runtime_calendar=None):
+    """Shared source-neutral graph rules; public adapters validate source identity."""
     # The new native consumer may continue under a strict horizon extension.
     # Historical callers omit this argument and retain exact-calendar semantics.
     def compatible(clock):
@@ -154,8 +162,6 @@ def project_knockout_progress(
             "Canonical runtime calendar may only extend the source horizon"
         )
     topology = plan.topology
-    source = plan.source
-    draw = source.draw
     records = {m.match_id: m for m in matches}
     executable = {p.match_id: p for p in topology.plans}
     if len(records) != len(matches) or not set(records) <= set(executable):
@@ -226,8 +232,7 @@ def project_knockout_progress(
             raise ValueError(
                 "Canonical match differs from frozen Run/Branch/Calendar/Saved source"
             )
-        year = int(str(source.source_event.season).split("/")[0])
-        if record.week.season_index != year - plan.calendar.start_year:
+        if record.week.season_index != source_season_index:
             raise ValueError("Canonical match belongs to another source season")
         if record.seed != plan.match_seed(match_id):
             raise ValueError(

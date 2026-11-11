@@ -202,14 +202,8 @@ def _point_stage(
     )
 
 
-def build_tournament_point_award_authority(
-    *,
-    result: TournamentResultAuthority,
-    point_authority: FrozenPointAwardAuthority,
-    seed: int,
-) -> TournamentPointAwardAuthority:
-    """Resolve ranking/race points from already frozen sporting + point inputs."""
-
+def build_knockout_player_point_awards(*, result, point_authority, seed):
+    """Shared clock-free phase composition, including existing BYE/W/O rules."""
     if point_authority.ranking_status != "ranked":
         raise ValueError(
             "Canonical ranked tournament close requires ranked point authority"
@@ -224,7 +218,6 @@ def build_tournament_point_award_authority(
         )
 
     distribution = dict(point_authority.point_distribution)
-    distribution_fp = _hash(distribution)
     awards: list[TournamentPlayerPointAwardAuthority] = []
     for player in sorted(result.players, key=lambda item: item.player_id):
         qualification_point_stage = None
@@ -321,6 +314,20 @@ def build_tournament_point_award_authority(
             )
         )
 
+    return tuple(awards)
+
+
+def build_tournament_point_award_authority(
+    *,
+    result: TournamentResultAuthority,
+    point_authority: FrozenPointAwardAuthority,
+    seed: int,
+) -> TournamentPointAwardAuthority:
+    """Resolve ranking/race points from already frozen sporting + point inputs."""
+
+    awards=build_knockout_player_point_awards(result=result,point_authority=point_authority,seed=seed)
+    distribution=dict(point_authority.point_distribution)
+    distribution_fp=_hash(distribution)
     schema_version = (
         "tournament_point_award_authority.v3"
         if any(

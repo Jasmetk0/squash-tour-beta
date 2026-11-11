@@ -1702,14 +1702,16 @@ class CalendarTourService:
                 )
                 if entry_policy.requires_turn_pro:
                     # Master v87: only a player who already turned pro may apply.
-                    if current_lifecycle is None:
-                        raise ValueError(
-                            "Turn Pro applications require the native lifecycle"
-                        )
+                    # Without a stored native lifecycle, use the same derived
+                    # history (World + applications + recorded Turn Pro) that
+                    # the ranking roster is built from.
+                    gate_lifecycle = (
+                        current_lifecycle
+                        if current_lifecycle is not None
+                        else _lifecycle_history(world, cp.week, state)[-1]
+                    )
                     for pid in sorted(ids):
-                        require_professional_for_entry(
-                            current_lifecycle, pid, authority.edition.week
-                        )
+                        require_professional_for_entry(gate_lifecycle, pid, cp.week)
                 slot = authority.edition.start_slot
                 submissions = tuple(
                     sorted(

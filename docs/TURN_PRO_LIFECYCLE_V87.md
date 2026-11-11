@@ -126,12 +126,31 @@ known through the end of the completed week; that wiring is the next slice.
   Opening professionals may apply from Week 1, are the readiness reference for
   the first Week Transition and enter the ranking roster published at Week 2.
 
+## Slice 6: first full v87 HTTP/SQLite path
+
+- `tests/api/test_calendar_tour_turn_pro_v87_flow.py` (smoke) runs the real
+  production stack: v87 population adoption with opening professionals →
+  health → sporting checkpoint → Tour initialize → Edition → Week Transitions
+  that run and record the model → a prospect turns pro, applies in its Turn Pro
+  week, plays real matches and is ranked → a remaining prospect's application is
+  refused without writes → Save, exact replay, Saved hash, restart and an
+  idempotent retry verified from the recorded decisions.
+- The test injects a recorded, test-only eager calibration for two transitions
+  so a weekly decision happens within the fixture's few weeks; the following
+  transition records the default calibration.
+- Fix: a Tour without a stored native lifecycle (pre-v4 authority) no longer
+  refuses every v87 application; the gate uses the same derived lifecycle
+  (World + applications + recorded Turn Pro) as the ranking roster, at the
+  application week.
+- **Known gap:** weeks advanced before Tour initialization (the pre-Tour
+  sporting continuation) record no Turn Pro decisions, so the model does not
+  run in those preparation weeks. Native competition and birth weeks still
+  reject v87 explicitly.
+
 ## Not implemented (next slices)
 
 - The public World Event and Viewer news for Turn Pro.
 - Host country on native Editions, so the home opportunity can be derived.
 - Turn Pro in the birth transition and native forks; model re-run in replay.
-- HTTP/SQLite proof of the full v87 path (adoption → sporting initialization →
-  applications → Week Transition with Turn Pro → Save/verify). Adoption, Save,
-  restart and fork of the opening professionals are proven over HTTP/SQLite.
+- Turn Pro in the pre-Tour sporting continuation weeks.
 - `verify_tour` Turn Pro replay with the lifecycle as input.

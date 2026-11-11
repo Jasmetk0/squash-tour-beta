@@ -1,3 +1,15 @@
+# Turn Pro v87 HTTP/SQLite acceptance candidate (Master v87) — 11 November 2026
+
+Stacked on #1772. First real production-stack v87 path: opening professionals,
+model-recorded Week Transitions, a prospect who turns pro then applies, plays and
+is ranked, a refused non-professional application, exact replay, Saved hash and
+restart retry. Fixes the application gate for Tours without a stored native
+lifecycle. Known gap: pre-Tour continuation weeks do not run Turn Pro; native
+competition/birth weeks and forks still reject v87. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
 # Turn Pro opening professionals candidate (Master v87) — 11 November 2026
 
 Stacked on #1771. A new Run selects v87 through the existing calendar population

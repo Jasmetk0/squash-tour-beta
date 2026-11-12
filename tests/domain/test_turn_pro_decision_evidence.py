@@ -164,3 +164,63 @@ def test_transition_requires_evidence_exactly_when_the_recorded_model_has_it():
             decisions=(made[0],),
             model=model.model_copy(update={"perception": foreign}),
         )
+
+
+def _population_for(w, n):
+    """A v87 prospect population on a Run with ``w`` weeks per year (ages 14-18)."""
+    from beta_engine.domain.calendar.season_weeks import age_at_calendar_position
+    from beta_engine.domain.players.calendar_lifecycle import (
+        CalendarPlayerLifecycleIdentity,
+        CalendarPlayerLifecycleState,
+    )
+    from tests.domain.test_turn_pro_lifecycle import policy
+
+    clock = RunCalendar(w, 35, 2030, 3)
+    opening = RunWeekPosition(calendar=clock, season_index=0, week=1)
+    position = opening.calendar_position
+    players = []
+    for i in range(n):
+        birth_year, birth_week = position.calendar_year - 16 - (i % 3), (i * 7) % w + 1
+        age = age_at_calendar_position(
+            birth_year=birth_year, birth_year_week=birth_week,
+            calendar_year=position.calendar_year, year_week=position.year_week,
+            weeks_per_calendar_year=w,
+        )
+        players.append(CalendarPlayerLifecycleIdentity(
+            player_id=f"p{i:04d}", birth_year=birth_year, birth_year_week=birth_week,
+            age=age, source_generation_fingerprint=f"{i:064x}",
+        ))
+    state = CalendarPlayerLifecycleState(
+        run_id="r", branch_id="b", week=opening, players=tuple(players),
+        source_initial_world_fingerprint="f" * 64, policy=policy("turn_pro.v87"),
+    )
+    return clock, state
+
+
+@pytest.mark.parametrize("w", [52, 61, 80])
+def test_decisions_replay_on_every_supported_run_year_length(w):
+    """Evidence replay uses the decision's own calendar: W52, W61 and W80 all verify."""
+    clock, state = _population_for(w, 400)
+    made = []
+    for ordinal in range(1, 9):
+        position = clock.position_at_ordinal(ordinal)
+        target = RunWeekPosition(
+            calendar=clock, season_index=position.season_index, week=position.season_week
+        )
+        plain = advance_calendar_lifecycle(state, target, (), tuple(made))
+        records = [record(p.player_id, 120) for p in state.players]
+        decisions = decide_turn_pro(
+            predecessor=state, target=target, policy=MODEL, seed=SEED,
+            candidates=turn_pro_candidates_for(
+                MODEL, state, plain, records, seed=SEED, target=target,
+            ),
+        )
+        made.extend(decisions)
+        state = advance_calendar_lifecycle(state, target, (), tuple(made))
+    assert made, "400 prospects over eight weeks must produce decisions"
+    for decision in made:
+        assert decision.effective_week.calendar.weeks_per_year == w
+        verify_turn_pro_decision_evidence(decision, policy=MODEL, seed=SEED)
+    # Another seed is not an acceptable replay of the same decisions.
+    with pytest.raises(ValueError, match="draw|provenance"):
+        verify_turn_pro_decision_evidence(made[0], policy=MODEL, seed=SEED + 1)

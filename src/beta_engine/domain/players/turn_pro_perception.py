@@ -28,6 +28,7 @@ command seed and the target week. Processing order never matters.
 from __future__ import annotations
 
 import math
+from functools import lru_cache
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -124,6 +125,10 @@ class TurnProObservation(FrozenInput):
     policy_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+# Persistent components (level, groups, attributes) have the same key every week, so
+# their values are memoised. The cache only avoids recomputation of a pure function of
+# its key: it can never change a result, so replay and recorded history are unaffected.
+@lru_cache(maxsize=262_144)
 def _normal(*key) -> float:
     """Deterministic standard normal from a hashed key (Box-Muller)."""
     digest = canonical_hash({"kind": "turn_pro_self_perception.v1", "key": list(key)})

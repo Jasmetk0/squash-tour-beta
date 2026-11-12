@@ -64,8 +64,9 @@ existing model/perception domain tests; decision-evidence replay is now also tes
 for W52/W61/W80. Measured cost: 1000 prospects in one week take ~0.5 s (almost all
 self-perception, ~0.4 ms per prospect; ~0.07-0.11 s to decide), so a long Run that
 keeps ~1000 prospects in play every week of 50 seasons would spend tens of minutes
-there; reduce by caching or evaluating fewer attribute errors if this proves too
-slow. No full W80/1000-player Run and no simultaneous-slot run was added. Fork read of the never-pro exception shares the same pure helper but has
+there. The persistent perception components are now memoised (output verified
+byte-identical to the previous implementation on 90 samples): warm cost fell from
+0.36 s to 0.13 s per 1000 perceptions. No full W80/1000-player Run and no simultaneous-slot run was added. Fork read of the never-pro exception shares the same pure helper but has
 no fork execution test. Hosted workflows were not run on this head.
 
 ---

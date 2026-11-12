@@ -142,4 +142,17 @@ describe('EventsPage URL-backed historical filters', () => {
     expect(screen.getByLabelText('Current query')).toHaveTextContent('foreign=keep')
     expect(screen.getByRole('button', { name: /1\. E1/ })).toHaveAttribute('aria-current', 'true')
   })
+  it('reset retains an exact still-valid sequence and only removes its own filter keys', async () => {
+    const user = userEvent.setup()
+    renderPage('/runs/run-a/events?foreign=keep&filterWeek=8&selectedEventId=E1&selectedEventSequence=1')
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    expect(within(list).getByRole('button', { name: /1\\. E1/ })).toHaveAttribute('aria-current', 'true')
+    await user.click(screen.getByRole('button', { name: 'Reset filters' }))
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedEventSequence=1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedEventId=E1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('foreign=keep')
+    expect(screen.getByLabelText('Current query')).not.toHaveTextContent('filterWeek')
+    expect(within(list).getByRole('button', { name: /1\\. E1/ })).toHaveAttribute('aria-current', 'true')
+  })
+
 })

@@ -3,12 +3,13 @@ import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { listRunContainers, listWorldPackages } from '../../api/client'
 import { useLanguage } from '../../i18n/LanguageContext'
-import { clearRecentProductRuns, readRecentProductRuns, RECENT_PRODUCT_RUNS_STORAGE_KEY, rememberProductRun } from '../../navigation/recentProductRuns'
+import { clearRecentProductRuns, hasRecentProductRunsStorageEntry, readRecentProductRuns, RECENT_PRODUCT_RUNS_STORAGE_KEY, rememberProductRun } from '../../navigation/recentProductRuns'
 import { formatApiError } from '../../utils/apiErrors'
 
 export function AdminHomePage(): JSX.Element {
   const { language, t } = useLanguage()
   const [recentIds, setRecentIds] = useState(() => readRecentProductRuns())
+  const [hasHistoryEntry, setHasHistoryEntry] = useState(() => hasRecentProductRunsStorageEntry())
   const [clearStatus, setClearStatus] = useState<'idle' | 'cleared' | 'error'>('idle')
 
   useEffect(() => {
@@ -17,6 +18,7 @@ export function AdminHomePage(): JSX.Element {
       try {
         if (event.storageArea !== localStorage) return
         setRecentIds(readRecentProductRuns())
+        setHasHistoryEntry(hasRecentProductRunsStorageEntry())
         setClearStatus('idle')
       } catch {
         // Browsers may deny access to storage entirely; Home remains usable.
@@ -30,6 +32,7 @@ export function AdminHomePage(): JSX.Element {
   const clearRecent = () => {
     if (clearRecentProductRuns()) {
       setRecentIds([])
+      setHasHistoryEntry(false)
       setClearStatus('cleared')
     } else {
       setClearStatus('error')
@@ -60,7 +63,7 @@ export function AdminHomePage(): JSX.Element {
       {runs.isError && <p role="alert" className="error">{t('Unavailable')}: {formatApiError(runs.error)}</p>}
       {runs.isSuccess && all.length === 0 && <p className="status">{t('No Runs yet')}</p>}
       {runs.isSuccess && recent.length === 0 && all.length > 0 && <p className="status">{language === 'cs' ? 'Žádné dostupné nedávno otevřené Runy v tomto prohlížeči.' : 'No accessible recently opened Runs in this browser.'}</p>}
-      {runs.isSuccess && recentIds.length > 0 && <div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div>}
+      {runs.isSuccess && (recentIds.length > 0 || hasHistoryEntry) && <div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div>}
       {runs.isSuccess && recent.length > 0 && <ul className="home-run-list">
         {recent.map(run => <li key={run.run_id}><span><strong>{run.display_name || run.run_id}</strong><small>{run.status} · {run.read_only ? 'Read-only' : 'Editable'}</small></span>
           <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul>}

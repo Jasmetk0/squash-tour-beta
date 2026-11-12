@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getRun, listEvents, listRaceSnapshots, listRankingSnapshots } from '../api/client'
+import { useLanguage } from '../i18n/LanguageContext'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -24,15 +25,21 @@ const MISSING_SOURCE_EVENT_ID_FALLBACK = 'Missing source_event_id'
 import { useHistoryText } from './runHistoryText'
 export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
   const t = useHistoryText()
+  const { language } = useLanguage()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [weekFilter, setWeekFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [sourceEventFilter, setSourceEventFilter] = useState('')
+  const weekFilter = searchParams.get('filterWeek') ?? ''
+  const categoryFilter = searchParams.get('filterCategory') ?? ''
+  const sourceEventFilter = searchParams.get('filterSourceEvent') ?? ''
   const requestedSequenceText = searchParams.get('selectedSequence') ?? ''
   // A partial number like "3abc" must not select snapshot #3.
   const requestedSequence = /^\d+$/.test(requestedSequenceText) ? Number(requestedSequenceText) : NaN
-  const hasRequestedSequence = Number.isSafeInteger(requestedSequence) && requestedSequence > 0
+  // Newly selected sequences are scoped to both the route's Run and mode.
+  // Old single-key bookmarks remain readable within the route where opened.
+  const selectionMode = searchParams.get('selectedMode')
+  const selectionRun = searchParams.get('selectedRun')
+  const selectionContextMatches = (!selectionMode && !selectionRun) || (selectionMode === mode && selectionRun === runId)
+  const hasRequestedSequence = selectionContextMatches && Number.isSafeInteger(requestedSequence) && requestedSequence > 0
 
   const query = useQuery({
     queryKey: [`${mode}-snapshots`, runId],
@@ -95,19 +102,18 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     const persisted = persistedEventsById.get(sourceEventId)
     return plan && (!persisted || persisted.season == null || persisted.season === plan.season) ? plan : undefined
   }
-  const normalizedSourceEventFilter = sourceEventFilter.trim().toLowerCase()
-  const filteredSnapshots = snapshots.filter((snapshot) => {
+  const matchesFilters = (snapshot: (typeof snapshots)[number], week: string, category: string, sourceText: string) => {
     const sourceEventId = snapshot.source_event_id
     const planContext = sourceEventId ? plannedForSource(sourceEventId) : undefined
     const persistedContext = sourceEventId ? persistedEventsById.get(sourceEventId) : undefined
-    const effectiveWeek = persistedContext?.week ?? planContext?.week
-    const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
-    const categoryMatches = categoryFilter ? planContext?.category === categoryFilter : true
-    const sourceEventMatches = normalizedSourceEventFilter
-      ? (sourceEventId?.toLowerCase().includes(normalizedSourceEventFilter) ?? false)
-      : true
-    return weekMatches && categoryMatches && sourceEventMatches
-  })
+    const effectiveWeek = persistedContext?.week ?? planContext?.week ?? null
+    const query = sourceText.trim().toLowerCase()
+    // Missing source week is absence, not the literal "null"/"undefined".
+    return (!week || (effectiveWeek != null && String(effectiveWeek) === week)) &&
+      (!category || planContext?.category === category) &&
+      (!query || (sourceEventId?.toLowerCase().includes(query) ?? false))
+  }
+  const filteredSnapshots = snapshots.filter(snapshot => matchesFilters(snapshot, weekFilter, categoryFilter, sourceEventFilter))
   const weekOptions = useMemo(() => {
     const values = new Set<string>()
     snapshots.forEach((snapshot) => {
@@ -130,6 +136,40 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
     })
     return Array.from(values)
   }, [plannedContext, ambiguousPersistedEventIds, snapshots])
+
+  const unknownWeek = weekFilter !== '' && !weekOptions.includes(weekFilter)
+  const unknownCategory = categoryFilter !== '' && !categoryOptions.includes(categoryFilter)
+
+  // Filter writes touch only this page's keys. An exact snapshot bookmark is
+  // retained only when its mode/Run identity and new filter set still agree.
+  const updateFilters = (key: 'filterWeek' | 'filterCategory' | 'filterSourceEvent' | null, value = '', replaceEntry = false) => {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (key === null) {
+        next.delete('filterWeek')
+        next.delete('filterCategory')
+        next.delete('filterSourceEvent')
+      } else if (value) {
+        next.set(key, value)
+      } else {
+        next.delete(key)
+      }
+      const sequenceText = current.get('selectedSequence') ?? ''
+      const sequence = /^\\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
+      const currentMode = current.get('selectedMode')
+      const currentRun = current.get('selectedRun')
+      const inContext = (!currentMode && !currentRun) || (currentMode === mode && currentRun === runId)
+      const bookmarked = inContext && Number.isSafeInteger(sequence) && sequence > 0
+        ? snapshots.find(snapshot => snapshot.snapshot_sequence === sequence) : undefined
+      if ((current.has('selectedSequence') || current.has('selectedMode') || current.has('selectedRun')) &&
+        (!bookmarked || !matchesFilters(bookmarked, next.get('filterWeek') ?? '', next.get('filterCategory') ?? '', next.get('filterSourceEvent') ?? ''))) {
+        next.delete('selectedSequence')
+        next.delete('selectedMode')
+        next.delete('selectedRun')
+      }
+      return next
+    }, { replace: replaceEntry })
+  }
 
   // URL-backed selection follows Back/Forward and filters without a second
   // local state that may momentarily select an outdated snapshot.
@@ -167,8 +207,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         <div className="grid">
           <label>
             {t('Week')}
-            <select aria-label={t('Filter snapshots by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select aria-label={t('Filter snapshots by week')} value={weekFilter} onChange={(event) => updateFilters('filterWeek', event.target.value)}>
               <option value="">{t('All weeks')}</option>
+              {unknownWeek && <option value={weekFilter}>{language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`}</option>}
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -181,9 +222,10 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             <select
               aria-label={t('Filter snapshots by category')}
               value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
+              onChange={(event) => updateFilters('filterCategory', event.target.value)}
             >
               <option value="">{t('All categories')}</option>
+              {unknownCategory && <option value={categoryFilter}>{language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`}</option>}
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -196,12 +238,13 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             <input
               aria-label={t('Filter snapshots by source event')}
               value={sourceEventFilter}
-              onChange={(event) => setSourceEventFilter(event.target.value)}
+              onChange={(event) => updateFilters('filterSourceEvent', event.target.value, true)}
               placeholder="source_event_id"
             />
           </label>
         </div>
-        <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setSourceEventFilter('') }}>{t('Reset filters')}</button>
+        {(unknownWeek || unknownCategory) && !query.isLoading && <p role="status" className="status">{language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Zůstává vybraný neznámý filtr, nikoliv Vše.' : 'The requested week or category is unavailable. The view has not switched to All.'}</p>}
+        <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 
       {runMismatch && <p role="alert" className="error">{t('Planned context belongs to another Run.')}</p>}
@@ -253,6 +296,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
               setSearchParams((current) => {
                 const next = new URLSearchParams(current)
                 next.set('selectedSequence', String(snapshot.snapshot_sequence))
+                next.set('selectedMode', mode)
+                next.set('selectedRun', runId)
                 return next
               })
             }}

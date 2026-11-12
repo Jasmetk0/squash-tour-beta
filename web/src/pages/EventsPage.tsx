@@ -108,6 +108,7 @@ export function EventsPage(): JSX.Element {
 
   const unknownWeek = weekFilter !== '' && !weekOptions.includes(weekFilter)
   const unknownCategory = categoryFilter !== '' && !categoryOptions.includes(categoryFilter)
+  const filtersVerifiable = eventsQuery.isSuccess && !eventsMismatch && !planUnavailable
 
   // Update only this page's filter keys. Preserve foreign query parameters and
   // keep an exact bookmarked event only if it remains within the new filter set.
@@ -130,7 +131,8 @@ export function EventsPage(): JSX.Element {
       const bookmarked = hasSequence
         ? events.find(event => event.event_sequence === sequenceNumber && (!eventId || event.event_id === eventId))
         : eventId ? events.find(event => event.event_id === eventId) : undefined
-      if ((current.has('selectedEventId') || current.has('selectedEventSequence')) &&
+      // Do not erase an exact deep link before the list and plan have loaded.
+      if (filtersVerifiable && (current.has('selectedEventId') || current.has('selectedEventSequence')) &&
         (!bookmarked || !matchesFilters(bookmarked, next.get('filterWeek') ?? '', next.get('filterCategory') ?? '', next.get('filterText') ?? ''))) {
         next.delete('selectedEventId')
         next.delete('selectedEventSequence')
@@ -198,7 +200,9 @@ export function EventsPage(): JSX.Element {
             {t('Week')}
             <select data-run-navigation-readonly aria-label={t('Filter events by week')} value={weekFilter} onChange={(event) => updateFilters('filterWeek', event.target.value)}>
               <option value="">{t('All weeks')}</option>
-              {unknownWeek && <option value={weekFilter}>{language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`}</option>}
+              {unknownWeek && <option value={weekFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`)
+                : (language === 'cs' ? `Týden nelze ověřit: ${weekFilter}` : `Week not verified: ${weekFilter}`)}</option>}
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -214,7 +218,9 @@ export function EventsPage(): JSX.Element {
               onChange={(event) => updateFilters('filterCategory', event.target.value)}
             >
               <option value="">{t('All categories')}</option>
-              {unknownCategory && <option value={categoryFilter}>{language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`}</option>}
+              {unknownCategory && <option value={categoryFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`)
+                : (language === 'cs' ? `Kategorii nelze ověřit: ${categoryFilter}` : `Category not verified: ${categoryFilter}`)}</option>}
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -232,7 +238,9 @@ export function EventsPage(): JSX.Element {
             />
           </label>
         </div>
-        {(unknownWeek || unknownCategory) && !eventsQuery.isLoading && <p role="status" className="status">{language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Historie se nepřepnula na Vše.' : 'The requested week or category is unavailable. The view has not silently switched to All.'}</p>}
+        {(unknownWeek || unknownCategory) && !eventsQuery.isLoading && <p role="status" className="status">{!filtersVerifiable
+          ? (language === 'cs' ? 'Filtr zatím nelze ověřit z načtených zdrojů; zůstává aktivní.' : 'The filter cannot yet be verified from loaded sources and remains active.')
+          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Historie se nepřepnula na Vše.' : 'The requested week or category is unavailable. The view has not silently switched to All.')}</p>}
         <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 

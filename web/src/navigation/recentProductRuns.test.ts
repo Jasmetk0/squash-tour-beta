@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { readRecentProductRuns, rememberProductRun } from './recentProductRuns'
+import { clearRecentProductRuns, readRecentProductRuns, rememberProductRun } from './recentProductRuns'
 
 const KEY = 'squash-engine-recent-product-runs-v1'
 
@@ -61,4 +61,20 @@ describe('recentProductRuns', () => {
     expect(() => rememberProductRun('run-1')).not.toThrow()
     setItem.mockRestore()
   })
+  it('removes only recent history and survives reload while other keys remain', () => {
+    rememberProductRun('run-1')
+    localStorage.setItem('saved-view', 'preserved')
+    expect(clearRecentProductRuns()).toBe(true)
+    expect(readRecentProductRuns()).toEqual([])
+    expect(localStorage.getItem('saved-view')).toBe('preserved')
+    expect(localStorage.getItem(KEY)).toBeNull()
+  })
+
+  it('reports failed removal instead of a false success', () => {
+    rememberProductRun('run-1')
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('denied') })
+    expect(clearRecentProductRuns()).toBe(false)
+    expect(readRecentProductRuns()).toEqual(['run-1'])
+  })
+
 })

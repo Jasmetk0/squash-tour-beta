@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -382,6 +382,109 @@ describe('canonical Runs inventory', () => {
     expect(JSON.parse(localStorage.getItem(RUN_LIST_VIEWS_KEY)!).items[0]).toEqual({
       name: 'Current only', query: 'Sandbox', visibility: 'all', hidden: false
     })
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+  })
+
+  it('refuses a stale-tab update without silently overwriting another tab', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Shared')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Typ Runu' }), 'protected')
+    const external = JSON.stringify({ schema_version: 'run_list_views.v1', items: [
+      { name: 'Shared', query: 'saved elsewhere', visibility: 'editable', hidden: false }
+    ] })
+    // Simulate a write in another tab that arrived just before our click,
+    // even if the StorageEvent has not yet been delivered.
+    localStorage.setItem(RUN_LIST_VIEWS_KEY, external)
+    await userEvent.click(screen.getByRole('button', { name: 'Výslovně aktualizovat pohled' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Uložené pohledy se mezitím změnily')
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toBe(external)
+    expect(screen.getByRole('combobox', { name: 'Typ Runu' })).toHaveValue('protected')
+    expect(screen.getByRole('button', { name: 'Výslovně aktualizovat pohled' })).toBeEnabled()
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), '')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), 'Shared')
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('saved elsewhere')
+    expect(screen.getByRole('combobox', { name: 'Typ Runu' })).toHaveValue('editable')
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+    expect(api.listBranchStates).not.toHaveBeenCalled()
+  })
+
+  it('reflects StorageEvent changes in the selector without changing current filters or opening a Run', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'Sandbox')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Old')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    const external = JSON.stringify({ schema_version: 'run_list_views.v1', items: [
+      { name: 'Old', query: 'Elsewhere', visibility: 'protected', hidden: true },
+      { name: 'From tab two', query: 'another', visibility: 'editable', hidden: false }
+    ] })
+    act(() => {
+      localStorage.setItem(RUN_LIST_VIEWS_KEY, external)
+      window.dispatchEvent(new StorageEvent('storage', { key: RUN_LIST_VIEWS_KEY }))
+    })
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('Sandbox')
+    expect(screen.getByRole('combobox', { name: 'Typ Runu' })).toHaveValue('all')
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).not.toHaveTextContent('Old')
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).toHaveTextContent('From tab two')
+    expect(screen.getByText('Uložené pohledy se změnily v jiném panelu. Filtry zůstaly beze změny; pro použití vyber pohled znovu.')).toBeInTheDocument()
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+    expect(api.listBranchStates).not.toHaveBeenCalled()
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
+
+  it('can retry browser preference loading after temporary unavailable storage', async () => {
+    const failure = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked') })
+    try {
+      renderPage()
+      expect(await screen.findByText('Sandbox One')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Uložit nový pohled' })).toBeDisabled()
+    } finally {
+      failure.mockRestore()
+    }
+    await userEvent.click(screen.getByRole('button', { name: 'Znovu načíst uložené pohledy' }))
+    expect(screen.getByRole('button', { name: 'Uložit nový pohled' })).toBeEnabled()
+    expect(screen.queryByText('Úložiště prohlížeče není dostupné. Ukládání pohledů je vypnuté.')).not.toBeInTheDocument()
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Recovered')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    expect(JSON.parse(localStorage.getItem(RUN_LIST_VIEWS_KEY)!).items[0].name).toBe('Recovered')
+  })
+
+  it('keeps a full 24-view store unchanged when an additional view is requested', async () => {
+    const fullStore = JSON.stringify({
+      schema_version: 'run_list_views.v1',
+      items: Array.from({ length: 24 }, (_, i) => ({
+        name: 'View ' + String(i + 1), query: '', visibility: 'all', hidden: false
+      }))
+    })
+    localStorage.setItem(RUN_LIST_VIEWS_KEY, fullStore)
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'One too many')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Byl dosažen limit 24 pohledů')
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toBe(fullStore)
+  })
+
+  it('supports saving with the Enter key, and retaining preferences with empty or unavailable inventory', async () => {
+    api.listRunContainers.mockResolvedValueOnce({ run_containers: [] })
+    const page = renderPage()
+    expect(await screen.findByText('Zatím žádné uložené Runy.')).toBeInTheDocument()
+    const input = screen.getByRole('textbox', { name: 'Název nového pohledu' })
+    input.focus()
+    await userEvent.keyboard('Keyboard saved')
+    const saveButton = screen.getByRole('button', { name: 'Uložit nový pohled' })
+    saveButton.focus()
+    await userEvent.keyboard('{Enter}')
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).toHaveValue('Keyboard saved')
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toContain('Keyboard saved')
+    page.unmount()
+    api.listRunContainers.mockRejectedValueOnce(new Error('offline'))
+    renderPage()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Přehled Runů není dostupný')
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).toHaveTextContent('Keyboard saved')
+    expect(screen.getByRole('link', { name: 'Vytvořit prázdný Run' })).toHaveAttribute('href', '/admin/runs/new')
     expect(api.listRunBranches).not.toHaveBeenCalled()
   })
 

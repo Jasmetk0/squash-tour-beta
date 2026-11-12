@@ -43,6 +43,8 @@ export type SavedDrawEntryEvidence = {
 
 const SHA = /^[0-9a-f]{64}$/
 const ROLES = ['direct_main', 'qualification', 'wild_card']
+/** The only first-entry trigger contracts the backend defines (`PlayerTourEntryTrigger`). */
+const TRIGGER_SCHEMAS = ['player_tour_entry_trigger.v1', 'player_tour_entry_trigger.v2']
 const KINDS = ['valid_tournament_application', 'definitive_wild_card_assignment']
 const sha = (v: unknown): v is string => typeof v === 'string' && SHA.test(v)
 const text = (v: unknown): v is string => typeof v === 'string' && v.length > 0
@@ -72,6 +74,8 @@ export function validSavedDrawPreflight(
     return data.point_table_status === 'not_required' && required.size === 0 &&
       data.native_execution_status === 'requires_adoption_preview'
   }
+  // A Ranked Draw always has point stages to score; an empty list is not 'complete'.
+  if (required.size === 0) return false
   if (data.point_table_status !== (gaps ? 'incomplete' : 'complete')) return false
   // Gaps can only be reported as unsupported or incomplete, never as ready for preview.
   return !(gaps && data.native_execution_status === 'requires_adoption_preview') &&
@@ -91,7 +95,7 @@ export function validSavedDrawEntryEvidence(
     if (!ROLES.includes(row.draw_role)) return false
     const t = row.first_entry
     if (t === null) continue
-    if (!t || t.run_id !== scope.runId || t.branch_id !== scope.branchId ||
+    if (!t || !TRIGGER_SCHEMAS.includes(t.schema_version) || t.run_id !== scope.runId || t.branch_id !== scope.branchId ||
       t.player_id !== row.player_id || !text(t.event_id) ||
       !KINDS.includes(t.trigger_kind) || !sha(t.source_evidence_fingerprint) ||
       !text(t.source_evidence_id) || !t.trigger_week ||

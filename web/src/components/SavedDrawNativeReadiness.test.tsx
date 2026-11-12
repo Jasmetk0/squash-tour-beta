@@ -88,6 +88,21 @@ describe('SavedDrawNativeReadiness', () => {
     expect(screen.getByText('V této uložené revizi není doloženo')).toBeInTheDocument()
   })
 
+  it.each([
+    [true, /neukazuje|nevytváří ani neověřuje/, /Master v87[\s\S]*Ranked i Unranked/],
+    [false, /neither creates nor verifies/, /Ranked or Unranked Edition must be a professional/]
+  ])('explains historical first entry versus professional eligibility (cs=%s)', async (cs, _a, eligibility) => {
+    api.getSavedDrawNativePreflight.mockResolvedValue(preflight())
+    api.getSavedDrawEntryEvidence.mockResolvedValue(evidence())
+    mount(cs)
+    await screen.findByRole('table')
+    const text = screen.getByRole('region').textContent ?? ''
+    expect(text).toMatch(eligibility)
+    // Never claims that Ranked alone needs a Tour Entry, nor that history proves pro status.
+    expect(text).not.toMatch(/Ranked adoption additionally requires|Ranked přijetí navíc vyžaduje/)
+    expect(text).toMatch(cs ? /ne dnešní profesionální status/ : /not today.s professional status/)
+  })
+
   it('treats an unsupported Saved Draw as information, not a crash', async () => {
     const { ApiError } = await import('../api/client')
     api.getSavedDrawNativePreflight.mockRejectedValue(new ApiError(JSON.stringify({

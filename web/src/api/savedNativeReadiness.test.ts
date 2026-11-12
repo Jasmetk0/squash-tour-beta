@@ -63,6 +63,27 @@ describe('Saved Draw native readiness contracts (pure validators)', () => {
     expect(validSavedDrawPreflight(null, 'rev-1')).toBe(false)
   })
 
+  it('rejects a Ranked preflight without required point stages', () => {
+    // 'complete' with nothing required would claim readiness for a table that scores nothing.
+    expect(validSavedDrawPreflight(preflight({
+      ranking_status: 'ranked', point_table_status: 'complete', required_point_stages: []
+    }), 'rev-1')).toBe(false)
+    expect(validSavedDrawPreflight(preflight({
+      ranking_status: 'ranked', point_table_status: 'complete',
+      required_point_stages: [], native_execution_status: 'ranked_not_supported'
+    }), 'rev-1')).toBe(false)
+  })
+
+  it('accepts only the defined first-entry trigger schema versions', () => {
+    expect(validSavedDrawEntryEvidence(evidence(), 'rev-1', 'event-x', scope)).toBe(true)
+    const v2 = evidence()
+    v2.entrants[0].first_entry!.schema_version = 'player_tour_entry_trigger.v2'
+    expect(validSavedDrawEntryEvidence(v2, 'rev-1', 'event-x', scope)).toBe(true)
+    const future = evidence()
+    future.entrants[0].first_entry!.schema_version = 'future_unsupported.v99'
+    expect(validSavedDrawEntryEvidence(future, 'rev-1', 'event-x', scope)).toBe(false)
+  })
+
   it('requires exact scope, unique players and matching trigger identity', () => {
     expect(validSavedDrawEntryEvidence(evidence(), 'rev-1', 'event-x', scope)).toBe(true)
     expect(validSavedDrawEntryEvidence(evidence(), 'rev-2', 'event-x', scope)).toBe(false)

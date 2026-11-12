@@ -44,6 +44,9 @@ function detailText(e: CareerEvent, cs: boolean): string {
   if (e.kind === 'retirement' && d.without_turn_pro === true) {
     return cs ? 'výjimka: bez přechodu mezi profesionály' : 'exception: without ever turning pro'
   }
+  if (e.kind === 'retirement' && d.without_tour_entry === true) {
+    return cs ? 'bez vstupu na Tour' : 'never entered the Tour'
+  }
   return ''
 }
 
@@ -111,6 +114,20 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
       <button type="submit">{cs ? 'Použít' : 'Apply'}</button>
     </form>
     <p role="status">{cs ? 'Zobrazeno k týdnu č.' : 'Shown as of week no.'} {data.as_of_ordinal}</p>
+    {data.retirement_summary && <section aria-label={cs ? 'Souhrn kariéry' : 'Career summary'}>
+      <h4>{cs ? 'Souhrn kariéry při odchodu do důchodu' : 'Retirement career summary'}</h4>
+      <p>{cs ? 'Konec kariéry' : 'Retired'}: {weekText({ ...data.retirement_summary.source, kind: 'retirement', effective_week: data.retirement_summary.retired_week, detail: {}, source: data.retirement_summary.source } as CareerEvent, cs)}
+        {' · '}{cs ? 'Tituly / finále / Edice' : 'Titles / finals / Editions'}: {data.retirement_summary.titles} / {data.retirement_summary.finals} / {data.retirement_summary.editions_played}
+        {' · '}{cs ? 'Nejlepší ranking' : 'Career-high rank'}: {data.retirement_summary.career_high_rank ?? '—'}</p>
+      {data.retirement_summary.without_turn_pro === true && <p role="note">{cs
+        ? 'Výjimka podle Master v87: kariéra skončila, aniž by se hráč kdy stal profesionálem. Nevzniká žádná událost Turn Pro ani zdravotní příčina.'
+        : 'Master v87 exception: the career ended without the player ever turning pro. No Turn Pro event or health cause is implied.'}</p>}
+      {data.retirement_summary.without_tour_entry === true && <p role="note">{cs
+        ? 'Hráč nikdy nevstoupil na Tour (historické pravidlo bez události Turn Pro).'
+        : 'The player never entered the Tour (historical rule, which has no Turn Pro event).'}</p>}
+      <p><small>{cs ? 'Zdroj' : 'Source'}: {data.retirement_summary.source.kind} · {data.retirement_summary.source.fingerprint.slice(0, 12)}
+        {' · '}{cs ? 'Souhrn pokrývá jen zaznamenanou historii; příčina konce kariéry se neodvozuje.' : 'The summary covers recorded history only; no cause of the career ending is inferred.'}</small></p>
+    </section>}
     <h4>{cs ? 'Milníky' : 'Milestones'}</h4>
     {data.milestones.length === 0
       ? <p>{cs ? 'K tomuto týdnu zatím není doložený žádný milník.' : 'No milestone is recorded as of this week.'}</p>

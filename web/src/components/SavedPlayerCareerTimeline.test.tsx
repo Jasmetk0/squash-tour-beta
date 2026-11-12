@@ -86,6 +86,31 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     expect(screen.queryByText(/Turned professional/)).not.toBeInTheDocument()
   })
 
+  it('shows the retirement summary and the never-pro exception without implying a cause', async () => {
+    const retire = { kind: 'retirement', effective_week: { season_index: 0, week: 6 }, detail: { without_turn_pro: true },
+      source: { kind: 'week_transition', fingerprint: 'c'.repeat(64) } }
+    const summary = { retired_week: { season_index: 0, week: 6 }, turn_pro_rule: true, without_turn_pro: true,
+      without_tour_entry: null, opening_professional: false, entry_week: null, titles: 0, finals: 0,
+      editions_played: 0, first_recorded_title_week: null, career_high_rank: 12,
+      source: retire.source, note: 'n' }
+    api.getSavedPlayerCareer.mockResolvedValue({
+      ...data(12, [retire], [retire]), overview: { status: 'retired', titles: 0, finals: 0, editions_played: 0, career_high_rank: 12, current_rank: null },
+      retirement_summary: summary })
+    mount()
+    const block = await screen.findByLabelText('Career summary')
+    expect(block).toHaveTextContent('Master v87 exception')
+    expect(block).toHaveTextContent('No Turn Pro event or health cause is implied')
+    expect(block).toHaveTextContent('week_transition · cccccccccccc')
+    expect(screen.getAllByText(/exception: without ever turning pro/).length).toBeGreaterThan(0)
+  })
+
+  it('does not display a retired player whose summary is missing or unbacked', async () => {
+    api.getSavedPlayerCareer.mockResolvedValue({
+      ...data(12, [turnPro], [turnPro]), overview: { status: 'retired', titles: 0, finals: 0, editions_played: 0, career_high_rank: null, current_rank: null } })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent(/was not displayed/)
+  })
+
   it('treats an unsupported Run as information', async () => {
     api.getSavedPlayerCareer.mockImplementation(async () => {
       throw new Error('Player career requires a Saved configured Tour')

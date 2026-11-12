@@ -26,7 +26,17 @@ export type SavedPlayerCareer = {
   }
   milestones: CareerEvent[]
   timeline: CareerEvent[]
+  /** Present only when the player retired at or before the viewed week. */
+  retirement_summary?: RetirementSummary | null
   unsupported: string[]
+}
+export type RetirementSummary = {
+  retired_week: CareerWeek; turn_pro_rule: boolean
+  without_turn_pro: boolean | null; without_tour_entry: boolean | null
+  opening_professional: boolean; entry_week: CareerWeek | null
+  titles: number; finals: number; editions_played: number
+  first_recorded_title_week: CareerWeek | null; career_high_rank: number | null
+  source: CareerSource; note: string
 }
 
 /** Kinds that can appear in the timeline; a milestone may also be a first recorded title. */
@@ -67,6 +77,13 @@ export function validSavedPlayerCareer(
     !count(data.covered_period.first_recorded_ranking_ordinal)) return false
   if (!Array.isArray(data.timeline) || !Array.isArray(data.milestones) ||
     !Array.isArray(data.unsupported)) return false
+  const r = data.retirement_summary
+  if (r !== undefined && r !== null) {
+    // A summary exists exactly for a retired player and is backed by a retirement fact.
+    if (o.status !== 'retired' || !count(r.titles) || !count(r.finals) || !count(r.editions_played) ||
+      !rank(r.career_high_rank) || !text(r.source?.fingerprint) || !r.retired_week ||
+      !data.timeline.some(t => t.kind === 'retirement' && t.source.fingerprint === r.source.fingerprint)) return false
+  } else if (o.status === 'retired') return false
   if (!data.timeline.every(e => validEvent(e, CAREER_KINDS))) return false
   // Milestones are a selection of recorded facts, never an independent source.
   return data.milestones.every(m => validEvent(m, MILESTONE_KINDS) &&

@@ -188,11 +188,18 @@ def native_player_career(state, world, player_id, *, as_of_ordinal=None):
          if player_id in t.retired_player_ids and t.target_week.ordinal <= as_of),
         None,
     )
+    turn_pro_rule = getattr(world, "initial_turn_pro", None) is not None
+    never_entered = entry_week is None and not opening_pro
     if retired is not None:
         events.append({
             "kind": "retirement", "effective_week": _week(retired.target_week),
             "sort": (retired.target_week.ordinal, 3),
-            "detail": {"without_turn_pro": entry_week is None and not opening_pro},
+            # Under the historical rule there is no Turn Pro event, so the honest fact is
+            # that the player never entered the Tour; Master v87 names the exception.
+            "detail": (
+                {"without_turn_pro": never_entered} if turn_pro_rule
+                else {"without_tour_entry": never_entered}
+            ),
             "source": {"kind": "week_transition", "fingerprint": retired.sporting_advance_fingerprint,
                        "command_id": retired.command_id},
         })
@@ -210,6 +217,23 @@ def native_player_career(state, world, player_id, *, as_of_ordinal=None):
             -1 if e["effective_week"] is None else
             e["effective_week"]["season_index"] * 1000 + e["effective_week"]["week"]
         ))
+    summary = None
+    if retired is not None:
+        summary = {
+            "retired_week": _week(retired.target_week),
+            "turn_pro_rule": turn_pro_rule,
+            "without_turn_pro": never_entered if turn_pro_rule else None,
+            "without_tour_entry": never_entered if not turn_pro_rule else None,
+            "opening_professional": opening_pro,
+            "entry_week": None if entry_week is None else _week(entry_week),
+            "titles": titles, "finals": finals, "editions_played": appearances,
+            "first_recorded_title_week": None if first_title is None else first_title["effective_week"],
+            "career_high_rank": None if best is None else best[1].rank,
+            "source": {"kind": "week_transition", "fingerprint": retired.sporting_advance_fingerprint,
+                       "command_id": retired.command_id},
+            # A summary of recorded facts only: no cause is implied for the end of a career.
+            "note": "Totals cover recorded history only; no cause of retirement is implied.",
+        }
     return {
         "schema_version": SCHEMA,
         "run_id": state.run_id,
@@ -237,5 +261,6 @@ def native_player_career(state, world, player_id, *, as_of_ordinal=None):
         },
         "milestones": milestones,
         "timeline": timeline,
+        "retirement_summary": summary,
         "unsupported": list(UNSUPPORTED),
     }

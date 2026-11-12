@@ -29,10 +29,15 @@ from test_authoritative_slot_matches import (
 )
 
 
-def _force_positive_entry_tuning(driver) -> None:
-    """Make positive Entry tests independent of one arbitrary RNG seed."""
+def _force_positive_entry_tuning(driver, tmp_path) -> None:
+    """Make positive Entry tests independent of one arbitrary RNG seed.
+
+    The override goes to an isolated copy: the built-in config/balance file is a
+    shared read-only input and must never be rewritten by a test.
+    """
 
     entry_service = driver.match_service.draw_service.entry_list_service
+    entry_service.entry_tuning_path = tmp_path / "entry_tuning.json"
     entry_service.entry_tuning_path.write_text(
         json.dumps(
             {
@@ -180,7 +185,7 @@ def test_multi_event_entry_slot_uses_one_shared_snapshot_and_canonical_events(tm
 @pytest.mark.pr_critical
 def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "entry-validation-command")
-    _force_positive_entry_tuning(driver)
+    _force_positive_entry_tuning(driver, tmp_path)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     preview = driver.preview_entry_decision_slot(
         run_id="run",
@@ -262,7 +267,7 @@ def test_entry_slot_validation_commits_valid_submission_and_first_tour_entry(tmp
 @pytest.mark.pr_critical
 def test_entry_slot_validation_rejects_forged_lifecycle_tie_break_token(tmp_path):
     driver, factory, week = _driver_fixture(tmp_path / "entry-validation-token-drift")
-    _force_positive_entry_tuning(driver)
+    _force_positive_entry_tuning(driver, tmp_path)
     event_id = next(iter(driver.match_service._load_registry().matches_by_event_id))
     preview = driver.preview_entry_decision_slot(
         run_id="run",

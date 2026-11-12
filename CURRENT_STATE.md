@@ -1,3 +1,48 @@
+# Expanded Claude work queue — 12 November 2026
+
+Owner has merged #1784 and #1785; the refreshed baseline is
+`buuk 6e4066a8359307be4d89c0f9202260bcc69a4e92`. Radim requested a new Claude-chat
+prompt including larger follow-on implementation packages, not only the repairs.
+The existing `docs/AI_REVIEW_HANDOFF.md` now authorises, in order: Turn Pro repair,
+Saved Draw read-only UI repair, native career timeline/milestones, completed-season
+summary/comparison, and following/milestone notifications. Each has a product
+basis, source boundary, concrete acceptance example and complete-PR handoff.
+These are assignments, not new implementation evidence or new product decisions.
+Claude may continue independent packages while Work reviews completed results;
+shared sporting writers require a single owner. Work retains ATP source/calendar
+and native Q/Main slot integration. Earlier pending-merge wording below is dated
+history; #1783 runtime remains unmerged and unapproved at this checkpoint.
+
+---
+
+# Claude review checkpoint — 12 November 2026
+
+Reviewed `buuk a86053f7ded5b72cd594f7e51ce64ab6ea43d11b` includes owner merges
+#1763/#1780/#1781/#1782. All 17 remaining Claude PRs were inventoried by actual
+ancestry; the complete final lifecycle candidate is #1783 `06b41e4` (41 files),
+not 13 independent runtime releases. Its seven manual acceptance workflows pass,
+but important v87 paths/evidence and other applicable gates remain incomplete.
+
+Work #1784 combines the useful #1766/#1769 test repairs and restores the positive
+Reconstruction `pr_critical` marker: 22 independent tests pass and actual final-head
+Fast CI/CodeQL/Sonar pass. No production config or Health guard changed.
+The accompanying Master v87 consolidation records the owner's 12 November
+confirmations: own imperfect self-view; near-certain entry without forced age,
+with explicit history/audit for the rare never-pro career. Calibration remains
+provisional; no runtime merge or release is implied.
+
+Next Claude task: exact historical decision evidence, older Tour model replay,
+early pre-Tour weeks and direct native FAX/never-pro integration; then separate
+read-only Saved Draw UI correction. Work owns independent review and the ATP
+source/scheduled integration; avoid concurrent shared Tour/persistence writers.
+The [current evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) contains all
+17 pinned heads, findings, checks and the bounded merge recommendation. The
+[new Claude chat prompt](docs/AI_REVIEW_HANDOFF.md#prompt-to-paste-into-a-new-claude-code-chat)
+is ready to paste. Owner alone merges. Earlier candidate entries below are dated
+history and do not certify current runtime or full pre-alpha completion.
+
+---
+
 # Turn Pro model v2: own self-perception (Master v87) — 11 November 2026
 
 Stacked on the FAX Saved Draw branch. Following the owner clarification, the

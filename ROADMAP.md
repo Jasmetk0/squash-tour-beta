@@ -1,3 +1,52 @@
+# Claude follow-on packages — 12 November 2026
+
+Work's #1784/#1785 are owner-merged at `buuk 6e4066a8359307be4d89c0f9202260bcc69a4e92`.
+The current Claude assignment in `docs/AI_REVIEW_HANDOFF.md` expands the existing
+repair into a sequenced queue of complete packages:
+
+1. Final Turn Pro runtime and actual lifecycle acceptance.
+2. Separate read-only Saved Draw readiness repair.
+3. Native career timeline, milestones and retirement summary.
+4. Completed-season archive and country/season comparison.
+5. Following and milestone notifications over the same authoritative facts.
+
+Tasks 3–5 implement already decided Master 21.5/25.6.1/27.25 targets, with current
+code audited first; they do not imply that an existing summary/legacy career
+reader is absent or that a notification service already exists. One complete
+package per PR, focused real acceptance, independent Work review and owner merge.
+Continue an independent package while review is pending; avoid a new cumulative
+stack. Work's parallel ATP integration and full release requirements remain.
+No product Master update or runtime implementation is made by this queue change.
+
+---
+
+# Current dependency checkpoint — 12 November 2026
+
+Base `buuk a86053f7` includes the owner-merged ATP foundations/horizon repairs
+and coordination guard. Do not reopen those PRs or mistake package/scheduled
+component readiness for a playable public ATP Run.
+
+1. Review/owner-merge Work's test consolidation #1784 and reconciled Master v87
+   documentation after their own final-head checks. Do not separately merge the
+   uncorrected positive-test selection from #1769.
+2. Claude completes one final v2 lifecycle candidate based on #1783: historical
+   knowledge evidence and model replay, actual early weeks, explicit never-pro
+   history/audit and direct native FAX acceptance. Seven existing manual workflow
+   passes are real, but not proof of these missing new-policy paths. The separate
+   #1764 read-only UI repair follows; no intermediate v1 defaults are deployed.
+3. Work reviews those final heads, then resumes ATP's native scheduled owner using
+   the existing slot/point ledger: public Q → manual Save/restart → normal Week
+   Transition → Main → terminal confirmation → next ranking in one real Run.
+4. Multiple simultaneous Editions, full reference season/Finals, 50-season,
+   recovery/performance and the complete Master release scope remain mandatory.
+
+Use the existing [evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) and
+[new Claude prompt](docs/AI_REVIEW_HANDOFF.md). One active writer for shared Tour
+and persistence boundaries; Radim alone merges. Older checkpoints below are
+history, not competing current assignments.
+
+---
+
 # Native Q/Main dependency checkpoint after #1746 — 6 November 2026
 
 Base `buuk` `c7bb53eb893dceb2cb603bc0d312b71070489a0e` contains owner merge #1746.

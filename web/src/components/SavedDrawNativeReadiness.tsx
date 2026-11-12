@@ -85,8 +85,11 @@ export function SavedDrawNativeReadiness(
       ? `Účastníci: ${evidence.entrants.length} · s doloženým prvním Entry: ${entered.length} · bez: ${missing}`
       : `Participants: ${evidence.entrants.length} · with recorded first Entry: ${entered.length} · without: ${missing}`}</p>
     <p>{cs
-      ? 'Doklad pochází z této uložené revize. Ranked přijetí navíc vyžaduje nativní Tour Entry každého účastníka v aktuálním životním cyklu; ten se zde nevytváří.'
-      : 'Evidence comes from this Saved revision. Ranked adoption additionally requires a native Tour Entry for every participant in the current lifecycle; this view does not create one.'}</p>
+      ? 'Doklad pochází z této uložené revize a popisuje historický první vstup, ne dnešní profesionální status.'
+      : 'Evidence comes from this Saved revision and describes a historical first entry, not today\u2019s professional status.'}</p>
+    <p>{cs
+      ? 'U Runů s pravidlem Master v87 (výchozí pro nové Runy) musí být každý účastník Ranked i Unranked Edice profesionál v cílovém životním cyklu; k tomu slouží samostatná událost Turn Pro, přihláška ji nezakládá. U Runů s historickým pravidlem vyžaduje Ranked přijetí nativní Tour Entry každého účastníka. Tento přehled nic z toho nevytváří ani neověřuje.'
+      : 'In Runs under Master v87 (the default for new Runs) every participant of a Ranked or Unranked Edition must be a professional in the target lifecycle, through the separate Turn Pro event; an application does not create it. In Runs under the historical rule, Ranked adoption requires a native Tour Entry for every participant. This view neither creates nor verifies either.'}</p>
     <div className="table-responsive"><table>
       <thead><tr>
         <th>{cs ? 'Hráč' : 'Player'}</th><th>{cs ? 'Role v Draw' : 'Draw role'}</th>

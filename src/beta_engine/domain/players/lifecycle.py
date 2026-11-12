@@ -6,7 +6,7 @@ import hashlib
 import json
 from typing import Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Field, model_validator
 
 from beta_engine.domain.rankings.official import (
     FrozenInput,
@@ -30,14 +30,9 @@ class PlayerLifecyclePolicy(FrozenInput):
     provenance: str = Field(min_length=1)
     # None is the historical v57 rule: first valid application or definitive WC.
     # It is omitted from serialization so every earlier policy keeps its bytes.
-    tour_entry_rule: TourEntryRule | None = None
-
-    @model_serializer(mode="wrap")
-    def _omit_historical_entry_rule(self, handler):
-        data = handler(self)
-        if self.tour_entry_rule is None:
-            data.pop("tour_entry_rule", None)
-        return data
+    tour_entry_rule: TourEntryRule | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @property
     def requires_turn_pro(self) -> bool:

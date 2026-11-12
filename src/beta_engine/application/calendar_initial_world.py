@@ -2,7 +2,7 @@
 
 from typing import Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Field, model_validator
 
 from beta_engine.application.season_player_bootstrap_service import SeasonActivePlayer
 from beta_engine.domain.calendar.run_calendar import RunCalendar
@@ -84,14 +84,9 @@ class CalendarInitialWorldState(FrozenInput):
     adoption_request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     lifecycle_policy: PlayerLifecyclePolicy
     # Master v87 only; omitted otherwise so every earlier world keeps its bytes.
-    initial_turn_pro: InitialTurnProEvidence | None = None
-
-    @model_serializer(mode="wrap")
-    def _omit_absent_initial_turn_pro(self, handler):
-        data = handler(self)
-        if self.initial_turn_pro is None:
-            data.pop("initial_turn_pro", None)
-        return data
+    initial_turn_pro: InitialTurnProEvidence | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def validate_world(self):

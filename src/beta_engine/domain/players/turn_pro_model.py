@@ -23,7 +23,7 @@ import math
 from collections.abc import Iterable
 from typing import Literal
 
-from pydantic import Field, model_serializer, model_validator
+from pydantic import Field, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
@@ -54,17 +54,15 @@ class TurnProModelPolicy(FrozenInput):
     # Model v2 (owner clarification 11 Nov 2026): readiness comes only from the
     # prospect's own self-perception, never from others' hidden strength, and
     # the player's own personality scales the hazard. Omitted in v1 policies.
-    perception: SelfPerceptionPolicy | None = None
-    ambition_weight: float | None = Field(default=None, ge=0)
-    professionalism_weight: float | None = Field(default=None, ge=0)
-
-    @model_serializer(mode="wrap")
-    def _omit_v1_absent_fields(self, handler):
-        data = handler(self)
-        for name in ("perception", "ambition_weight", "professionalism_weight"):
-            if getattr(self, name) is None:
-                data.pop(name, None)
-        return data
+    perception: SelfPerceptionPolicy | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+    ambition_weight: float | None = Field(
+        default=None, ge=0, exclude_if=lambda v: v is None
+    )
+    professionalism_weight: float | None = Field(
+        default=None, ge=0, exclude_if=lambda v: v is None
+    )
 
     @property
     def uses_self_perception(self) -> bool:
@@ -131,14 +129,9 @@ class TurnProCandidate(FrozenInput):
     # v2: the prospect's own perceived readiness (``observation.readiness``).
     readiness: float = Field(ge=0, le=1)
     home_opportunity: bool = False
-    observation: TurnProObservation | None = None
-
-    @model_serializer(mode="wrap")
-    def _omit_absent_observation(self, handler):
-        data = handler(self)
-        if self.observation is None:
-            data.pop("observation", None)
-        return data
+    observation: TurnProObservation | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def observation_matches(self):

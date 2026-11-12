@@ -321,17 +321,12 @@ class CalendarTourTransition(FrozenInput):
     # Master v87: Turn Pro decisions made at this transition and the exact model
     # policy that made them. Both are omitted when absent so historical
     # transitions keep their bytes.
-    turn_pro_decisions: tuple[PlayerTurnProDecision, ...] = ()
-    turn_pro_model: TurnProModelPolicy | None = None
-
-    @model_serializer(mode="wrap")
-    def _omit_absent_turn_pro(self, handler):
-        body = handler(self)
-        if not self.turn_pro_decisions:
-            body.pop("turn_pro_decisions", None)
-        if self.turn_pro_model is None:
-            body.pop("turn_pro_model", None)
-        return body
+    turn_pro_decisions: tuple[PlayerTurnProDecision, ...] = Field(
+        default=(), exclude_if=lambda v: not v
+    )
+    turn_pro_model: TurnProModelPolicy | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def _turn_pro_belongs_to_this_transition(self):

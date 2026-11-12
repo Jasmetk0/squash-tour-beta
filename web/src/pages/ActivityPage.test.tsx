@@ -615,6 +615,7 @@ describe('ActivityPage', () => {
     const user = userEvent.setup()
     renderActivityWithHistory('/runs/run-a/activity?activitySeason=2027&from=timeline')
     const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    const callsBeforeSelection = api.getRunActivity.mock.calls.length
     await user.click(within(list).getByRole('button', { name: /Ranking snapshot 11/i }))
     const params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
     expect(params.get('selectedItem')).toBe('1')
@@ -623,7 +624,7 @@ describe('ActivityPage', () => {
     expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
       'href', '/runs/run-a/snapshots/ranking/11'
     )
-    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+    expect(api.getRunActivity).toHaveBeenCalledTimes(callsBeforeSelection)
   })
 
 })

@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { readRecentProductRuns, rememberProductRun } from './recentProductRuns'
+import { clearRecentProductRuns, hasRecentProductRunsStorageEntry, readRecentProductRuns, rememberProductRun } from './recentProductRuns'
 
 const KEY = 'squash-engine-recent-product-runs-v1'
 
@@ -61,4 +61,43 @@ describe('recentProductRuns', () => {
     expect(() => rememberProductRun('run-1')).not.toThrow()
     setItem.mockRestore()
   })
+  it('removes only recent history and survives reload while other keys remain', () => {
+    rememberProductRun('run-1')
+    localStorage.setItem('saved-view', 'preserved')
+    expect(clearRecentProductRuns()).toBe(true)
+    expect(readRecentProductRuns()).toEqual([])
+    expect(localStorage.getItem('saved-view')).toBe('preserved')
+    expect(localStorage.getItem(KEY)).toBeNull()
+  })
+
+  it('reports failed removal instead of a false success', () => {
+    rememberProductRun('run-1')
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('denied') })
+    expect(clearRecentProductRuns()).toBe(false)
+    expect(readRecentProductRuns()).toEqual(['run-1'])
+  })
+
+  it('does not claim success when removeItem silently leaves the history in place', () => {
+    rememberProductRun('run-1')
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {})
+    expect(clearRecentProductRuns()).toBe(false)
+    expect(readRecentProductRuns()).toEqual(['run-1'])
+  })
+
+  it('detects corrupt records without parsing them or accessing other preferences', () => {
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
+    localStorage.setItem(KEY, '{invalid-json')
+    localStorage.setItem('other-preference', 'do-not-touch')
+    expect(readRecentProductRuns()).toEqual([])
+    expect(hasRecentProductRunsStorageEntry()).toBe(true)
+    expect(clearRecentProductRuns()).toBe(true)
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
+    expect(localStorage.getItem('other-preference')).toBe('do-not-touch')
+  })
+
+  it('does not throw if reading the raw history key is denied', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied') })
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
+  })
+
 })

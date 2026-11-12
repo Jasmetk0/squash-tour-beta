@@ -1,9 +1,10 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AdminHomePage } from './AdminHomePage'
 import { LanguageProvider } from '../../i18n/LanguageContext'
+import { readRecentProductRuns, rememberProductRun, RECENT_PRODUCT_RUNS_STORAGE_KEY } from '../../navigation/recentProductRuns'
 
 const api = vi.hoisted(() => ({
   listRunContainers: vi.fn(),
@@ -49,4 +50,97 @@ describe('pre-alpha global Home', () => {
     expect(screen.queryByText('Zatím neexistují žádné uložené Runy.')).not.toBeInTheDocument()
     await waitFor(() => expect(screen.getByText(/World balíčky: 0/)).toBeInTheDocument())
   })
+  it('clears only the recent navigation hint while keeping saved Runs and other preferences', async () => {
+    rememberProductRun('run-a')
+    rememberProductRun('run-b')
+    localStorage.setItem('saved-view-preference', 'keep-me')
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    expect(screen.getByText('FAX built-in')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(readRecentProductRuns()).toEqual([])
+    expect(localStorage.getItem('saved-view-preference')).toBe('keep-me')
+    expect(screen.getByRole('status', { name: '' })).toHaveTextContent('Runy zůstaly uložené.')
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
+    expect(screen.queryByRole('button', { name: 'Vymazat nedávné návštěvy' })).not.toBeInTheDocument()
+  })
+
+  it('refreshes recent order from a different tab without opening a Run', async () => {
+    rememberProductRun('run-a')
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    localStorage.setItem(RECENT_PRODUCT_RUNS_STORAGE_KEY, JSON.stringify(['run-b']))
+    fireEvent(window, new StorageEvent('storage', {
+      key: RECENT_PRODUCT_RUNS_STORAGE_KEY,
+      storageArea: localStorage,
+      newValue: JSON.stringify(['run-b'])
+    }))
+    expect(readRecentProductRuns()).toEqual(['run-b'])
+    expect(screen.getByText('FAX built-in').closest('li')?.parentElement?.previousElementSibling).toHaveTextContent('Nedávno otevřené')
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
+  })
+
+  it('reports denied removal without claiming success or hiding the recent Run', async () => {
+    rememberProductRun('run-a')
+    const remove = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('denied') })
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Historii se nepodařilo vymazat')
+    expect(screen.queryByText(/Historie nedávných návštěv byla vymazána/)).not.toBeInTheDocument()
+    expect(readRecentProductRuns()).toEqual(['run-a'])
+    remove.mockRestore()
+  })
+
+  it('does not fail Home on corrupted history and uses current Run display names', async () => {
+    localStorage.setItem(RECENT_PRODUCT_RUNS_STORAGE_KEY, '{broken')
+    api.listRunContainers.mockResolvedValue({ run_containers: [
+      { run_id: 'run-a', display_name: 'Renamed world', status: 'working', read_only: false }
+    ] })
+    renderHome()
+    expect(await screen.findByText('Renamed world')).toBeInTheDocument()
+    expect(screen.getByText(/Žádné dostupné nedávno otevřené Runy/)).toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(localStorage.getItem(RECENT_PRODUCT_RUNS_STORAGE_KEY)).toBeNull()
+    expect(screen.getByText('Renamed world')).toBeInTheDocument()
+  })
+
+  it('allows clearing stale Run identifiers without inventing a Run or opening it', async () => {
+    localStorage.setItem(RECENT_PRODUCT_RUNS_STORAGE_KEY, JSON.stringify(['deleted-run']))
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    expect(screen.queryByText('deleted-run')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(readRecentProductRuns()).toEqual([])
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
+    expect(screen.getByText('FAX built-in')).toBeInTheDocument()
+  })
+
+  it('reacts to another tab clearing the storage key with no Run navigation', async () => {
+    rememberProductRun('run-a')
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    localStorage.removeItem(RECENT_PRODUCT_RUNS_STORAGE_KEY)
+    fireEvent(window, new StorageEvent('storage', {
+      key: RECENT_PRODUCT_RUNS_STORAGE_KEY, storageArea: localStorage, newValue: null
+    }))
+    expect(screen.queryByRole('button', { name: 'Vymazat nedávné návštěvy' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
+  })
+
+  it('can clear browser visits even while Run inventory API is unavailable', async () => {
+    rememberProductRun('run-a')
+    api.listRunContainers.mockRejectedValue(new Error('Run storage offline'))
+    renderHome()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Run storage offline')
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(readRecentProductRuns()).toEqual([])
+    expect(screen.getByRole('status')).toHaveTextContent('Runy zůstaly uložené.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Run storage offline')
+  })
+
 })

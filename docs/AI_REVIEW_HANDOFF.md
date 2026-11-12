@@ -38,6 +38,16 @@ packages, not a request to return only another plan. Work independently reviews
 the results and owns ATP source/schedule/slot integration. Shared Tour/persistence
 writers require an explicit file-boundary handoff, not competing implementations.
 
+## Separate ordinary-ChatGPT assignment
+
+Radim requested a third parallel contributor. Its bounded task is documented in
+`docs/CHATGPT_PARALLEL_RUN_VIEWS_TASK.md`: named personal filter views for the
+existing `web/src/pages/RunsPage.tsx` only, with isolated helpers/tests. Reserve
+that page and its new Run-list-view files for this task. It does not own global
+favorites/following, career/season views, backend persistence or the API client.
+Claude keeps Tasks 1–5 below; Work keeps ATP. Check actual open PRs before any
+shared edit. This allocation is not evidence of implemented Saved Views.
+
 ## Prompt to paste into a NEW Claude Code chat
 
 You are continuing Squash Engine for Radim. Implement autonomously within this

@@ -155,7 +155,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         next.delete(key)
       }
       const sequenceText = current.get('selectedSequence') ?? ''
-      const sequence = /^\\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
+      const sequence = /^\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
       const currentMode = current.get('selectedMode')
       const currentRun = current.get('selectedRun')
       const inContext = (!currentMode && !currentRun) || (currentMode === mode && currentRun === runId)

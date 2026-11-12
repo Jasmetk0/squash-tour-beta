@@ -8,6 +8,11 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { rememberProductRun } from '../navigation/recentProductRuns'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
+import { isValidRunListView, readRunListViews, writeRunListViews } from './runListViews'
+import type { RunListVisibility, SavedRunListView } from './runListViews'
+
+type ViewNotice = 'viewSaved' | 'viewUpdated' | 'viewHidden' | 'viewRestored'
+  | 'viewDuplicate' | 'viewInvalid' | 'viewLimit' | 'viewWriteFailed'
 
 const messages = {
   cs: {
@@ -16,6 +21,21 @@ const messages = {
     openRun: 'Otevřít Run', refreshRuns: 'Obnovit seznam Runů', refreshingRuns: 'Obnovuji seznam Runů…',
     visibility: 'Typ Runu', allRuns: 'Všechny Runy', editableOnly: 'Pouze upravitelné', protectedOnly: 'Pouze chráněné',
     visibleCount: 'Zobrazeno', resetFilters: 'Zrušit filtry',
+    viewsTitle: 'Pojmenované pohledy', viewsLocal: 'Ukládají se pouze v tomto prohlížeči. Obsahují jen filtry přehledu, nikoli Runy.',
+    quickView: 'Uložený pohled', chooseView: 'Vybrat pohled', newViewName: 'Název nového pohledu',
+    saveView: 'Uložit nový pohled', updateView: 'Výslovně aktualizovat pohled',
+    viewChanged: 'Filtry byly změněny. Uložený pohled zůstává beze změny.',
+    manageViews: 'Spravovat pohledy', viewsManager: 'Správce pohledů', noViews: 'Zatím žádné uložené pohledy.',
+    hideView: 'Skrýt', restoreView: 'Obnovit', hiddenView: 'Skrytý',
+    viewSaved: 'Pohled uložen.', viewUpdated: 'Pohled výslovně aktualizován.',
+    viewHidden: 'Pohled skryt z rychlé nabídky.', viewRestored: 'Pohled obnoven.',
+    viewDuplicate: 'Pohled se stejným názvem již existuje. Vyber jej a použij výslovnou aktualizaci.',
+    viewInvalid: 'Zadej název (max. 64 znaků) a hledání do 250 znaků.',
+    viewLimit: 'Byl dosažen limit 24 pohledů.',
+    viewWriteFailed: 'Nastavení se nepodařilo uložit do prohlížeče. Změna nebyla provedena.',
+    viewInvalidStorage: 'Uložené nastavení pohledů je poškozené. Zůstává nedotčené; základní filtry fungují.',
+    viewUnsupportedStorage: 'Nastavení pohledů má nepodporovanou verzi. Nebude přepsáno.',
+    viewUnavailableStorage: 'Úložiště prohlížeče není dostupné. Ukládání pohledů je vypnuté.',
     empty: 'Zatím žádné uložené Runy.', noResults: 'Žádný Run neodpovídá hledání.',
     loading: 'Načítám uložené Runy…', error: 'Přehled Runů není dostupný',
     protected: 'Chráněný zdroj', editable: 'Upravitelný', branches: 'Větve',
@@ -42,6 +62,21 @@ const messages = {
     openRun: 'Open Run', refreshRuns: 'Refresh Run list', refreshingRuns: 'Refreshing Run list…',
     visibility: 'Run type', allRuns: 'All Runs', editableOnly: 'Editable only', protectedOnly: 'Protected only',
     visibleCount: 'Showing', resetFilters: 'Clear filters',
+    viewsTitle: 'Named views', viewsLocal: 'Saved only in this browser. Stores list filters, never Runs.',
+    quickView: 'Saved view', chooseView: 'Choose a view', newViewName: 'New view name',
+    saveView: 'Save new view', updateView: 'Explicitly update view',
+    viewChanged: 'Filters changed. The saved view has not been overwritten.',
+    manageViews: 'Manage views', viewsManager: 'View manager', noViews: 'No saved views yet.',
+    hideView: 'Hide', restoreView: 'Restore', hiddenView: 'Hidden',
+    viewSaved: 'View saved.', viewUpdated: 'View explicitly updated.',
+    viewHidden: 'View hidden from quick selection.', viewRestored: 'View restored.',
+    viewDuplicate: 'A view with this name already exists. Select it and explicitly update it.',
+    viewInvalid: 'Enter a name (up to 64 characters) and search text up to 250 characters.',
+    viewLimit: 'The limit of 24 views has been reached.',
+    viewWriteFailed: 'Could not save settings in this browser. No change was applied.',
+    viewInvalidStorage: 'Saved view settings are corrupted. Left untouched; basic filters still work.',
+    viewUnsupportedStorage: 'Saved view settings use an unsupported version and will not be overwritten.',
+    viewUnavailableStorage: 'Browser storage is unavailable. Saving views is disabled.',
     empty: 'No saved Runs yet.', noResults: 'No Runs match your search.',
     loading: 'Loading saved Runs…', error: 'Runs inventory unavailable',
     protected: 'Protected source', editable: 'Editable', branches: 'Branches',
@@ -152,7 +187,74 @@ export function RunsPage(): JSX.Element {
   const { language } = useLanguage()
   const l = messages[language]
   const [query, setQuery] = useState('')
-  const [visibility, setVisibility] = useState<'all' | 'editable' | 'protected'>('all')
+  const [visibility, setVisibility] = useState<RunListVisibility>('all')
+  const [savedViews, setSavedViews] = useState(readRunListViews)
+  const [selectedViewName, setSelectedViewName] = useState('')
+  const [newViewName, setNewViewName] = useState('')
+  const [manageViews, setManageViews] = useState(false)
+  const [viewNotice, setViewNotice] = useState<ViewNotice | null>(null)
+  const selectedView = savedViews.items.find(view => view.name === selectedViewName)
+  const viewChanged = Boolean(selectedView && (query !== selectedView.query || visibility !== selectedView.visibility))
+
+  function persistViews(items: SavedRunListView[], notice: ViewNotice): boolean {
+    if (savedViews.status !== 'ok' || !writeRunListViews(items)) {
+      setViewNotice('viewWriteFailed')
+      return false
+    }
+    setSavedViews({ status: 'ok', items })
+    setViewNotice(notice)
+    return true
+  }
+
+  function saveNewView(): void {
+    const view: SavedRunListView = {
+      name: newViewName.trim(), query, visibility, hidden: false
+    }
+    if (!isValidRunListView(view)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    if (savedViews.items.some(item => item.name.toLocaleLowerCase() === view.name.toLocaleLowerCase())) {
+      setViewNotice('viewDuplicate')
+      return
+    }
+    if (savedViews.items.length >= 24) {
+      setViewNotice('viewLimit')
+      return
+    }
+    if (persistViews([...savedViews.items, view], 'viewSaved')) {
+      setSelectedViewName(view.name)
+      setNewViewName('')
+    }
+  }
+
+  function selectView(name: string): void {
+    const view = savedViews.items.find(item => item.name === name && !item.hidden)
+    setSelectedViewName(view?.name ?? '')
+    if (view) {
+      setQuery(view.query)
+      setVisibility(view.visibility)
+    }
+    setViewNotice(null)
+  }
+
+  function updateSelectedView(): void {
+    if (!selectedView) return
+    const updated = { ...selectedView, query, visibility }
+    if (!isValidRunListView(updated)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    persistViews(savedViews.items.map(item => item.name === selectedView.name ? updated : item), 'viewUpdated')
+  }
+
+  function toggleHiddenView(name: string): void {
+    const existing = savedViews.items.find(item => item.name === name)
+    if (!existing) return
+    if (persistViews(savedViews.items.map(item => item.name === name
+      ? { ...item, hidden: !item.hidden } : item), existing.hidden ? 'viewRestored' : 'viewHidden')
+      && !existing.hidden && selectedViewName === name) setSelectedViewName('')
+  }
   const runsQuery = useQuery({
     queryKey: ['canonical-run-containers'],
     queryFn: listRunContainers,
@@ -220,6 +322,43 @@ export function RunsPage(): JSX.Element {
       <button type="button" disabled={runsQuery.isFetching} onClick={() => { void runsQuery.refetch() }}>{runsQuery.isFetching ? l.refreshingRuns : l.refreshRuns}</button>
       <Link className="button-link" to="/admin/runs/new">{l.create}</Link>
     </div>
+    <section className="panel" aria-label={l.viewsTitle}>
+      <h3>{l.viewsTitle}</h3>
+      <p className="status">{l.viewsLocal}</p>
+      {savedViews.status !== 'ok' && <p role="alert" className="error">{savedViews.status === 'invalid'
+        ? l.viewInvalidStorage : savedViews.status === 'unsupported'
+          ? l.viewUnsupportedStorage : l.viewUnavailableStorage}</p>}
+      <div className="runs-canonical-toolbar">
+        <label>{l.quickView}<select value={selectedViewName} onChange={event => selectView(event.target.value)}>
+          <option value="">{l.chooseView}</option>
+          {savedViews.items.filter(view => !view.hidden).map(view =>
+            <option key={view.name} value={view.name}>{view.name}</option>)}
+        </select></label>
+        <label>{l.newViewName}<input type="text" maxLength={64} value={newViewName}
+          onChange={event => setNewViewName(event.target.value)} /></label>
+        <button type="button" disabled={savedViews.status !== 'ok'} onClick={saveNewView}>{l.saveView}</button>
+        {selectedView && <button type="button" disabled={savedViews.status !== 'ok' || !viewChanged}
+          onClick={updateSelectedView}>{l.updateView}</button>}
+        <button type="button" aria-expanded={manageViews} onClick={() => setManageViews(open => !open)}>{l.manageViews}</button>
+      </div>
+      {viewChanged && <p className="status">{l.viewChanged}</p>}
+      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed'].includes(viewNotice) ? 'alert' : 'status'}>
+        {l[viewNotice]}</p>}
+      {manageViews && <div>
+        <h4>{l.viewsManager}</h4>
+        {savedViews.items.length === 0 && <p>{l.noViews}</p>}
+        <ul aria-label={l.viewsManager}>
+          {savedViews.items.map(view => <li key={view.name}>
+            <span>{view.name}{view.hidden ? ' · ' + l.hiddenView : ''}</span>{' '}
+            <button type="button" disabled={savedViews.status !== 'ok'}
+              aria-label={(view.hidden ? l.restoreView : l.hideView) + ': ' + view.name}
+              onClick={() => toggleHiddenView(view.name)}>
+              {view.hidden ? l.restoreView : l.hideView}
+            </button>
+          </li>)}
+        </ul>
+      </div>}
+    </section>
     {runsQuery.isPending && <p role="status">{l.loading}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length > 0 &&
       <p className="status">{l.visibleCount}: {runs.length} / {runsQuery.data.run_containers.length}</p>}

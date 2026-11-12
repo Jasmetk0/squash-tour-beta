@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -571,6 +571,39 @@ describe('ActivityPage', () => {
     expect(['activityKind', 'activitySeason', 'activityWeek', 'activityText'].every(k => !params.has(k))).toBe(true)
     expect(within(screen.getByRole('list', { name: 'Run activity feed list' })).getAllByRole('button')).toHaveLength(4)
     expect(api.listEvents).toHaveBeenCalled()
+  })
+
+  it('preserves a matching non-first bookmark through text edits and Back/Forward', async () => {
+    vi.clearAllMocks()
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    const user = userEvent.setup()
+    renderActivityWithHistory('/runs/run-a/activity?selectedItem=1&from=bookmark')
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), '1')
+    expect(new URLSearchParams(screen.getByTestId('activity-url').textContent!).get('selectedItem')).toBe('1')
+    expect(within(list).getByRole('button', { name: /Ranking snapshot 11/ })).toHaveAttribute('aria-current', 'true')
+    await user.click(within(list).getByRole('button', { name: /Event E1/ }))
+    await user.click(screen.getByRole('button', { name: 'Browser back' }))
+    expect(new URLSearchParams(screen.getByTestId('activity-url').textContent!).get('selectedItem')).toBe('1')
+    expect(within(list).getByRole('button', { name: /Ranking snapshot 11/ })).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByLabelText('Filter activity by label or identifier text')).toHaveValue('1')
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
+  })
+
+  it('keeps the exact original-index bookmark while activity is loading', async () => {
+    vi.clearAllMocks()
+    let resolveActivity!: (value: unknown) => void
+    api.getRunActivity.mockReturnValueOnce(new Promise(resolve => { resolveActivity = resolve }))
+    mockContext()
+    const user = userEvent.setup()
+    renderActivityWithHistory('/runs/run-a/activity?selectedItem=1&from=bookmark')
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), '1')
+    expect(new URLSearchParams(screen.getByTestId('activity-url').textContent!).get('selectedItem')).toBe('1')
+    await act(async () => { resolveActivity({ run_id: 'run-a', items: baseItems }) })
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    expect(within(list).getByRole('button', { name: /Ranking snapshot 11/ })).toHaveAttribute('aria-current', 'true')
+    expect(api.getRunActivity).toHaveBeenCalledTimes(1)
   })
 
   it('keeps unknown URL filters restrictive and shows an inspectable missing value', async () => {

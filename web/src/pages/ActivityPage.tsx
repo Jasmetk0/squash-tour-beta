@@ -78,17 +78,6 @@ export function ActivityPage(): JSX.Element {
   const weekFilter = searchParams.get('activityWeek') ?? ''
   const textFilter = searchParams.get('activityText') ?? ''
 
-  function setActivityFilter(key: 'activityKind' | 'activitySeason' | 'activityWeek' | 'activityText', value: string): void {
-    setSearchParams(current => {
-      const next = new URLSearchParams(current)
-      if (value) next.set(key, value)
-      else next.delete(key)
-      // A selection in the old filter no longer owns the visible detail.
-      next.delete('selectedItem')
-      return next
-    }, { replace: key === 'activityText' })
-  }
-
   function resetActivityFilters(): void {
     setSearchParams(current => {
       const next = new URLSearchParams(current)
@@ -156,20 +145,37 @@ export function ActivityPage(): JSX.Element {
   const persistedEventById = persistedEvidence.byId
   const ambiguousPersistedEventIds = persistedEvidence.ambiguousIds
 
-  const normalizedTextFilter = textFilter.trim().toLowerCase()
-  const filteredItems = indexedItems.filter(({ item }) => {
+  const matchesFilters = (item: RunActivityItem, params: URLSearchParams) => {
+    const kind = params.get('activityKind') ?? ''
+    const season = params.get('activitySeason') ?? ''
+    const week = params.get('activityWeek') ?? ''
+    const text = (params.get('activityText') ?? '').trim().toLowerCase()
     const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
-    const kindMatches = kindFilter ? item.kind === kindFilter : true
-    const seasonMatches = seasonFilter ? item.season != null && String(item.season) === seasonFilter : true
-    const weekMatches = weekFilter ? effectiveWeek != null && String(effectiveWeek) === weekFilter : true
-    const textMatches = normalizedTextFilter
-      ? item.label.toLowerCase().includes(normalizedTextFilter) ||
-        (item.event_id?.toLowerCase().includes(normalizedTextFilter) ?? false) ||
-        (item.related_run_id?.toLowerCase().includes(normalizedTextFilter) ?? false)
-      : true
+    return (!kind || item.kind === kind) &&
+      (!season || (item.season != null && String(item.season) === season)) &&
+      (!week || (effectiveWeek != null && String(effectiveWeek) === week)) &&
+      (!text || item.label.toLowerCase().includes(text) ||
+        (item.event_id?.toLowerCase().includes(text) ?? false) ||
+        (item.related_run_id?.toLowerCase().includes(text) ?? false))
+  }
+  const filteredItems = indexedItems.filter(({ item }) => matchesFilters(item, searchParams))
 
-    return kindMatches && seasonMatches && weekMatches && textMatches
-  })
+  function setActivityFilter(key: 'activityKind' | 'activitySeason' | 'activityWeek' | 'activityText', value: string): void {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      const indexText = current.get('selectedItem') ?? ''
+      const index = /^\d+$/.test(indexText) ? Number(indexText) : NaN
+      const bookmarked = Number.isSafeInteger(index) && index >= 0 ? items[index] : undefined
+      // Keep a matching original-index bookmark, including during pending reads.
+      // Only confirmed exclusion invalidates it; a text edit replaces history.
+      if (activityQuery.isSuccess && !activityMismatch &&
+        (!next.get('activityWeek') || (!plannedContextUnavailable && !persistedContextUnavailable)) &&
+        (!bookmarked || !matchesFilters(bookmarked, next))) next.delete('selectedItem')
+      return next
+    }, { replace: key === 'activityText' })
+  }
 
   const kindOptions = useMemo(() => {
     const seen = new Set<string>()

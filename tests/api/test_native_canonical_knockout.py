@@ -392,7 +392,8 @@ def run_actual_q_main(tmp_path, fax_source, size, ranked, monkeypatch, *, v87=Fa
         assert status == 200, public
         assert event_id not in {e["edition_id"] for e in public["editions"]}
         # Only the normal public Week Transition publishes the explicit source date.
-        for _ in range(2):
+        steps = play_week - inspect(server)["state"]["week"]["week"]
+        for _ in range(steps):
             execute(
                 server,
                 command(
@@ -407,8 +408,11 @@ def run_actual_q_main(tmp_path, fax_source, size, ranked, monkeypatch, *, v87=Fa
             )
             assert status == 200, public
             adopted_public = [e for e in public["editions"] if e["edition_id"] == event_id]
-            assert len(adopted_public) == 1
-            assert adopted_public[0]["completed"] is False
+            # Public only from its announcement week (play week - 1), never earlier.
+            announced = inspect(server)["state"]["week"]["week"] >= play_week - 1
+            assert len(adopted_public) == (1 if announced else 0)
+            if announced:
+                assert adopted_public[0]["completed"] is False
         assert inspect(server)["state"]["week"]["week"] == play_week
         assert sum(
             event_id in t["public_event"]["announced_edition_ids"]

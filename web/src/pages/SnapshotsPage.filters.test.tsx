@@ -166,7 +166,7 @@ describe('SnapshotsPage URL-backed Ranking/Race history filters', () => {
       { snapshot_sequence: 3, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { name: 'stored-three' } }
     ] }) })
     const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
-    expect(within(list).getByRole('button', { name: /3\\. WEEK/ })).toHaveAttribute('aria-current', 'true')
+    expect(within(list).getByRole('button', { name: /3[.] WEEK/ })).toHaveAttribute('aria-current', 'true')
     expect(await screen.findByText(/stored-three/)).toBeInTheDocument()
   })
 
@@ -183,8 +183,8 @@ describe('SnapshotsPage URL-backed Ranking/Race history filters', () => {
     'never accepts a malformed selectedSequence=%s as a matching numeric snapshot', async (malformed) => {
       renderPage('ranking', `?selectedSequence=${encodeURIComponent(malformed)}`)
       const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
-      expect(within(list).getByRole('button', { name: /4\\. WEEK/ })).toHaveAttribute('aria-current', 'true')
-      expect(within(list).getByRole('button', { name: /3\\. WEEK/ })).not.toHaveAttribute('aria-current')
+      expect(within(list).getByRole('button', { name: /4[.] WEEK/ })).toHaveAttribute('aria-current', 'true')
+      expect(within(list).getByRole('button', { name: /3[.] WEEK/ })).not.toHaveAttribute('aria-current')
       expect(await screen.findByText(/ranking-4/)).toBeInTheDocument()
     }
   )

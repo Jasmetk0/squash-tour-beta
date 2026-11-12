@@ -90,7 +90,8 @@ def main():
                         # Read-only: nothing in the section can adopt, create or save.
                         assert section.get_by_role("button").count() == 0
                         assert section.get_by_role("link").count() >= 0
-                        page.screenshot(path=str(root / f"readiness-{language}.png"))
+                        section.scroll_into_view_if_needed()
+                        section.screenshot(path=str(root / f"readiness-{language}.png"))
                         assert not errors, errors
                         context.close()
                     browser.close()

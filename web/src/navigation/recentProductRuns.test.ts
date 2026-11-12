@@ -77,6 +77,13 @@ describe('recentProductRuns', () => {
     expect(readRecentProductRuns()).toEqual(['run-1'])
   })
 
+  it('does not claim success when removeItem silently leaves the history in place', () => {
+    rememberProductRun('run-1')
+    vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => {})
+    expect(clearRecentProductRuns()).toBe(false)
+    expect(readRecentProductRuns()).toEqual(['run-1'])
+  })
+
   it('detects corrupt records without parsing them or accessing other preferences', () => {
     expect(hasRecentProductRunsStorageEntry()).toBe(false)
     localStorage.setItem(KEY, '{invalid-json')

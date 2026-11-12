@@ -52,7 +52,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>
-      <h2>{player?.display_name || playerId} {player && <FollowStar runId={runId} kind="player" subjectId={playerId} cs={cs} />}</h2>
+      <h2>{player?.display_name || playerId}</h2>
+      {player && <p><FollowStar runId={runId} kind="player" subjectId={playerId} cs={cs} /></p>}
       <p className="subtitle">{tab==='health' ? (cs?'Současný zdravotní stav v Adminu':'Current Admin health state') : (cs ? 'Sportovní přehled z uložené revize vybrané branche' : 'Sporting summary from the selected Branch Saved Revision')}</p>
     </div>
     {time.mode !== 'present' ? <p className="status">{cs

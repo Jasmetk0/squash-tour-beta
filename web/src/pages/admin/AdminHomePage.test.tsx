@@ -101,6 +101,34 @@ describe('pre-alpha global Home', () => {
     expect(await screen.findByText('Renamed world')).toBeInTheDocument()
     expect(screen.getByText(/Žádné dostupné nedávno otevřené Runy/)).toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(localStorage.getItem(RECENT_PRODUCT_RUNS_STORAGE_KEY)).toBeNull()
+    expect(screen.getByText('Renamed world')).toBeInTheDocument()
+  })
+
+  it('allows clearing stale Run identifiers without inventing a Run or opening it', async () => {
+    localStorage.setItem(RECENT_PRODUCT_RUNS_STORAGE_KEY, JSON.stringify(['deleted-run']))
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    expect(screen.queryByText('deleted-run')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(readRecentProductRuns()).toEqual([])
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
+    expect(screen.getByText('FAX built-in')).toBeInTheDocument()
+  })
+
+  it('reacts to another tab clearing the storage key with no Run navigation', async () => {
+    rememberProductRun('run-a')
+    renderHome()
+    expect(await screen.findByText('Personal world')).toBeInTheDocument()
+    localStorage.removeItem(RECENT_PRODUCT_RUNS_STORAGE_KEY)
+    fireEvent(window, new StorageEvent('storage', {
+      key: RECENT_PRODUCT_RUNS_STORAGE_KEY, storageArea: localStorage, newValue: null
+    }))
+    expect(screen.queryByRole('button', { name: 'Vymazat nedávné návštěvy' })).not.toBeInTheDocument()
+    expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
   })
 
 })

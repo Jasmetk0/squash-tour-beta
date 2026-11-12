@@ -62,8 +62,9 @@ def test_annual_rate_is_independent_of_weeks_per_year(w):
 
 def test_draw_is_deterministic_and_keyed_to_player_week_and_seed():
     key = dict(seed=7, run_id="r", branch_id="b", player_id="a", target=week(2))
-    assert turn_pro_draw(**key) == turn_pro_draw(**key)
-    assert 0 <= turn_pro_draw(**key) < 1
+    first, second = turn_pro_draw(**key), turn_pro_draw(**key)
+    assert first == second  # the same inputs must give the same draw
+    assert 0 <= first < 1
     assert turn_pro_draw(**{**key, "seed": 8}) != turn_pro_draw(**key)
     assert turn_pro_draw(**{**key, "player_id": "b"}) != turn_pro_draw(**key)
     assert turn_pro_draw(**{**key, "target": week(3)}) != turn_pro_draw(**key)

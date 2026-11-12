@@ -13,6 +13,7 @@ import type { RunListVisibility, SavedRunListView } from './runListViews'
 
 type ViewNotice = 'viewSaved' | 'viewUpdated' | 'viewHidden' | 'viewRestored'
   | 'viewDuplicate' | 'viewInvalid' | 'viewLimit' | 'viewWriteFailed' | 'viewConflict' | 'viewExternalChange'
+  | 'viewRenamed' | 'viewRenameDuplicate'
 
 const messages = {
   cs: {
@@ -28,6 +29,9 @@ const messages = {
     manageViews: 'Spravovat pohledy', reloadViews: 'Znovu načíst uložené pohledy',
     viewsManager: 'Správce pohledů', noViews: 'Zatím žádné uložené pohledy.',
     hideView: 'Skrýt', restoreView: 'Obnovit', hiddenView: 'Skrytý',
+    renameView: 'Přejmenovat', renameInput: 'Nový název pohledu', saveRename: 'Uložit nový název',
+    cancelRename: 'Zrušit přejmenování', viewRenamed: 'Pohled přejmenován.',
+    viewRenameDuplicate: 'Jiný pohled se stejným názvem již existuje.',
     viewSaved: 'Pohled uložen.', viewUpdated: 'Pohled výslovně aktualizován.',
     viewHidden: 'Pohled skryt z rychlé nabídky.', viewRestored: 'Pohled obnoven.',
     viewDuplicate: 'Pohled se stejným názvem již existuje. Vyber jej a použij výslovnou aktualizaci.',
@@ -72,6 +76,9 @@ const messages = {
     manageViews: 'Manage views', reloadViews: 'Reload saved views',
     viewsManager: 'View manager', noViews: 'No saved views yet.',
     hideView: 'Hide', restoreView: 'Restore', hiddenView: 'Hidden',
+    renameView: 'Rename', renameInput: 'New view name', saveRename: 'Save new name',
+    cancelRename: 'Cancel rename', viewRenamed: 'View renamed.',
+    viewRenameDuplicate: 'Another view already has this name.',
     viewSaved: 'View saved.', viewUpdated: 'View explicitly updated.',
     viewHidden: 'View hidden from quick selection.', viewRestored: 'View restored.',
     viewDuplicate: 'A view with this name already exists. Select it and explicitly update it.',
@@ -198,6 +205,8 @@ export function RunsPage(): JSX.Element {
   const [selectedViewName, setSelectedViewName] = useState('')
   const [newViewName, setNewViewName] = useState('')
   const [manageViews, setManageViews] = useState(false)
+  const [renamingViewName, setRenamingViewName] = useState('')
+  const [renameDraft, setRenameDraft] = useState('')
   const [viewNotice, setViewNotice] = useState<ViewNotice | null>(null)
   const selectedView = savedViews.items.find(view => view.name === selectedViewName)
   const viewChanged = Boolean(selectedView && (query !== selectedView.query || visibility !== selectedView.visibility))
@@ -205,6 +214,8 @@ export function RunsPage(): JSX.Element {
   function acceptStoredViews(next: ReturnType<typeof readRunListViews>, notice: ViewNotice | null): void {
     setSavedViews(next)
     setSelectedViewName(current => next.items.some(view => view.name === current && !view.hidden) ? current : '')
+    setRenamingViewName('')
+    setRenameDraft('')
     setViewNotice(notice)
   }
 
@@ -280,6 +291,32 @@ export function RunsPage(): JSX.Element {
       return
     }
     persistViews(savedViews.items.map(item => item.name === selectedView.name ? updated : item), 'viewUpdated')
+  }
+
+  function renameView(view: SavedRunListView): void {
+    const name = renameDraft.trim()
+    const updated = { ...view, name }
+    if (!isValidRunListView(updated)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    if (savedViews.items.some(item =>
+      item.name !== view.name && item.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    )) {
+      setViewNotice('viewRenameDuplicate')
+      return
+    }
+    if (name === view.name) {
+      setRenamingViewName('')
+      setRenameDraft('')
+      setViewNotice(null)
+      return
+    }
+    if (persistViews(savedViews.items.map(item => item.name === view.name ? updated : item), 'viewRenamed')) {
+      setSelectedViewName(current => current === view.name ? name : current)
+      setRenamingViewName('')
+      setRenameDraft('')
+    }
   }
 
   function toggleHiddenView(name: string): void {
@@ -368,16 +405,18 @@ export function RunsPage(): JSX.Element {
           {savedViews.items.filter(view => !view.hidden).map(view =>
             <option key={view.name} value={view.name}>{view.name}</option>)}
         </select></label>
-        <label>{l.newViewName}<input type="text" maxLength={64} value={newViewName}
-          onChange={event => setNewViewName(event.target.value)} /></label>
-        <button type="button" disabled={savedViews.status !== 'ok'} onClick={saveNewView}>{l.saveView}</button>
+        <form className="runs-canonical-toolbar" onSubmit={event => { event.preventDefault(); saveNewView() }}>
+          <label>{l.newViewName}<input type="text" maxLength={64} value={newViewName}
+            onChange={event => setNewViewName(event.target.value)} /></label>
+          <button type="submit" disabled={savedViews.status !== 'ok'}>{l.saveView}</button>
+        </form>
         {selectedView && <button type="button" disabled={savedViews.status !== 'ok' || !viewChanged}
           onClick={updateSelectedView}>{l.updateView}</button>}
         <button type="button" aria-expanded={manageViews} onClick={() => setManageViews(open => !open)}>{l.manageViews}</button>
         <button type="button" onClick={() => acceptStoredViews(readRunListViews(), null)}>{l.reloadViews}</button>
       </div>
       {viewChanged && <p className="status">{l.viewChanged}</p>}
-      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed', 'viewConflict'].includes(viewNotice) ? 'alert' : 'status'}>
+      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed', 'viewConflict', 'viewRenameDuplicate'].includes(viewNotice) ? 'alert' : 'status'}>
         {l[viewNotice]}</p>}
       {manageViews && <div>
         <h4>{l.viewsManager}</h4>
@@ -389,7 +428,25 @@ export function RunsPage(): JSX.Element {
               aria-label={(view.hidden ? l.restoreView : l.hideView) + ': ' + view.name}
               onClick={() => toggleHiddenView(view.name)}>
               {view.hidden ? l.restoreView : l.hideView}
-            </button>
+            </button>{' '}
+            {renamingViewName === view.name
+              ? <form onSubmit={event => { event.preventDefault(); renameView(view) }}>
+                <label>{l.renameInput}<input type="text" maxLength={64}
+                  value={renameDraft} onChange={event => setRenameDraft(event.target.value)} /></label>
+                <button type="submit" disabled={savedViews.status !== 'ok'}>{l.saveRename}</button>{' '}
+                <button type="button" onClick={() => {
+                  setRenamingViewName('')
+                  setRenameDraft('')
+                  setViewNotice(null)
+                }}>{l.cancelRename}</button>
+              </form>
+              : <button type="button" disabled={savedViews.status !== 'ok'}
+                aria-label={l.renameView + ': ' + view.name}
+                onClick={() => {
+                  setRenamingViewName(view.name)
+                  setRenameDraft(view.name)
+                  setViewNotice(null)
+                }}>{l.renameView}</button>}
           </li>)}
         </ul>
       </div>}

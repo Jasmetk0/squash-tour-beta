@@ -6,6 +6,7 @@ import { getSavedPlayerProfile } from '../api/client'
 import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
 import { SavedPlayerMatchesPanel } from './SavedPlayerMatchesPanel'
 import { SavedPlayerCareerTimeline } from '../components/SavedPlayerCareerTimeline'
+import { FollowStar } from '../components/FollowStar'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -51,7 +52,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
   return <section className="panel run-home">
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>
-      <h2>{player?.display_name || playerId}</h2>
+      <h2>{player?.display_name || playerId} {player && <FollowStar runId={runId} kind="player" subjectId={playerId} cs={cs} />}</h2>
       <p className="subtitle">{tab==='health' ? (cs?'Současný zdravotní stav v Adminu':'Current Admin health state') : (cs ? 'Sportovní přehled z uložené revize vybrané branche' : 'Sporting summary from the selected Branch Saved Revision')}</p>
     </div>
     {time.mode !== 'present' ? <p className="status">{cs

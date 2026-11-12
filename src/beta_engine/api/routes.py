@@ -4,6 +4,7 @@ from fastapi import APIRouter
 from beta_engine.api.routers.admin_saved_cross_compare import router as admin_saved_cross_compare_router
 from beta_engine.api.routers.admin_run_archives import router as admin_run_archives_router
 from beta_engine.api.routers.admin_calendar_tour import router as admin_calendar_tour_router
+from beta_engine.api.routers.admin_follow_notifications import router as admin_follow_notifications_router
 from beta_engine.api.routers.viewer_calendar_tour import router as viewer_calendar_tour_router
 
 from beta_engine.api.routers.admin_ranking_candidates import router as admin_ranking_candidates_router
@@ -75,6 +76,7 @@ router = APIRouter()
 router.include_router(admin_saved_cross_compare_router)
 router.include_router(admin_run_archives_router)
 router.include_router(admin_calendar_tour_router)
+router.include_router(admin_follow_notifications_router)
 router.include_router(viewer_calendar_tour_router)
 router.include_router(admin_authoritative_simulation_router)
 router.include_router(admin_tournament_entry_fields_router)

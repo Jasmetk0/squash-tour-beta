@@ -887,6 +887,17 @@ class NativeForkRuntimeService:
             )
 
             state, world = publication_inputs(self.repository, session, revision)
+            if kind == "notifications":
+                from beta_engine.application.calendar_tour_notifications import (
+                    derive_notifications,
+                )
+
+                return {
+                    **derive_notifications(
+                        state, world, options["follows"], branch_id, options.get("as_of_ordinal")
+                    ),
+                    "saved_head_revision_id": revision.revision_id,
+                }
             if kind == "career":
                 from beta_engine.application.calendar_tour_player_career import (
                     native_player_career,

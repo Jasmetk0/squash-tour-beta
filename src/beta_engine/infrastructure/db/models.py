@@ -1930,6 +1930,33 @@ class CalendarTourAuthorityModel(Base):
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
 
 
+class RunFollowModel(Base):
+    """Run-level following (Master 27.23): a user preference, not Saved Run content.
+
+    Shared by every Branch of the Run, never part of a Saved revision or its hashes;
+    following changes no sport and no RNG. ``alerts_enabled`` mutes only new alerts.
+    """
+    __tablename__ = 'run_follows'
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    subject_kind: Mapped[str] = mapped_column(String(16), primary_key=True)
+    subject_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    alerts_enabled: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+
+
+class RunNotificationStateModel(Base):
+    """Attention state of one derived notification card in one Branch (read/hidden).
+
+    The card itself is derived from immutable facts and is never stored; this row only
+    remembers what the Admin has seen, so reading or hiding can never delete a fact.
+    """
+    __tablename__ = 'run_notification_states'
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    notification_key: Mapped[str] = mapped_column(String(64), primary_key=True)
+    state: Mapped[str] = mapped_column(String(16), nullable=False)
+    seen_item_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+
+
 class CalendarPlayerSportingCheckpointModel(Base):
     """Native Run calendar authority, separate from legacy FAX sporting weeks."""
     __tablename__ = 'calendar_player_sporting_checkpoints'

@@ -1,8 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getEvent, getRun, listEvents } from '../api/client'
+import { useLanguage } from '../i18n/LanguageContext'
 import {
   CompactSummaryCard,
   CurrentContextStrip,
@@ -19,11 +20,12 @@ import { formatApiError, isApiNotFound } from '../utils/apiErrors'
 import { useHistoryText } from './runHistoryText'
 export function EventsPage(): JSX.Element {
   const t = useHistoryText()
+  const { language } = useLanguage()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [weekFilter, setWeekFilter] = useState('')
-  const [categoryFilter, setCategoryFilter] = useState('')
-  const [textFilter, setTextFilter] = useState('')
+  const weekFilter = searchParams.get('filterWeek') ?? ''
+  const categoryFilter = searchParams.get('filterCategory') ?? ''
+  const textFilter = searchParams.get('filterText') ?? ''
   const requestedEventId = searchParams.get('selectedEventId')
   const requestedSequenceText = searchParams.get('selectedEventSequence') ?? ''
   const requestedSequence = /^\d+$/.test(requestedSequenceText) ? Number(requestedSequenceText) : NaN
@@ -63,20 +65,19 @@ export function EventsPage(): JSX.Element {
     return context && (event.season == null || event.season === context.season) ? context : undefined
   }
 
-  const normalizedTextFilter = textFilter.trim().toLowerCase()
-  const filteredEvents = events.filter((event) => {
+  // Keep filtering a pure projection of the URL. Null historical metadata must
+  // never match the literal query value "null" or "undefined".
+  const matchesFilters = (event: (typeof events)[number], week: string, category: string, text: string) => {
     const plannedContext = getEventPlanContext(event)
     const effectiveWeek = event.week ?? plannedContext?.week ?? null
-    const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
-    const categoryMatches = categoryFilter ? plannedContext?.category === categoryFilter : true
-    const textMatches = normalizedTextFilter
-      ? event.event_id.toLowerCase().includes(normalizedTextFilter) ||
-        (event.template_id?.toLowerCase().includes(normalizedTextFilter) ?? false) ||
-        (plannedContext?.templateId.toLowerCase().includes(normalizedTextFilter) ?? false)
-      : true
-
-    return weekMatches && categoryMatches && textMatches
-  })
+    const query = text.trim().toLowerCase()
+    return (!week || (effectiveWeek != null && String(effectiveWeek) === week)) &&
+      (!category || plannedContext?.category === category) &&
+      (!query || event.event_id.toLowerCase().includes(query) ||
+        (event.template_id?.toLowerCase().includes(query) ?? false) ||
+        (plannedContext?.templateId.toLowerCase().includes(query) ?? false))
+  }
+  const filteredEvents = events.filter(event => matchesFilters(event, weekFilter, categoryFilter, textFilter))
 
   const weekOptions = useMemo(() => {
     const values = new Set<string>()
@@ -105,6 +106,41 @@ export function EventsPage(): JSX.Element {
     return Array.from(values)
   }, [events, orderedEventContext])
 
+  const unknownWeek = weekFilter !== '' && !weekOptions.includes(weekFilter)
+  const unknownCategory = categoryFilter !== '' && !categoryOptions.includes(categoryFilter)
+  const filtersVerifiable = eventsQuery.isSuccess && !eventsMismatch && !planUnavailable
+
+  // Update only this page's filter keys. Preserve foreign query parameters and
+  // keep an exact bookmarked event only if it remains within the new filter set.
+  const updateFilters = (key: 'filterWeek' | 'filterCategory' | 'filterText' | null, value = '', replaceEntry = false) => {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (key === null) {
+        next.delete('filterWeek')
+        next.delete('filterCategory')
+        next.delete('filterText')
+      } else if (value) {
+        next.set(key, value)
+      } else {
+        next.delete(key)
+      }
+      const sequenceText = current.get('selectedEventSequence') ?? ''
+      const sequenceNumber = /^\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
+      const hasSequence = Number.isSafeInteger(sequenceNumber) && sequenceNumber > 0
+      const eventId = current.get('selectedEventId')
+      const bookmarked = hasSequence
+        ? events.find(event => event.event_sequence === sequenceNumber && (!eventId || event.event_id === eventId))
+        : eventId ? events.find(event => event.event_id === eventId) : undefined
+      // Do not erase an exact deep link before the list and plan have loaded.
+      if (filtersVerifiable && (current.has('selectedEventId') || current.has('selectedEventSequence')) &&
+        (!bookmarked || !matchesFilters(bookmarked, next.get('filterWeek') ?? '', next.get('filterCategory') ?? '', next.get('filterText') ?? ''))) {
+        next.delete('selectedEventId')
+        next.delete('selectedEventSequence')
+      }
+      return next
+    }, { replace: replaceEntry })
+  }
+
   // Use URL parameters as the sole selection authority. Local selection state
   // can race with useSearchParams and trigger duplicate same-ID detail reads.
   // Legacy ?selectedEventId bookmarks remain supported.
@@ -113,7 +149,7 @@ export function EventsPage(): JSX.Element {
         event.event_sequence === requestedSequence &&
         (!requestedEventId || event.event_id === requestedEventId))
     : undefined
-  const requestedByLegacyId = requestedEventId
+  const requestedByLegacyId = !hasRequestedSequence && requestedEventId
     ? filteredEvents.find((event) => event.event_id === requestedEventId)
     : undefined
   const selectedEvent = requestedBySequence ?? requestedByLegacyId ?? filteredEvents[0] ?? null
@@ -162,8 +198,11 @@ export function EventsPage(): JSX.Element {
         <div className="grid">
           <label>
             {t('Week')}
-            <select data-run-navigation-readonly aria-label={t('Filter events by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select data-run-navigation-readonly aria-label={t('Filter events by week')} value={weekFilter} onChange={(event) => updateFilters('filterWeek', event.target.value)}>
               <option value="">{t('All weeks')}</option>
+              {unknownWeek && <option value={weekFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`)
+                : (language === 'cs' ? `Týden nelze ověřit: ${weekFilter}` : `Week not verified: ${weekFilter}`)}</option>}
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -176,9 +215,12 @@ export function EventsPage(): JSX.Element {
             <select data-run-navigation-readonly
               aria-label={t('Filter events by category')}
               value={categoryFilter}
-              onChange={(event) => setCategoryFilter(event.target.value)}
+              onChange={(event) => updateFilters('filterCategory', event.target.value)}
             >
               <option value="">{t('All categories')}</option>
+              {unknownCategory && <option value={categoryFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`)
+                : (language === 'cs' ? `Kategorii nelze ověřit: ${categoryFilter}` : `Category not verified: ${categoryFilter}`)}</option>}
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -191,12 +233,15 @@ export function EventsPage(): JSX.Element {
             <input data-run-navigation-readonly
               aria-label={t('Filter events by event or template')}
               value={textFilter}
-              onChange={(event) => setTextFilter(event.target.value)}
+              onChange={(event) => updateFilters('filterText', event.target.value, true)}
               placeholder={t('Event ID or template ID')}
             />
           </label>
         </div>
-        <button type="button" onClick={() => { setWeekFilter(''); setCategoryFilter(''); setTextFilter('') }}>{t('Reset filters')}</button>
+        {(unknownWeek || unknownCategory) && !eventsQuery.isLoading && <p role="status" className="status">{!filtersVerifiable
+          ? (language === 'cs' ? 'Filtr zatím nelze ověřit z načtených zdrojů; zůstává aktivní.' : 'The filter cannot yet be verified from loaded sources and remains active.')
+          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Historie se nepřepnula na Vše.' : 'The requested week or category is unavailable. The view has not silently switched to All.')}</p>}
+        <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 
       <SectionCard title={t('Event timeline')}>

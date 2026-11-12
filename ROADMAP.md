@@ -1,3 +1,30 @@
+# Current dependency checkpoint — 12 November 2026
+
+Base `buuk a86053f7` includes the owner-merged ATP foundations/horizon repairs
+and coordination guard. Do not reopen those PRs or mistake package/scheduled
+component readiness for a playable public ATP Run.
+
+1. Review/owner-merge Work's test consolidation #1784 and reconciled Master v87
+   documentation after their own final-head checks. Do not separately merge the
+   uncorrected positive-test selection from #1769.
+2. Claude completes one final v2 lifecycle candidate based on #1783: historical
+   knowledge evidence and model replay, actual early weeks, explicit never-pro
+   history/audit and direct native FAX acceptance. Seven existing manual workflow
+   passes are real, but not proof of these missing new-policy paths. The separate
+   #1764 read-only UI repair follows; no intermediate v1 defaults are deployed.
+3. Work reviews those final heads, then resumes ATP's native scheduled owner using
+   the existing slot/point ledger: public Q → manual Save/restart → normal Week
+   Transition → Main → terminal confirmation → next ranking in one real Run.
+4. Multiple simultaneous Editions, full reference season/Finals, 50-season,
+   recovery/performance and the complete Master release scope remain mandatory.
+
+Use the existing [evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) and
+[new Claude prompt](docs/AI_REVIEW_HANDOFF.md). One active writer for shared Tour
+and persistence boundaries; Radim alone merges. Older checkpoints below are
+history, not competing current assignments.
+
+---
+
 # Native Q/Main dependency checkpoint after #1746 — 6 November 2026
 
 Base `buuk` `c7bb53eb893dceb2cb603bc0d312b71070489a0e` contains owner merge #1746.

@@ -1,3 +1,31 @@
+# Claude review checkpoint — 12 November 2026
+
+Reviewed `buuk a86053f7ded5b72cd594f7e51ce64ab6ea43d11b` includes owner merges
+#1763/#1780/#1781/#1782. All 17 remaining Claude PRs were inventoried by actual
+ancestry; the complete final lifecycle candidate is #1783 `06b41e4` (41 files),
+not 13 independent runtime releases. Its seven manual acceptance workflows pass,
+but important v87 paths/evidence and other applicable gates remain incomplete.
+
+Work #1784 combines the useful #1766/#1769 test repairs and restores the positive
+Reconstruction `pr_critical` marker: 22 independent tests pass and actual final-head
+Fast CI/CodeQL/Sonar pass. No production config or Health guard changed.
+The accompanying Master v87 consolidation records the owner's 12 November
+confirmations: own imperfect self-view; near-certain entry without forced age,
+with explicit history/audit for the rare never-pro career. Calibration remains
+provisional; no runtime merge or release is implied.
+
+Next Claude task: exact historical decision evidence, older Tour model replay,
+early pre-Tour weeks and direct native FAX/never-pro integration; then separate
+read-only Saved Draw UI correction. Work owns independent review and the ATP
+source/scheduled integration; avoid concurrent shared Tour/persistence writers.
+The [current evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) contains all
+17 pinned heads, findings, checks and the bounded merge recommendation. The
+[new Claude chat prompt](docs/AI_REVIEW_HANDOFF.md#prompt-to-paste-into-a-new-claude-code-chat)
+is ready to paste. Owner alone merges. Earlier candidate entries below are dated
+history and do not certify current runtime or full pre-alpha completion.
+
+---
+
 # Scheduled ATP horizon-continuation repair candidate — 11 November 2026
 
 An explicit compatible Run horizon extension can now be consumed between Q and

@@ -1,4 +1,222 @@
-# Current AI/PR coordination checkpoint — 11 November 2026
+# Current Claude review and handoff — 12 November 2026
+
+Reviewed baseline: `buuk a86053f7ded5b72cd594f7e51ce64ab6ea43d11b`,
+including owner merges #1763/#1780/#1781/#1782. The approved repository Master
+was v86; the Work documentation candidate consolidates v87 with the owner's
+explicit 12 November confirmations. A candidate is not a runtime merge.
+
+This review covers all **17 open Claude PRs** below: actual ancestry, each
+feature increment, complete final runtime delta, separate UI/document/test
+changes, changed production paths, tests, CI checks and review discussions.
+The final runtime is 41 files (+3922/-70) versus current buuk. Its merge of buuk
+includes Work's ATP changes; those are not new Claude contributions. Historical
+heads are not individually certified, and this is not a repository-wide security
+audit, full release or line-count productivity ranking.
+
+## Current PR disposition
+
+| PR | Purpose | Closest open ancestor | Files: own / cumulative | Exact reviewed head | Disposition |
+| --- | --- | --- | --- | --- | --- |
+| [#1764](https://github.com/Jasmetk0/squash-tour-beta/pull/1764) | Saved Draw readiness UI | buuk | 8 / 8 | `4099a5f5caa9c1f0504d2a81edf0ff3ce59eb2c2` | CHANGES REQUIRED; separate UI follow-up |
+| [#1765](https://github.com/Jasmetk0/squash-tour-beta/pull/1765) | Proposed Master v87 | buuk | 3 / 3 | `409cdbc440c305382abc836dd4e63d74d66fe872` | Reconciled in Work documentation candidate |
+| [#1766](https://github.com/Jasmetk0/squash-tour-beta/pull/1766) | Signed-intake test repair | buuk | 1 / 1 | `5ac6413a771b996263f67112f41efeab53e818e9` | Useful; included in Work #1784 |
+| [#1767](https://github.com/Jasmetk0/squash-tour-beta/pull/1767) | Lifecycle kernel | buuk | 7 / 7 | `8165894e1e02f24eaf1f24f8e7d8ad0d2bd6a93b` | Review only as part of final runtime |
+| [#1768](https://github.com/Jasmetk0/squash-tour-beta/pull/1768) | Professional roster/Entry gate | #1767 | 7 / 12 | `b0e29a9ff0c41a7e192ea86d1bb1961a94bc5ecb` | Review only as part of final runtime |
+| [#1769](https://github.com/Jasmetk0/squash-tour-beta/pull/1769) | Entry isolation/Health tests | buuk | 3 / 3 | `cf7d55373669608ed78e163ee7ac3b6339b40137` | Positive critical marker corrected in #1784 |
+| [#1770](https://github.com/Jasmetk0/squash-tour-beta/pull/1770) | Model v1 | #1768 | 4 / 14 | `9ee97c347adc28d2118b7f662cdb8cb6d6123e74` | Do not merge as the final default |
+| [#1771](https://github.com/Jasmetk0/squash-tour-beta/pull/1771) | Weekly decisions | #1770 | 9 / 17 | `26652b7e953480b02a6ce3ea5143aad1dc609eed` | Review only as part of final runtime |
+| [#1772](https://github.com/Jasmetk0/squash-tour-beta/pull/1772) | Opening professionals | #1771 | 10 / 21 | `d50cdf056c340778a49773e0cc63a405209fbaf9` | Review only as part of final runtime |
+| [#1773](https://github.com/Jasmetk0/squash-tour-beta/pull/1773) | HTTP/SQLite flow | #1772 | 4 / 22 | `cf7cb8658579881d673dc7a05305bbd80d1e6681` | Review only as part of final runtime |
+| [#1774](https://github.com/Jasmetk0/squash-tour-beta/pull/1774) | Home opportunity | #1773 | 6 / 23 | `8cd82e4ddd49566728a4a1e3b0d5b3cb4fb43454` | Review only as part of final runtime |
+| [#1775](https://github.com/Jasmetk0/squash-tour-beta/pull/1775) | Public Turn Pro event | #1774 | 7 / 23 | `6e5eb61a170cdf001eb5ebb49ae7b1d674e9114e` | Review only as part of final runtime |
+| [#1776](https://github.com/Jasmetk0/squash-tour-beta/pull/1776) | Native birth/week integration | #1775 | 8 / 28 | `84726500f743eb1df0c59daf1ee6ef7a9ec28662` | Review only as part of final runtime |
+| [#1777](https://github.com/Jasmetk0/squash-tour-beta/pull/1777) | Native fork; config restored | #1776 | 6 / 30 | `b17fc7ac5b0a05307952579706d5052a5296c228` | Do not revive the earlier polluted head |
+| [#1778](https://github.com/Jasmetk0/squash-tour-beta/pull/1778) | New Admin default | #1777 | 9 / 35 | `77fdd8149597fee5d6c6f973fd3c5bd02fb4f1e5` | Review only with v2 and early-week repair |
+| [#1779](https://github.com/Jasmetk0/squash-tour-beta/pull/1779) | Professional-only FAX adoption | #1778 | 6 / 38 | `cb9181c995bcbcb6c398de285a9d0a290d800a6b` | Bounded path, not v87 full FAX acceptance |
+| [#1783](https://github.com/Jasmetk0/squash-tour-beta/pull/1783) | Own-self model v2, final runtime | #1779 + merged buuk | 41 vs current buuk | `06b41e45467f1131883787e4ef3697a3339977a0` | CHANGES REQUIRED; 7 manual workflows pass |
+
+The chain #1767 → #1768 → #1770 → #1771 → #1772 → #1773 → #1774 → #1775 →
+#1776 → #1777 → #1778 → #1779 → #1783 is cumulative. The smaller parent deltas
+explain provenance, not independently mergeable feature releases. #1783 already
+contains the reviewed buuk. #1764/#1765 and the two test repairs are separate.
+
+**Recommendation:** use Work #1784 for the complete test repair and the Work
+documentation candidate for reconciled Master/handoff; then review ONE completed
+v2 runtime head. Do not merge intermediate runtime PRs one by one. After owner
+merge of their replacements, the old PRs can be closed as superseded by an
+explicit owner/Work decision. This review closes or merges none of them.
+
+## Findings and concrete repairs
+
+1. **Lost positive critical-CI coverage — fixed by Work #1784.**
+   In #1769 `cf7d553`, adding the negative missing-Health test immediately after
+   `@pytest.mark.pr_critical` transferred that marker away from the original
+   `test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact`.
+   The positive test was no longer selected. Work restores its marker while
+   retaining the real Health bootstrap/carry fixture and negative guard. This
+   is a test-selection regression, not a weakened production Health rule.
+   #1784 also includes #1766's genuine Signed-source preflight repair and both
+   Claude commits as ancestors. All 22 tests in the four changed modules pass;
+   critical collection selects 16, including both Reconstruction cases.
+   Exact remote head: `95c704c4683933cf8836d8ba0303b1200a7513a4`;
+   identical tested tree: `8258c085c32ad9e374d4e86aeeccbd99dc71babc`.
+   Fast CI run [43209396768](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43209396768),
+   CodeQL and Sonar pass. Frontend/security/docs skips are unrelated test-only
+   path selections, not claimed execution of those suites.
+
+2. **Decision observation is hashed, not stored as claimed — runtime repair.**
+   `turn_pro_model.py::decide_turn_pro` fingerprints full candidates, including
+   their observations, then emits `PlayerTurnProDecision.v1`. That DTO stores
+   identity, effective week, source hash and provenance; it has no observation.
+   `CalendarTourTransition` stores the model and decisions, not the candidates.
+   The default-model API test has an unused `observation` variable and comments
+   about knowledge but only asserts a public player ID. Thus the PR, handoff
+   comment and `TURN_PRO_LIFECYCLE_V87.md` overstate persisted evidence.
+   An authenticated deterministic reconstruction can be a valid design, but no
+   inspectable historical-observation read is implemented here. Complete it with
+   proper version/byte compatibility; do not add fields only when replaying an
+   older recorded decision or multiply Saved size by all weekly 57-attribute
+   prospect observations.
+
+3. **Older Tour model replay is incomplete — runtime repair.**
+   The fallback in `infrastructure/db/calendar_tour.py` rebuilds lifecycle and
+   ranking using stored Turn Pro decisions, rather than regenerating decisions
+   from the stored model and predecessor inputs. Native birth/competition/fork
+   paths do rerun their recorded policy. The author correctly lists the older
+   path as unsupported in the scope document/handoff. The existing default-model
+   HTTP demo uses that older Tour path: an unchanged view under changed defaults
+   is useful compatibility evidence but does not prove model replay.
+   This finding is a missing mathematical-verification contract; it is **not**
+   a demonstrated bypass of physical Saved hashes/origin authentication. Keep
+   those proof layers separate and add real negative replay/ownership cases.
+
+4. **New-default v87 skips pre-Tour sporting weeks — runtime integration gap.**
+   `calendar_sporting_week_service.py` explicitly advances sporting state without
+   lifecycle/intake. A new Admin v87 population must pass through early sporting
+   preparation before Tour initialization. Opening professionals are generated,
+   but normal prospect decisions in those early weeks are not executed. Connect
+   the actual versioned owner/replay path; do not silently delay all decisions
+   until Tour exists or introduce a first-application shortcut.
+
+5. **Never-pro exception is only a public event — partial implementation.**
+   `retired_without_turn_pro_player_ids` correctly selects players retiring in
+   this transition who never had a Tour entry, only under v87. It is integrated
+   into public-event rebuilds, rather than exposed before its effective week.
+   It does not yet provide the confirmed explicit career-history/audit display.
+   Reuse existing history/audit, preserve the same profile, and do not force a
+   professional event or invent a health cause to explain the exception.
+
+6. **Reference FAX acceptance still uses the historical policy.**
+   The native Saved Draw gate now rejects a non-professional in both Ranked and
+   Unranked under v87; that bounded implementation is useful. The large copied-FAX
+   materializer still uses legacy 61-week lifecycle. Green FAX preparation and
+   general native regressions therefore do not establish the owner-required
+   direct v87 reference Run. Complete a genuine native-population association
+   flow and state the separate full-season/release gap.
+
+7. **UI validators accept unsupported evidence — reproduced, separate follow-up.**
+   On exact #1764 head, direct execution of the production pure validators returns
+   true for (a) `schema_version='future_unsupported.v99'` on a first-entry trigger,
+   and (b) `ranking_status='ranked'`, complete table, no gaps and
+   `required_point_stages=[]`. Existing 35 tests all pass but omit these cases.
+   The read-only panel also describes only Ranked native Entry requirements,
+   which must be distinguished from v87's professional prerequisite for Ranked
+   AND Unranked. This is a read/display contract gap, not an authorization bypass;
+   the backend still validates adoption. Keep same-head/source scope and no write
+   actions. #1764 conflicts with current buuk and has no actual readiness-page
+   browser acceptance.
+
+8. **Contradictory Master summaries — reconciled by Work.**
+   #1765 retains unconditional eventual-entry guarantees alongside the new rare
+   exception, exact Tour-strength wording alongside self-perception, and an
+   AGENTS summary with both stale rules. Its older AGENTS also drops the current
+   coordination pointer. Work preserves that pointer and ATP/current-state
+   history; updates active 9.2, summaries/registers and the health exception;
+   records the two explicit 12 November owner confirmations. Exact observation
+   granularity, threshold/errors/weights and other calibration remain provisional.
+   No new financial subsystem, forced age, migration rule or broad notification
+   layout is invented.
+
+## Corrections already completed by Claude
+
+- Production Entry tuning is restored in **all current reviewed heads** to blob
+  `02fd58856ca05ca248c20373fa8a296c72d4c797`. Earlier #1777 pollution is historical,
+  not an unresolved current-head defect.
+- Default v2 weekly candidates consume the prospect's own noisy attributes and
+  own available traits; they do not compare with opponents' hidden true OVR.
+  Unknown Financial Level and born-prospect traits remain neutral, explicitly
+  bounded. V1 is retained for old-policy replay and opening-population generation.
+- Annual chance normalization is exercised for W52/W61/W80. Home opportunities
+  use already-public future Editions; same-transition announcements are excluded.
+  Exact age/strength/opportunity calibration remains provisional.
+- Versioned Entry/WC gate, professional ranking roster, opening identities,
+  native birth, fork and public events have substantial deterministic tests.
+  Optional fields are omitted for historical bytes.
+- Earlier wrap serializers caused a real W80/1000 slowdown. `06b41e4` replaces
+  them with field `exclude_if`; the existing byte tests and final browser pass
+  are useful evidence. Author-reported local timings are not Work benchmarks.
+
+## Independent execution and hosted evidence
+
+- Work #1784: `GITHUB_EVENT_NAME=claude_test_review PYTHONPATH=src:.:tests/api`,
+  `pytest -o addopts='' -q` on
+  `tests/application/test_authoritative_entry_decision_slot.py`,
+  `tests/application/test_authoritative_simulation_api.py`,
+  `tests/application/test_shared_config_is_not_mutated_by_tests.py`,
+  `tests/api/test_calendar_native_prospect_intake_api.py`:
+  **22 passed in 256.53s**. Critical collection: **16/22 selected**.
+- #1783 exact `06b41e4`: independent targeted domain + real v87 HTTP/SQLite
+  execution: **68 passed in 1578.11s (26m18s)**.
+- #1783 frontend: `vitest run src/api/calendarPopulation.test.ts
+  src/components/RunCalendarPopulationControls.test.tsx`: **14 passed**.
+- #1764 frontend: `vitest run src/api/savedNativeReadiness.test.ts
+  src/components/SavedDrawNativeReadiness.test.tsx
+  src/pages/SavedTourEditionPage.test.tsx`: **35 passed**. These are pure/
+  mocked-boundary component/page tests, not genuine API/browser acceptance.
+- No full release, 50-season, exhaustive repository regression or new global
+  performance benchmark was run by Work in this review.
+
+The commit check-runs endpoint matters: the convenience workflow wrapper filters
+to PR-triggered runs and misses manual dispatch. At #1783 `06b41e4`, **all seven
+manual workflows really passed**, alongside Fast CI and CodeQL:
+
+| Workflow | Exact-head manual run |
+| --- | --- |
+| Native Tour Browser, including W80/1000 | [43188495406](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188495406) |
+| Native Tour API | [43188500087](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188500087) |
+| Native Full Simulation | [43188505189](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188505189) |
+| Native two-Edition restart | [43188509306](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188509306) |
+| Native one-Edition operator | [43188513973](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188513973) |
+| Native Season Boundary API | [43188518747](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188518747) |
+| FAX Reference Preparation | [43188522710](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/43188522710) |
+
+This is real evidence, not seven Draft skips. However, groups/global-slot and
+Saved Branch/fork workflows are still Draft-skipped without a corresponding
+observed exact-head manual run, and many green fixtures exercise historical
+policy. They do not replace new v87 acceptance for the gaps above. Sonar remains
+failed on #1783 (C Reliability) and #1764; issue-level details were not exposed by
+the connected check-annotation endpoint, so no false-positive claim is made.
+There are no inline review threads on any of the 17 PRs; the #1783 author's
+handoff/review comments were also read. Author self-review is not independent.
+
+## Next work and merge boundary
+
+Work #1784 is the independently verified test-only merge candidate. The Work
+documentation candidate reconciles Master/coordination without changing runtime.
+Claude receives the [new-chat prompt](AI_REVIEW_HANDOFF.md#prompt-to-paste-into-a-new-claude-code-chat)
+for one completed runtime candidate and then the separate read-only UI repair.
+Do not merge #1783 yet or certify intermediate v1 defaults. Recheck exact final
+heads and required checks after every change; Radim alone merges.
+
+ATP source/schedule/points foundations are now owner-merged, but their public
+native Run owner with normal cross-week Q/Main/Entry/Save remains a separate
+dependency. Do not disturb those helpers while completing lifecycle. Full
+reference season/Finals, 50-season/recovery/performance and the rest of the Master
+remain release requirements.
+
+---
+
+# Historical AI/PR coordination checkpoint — 11 November 2026
 
 Baseline: `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`, approved Master v86.
 Inventory captured 11 Nov 2026, 20:38 (Europe/Prague), before the new coordination PR.

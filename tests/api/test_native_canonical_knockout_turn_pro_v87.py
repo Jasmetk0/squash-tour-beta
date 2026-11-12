@@ -41,19 +41,20 @@ def _participants(plan):
     return {*d.direct_main_player_ids, *d.wild_card_player_ids, *d.qualification_player_ids}
 
 
+@pytest.mark.parametrize("ranked", [False, True], ids=["unranked", "ranked"])
 @pytest.mark.parametrize("min_age,max_age,all_pro", [
     pytest.param(15, 19, False, id="prospects-in-draw"),
     pytest.param(26, 30, True, id="professionals-only"),
 ])
 def test_v87_saved_fax_draw_admits_only_professionals(
-    tmp_path, fax_source, monkeypatch, min_age, max_age, all_pro
+    tmp_path, fax_source, monkeypatch, min_age, max_age, all_pro, ranked
 ):
     _v87(monkeypatch, min_age=min_age, max_age=max_age)
     db = f"sqlite:///{tmp_path / 'v87-fax.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(server, RunCalendar(61, 37, 2000, 3), count=40)
         pros, _ = _opening_pros(repo)
-        plan = canonical.authored_source(server, repo, fax_source, 24)
+        plan = canonical.authored_source(server, repo, fax_source, 24, ranked=ranked)
         not_pro = _participants(plan) - pros
         assert bool(not_pro) is not all_pro, (len(not_pro), len(pros))
         before = inspect(server)
@@ -75,3 +76,18 @@ def test_v87_saved_fax_draw_admits_only_professionals(
         assert repo.verify_branch_saved_revision_hash(revision_id=saved["revision_id"])
         state = inspect(server)["state"]
         assert plan.source.draw.event_id in {a["edition"]["edition_id"] for a in state["editions"]}
+
+
+@pytest.mark.parametrize("ranked", [False, True], ids=["unranked", "ranked"])
+def test_v87_actual_q_to_main_played_confirmed_saved_and_reopened(
+    tmp_path, fax_source, monkeypatch, ranked
+):
+    """Real Saved Draw -> adoption -> actual Q and Main MatchEngine matches -> result
+    confirmation -> published ranking -> explicit Save -> cold restart, under v87.
+
+    Participants are opening professionals (ages 26-30); no prior native Entry is
+    needed. Scope: opening professionals only; a player who turned pro through the
+    player AI is covered by the normal Entry/Edition flow, not by this Saved-Draw path.
+    """
+    _v87(monkeypatch, min_age=26, max_age=30)
+    canonical.run_actual_q_main(tmp_path, fax_source, 24, ranked, monkeypatch, v87=True)

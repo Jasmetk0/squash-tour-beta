@@ -131,4 +131,16 @@ describe('pre-alpha global Home', () => {
     expect(screen.getAllByRole('link', { name: /Otevřít Run/ })).toHaveLength(2)
   })
 
+  it('can clear browser visits even while Run inventory API is unavailable', async () => {
+    rememberProductRun('run-a')
+    api.listRunContainers.mockRejectedValue(new Error('Run storage offline'))
+    renderHome()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Run storage offline')
+    expect(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Vymazat nedávné návštěvy' }))
+    expect(readRecentProductRuns()).toEqual([])
+    expect(screen.getByRole('status')).toHaveTextContent('Runy zůstaly uložené.')
+    expect(screen.getByRole('alert')).toHaveTextContent('Run storage offline')
+  })
+
 })

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -153,6 +153,29 @@ describe('EventsPage URL-backed historical filters', () => {
     expect(screen.getByLabelText('Current query')).toHaveTextContent('foreign=keep')
     expect(screen.getByLabelText('Current query')).not.toHaveTextContent('filterWeek')
     expect(within(list).getByRole('button', { name: /E1/ })).toHaveAttribute('aria-current', 'true')
+  })
+
+  it('keeps an exact bookmarked event while the list is still loading', async () => {
+    const user = userEvent.setup()
+    let resolveEvents!: (value: unknown) => void
+    api.listEvents.mockReturnValue(new Promise(resolve => { resolveEvents = resolve }))
+    renderPage('/runs/run-a/events?selectedEventId=E1&selectedEventSequence=1&foreign=keep')
+    await user.type(screen.getByLabelText('Filter events by event or template'), 'E1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedEventId=E1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedEventSequence=1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('filterText=E1')
+    await act(async () => { resolveEvents({ run_id: 'run-a', events }) })
+    const list = await screen.findByRole('list', { name: 'Events history list' })
+    expect(within(list).getByRole('button', { name: /E1/ })).toHaveAttribute('aria-current', 'true')
+    expect(api.getEvent).toHaveBeenCalledTimes(1)
+  })
+
+  it('does not call an unavailable season plan an unknown category', async () => {
+    api.getRun.mockRejectedValue(new Error('plan unavailable'))
+    renderPage('/runs/run-a/events?filterCategory=Gold')
+    expect(await screen.findByText('No persisted events match the current filters.')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Category not verified: Gold' })).toBeInTheDocument()
+    expect(screen.getByText(/cannot yet be verified from loaded sources/)).toBeInTheDocument()
   })
 
 })

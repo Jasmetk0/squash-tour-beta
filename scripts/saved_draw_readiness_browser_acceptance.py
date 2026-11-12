@@ -29,14 +29,13 @@ def main():
     from tests.infrastructure import test_fax_reference_player_draw as fax
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path)
     parser.add_argument(
         "--chromium", default=os.environ.get("CHROME_BIN", "/usr/bin/chromium")
     )
     args = parser.parse_args()
     expect.set_options(timeout=30000)
-    root = args.root or Path(tempfile.mkdtemp(prefix="saved-draw-readiness-"))
-    root.mkdir(parents=True, exist_ok=True)
+    # Evidence goes to a fresh temporary directory; no path is taken from the command line.
+    root = Path(tempfile.mkdtemp(prefix="saved-draw-readiness-"))
     factory = SimpleNamespace(mktemp=lambda name, numbered=True: Path(tempfile.mkdtemp(prefix=name)))
     source = fax.fax_source.__wrapped__(factory)
     with ApiServer(database_url=f"sqlite:///{root.resolve() / 'draw.sqlite'}") as server:

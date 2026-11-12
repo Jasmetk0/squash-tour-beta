@@ -41,8 +41,6 @@ const copy = {
     search: 'Hledat Run, větev nebo ID příkazu',
     searchPlaceholder: 'Název, ID Runu, Branch nebo příkazu',
     filter: 'Stav uložené operace',
-    ...receiptFilterMessages('cs'),
-
     all: 'Všechny stavy',
     state: {
       running: 'Povoleno – aktivita procesu nepotvrzena',
@@ -88,8 +86,6 @@ const copy = {
     search: 'Search Run, Branch or command ID',
     searchPlaceholder: 'Name, Run ID, Branch ID or command ID',
     filter: 'Saved control state',
-    ...receiptFilterMessages('en'),
-
     all: 'All states',
     state: {
       running: 'Authorized – worker activity unverified',
@@ -133,6 +129,7 @@ function matchingOperation(operation: GlobalFullSimulationOperation, value: stri
 export function GlobalSimulationTaskCenterPage(): JSX.Element {
   const { language } = useLanguage()
   const text = copy[language]
+  const filterText = receiptFilterMessages(language)
   // These URL parameters filter *only* historical persisted receipts below;
   // the independent server-task list and any recovery controls are unchanged.
   const [searchParams, setSearchParams] = useSearchParams()
@@ -217,14 +214,14 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
       <label>{text.filter}
         <select value={state} onChange={event => setReceiptFilter('receiptState', event.target.value)}>
           <option value="all">{text.all}</option>
-          {unsupportedState && <option value={state}>{state} · {text.unknownState}</option>}
+          {unsupportedState && <option value={state}>{state} · {filterText.unknownState}</option>}
           <option value="running">{text.state.running}</option>
           <option value="pause_requested">{text.state.pause_requested}</option>
           <option value="paused">{text.state.paused}</option>
         </select>
       </label>
       {(search || state !== 'all') &&
-        <button type="button" onClick={resetReceiptFilters}>{text.reset}</button>}
+        <button type="button" onClick={resetReceiptFilters}>{filterText.reset}</button>}
       <button type="button" onClick={() => { void inventory.refetch() }}
         disabled={inventory.isFetching}>{inventory.isFetching ? text.refreshing : text.refresh}</button>
     </div>
@@ -233,8 +230,8 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     {inventory.isSuccess && <>
       <p className="status">{text.count}: <strong>{inventory.data.pending_count}</strong>
         {' · '}{text.legacy}: <strong>{inventory.data.legacy_pending_count}</strong>
-        {' · '}{text.matching}: <strong>{operations.length} / {inventory.data.operations.length}</strong></p>
-      {unsupportedState && <p role="status">{text.unknownState}</p>}
+        {' · '}{filterText.matching}: <strong>{operations.length} / {inventory.data.operations.length}</strong></p>
+      {unsupportedState && <p role="status">{filterText.unknownState}</p>}
       {inventory.data.pending_count === 0 ? <p className="status">{text.empty}</p>
         : operations.length === 0 ? <p className="status">{text.noMatches}</p>
           : <ul className="simulation-task-center__list" aria-label={text.title}>

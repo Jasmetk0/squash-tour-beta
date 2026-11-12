@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { clearRecentProductRuns, readRecentProductRuns, rememberProductRun } from './recentProductRuns'
+import { clearRecentProductRuns, hasRecentProductRunsStorageEntry, readRecentProductRuns, rememberProductRun } from './recentProductRuns'
 
 const KEY = 'squash-engine-recent-product-runs-v1'
 
@@ -75,6 +75,22 @@ describe('recentProductRuns', () => {
     vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('denied') })
     expect(clearRecentProductRuns()).toBe(false)
     expect(readRecentProductRuns()).toEqual(['run-1'])
+  })
+
+  it('detects corrupt records without parsing them or accessing other preferences', () => {
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
+    localStorage.setItem(KEY, '{invalid-json')
+    localStorage.setItem('other-preference', 'do-not-touch')
+    expect(readRecentProductRuns()).toEqual([])
+    expect(hasRecentProductRunsStorageEntry()).toBe(true)
+    expect(clearRecentProductRuns()).toBe(true)
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
+    expect(localStorage.getItem('other-preference')).toBe('do-not-touch')
+  })
+
+  it('does not throw if reading the raw history key is denied', () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('denied') })
+    expect(hasRecentProductRunsStorageEntry()).toBe(false)
   })
 
 })

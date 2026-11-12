@@ -5523,3 +5523,21 @@ export async function getSavedPlayerCareer(
     + `/calendar-tour/players/${encodeURIComponent(playerId)}/career${query}`
   )
 }
+
+/** Run-level follows (a preference, never Saved Run content) and Branch-level derived alerts. */
+const followRoot=(run:string)=>`/admin/runs/${encodeURIComponent(run)}`
+export function getRunFollows(run:string):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+'/follows')
+}
+export function putRunFollow(run:string,kind:string,subject:string,alertsEnabled=true):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+`/follows/${encodeURIComponent(kind)}/${encodeURIComponent(subject)}`,{method:'PUT',body:JSON.stringify({alerts_enabled:alertsEnabled})})
+}
+export function deleteRunFollow(run:string,kind:string,subject:string):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+`/follows/${encodeURIComponent(kind)}/${encodeURIComponent(subject)}`,{method:'DELETE'})
+}
+export function getFollowAlerts(run:string,branch:string,includeHidden=false):Promise<import('./followNotifications').AlertList> {
+  return request(followRoot(run)+`/branches/${encodeURIComponent(branch)}/notifications${includeHidden?'?include_hidden=true':''}`)
+}
+export function putAlertState(run:string,branch:string,key:string,state:'unread'|'read'|'hidden'):Promise<import('./followNotifications').AlertList> {
+  return request(followRoot(run)+`/branches/${encodeURIComponent(branch)}/notifications/${encodeURIComponent(key)}/state`,{method:'PUT',body:JSON.stringify({state})})
+}

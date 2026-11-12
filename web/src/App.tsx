@@ -82,6 +82,7 @@ import { LegacyRunsPage } from './pages/LegacyRunsPage'
 import { PlannedEventDetailPage } from './pages/PlannedEventDetailPage'
 import { SavedTourCalendarPage } from './pages/SavedTourCalendarPage'
 import { SavedTourEditionPage } from './pages/SavedTourEditionPage'
+import { FollowAlertsPage } from './pages/FollowAlertsPage'
 import { SavedTourMatchDetailPage } from './pages/SavedTourMatchDetailPage'
 import { PlayersPage } from './pages/PlayersPage'
 import { RunPlayerGeneratorPage } from './pages/RunPlayerGeneratorPage'
@@ -214,6 +215,7 @@ export default function App(): JSX.Element {
         <Route path="admin/runs/:runId/players/legacy" element={<LegacyRunPlayersExplorerPage />} />
         <Route path="admin/runs/:runId/players/intake" element={<TalentIntakePage />} />
         <Route path="admin/runs/:runId/people/:playerId" element={<SavedPlayerIdentityPage />} />
+        <Route path="admin/runs/:runId/following" element={<FollowAlertsPage />} />
         <Route path="admin/runs/:runId/people/:playerId/matches/:eventId/:matchId" element={<SavedPlayerMatchDetailPage />} />
         <Route path="admin/runs/:runId/players/:playerId/career" element={<PlayerCareerPage />} />
         <Route path="admin/runs/:runId/nations" element={<NationsPage />} />

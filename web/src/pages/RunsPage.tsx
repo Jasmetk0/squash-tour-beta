@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getGlobalFullSimulationOperations, listBranchStates, listRunBranches, listRunContainers } from '../api/client'
@@ -8,6 +8,56 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { rememberProductRun } from '../navigation/recentProductRuns'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
+import { isValidRunListView, readRunListViews, RUN_LIST_VIEWS_KEY, RUN_LIST_VIEWS_LIMIT, writeRunListViews } from './runListViews'
+import type { RunListVisibility, SavedRunListView } from './runListViews'
+
+type ViewNotice = 'viewSaved' | 'viewUpdated' | 'viewHidden' | 'viewRestored'
+  | 'viewDuplicate' | 'viewInvalid' | 'viewLimit' | 'viewWriteFailed' | 'viewConflict' | 'viewExternalChange'
+  | 'viewRenamed' | 'viewRenameDuplicate'
+
+const namedViewMessagesPairs = {
+  viewsTitle: ['Pojmenované pohledy', 'Named views'],
+  viewsLocal: ['Ukládají se pouze v tomto prohlížeči. Obsahují jen filtry přehledu, nikoli Runy.', 'Saved only in this browser. Stores list filters, never Runs.'],
+  quickView: ['Uložený pohled', 'Saved view'],
+  chooseView: ['Vybrat pohled', 'Choose a view'],
+  newViewName: ['Název nového pohledu', 'New view name'],
+  saveView: ['Uložit nový pohled', 'Save new view'],
+  updateView: ['Výslovně aktualizovat pohled', 'Explicitly update view'],
+  viewChanged: ['Filtry byly změněny. Uložený pohled zůstává beze změny.', 'Filters changed. The saved view has not been overwritten.'],
+  manageViews: ['Spravovat pohledy', 'Manage views'],
+  reloadViews: ['Znovu načíst uložené pohledy', 'Reload saved views'],
+  viewsManager: ['Správce pohledů', 'View manager'],
+  noViews: ['Zatím žádné uložené pohledy.', 'No saved views yet.'],
+  hideView: ['Skrýt', 'Hide'],
+  restoreView: ['Obnovit', 'Restore'],
+  hiddenView: ['Skrytý', 'Hidden'],
+  renameView: ['Přejmenovat', 'Rename'],
+  renameInput: ['Nový název pohledu', 'New view name'],
+  saveRename: ['Uložit nový název', 'Save new name'],
+  cancelRename: ['Zrušit přejmenování', 'Cancel rename'],
+  viewRenamed: ['Pohled přejmenován.', 'View renamed.'],
+  viewRenameDuplicate: ['Jiný pohled se stejným názvem již existuje.', 'Another view already has this name.'],
+  viewSaved: ['Pohled uložen.', 'View saved.'],
+  viewUpdated: ['Pohled výslovně aktualizován.', 'View explicitly updated.'],
+  viewHidden: ['Pohled skryt z rychlé nabídky.', 'View hidden from quick selection.'],
+  viewRestored: ['Pohled obnoven.', 'View restored.'],
+  viewDuplicate: ['Pohled se stejným názvem již existuje. Vyber jej a použij výslovnou aktualizaci.', 'A view with this name already exists. Select it and explicitly update it.'],
+  viewInvalid: ['Zadej název (max. 64 znaků) a hledání do 250 znaků.', 'Enter a name (up to 64 characters) and search text up to 250 characters.'],
+  viewLimit: ['Byl dosažen limit 24 pohledů.', 'The limit of 24 views has been reached.'],
+  viewWriteFailed: ['Nastavení se nepodařilo uložit do prohlížeče. Změna nebyla provedena.', 'Could not save settings in this browser. No change was applied.'],
+  viewConflict: ['Uložené pohledy se mezitím změnily v jiném panelu. Původní data nebyla přepsána; ověř nové pohledy a změnu případně zopakuj.', 'Saved views changed in another tab. The newer data was not overwritten; review the views and try again if needed.'],
+  viewExternalChange: ['Uložené pohledy se změnily v jiném panelu. Filtry zůstaly beze změny; pro použití vyber pohled znovu.', 'Saved views changed in another tab. Current filters stayed unchanged; reselect a view to apply it.'],
+  viewInvalidStorage: ['Uložené nastavení pohledů je poškozené. Zůstává nedotčené; základní filtry fungují.', 'Saved view settings are corrupted. Left untouched; basic filters still work.'],
+  viewUnsupportedStorage: ['Nastavení pohledů má nepodporovanou verzi. Nebude přepsáno.', 'Saved view settings use an unsupported version and will not be overwritten.'],
+  viewUnavailableStorage: ['Úložiště prohlížeče není dostupné. Ukládání pohledů je vypnuté.', 'Browser storage is unavailable. Saving views is disabled.'],
+} as const
+
+function namedViewMessages(language: 'cs' | 'en'): Record<keyof typeof namedViewMessagesPairs, string> {
+  const column = language === 'cs' ? 0 : 1
+  return Object.fromEntries(
+    Object.entries(namedViewMessagesPairs).map(([key, translations]) => [key, translations[column]])
+  ) as Record<keyof typeof namedViewMessagesPairs, string>
+}
 
 const messages = {
   cs: {
@@ -16,6 +66,8 @@ const messages = {
     openRun: 'Otevřít Run', refreshRuns: 'Obnovit seznam Runů', refreshingRuns: 'Obnovuji seznam Runů…',
     visibility: 'Typ Runu', allRuns: 'Všechny Runy', editableOnly: 'Pouze upravitelné', protectedOnly: 'Pouze chráněné',
     visibleCount: 'Zobrazeno', resetFilters: 'Zrušit filtry',
+    ...namedViewMessages('cs'),
+
     empty: 'Zatím žádné uložené Runy.', noResults: 'Žádný Run neodpovídá hledání.',
     loading: 'Načítám uložené Runy…', error: 'Přehled Runů není dostupný',
     protected: 'Chráněný zdroj', editable: 'Upravitelný', branches: 'Větve',
@@ -42,6 +94,8 @@ const messages = {
     openRun: 'Open Run', refreshRuns: 'Refresh Run list', refreshingRuns: 'Refreshing Run list…',
     visibility: 'Run type', allRuns: 'All Runs', editableOnly: 'Editable only', protectedOnly: 'Protected only',
     visibleCount: 'Showing', resetFilters: 'Clear filters',
+    ...namedViewMessages('en'),
+
     empty: 'No saved Runs yet.', noResults: 'No Runs match your search.',
     loading: 'Loading saved Runs…', error: 'Runs inventory unavailable',
     protected: 'Protected source', editable: 'Editable', branches: 'Branches',
@@ -152,7 +206,132 @@ export function RunsPage(): JSX.Element {
   const { language } = useLanguage()
   const l = messages[language]
   const [query, setQuery] = useState('')
-  const [visibility, setVisibility] = useState<'all' | 'editable' | 'protected'>('all')
+  const [visibility, setVisibility] = useState<RunListVisibility>('all')
+  const [savedViews, setSavedViews] = useState(readRunListViews)
+  const [selectedViewName, setSelectedViewName] = useState('')
+  const [newViewName, setNewViewName] = useState('')
+  const [manageViews, setManageViews] = useState(false)
+  const [renamingViewName, setRenamingViewName] = useState('')
+  const [renameDraft, setRenameDraft] = useState('')
+  const [viewNotice, setViewNotice] = useState<ViewNotice | null>(null)
+  const selectedView = savedViews.items.find(view => view.name === selectedViewName)
+  const viewChanged = Boolean(selectedView && (query !== selectedView.query || visibility !== selectedView.visibility))
+
+  function acceptStoredViews(next: ReturnType<typeof readRunListViews>, notice: ViewNotice | null): void {
+    setSavedViews(next)
+    setSelectedViewName(current => next.items.some(view => view.name === current && !view.hidden) ? current : '')
+    setRenamingViewName('')
+    setRenameDraft('')
+    setViewNotice(notice)
+  }
+
+  // The StorageEvent fires in OTHER same-origin tabs, not for this tab's own write.
+  // Never apply a remotely edited preference to the active filters automatically.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== RUN_LIST_VIEWS_KEY) return
+      acceptStoredViews(readRunListViews(), 'viewExternalChange')
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
+  function persistViews(items: SavedRunListView[], notice: ViewNotice): boolean {
+    if (savedViews.status !== 'ok') {
+      setViewNotice('viewWriteFailed')
+      return false
+    }
+    // Best-effort stale-tab protection: don't silently replace a different
+    // version written since this page loaded. localStorage has no atomic CAS.
+    const latest = readRunListViews()
+    if (latest.status !== 'ok' || JSON.stringify(latest.items) !== JSON.stringify(savedViews.items)) {
+      acceptStoredViews(latest, 'viewConflict')
+      return false
+    }
+    if (!writeRunListViews(items)) {
+      setViewNotice('viewWriteFailed')
+      return false
+    }
+    setSavedViews({ status: 'ok', items })
+    setViewNotice(notice)
+    return true
+  }
+
+  function saveNewView(): void {
+    const view: SavedRunListView = {
+      name: newViewName.trim(), query, visibility, hidden: false
+    }
+    if (!isValidRunListView(view)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    if (savedViews.items.some(item => item.name.toLocaleLowerCase() === view.name.toLocaleLowerCase())) {
+      setViewNotice('viewDuplicate')
+      return
+    }
+    if (savedViews.items.length >= RUN_LIST_VIEWS_LIMIT) {
+      setViewNotice('viewLimit')
+      return
+    }
+    if (persistViews([...savedViews.items, view], 'viewSaved')) {
+      setSelectedViewName(view.name)
+      setNewViewName('')
+    }
+  }
+
+  function selectView(name: string): void {
+    const view = savedViews.items.find(item => item.name === name && !item.hidden)
+    setSelectedViewName(view?.name ?? '')
+    if (view) {
+      setQuery(view.query)
+      setVisibility(view.visibility)
+    }
+    setViewNotice(null)
+  }
+
+  function updateSelectedView(): void {
+    if (!selectedView) return
+    const updated = { ...selectedView, query, visibility }
+    if (!isValidRunListView(updated)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    persistViews(savedViews.items.map(item => item.name === selectedView.name ? updated : item), 'viewUpdated')
+  }
+
+  function renameView(view: SavedRunListView): void {
+    const name = renameDraft.trim()
+    const updated = { ...view, name }
+    if (!isValidRunListView(updated)) {
+      setViewNotice('viewInvalid')
+      return
+    }
+    if (savedViews.items.some(item =>
+      item.name !== view.name && item.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    )) {
+      setViewNotice('viewRenameDuplicate')
+      return
+    }
+    if (name === view.name) {
+      setRenamingViewName('')
+      setRenameDraft('')
+      setViewNotice(null)
+      return
+    }
+    if (persistViews(savedViews.items.map(item => item.name === view.name ? updated : item), 'viewRenamed')) {
+      setSelectedViewName(current => current === view.name ? name : current)
+      setRenamingViewName('')
+      setRenameDraft('')
+    }
+  }
+
+  function toggleHiddenView(name: string): void {
+    const existing = savedViews.items.find(item => item.name === name)
+    if (!existing) return
+    if (persistViews(savedViews.items.map(item => item.name === name
+      ? { ...item, hidden: !item.hidden } : item), existing.hidden ? 'viewRestored' : 'viewHidden')
+      && !existing.hidden && selectedViewName === name) setSelectedViewName('')
+  }
   const runsQuery = useQuery({
     queryKey: ['canonical-run-containers'],
     queryFn: listRunContainers,
@@ -220,6 +399,64 @@ export function RunsPage(): JSX.Element {
       <button type="button" disabled={runsQuery.isFetching} onClick={() => { void runsQuery.refetch() }}>{runsQuery.isFetching ? l.refreshingRuns : l.refreshRuns}</button>
       <Link className="button-link" to="/admin/runs/new">{l.create}</Link>
     </div>
+    <section className="panel" aria-label={l.viewsTitle}>
+      <h3>{l.viewsTitle}</h3>
+      <p className="status">{l.viewsLocal}</p>
+      {savedViews.status !== 'ok' && <p role="alert" className="error">{savedViews.status === 'invalid'
+        ? l.viewInvalidStorage : savedViews.status === 'unsupported'
+          ? l.viewUnsupportedStorage : l.viewUnavailableStorage}</p>}
+      <div className="runs-canonical-toolbar">
+        <label>{l.quickView}<select value={selectedViewName} onChange={event => selectView(event.target.value)}>
+          <option value="">{l.chooseView}</option>
+          {savedViews.items.filter(view => !view.hidden).map(view =>
+            <option key={view.name} value={view.name}>{view.name}</option>)}
+        </select></label>
+        <form className="runs-canonical-toolbar" onSubmit={event => { event.preventDefault(); saveNewView() }}>
+          <label>{l.newViewName}<input type="text" maxLength={64} value={newViewName}
+            onChange={event => setNewViewName(event.target.value)} /></label>
+          <button type="submit" disabled={savedViews.status !== 'ok'}>{l.saveView}</button>
+        </form>
+        {selectedView && <button type="button" disabled={savedViews.status !== 'ok' || !viewChanged}
+          onClick={updateSelectedView}>{l.updateView}</button>}
+        <button type="button" aria-expanded={manageViews} onClick={() => setManageViews(open => !open)}>{l.manageViews}</button>
+        <button type="button" onClick={() => acceptStoredViews(readRunListViews(), null)}>{l.reloadViews}</button>
+      </div>
+      {viewChanged && <p className="status">{l.viewChanged}</p>}
+      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed', 'viewConflict', 'viewRenameDuplicate'].includes(viewNotice) ? 'alert' : 'status'}>
+        {l[viewNotice]}</p>}
+      {manageViews && <div>
+        <h4>{l.viewsManager}</h4>
+        {savedViews.items.length === 0 && <p>{l.noViews}</p>}
+        <ul aria-label={l.viewsManager}>
+          {savedViews.items.map(view => <li key={view.name}>
+            <span>{view.name}{view.hidden ? ' · ' + l.hiddenView : ''}</span>{' '}
+            <button type="button" disabled={savedViews.status !== 'ok'}
+              aria-label={(view.hidden ? l.restoreView : l.hideView) + ': ' + view.name}
+              onClick={() => toggleHiddenView(view.name)}>
+              {view.hidden ? l.restoreView : l.hideView}
+            </button>{' '}
+            {renamingViewName === view.name
+              ? <form onSubmit={event => { event.preventDefault(); renameView(view) }}>
+                <label>{l.renameInput}<input type="text" maxLength={64}
+                  value={renameDraft} onChange={event => setRenameDraft(event.target.value)} /></label>
+                <button type="submit" disabled={savedViews.status !== 'ok'}>{l.saveRename}</button>{' '}
+                <button type="button" onClick={() => {
+                  setRenamingViewName('')
+                  setRenameDraft('')
+                  setViewNotice(null)
+                }}>{l.cancelRename}</button>
+              </form>
+              : <button type="button" disabled={savedViews.status !== 'ok'}
+                aria-label={l.renameView + ': ' + view.name}
+                onClick={() => {
+                  setRenamingViewName(view.name)
+                  setRenameDraft(view.name)
+                  setViewNotice(null)
+                }}>{l.renameView}</button>}
+          </li>)}
+        </ul>
+      </div>}
+    </section>
     {runsQuery.isPending && <p role="status">{l.loading}</p>}
     {runsQuery.isSuccess && runsQuery.data.run_containers.length > 0 &&
       <p className="status">{l.visibleCount}: {runs.length} / {runsQuery.data.run_containers.length}</p>}

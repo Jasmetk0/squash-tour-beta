@@ -124,7 +124,7 @@ export function EventsPage(): JSX.Element {
         next.delete(key)
       }
       const sequenceText = current.get('selectedEventSequence') ?? ''
-      const sequenceNumber = /^\\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
+      const sequenceNumber = /^\d+$/.test(sequenceText) ? Number(sequenceText) : NaN
       const hasSequence = Number.isSafeInteger(sequenceNumber) && sequenceNumber > 0
       const eventId = current.get('selectedEventId')
       const bookmarked = hasSequence

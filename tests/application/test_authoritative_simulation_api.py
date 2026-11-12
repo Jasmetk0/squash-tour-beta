@@ -23,6 +23,11 @@ from beta_engine.infrastructure.db.player_lifecycle_state import (
     get_lifecycle,
     put_lifecycle,
 )
+from beta_engine.domain.players.health import (
+    bootstrap_health_state,
+    carry_health_state_forward,
+)
+from beta_engine.infrastructure.db.player_health_state import put_health
 from beta_engine.infrastructure.db.player_sporting_state import (
     get_sporting,
     put_sporting,
@@ -38,6 +43,7 @@ from beta_engine.infrastructure.db.owned_tournament_sources import (
     OwnedTournamentRankingSourceStore,
 )
 from beta_engine.infrastructure.db.models import (
+    PlayerHealthWeekStateModel,
     PublishedOfficialRankingModel,
     PlayerSportingWeekStateModel,
     SimulationEventGroupModel,
@@ -297,6 +303,27 @@ def _install_owned_state(
                 }
             ),
         )
+        # The owned Run also needs its own authoritative Health truth, built by
+        # the supported bootstrap/carry-forward path for this Run and World.
+        # Slots still fail closed when Health is genuinely missing.
+        player_ids = tuple(sorted(p.player_id for p in owned_world.players))
+        health = bootstrap_health_state(
+            run_id=run_id,
+            branch_id=branch_id,
+            source_initial_world_fingerprint=owned_world.fingerprint,
+            player_ids=player_ids,
+        )
+        put_health(session, health)
+        while health.week.ordinal < week.ordinal:
+            health = carry_health_state_forward(
+                health,
+                target=RankingWeek(
+                    season_index=(health.week.ordinal + 1) // 61,
+                    week=((health.week.ordinal + 1) % 61) + 1,
+                ),
+                target_player_ids=player_ids,
+            )
+            put_health(session, health)
     return week
 
 
@@ -322,6 +349,8 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
             f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}"
             "/authoritative-simulation"
         )
+        # Isolated copy: never rewrite the shared built-in config/balance file.
+        entry_service.entry_tuning_path = tmp_path / "entry_tuning.json"
         entry_service.entry_tuning_path.write_text(
             json.dumps(
                 {
@@ -523,6 +552,36 @@ def test_authoritative_entry_decision_slot_http_preview_commit_and_retry(tmp_pat
 
 
 @pytest.mark.pr_critical
+def test_match_reconstruction_state_still_rejects_genuinely_missing_health(tmp_path):
+    server, package = _server_state(tmp_path / "match-reconstruction-no-health")
+    with server:
+        run_id, branch_id, _revision = _create_run(
+            server, display_name="Match Reconstruction without Health"
+        )
+        _install_owned_state(server, package, run_id, branch_id)
+        with server.app.state.runtime.repository._session_factory.begin() as session:
+            for row in session.scalars(
+                select(PlayerHealthWeekStateModel).where(
+                    PlayerHealthWeekStateModel.run_id == run_id
+                )
+            ).all():
+                session.delete(row)
+        root = (
+            f"{server.base_url}/admin/runs/{run_id}/branches/{branch_id}/"
+            "authoritative-simulation"
+        )
+        status, opening = _request("GET", root + "/position")
+        assert status == 200
+        group_id = opening["eligible_match_ids"][0]
+        status, body = _request(
+            "GET", root + f"/match-reconstruction/state?group_id={group_id}"
+        )
+        assert status == 409, body
+        assert body["detail"]["code"] == "match_reconstruction_state_conflict"
+        assert "requires authoritative Health state" in body["detail"]["message"]
+
+
+@pytest.mark.pr_critical
 def test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact(tmp_path):
     server, package = _server_state(tmp_path / "match-reconstruction-http")
     with server:
@@ -584,6 +643,21 @@ def test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact(tmp_
             "operator_label": "Commissioner",
             "audit_reason": "Reviewed manual historical result",
         }
+        # A forged candidate or stale preview is rejected and writes nothing.
+        for forged in (
+            {"selected_candidate_fingerprint": "f" * 64},
+            {"expected_preview_fingerprint": "e" * 64},
+        ):
+            status, rejected = _request(
+                "POST", root + "/match-reconstruction/commit", command | forged
+            )
+            assert status in (409, 422), rejected
+            with server.app.state.runtime.repository._session_factory() as session:
+                assert (
+                    len(session.scalars(select(SimulationEventGroupModel)).all()),
+                    len(session.scalars(select(SimulationSlotModel)).all()),
+                    len(session.scalars(select(AdoptedTournamentAuthorityModel)).all()),
+                ) == before
         status, committed = _request(
             "POST", root + "/match-reconstruction/commit", command
         )
@@ -594,6 +668,13 @@ def test_match_reconstruction_http_preview_is_read_only_and_commit_is_exact(tmp_
             201,
             committed,
         )
+        # The same command id with a changed body is not an exact retry.
+        status, changed = _request(
+            "POST",
+            root + "/match-reconstruction/commit",
+            command | {"audit_reason": "A different reviewed reason"},
+        )
+        assert status == 409, changed
 
         with server.app.state.runtime.repository._session_factory() as session:
             rows = session.scalars(select(SimulationEventGroupModel)).all()

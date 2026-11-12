@@ -1,7 +1,9 @@
 """Actual HTTP/SQLite Saved HEAD + shared Run source preflight acceptance."""
 import pytest
+from sqlalchemy import select
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
+from beta_engine.infrastructure.db.models import RunProspectModel
 from beta_engine.infrastructure.db.repositories import RunProspectRecord
 from tests.api.test_calendar_tour_flow import setup, tour_url
 from tests.api.test_saved_revision_history_api import ApiServer, _request
@@ -64,12 +66,21 @@ def test_native_intake_preflight_requires_signed_shared_source_and_never_activat
         assert report["native_activation_supported"] is False
         assert _request("GET", route) == (code, report)
 
-        # A shared Run prospect source is immutable with respect to this
-        # signed branch: a new unsaved mutation cannot be read as authentic.
-        altered = RunProspectRecord(**(
-            record.__dict__ | {"display_name": "Unsaved changed identity"}
-        ))
-        repo.upsert_run_prospects([altered])
+        # The repository now refuses to edit a signed prospect, so prove the
+        # preflight's own defence: a source changed behind that guard (direct
+        # SQL, as corruption or an external edit would) cannot be read as authentic.
+        with pytest.raises(ValueError, match="metadata is immutable"):
+            repo.upsert_run_prospects([RunProspectRecord(**(
+                record.__dict__ | {"display_name": "Unsaved changed identity"}
+            ))])
+        with repo._session_factory.begin() as session:
+            row = session.scalars(
+                select(RunProspectModel).where(
+                    RunProspectModel.run_id == "run",
+                    RunProspectModel.prospect_id == "intake-prospect",
+                )
+            ).one()
+            row.display_name = "Unsaved changed identity"
         status, response = _request("GET", route)
         assert status == 409, response
 

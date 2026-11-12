@@ -6,7 +6,7 @@ vi.mock('../components/FullSimulationServerTasks',()=>({
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LanguageProvider } from '../i18n/LanguageContext'
@@ -63,11 +63,21 @@ const example = {
   ]
 }
 
-function renderPage(): void {
+function TaskCenterRoute(): JSX.Element {
+  const location = useLocation()
+  const navigate = useNavigate()
+  return <>
+    <GlobalSimulationTaskCenterPage />
+    <output data-testid="receipt-query">{location.search}</output>
+    <button type="button" onClick={() => navigate(-1)}>History back</button>
+  </>
+}
+
+function renderPage(route = '/admin/operations'): void {
   const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   render(<QueryClientProvider client={queryClient}>
-    <MemoryRouter initialEntries={['/admin/operations']}>
-      <LanguageProvider><GlobalSimulationTaskCenterPage /></LanguageProvider>
+    <MemoryRouter initialEntries={[route]}>
+      <LanguageProvider><TaskCenterRoute /></LanguageProvider>
     </MemoryRouter>
   </QueryClientProvider>)
 }
@@ -196,4 +206,67 @@ describe('global Full Simulation Task Center', () => {
   expect(within(gamma).getByRole('link', {name: 'Otevřít detail a ovládání'}))
     .toHaveAttribute('href', '/admin/runs/run-gamma/simulate?branch=c-three')
  })
+
+  it('restores a bookmarked receipt search/state without changing the server inventory', async () => {
+    renderPage('/admin/operations?receiptState=paused&receiptQuery=first-command&from=admin')
+    const list = await screen.findByRole('list', { name: 'Centrum simulací' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(list).getByText('Alfa svět / A timeline')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Stav uložené operace' })).toHaveValue('paused')
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run, větev nebo ID příkazu' })).toHaveValue('first-command')
+    expect(screen.getByText(/Zobrazené záznamy po filtrování/)).toHaveTextContent('1 / 3')
+    const params = new URLSearchParams(screen.getByTestId('receipt-query').textContent!)
+    expect(params.get('from')).toBe('admin')
+    expect(params.get('receiptState')).toBe('paused')
+    expect(api.getGlobalFullSimulationOperations).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
+
+  it('keeps invalid state filters restrictive and removable without inventing a saved control state', async () => {
+    renderPage('/admin/operations?receiptState=future_state&receiptQuery=Beta&from=old-link')
+    await screen.findByText('Zadaným filtrům neodpovídá žádná uložená simulace.')
+    expect(screen.getByRole('combobox', { name: 'Stav uložené operace' })).toHaveValue('future_state')
+    expect(screen.getByRole('option', { name: /future_state · Nepodporovaný stav/ })).toBeInTheDocument()
+    expect(screen.getByText(/Zobrazené záznamy po filtrování/)).toHaveTextContent('0 / 3')
+    expect(screen.queryByText('Beta world / B timeline')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: 'Zrušit filtry záznamů' }))
+    expect(within(await screen.findByRole('list', { name: 'Centrum simulací' })).getAllByRole('listitem')).toHaveLength(3)
+    expect(new URLSearchParams(screen.getByTestId('receipt-query').textContent!).get('from')).toBe('old-link')
+    expect(screen.getByRole('combobox', { name: 'Stav uložené operace' })).toHaveValue('all')
+  })
+
+  it('updates URL filters, preserves unrelated query keys, and supports browser Back navigation', async () => {
+    renderPage('/admin/operations?from=task-overview')
+    await screen.findByRole('list', { name: 'Centrum simulací' })
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Stav uložené operace' }), 'running')
+    let params = new URLSearchParams(screen.getByTestId('receipt-query').textContent!)
+    expect(params.get('receiptState')).toBe('running')
+    expect(params.get('from')).toBe('task-overview')
+    expect(screen.getByText(/Zobrazené záznamy po filtrování/)).toHaveTextContent('1 / 3')
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run, větev nebo ID příkazu' }), 'beta')
+    params = new URLSearchParams(screen.getByTestId('receipt-query').textContent!)
+    expect(params.get('receiptQuery')).toBe('beta')
+    expect(params.get('receiptState')).toBe('running')
+    expect(screen.getByText('Beta world / B timeline')).toBeInTheDocument()
+    expect(api.getGlobalFullSimulationOperations).toHaveBeenCalledTimes(1)
+    await userEvent.click(screen.getByRole('button', { name: 'History back' }))
+    expect(screen.getByRole('combobox', { name: 'Stav uložené operace' })).toHaveValue('all')
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run, větev nebo ID příkazu' })).toHaveValue('')
+    expect(new URLSearchParams(screen.getByTestId('receipt-query').textContent!).get('from')).toBe('task-overview')
+    expect(within(screen.getByRole('list', { name: 'Centrum simulací' })).getAllByRole('listitem')).toHaveLength(3)
+  })
+
+  it('clears only receipt filters and never changes selected Run/Branch or refreshes data implicitly', async () => {
+    renderPage('/admin/operations?receiptState=paused&receiptQuery=alpha&branch=b-two&task=external-task')
+    const list = await screen.findByRole('list', { name: 'Centrum simulací' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(1)
+    await userEvent.click(screen.getByRole('button', { name: 'Zrušit filtry záznamů' }))
+    const params = new URLSearchParams(screen.getByTestId('receipt-query').textContent!)
+    expect(params.get('branch')).toBe('b-two')
+    expect(params.get('task')).toBe('external-task')
+    expect(params.get('receiptState')).toBeNull()
+    expect(params.get('receiptQuery')).toBeNull()
+    expect(api.getGlobalFullSimulationOperations).toHaveBeenCalledTimes(1)
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
 })

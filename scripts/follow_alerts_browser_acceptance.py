@@ -87,9 +87,9 @@ def main():
                     wait_http(web, frontend)
                     with sync_playwright() as pw:
                         browser = pw.chromium.launch(executable_path=args.chromium, args=["--no-sandbox"])
-                        for language, title, follow_btn, read_btn, hide_btn, read_text, hidden_text, unfollow_btn in (
-                            ("en", "Following and alerts", "Follow", "Mark as read", "Hide", "read", "No alerts", "Unfollow"),
-                            ("cs", "Sledování a upozornění", "Sledovat", "Označit jako přečtené", "Skrýt", "přečteno", "Žádná upozornění", "Přestat sledovat"),
+                        for language, title, follow_btn, read_btn, hide_btn, read_text, hidden_text, unfollow_btn, show_hidden, restore_btn, nothing in (
+                            ("en", "Following and alerts", "Follow", "Mark as read", "Hide", "read", "No alerts", "Unfollow", "Show hidden too", "Restore", "You follow nothing yet."),
+                            ("cs", "Sledování a upozornění", "Sledovat", "Označit jako přečtené", "Skrýt", "přečteno", "Žádná upozornění", "Přestat sledovat", "Zobrazit i skrytá", "Obnovit", "Zatím nic nesledujete."),
                         ):
                             context = browser.new_context(viewport={"width": 1440, "height": 1050}, device_scale_factor=1)
                             context.add_init_script(f"localStorage.setItem('squash-engine-language-v1','{language}')")
@@ -117,7 +117,14 @@ def main():
                             expect(section).to_contain_text(hidden_text)
                             page.reload()
                             expect(section).to_contain_text(hidden_text)
+                            # Hidden state is persistent: show and restore the card (an explicit step),
+                            # then unfollow; career history must stay intact.
+                            section.get_by_label(show_hidden).check()
+                            section.get_by_role("button", name=restore_btn, exact=True).click()
+                            section.get_by_label(show_hidden).uncheck()
+                            expect(section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))).to_have_count(1)
                             section.get_by_role("button", name=unfollow_btn).first.click()
+                            expect(section).to_contain_text(nothing)
                             assert not errors, errors
                             context.close()
                         browser.close()

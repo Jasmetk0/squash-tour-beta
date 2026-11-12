@@ -116,7 +116,7 @@ def test_replay_rejects_changed_model_seed_observation_and_week():
     edited = decision.model_copy(
         update={"evidence": evidence.model_copy(update={"observation": edited_obs})}
     )
-    with pytest.raises(ValueError, match="draw|provenance"):
+    with pytest.raises(ValueError, match="internally inconsistent"):
         verify_turn_pro_decision_evidence(edited, policy=model, seed=SEED)
     # A decision moved to another week draws differently.
     later = RunWeekPosition(

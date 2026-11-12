@@ -285,6 +285,37 @@ def _decision_provenance(policy: TurnProModelPolicy, chance: float, draw: float)
     )
 
 
+def _require_consistent_observation(observation, perception) -> None:
+    """The stored observation must agree with itself and the recorded policy.
+
+    Overall level is the mean of the 57 perceived attributes, group values their
+    group means and readiness the policy's logistic of the overall level. Without
+    this a stored readiness could be edited whenever it does not move the chance.
+    """
+    from beta_engine.domain.players.attribute_catalog import (
+        ATTRIBUTE_TO_GROUP,
+        CANONICAL_PLAYER_ATTRIBUTES,
+    )
+
+    names = tuple(name for name, _ in observation.perceived_attributes)
+    if names != CANONICAL_PLAYER_ATTRIBUTES:
+        raise ValueError("Turn Pro observation is internally inconsistent: attributes")
+    values = dict(observation.perceived_attributes)
+    overall = sum(values.values()) / len(values)
+    if abs(overall - observation.perceived_overall) > 1e-5:
+        raise ValueError("Turn Pro observation is internally inconsistent: overall level")
+    for group, value in observation.perceived_groups:
+        members = [values[a] for a in CANONICAL_PLAYER_ATTRIBUTES if ATTRIBUTE_TO_GROUP[a] == group]
+        if not members or abs(sum(members) / len(members) - value) > 1e-5:
+            raise ValueError("Turn Pro observation is internally inconsistent: group level")
+    readiness = 1.0 / (
+        1.0 + math.exp(-(observation.perceived_overall - perception.professional_threshold)
+                       / perception.readiness_scale)
+    )
+    if abs(readiness - observation.readiness) > 1e-6:
+        raise ValueError("Turn Pro observation is internally inconsistent: readiness")
+
+
 def verify_turn_pro_decision_evidence(
     decision: PlayerTurnProDecision, *, policy: TurnProModelPolicy, seed: int
 ) -> None:
@@ -307,6 +338,7 @@ def verify_turn_pro_decision_evidence(
     observation = evidence.observation
     if observation.policy_fingerprint != policy.perception.fingerprint:
         raise ValueError("Turn Pro observation was made under a different perception policy")
+    _require_consistent_observation(observation, policy.perception)
     candidate = TurnProCandidate(
         player_id=decision.player_id,
         age=evidence.age,

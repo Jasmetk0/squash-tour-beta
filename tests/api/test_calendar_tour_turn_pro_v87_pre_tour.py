@@ -146,7 +146,7 @@ def test_pre_tour_record_rejects_missing_changed_or_forged_history(tmp_path, mon
         update={"evidence": decision.evidence.model_copy(update={"observation": edited_obs})}
     )
     changed = pre.model_copy(update={"weeks": (week.model_copy(update={"decisions": (edited, *week.decisions[1:])}),)})
-    with pytest.raises(ValueError, match="draw|provenance"):
+    with pytest.raises(ValueError, match="internally inconsistent"):
         _verify_pre_tour_turn_pro(state.model_copy(update={"pre_tour_turn_pro": changed}), checkpoint, world)
     # Changed model: the recorded calibration is bound to each decision's provenance.
     other = pre.model_copy(

@@ -63,7 +63,7 @@ export function AdminHomePage(): JSX.Element {
       {runs.isError && <p role="alert" className="error">{t('Unavailable')}: {formatApiError(runs.error)}</p>}
       {runs.isSuccess && all.length === 0 && <p className="status">{t('No Runs yet')}</p>}
       {runs.isSuccess && recent.length === 0 && all.length > 0 && <p className="status">{language === 'cs' ? 'Žádné dostupné nedávno otevřené Runy v tomto prohlížeči.' : 'No accessible recently opened Runs in this browser.'}</p>}
-      {runs.isSuccess && (recentIds.length > 0 || hasHistoryEntry) && <div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div>}
+      {(recentIds.length > 0 || hasHistoryEntry) && <div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div>}
       {runs.isSuccess && recent.length > 0 && <ul className="home-run-list">
         {recent.map(run => <li key={run.run_id}><span><strong>{run.display_name || run.run_id}</strong><small>{run.status} · {run.read_only ? 'Read-only' : 'Editable'}</small></span>
           <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul>}

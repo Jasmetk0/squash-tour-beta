@@ -143,6 +143,20 @@ def signed_career_records(
         raise conflict(exc) from exc
 
 
+@router.get("/seasons")
+def season_archive(
+    run_id: str,
+    branch_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+):
+    try:
+        return CalendarTourService(runtime.repository).season_archive(
+            run_id=run_id, branch_id=branch_id
+        )
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
 @router.get("/seasons/{season_index}")
 def season_summary(
     run_id: str,

@@ -884,10 +884,26 @@ class NativeForkRuntimeService:
                     "schema_version": "calendar_tour_signed_records_response.v1",
                     "saved_head_revision_id": revision.revision_id,
                 }
+            from beta_engine.application.calendar_tour_season_archive import (
+                season_archive,
+                season_summary_extras,
+            )
+
+            closure = saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None))
+            if kind == "archive":
+                return {
+                    **season_archive(state, world, closure=closure),
+                    "saved_head_revision_id": revision.revision_id,
+                }
+            summary = compare_completed_seasons(state, world, closure=closure, **options)
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": revision.revision_id,
-                **compare_completed_seasons(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),
+                **summary,
+                **season_summary_extras(
+                    state, world, options["season_index"], summary,
+                    options.get("compare_to"), closure=closure,
+                ),
             }

@@ -407,12 +407,43 @@ class CalendarTourService:
                 compare_to,
                 closure=saved_final_closure(rev.saved_revision.payload, branch_id),
             )
+            from beta_engine.application.calendar_tour_season_archive import (
+                season_summary_extras,
+            )
+
+            closure = saved_final_closure(rev.saved_revision.payload, branch_id)
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": rev.saved_head_revision_id,
                 **summary,
+                **season_summary_extras(signed, world, season_index, summary, compare_to, closure=closure),
+            }
+
+    def season_archive(self, *, run_id, branch_id):
+        """Every completed season of the authenticated Saved Tour, oldest first."""
+        from beta_engine.application.calendar_tour_season_archive import season_archive
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(
+                run_id=run_id, branch_id=branch_id, kind="archive"
+            )
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Season archive requires a Saved configured Tour")
+            return {
+                **season_archive(
+                    signed, world,
+                    closure=saved_final_closure(rev.saved_revision.payload, branch_id),
+                ),
+                "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
     def inspect(self, *, run_id, branch_id):

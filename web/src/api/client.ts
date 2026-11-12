@@ -4987,6 +4987,24 @@ export function getSavedTourEdition(
   return request(prefix+'/tour/editions/'+encodeURIComponent(eventId)+'?'+params.toString())
 }
 
+/** Read-only: does the Branch's current Saved FAX Draw meet the native-adoption prerequisites? */
+export function getSavedDrawNativePreflight(
+  runId:string,branchId:string,eventId:string,season:string,expectedSavedRevisionId:string
+):Promise<import('./savedNativeReadiness').SavedDrawPreflight>{
+  const params=new URLSearchParams({season,expected_saved_revision_id:expectedSavedRevisionId})
+  return request(canonicalTournamentDrawRoot(runId,branchId,eventId)
+    +'/saved-native-preflight?'+params.toString())
+}
+
+/** Read-only: which Saved Draw participants have first Tour Entry evidence in this Saved head? */
+export function getSavedDrawEntryEvidence(
+  runId:string,branchId:string,eventId:string,season:string,expectedSavedRevisionId:string
+):Promise<import('./savedNativeReadiness').SavedDrawEntryEvidence>{
+  const params=new URLSearchParams({season,expected_saved_revision_id:expectedSavedRevisionId})
+  return request(canonicalTournamentDrawRoot(runId,branchId,eventId)
+    +'/saved-entry-evidence?'+params.toString())
+}
+
 /** Reachable, immutable Saved Revision Edition match; never the current player Saved HEAD. */
 export async function getSavedTourMatchDetail(
   runId:string,branchId:string,revisionId:string,seasonIndex:number,

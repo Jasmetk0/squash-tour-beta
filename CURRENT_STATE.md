@@ -189,6 +189,29 @@ formats remain follow-up work. See [mapping and validation](docs/ATP_EARTH_WEEK_
 
 ---
 
+# Saved Draw native readiness panel candidate — 10 November 2026
+
+Base `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`. Admin now surfaces the two
+existing read-only Saved Draw inspections (`saved-native-preflight`,
+`saved-entry-evidence`) on the Saved Edition Draw tab, for the Branch's current
+Saved head only. It shows point-table gaps, the native execution status and which
+Main / Qualification / wild-card participants have a recorded first Tour Entry.
+It adds no backend behavior, command, sporting rule or calibration, and it neither
+creates first Entry nor adopts a Draw. Wiring valid first Entry into the native
+lifecycle, the adoption wizard and original-source chronology stay the next
+boundaries.
+
+The panel is requested only when the page's revision equals the Branch's current
+Saved head; historical revisions never call these current-head endpoints. Any
+response whose Saved revision, Edition, Draw source fingerprint or trigger owner
+differs from the request is discarded, not displayed. Unsupported Draws (HTTP
+404/409) appear as information. The panel has no action and does not decide
+whether a missing Entry is acceptable. Evidence is mocked-API component/contract
+tests plus the existing frontend suite and production build; no browser or
+HTTP/SQLite pass is claimed.
+
+---
+
 # Saved FAX Entry evidence candidate — 8 November 2026
 
 Base `buuk` `d239a972fe2f9834b36c608193d196a67d4abb1a` includes the reviewed

@@ -35,12 +35,11 @@ def main():
     from tests.api.test_saved_revision_history_api import ApiServer
 
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path)
     parser.add_argument("--chromium", default=os.environ.get("CHROME_BIN", "/usr/bin/chromium"))
     args = parser.parse_args()
     expect.set_options(timeout=30000)
-    root = args.root or Path(tempfile.mkdtemp(prefix="follow-alerts-browser-"))
-    root.mkdir(parents=True, exist_ok=True)
+    # Evidence goes to a fresh temporary directory; no path is taken from the command line.
+    root = Path(tempfile.mkdtemp(prefix="follow-alerts-browser-"))
     patch = pytest.MonkeyPatch()
     patch.setattr(population, "population_request",
         lambda server, **changes: population_request(server, **{**changes, "lifecycle_policy": V87}))

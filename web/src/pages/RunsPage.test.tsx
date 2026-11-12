@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { RunsPage } from './RunsPage'
+import { RUN_LIST_VIEWS_KEY } from './runListViews'
 
 const api = vi.hoisted(() => ({
   ApiError: class ApiError extends Error {},
@@ -14,8 +15,8 @@ const api = vi.hoisted(() => ({
 }))
 vi.mock('../api/client', () => api)
 
-function renderPage(): void {
-  render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
+function renderPage() {
+  return render(<QueryClientProvider client={new QueryClient({ defaultOptions: { queries: { retry: false } } })}>
     <MemoryRouter initialEntries={['/admin/runs']}><LanguageProvider><RunsPage /></LanguageProvider></MemoryRouter>
   </QueryClientProvider>)
 }
@@ -243,6 +244,145 @@ describe('canonical Runs inventory', () => {
       expect(within(row).queryByRole('status')).not.toBeInTheDocument()
     })
     expect(within(row).getByText('Run nemá dostupné větve.')).toBeInTheDocument()
+  })
+
+  it('saves named filters, survives remount and reapplies them to fresh Runs without auto-overwrite', async () => {
+    api.listRunContainers.mockResolvedValue({ run_containers: [
+      { run_id: 'test-editable', display_name: 'test working', read_only: false, status: 'working' },
+      { run_id: 'test-protected', display_name: 'test protected', read_only: true, status: 'active' }
+    ] })
+    const page = renderPage()
+    await screen.findByText('test working')
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'test')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Typ Runu' }), 'editable')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Moje testy')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    const stored = localStorage.getItem(RUN_LIST_VIEWS_KEY)
+    expect(stored).toContain('run_list_views.v1')
+    expect(JSON.parse(stored!).items).toEqual([
+      { name: 'Moje testy', query: 'test', visibility: 'editable', hidden: false }
+    ])
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Typ Runu' }), 'protected')
+    expect(screen.getByText('Filtry byly změněny. Uložený pohled zůstává beze změny.')).toBeInTheDocument()
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toBe(stored)
+    page.unmount()
+    renderPage()
+    await screen.findByText('test working')
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), 'Moje testy')
+    expect(screen.getByRole('searchbox', { name: 'Hledat Run' })).toHaveValue('test')
+    expect(screen.getByRole('combobox', { name: 'Typ Runu' })).toHaveValue('editable')
+    expect(screen.getByText('test working')).toBeInTheDocument()
+    expect(screen.queryByText('test protected')).not.toBeInTheDocument()
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+    expect(api.listBranchStates).not.toHaveBeenCalled()
+    expect(localStorage.getItem('beta_engine:last_run_id')).toBeNull()
+  })
+
+  it('requires explicit update, and rejects a duplicate name instead of silently replacing its filters', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Focus')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    const original = localStorage.getItem(RUN_LIST_VIEWS_KEY)
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Typ Runu' }), 'protected')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'focus')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Pohled se stejným názvem již existuje')
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toBe(original)
+    await userEvent.click(screen.getByRole('button', { name: 'Výslovně aktualizovat pohled' }))
+    expect(JSON.parse(localStorage.getItem(RUN_LIST_VIEWS_KEY)!).items[0].visibility).toBe('protected')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), '')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Typ Runu' }), 'all')
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), 'Focus')
+    expect(screen.getByRole('combobox', { name: 'Typ Runu' })).toHaveValue('protected')
+  })
+
+  it('hides a view only from quick selection and restores it from the manager after remount', async () => {
+    const page = renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Private view')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Spravovat pohledy' }))
+    await userEvent.click(screen.getByRole('button', { name: 'Skrýt: Private view' }))
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).not.toHaveTextContent('Private view')
+    expect(screen.getByText('Private view · Skrytý')).toBeInTheDocument()
+    page.unmount()
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.click(screen.getByRole('button', { name: 'Spravovat pohledy' }))
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).not.toHaveTextContent('Private view')
+    await userEvent.click(screen.getByRole('button', { name: 'Obnovit: Private view' }))
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Uložený pohled' }), 'Private view')
+    expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).toHaveValue('Private view')
+  })
+
+  it.each([
+    ['{broken', 'poškozené'],
+    [JSON.stringify({ schema_version: 'run_list_views.v99', items: [] }), 'nepodporovanou verzi'],
+    [JSON.stringify({ schema_version: 'run_list_views.v1', items: [{ name: 'Unsafe', query: '', visibility: 'anything', hidden: false }] }), 'poškozené']
+  ])('keeps damaged/unsupported preferences intact and basic navigation usable: %s', async (raw, note) => {
+    localStorage.setItem(RUN_LIST_VIEWS_KEY, raw)
+    renderPage()
+    expect(await screen.findByText('Sandbox One')).toBeInTheDocument()
+    expect(screen.getByRole('alert')).toHaveTextContent(note)
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'another')
+    expect(screen.getByText('Another world')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít Run' })).toHaveAttribute('href', '/admin/runs/run-two')
+    expect(screen.getByRole('button', { name: 'Uložit nový pohled' })).toBeDisabled()
+    expect(localStorage.getItem(RUN_LIST_VIEWS_KEY)).toBe(raw)
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+  })
+
+  it('keeps the inventory usable when browser storage throws on read or write', async () => {
+    const readError = vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => { throw new Error('blocked') })
+    const page = renderPage()
+    expect(await screen.findByText('Sandbox One')).toBeInTheDocument()
+    expect(screen.getByText('Úložiště prohlížeče není dostupné. Ukládání pohledů je vypnuté.')).toBeInTheDocument()
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'another')
+    expect(screen.getByText('Another world')).toBeInTheDocument()
+    page.unmount()
+    readError.mockRestore()
+    const writeError = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota') })
+    try {
+      renderPage()
+      await screen.findByText('Sandbox One')
+      await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Cannot persist')
+      await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+      expect(screen.getByRole('alert')).toHaveTextContent('Nastavení se nepodařilo uložit')
+      expect(screen.getByRole('combobox', { name: 'Uložený pohled' })).not.toHaveTextContent('Cannot persist')
+    } finally {
+      writeError.mockRestore()
+    }
+  })
+
+  it('supports English labels while preserving the user-authored view name', async () => {
+    localStorage.setItem('squash-engine-language-v1', 'en')
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('textbox', { name: 'New view name' }), 'Moje testy')
+    await userEvent.click(screen.getByRole('button', { name: 'Save new view' }))
+    expect(screen.getByRole('combobox', { name: 'Saved view' })).toHaveValue('Moje testy')
+    expect(screen.getByText('Saved only in this browser. Stores list filters, never Runs.')).toBeInTheDocument()
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+  })
+
+  it('applies saved search to the CURRENT refreshed inventory, not stored Run copies', async () => {
+    renderPage()
+    await screen.findByText('Sandbox One')
+    await userEvent.type(screen.getByRole('searchbox', { name: 'Hledat Run' }), 'Sandbox')
+    await userEvent.type(screen.getByRole('textbox', { name: 'Název nového pohledu' }), 'Current only')
+    await userEvent.click(screen.getByRole('button', { name: 'Uložit nový pohled' }))
+    api.listRunContainers.mockResolvedValue({ run_containers: [
+      { run_id: 'run-one', display_name: 'Renamed now', read_only: false, status: 'working' }
+    ] })
+    await userEvent.click(screen.getByRole('button', { name: 'Obnovit seznam Runů' }))
+    await waitFor(() => expect(screen.getByText('Žádný Run neodpovídá hledání.')).toBeInTheDocument())
+    expect(screen.queryByText('Sandbox One')).not.toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem(RUN_LIST_VIEWS_KEY)!).items[0]).toEqual({
+      name: 'Current only', query: 'Sandbox', visibility: 'all', hidden: false
+    })
+    expect(api.listRunBranches).not.toHaveBeenCalled()
   })
 
 })

@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
 import { getGlobalFullSimulationOperations, listBranchStates, listRunBranches, listRunContainers } from '../api/client'
@@ -8,11 +8,11 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { rememberProductRun } from '../navigation/recentProductRuns'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
-import { isValidRunListView, readRunListViews, writeRunListViews } from './runListViews'
+import { isValidRunListView, readRunListViews, RUN_LIST_VIEWS_KEY, RUN_LIST_VIEWS_LIMIT, writeRunListViews } from './runListViews'
 import type { RunListVisibility, SavedRunListView } from './runListViews'
 
 type ViewNotice = 'viewSaved' | 'viewUpdated' | 'viewHidden' | 'viewRestored'
-  | 'viewDuplicate' | 'viewInvalid' | 'viewLimit' | 'viewWriteFailed'
+  | 'viewDuplicate' | 'viewInvalid' | 'viewLimit' | 'viewWriteFailed' | 'viewConflict' | 'viewExternalChange'
 
 const messages = {
   cs: {
@@ -25,7 +25,8 @@ const messages = {
     quickView: 'Uložený pohled', chooseView: 'Vybrat pohled', newViewName: 'Název nového pohledu',
     saveView: 'Uložit nový pohled', updateView: 'Výslovně aktualizovat pohled',
     viewChanged: 'Filtry byly změněny. Uložený pohled zůstává beze změny.',
-    manageViews: 'Spravovat pohledy', viewsManager: 'Správce pohledů', noViews: 'Zatím žádné uložené pohledy.',
+    manageViews: 'Spravovat pohledy', reloadViews: 'Znovu načíst uložené pohledy',
+    viewsManager: 'Správce pohledů', noViews: 'Zatím žádné uložené pohledy.',
     hideView: 'Skrýt', restoreView: 'Obnovit', hiddenView: 'Skrytý',
     viewSaved: 'Pohled uložen.', viewUpdated: 'Pohled výslovně aktualizován.',
     viewHidden: 'Pohled skryt z rychlé nabídky.', viewRestored: 'Pohled obnoven.',
@@ -33,6 +34,8 @@ const messages = {
     viewInvalid: 'Zadej název (max. 64 znaků) a hledání do 250 znaků.',
     viewLimit: 'Byl dosažen limit 24 pohledů.',
     viewWriteFailed: 'Nastavení se nepodařilo uložit do prohlížeče. Změna nebyla provedena.',
+    viewConflict: 'Uložené pohledy se mezitím změnily v jiném panelu. Původní data nebyla přepsána; ověř nové pohledy a změnu případně zopakuj.',
+    viewExternalChange: 'Uložené pohledy se změnily v jiném panelu. Filtry zůstaly beze změny; pro použití vyber pohled znovu.',
     viewInvalidStorage: 'Uložené nastavení pohledů je poškozené. Zůstává nedotčené; základní filtry fungují.',
     viewUnsupportedStorage: 'Nastavení pohledů má nepodporovanou verzi. Nebude přepsáno.',
     viewUnavailableStorage: 'Úložiště prohlížeče není dostupné. Ukládání pohledů je vypnuté.',
@@ -66,7 +69,8 @@ const messages = {
     quickView: 'Saved view', chooseView: 'Choose a view', newViewName: 'New view name',
     saveView: 'Save new view', updateView: 'Explicitly update view',
     viewChanged: 'Filters changed. The saved view has not been overwritten.',
-    manageViews: 'Manage views', viewsManager: 'View manager', noViews: 'No saved views yet.',
+    manageViews: 'Manage views', reloadViews: 'Reload saved views',
+    viewsManager: 'View manager', noViews: 'No saved views yet.',
     hideView: 'Hide', restoreView: 'Restore', hiddenView: 'Hidden',
     viewSaved: 'View saved.', viewUpdated: 'View explicitly updated.',
     viewHidden: 'View hidden from quick selection.', viewRestored: 'View restored.',
@@ -74,6 +78,8 @@ const messages = {
     viewInvalid: 'Enter a name (up to 64 characters) and search text up to 250 characters.',
     viewLimit: 'The limit of 24 views has been reached.',
     viewWriteFailed: 'Could not save settings in this browser. No change was applied.',
+    viewConflict: 'Saved views changed in another tab. The newer data was not overwritten; review the views and try again if needed.',
+    viewExternalChange: 'Saved views changed in another tab. Current filters stayed unchanged; reselect a view to apply it.',
     viewInvalidStorage: 'Saved view settings are corrupted. Left untouched; basic filters still work.',
     viewUnsupportedStorage: 'Saved view settings use an unsupported version and will not be overwritten.',
     viewUnavailableStorage: 'Browser storage is unavailable. Saving views is disabled.',
@@ -196,8 +202,36 @@ export function RunsPage(): JSX.Element {
   const selectedView = savedViews.items.find(view => view.name === selectedViewName)
   const viewChanged = Boolean(selectedView && (query !== selectedView.query || visibility !== selectedView.visibility))
 
+  function acceptStoredViews(next: ReturnType<typeof readRunListViews>, notice: ViewNotice | null): void {
+    setSavedViews(next)
+    setSelectedViewName(current => next.items.some(view => view.name === current && !view.hidden) ? current : '')
+    setViewNotice(notice)
+  }
+
+  // The StorageEvent fires in OTHER same-origin tabs, not for this tab's own write.
+  // Never apply a remotely edited preference to the active filters automatically.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== null && event.key !== RUN_LIST_VIEWS_KEY) return
+      acceptStoredViews(readRunListViews(), 'viewExternalChange')
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
+  }, [])
+
   function persistViews(items: SavedRunListView[], notice: ViewNotice): boolean {
-    if (savedViews.status !== 'ok' || !writeRunListViews(items)) {
+    if (savedViews.status !== 'ok') {
+      setViewNotice('viewWriteFailed')
+      return false
+    }
+    // Best-effort stale-tab protection: don't silently replace a different
+    // version written since this page loaded. localStorage has no atomic CAS.
+    const latest = readRunListViews()
+    if (latest.status !== 'ok' || JSON.stringify(latest.items) !== JSON.stringify(savedViews.items)) {
+      acceptStoredViews(latest, 'viewConflict')
+      return false
+    }
+    if (!writeRunListViews(items)) {
       setViewNotice('viewWriteFailed')
       return false
     }
@@ -218,7 +252,7 @@ export function RunsPage(): JSX.Element {
       setViewNotice('viewDuplicate')
       return
     }
-    if (savedViews.items.length >= 24) {
+    if (savedViews.items.length >= RUN_LIST_VIEWS_LIMIT) {
       setViewNotice('viewLimit')
       return
     }
@@ -340,9 +374,10 @@ export function RunsPage(): JSX.Element {
         {selectedView && <button type="button" disabled={savedViews.status !== 'ok' || !viewChanged}
           onClick={updateSelectedView}>{l.updateView}</button>}
         <button type="button" aria-expanded={manageViews} onClick={() => setManageViews(open => !open)}>{l.manageViews}</button>
+        <button type="button" onClick={() => acceptStoredViews(readRunListViews(), null)}>{l.reloadViews}</button>
       </div>
       {viewChanged && <p className="status">{l.viewChanged}</p>}
-      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed'].includes(viewNotice) ? 'alert' : 'status'}>
+      {viewNotice && <p role={['viewDuplicate', 'viewInvalid', 'viewLimit', 'viewWriteFailed', 'viewConflict'].includes(viewNotice) ? 'alert' : 'status'}>
         {l[viewNotice]}</p>}
       {manageViews && <div>
         <h4>{l.viewsManager}</h4>

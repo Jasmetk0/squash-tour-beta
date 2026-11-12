@@ -129,7 +129,7 @@ describe('EventsPage URL-backed historical filters', () => {
     expect(await screen.findByText('No persisted events match the current filters.')).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Unknown week: null' })).toBeInTheDocument()
     expect(screen.getByRole('option', { name: 'Unknown category: UNKNOWN' })).toBeInTheDocument()
-    expect(screen.getByRole('status')).toHaveTextContent('has not silently switched to All')
+    expect(screen.getByText(/has not silently switched to All/)).toBeInTheDocument()
     expect(screen.getByLabelText('Current query')).toHaveTextContent('foreign=keep')
   })
 

@@ -251,7 +251,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
         </div>
         {(unknownWeek || unknownCategory) && !query.isLoading && <p role="status" className="status">{!filtersVerifiable
           ? (language === 'cs' ? 'Filtr zatím nelze ověřit z načtených zdrojů; zůstává aktivní.' : 'The filter cannot yet be verified from loaded sources and remains active.')
-          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Zůstává vybraný neznámý filtr, nikoliv Vše.' : 'The requested week or category is unavailable. The view has not switched to All.')}</p>
+          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Zůstává vybraný neznámý filtr, nikoliv Vše.' : 'The requested week or category is unavailable. The view has not switched to All.')}</p>}
         <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 

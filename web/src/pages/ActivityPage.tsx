@@ -160,8 +160,8 @@ export function ActivityPage(): JSX.Element {
   const filteredItems = indexedItems.filter(({ item }) => {
     const effectiveWeek = getEffectiveWeek(item, plannedContextByEventId, persistedEventById, ambiguousPersistedEventIds)
     const kindMatches = kindFilter ? item.kind === kindFilter : true
-    const seasonMatches = seasonFilter ? String(item.season) === seasonFilter : true
-    const weekMatches = weekFilter ? String(effectiveWeek) === weekFilter : true
+    const seasonMatches = seasonFilter ? item.season != null && String(item.season) === seasonFilter : true
+    const weekMatches = weekFilter ? effectiveWeek != null && String(effectiveWeek) === weekFilter : true
     const textMatches = normalizedTextFilter
       ? item.label.toLowerCase().includes(normalizedTextFilter) ||
         (item.event_id?.toLowerCase().includes(normalizedTextFilter) ?? false) ||

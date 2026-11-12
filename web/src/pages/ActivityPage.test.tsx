@@ -628,3 +628,16 @@ describe('ActivityPage', () => {
   })
 
 })
+
+
+it.each(['activitySeason=null', 'activityWeek=null'])(
+  'does not match absent metadata to an unsupported URL filter: %s', async filter => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [
+      { ...baseItems[3], season: null, week: null }
+    ] })
+    mockContext()
+    renderActivityWithHistory('/runs/run-a/activity?' + filter)
+    expect(await screen.findByText('No activity items match the current filters.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Run activity feed list' })).not.toBeInTheDocument()
+  }
+)

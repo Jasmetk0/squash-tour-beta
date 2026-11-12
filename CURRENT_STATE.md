@@ -1,3 +1,22 @@
+# Ordinary ChatGPT review and second queue — 12 November 2026
+
+Owner-merged base `buuk 8c2507bfe20601c5dd7b7fc7a47c48c5190180e9` now includes
+#1788/#1791/#1792. Work reviewed all source/test changes, corrected the null URL
+filter bug with two failing-before/passing-after regressions and paired duplicated
+feature translations. Combined final sources: 85 tests, typecheck/build passed;
+all final CI/CodeQL/Sonar passed. No browser pass: local Chromium was blocked by
+EPERM and the cloud browser could not reach the local application.
+
+Radim requested a second queue for this contributor: recent-Run controls on
+Admin Home, URL filters for the legacy Events reader, then Ranking/Race snapshot
+URL filters. Full source boundaries, examples and acceptance are in
+`docs/CHATGPT_PARALLEL_RUN_VIEWS_TASK.md`. These are new assignments, not completed
+features. Claude retains native lifecycle/career/season/notification work; Work
+retains ATP source/calendar/Q/Main integration. No sporting rule or Master changed.
+Earlier dated queue and pending-merge statements below remain history.
+
+---
+
 # Expanded Claude work queue — 12 November 2026
 
 Owner has merged #1784 and #1785; the refreshed baseline is

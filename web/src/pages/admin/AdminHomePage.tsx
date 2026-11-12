@@ -13,9 +13,13 @@ export function AdminHomePage(): JSX.Element {
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
-      if (event.storageArea === localStorage && (event.key === RECENT_PRODUCT_RUNS_STORAGE_KEY || event.key === null)) {
+      if (event.key !== RECENT_PRODUCT_RUNS_STORAGE_KEY && event.key !== null) return
+      try {
+        if (event.storageArea !== localStorage) return
         setRecentIds(readRecentProductRuns())
         setClearStatus('idle')
+      } catch {
+        // Browsers may deny access to storage entirely; Home remains usable.
       }
     }
     // The same-tab clear updates state directly; storage events cover other tabs.
@@ -56,9 +60,10 @@ export function AdminHomePage(): JSX.Element {
       {runs.isError && <p role="alert" className="error">{t('Unavailable')}: {formatApiError(runs.error)}</p>}
       {runs.isSuccess && all.length === 0 && <p className="status">{t('No Runs yet')}</p>}
       {runs.isSuccess && recent.length === 0 && all.length > 0 && <p className="status">{language === 'cs' ? 'Žádné dostupné nedávno otevřené Runy v tomto prohlížeči.' : 'No accessible recently opened Runs in this browser.'}</p>}
-      {runs.isSuccess && recent.length > 0 && <><div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div><ul className="home-run-list">
+      {runs.isSuccess && recentIds.length > 0 && <div className="home-recent__heading"><h4>{t('Recently opened')}</h4><button type="button" onClick={clearRecent}>{language === 'cs' ? 'Vymazat nedávné návštěvy' : 'Clear recent visits'}</button></div>}
+      {runs.isSuccess && recent.length > 0 && <ul className="home-run-list">
         {recent.map(run => <li key={run.run_id}><span><strong>{run.display_name || run.run_id}</strong><small>{run.status} · {run.read_only ? 'Read-only' : 'Editable'}</small></span>
-          <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul></>}
+          <Link to={'/admin/runs/' + encodeURIComponent(run.run_id)} onClick={() => rememberProductRun(run.run_id)}>{t('Open Run')} →</Link></li>)}</ul>}
       {clearStatus === 'cleared' && <p role="status">{language === 'cs' ? 'Historie nedávných návštěv byla vymazána jen v tomto prohlížeči. Runy zůstaly uložené.' : 'Recent visits were cleared only in this browser. Saved Runs remain unchanged.'}</p>}
       {clearStatus === 'error' && <p role="alert" className="error">{language === 'cs' ? 'Historii se nepodařilo vymazat. Zkontroluj nastavení úložiště prohlížeče.' : 'Could not clear recent visits. Check browser storage permissions.'}</p>}
       {runs.isSuccess && others.length > 0 && <><h4>{recent.length ? t('Other saved Runs') : t('Saved Product Runs')}</h4><ul className="home-run-list">

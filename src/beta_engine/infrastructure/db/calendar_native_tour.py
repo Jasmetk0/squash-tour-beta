@@ -13,10 +13,17 @@ from beta_engine.domain.tournaments.calendar_tour import CalendarTourTransition
 
 
 def _impact_lifecycle(impact):
+    """The target lifecycle, parsed only when Master v87 public fields need it.
+
+    Every Signed read replays all native transitions, so the historical rule must
+    not pay for parsing a whole-population lifecycle it never uses.
+    """
     from beta_engine.infrastructure.db.player_lifecycle_state import _parse_lifecycle_json
 
     raw = impact.get("lifecycle")
-    return None if raw is None else _parse_lifecycle_json(json.dumps(raw))
+    if raw is None or (raw.get("policy") or {}).get("tour_entry_rule") != "turn_pro.v87":
+        return None
+    return _parse_lifecycle_json(json.dumps(raw))
 
 
 def recorded_turn_pro_model(receipt_result):

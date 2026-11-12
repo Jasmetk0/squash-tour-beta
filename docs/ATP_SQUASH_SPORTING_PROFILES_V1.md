@@ -120,6 +120,28 @@ offset year rollover, invalid season/horizon/round chronology and real HTTP/
 SQLite Saved-source reads. They are planning/contract evidence, not a played
 cross-week tournament or publication acceptance pass.
 
+## Scheduled continuation after an explicit Run extension
+
+The consuming owner supplies the current Run calendar with its current slot.
+The frozen schedule and original Saved plan remain unchanged. The consumer
+accepts only the identical clock or a legal horizon extension through the Run
+calendar's existing extension rules. W, offset, start year and schema cannot be
+rebased. Each accepted match must retain the exact clock of its frozen slot;
+that clock cannot exceed the current Run horizon or precede the frozen source.
+A round cannot mix clocks, and later rounds cannot shrink the Run horizon.
+
+The same pending slot may finish with its original frozen clock after extension.
+Later newly frozen rounds can use the extended clock while consuming actual Q
+winners. The completed result retains the actual final match's clock; a later
+extension can make publication possible without rewriting that result. Seeds,
+scores, physical match effects and the copied source schedule are preserved.
+
+Component tests play all 43 matches with extension between Q/Main and compare
+sporting outcomes to the unextended control. A separate real HTTP/SQLite test
+extends the Run after source Save, retains the exact original source envelope
+and reloads the same plan after a cold restart. These are separate proofs, not a
+public native cross-week Run Save/Week Transition/Official-publication pass.
+
 ## Knockout configuration extension
 
 Setup source v3 adds sporting Category v2 with a separate knockout entity kind.

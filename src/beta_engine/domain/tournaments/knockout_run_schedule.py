@@ -61,6 +61,17 @@ class KnockoutRunSchedule(FrozenInput):
         elif self.qualification:
             raise ValueError('Qualification rounds require Qualification brackets')
 
+    def validate_runtime_calendar(self, calendar: RunCalendar):
+        """Keep this frozen schedule; only the consuming Run horizon may grow."""
+        if calendar == self.calendar:
+            return
+        try:
+            extended = self.calendar.extend_to(calendar.season_count)
+        except ValueError as error:
+            raise ValueError('Knockout runtime calendar may only extend the frozen source horizon') from error
+        if calendar != extended:
+            raise ValueError('Knockout runtime calendar may only extend the frozen source horizon')
+
     @property
     def fingerprint(self):
         return canonical_hash(self.model_dump(mode='json'))

@@ -65,3 +65,12 @@ def test_horizon_and_week_bounds_cannot_be_wrapped_or_clipped():
     for week,season in ((53,0),(1,1),(0,0)):
         with pytest.raises(ValueError): position(clock,week,1,season)
     with pytest.raises(ValueError): position(clock,5,True)
+
+
+def test_legacy_clock_cannot_become_modern_by_extending_the_consumer():
+    legacy=RunCalendar.legacy_fax()
+    schedule=KnockoutRunSchedule.on_one_week(week=position(legacy,5,1).week,
+        qualification=(1,),main=(2,))
+    schedule.validate_runtime_calendar(legacy)
+    with pytest.raises(ValueError,match='only extend'):
+        schedule.validate_runtime_calendar(RunCalendar(61,37,2000,51))

@@ -16,6 +16,11 @@ from tests.api.test_atp_saved_run_week_preview_api import _make_run
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 from tests.api.viewer_saved_revision_helpers import save_simulation
 from tests.infrastructure.test_tournament_draw_authority import ranking_snapshot
+from tests.api.test_run_calendar_extension_commit_api import _review, _save
+from beta_engine.domain.calendar.run_calendar import RunCalendar
+from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.tournaments.knockout_run_schedule import KnockoutRoundPosition
+from beta_engine.domain.tournaments.scheduled_knockout_feeders import scheduled_knockout_progress
 
 pytestmark=pytest.mark.pr_critical
 
@@ -89,6 +94,23 @@ def test_saved_atp_draw_reopens_without_reading_live_draw_and_rejects_corruption
         save_simulation(server,r,b)
         assert repo.get_branch_revision_state(branch_id=b).saved_head_revision_id != plan.source_saved_revision_id
         assert service.reload(plan,run_id=r,branch_id=b,expected_plan_fingerprint=reviewed_fingerprint)==plan
+        original_source=next(row for row in repo.get_branch_saved_revision_history(run_id=r,branch_id=b).saved_revisions
+                             if row.revision_id==plan.source_saved_revision_id)
+        source_bytes=json.dumps(original_source.payload,sort_keys=True)
+        code,reviewed=_review(server,r,3);assert code==200,reviewed
+        assert reviewed['can_save'],reviewed
+        code,extended=_save(server,r,reviewed,'atp-schedule-horizon-extension');assert code==200,extended
+        assert extended['saved'] and not extended['simulation_started']
+        runtime=RunCalendar.from_metadata(reviewed['proposed_calendar'])
+        restored=service.reload(plan,run_id=r,branch_id=b,expected_plan_fingerprint=reviewed_fingerprint)
+        current=KnockoutRoundPosition(week=RunWeekPosition(calendar=runtime,season_index=0,week=5),slot=1)
+        _,due=scheduled_knockout_progress(plan=restored,matches=(),positions={},current=current)
+        assert len(due)==8
+        assert restored.model_dump_json()==encoded
+        unchanged=next(row for row in repo.get_branch_saved_revision_history(run_id=r,branch_id=b).saved_revisions
+                       if row.revision_id==plan.source_saved_revision_id)
+        assert unchanged.content_hash==original_source.content_hash
+        assert json.dumps(unchanged.payload,sort_keys=True)==source_bytes
         # Tamper ONLY live Draw data. An immutable source read must ignore it.
         with repo._session_factory.begin() as session:
             row=session.query(TournamentDrawAuthorityModel).filter_by(run_id=r,branch_id=b,event_id=scope['event_id']).one()
@@ -100,6 +122,12 @@ def test_saved_atp_draw_reopens_without_reading_live_draw_and_rejects_corruption
         service=SavedATPScheduledFeederService(repo)
         plan=ScheduledKnockoutFeederPlan.model_validate_json(encoded)
         assert service.reload(plan,run_id=r,branch_id=b,expected_plan_fingerprint=reviewed_fingerprint)==plan
+        code,reviewed=_review(reopened,r,4);assert code==200,reviewed
+        assert reviewed['original_calendar']['season_count']==3
+        runtime=RunCalendar.from_metadata(reviewed['original_calendar'])
+        current=KnockoutRoundPosition(week=RunWeekPosition(calendar=runtime,season_index=0,week=5),slot=1)
+        _,due=scheduled_knockout_progress(plan=plan,matches=(),positions={},current=current)
+        assert len(due)==8
         with pytest.raises(ValueError): service.reload(plan,run_id=r,branch_id='foreign',expected_plan_fingerprint=reviewed_fingerprint)
         with pytest.raises(ValueError,match='reviewed binding'):
             service.reload(plan,run_id=r,branch_id=b,expected_plan_fingerprint='f'*64)

@@ -72,7 +72,7 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     <h3>{title}</h3>
     <p>{cs
       ? 'Pouze čtení z uložené revize vybrané Branch. Neexistuje žádné složené skóre země; zobrazují se výslovné ukazatele. Přehled sám nic nezastavuje ani nevytváří.'
-      : 'Read-only from the selected Branch Saved revision. There is no composite country score; explicit metrics are shown. The view pauses and creates nothing.'}</p>
+      : 'Read-only from the selected Branch Saved revision. There is no composite country score; explicit metrics are shown. The view neither pauses the simulation nor creates anything.'}</p>
     {archive.seasons.length === 0
       ? <p>{cs ? 'Zatím není dokončena žádná sezóna.' : 'No season is completed yet.'}</p>
       : <div className="table-responsive"><table aria-label={cs ? 'Archiv dokončených sezón' : 'Completed season archive'}>

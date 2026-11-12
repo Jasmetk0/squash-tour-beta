@@ -1,5 +1,7 @@
-import { screen, within } from '@testing-library/react'
+import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { describe, expect, it, vi } from 'vitest'
 
 import { ActivityPage } from './ActivityPage'
@@ -89,6 +91,27 @@ function mockContext(): void {
       { event_sequence: 15, event_id: 'WORLD_TOUR_FINALS', season: 2027, week: 40, template_id: 'T-FINALS', tournament_result: null }
     ]
   })
+}
+
+function ActivityHistoryHarness(): JSX.Element {
+  const location = useLocation()
+  const navigate = useNavigate()
+  return <>
+    <ActivityPage />
+    <output data-testid="activity-url">{location.search}</output>
+    <button type="button" onClick={() => navigate(-1)}>Browser back</button>
+  </>
+}
+
+function renderActivityWithHistory(route: string): void {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+  render(<QueryClientProvider client={client}>
+    <MemoryRouter initialEntries={[route]}>
+      <Routes>
+        <Route path="/runs/:runId/*" element={<ActivityHistoryHarness />} />
+      </Routes>
+    </MemoryRouter>
+  </QueryClientProvider>)
 }
 
 describe('ActivityPage', () => {
@@ -500,4 +523,121 @@ describe('ActivityPage', () => {
     }
   })
 
+  it('restores URL filters and selected original index from a bookmarked Run activity link', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    renderActivityWithHistory('/runs/run-a/activity?activityKind=ranking_snapshot&activitySeason=2027&activityWeek=1&activityText=Ranking&selectedItem=1&from=bookmarks')
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    const buttons = within(list).getAllByRole('button')
+    expect(buttons).toHaveLength(1)
+    expect(buttons[0]).toHaveTextContent('Ranking snapshot 11')
+    expect(screen.getByLabelText('Filter activity by kind')).toHaveValue('ranking_snapshot')
+    expect(screen.getByLabelText('Filter activity by season')).toHaveValue('2027')
+    expect(screen.getByLabelText('Filter activity by week')).toHaveValue('1')
+    expect(screen.getByLabelText('Filter activity by label or identifier text')).toHaveValue('Ranking')
+    expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/11'
+    )
+    const params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('selectedItem')).toBe('1')
+    expect(params.get('from')).toBe('bookmarks')
+    expect(api.getRunActivity).toHaveBeenCalledWith('run-a')
+  })
+
+  it('writes filter changes into the URL, preserves unrelated parameters, and resets selection', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    const user = userEvent.setup()
+    renderActivityWithHistory('/runs/run-a/activity?from=other-page&selectedItem=2')
+    await screen.findByRole('list', { name: 'Run activity feed list' })
+
+    await user.selectOptions(screen.getByLabelText('Filter activity by kind'), 'event')
+    let params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('activityKind')).toBe('event')
+    expect(params.get('selectedItem')).toBeNull()
+    expect(params.get('from')).toBe('other-page')
+
+    await user.type(screen.getByLabelText('Filter activity by label or identifier text'), 'E1')
+    params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('activityKind')).toBe('event')
+    expect(params.get('activityText')).toBe('E1')
+    expect(screen.getByRole('link', { name: 'Open persisted event detail' })).toHaveAttribute(
+      'href', '/runs/run-a/events/E1'
+    )
+    await user.click(screen.getByRole('button', { name: 'Reset filters' }))
+    params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('from')).toBe('other-page')
+    expect(params.has('selectedItem')).toBe(false)
+    expect(['activityKind', 'activitySeason', 'activityWeek', 'activityText'].every(k => !params.has(k))).toBe(true)
+    expect(within(screen.getByRole('list', { name: 'Run activity feed list' })).getAllByRole('button')).toHaveLength(4)
+    expect(api.listEvents).toHaveBeenCalled()
+  })
+
+  it('keeps unknown URL filters restrictive and shows an inspectable missing value', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    renderActivityWithHistory('/runs/run-a/activity?activityKind=unknown_kind&activitySeason=9999&activityWeek=1000&from=deep-link')
+    expect(await screen.findByText('No activity items match the current filters.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Filter activity by kind')).toHaveValue('unknown_kind')
+    expect(screen.getByRole('option', { name: 'unknown_kind · Unavailable' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Filter activity by season')).toHaveValue('9999')
+    expect(screen.getByLabelText('Filter activity by week')).toHaveValue('1000')
+    expect(screen.queryByRole('link', { name: 'Open persisted event detail' })).not.toBeInTheDocument()
+    expect(screen.getByTestId('activity-url')).toHaveTextContent('activityKind=unknown_kind')
+    await userEvent.click(screen.getByRole('button', { name: 'Reset filters' }))
+    expect(within(await screen.findByRole('list', { name: 'Run activity feed list' })).getAllByRole('button')).toHaveLength(4)
+    expect(new URLSearchParams(screen.getByTestId('activity-url').textContent!).get('from')).toBe('deep-link')
+  })
+
+  it('restores prior filters when navigating back without replacing selected activity history', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    const user = userEvent.setup()
+    renderActivityWithHistory('/runs/run-a/activity?from=history')
+    await screen.findByRole('list', { name: 'Run activity feed list' })
+    await user.selectOptions(screen.getByLabelText('Filter activity by kind'), 'event')
+    await user.selectOptions(screen.getByLabelText('Filter activity by season'), '2027')
+    let params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('activityKind')).toBe('event')
+    expect(params.get('activitySeason')).toBe('2027')
+    await user.click(screen.getByRole('button', { name: 'Browser back' }))
+    expect(screen.getByLabelText('Filter activity by kind')).toHaveValue('event')
+    expect(screen.getByLabelText('Filter activity by season')).toHaveValue('')
+    await user.click(screen.getByRole('button', { name: 'Browser back' }))
+    expect(screen.getByLabelText('Filter activity by kind')).toHaveValue('')
+    expect(within(screen.getByRole('list', { name: 'Run activity feed list' })).getAllByRole('button')).toHaveLength(4)
+    expect(new URLSearchParams(screen.getByTestId('activity-url').textContent!).get('from')).toBe('history')
+  })
+
+  it('keeps active URL filters while selecting another activity item', async () => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: baseItems })
+    mockContext()
+    const user = userEvent.setup()
+    renderActivityWithHistory('/runs/run-a/activity?activitySeason=2027&from=timeline')
+    const list = await screen.findByRole('list', { name: 'Run activity feed list' })
+    const callsBeforeSelection = api.getRunActivity.mock.calls.length
+    await user.click(within(list).getByRole('button', { name: /Ranking snapshot 11/i }))
+    const params = new URLSearchParams(screen.getByTestId('activity-url').textContent!)
+    expect(params.get('selectedItem')).toBe('1')
+    expect(params.get('activitySeason')).toBe('2027')
+    expect(params.get('from')).toBe('timeline')
+    expect(screen.getByRole('link', { name: 'Open ranking snapshot detail' })).toHaveAttribute(
+      'href', '/runs/run-a/snapshots/ranking/11'
+    )
+    expect(api.getRunActivity).toHaveBeenCalledTimes(callsBeforeSelection)
+  })
+
 })
+
+
+it.each(['activitySeason=null', 'activityWeek=null'])(
+  'does not match absent metadata to an unsupported URL filter: %s', async filter => {
+    api.getRunActivity.mockResolvedValueOnce({ run_id: 'run-a', items: [
+      { ...baseItems[3], season: null, week: null }
+    ] })
+    mockContext()
+    renderActivityWithHistory('/runs/run-a/activity?' + filter)
+    expect(await screen.findByText('No activity items match the current filters.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Run activity feed list' })).not.toBeInTheDocument()
+  }
+)

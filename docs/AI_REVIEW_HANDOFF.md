@@ -1,6 +1,8 @@
 # AI repair handoff — 12 November 2026
 
-Current assignment after Work's review of all 17 open Claude PRs. This replaces
+Current assignment, expanded at Radim's request on 12 November with three
+follow-on implementation packages. This follows Work's review of all 17 open
+Claude PRs and replaces
 the 11 November repair prompt; the old findings remain dated history in the
 [existing evidence map](PRE_ALPHA_INTEGRATION_2026_10_30.md). This is a one-month
 trial, not a subscription commitment. Radim owns every merge.
@@ -24,39 +26,49 @@ not silently approve every detail in Claude's proposed #1765.
 **Work completed:** #1784 consolidates #1766/#1769 and restores the positive
 Reconstruction test's lost `pr_critical` marker; 22 focused tests pass, including
 both real successful Reconstruction and missing-Health rejection. Production
-config is unchanged. This documentation candidate reconciles #1765 with the
-owner's confirmations, retaining current ATP/coordination evidence. These are
-separate from the runtime chain and need owner merge; do not redo either repair.
+config is unchanged. Work #1785 reconciled #1765 with the
+owner's confirmations, retaining current ATP/coordination evidence. Both #1784
+and #1785 are now owner-merged. Do not redo either repair; fetch the
+actual latest buuk before continuing.
 
-**Claude owns:** one final Turn Pro runtime candidate based on #1783, followed by
-the separate #1764 read-only UI correction. Work reviews those results and keeps
-the ATP schedule/source work; use one writer for shared Tour/persistence files.
+**Claude owns, in order:** the final Turn Pro repair, the separate Saved Draw UI
+repair, then the native career/milestone, seasonal-summary/comparison and
+following/notification packages below. These are authorised implementation
+packages, not a request to return only another plan. Work independently reviews
+the results and owns ATP source/schedule/slot integration. Shared Tour/persistence
+writers require an explicit file-boundary handoff, not competing implementations.
 
 ## Prompt to paste into a NEW Claude Code chat
 
 You are continuing Squash Engine for Radim. Implement autonomously within this
 assignment. Work is technical lead, active developer and independent reviewer;
-Radim alone merges. Read `AGENTS.md`, `CLAUDE.md`, the full Master (especially
-9.2, 19.2 and 36), `CURRENT_STATE.md`, `ROADMAP.md`, this file and the current
-section of `docs/PRE_ALPHA_INTEGRATION_2026_10_30.md` before editing.
+Radim alone merges. Read `AGENTS.md`, `CLAUDE.md`, `CURRENT_STATE.md`,
+`ROADMAP.md`, this file and the current integration evidence map before editing.
+Map the canonical Master's structure and read the full relevant clauses/statuses
+for each package, including 9.2, 19.2, 21.5, 25.6/25.6.1, 27.23/27.25 and 36.
+This handoff selects work; it does not replace the Master or discard its other
+pre-alpha requirements.
 
 ### Start from the real current heads
 
 - Repository: `Jasmetk0/squash-tour-beta`; integration branch: `buuk`.
-- Reviewed base: `a86053f7ded5b72cd594f7e51ce64ab6ea43d11b`. Fetch current refs;
-  do not assume this is still the latest owner-merged baseline.
+- Current owner-merged base at this prompt expansion:
+  `6e4066a8359307be4d89c0f9202260bcc69a4e92`, including #1784 and #1785.
+  Fetch current refs; do not assume this remains the latest baseline. The prior
+  runtime audit used `a86053f7ded5b72cd594f7e51ce64ab6ea43d11b`.
 - Runtime #1783: `claude/turn-pro-self-perception-v87`, reviewed head
-  `06b41e45467f1131883787e4ef3697a3339977a0`. It already contains current reviewed
-  buuk and the entire chain #1767 → #1768 → #1770 → #1771 → #1772 → #1773 →
+  `06b41e45467f1131883787e4ef3697a3339977a0`. It already contains the former audited
+  `buuk a86053f7` and the entire chain #1767 → #1768 → #1770 → #1771 → #1772 → #1773 →
   #1774 → #1775 → #1776 → #1777 → #1778 → #1779. Its real delta is 41 files,
   +3922/-70 versus buuk, not every ATP file seen in a two-dot parent comparison.
 - Work #1784: `feat/claude-entry-test-review-20261112`, reviewed head
   `95c704c4683933cf8836d8ba0303b1200a7513a4`, contains the two useful test repairs
-  AND restores the positive Reconstruction marker. Use it once, by normal merge
-  when needed; never copy the uncorrected #1769 over it. Preserve ancestry.
-- Work documentation: `feat/claude-review-handoff-20261112`. If not yet merged,
-  read its exact files; do not replace current coordination/ATP evidence with
-  #1765's old versions. The owner decisions in this prompt already apply.
+  AND restores the positive Reconstruction marker. It is already in buuk; retain
+  it when integrating the latest base. Never copy the uncorrected #1769 over it.
+- Work's documentation #1785 is already merged. This expanded prompt is on
+  `feat/claude-next-work-packages-20261112` until its owner merge. If necessary,
+  fetch/read this file from that branch. Do not replace current coordination/ATP
+  evidence with #1765's old versions. The owner decisions already apply.
 
 Continue the existing runtime branch through normal commits if your environment
 allows it. Otherwise create ONE coherent Draft continuation PR from the latest
@@ -65,7 +77,7 @@ Do not make another chain of one-feature PRs, force-push, merge, enable auto-mer
 write directly to buuk or close predecessors without Radim/Work's decision.
 Do not merge intermediate v1-model heads as standalone production defaults.
 
-### Task 1 — finish the supported Turn Pro path, then stop for review
+### Task 1 — finish the supported Turn Pro path as a reviewable whole
 
 1. **Make decision knowledge inspectable and historically exact.**
    `turn_pro_model.py::decide_turn_pro` hashes the candidates/observations, then
@@ -167,6 +179,144 @@ Admin-only/read-only boundary. Do not add an adoption button or a second writer.
 Run the relevant API/component/page tests, typecheck/build and the actual changed
 page's Chromium acceptance; account for shared `api/client.ts` path filters.
 
+### Task 3 — native player careers, milestones and retirement summary
+
+**Product basis:** Master 9.2, 21.5 and 27.25. Deliver a usable native Run player
+profile section: concise career overview, filterable timeline, factual milestones
+and a retirement summary, with real underlying evidence links and CS/EN. This
+extends existing readers/components rather than creating a second player profile.
+
+- First audit the current readers, especially `player_career_query_service.py`,
+  `player_career_performance_query_service.py`, `PlayerCareerPage.tsx`, Saved
+  player navigation and native signed records. The legacy career service walks
+  connected legacy Run trees; that is not authority to combine sibling native
+  Branch histories. Use authenticated selected Run/Branch/reachable Saved time,
+  actual public events, matches, results, ranking snapshots and supported Health.
+- Include Turn Pro/debut, first evidenced title, first TOP-100 entry, career-high
+  published ranking and retirement where data exists. Preserve source identity,
+  covered period and unknown/unsupported cases. A player with partial prehistory
+  has a *first recorded title*, not an invented first lifetime title. A missing
+  injury/return source is unavailable, not a guessed event.
+- Derive achievements from existing immutable facts. Reading a page creates no
+  events, Save or sport. A retirement summary survives restart/restore and links
+  to that player's recorded career, including the never-pro exception from
+  Task 1. Do not duplicate Task 1's audit/exception implementation.
+- **Acceptance example:** P turns pro in Week 4 and wins its first evidenced
+  Edition in Week 10. The Week-3 view contains neither future fact; the Week-10
+  view links both to exact sources. A fork where P loses has no inherited future
+  title from its sibling. Cold restart and later source/default changes preserve
+  the old view. Show this through real HTTP/SQLite plus the actual Admin profile
+  in Chromium; UI mocks alone are not completion.
+
+Do not redesign development, scoring, injuries or retirement AI to populate the
+page. Keep exact milestone catalog/layout extensible and calibration labelled.
+A complete new Viewer frontend or annual Awards is outside this package.
+
+### Task 4 — completed-season overview and country/season comparison
+
+**Product basis:** Master 6.5/6.9, 21.5, 27.25 and 31.40. Deliver an Admin seasonal
+archive with a compact summary, detailed player/country/Edition tables and
+comparison with the previous OR another recorded completed season.
+
+- Extend `application/calendar_tour_season_summary.py`, its actual Saved API and
+  existing native Tour season-summary/record UI. They already provide bounded
+  national comparison; audit and complete the missing product flow, do not
+  rebuild it or report their existing functions as new work.
+- Use signed Season Transition/terminal closure and actual authoritative played
+  Edition results. Include available end-of-season ranking, major winners,
+  evidenced debuts/retirements/milestones, and explainable changes. Respect the
+  distinct Week-W published ranking, outgoing-policy Season Closing Ranking and
+  next-season Week-1 ranking. Preserve final-week results and closure ownership.
+- Country comparison shows explicit metrics (e.g. titles/finals, TOP-10/100,
+  highest-ranked player), not an invented mandatory composite country score.
+  Keep historical sporting representation/identity where available. Changed
+  categories, policies or definitions expose limited comparability; missing
+  or unplayed history is not zero. Do not silently use current nationality,
+  present-day rules or future results in an older summary.
+- **Acceptance example:** complete two real bounded populated seasons, compare
+  both directions, then extend the Run or continue another Branch. The old
+  summaries and their sources remain unchanged. Cover W52/W61/W80 in separate
+  Runs, keeping each Run clock fixed. After automated continuation of
+  several short test seasons, every completed season remains accessible; no
+  extra pause, implicit Save, duplicate closure or fabricated full-season pass.
+  Prove real HTTP/SQLite cold restart and actual CS/EN Admin navigation.
+
+Reuse the existing summary projections/closures. If any shared sporting writer
+hook is essential, coordinate the small boundary with Work first; do not rewrite
+ATP scheduling, points, Week/Season mechanics or stop rules. This package does
+not certify the reference 50-season release.
+
+### Task 5 — following and milestone notifications from the same facts
+
+**Product basis:** Master 25.6/25.6.1 and 27.23/27.25. Deliver the bounded Admin
+following/attention flow over the achievements and summaries above. World Event
+Log, Audit Log, Task Center and Notification Center retain distinct meanings.
+
+- First discover what actually exists. Current `full_simulation_summary.py`
+  explicitly reports watched events/notifications unavailable; a Master target
+  is not evidence of an implemented watchlist service. Reuse real infrastructure
+  when present; otherwise implement the smallest coherent V1 of the approved
+  model, not a second parallel watchlist or a speculative full editor.
+- Player/country follows use the Master Run-level scope; event/history/notification
+  sources retain their exact Branch/time scope. Followed players get ordinary
+  personal milestone notifications; others still retain those facts in career
+  history. A followed country includes collective successes, meaningful domestic
+  leaders and exceptional individual achievements, not every minor event of
+  every representative. Label configurable leader/importance selection as
+  provisional calibration, with an explainable criterion.
+- Group related milestones into a readable item with source-linked details.
+  Dedupe the same event matching both player and country follows and exact retry,
+  reconnect/restart. Reading, hiding, muting or marking a notification read must
+  not delete the underlying facts or influence sport/RNG. Respect the existing
+  save/preferences ownership rather than inventing an implicit Run Save.
+- Keep supported UI clear and bilingual. No future knowledge, technical warnings
+  in public Viewer, notification-driven pauses or new stop-rule mechanism. Full
+  badge taxonomy, broad watchlist editor, News Importance Score and editorial
+  story generation are not prerequisites.
+- **Acceptance example:** following P and its country yields one grouped card
+  for P's first recorded title plus a ranking milestone, with both separate
+  historical facts accessible. An unrelated ordinary player milestone stays in
+  history without an ordinary personal alert. Read/mute persists appropriately;
+  repeat/restart does not duplicate delivery or change match results. A historical
+  or foreign Branch view reveals no later/sibling event. Exercise real persistence
+  and the actual Admin UI, not only a hard-coded notification fixture.
+
+### How to continue across the packages
+
+These follow-on packages are authorised now; do not stop after the first tiny
+repair to ask whether you may continue. Start with Tasks 1 and 2, then take the
+next feasible complete package in the order above. This is a queue, not a demand
+to finish all packages in one huge PR or one response.
+
+Before editing a package, inspect the current owner-merged baseline, open PRs,
+actual implementation and current Work assignment. Write a short scope/boundary
+note in its PR and start implementing. Skip already completed work with source
+and test evidence. Deliver backend + API + supported Admin flow + real persistence
+and focused acceptance where required, rather than disconnected helpers/mock UI.
+One coherent Draft PR per package; finish and test a stable head before starting
+another. If a package proves too large, split only at a complete usable boundary
+and explicitly preserve the remaining requirement.
+
+Hand completed PRs to Work for independent review. You may continue an independent
+package from current buuk while that review is pending. If the next package needs
+unmerged work, disclose the dependency and choose an independent package when
+possible; never treat your own green tests as owner merge approval or create a
+long unreviewed cumulative stack. Do not close predecessors unilaterally.
+
+Work owns ATP Packages, source/calendar mapping and native scheduled Q/Main slot
+integration. Claude owns lifecycle and the career/summary/notification readers
+above. Shared `calendar_tour_service.py`, Tour schemas, persistence and the API
+client require a clear single active writer; prefer existing adapters/projections
+and a bounded handoff for unavoidable shared edits. Do not redesign another
+owner's work just because you touch a shared file.
+
+Implementation choices and labelled provisional calibration are autonomous.
+Unresolved product decisions are not: ask Radim only when they block the current
+package, explain the consequence, and give two or three concrete options plus
+an example. Continue independent authorised work when possible. Do not implement
+finance, travel, referee, country DNA, scouting or other new subsystems as a
+prerequisite or invent new canon to fill an empty dashboard.
+
 ### Handoff and checks
 
 - Stable final head(s), actual parent and own delta against fetched current buuk;
@@ -187,7 +337,8 @@ page's Chromium acceptance; account for shared `api/client.ts` path filters.
 - Preserve corruption/rollback/retry negatives, legacy bytes and the full release
   policy. Ordinary PR review is not a 50-season/pre-alpha release certification.
 - Update the existing state/evidence map; no parallel authoritative status ledger.
-  Stop with a concrete reviewable result and remaining limitations. Radim merges.
+  Hand off each concrete reviewable result and remaining limitations, then
+  continue the next independent authorised package as described above. Radim merges.
 
 ## Reusable task brief and review checklist
 

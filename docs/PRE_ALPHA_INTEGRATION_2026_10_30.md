@@ -1,3 +1,19 @@
+# Work queue expansion — 12 November 2026
+
+After the review below, Radim owner-merged Work #1784/#1785; refreshed buuk is
+`6e4066a8359307be4d89c0f9202260bcc69a4e92`. At his request the
+[new-chat prompt](AI_REVIEW_HANDOFF.md#prompt-to-paste-into-a-new-claude-code-chat)
+now includes three larger follow-on packages after the existing repairs: native
+careers/milestones, completed-season comparison and milestone following/attention.
+These are authorised implementation assignments grounded in existing Master
+21.5/25.6.1/27.25, **not completed features, passed tests or new product rules**.
+Claude proceeds one complete package at a time and can continue independent work
+while Work reviews results. Work keeps ATP native source/scheduled integration;
+shared Tour/persistence files retain one active writer. #1783 remains the
+unmerged runtime candidate. The pinned review findings/evidence below remain.
+
+---
+
 # Current Claude review and handoff — 12 November 2026
 
 Reviewed baseline: `buuk a86053f7ded5b72cd594f7e51ce64ab6ea43d11b`,

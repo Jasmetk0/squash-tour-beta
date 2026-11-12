@@ -97,14 +97,6 @@ def main():
                             page.set_default_timeout(60000)
                             errors = []
                             page.on("pageerror", lambda error: errors.append(str(error)))
-                            def on_response(resp):
-                                if "/notifications" in resp.url or "/follows" in resp.url:
-                                    try:
-                                        body = resp.text()[:160]
-                                    except Exception as exc:  # noqa: BLE001
-                                        body = repr(exc)
-                                    print("NET", resp.request.method, resp.status, resp.url.split("/run")[-1], body, flush=True)
-                            page.on("response", on_response)
                             page.goto(f"{web}/admin/runs/run/following")
                             section = page.get_by_role("region", name=title)
                             expect(section).to_be_visible()
@@ -112,13 +104,6 @@ def main():
                             section.get_by_label("ID hráče / kód země" if language == "cs" else "Player ID / country code").fill(champion)
                             section.get_by_role("button", name=follow_btn, exact=True).click()
                             card = section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))
-                            page.wait_for_timeout(3000)
-                            from tests.api.test_saved_revision_history_api import _request as _req
-                            code, body = _req("GET", server.base_url + "/admin/runs/run/branches/branch/notifications")
-                            print("API NOTIFICATIONS:", code, len(body.get("cards", [])), str(body)[:600], flush=True)
-                            code, body = _req("GET", server.base_url + "/admin/runs/run/follows")
-                            print("API FOLLOWS:", code, body, flush=True)
-                            print("CHAMPION:", champion, flush=True)
                             expect(card).to_have_count(1)
                             card.locator("details summary").click()
                             expect(card).to_contain_text("played_edition")

@@ -32,9 +32,16 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
   const [subject, setSubject] = useState('')
   const [showHidden, setShowHidden] = useState(false)
   const followsKey = ['run-follows', runId]
-  const alertsKey = ['follow-alerts', runId, branchId, savedHead, showHidden]
   const follows = useQuery({ queryKey: followsKey, queryFn: () => getRunFollows(runId), retry: false })
-  const alerts = useQuery({ queryKey: alertsKey, queryFn: () => getFollowAlerts(runId, branchId, showHidden), retry: false })
+  const list = follows.data && validFollowList(follows.data, runId) ? follows.data : null
+  // Alerts depend on the follow set: it is part of the key and the read waits for it, so a
+  // slow first read can never leave a stale "no alerts" result after a follow changed.
+  const signature = list ? list.follows.map(f => `${f.kind}:${f.subject_id}:${f.alerts_enabled}`).join('|') : null
+  const alertsKey = ['follow-alerts', runId, branchId, savedHead, showHidden, signature]
+  const alerts = useQuery({
+    queryKey: alertsKey, queryFn: () => getFollowAlerts(runId, branchId, showHidden),
+    enabled: list !== null, retry: false
+  })
   const refresh = () => {
     void client.invalidateQueries({ queryKey: followsKey })
     void client.invalidateQueries({ queryKey: ['follow-alerts', runId, branchId] })
@@ -49,7 +56,6 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
     onSuccess: refresh
   })
   const title = cs ? 'Sledování a upozornění' : 'Following and alerts'
-  const list = follows.data && validFollowList(follows.data, runId) ? follows.data : null
   const cards = alerts.data && validAlertList(alerts.data, { runId, branchId, savedHead }) ? alerts.data : null
   const label = (it: AlertItem) => (KIND[it.kind] ?? [it.kind, it.kind])[cs ? 0 : 1]
   const detail = (it: AlertItem) => {
@@ -86,7 +92,8 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
     <h3>{cs ? 'Upozornění' : 'Alerts'}</h3>
     <label><input type="checkbox" checked={showHidden} onChange={e => setShowHidden(e.target.checked)} />{' '}
       {cs ? 'Zobrazit i skrytá' : 'Show hidden too'}</label>
-    {alerts.isPending ? <p role="status">{cs ? 'Načítám upozornění…' : 'Loading alerts…'}</p>
+    {follows.isPending || (list !== null && alerts.isPending) ? <p role="status">{cs ? 'Načítám upozornění…' : 'Loading alerts…'}</p>
+      : !list ? null
       : alerts.error ? <p role="status">{cs ? 'Upozornění nejsou pro tuto revizi dostupná: ' : 'Alerts are unavailable for this revision: '}{formatApiError(alerts.error)}</p>
       : !cards ? <p role="alert">{cs ? 'Odpověď neodpovídá vybrané Branch nebo uložené revizi a nebyla zobrazena.' : 'The response does not match the selected Branch or Saved revision and was not displayed.'}</p>
       : <>

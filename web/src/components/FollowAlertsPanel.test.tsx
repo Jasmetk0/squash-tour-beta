@@ -98,6 +98,23 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     expect(await screen.findByText(/Alerts are unavailable for this revision/)).toHaveTextContent('Saved configured Tour')
   })
 
+  it('reads alerts again after a follow even if the first read is still slow (no stale empty list)', async () => {
+    let release: (v: unknown) => void = () => undefined
+    api.getRunFollows.mockResolvedValueOnce(follows([])).mockResolvedValue(follows())
+    api.putRunFollow.mockResolvedValue(follows())
+    api.getFollowAlerts.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+      .mockResolvedValue(alerts())
+    mount()
+    await screen.findByText('You follow nothing yet.')
+    fireEvent.change(screen.getByLabelText('Player ID / country code'), { target: { value: 'P1' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Follow' }))
+    // The new follow set triggers its own read; the slow first one is irrelevant.
+    expect(await screen.findByLabelText(/^Alice /)).toBeInTheDocument()
+    release(alerts([]))
+    await waitFor(() => expect(api.getFollowAlerts.mock.calls.length).toBeGreaterThanOrEqual(2))
+    expect(screen.getByLabelText(/^Alice /)).toBeInTheDocument()
+  })
+
   it('says that facts stay in history when there is no alert', async () => {
     api.getFollowAlerts.mockResolvedValue(alerts([]))
     mount()

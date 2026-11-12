@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -152,4 +152,41 @@ describe('SnapshotsPage URL-backed Ranking/Race history filters', () => {
     expect(screen.queryByText(/other-world/)).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open dedicated snapshot detail page' })).not.toBeInTheDocument()
   })
+  it('retains the Ranking exact bookmark when typing a source filter during list loading', async () => {
+    const user = userEvent.setup()
+    let resolveSnapshots!: (value: unknown) => void
+    api.listRankingSnapshots.mockReturnValue(new Promise(resolve => { resolveSnapshots = resolve }))
+    renderPage('ranking', '?selectedSequence=3&selectedMode=ranking&selectedRun=run-a')
+    await user.type(screen.getByLabelText('Filter snapshots by source event'), 'E1')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedSequence=3')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('selectedMode=ranking')
+    expect(screen.getByLabelText('Current query')).toHaveTextContent('filterSourceEvent=E1')
+    await act(async () => { resolveSnapshots({ run_id: 'run-a', snapshots: [
+      { snapshot_sequence: 4, snapshot_kind: 'WEEK', source_event_id: 'E2', payload: {} },
+      { snapshot_sequence: 3, snapshot_kind: 'WEEK', source_event_id: 'E1', payload: { name: 'stored-three' } }
+    ] }) })
+    const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+    expect(within(list).getByRole('button', { name: /3\\. WEEK/ })).toHaveAttribute('aria-current', 'true')
+    expect(await screen.findByText(/stored-three/)).toBeInTheDocument()
+  })
+
+  it('keeps an unavailable source week distinguishable from an unknown week', async () => {
+    api.listEvents.mockRejectedValue(new Error('source events offline'))
+    api.getRun.mockRejectedValue(new Error('plan offline'))
+    renderPage('ranking', '?filterWeek=9')
+    expect(await screen.findByText('No snapshots match the current filters.')).toBeInTheDocument()
+    expect(screen.getByRole('option', { name: 'Week not verified: 9' })).toBeInTheDocument()
+    expect(screen.getByText(/cannot yet be verified from loaded sources/)).toBeInTheDocument()
+  })
+
+  it.each(['3abc', 'null', 'undefined', '3.5', '-3'])(
+    'never accepts a malformed selectedSequence=%s as a matching numeric snapshot', async (malformed) => {
+      renderPage('ranking', `?selectedSequence=${encodeURIComponent(malformed)}`)
+      const list = await screen.findByRole('list', { name: 'Ranking snapshots list' })
+      expect(within(list).getByRole('button', { name: /4\\. WEEK/ })).toHaveAttribute('aria-current', 'true')
+      expect(within(list).getByRole('button', { name: /3\\. WEEK/ })).not.toHaveAttribute('aria-current')
+      expect(await screen.findByText(/ranking-4/)).toBeInTheDocument()
+    }
+  )
+
 })

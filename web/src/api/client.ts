@@ -5509,3 +5509,11 @@ export function importPlayerLabHistory(payload: {product_run_id: string; branch_
 export function runPlayerLabSession(id: string, fingerprint: string): Promise<import('./types').PlayerLabResult> {
   return request(`/admin/labs/player/sessions/${encodeURIComponent(id)}/run`, {method: 'POST', body: JSON.stringify({expected_session_fingerprint: fingerprint})})
 }
+
+/** Read-only archive of every completed season of the Branch's Saved native Tour. */
+export function getSeasonArchive(run:string,branch:string):Promise<import('./seasonArchive').SeasonArchive> {
+  return request(calendarTourRoot(run,branch)+'/seasons')
+}
+export function getSeasonDetail(run:string,branch:string,season:number,compareTo:number):Promise<import('./seasonArchive').SeasonDetailResponse> {
+  return request(calendarTourRoot(run,branch)+'/seasons/'+encodeURIComponent(season)+'?compare_to='+encodeURIComponent(compareTo))
+}

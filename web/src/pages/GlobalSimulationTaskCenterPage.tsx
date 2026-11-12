@@ -2,8 +2,8 @@ import { BoundaryDescription } from '../components/FullSimulationBoundaryTargets
 import { FullSimulationServerTasks, useServerTasks } from '../components/FullSimulationServerTasks'
 import { TaskCenterRecoveryDiagnostics } from '../components/TaskCenterRecoveryDiagnostics'
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useMemo } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getGlobalFullSimulationOperations } from '../api/client'
 import type { GlobalFullSimulationOperation } from '../api/types'
@@ -11,8 +11,6 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { rememberProductRun } from '../navigation/recentProductRuns'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
-
-type OperationStateFilter = 'all' | GlobalFullSimulationOperation['control_state']
 
 const copy = {
   cs: {
@@ -30,6 +28,9 @@ const copy = {
     search: 'Hledat Run, větev nebo ID příkazu',
     searchPlaceholder: 'Název, ID Runu, Branch nebo příkazu',
     filter: 'Stav uložené operace',
+    matching: 'Zobrazené záznamy po filtrování',
+    reset: 'Zrušit filtry záznamů',
+    unknownState: 'Nepodporovaný stav v odkazu – žádný záznam nebyl automaticky vybrán',
     all: 'Všechny stavy',
     state: {
       running: 'Povoleno – aktivita procesu nepotvrzena',
@@ -75,6 +76,9 @@ const copy = {
     search: 'Search Run, Branch or command ID',
     searchPlaceholder: 'Name, Run ID, Branch ID or command ID',
     filter: 'Saved control state',
+    matching: 'Receipts matching filters',
+    reset: 'Reset receipt filters',
+    unknownState: 'Unsupported state in link – no receipt was selected automatically',
     all: 'All states',
     state: {
       running: 'Authorized – worker activity unverified',
@@ -118,8 +122,32 @@ function matchingOperation(operation: GlobalFullSimulationOperation, value: stri
 export function GlobalSimulationTaskCenterPage(): JSX.Element {
   const { language } = useLanguage()
   const text = copy[language]
-  const [search, setSearch] = useState('')
-  const [state, setState] = useState<OperationStateFilter>('all')
+  // These URL parameters filter *only* historical persisted receipts below;
+  // the independent server-task list and any recovery controls are unchanged.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const search = searchParams.get('receiptQuery') ?? ''
+  const state = searchParams.get('receiptState') ?? 'all'
+  const unsupportedState = state !== 'all' && state !== 'running' &&
+    state !== 'pause_requested' && state !== 'paused'
+
+  function setReceiptFilter(key: 'receiptQuery' | 'receiptState', value: string): void {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (!value || (key === 'receiptState' && value === 'all')) next.delete(key)
+      else next.set(key, value)
+      return next
+    }, { replace: key === 'receiptQuery' })
+  }
+
+  function resetReceiptFilters(): void {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      next.delete('receiptQuery')
+      next.delete('receiptState')
+      return next
+    })
+  }
+
   const serverTasks = useServerTasks()
   const inventory = useQuery({
     queryKey: ['global-full-simulation-operations'],
@@ -172,17 +200,20 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     <div className="simulation-task-center__toolbar">
       <label>{text.search}
         <input type="search" value={search}
-          onChange={event => setSearch(event.target.value)}
+          onChange={event => setReceiptFilter('receiptQuery', event.target.value)}
           placeholder={text.searchPlaceholder} />
       </label>
       <label>{text.filter}
-        <select value={state} onChange={event => setState(event.target.value as OperationStateFilter)}>
+        <select value={state} onChange={event => setReceiptFilter('receiptState', event.target.value)}>
           <option value="all">{text.all}</option>
+          {unsupportedState && <option value={state}>{state} · {text.unknownState}</option>}
           <option value="running">{text.state.running}</option>
           <option value="pause_requested">{text.state.pause_requested}</option>
           <option value="paused">{text.state.paused}</option>
         </select>
       </label>
+      {(search || state !== 'all') &&
+        <button type="button" onClick={resetReceiptFilters}>{text.reset}</button>}
       <button type="button" onClick={() => { void inventory.refetch() }}
         disabled={inventory.isFetching}>{inventory.isFetching ? text.refreshing : text.refresh}</button>
     </div>
@@ -190,7 +221,9 @@ export function GlobalSimulationTaskCenterPage(): JSX.Element {
     {inventory.isError && <p role="alert" className="error">{text.unavailable}: {formatApiError(inventory.error)}</p>}
     {inventory.isSuccess && <>
       <p className="status">{text.count}: <strong>{inventory.data.pending_count}</strong>
-        {' · '}{text.legacy}: <strong>{inventory.data.legacy_pending_count}</strong></p>
+        {' · '}{text.legacy}: <strong>{inventory.data.legacy_pending_count}</strong>
+        {' · '}{text.matching}: <strong>{operations.length} / {inventory.data.operations.length}</strong></p>
+      {unsupportedState && <p role="status">{text.unknownState}</p>}
       {inventory.data.pending_count === 0 ? <p className="status">{text.empty}</p>
         : operations.length === 0 ? <p className="status">{text.noMatches}</p>
           : <ul className="simulation-task-center__list" aria-label={text.title}>

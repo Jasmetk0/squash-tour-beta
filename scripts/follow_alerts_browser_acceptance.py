@@ -97,6 +97,14 @@ def main():
                             page.set_default_timeout(60000)
                             errors = []
                             page.on("pageerror", lambda error: errors.append(str(error)))
+                            def on_response(resp):
+                                if "/notifications" in resp.url or "/follows" in resp.url:
+                                    try:
+                                        body = resp.text()[:160]
+                                    except Exception as exc:  # noqa: BLE001
+                                        body = repr(exc)
+                                    print("NET", resp.request.method, resp.status, resp.url.split("/run")[-1], body, flush=True)
+                            page.on("response", on_response)
                             page.goto(f"{web}/admin/runs/run/following")
                             section = page.get_by_role("region", name=title)
                             expect(section).to_be_visible()

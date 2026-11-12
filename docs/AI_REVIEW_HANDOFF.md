@@ -38,15 +38,21 @@ packages, not a request to return only another plan. Work independently reviews
 the results and owns ATP source/schedule/slot integration. Shared Tour/persistence
 writers require an explicit file-boundary handoff, not competing implementations.
 
-## Separate ordinary-ChatGPT assignment
+## Separate ordinary-ChatGPT assignment — queue 2
 
-Radim requested a third parallel contributor. Its bounded task is documented in
-`docs/CHATGPT_PARALLEL_RUN_VIEWS_TASK.md`: named personal filter views for the
-existing `web/src/pages/RunsPage.tsx` only, with isolated helpers/tests. Reserve
-that page and its new Run-list-view files for this task. It does not own global
-favorites/following, career/season views, backend persistence or the API client.
-Claude keeps Tasks 1–5 below; Work keeps ATP. Check actual open PRs before any
-shared edit. This allocation is not evidence of implemented Saved Views.
+Owner has merged #1788/#1791/#1792 after Work's independent review and corrections:
+85 combined frontend tests, typecheck/build and final-head CI/CodeQL/Sonar passed.
+Browser execution was blocked by the environment and is not claimed.
+
+At Radim's request the next bounded queue is documented in
+`docs/CHATGPT_PARALLEL_RUN_VIEWS_TASK.md`: (1) recent-Run history management on
+Admin Home; (2) URL filters for legacy EventsPage; (3) URL filters for legacy
+SnapshotsPage (Ranking/Race). Reserve only those pages, recentProductRuns helper
+and their isolated tests. They do not own global favorites/following, native
+career/season views, backend or the API client. Independent PRs use fresh buuk.
+
+Claude keeps Tasks 1–5 below; Work keeps ATP. Check actual open PRs before shared
+edits. These new assignments are not implementation evidence or new product canon.
 
 ## Prompt to paste into a NEW Claude Code chat
 

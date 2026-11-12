@@ -139,6 +139,7 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
 
   const unknownWeek = weekFilter !== '' && !weekOptions.includes(weekFilter)
   const unknownCategory = categoryFilter !== '' && !categoryOptions.includes(categoryFilter)
+  const filtersVerifiable = query.isSuccess && !snapshotMismatch && !planUnavailable && !eventsUnavailable
 
   // Filter writes touch only this page's keys. An exact snapshot bookmark is
   // retained only when its mode/Run identity and new filter set still agree.
@@ -161,7 +162,8 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
       const inContext = (!currentMode && !currentRun) || (currentMode === mode && currentRun === runId)
       const bookmarked = inContext && Number.isSafeInteger(sequence) && sequence > 0
         ? snapshots.find(snapshot => snapshot.snapshot_sequence === sequence) : undefined
-      if ((current.has('selectedSequence') || current.has('selectedMode') || current.has('selectedRun')) &&
+      // Do not erase a shared exact bookmark while historical sources are pending.
+      if (filtersVerifiable && (current.has('selectedSequence') || current.has('selectedMode') || current.has('selectedRun')) &&
         (!bookmarked || !matchesFilters(bookmarked, next.get('filterWeek') ?? '', next.get('filterCategory') ?? '', next.get('filterSourceEvent') ?? ''))) {
         next.delete('selectedSequence')
         next.delete('selectedMode')
@@ -209,7 +211,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             {t('Week')}
             <select aria-label={t('Filter snapshots by week')} value={weekFilter} onChange={(event) => updateFilters('filterWeek', event.target.value)}>
               <option value="">{t('All weeks')}</option>
-              {unknownWeek && <option value={weekFilter}>{language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`}</option>}
+              {unknownWeek && <option value={weekFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámý týden: ${weekFilter}` : `Unknown week: ${weekFilter}`)
+                : (language === 'cs' ? `Týden nelze ověřit: ${weekFilter}` : `Week not verified: ${weekFilter}`)}</option>}
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -225,7 +229,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
               onChange={(event) => updateFilters('filterCategory', event.target.value)}
             >
               <option value="">{t('All categories')}</option>
-              {unknownCategory && <option value={categoryFilter}>{language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`}</option>}
+              {unknownCategory && <option value={categoryFilter}>{filtersVerifiable
+                ? (language === 'cs' ? `Neznámá kategorie: ${categoryFilter}` : `Unknown category: ${categoryFilter}`)
+                : (language === 'cs' ? `Kategorii nelze ověřit: ${categoryFilter}` : `Category not verified: ${categoryFilter}`)}</option>}
               {categoryOptions.map((category) => (
                 <option key={category} value={category}>
                   {category}
@@ -243,7 +249,9 @@ export function SnapshotsPage({ mode }: { mode: Mode }): JSX.Element {
             />
           </label>
         </div>
-        {(unknownWeek || unknownCategory) && !query.isLoading && <p role="status" className="status">{language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Zůstává vybraný neznámý filtr, nikoliv Vše.' : 'The requested week or category is unavailable. The view has not switched to All.'}</p>}
+        {(unknownWeek || unknownCategory) && !query.isLoading && <p role="status" className="status">{!filtersVerifiable
+          ? (language === 'cs' ? 'Filtr zatím nelze ověřit z načtených zdrojů; zůstává aktivní.' : 'The filter cannot yet be verified from loaded sources and remains active.')
+          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Zůstává vybraný neznámý filtr, nikoliv Vše.' : 'The requested week or category is unavailable. The view has not switched to All.')}</p>
         <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 

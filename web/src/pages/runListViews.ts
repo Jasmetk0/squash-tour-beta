@@ -19,6 +19,10 @@ export type RunListViewsRead = {
 export function isValidRunListView(value: unknown): value is SavedRunListView {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return false
   const v = value as Record<string, unknown>
+  // Reject extra fields: a loaded item must never carry copied Run data or URLs
+  // into a later preference write via object spreading.
+  if (Object.keys(v).length !== 4
+    || !['name', 'query', 'visibility', 'hidden'].every(key => Object.prototype.hasOwnProperty.call(v, key))) return false
   return typeof v.name === 'string' && v.name.length > 0 && v.name.length <= 64
     && v.name.trim() === v.name && !/[\u0000-\u001f\u007f]/.test(v.name)
     && typeof v.query === 'string' && v.query.length <= 250
@@ -42,7 +46,7 @@ export function decodeRunListViews(raw: string | null): RunListViewsRead {
     const data = parsed as Record<string, unknown>
     if (typeof data.schema_version !== 'string') return { status: 'invalid', items: [] }
     if (data.schema_version !== VERSION) return { status: 'unsupported', items: [] }
-    if (!validItems(data.items)) return { status: 'invalid', items: [] }
+    if (Object.keys(data).length !== 2 || !validItems(data.items)) return { status: 'invalid', items: [] }
     return { status: 'ok', items: data.items }
   } catch {
     return { status: 'invalid', items: [] }

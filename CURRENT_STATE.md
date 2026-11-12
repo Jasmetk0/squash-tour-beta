@@ -60,8 +60,13 @@ revision. A compact attribute encoding is the obvious reduction if this proves t
 large; it was not done here. Limits: observation-vs-true-attributes is provable only
 on the native replay path, and the older Tour path cannot prove no prospect was
 omitted (candidate set not stored). Annual W52/W61/W80 timing is covered by the
-existing model/perception domain tests; no new W80/1000 or simultaneous-slot run
-was added. Fork read of the never-pro exception shares the same pure helper but has
+existing model/perception domain tests; decision-evidence replay is now also tested
+for W52/W61/W80. Measured cost: 1000 prospects in one week take ~0.5 s (almost all
+self-perception, ~0.4 ms per prospect; ~0.07-0.11 s to decide), so a long Run that
+keeps ~1000 prospects in play every week of 50 seasons would spend tens of minutes
+there. The persistent perception components are now memoised (output verified
+byte-identical to the previous implementation on 90 samples): warm cost fell from
+0.36 s to 0.13 s per 1000 perceptions. No full W80/1000-player Run and no simultaneous-slot run was added. Fork read of the never-pro exception shares the same pure helper but has
 no fork execution test. Hosted workflows were not run on this head.
 
 ---

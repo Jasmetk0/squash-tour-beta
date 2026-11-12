@@ -1,3 +1,20 @@
+# Expanded Claude work queue — 12 November 2026
+
+Owner has merged #1784 and #1785; the refreshed baseline is
+`buuk 6e4066a8359307be4d89c0f9202260bcc69a4e92`. Radim requested a new Claude-chat
+prompt including larger follow-on implementation packages, not only the repairs.
+The existing `docs/AI_REVIEW_HANDOFF.md` now authorises, in order: Turn Pro repair,
+Saved Draw read-only UI repair, native career timeline/milestones, completed-season
+summary/comparison, and following/milestone notifications. Each has a product
+basis, source boundary, concrete acceptance example and complete-PR handoff.
+These are assignments, not new implementation evidence or new product decisions.
+Claude may continue independent packages while Work reviews completed results;
+shared sporting writers require a single owner. Work retains ATP source/calendar
+and native Q/Main slot integration. Earlier pending-merge wording below is dated
+history; #1783 runtime remains unmerged and unapproved at this checkpoint.
+
+---
+
 # Claude review checkpoint — 12 November 2026
 
 Reviewed `buuk a86053f7ded5b72cd594f7e51ce64ab6ea43d11b` includes owner merges

@@ -1,3 +1,25 @@
+# Claude follow-on packages — 12 November 2026
+
+Work's #1784/#1785 are owner-merged at `buuk 6e4066a8359307be4d89c0f9202260bcc69a4e92`.
+The current Claude assignment in `docs/AI_REVIEW_HANDOFF.md` expands the existing
+repair into a sequenced queue of complete packages:
+
+1. Final Turn Pro runtime and actual lifecycle acceptance.
+2. Separate read-only Saved Draw readiness repair.
+3. Native career timeline, milestones and retirement summary.
+4. Completed-season archive and country/season comparison.
+5. Following and milestone notifications over the same authoritative facts.
+
+Tasks 3–5 implement already decided Master 21.5/25.6.1/27.25 targets, with current
+code audited first; they do not imply that an existing summary/legacy career
+reader is absent or that a notification service already exists. One complete
+package per PR, focused real acceptance, independent Work review and owner merge.
+Continue an independent package while review is pending; avoid a new cumulative
+stack. Work's parallel ATP integration and full release requirements remain.
+No product Master update or runtime implementation is made by this queue change.
+
+---
+
 # Current dependency checkpoint — 12 November 2026
 
 Base `buuk a86053f7` includes the owner-merged ATP foundations/horizon repairs

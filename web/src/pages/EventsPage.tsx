@@ -240,7 +240,7 @@ export function EventsPage(): JSX.Element {
         </div>
         {(unknownWeek || unknownCategory) && !eventsQuery.isLoading && <p role="status" className="status">{!filtersVerifiable
           ? (language === 'cs' ? 'Filtr zatím nelze ověřit z načtených zdrojů; zůstává aktivní.' : 'The filter cannot yet be verified from loaded sources and remains active.')
-          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Historie se nepřepnula na Vše.' : 'The requested week or category is unavailable. The view has not silently switched to All.')}</p>}}
+          : (language === 'cs' ? 'Zadaný týden nebo kategorie nepatří mezi dostupné filtry. Historie se nepřepnula na Vše.' : 'The requested week or category is unavailable. The view has not silently switched to All.')}</p>}
         <button type="button" onClick={() => updateFilters(null)}>{t('Reset filters')}</button>
       </SectionCard>
 

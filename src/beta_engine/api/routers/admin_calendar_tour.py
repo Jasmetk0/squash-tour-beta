@@ -143,6 +143,25 @@ def signed_career_records(
         raise conflict(exc) from exc
 
 
+@router.get("/players/{player_id}/career")
+def player_career(
+    run_id: str,
+    branch_id: str,
+    player_id: str,
+    runtime: Annotated[ApiRuntime, Depends(get_runtime)],
+    as_of_ordinal: int | None = Query(default=None, ge=0),
+):
+    try:
+        return CalendarTourService(runtime.repository).player_career(
+            run_id=run_id, branch_id=branch_id, player_id=player_id,
+            as_of_ordinal=as_of_ordinal,
+        )
+    except KeyError as exc:
+        raise HTTPException(status_code=404, detail=str(exc.args[0])) from exc
+    except (ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
 @router.get("/seasons/{season_index}")
 def season_summary(
     run_id: str,

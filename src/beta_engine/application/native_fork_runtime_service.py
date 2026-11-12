@@ -887,6 +887,15 @@ class NativeForkRuntimeService:
             )
 
             state, world = publication_inputs(self.repository, session, revision)
+            if kind == "career":
+                from beta_engine.application.calendar_tour_player_career import (
+                    native_player_career,
+                )
+
+                return {
+                    **native_player_career(state, world, **options),
+                    "saved_head_revision_id": revision.revision_id,
+                }
             if kind == "records":
                 return {
                     **signed_tour_records(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),

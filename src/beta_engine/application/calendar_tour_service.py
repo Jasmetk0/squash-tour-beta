@@ -449,6 +449,29 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
+    def player_career(self, *, run_id, branch_id, player_id, as_of_ordinal=None):
+        """Read only the authenticated Saved Tour; never Working changes or other Branches."""
+        from beta_engine.application.calendar_tour_player_career import native_player_career
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(
+                run_id=run_id, branch_id=branch_id, kind="career",
+                player_id=player_id, as_of_ordinal=as_of_ordinal,
+            )
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Player career requires a Saved configured Tour")
+            return {
+                **native_player_career(signed, world, player_id, as_of_ordinal=as_of_ordinal),
+                "saved_head_revision_id": rev.saved_head_revision_id,
+            }
+
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""
         from beta_engine.application.native_fork_runtime_service import (

@@ -12,6 +12,19 @@ import { rememberProductRun } from '../navigation/recentProductRuns'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
 
+const receiptFilterMessagesPairs = {
+  matching: ['Zobrazené záznamy po filtrování', 'Receipts matching filters'],
+  reset: ['Zrušit filtry záznamů', 'Reset receipt filters'],
+  unknownState: ['Nepodporovaný stav v odkazu – žádný záznam nebyl automaticky vybrán', 'Unsupported state in link – no receipt was selected automatically'],
+} as const
+
+function receiptFilterMessages(language: 'cs' | 'en'): Record<keyof typeof receiptFilterMessagesPairs, string> {
+  const column = language === 'cs' ? 0 : 1
+  return Object.fromEntries(
+    Object.entries(receiptFilterMessagesPairs).map(([key, translations]) => [key, translations[column]])
+  ) as Record<keyof typeof receiptFilterMessagesPairs, string>
+}
+
 const copy = {
   cs: {
     title: 'Centrum simulací',
@@ -28,9 +41,8 @@ const copy = {
     search: 'Hledat Run, větev nebo ID příkazu',
     searchPlaceholder: 'Název, ID Runu, Branch nebo příkazu',
     filter: 'Stav uložené operace',
-    matching: 'Zobrazené záznamy po filtrování',
-    reset: 'Zrušit filtry záznamů',
-    unknownState: 'Nepodporovaný stav v odkazu – žádný záznam nebyl automaticky vybrán',
+    ...receiptFilterMessages('cs'),
+
     all: 'Všechny stavy',
     state: {
       running: 'Povoleno – aktivita procesu nepotvrzena',
@@ -76,9 +88,8 @@ const copy = {
     search: 'Search Run, Branch or command ID',
     searchPlaceholder: 'Name, Run ID, Branch ID or command ID',
     filter: 'Saved control state',
-    matching: 'Receipts matching filters',
-    reset: 'Reset receipt filters',
-    unknownState: 'Unsupported state in link – no receipt was selected automatically',
+    ...receiptFilterMessages('en'),
+
     all: 'All states',
     state: {
       running: 'Authorized – worker activity unverified',

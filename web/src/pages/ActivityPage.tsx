@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getRun, getRunActivity, listEvents } from '../api/client'
@@ -70,10 +70,33 @@ export function ActivityPage(): JSX.Element {
   const t = useHistoryText()
   const { runId = '' } = useParams()
   const [searchParams, setSearchParams] = useSearchParams()
-  const [kindFilter, setKindFilter] = useState('')
-  const [seasonFilter, setSeasonFilter] = useState('')
-  const [weekFilter, setWeekFilter] = useState('')
-  const [textFilter, setTextFilter] = useState('')
+  // Read-only presentation filters live in the URL so a filtered history can
+  // be bookmarked or shared. Unknown values remain restrictive, never widen
+  // the inventory by silently replacing them with "All".
+  const kindFilter = searchParams.get('activityKind') ?? ''
+  const seasonFilter = searchParams.get('activitySeason') ?? ''
+  const weekFilter = searchParams.get('activityWeek') ?? ''
+  const textFilter = searchParams.get('activityText') ?? ''
+
+  function setActivityFilter(key: 'activityKind' | 'activitySeason' | 'activityWeek' | 'activityText', value: string): void {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      if (value) next.set(key, value)
+      else next.delete(key)
+      // A selection in the old filter no longer owns the visible detail.
+      next.delete('selectedItem')
+      return next
+    }, { replace: key === 'activityText' })
+  }
+
+  function resetActivityFilters(): void {
+    setSearchParams(current => {
+      const next = new URLSearchParams(current)
+      ;(['activityKind', 'activitySeason', 'activityWeek', 'activityText', 'selectedItem'] as const)
+        .forEach(key => next.delete(key))
+      return next
+    })
+  }
 
   const requestedItemText = searchParams.get('selectedItem') ?? ''
   // The deep link indexes the original activity items; reject partial numbers.
@@ -244,8 +267,10 @@ export function ActivityPage(): JSX.Element {
         <div className="grid">
           <label>
             {t('Kind')}
-            <select aria-label={t('Filter activity by kind')} value={kindFilter} onChange={(event) => setKindFilter(event.target.value)}>
+            <select aria-label={t('Filter activity by kind')} value={kindFilter} onChange={(event) => setActivityFilter('activityKind', event.target.value)}>
               <option value="">{t('All kinds')}</option>
+              {kindFilter && !kindOptions.includes(kindFilter) &&
+                <option value={kindFilter}>{kindFilter} · {t('Unavailable')}</option>}
               {kindOptions.map((kind) => (
                 <option key={kind} value={kind}>
                   {t(kind)}
@@ -255,8 +280,10 @@ export function ActivityPage(): JSX.Element {
           </label>
           <label>
             {t('Season')}
-            <select aria-label={t('Filter activity by season')} value={seasonFilter} onChange={(event) => setSeasonFilter(event.target.value)}>
+            <select aria-label={t('Filter activity by season')} value={seasonFilter} onChange={(event) => setActivityFilter('activitySeason', event.target.value)}>
               <option value="">{t('All seasons')}</option>
+              {seasonFilter && !seasonOptions.includes(seasonFilter) &&
+                <option value={seasonFilter}>{seasonFilter} · {t('Unavailable')}</option>}
               {seasonOptions.map((season) => (
                 <option key={season} value={season}>
                   {season}
@@ -266,8 +293,10 @@ export function ActivityPage(): JSX.Element {
           </label>
           <label>
             {t('Week')}
-            <select aria-label={t('Filter activity by week')} value={weekFilter} onChange={(event) => setWeekFilter(event.target.value)}>
+            <select aria-label={t('Filter activity by week')} value={weekFilter} onChange={(event) => setActivityFilter('activityWeek', event.target.value)}>
               <option value="">{t('All weeks')}</option>
+              {weekFilter && !weekOptions.includes(weekFilter) &&
+                <option value={weekFilter}>W{weekFilter} · {t('Unavailable')}</option>}
               {weekOptions.map((week) => (
                 <option key={week} value={week}>
                   W{week}
@@ -280,12 +309,12 @@ export function ActivityPage(): JSX.Element {
             <input
               aria-label={t('Filter activity by label or identifier text')}
               value={textFilter}
-              onChange={(event) => setTextFilter(event.target.value)}
+              onChange={(event) => setActivityFilter('activityText', event.target.value)}
               placeholder={t('Label, event ID, or related run ID')}
             />
           </label>
         </div>
-        <button type="button" onClick={() => { setKindFilter(''); setSeasonFilter(''); setWeekFilter(''); setTextFilter('') }}>{t('Reset filters')}</button>
+        <button type="button" onClick={resetActivityFilters}>{t('Reset filters')}</button>
       </SectionCard>
 
       <SectionCard title={t('Activity feed')}>

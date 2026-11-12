@@ -68,6 +68,72 @@ def _turn_pro_replay_lifecycle(world, state, target):
     )[-1]
 
 
+def _verify_turn_pro_receipt(transition, receipt):
+    """Bind a transition's Turn Pro evidence to its confirmed command receipt.
+
+    Separates three proofs. (1) DTO consistency: the stored decisions and model equal
+    the receipt's authoritative impact. (2) Mathematical replay: every positive
+    decision recomputes from the recorded model, the prospect's own recorded
+    observation and the command seed. (3) Physical origin of the observation (that
+    it derives from the player's real attributes) is NOT provable on this older
+    path, which keeps no earlier-week sporting records; the native replay proves it.
+    Transitions recorded without decision evidence keep their genuine historical
+    reader and are accepted as recorded.
+    """
+    impact = receipt.result.get("impact", {})
+    recorded = [d.model_dump(mode="json") for d in transition.turn_pro_decisions]
+    model = transition.turn_pro_model
+    if impact.get("turn_pro_decisions", []) != recorded or impact.get(
+        "turn_pro_model"
+    ) != (None if model is None else model.model_dump(mode="json")):
+        raise ValueError("Turn Pro decisions differ from the confirmed transition impact")
+    if model is None or model.decision_evidence is None:
+        return
+    from beta_engine.domain.players.turn_pro_model import (
+        verify_turn_pro_decision_evidence,
+    )
+
+    seed = receipt.request.get("command", {}).get("seed")
+    if type(seed) is not int:
+        raise ValueError("Turn Pro replay requires the command seed")
+    for decision in transition.turn_pro_decisions:
+        verify_turn_pro_decision_evidence(decision, policy=model, seed=seed)
+
+
+def _verify_pre_tour_turn_pro(state, checkpoint, world):
+    """Every exhibition week before the Tour has exactly one recorded Turn Pro week."""
+    if world is None:
+        return
+    pre = state.pre_tour_turn_pro
+    exhibition = tuple(
+        e
+        for e in checkpoint.weekly_advances
+        if e.schema_version == "calendar_sporting_week_advance.v1"
+    )
+    if not world.lifecycle_policy.requires_turn_pro or not exhibition:
+        if pre is not None:
+            raise ValueError("Pre-Tour Turn Pro exists without a v87 exhibition history")
+        return
+    if pre is None:
+        raise ValueError("v87 exhibition weeks lack their recorded Turn Pro evaluation")
+    if tuple((w.command_id, w.seed, w.completed_week, w.target_week) for w in pre.weeks) != tuple(
+        (e.command_id, e.seed, e.completed_week, e.target_week) for e in exhibition
+    ):
+        raise ValueError("Pre-Tour Turn Pro weeks differ from the signed exhibition history")
+    if any(
+        (d.run_id, d.branch_id) != (state.run_id, state.branch_id) for d in pre.decisions
+    ):
+        raise ValueError("Pre-Tour Turn Pro decision has a foreign Run or Branch")
+    if pre.model.decision_evidence is not None:
+        from beta_engine.domain.players.turn_pro_model import (
+            verify_turn_pro_decision_evidence,
+        )
+
+        for week in pre.weeks:
+            for decision in week.decisions:
+                verify_turn_pro_decision_evidence(decision, policy=pre.model, seed=week.seed)
+
+
 def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
     if (
         checkpoint is not None
@@ -127,6 +193,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
         raise ValueError(
             "Tour authority differs from its actual population sporting owner"
         )
+    _verify_pre_tour_turn_pro(state, checkpoint, world)
     events = {e.tournament_id: e for e in checkpoint.tournaments}
     sources = {a.edition.edition_id: a for a in state.editions}
     confirmations = {}
@@ -276,6 +343,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                     transition.target_week,
                 )
             )
+        _verify_turn_pro_receipt(transition, receipt)
         if transition.public_event != expected_public:
             raise ValueError(
                 "Public Week Transition event differs from effective announcements/ranking"

@@ -340,15 +340,83 @@ class CalendarTourTransition(FrozenInput):
         ids = [d.player_id for d in self.turn_pro_decisions]
         if ids != sorted(set(ids)):
             raise ValueError("Turn Pro decisions require canonical distinct players")
+        model = self.turn_pro_model
+        for d in self.turn_pro_decisions:
+            wants_evidence = model.decision_evidence is not None
+            if wants_evidence != (d.evidence is not None):
+                raise ValueError(
+                    "Turn Pro decision evidence differs from its recorded model version"
+                )
+            if (
+                d.evidence is not None
+                and d.evidence.observation.policy_fingerprint != model.perception.fingerprint
+            ):
+                raise ValueError("Turn Pro evidence was made under a different perception")
         return self
 
 
+class CalendarPreTourTurnProWeek(FrozenInput):
+    """One exhibition Week Transition before Tour initialization, evaluated by the AI."""
+
+    command_id: str = Field(min_length=1)
+    completed_week: RunWeekPosition
+    target_week: RunWeekPosition
+    seed: int
+    decisions: tuple[PlayerTurnProDecision, ...] = ()
+
+    @model_validator(mode="after")
+    def _decisions_are_effective_at_target(self):
+        if self.target_week.ordinal != self.completed_week.ordinal + 1:
+            raise ValueError("Pre-Tour Turn Pro week is not a consecutive transition")
+        if any(d.effective_week.ordinal != self.target_week.ordinal for d in self.decisions):
+            raise ValueError("Turn Pro decision is not effective at its transition week")
+        ids = [d.player_id for d in self.decisions]
+        if ids != sorted(set(ids)):
+            raise ValueError("Turn Pro decisions require canonical distinct players")
+        return self
+
+
+class CalendarPreTourTurnPro(FrozenInput):
+    """Master v87: Turn Pro for every Week Transition before the Tour existed.
+
+    The exhibition writer advances only the sporting owner. Without this record those
+    weeks would silently allow nobody to turn pro. It lists *every* exhibition
+    transition (even with no decision) so a missing or duplicated week is detectable,
+    and the one model that made all of them. Written once, at Tour initialization,
+    from the signed exhibition history; omitted for historical Runs.
+    """
+
+    schema_version: Literal["calendar_pre_tour_turn_pro.v1"] = "calendar_pre_tour_turn_pro.v1"
+    model: TurnProModelPolicy
+    weeks: tuple[CalendarPreTourTurnProWeek, ...] = Field(min_length=1)
+
+    @model_validator(mode="after")
+    def _consecutive_and_consistent(self):
+        ordinals = [w.target_week.ordinal for w in self.weeks]
+        if ordinals != list(range(ordinals[0], ordinals[0] + len(ordinals))):
+            raise ValueError("Pre-Tour Turn Pro weeks must be consecutive")
+        if len({w.command_id for w in self.weeks}) != len(self.weeks):
+            raise ValueError("Pre-Tour Turn Pro week repeated")
+        for decision in (d for w in self.weeks for d in w.decisions):
+            if (decision.evidence is not None) != (self.model.decision_evidence is not None):
+                raise ValueError(
+                    "Turn Pro decision evidence differs from its recorded model version"
+                )
+        return self
+
+    @property
+    def decisions(self) -> tuple[PlayerTurnProDecision, ...]:
+        return tuple(d for w in self.weeks for d in w.decisions)
+
+
 def tour_turn_pro_decisions(state) -> tuple[PlayerTurnProDecision, ...]:
-    """Every Turn Pro decision recorded by this Tour's Week Transitions."""
+    """Every Turn Pro decision of this Tour: pre-Tour exhibition weeks, then transitions."""
     if state is None:
         return ()
-    return tuple(
-        d for t in getattr(state, "transitions", ()) for d in t.turn_pro_decisions
+    pre = getattr(state, "pre_tour_turn_pro", None)
+    return (
+        *(pre.decisions if pre is not None else ()),
+        *(d for t in getattr(state, "transitions", ()) for d in t.turn_pro_decisions),
     )
 
 
@@ -365,6 +433,10 @@ class CalendarTourState(FrozenInput):
     rankings: tuple[CalendarOfficialRankingSnapshot, ...]
     transitions: tuple[CalendarTourTransition, ...] = ()
     receipts: tuple[CalendarTourReceipt, ...] = ()
+    # Master v87: Turn Pro decisions of the exhibition weeks before initialization.
+    pre_tour_turn_pro: CalendarPreTourTurnPro | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def validate_state(self):
@@ -705,6 +777,54 @@ def retired_without_turn_pro_player_ids(lifecycle, target):
         and p.retirement_effective_week.ordinal == target.ordinal
         and getattr(p, "tour_entry_week", None) is None
     )
+
+
+def player_turn_pro_history(identity, policy, decisions):
+    """Read-only Turn Pro explanation of one player, derived from persisted facts.
+
+    Nothing is invented: it combines the player's lifecycle identity (Tour entry and
+    retirement weeks), the lifecycle policy and the recorded Turn Pro decisions. A
+    career that ended without Turn Pro is the explicit exception of Master v87
+    decision B; no health cause and no fake Turn Pro is created for it. Returns
+    None under the historical rule, which has no Turn Pro event.
+    """
+    if identity is None or not policy.requires_turn_pro:
+        return None
+    entry = getattr(identity, "tour_entry_week", None)
+    retired = getattr(identity, "retirement_effective_week", None)
+    decision = next((d for d in decisions if d.player_id == identity.player_id), None)
+    body = {
+        "schema_version": "player_turn_pro_history.v1",
+        "player_id": identity.player_id,
+        "turn_pro_week": None if entry is None else entry.model_dump(mode="json"),
+        "retired_week": None if retired is None else retired.model_dump(mode="json"),
+        "decision": None if decision is None else decision.model_dump(mode="json"),
+    }
+    if entry is None:
+        body["status"] = "retired_without_turn_pro" if retired is not None else "prospect"
+        body["source"] = None
+        body["explanation"] = (
+            "The career ended at the automatic retirement age without the player ever "
+            "turning pro. Master v87 records this rare case as an explicit exception; "
+            "no Turn Pro event, ranking entry or health cause is implied."
+            if retired is not None
+            else "Not yet professional; the player AI evaluates each Week Transition."
+        )
+    elif decision is not None:
+        body["status"] = "professional"
+        body["source"] = "player_ai_decision"
+        body["explanation"] = (
+            "Turned pro through the player AI's weekly decision from its own "
+            "self-perception; the recorded evidence is attached."
+        )
+    else:
+        body["status"] = "professional"
+        body["source"] = "opening_population"
+        body["explanation"] = (
+            "Already professional at Run start (opening population evidence), "
+            "or by a Turn Pro record not retained in this Tour."
+        )
+    return body
 
 
 def turn_pro_public_fields(decisions, lifecycle, target):

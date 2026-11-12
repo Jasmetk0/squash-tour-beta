@@ -33,6 +33,8 @@ from tests.domain.test_turn_pro_lifecycle import bootstrap, decision, policy, we
 pytestmark = pytest.mark.pr_critical
 
 MODEL = default_turn_pro_model_policy()
+# The v2 policy exactly as recorded before decision evidence existed (same bytes).
+LEGACY_V2 = MODEL.model_copy(update={"decision_evidence": None})
 V1 = true_strength_turn_pro_model_policy_v1()
 
 
@@ -60,8 +62,9 @@ def test_historical_transition_bytes_are_unchanged_and_evidence_round_trips():
     assert "turn_pro_decisions" not in body and "turn_pro_model" not in body
     assert CalendarTourTransition.model_validate_json(plain.model_dump_json()) == plain
 
-    rich = transition(decisions=(decision("a", 2),), model=MODEL)
+    rich = transition(decisions=(decision("a", 2),), model=LEGACY_V2)
     assert CalendarTourTransition.model_validate_json(rich.model_dump_json()) == rich
+    assert "decision_evidence" not in json.loads(LEGACY_V2.model_dump_json())
     # A v87 transition that evaluated nobody still records the model it used.
     assert "turn_pro_model" in json.loads(transition(model=MODEL).model_dump_json())
     assert tour_turn_pro_decisions(SimpleNamespace(transitions=(plain, rich))) == (
@@ -72,8 +75,8 @@ def test_historical_transition_bytes_are_unchanged_and_evidence_round_trips():
 
 @pytest.mark.parametrize("decisions,model,message", [
     ((decision("a", 2),), None, "require the model policy"),
-    ((decision("a", 3),), MODEL, "not effective at its transition week"),
-    ((decision("b", 2), decision("a", 2)), MODEL, "canonical distinct players"),
+    ((decision("a", 3),), LEGACY_V2, "not effective at its transition week"),
+    ((decision("b", 2), decision("a", 2)), LEGACY_V2, "canonical distinct players"),
 ])
 def test_transition_rejects_inconsistent_turn_pro_evidence(decisions, model, message):
     with pytest.raises(ValueError, match=message):

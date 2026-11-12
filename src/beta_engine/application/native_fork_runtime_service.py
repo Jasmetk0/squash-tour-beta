@@ -288,6 +288,14 @@ class NativeForkRuntimeService:
             identity = next(
                 p for p in current.lifecycle.players if p.player_id == player_id
             )
+            from beta_engine.domain.tournaments.calendar_tour import (
+                player_turn_pro_history,
+                tour_turn_pro_decisions,
+            )
+
+            history = player_turn_pro_history(
+                identity, current.lifecycle.policy, tour_turn_pro_decisions(current.tour)
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -295,6 +303,7 @@ class NativeForkRuntimeService:
                 "checkpoint_fingerprint": current.checkpoint_fingerprint,
                 "record": record.model_dump(mode="json"),
                 "lifecycle": identity.model_dump(mode="json"),
+                **({"turn_pro": history} if history is not None else {}),
             }
 
     def preview(self, *, run_id, branch_id, command):

@@ -18,9 +18,10 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.players.turn_pro_perception import TurnProObservation
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -42,6 +43,24 @@ def opening_turn_pro_tie_break_token(*, run_id: str, player_id: str) -> str:
     return canonical_hash({"kind": "initial_turn_pro.v1", "run": run_id, "player": player_id})
 
 
+class TurnProDecisionEvidence(FrozenInput):
+    """What the prospect knew when the AI decided: its own view, never hidden truth.
+
+    Stored only with *positive* decisions (the prospect turned pro), so Saved size
+    grows with the number of new professionals, not with every prospect every
+    week. It contains the exact inputs of the weekly chance: the prospect's own
+    ``TurnProObservation`` (perceived attributes, unknown Financial Level, own
+    personality, readiness), its age and whether a public home Edition existed.
+    With the recorded model policy and the command seed the chance and the draw
+    are recomputable without any other player's data.
+    """
+
+    schema_version: Literal["turn_pro_decision_evidence.v1"] = "turn_pro_decision_evidence.v1"
+    age: int = Field(ge=15, le=120)
+    home_opportunity: bool
+    observation: TurnProObservation
+
+
 class PlayerTurnProDecision(FrozenInput):
     """Immutable evidence that one prospect turned professional at a week start."""
 
@@ -54,6 +73,17 @@ class PlayerTurnProDecision(FrozenInput):
     # Fingerprint of the exact pre-transition inputs the decision was made from.
     source_state_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     provenance: str = Field(min_length=1)
+    # Present only for decisions written under a model with ``decision_evidence``;
+    # omitted otherwise so earlier recorded decisions keep their exact bytes.
+    evidence: TurnProDecisionEvidence | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+
+    @model_validator(mode="after")
+    def evidence_is_the_players_own(self):
+        if self.evidence is not None and self.evidence.observation.player_id != self.player_id:
+            raise ValueError("Turn Pro evidence belongs to a different player")
+        return self
 
     @property
     def tie_break_token(self) -> str:

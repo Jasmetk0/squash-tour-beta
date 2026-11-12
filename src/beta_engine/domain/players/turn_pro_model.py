@@ -26,7 +26,10 @@ from typing import Literal
 from pydantic import Field, model_validator
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
-from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
+from beta_engine.domain.players.turn_pro import (
+    PlayerTurnProDecision,
+    TurnProDecisionEvidence,
+)
 from beta_engine.domain.players.turn_pro_perception import (
     SelfPerceptionPolicy,
     TurnProObservation,
@@ -64,12 +67,21 @@ class TurnProModelPolicy(FrozenInput):
         default=None, ge=0, exclude_if=lambda v: v is None
     )
 
+    # Versioned evidence boundary: when set, every positive decision stores the
+    # prospect's own observation (``TurnProDecisionEvidence``). Policies recorded
+    # before this field existed omit it and keep their exact bytes/fingerprint.
+    decision_evidence: Literal["observation.v1"] | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
+
     @property
     def uses_self_perception(self) -> bool:
         return self.perception is not None
 
     @model_validator(mode="after")
     def validate_bases(self):
+        if self.decision_evidence is not None and not self.uses_self_perception:
+            raise ValueError("Decision evidence needs the self-perception model")
         if self.uses_self_perception != (
             self.ambition_weight is not None and self.professionalism_weight is not None
         ):
@@ -97,6 +109,7 @@ def default_turn_pro_model_policy() -> TurnProModelPolicy:
         perception=default_self_perception_policy(),
         ambition_weight=1.2,
         professionalism_weight=0.4,
+        decision_evidence="observation.v1",
         provenance=(
             "Provisional pre-alpha calibration; readiness from self-perception "
             "only (owner clarification 11 Nov 2026); age bases from research "
@@ -250,13 +263,71 @@ def decide_turn_pro(
                     effective_week=target,
                     decision_source="player_ai",
                     source_state_fingerprint=source,
-                    provenance=(
-                        f"{policy.schema_version}:{policy.model_id}; "
-                        f"weekly_chance={chance:.12f}; draw={draw:.12f}"
+                    provenance=_decision_provenance(policy, chance, draw),
+                    evidence=(
+                        TurnProDecisionEvidence(
+                            age=candidate.age,
+                            home_opportunity=candidate.home_opportunity,
+                            observation=candidate.observation,
+                        )
+                        if policy.decision_evidence is not None
+                        else None
                     ),
                 )
             )
     return tuple(decisions)
+
+
+def _decision_provenance(policy: TurnProModelPolicy, chance: float, draw: float) -> str:
+    return (
+        f"{policy.schema_version}:{policy.model_id}; "
+        f"weekly_chance={chance:.12f}; draw={draw:.12f}"
+    )
+
+
+def verify_turn_pro_decision_evidence(
+    decision: PlayerTurnProDecision, *, policy: TurnProModelPolicy, seed: int
+) -> None:
+    """Mathematical replay of one positive decision from its own recorded evidence.
+
+    Recomputes the weekly chance from the recorded model, the prospect's observation
+    and age, then the keyed draw for (seed, Run, Branch, player, week). It proves the
+    stored decision is consistent with the model and what the prospect knew; it does
+    NOT prove the observation matches the player's true attributes (that needs the
+    completed week's sporting record, available only on the native replay path) nor
+    that no other prospect was omitted (the candidate set is not stored).
+    """
+    evidence = decision.evidence
+    if policy.decision_evidence is None:
+        if evidence is not None:
+            raise ValueError("Turn Pro evidence is not allowed by its recorded model")
+        raise ValueError("Turn Pro model recorded no decision evidence to replay")
+    if evidence is None:
+        raise ValueError("Turn Pro decision lacks its recorded evidence")
+    observation = evidence.observation
+    if observation.policy_fingerprint != policy.perception.fingerprint:
+        raise ValueError("Turn Pro observation was made under a different perception policy")
+    candidate = TurnProCandidate(
+        player_id=decision.player_id,
+        age=evidence.age,
+        readiness=observation.readiness,
+        home_opportunity=evidence.home_opportunity,
+        observation=observation,
+    )
+    chance = weekly_turn_pro_chance(
+        policy, candidate, weeks_per_year=decision.effective_week.calendar.weeks_per_year
+    )
+    draw = turn_pro_draw(
+        seed=seed,
+        run_id=decision.run_id,
+        branch_id=decision.branch_id,
+        player_id=decision.player_id,
+        target=decision.effective_week,
+    )
+    if not draw < chance:
+        raise ValueError("Turn Pro draw does not fall below the recomputed weekly chance")
+    if decision.provenance != _decision_provenance(policy, chance, draw):
+        raise ValueError("Turn Pro provenance differs from the recomputed chance and draw")
 
 
 def readiness_against(prospect_strength: float, reference_strengths: Iterable[float]) -> float:

@@ -69,6 +69,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
     build_draw,
     calculate_tour_ranking,
+    player_turn_pro_history,
     tour_turn_pro_decisions,
     turn_pro_home_opportunities,
     turn_pro_public_fields,
@@ -104,7 +105,8 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
 )
 
 
-def _lifecycle_history(world, week, state):
+def _lifecycle_history(world, week, state, *, pre_tour=None):
+    """Lifecycle weeks 1..``week``. ``pre_tour`` serves Tour initialization only."""
     from beta_engine.application.calendar_initial_world import (
         derive_calendar_bootstrap_lifecycle,
     )
@@ -114,7 +116,9 @@ def _lifecycle_history(world, week, state):
         week,
         tuple(s for a in state.editions for s in a.submissions) if state else (),
         effective_calendars=lifecycle_calendars(state) if state else None,
-        turn_pro=tour_turn_pro_decisions(state),
+        turn_pro=tour_turn_pro_decisions(state)
+        if state
+        else (pre_tour.decisions if pre_tour is not None else ()),
     )
 
 
@@ -729,6 +733,11 @@ class CalendarTourService:
                 if life
                 else None
             )
+            history = (
+                player_turn_pro_history(identity, life.policy, tour_turn_pro_decisions(state))
+                if life
+                else None
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -736,6 +745,7 @@ class CalendarTourService:
                 "checkpoint_fingerprint": ctx[4].fingerprint,
                 "record": record.model_dump(mode="json"),
                 "lifecycle": identity.model_dump(mode="json") if identity else None,
+                **({"turn_pro": history} if history is not None else {}),
             }
 
     def _prepare(self, session, run_id, branch_id, command, *, loaded=None):
@@ -1389,7 +1399,14 @@ class CalendarTourService:
             effective_week = RunWeekPosition(
                 calendar=clock, season_index=cp.week.season_index, week=cp.week.week
             )
-            life = _lifecycle_history(world, effective_week, None)
+            from beta_engine.application.calendar_pre_tour_turn_pro import (
+                derive_pre_tour_turn_pro,
+            )
+
+            # Master v87: the exhibition weeks before the Tour are Week Transitions
+            # too. Evaluate Turn Pro for each of them from the signed history.
+            pre_tour = derive_pre_tour_turn_pro(world, cp, evidence)
+            life = _lifecycle_history(world, effective_week, None, pre_tour=pre_tour)
             if persist:
                 for item in life:
                     put_lifecycle(session, item)
@@ -1417,6 +1434,7 @@ class CalendarTourService:
                 lifecycle_fingerprint=life[-1].fingerprint,
                 policies=(policy,),
                 rankings=(ranking,),
+                pre_tour_turn_pro=pre_tour,
             )
         elif command.action == "adopt-saved-draw":
             from beta_engine.application.native_canonical_draw_adoption import (

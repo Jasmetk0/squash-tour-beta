@@ -104,6 +104,8 @@ def main():
                             section.get_by_label("ID hráče / kód země" if language == "cs" else "Player ID / country code").fill(champion)
                             section.get_by_role("button", name=follow_btn, exact=True).click()
                             card = section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))
+                            page.wait_for_timeout(3000)
+                            print("SECTION TEXT:", section.inner_text()[:1500], flush=True)
                             expect(card).to_have_count(1)
                             card.locator("details summary").click()
                             expect(card).to_contain_text("played_edition")

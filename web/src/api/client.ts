@@ -5509,3 +5509,17 @@ export function importPlayerLabHistory(payload: {product_run_id: string; branch_
 export function runPlayerLabSession(id: string, fingerprint: string): Promise<import('./types').PlayerLabResult> {
   return request(`/admin/labs/player/sessions/${encodeURIComponent(id)}/run`, {method: 'POST', body: JSON.stringify({expected_session_fingerprint: fingerprint})})
 }
+
+/** Strictly read-only native player career from the Branch's Saved configured Tour. */
+export async function getSavedPlayerCareer(
+  runId: string, branchId: string, playerId: string, asOfOrdinal?: number
+): Promise<import('./savedPlayerCareer').SavedPlayerCareer> {
+  if (!playerId || playerId.length > 128 || playerId.trim() !== playerId) {
+    throw new Error('Invalid saved player identifier.')
+  }
+  const query = asOfOrdinal === undefined ? '' : `?as_of_ordinal=${encodeURIComponent(String(asOfOrdinal))}`
+  return request<import('./savedPlayerCareer').SavedPlayerCareer>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}`
+    + `/calendar-tour/players/${encodeURIComponent(playerId)}/career${query}`
+  )
+}

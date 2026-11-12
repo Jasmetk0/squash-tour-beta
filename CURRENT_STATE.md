@@ -43,6 +43,29 @@ history and do not certify current runtime or full pre-alpha completion.
 
 ---
 
+# Turn Pro continuation — 12 November 2026 (draft PR, not owner-approved)
+
+Own delta over #1783: positive decisions store the prospect's own observation
+(`decision_evidence: observation.v1`, versioned through the model policy; earlier
+v1/v2 bytes unchanged); replay recomputes chance/draw and checks the observation's
+internal consistency; Tour initialization records Turn Pro for every exhibition
+week before the Tour (`CalendarPreTourTurnPro`); the existing player read gains a
+read-only `turn_pro` block incl. the never-pro exception; Saved FAX Draws are
+tested under v87 for Ranked and Unranked.
+
+Measured (provisional): one positive decision grows from 500 B to 2503 B (+~2 KB,
+57 perceived attributes dominate); verification is ~0.05 ms per decision. The Tour
+state is part of every Saved revision, so ~3000 AI professionals would add ~6 MB per
+revision. A compact attribute encoding is the obvious reduction if this proves too
+large; it was not done here. Limits: observation-vs-true-attributes is provable only
+on the native replay path, and the older Tour path cannot prove no prospect was
+omitted (candidate set not stored). Annual W52/W61/W80 timing is covered by the
+existing model/perception domain tests; no new W80/1000 or simultaneous-slot run
+was added. Fork read of the never-pro exception shares the same pure helper but has
+no fork execution test. Hosted workflows were not run on this head.
+
+---
+
 # Turn Pro model v2: own self-perception (Master v87) — 11 November 2026
 
 Stacked on the FAX Saved Draw branch. Following the owner clarification, the

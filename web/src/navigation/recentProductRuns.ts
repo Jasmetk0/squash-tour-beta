@@ -33,6 +33,15 @@ export function rememberProductRun(runId: string): void {
   }
 }
 
+/** A corrupt or stale history record should still be removable from Home. */
+export function hasRecentProductRunsStorageEntry(): boolean {
+  try {
+    return localStorage.getItem(KEY) !== null
+  } catch {
+    return false
+  }
+}
+
 /** Removes only this browser's navigation hint. Never changes a Run or preference. */
 export function clearRecentProductRuns(): boolean {
   try {

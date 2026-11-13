@@ -152,6 +152,22 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert code == 200, report
         assert report['selected']['closing_ranking']['rows'] == review_rows(closed, branch)
         assert sum(r['awarded_points'] for r in report['selected']['players']) == 220
+        # Seasonal archive and world overview over the same signed closure.
+        archive_url = report_url.rsplit('/', 1)[0]
+        code, archive = _request('GET', archive_url)
+        assert code == 200, archive
+        assert [s['season_index'] for s in archive['seasons']] == [0]
+        entry = archive['seasons'][0]
+        assert entry['rules']['weeks_per_season'] == clock.weeks_per_year
+        assert entry['overview']['completed_edition_count'] == 1
+        assert entry['overview']['titles_awarded'] == 1 and not entry['overview']['no_completed_editions']
+        # The outgoing-policy Season Closing Ranking exists; no next-season Week-1 ranking yet.
+        assert entry['overview']['rankings']['season_closing_ranking_available'] is True
+        assert entry['overview']['rankings']['next_season_week_1_fingerprint'] is None
+        assert entry['leading_player']['titles'] == 1
+        assert report['overview'] == entry['overview']
+        # A season that is not completed cannot be compared, and nothing is guessed.
+        assert _request('GET', report_url + '?compare_to=1')[0] == 409
         code, viewer = _request('GET', server.base_url + '/viewer/runs/run/calendar-tour/seasons/0')
         if not forked:
             assert code == 200, viewer
@@ -189,6 +205,21 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert sorted(r['points'] for r in ranking['rows']) == [30, 30, 60, 100]
         assert all(len(r['counted_results']) == 1 for r in ranking['rows'])
         assert all(r['counted_results'][0]['first_publication_week'] == {'season_index': 1, 'week': 1} for r in ranking['rows'])
+        # Continuing the Run keeps the closed season's archive entry; only the Week-1 ranking of
+        # the next season is new, and it is a different publication than the Week-W ranking.
+        code, archive_after = _request('GET', archive_url)
+        assert code == 200, archive_after
+        assert [s['season_index'] for s in archive_after['seasons']] == [0]
+        later = archive_after['seasons'][0]
+        for key in ('rules', 'leading_player', 'leading_country', 'boundary_command_id'):
+            assert later[key] == entry[key]
+        assert {k: v for k, v in later['overview'].items() if k != 'rankings'} == {
+            k: v for k, v in entry['overview'].items() if k != 'rankings'}
+        week_w = entry['overview']['rankings']['week_w_published_fingerprint']
+        assert later['overview']['rankings']['week_w_published_fingerprint'] == week_w
+        assert later['overview']['rankings']['season_closing_ranking_available'] is True
+        assert later['overview']['rankings']['next_season_week_1_fingerprint'] not in (None, week_w)
+        assert _request('GET', report_url)[1]['selected'] == report['selected']
         if clock.weeks_per_year == 4 and forked:
             inherited = fork(server, closed.revision_id, branch=branch, name='Inherited final-week history')
             server.native_task_branch = inherited['branch_id']

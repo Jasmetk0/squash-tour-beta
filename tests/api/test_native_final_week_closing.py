@@ -219,7 +219,11 @@ def test_real_final_week_edition_closing_save_restart_and_extension(tmp_path, mo
         assert later['overview']['rankings']['week_w_published_fingerprint'] == week_w
         assert later['overview']['rankings']['season_closing_ranking_available'] is True
         assert later['overview']['rankings']['next_season_week_1_fingerprint'] not in (None, week_w)
-        assert _request('GET', report_url)[1]['selected'] == report['selected']
+        # The summary's own facts are unchanged; only the whole-Tour source fingerprint grows
+        # with the Run, so it is the one field that may legitimately differ.
+        again = _request('GET', report_url)[1]['selected']
+        assert {k: v for k, v in again.items() if k != 'source_tour_fingerprint'} == {
+            k: v for k, v in report['selected'].items() if k != 'source_tour_fingerprint'}
         if clock.weeks_per_year == 4 and forked:
             inherited = fork(server, closed.revision_id, branch=branch, name='Inherited final-week history')
             server.native_task_branch = inherited['branch_id']

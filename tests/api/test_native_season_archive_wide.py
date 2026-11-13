@@ -66,8 +66,20 @@ def plan_second_season(server, width):
     return ids
 
 
+def raw(server, path):
+    """GET with a long timeout: re-authenticating two wide closed seasons can take minutes."""
+    import json
+    from urllib import error, request
+
+    try:
+        with request.urlopen(tour_url(server) + path, timeout=1800) as response:
+            return response.status, json.loads(response.read().decode() or "{}")
+    except error.HTTPError as exc:
+        return int(exc.code), json.loads(exc.read().decode() or "{}")
+
+
 def get(server, path):
-    code, body = _request("GET", tour_url(server) + path)
+    code, body = raw(server, path)
     assert code == 200, body
     return body
 
@@ -124,4 +136,4 @@ def test_two_closed_seasons_archive_compare_extend_and_restart(tmp_path, width):
         for old, new in zip(before["archive"]["seasons"], again["seasons"]):
             for key in ("rules", "leading_player", "leading_country", "boundary_command_id"):
                 assert old[key] == new[key]
-        assert _request("GET", tour_url(restarted) + "/seasons/2")[0] == 409
+        assert raw(restarted, "/seasons/2")[0] == 409

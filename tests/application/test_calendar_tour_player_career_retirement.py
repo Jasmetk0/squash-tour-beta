@@ -78,3 +78,16 @@ def test_before_retirement_there_is_no_summary_and_no_future_fact():
         native_player_career(state, world, "P", as_of_ordinal=99)
     with pytest.raises(KeyError):
         native_player_career(state, world, "nobody")
+
+
+def test_current_rank_does_not_reuse_an_old_rank_after_the_player_leaves_the_publication():
+    state, world = build(v87=True)
+    latest = SimpleNamespace(run_calendar=CLOCK.to_metadata(),
+                             week=SimpleNamespace(season_index=0, week=7), rows=[], fingerprint="b" * 64)
+    state.rankings.append(latest)
+    career = native_player_career(state, world, "P")
+    assert career["overview"]["current_rank"] is None
+    assert career["overview"]["career_high_rank"] == 12
+    assert career["retirement_summary"]["career_high_rank"] == 12
+    historical = native_player_career(state, world, "P", as_of_ordinal=2)
+    assert historical["overview"]["current_rank"] == 12

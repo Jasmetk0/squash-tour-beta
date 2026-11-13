@@ -60,7 +60,8 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
         with:
           python-version: '3.11'
-      - run: python -m pip install -e . pytest
+      - name: Install locked backend test dependencies
+        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
       - name: Run the actual source and persistence contracts
         env:
           CASE: ${{ matrix.case }}
@@ -110,8 +111,9 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           node-version: '20'
-      - run: python -m pip install -e . pytest playwright
-      - run: npm --prefix web ci
+      - name: Install locked browser test dependencies
+        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/saved-branch-browser.lock.txt
+      - run: npm --prefix web ci --ignore-scripts
       - name: Prepare real Chromium
         run: |
           if [ -x /usr/bin/google-chrome ]; then

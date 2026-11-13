@@ -157,9 +157,10 @@ def native_player_career(state, world, player_id, *, as_of_ordinal=None):
         if ordinal > as_of:
             continue
         row = next((r for r in snapshot.rows if r.player_id == player_id), None)
+        # "Current" belongs to the latest publication, even when it omits this player.
+        current = None if row is None else (snapshot, row)
         if row is None:
             continue
-        current = (snapshot, row)
         if first_top is None and row.rank <= TOP_RANK_THRESHOLD:
             first_top = (snapshot, row, ordinal)
         if best is None or row.rank < best[1].rank:

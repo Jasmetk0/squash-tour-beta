@@ -72,7 +72,7 @@ export function SavedDrawNativeReadiness(
     <dl>
       <dt>{cs ? 'Ranking' : 'Ranking status'}</dt>
       <dd>{preflight.ranking_status === 'ranked'
-        ? (cs ? 'Ranked' : 'Ranked') : (cs ? 'Unranked' : 'Unranked')}</dd>
+        ? 'Ranked' : 'Unranked'}</dd>
       <dt>{cs ? 'Tabulka bodů' : 'Point table'}</dt>
       <dd>{pointTableText(preflight, cs)}</dd>
     </dl>

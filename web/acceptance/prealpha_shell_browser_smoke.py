@@ -789,7 +789,8 @@ def main() -> None:
                 "saved_revision_unchanged": True, "preview_only": True, "paging_and_stale_reset": True}
 
             # The same generator now supports a separately reviewed population
-            # adoption. No Save, Tour entry, result or time advance is implicit.
+            # adoption. No Save, result or time advance is implicit. Master v87
+            # retains separately recorded pre-Run professionals at opening Week 1.
             page.get_by_label("Player count", exact=True).fill(str(population_size))
             page.get_by_role("button", name="Generate preview", exact=True).click()
             expect(page.get_by_role("table")).to_be_visible()
@@ -824,7 +825,16 @@ def main() -> None:
             assert content["initial_world"]["state"]["schema_version"] == "initial_world_state.v2"
             life = content["player_lifecycle"]["states"][0]
             assert life["week"]["calendar"] == expected_clock and life["initialization_stage"] == "population_only"
-            assert all("tour_entry_week" not in player for player in life["players"])
+            opening_evidence = content["initial_world"]["state"]["initial_turn_pro"]
+            opening_pros = set(opening_evidence["professional_player_ids"])
+            entered = {player["player_id"]: player for player in life["players"]
+                       if "tour_entry_week" in player}
+            assert opening_evidence["schema_version"] == "initial_turn_pro.v2"
+            assert len(opening_pros) == proposed["opening_professional_count"]
+            assert set(entered) == opening_pros
+            assert all(player["tour_entry_week"] == life["week"]
+                       and player["tie_break_token"] for player in entered.values())
+            assert installed_population["state"]["initial_turn_pro"] == opening_evidence
             assert "player_health_state" not in content and "player_sporting" not in content
             expect(page.get_by_text("Population is saved.", exact=True)).to_be_visible()
             page.reload()
@@ -930,7 +940,8 @@ def main() -> None:
             evidence["custom_calendar_population_adopt_save_reload"] = {"player_count":population_size,
                 "saved_revision_id":saved_population["revision_id"],"weeks_per_year":52,
                 "adoption_did_not_save":True,"manual_save_verified":True,"population_only":True,
-                "saved_inventory_total":inventory["total"],"reload_exact":True}
+                "saved_inventory_total":inventory["total"],"reload_exact":True,
+                "opening_professionals_preserved":len(opening_pros)}
 
             # V83: real browser review -> explicit consent -> all-Branch
             # atomic Save on the *same* W52 Run with 1,000 saved players

@@ -28,6 +28,7 @@ from beta_engine.domain.run_revisions import canonical_json, saved_revision_cont
 from beta_engine.domain.tournaments.calendar_tour import (
     edition_results,
     effective_policy,
+    professional_ranking_players,
     ranking_players,
 )
 from beta_engine.infrastructure.db.models import (
@@ -64,7 +65,11 @@ def closure_facts(repository, session, revision, *, final=True):
     retired = tuple(p.player_id for p in sources.lifecycle.players if p.status == "retired")
     ranking = calculate_calendar_season_closing(calendar=clock, completed_week=week,
         policy=effective_policy(state, state.week).ranking,
-        players=ranking_players(state, submissions, retired=retired),
+        players=(
+            professional_ranking_players(sources.lifecycle, retired=retired)
+            if sources.lifecycle.policy.requires_turn_pro
+            else ranking_players(state, submissions, retired=retired)
+        ),
         results=results, previous=state.rankings[-1],
         # Only the completely authenticated source_inputs graph may introduce
         # inherited source owners; callers cannot supply this through an API.

@@ -101,6 +101,13 @@ def pytest_collection_modifyitems(config, items):
             continue
         (selected if rel in changed_tests else deselected).append(item)
 
+    # A source/browser-only PR (or smoke-only module) can have no changed
+    # pr_critical tests. Keep the real critical baseline in that case rather
+    # than turning a healthy PR into pytest's "no tests selected" exit 5.
+    if (config.option.markexpr == "pr_critical"
+            and not any(item.get_closest_marker("pr_critical") for item in selected)):
+        return
+
     if deselected:
         config.hook.pytest_deselected(items=deselected)
     items[:] = selected

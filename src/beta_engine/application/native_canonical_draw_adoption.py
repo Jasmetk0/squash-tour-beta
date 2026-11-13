@@ -29,6 +29,53 @@ class SavedDrawAdoptionInput(FrozenInput):
     schedule: NativeCanonicalRoundSchedule
 
 
+def require_professional_saved_draw(authority, state, lifecycle):
+    """Master v87: every Saved Draw participant must already have turned pro.
+
+    Turn Pro is what allows a player to play the Run association's tournaments,
+    Ranked or not. The adoption is the native Tour's consumption of the Saved
+    applications and wild cards, so each participant must be a professional in
+    the current lifecycle at the adoption week, which precedes announcement and
+    play. The Saved Draw, seeding or a wild card never makes anyone a pro.
+    """
+    from beta_engine.domain.players.turn_pro import is_professional_at
+
+    _require_current_lifecycle(state, lifecycle)
+    if not lifecycle.policy.requires_turn_pro:
+        raise ValueError("Professional Saved Draw check requires the v87 lifecycle policy")
+    not_pro = sorted(
+        pid for pid in _saved_draw_entrants(authority)
+        if not is_professional_at(lifecycle, pid, state.week)
+    )
+    if not_pro:
+        shown = ", ".join(not_pro[:5]) + (", ..." if len(not_pro) > 5 else "")
+        raise ValueError(
+            f"Master v87: {len(not_pro)} Saved Draw participant(s) have not turned pro "
+            f"({shown}); only professionals may enter association tournaments"
+        )
+
+
+def _saved_draw_entrants(authority):
+    source = authority.canonical_binding.draw_input
+    return {
+        *source.direct_main_player_ids,
+        *source.wild_card_player_ids,
+        *source.qualification_player_ids,
+    }
+
+
+def _require_current_lifecycle(state, lifecycle):
+    if lifecycle is None or (
+        lifecycle.run_id,
+        lifecycle.branch_id,
+        lifecycle.week.ordinal,
+        lifecycle.fingerprint,
+    ) != (
+        state.run_id, state.branch_id, state.week.ordinal, state.lifecycle_fingerprint,
+    ):
+        raise ValueError("Saved Draw requires the current owned Tour lifecycle")
+
+
 def require_ranked_draw_tour_entry(authority, state, lifecycle):
     """The adopted Draw is sporting evidence, not native first-Entry authority."""
     if lifecycle is None or (

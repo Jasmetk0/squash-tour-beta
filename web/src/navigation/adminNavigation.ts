@@ -30,7 +30,8 @@ export function runAdminNavFor(runId: string): AdminNavItem[] {
     ] },
     { to: base + '/players', label: 'Players', children: [
       { to: base + '/players', label: 'Player list' },
-      { to: base + '/players/intake', label: 'Talent Intake' }
+      { to: base + '/players/intake', label: 'Talent Intake' },
+      { to: base + '/following', label: 'Following & alerts' }
     ] },
     { to: base + '/calendar', label: 'Tour', children: [
       { to: base + '/tour/calendar', label: 'Saved Tour Calendar' },

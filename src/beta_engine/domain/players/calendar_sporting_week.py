@@ -13,6 +13,8 @@ from pydantic import Field, model_validator
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.attribute_catalog import ATTRIBUTE_TO_GROUP
 from beta_engine.domain.players.sporting import PlayerDevelopmentPolicy, _roll
+from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
+from beta_engine.domain.players.turn_pro_model import TurnProModelPolicy
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -29,7 +31,7 @@ class CalendarAnnualDevelopmentPolicy(FrozenInput):
 
 
 class CalendarSportingWeekAdvance(FrozenInput):
-    schema_version: Literal["calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v2", "calendar_sporting_week_advance.v3"] = (
+    schema_version: Literal["calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v2", "calendar_sporting_week_advance.v3", "calendar_sporting_week_advance.v4"] = (
         "calendar_sporting_week_advance.v1"
     )
     run_id: str = Field(min_length=1)
@@ -51,6 +53,14 @@ class CalendarSportingWeekAdvance(FrozenInput):
         "sporting_only_exhibition_timeline"
     )
 
+    turn_pro_model: TurnProModelPolicy | None = Field(default=None, exclude_if=lambda v: v is None)
+    turn_pro_decisions: tuple[PlayerTurnProDecision, ...] = Field(default=(), exclude_if=lambda v: not v)
+
+    source_lifecycle_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$", exclude_if=lambda v: v is None)
+    target_lifecycle_fingerprint: str | None = Field(default=None, pattern=r"^[0-9a-f]{64}$", exclude_if=lambda v: v is None)
+    retired_player_ids: tuple[str, ...] = Field(default=(), exclude_if=lambda v: not v)
+    retired_without_turn_pro_player_ids: tuple[str, ...] = Field(default=(), exclude_if=lambda v: not v)
+
     @model_validator(mode="after")
     def validate_advance(self):
         if (
@@ -71,6 +81,15 @@ class CalendarSportingWeekAdvance(FrozenInput):
         if self.schema_version.endswith(".v1") and (self.policy != CalendarAnnualDevelopmentPolicy()
                 or self.scope != "sporting_only_exhibition_timeline"):
             raise ValueError("Unknown native annual development calibration")
+        if self.schema_version.endswith(".v4"):
+            if (self.scope != "sporting_only_exhibition_timeline" or self.turn_pro_model is None
+                    or not self.turn_pro_model.uses_self_perception
+                    or self.policy != CalendarAnnualDevelopmentPolicy()
+                    or self.source_lifecycle_fingerprint is None or self.target_lifecycle_fingerprint is None):
+                raise ValueError("Exhibition v4 requires its recorded Turn Pro model")
+        elif (self.turn_pro_model is not None or self.turn_pro_decisions or self.source_lifecycle_fingerprint is not None
+              or self.target_lifecycle_fingerprint is not None or self.retired_player_ids or self.retired_without_turn_pro_player_ids):
+            raise ValueError("Historical sporting weeks cannot acquire new Turn Pro evidence")
         if self.schema_version.endswith(".v2") and self.scope != "configured_tour_week_transition":
             raise ValueError("Native v2 development belongs to an Official Week Transition")
         if tuple(p for p, _ in self.played_counts) != tuple(
@@ -244,6 +263,15 @@ def append_sporting_week(checkpoint, world, knockout, event):
         raise ValueError(
             "Sporting week predecessor, history, identity, calendar or played counts mismatch"
         )
+    if event.schema_version == "calendar_sporting_week_advance.v4":
+        from beta_engine.domain.players.calendar_exhibition_turn_pro import exhibition_turn_pro_impact
+        if not world.lifecycle_policy.requires_turn_pro or world.initial_turn_pro.schema_version != "initial_turn_pro.v2":
+            raise ValueError("Exhibition v4 requires the recorded own-perception opening policy")
+        expected = exhibition_turn_pro_impact(
+            world, checkpoint, model=event.turn_pro_model, seed=event.seed, target=event.target_week,
+        )
+        if any(getattr(event, key) != value for key, value in expected.items()):
+            raise ValueError("Exhibition Turn Pro decisions differ from completed-week replay")
     developed, recovered = develop_and_recover(
         checkpoint,
         world,

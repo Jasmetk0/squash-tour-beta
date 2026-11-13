@@ -22,8 +22,36 @@ from beta_engine.domain.players.calendar_prospect_birth import (
     advance_calendar_lifecycle_with_prospects,
     build_calendar_prospect_birth_event,
 )
+from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
+
+
+def _signed_turn_pro_entries(previous, current):
+    """Master v87: the Turn Pro entries a Signed week claims, as replay inputs.
+
+    Whether the player AI really made them is proven by the Tour receipt replay,
+    which re-runs the recorded model. Here they only drive the lifecycle advance,
+    which still checks the week, token, status and retirement of each entry.
+    """
+    if not current.policy.requires_turn_pro:
+        return ()
+    before = {p.player_id: getattr(p, "tour_entry_week", None) for p in previous.players}
+    return tuple(
+        PlayerTurnProDecision(
+            run_id=current.run_id,
+            branch_id=current.branch_id,
+            player_id=p.player_id,
+            effective_week=current.week,
+            decision_source="player_ai",
+            source_state_fingerprint=previous.fingerprint,
+            provenance="Signed lifecycle Turn Pro entry under replay",
+        )
+        for p in current.players
+        if getattr(p, "tour_entry_week", None) is not None
+        and p.tour_entry_week.ordinal == current.week.ordinal
+        and before.get(p.player_id) is None
+    )
 
 
 class CalendarNativeBirthReplayProof(FrozenInput):
@@ -178,6 +206,7 @@ def verify_calendar_native_birth_history(
                 raise ValueError("Native replay birth event differs from the Signed source")
             expected = advance_calendar_lifecycle_with_prospects(
                 all_previous, event, submissions,
+                _signed_turn_pro_entries(all_previous, current),
             )
             birth_fingerprints.append(event.fingerprint)
             admitted_ids.update(b.player_id for b in event.births)
@@ -186,6 +215,7 @@ def verify_calendar_native_birth_history(
                 raise ValueError("Native replay legacy lifecycle silently omitted a 15yo birth")
             expected = advance_calendar_lifecycle(
                 all_previous, current.week, submissions,
+                _signed_turn_pro_entries(all_previous, current),
             )
             birth_fingerprints.append(None)
         if current != expected or current.predecessor_fingerprint != all_previous.fingerprint:

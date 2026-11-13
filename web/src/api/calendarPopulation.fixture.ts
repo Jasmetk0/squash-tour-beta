@@ -8,7 +8,8 @@ export const population:CalendarPopulation={fingerprint:'c'.repeat(64),lifecycle
 export function reviewed(request:CalendarPopulationRequest):CalendarPopulationReview {
   return {schema_version:'calendar_initial_world_review.v2',preview_only:true,request,pool_preview:preview(),
     initial_world_fingerprint:population.fingerprint,lifecycle_fingerprint:population.lifecycle_fingerprint,
-    player_count_before:0,player_count_after:1}
+    player_count_before:0,player_count_after:1,
+    ...(request.lifecycle_policy?.tour_entry_rule==='turn_pro.v87'?{opening_professional_count:1}:{})}
 }
 export const saveProof={run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a',draft_version:2,
   initial_world_fingerprint:population.fingerprint,has_unsaved_changes:true,can_save:true}

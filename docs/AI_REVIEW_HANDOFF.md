@@ -1,3 +1,17 @@
+# Active takeover — 13 November 2026
+
+Radim asked Work to independently review and finish Claude's five native packages.
+The pinned source heads, observed fixes, evidence boundary and remaining release
+limits are now at the top of `CURRENT_STATE.md`. Work owns the active integration
+branch `fix/claude-native-readers-integration-20261113`, including the shared Tour,
+Saved, career, season and alert files during this review. Do not repeat the old
+queue or write concurrently into those files. Claude's original PRs remain open;
+no middle stack is independently approved merely because a later head passed CI.
+Owner alone merges the final reviewed candidate. Older instructions below retain
+product context but their completed assignments are not new work to reimplement.
+
+---
+
 # AI repair handoff — 12 November 2026
 
 Current assignment, expanded at Radim's request on 12 November with three

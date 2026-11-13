@@ -252,6 +252,12 @@ def establish_native_tour_entry(server, plan):
 def test_actual_q_main_partial_save_restart_and_terminal(
     tmp_path, fax_source, size, ranked, monkeypatch
 ):
+    run_actual_q_main(tmp_path, fax_source, size, ranked, monkeypatch)
+
+
+def run_actual_q_main(tmp_path, fax_source, size, ranked, monkeypatch, *, v87=False):
+    """Shared body. ``v87`` runs it under Master v87: Turn Pro, not a prior native
+    Entry, is what admits a Saved Draw participant, and the roster holds every pro."""
     db = f"sqlite:///{tmp_path / 'native-q-main.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(
@@ -299,7 +305,7 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         }
         event_id = plan.source.draw.event_id
         play_week = 7 if ranked else 4
-        if ranked:
+        if ranked and not v87:
             # A published seeding source and an exact Saved Draw are insufficient
             # to register a player on the live native Tour.
             before = inspect(server)
@@ -386,7 +392,8 @@ def test_actual_q_main_partial_save_restart_and_terminal(
         assert status == 200, public
         assert event_id not in {e["edition_id"] for e in public["editions"]}
         # Only the normal public Week Transition publishes the explicit source date.
-        for _ in range(2):
+        steps = play_week - inspect(server)["state"]["week"]["week"]
+        for _ in range(steps):
             execute(
                 server,
                 command(
@@ -401,8 +408,11 @@ def test_actual_q_main_partial_save_restart_and_terminal(
             )
             assert status == 200, public
             adopted_public = [e for e in public["editions"] if e["edition_id"] == event_id]
-            assert len(adopted_public) == 1
-            assert adopted_public[0]["completed"] is False
+            # Public only from its announcement week (play week - 1), never earlier.
+            announced = inspect(server)["state"]["week"]["week"] >= play_week - 1
+            assert len(adopted_public) == (1 if announced else 0)
+            if announced:
+                assert adopted_public[0]["completed"] is False
         assert inspect(server)["state"]["week"]["week"] == play_week
         assert sum(
             event_id in t["public_event"]["announced_edition_ids"]
@@ -515,7 +525,12 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 for row in evidence["results"]
             }
             assert len(resolved) == 36
-            assert {row["player_id"] for row in ranking} == resolved.keys()
+            if v87:
+                # The roster is every professional, not only this Edition's players.
+                assert resolved.keys() <= {row["player_id"] for row in ranking}
+                ranking = [row for row in ranking if row["player_id"] in resolved]
+            else:
+                assert {row["player_id"] for row in ranking} == resolved.keys()
             prior_points = {row["player_id"]: row["points"] for row in before_publication["rows"]}
             for row in ranking:
                 pid = row["player_id"]
@@ -524,7 +539,7 @@ def test_actual_q_main_partial_save_restart_and_terminal(
                 assert (
                     from_gold[0]["main_points"], from_gold[0]["qualification_points"]
                 ) == resolved[pid]
-                assert row["points"] == prior_points[pid] + sum(resolved[pid])
+                assert row["points"] == prior_points.get(pid, 0) + sum(resolved[pid])
             assert (
                 sum(row["qualification_points"] == 17 for row in evidence["results"])
                 == 4

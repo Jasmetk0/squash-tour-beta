@@ -4987,6 +4987,24 @@ export function getSavedTourEdition(
   return request(prefix+'/tour/editions/'+encodeURIComponent(eventId)+'?'+params.toString())
 }
 
+/** Read-only: does the Branch's current Saved FAX Draw meet the native-adoption prerequisites? */
+export function getSavedDrawNativePreflight(
+  runId:string,branchId:string,eventId:string,season:string,expectedSavedRevisionId:string
+):Promise<import('./savedNativeReadiness').SavedDrawPreflight>{
+  const params=new URLSearchParams({season,expected_saved_revision_id:expectedSavedRevisionId})
+  return request(canonicalTournamentDrawRoot(runId,branchId,eventId)
+    +'/saved-native-preflight?'+params.toString())
+}
+
+/** Read-only: which Saved Draw participants have first Tour Entry evidence in this Saved head? */
+export function getSavedDrawEntryEvidence(
+  runId:string,branchId:string,eventId:string,season:string,expectedSavedRevisionId:string
+):Promise<import('./savedNativeReadiness').SavedDrawEntryEvidence>{
+  const params=new URLSearchParams({season,expected_saved_revision_id:expectedSavedRevisionId})
+  return request(canonicalTournamentDrawRoot(runId,branchId,eventId)
+    +'/saved-entry-evidence?'+params.toString())
+}
+
 /** Reachable, immutable Saved Revision Edition match; never the current player Saved HEAD. */
 export async function getSavedTourMatchDetail(
   runId:string,branchId:string,revisionId:string,seasonIndex:number,
@@ -5508,4 +5526,44 @@ export function importPlayerLabHistory(payload: {product_run_id: string; branch_
 
 export function runPlayerLabSession(id: string, fingerprint: string): Promise<import('./types').PlayerLabResult> {
   return request(`/admin/labs/player/sessions/${encodeURIComponent(id)}/run`, {method: 'POST', body: JSON.stringify({expected_session_fingerprint: fingerprint})})
+}
+
+/** Strictly read-only native player career from the Branch's Saved configured Tour. */
+export async function getSavedPlayerCareer(
+  runId: string, branchId: string, playerId: string, asOfOrdinal?: number
+): Promise<import('./savedPlayerCareer').SavedPlayerCareer> {
+  if (!playerId || playerId.length > 128 || playerId.trim() !== playerId) {
+    throw new Error('Invalid saved player identifier.')
+  }
+  const query = asOfOrdinal === undefined ? '' : `?as_of_ordinal=${encodeURIComponent(String(asOfOrdinal))}`
+  return request<import('./savedPlayerCareer').SavedPlayerCareer>(
+    `/admin/runs/${encodeURIComponent(runId)}/branches/${encodeURIComponent(branchId)}`
+    + `/calendar-tour/players/${encodeURIComponent(playerId)}/career${query}`
+  )
+}
+
+/** Run-level follows (a preference, never Saved Run content) and Branch-level derived alerts. */
+const followRoot=(run:string)=>`/admin/runs/${encodeURIComponent(run)}`
+export function getRunFollows(run:string):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+'/follows')
+}
+export function putRunFollow(run:string,kind:string,subject:string,alertsEnabled=true):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+`/follows/${encodeURIComponent(kind)}/${encodeURIComponent(subject)}`,{method:'PUT',body:JSON.stringify({alerts_enabled:alertsEnabled})})
+}
+export function deleteRunFollow(run:string,kind:string,subject:string):Promise<import('./followNotifications').FollowList> {
+  return request(followRoot(run)+`/follows/${encodeURIComponent(kind)}/${encodeURIComponent(subject)}`,{method:'DELETE'})
+}
+export function getFollowAlerts(run:string,branch:string,includeHidden=false):Promise<import('./followNotifications').AlertList> {
+  return request(followRoot(run)+`/branches/${encodeURIComponent(branch)}/notifications${includeHidden?'?include_hidden=true':''}`)
+}
+export function putAlertState(run:string,branch:string,key:string,state:'unread'|'read'|'hidden',seenItemCount?:number):Promise<import('./followNotifications').AlertList> {
+  return request(followRoot(run)+`/branches/${encodeURIComponent(branch)}/notifications/${encodeURIComponent(key)}/state`,{method:'PUT',body:JSON.stringify({state,seen_item_count:seenItemCount})})
+}
+
+/** Read-only archive of every completed season of the Branch's Saved native Tour. */
+export function getSeasonArchive(run:string,branch:string):Promise<import('./seasonArchive').SeasonArchive> {
+  return request(calendarTourRoot(run,branch)+'/seasons')
+}
+export function getSeasonDetail(run:string,branch:string,season:number,compareTo:number):Promise<import('./seasonArchive').SeasonDetailResponse> {
+  return request(calendarTourRoot(run,branch)+'/seasons/'+encodeURIComponent(season)+'?compare_to='+encodeURIComponent(compareTo))
 }

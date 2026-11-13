@@ -13,6 +13,7 @@ vi.mock('../admin/AdminBranchContext',()=>({useAdminBranch:()=>({
 })}))
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
+vi.mock('../components/FollowStar',()=>({FollowStar:()=> <span data-testid="follow-star">star</span>}))
 vi.mock('./SavedPlayerMatchesPanel',()=>({SavedPlayerMatchesPanel:()=> <div data-testid="saved-matches">Real saved matches panel</div>}))
 function mount(entry='/admin/runs/run-a/people/p1'){
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})

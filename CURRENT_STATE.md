@@ -1,3 +1,61 @@
+# Work takeover of Claude native features — 13 November 2026
+
+Owner asked Work to review and finish Claude's implementation. Owner-merged base
+is `buuk fcf0deb9cfcb525641f20d73b03f5bdb3d647d3f` (includes #1800/#1796/#1797/#1798).
+The implementation candidate combines these pinned, unmerged Claude tips:
+
+- #1799 `bf1cef4d6d9bdd4f9a5ad020e2b5fefed227573d` (contains #1793 `0aa87ec3`
+  and #1790 `ea6b2307`, including the older Turn Pro chain).
+- #1795 `3cc3ab69b065fb2e019b1e9df510b17c87300227` (season archive).
+- #1789 `8ea924f0d018f98ab5b2e39511848a99a92af29e` (Saved Draw reader).
+
+Work's integration branch is `fix/claude-native-readers-integration-20261113`.
+It resolves the real client/router merge conflicts and repairs observed issues:
+
+1. Opening professionals use their own recorded self-perception under a new v2
+   evidence boundary. The old true-strength v1 reader retains its original bytes.
+2. New v4 exhibition advances record actual weekly Turn Pro decisions/model and
+   lifecycle/never-pro retirement evidence before Tour initialization. Preview,
+   commit, exact retry and replay bind those inputs; initialization copies them,
+   rather than evaluating the past under a later default. Old v1 advances remain
+   a compatibility path, not silently rewritten history.
+3. Every improved career ranking remains in history; a later improvement cannot
+   erase the earlier alert or change its anchored identity. Country alerts use
+   the domestic leaders at the fact's week. Real never-pro retirement/restart
+   is additionally tested, including a historical view before retirement.
+4. Native birth identities come from the authenticated Saved lifecycle/prospect
+   source, even before the first match; future source records are excluded.
+5. Alert acknowledgements carry the number of facts actually displayed, so a
+   delayed/repeated read acknowledgement leaves later facts unread.
+6. Season comparison detects changed stored point tables and draw formats; other
+   unsupported comparisons remain explicit. Invalid career/season responses fail
+   closed instead of inventing facts or crashing the panel.
+7. Fast CI's changed-module selector falls back to actual critical tests when
+   there are no changed critical tests. The prior red checks on #1789/#1795 were
+   reproduced from logs as pytest exit 5, not failing runtime assertions.
+
+Local review initially passed all 381 frontend files / 3,585 tests. After the first
+repairs all 3,587 tests passed; the final additional acknowledgement/identity cases
+have focused checks and must also pass the final candidate gates. Two alert and
+two career-validator regressions were failing-before/passing-after. Additional
+unit and real HTTP/SQLite checks exercise the new writer boundaries. Consult the
+candidate PR for exact final-head results, not older source-branch checks.
+
+A new Ready/manual workflow runs genuine lifecycle/career/alerts/season HTTP/SQLite
+and all four actual CS/EN reader browser scripts. Local Chromium is blocked by
+process-singleton `socket()` EPERM; no local browser pass is claimed. Wide two-season
+W52 remains a separate, unverified long test; its added 1,800-second transport timeout
+was restored to the normal 120-second limit. One closed W52/W61/W80 season and
+short-clock multi-season proofs do not certify two full wide seasons or the
+50-season pre-alpha release. Saved growth/replay performance remain release work.
+
+This is an unmerged integration candidate, not merge approval or full pre-alpha
+completion. Work is the current writer/reviewer of these shared files; Radim alone
+merges. No sporting calibration, Master rule, shared FAX source or production
+configuration was changed. Earlier status/queue entries below are dated history.
+
+---
+
 # Ordinary ChatGPT review and second queue — 12 November 2026
 
 Owner-merged base `buuk 8c2507bfe20601c5dd7b7fc7a47c48c5190180e9` now includes
@@ -59,6 +117,181 @@ The [current evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) contains al
 [new Claude chat prompt](docs/AI_REVIEW_HANDOFF.md#prompt-to-paste-into-a-new-claude-code-chat)
 is ready to paste. Owner alone merges. Earlier candidate entries below are dated
 history and do not certify current runtime or full pre-alpha completion.
+
+---
+
+# Turn Pro continuation — 12 November 2026 (draft PR, not owner-approved)
+
+Own delta over #1783: positive decisions store the prospect's own observation
+(`decision_evidence: observation.v1`, versioned through the model policy; earlier
+v1/v2 bytes unchanged); replay recomputes chance/draw and checks the observation's
+internal consistency; Tour initialization records Turn Pro for every exhibition
+week before the Tour (`CalendarPreTourTurnPro`); the existing player read gains a
+read-only `turn_pro` block incl. the never-pro exception; Saved FAX Draws are
+tested under v87 for Ranked and Unranked.
+
+Measured (provisional): one positive decision grows from 500 B to 2503 B (+~2 KB,
+57 perceived attributes dominate); verification is ~0.05 ms per decision. The Tour
+state is part of every Saved revision, so ~3000 AI professionals would add ~6 MB per
+revision. A compact attribute encoding is the obvious reduction if this proves too
+large; it was not done here. Limits: observation-vs-true-attributes is provable only
+on the native replay path, and the older Tour path cannot prove no prospect was
+omitted (candidate set not stored). Annual W52/W61/W80 timing is covered by the
+existing model/perception domain tests; decision-evidence replay is now also tested
+for W52/W61/W80. Measured cost: 1000 prospects in one week take ~0.5 s (almost all
+self-perception, ~0.4 ms per prospect; ~0.07-0.11 s to decide), so a long Run that
+keeps ~1000 prospects in play every week of 50 seasons would spend tens of minutes
+there. The persistent perception components are now memoised (output verified
+byte-identical to the previous implementation on 90 samples): warm cost fell from
+0.36 s to 0.13 s per 1000 perceptions. No full W80/1000-player Run and no simultaneous-slot run was added. Fork read of the never-pro exception shares the same pure helper but has
+no fork execution test. Hosted workflows were not run on this head.
+
+---
+
+# Turn Pro model v2: own self-perception (Master v87) — 11 November 2026
+
+Stacked on the FAX Saved Draw branch. Following the owner clarification, the
+weekly Turn Pro AI no longer reads other players' hidden strength. A prospect
+perceives its own 57 attributes imperfectly (level/group/attribute errors,
+Confidence bias, Analysis/Self Control reflection, unknown Financial Level),
+compares its perceived level with a fixed professional threshold and adds its own
+ambition/professionalism. Each decision records what the prospect knew. v1
+remains only for replaying recorded history. Owner decision B: eventual entry is
+near-certain, not forced. See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro v87 FAX Saved Draw candidate (Master v87) — 11 November 2026
+
+Stacked on the Admin-default branch. Owner decision: the FAX reference path also
+follows v87 — turn pro first, then apply. Under a v87 World, Saved Draw adoption
+(Ranked or Unranked) requires every participant to be a professional by the
+adoption week and otherwise fails closed, naming them. Proven over HTTP/SQLite
+(rejected with prospects, adopted and Saved with professionals only). The legacy
+copied-FAX acceptance materializer still uses the legacy 61-week lifecycle; its
+move to the native population is a separate step. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro v87 Admin default candidate (Master v87) — 11 November 2026
+
+Stacked on the native-fork branch. New Runs created through the Admin population
+controls default to the v87 Turn Pro rule (historical rule remains an explicit
+choice); the HTTP API default is unchanged. The review shows how many players are
+already professional at Run start. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro native fork candidate (Master v87) — 11 November 2026
+
+Stacked on the native-weeks branch. Public native forks of a v87 Run now run and
+record Turn Pro at their Week Transitions and re-run each recorded model on
+replay. Proven over HTTP/SQLite: fork birth week with decisions owned by the fork,
+untouched original Branch, a following default-calibration week and restart.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro native weeks candidate (Master v87) — 11 November 2026
+
+Stacked on the public-event branch. Native birth/competition Week Transitions run
+the v87 model and record it; Signed replay re-runs the recorded model and must
+reproduce every decision. Proven over HTTP/SQLite for a native birth week, Save,
+a forged-decision rejection, restart and a following native week. Native forks
+still reject v87. See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro public World Event candidate (Master v87) — 11 November 2026
+
+Stacked on the home-opportunity branch. v87 Week Transitions with decisions publish
+`turned_pro_player_ids` in their public event (absent otherwise, historical bytes
+unchanged), verified on Saved replay and visible in Viewer `public_events` from
+the target week only. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro home opportunity candidate (Master v87) — 11 November 2026
+
+Stacked on the v87 HTTP/SQLite acceptance branch. Editions may record an optional
+`host_country_code` (absent = identical historical bytes). Under v87 a prospect
+with a public, not-yet-played Edition in their country gets the model's home
+opportunity at the Week Transition; announcements that become public at that same
+transition are excluded (no future leak). PROVISIONAL: any such Edition counts.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro v87 HTTP/SQLite acceptance candidate (Master v87) — 11 November 2026
+
+Stacked on #1772. First real production-stack v87 path: opening professionals,
+model-recorded Week Transitions, a prospect who turns pro then applies, plays and
+is ranked, a refused non-professional application, exact replay, Saved hash and
+restart retry. Fixes the application gate for Tours without a stored native
+lifecycle. Known gap: pre-Tour continuation weeks do not run Turn Pro; native
+competition/birth weeks and forks still reject v87. See
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro opening professionals candidate (Master v87) — 11 November 2026
+
+Stacked on #1771. A new Run selects v87 through the existing calendar population
+adoption request (`lifecycle_policy.tour_entry_rule = "turn_pro.v87"`); earlier
+notes saying no runtime could select v87 missed this path. The adopted InitialWorld
+then records recomputable `initial_turn_pro` evidence (model, seed, opening
+professional ids from a PROVISIONAL retrospective integration of the pre-alpha
+model) and the bootstrap lifecycle gives those players Tour entry at opening Week
+1 with a Run-keyed token, so forks keep them. Proven over HTTP/SQLite for
+adoption, Save, restart and fork; the full v87 sporting path is not yet proven.
+See [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro Week Transition candidate (Master v87) — 11 November 2026
+
+Stacked on #1770. Under the opt-in v87 policy the native Week Transition runs the
+pre-alpha player-AI model and records its decisions and model policy in the
+transition; lifecycle history, the Saved lifecycle check and ranking replay rebuild
+the v87 lifecycle from them. Historical-policy Runs are byte-for-byte unchanged.
+Birth transitions and forks reject v87 explicitly. No runtime selects v87 yet; see
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro pre-alpha AI model candidate (Master v87) — 11 November 2026
+
+Stacked on #1768. Adds the pure, deterministic `turn_pro_model.v1`: a weekly
+chance by age, strength versus Tour Players and a home opportunity, converted by
+the Run's W, with a hash-derived per-player/week draw. Default calibration gives a
+neutral median of about 17.8 years and 99.7 % by 22. Not yet called by Week
+Transition; see [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro ranking roster and application gate candidate (Master v87) — 10 November 2026
+
+Stacked on the kernel candidate (#1767). Under the opt-in v87 policy the native
+Tour ranking roster comes from Turn Pro (a pro without any application is ranked
+from the next snapshot) and native `submit` rejects players who have not turned
+pro. Historical-policy rankings keep the application roster byte-for-byte. No
+runtime selects v87 yet; see [docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
+
+---
+
+# Turn Pro lifecycle kernel candidate (Master v87) — 10 November 2026
+
+Base `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`; the v87 decision itself is
+in Draft PR #1765. This candidate adds the pure domain kernel only: an opt-in
+`tour_entry_rule="turn_pro.v87"` lifecycle policy (historical bytes unchanged),
+the `PlayerTurnProDecision` contract, native lifecycle advance driven by Turn Pro
+instead of applications, and the pre-entry gate. No runtime selects v87 yet, so
+behavior of every Run is unchanged. Persistence, player AI, ranking roster and
+application/WC wiring are listed in
+[docs/TURN_PRO_LIFECYCLE_V87.md](docs/TURN_PRO_LIFECYCLE_V87.md).
 
 ---
 
@@ -205,6 +438,29 @@ squash MatchEngine, manual Saves and zero ranking points. The UI checks the
 exact target and announcement weeks against the chosen Run horizon. Admin
 selects the entrants. Automated age/Race eligibility and other ATP sporting
 formats remain follow-up work. See [mapping and validation](docs/ATP_EARTH_WEEK_MAPPING_V1.md).
+
+---
+
+# Saved Draw native readiness panel candidate — 10 November 2026
+
+Base `buuk` `04c9879c49921865e35240cbcf411426d84ef68d`. Admin now surfaces the two
+existing read-only Saved Draw inspections (`saved-native-preflight`,
+`saved-entry-evidence`) on the Saved Edition Draw tab, for the Branch's current
+Saved head only. It shows point-table gaps, the native execution status and which
+Main / Qualification / wild-card participants have a recorded first Tour Entry.
+It adds no backend behavior, command, sporting rule or calibration, and it neither
+creates first Entry nor adopts a Draw. Wiring valid first Entry into the native
+lifecycle, the adoption wizard and original-source chronology stay the next
+boundaries.
+
+The panel is requested only when the page's revision equals the Branch's current
+Saved head; historical revisions never call these current-head endpoints. Any
+response whose Saved revision, Edition, Draw source fingerprint or trigger owner
+differs from the request is discarded, not displayed. Unsupported Draws (HTTP
+404/409) appear as information. The panel has no action and does not decide
+whether a missing Entry is acceptable. Evidence is mocked-API component/contract
+tests plus the existing frontend suite and production build; no browser or
+HTTP/SQLite pass is claimed.
 
 ---
 

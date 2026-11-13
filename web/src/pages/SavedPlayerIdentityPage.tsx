@@ -5,6 +5,8 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { getSavedPlayerProfile } from '../api/client'
 import { PlayerHealthAdminPanel } from './PlayerHealthAdminPanel'
 import { SavedPlayerMatchesPanel } from './SavedPlayerMatchesPanel'
+import { SavedPlayerCareerTimeline } from '../components/SavedPlayerCareerTimeline'
+import { FollowStar } from '../components/FollowStar'
 import { useAdminBranch } from '../admin/AdminBranchContext'
 import { useAdminTime } from '../admin/AdminTimeContext'
 import { useLanguage } from '../i18n/LanguageContext'
@@ -51,6 +53,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
     <div className="page-intro">
       <p className="eyebrow">PRODUCT RUN · SAVED PLAYER PROFILE</p>
       <h2>{player?.display_name || playerId}</h2>
+      {player && <p><FollowStar runId={runId} kind="player" subjectId={playerId} cs={cs} /></p>}
       <p className="subtitle">{tab==='health' ? (cs?'Současný zdravotní stav v Adminu':'Current Admin health state') : (cs ? 'Sportovní přehled z uložené revize vybrané branche' : 'Sporting summary from the selected Branch Saved Revision')}</p>
     </div>
     {time.mode !== 'present' ? <p className="status">{cs
@@ -128,6 +131,8 @@ export function SavedPlayerIdentityPage(): JSX.Element {
               'Read-only mode. Editing will require a separate explicit action.'}</p>
           </section>}
           {tab==='career' && <section role="tabpanel" aria-label={cs ? 'Kariéra a výsledky' : 'Career & results'}>
+          <SavedPlayerCareerTimeline key={branchId + ':' + savedHead + ':' + playerId}
+            runId={runId} branchId={branchId!} savedHead={savedHead!} playerId={playerId} cs={cs} />
           <h3>{cs ? 'Turnajová historie' : 'Tournament history'}</h3>
           <p><strong>{cs ? 'Tituly' : 'Titles'}:</strong> {profile.titles}
             {' · '}<strong>{cs ? 'Finálové účasti' : 'Final appearances'}:</strong> {profile.final_appearances}</p>

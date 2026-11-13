@@ -13,6 +13,7 @@ import {verifiedCountryReturn} from './runWorldCountryTournaments'
 import {filterSavedEditionMatches} from './savedEditionResultDiscovery'
 import {SavedFinalLookupLink,SavedPlayerProfileLink} from './savedTourPlayerLinks'
 import {SavedEditionShortcuts} from '../components/SavedEditionShortcuts'
+import {SavedDrawNativeReadiness} from '../components/SavedDrawNativeReadiness'
 
 type Tab='overview'|'entries'|'draw'|'schedule'|'results'|'settings'
 const tabs:Tab[]=['overview','entries','draw','schedule','results','settings']
@@ -302,6 +303,9 @@ export function SavedTourEditionPage():JSX.Element {
             'No saved Draw authority exists in this revision.'}</p>}
         {result&&<><h4>{cs?'Publikované výsledky zápasů':'Published match results'}</h4>
           {matchTable(phase==='main'?main:qualification)}</>}
+        {draw&&sameHead&&<SavedDrawNativeReadiness key={[runId,branch,revision,eventId].join('|')}
+          runId={runId} branchId={branch!} revisionId={revision!} eventId={eventId}
+          season={e!.season} cs={cs} renderPlayer={playerRef}/>}
       </section>}
       {tab==='schedule'&&<section><h3>{labels[3]}</h3>
         <p>{cs?'Časy zápasů se z výsledků neodvozují. Den zápasu je pořadové číslo, nikoli datum.':

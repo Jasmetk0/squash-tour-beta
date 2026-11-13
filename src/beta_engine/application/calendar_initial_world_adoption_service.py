@@ -11,6 +11,7 @@ from beta_engine.application.calendar_initial_world import (
     CalendarInitialWorldState,
     bootstrap_calendar_player,
     derive_calendar_bootstrap_lifecycle,
+    initial_turn_pro_evidence,
 )
 from beta_engine.application.run_calendar_initial_pool_preview_service import (
     RunCalendarInitialPoolPreviewRequest,
@@ -19,6 +20,9 @@ from beta_engine.application.run_calendar_initial_pool_preview_service import (
 from beta_engine.application.world_package_run_adapter import WorldPackageRunAdapter
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+from beta_engine.domain.players.turn_pro_model import (
+    default_turn_pro_model_policy,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -173,24 +177,25 @@ class CalendarInitialWorldAdoptionService:
                 "lifecycle_policy": request.lifecycle_policy.model_dump(mode="json"),
             }
         )
+        players = tuple(
+            sorted(
+                (
+                    bootstrap_calendar_player(
+                        p,
+                        seed=request.generation.seed,
+                        bootstrap_fingerprint=bootstrap_fp,
+                    )
+                    for p in pool.result.players
+                ),
+                key=lambda p: p.player_id,
+            )
+        )
         world = CalendarInitialWorldState(
             run_id=run_id,
             branch_id=branch_id,
             run_calendar=calendar,
             season=calendar.label(0),
-            players=tuple(
-                sorted(
-                    (
-                        bootstrap_calendar_player(
-                            p,
-                            seed=request.generation.seed,
-                            bootstrap_fingerprint=bootstrap_fp,
-                        )
-                        for p in pool.result.players
-                    ),
-                    key=lambda p: p.player_id,
-                )
-            ),
+            players=players,
             source_season=calendar.label(0),
             source_fingerprint=pool.preview_fingerprint,
             world_package_id=request.generation.world_package_id,
@@ -204,6 +209,17 @@ class CalendarInitialWorldAdoptionService:
             audit_reason=request.audit_reason,
             adoption_request_fingerprint=request.fingerprint(run_id, branch_id),
             lifecycle_policy=request.lifecycle_policy,
+            initial_turn_pro=(
+                initial_turn_pro_evidence(
+                    run_id=run_id,
+                    run_calendar=calendar,
+                    players=players,
+                    model=default_turn_pro_model_policy(),
+                    seed=request.generation.seed,
+                )
+                if request.lifecycle_policy.requires_turn_pro
+                else None
+            ),
         )
         return world, pool
 
@@ -225,6 +241,16 @@ class CalendarInitialWorldAdoptionService:
             ).fingerprint,
             "player_count_before": 0,
             "player_count_after": len(world.players),
+            # Master v87 only: players already professional at opening Week 1.
+            **(
+                {
+                    "opening_professional_count": len(
+                        world.initial_turn_pro.professional_player_ids
+                    )
+                }
+                if world.initial_turn_pro is not None
+                else {}
+            ),
         }
 
     def _installed(self, session, *, run_id, branch_id):

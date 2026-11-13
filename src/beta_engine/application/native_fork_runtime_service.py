@@ -288,6 +288,14 @@ class NativeForkRuntimeService:
             identity = next(
                 p for p in current.lifecycle.players if p.player_id == player_id
             )
+            from beta_engine.domain.tournaments.calendar_tour import (
+                player_turn_pro_history,
+                tour_turn_pro_decisions,
+            )
+
+            history = player_turn_pro_history(
+                identity, current.lifecycle.policy, tour_turn_pro_decisions(current.tour)
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -295,6 +303,7 @@ class NativeForkRuntimeService:
                 "checkpoint_fingerprint": current.checkpoint_fingerprint,
                 "record": record.model_dump(mode="json"),
                 "lifecycle": identity.model_dump(mode="json"),
+                **({"turn_pro": history} if history is not None else {}),
             }
 
     def preview(self, *, run_id, branch_id, command):
@@ -878,16 +887,52 @@ class NativeForkRuntimeService:
             )
 
             state, world = publication_inputs(self.repository, session, revision)
+            if kind == "notifications":
+                from beta_engine.application.calendar_tour_notifications import (
+                    derive_notifications,
+                )
+
+                return {
+                    **derive_notifications(
+                        state, world, options["follows"], branch_id, options.get("as_of_ordinal")
+                    ),
+                    "saved_head_revision_id": revision.revision_id,
+                }
+            if kind == "career":
+                from beta_engine.application.calendar_tour_player_career import (
+                    native_player_career,
+                )
+
+                return {
+                    **native_player_career(state, world, **options),
+                    "saved_head_revision_id": revision.revision_id,
+                }
             if kind == "records":
                 return {
                     **signed_tour_records(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),
                     "schema_version": "calendar_tour_signed_records_response.v1",
                     "saved_head_revision_id": revision.revision_id,
                 }
+            from beta_engine.application.calendar_tour_season_archive import (
+                season_archive,
+                season_summary_extras,
+            )
+
+            closure = saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None))
+            if kind == "archive":
+                return {
+                    **season_archive(state, world, closure=closure),
+                    "saved_head_revision_id": revision.revision_id,
+                }
+            summary = compare_completed_seasons(state, world, closure=closure, **options)
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": revision.revision_id,
-                **compare_completed_seasons(state, world, closure=saved_final_closure(revision.payload, branch_id, getattr(state, "inherited_final_closure", None)), **options),
+                **summary,
+                **season_summary_extras(
+                    state, world, options["season_index"], summary,
+                    options.get("compare_to"), closure=closure,
+                ),
             }

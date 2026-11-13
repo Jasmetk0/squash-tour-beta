@@ -30,9 +30,22 @@ def publication_inputs(repository, session, revision):
     state.rankings = (
         tuple(r for t in history for r in t.rankings) + runtime.tour.rankings
     )
+    # Turn Pro evidence recorded before the fork lives on the source Tour(s).
+    if getattr(state, "pre_tour_turn_pro", None) is None:
+        state.pre_tour_turn_pro = next(
+            (t.pre_tour_turn_pro for t in history if getattr(t, "pre_tour_turn_pro", None)),
+            None,
+        )
     world = SimpleNamespace(
         run_id=runtime.run_id,
         branch_id=runtime.branch_id,
         players=sources.world.players,
+        # Career readers need the opening-professional evidence and the world identity.
+        initial_turn_pro=getattr(sources.world, "initial_turn_pro", None),
+        fingerprint=getattr(sources.world, "fingerprint", None),
     )
+    from beta_engine.application.native_career_identity import career_world
+    from beta_engine.infrastructure.db.run_prospect_source_state import load_saved_run_prospect_source
+    prospects = load_saved_run_prospect_source(revision.payload, run_id=runtime.run_id) or sources.prospects
+    world = career_world(world, state, runtime.lifecycle, prospects)
     return state, world

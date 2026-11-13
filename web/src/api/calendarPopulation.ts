@@ -4,13 +4,25 @@ import type {RunCalendarMetadata} from './runCalendarCreation'
 export type CalendarPopulationRequest = {
   command_id: string; expected_saved_head: string; expected_draft_version: number
   expected_package_fingerprint: string; generation: CalendarPoolInput; audit_label: string; audit_reason: string
-  lifecycle_policy?: {policy_id:string;automatic_retirement_age:number;provenance:string}
+  lifecycle_policy?: CalendarLifecyclePolicy
+}
+export type CalendarLifecyclePolicy = {policy_id:string;automatic_retirement_age:number;provenance:string
+  tour_entry_rule?:'turn_pro.v87'}
+export type TourEntryChoice = 'turn_pro.v87'|'first_application'
+/** Master v87: new Runs created in Admin default to the Turn Pro entry rule.
+ * The historical first-application rule omits the policy, keeping the server default. */
+export const TURN_PRO_V87_POLICY: CalendarLifecyclePolicy = {
+  policy_id:'admin-calendar-population-turn-pro.v87', automatic_retirement_age:46,
+  provenance:'Admin default for new Runs: Master v87 Turn Pro entry', tour_entry_rule:'turn_pro.v87'}
+export function lifecyclePolicyFor(choice:TourEntryChoice):CalendarLifecyclePolicy|undefined {
+  return choice==='turn_pro.v87'?TURN_PRO_V87_POLICY:undefined
 }
 export type CalendarPopulationReview = {
   schema_version: 'calendar_initial_world_review.v2'; preview_only: true
   request: CalendarPopulationRequest; pool_preview: CalendarPoolPreview
   initial_world_fingerprint: string; lifecycle_fingerprint: string
   player_count_before: 0; player_count_after: number
+  opening_professional_count?: number
 }
 export type CalendarPopulation = {
   state: {schema_version: 'initial_world_state.v2'; run_id: string; branch_id: string; run_calendar: RunCalendarMetadata
@@ -64,7 +76,10 @@ export function validateCalendarPopulationReview(value:unknown, request:Calendar
       .some(k=>p.request[k as keyof CalendarPopulationRequest]!==request[k as keyof CalendarPopulationRequest])
     || !p.request.generation || Object.entries(request.generation).some(([k,v])=>
       JSON.stringify(p.request.generation[k as keyof CalendarPoolInput])!==JSON.stringify(v))
-    || (request.lifecycle_policy && JSON.stringify(p.request.lifecycle_policy)!==JSON.stringify(request.lifecycle_policy))) {
+    || (request.lifecycle_policy && JSON.stringify(p.request.lifecycle_policy)!==JSON.stringify(request.lifecycle_policy))
+    || (request.lifecycle_policy?.tour_entry_rule==='turn_pro.v87') !== (p.opening_professional_count!==undefined)
+    || (p.opening_professional_count!==undefined && (!Number.isSafeInteger(p.opening_professional_count)
+      || p.opening_professional_count<0 || p.opening_professional_count>p.player_count_after))) {
     throw Error('Population adoption review does not match the explicit request')
   }
   validateCalendarPoolPreview(p.pool_preview,runId,branchId,request.expected_saved_head,

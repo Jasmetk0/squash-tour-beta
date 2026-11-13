@@ -49,6 +49,98 @@ def put_tour(session, state):
     session.flush()
 
 
+def _turn_pro_replay_lifecycle(world, state, target):
+    from beta_engine.application.calendar_initial_world import (
+        derive_calendar_bootstrap_lifecycle,
+    )
+    from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+    from beta_engine.domain.tournaments.calendar_tour import (
+        lifecycle_calendars,
+        tour_turn_pro_decisions,
+    )
+
+    return calendar_lifecycle_history(
+        derive_calendar_bootstrap_lifecycle(world),
+        target,
+        tuple(s for a in state.editions for s in a.submissions),
+        effective_calendars=lifecycle_calendars(state),
+        turn_pro=tour_turn_pro_decisions(state),
+    )[-1]
+
+
+def _verify_turn_pro_receipt(transition, receipt):
+    """Bind a transition's Turn Pro evidence to its confirmed command receipt.
+
+    Separates three proofs. (1) DTO consistency: the stored decisions and model equal
+    the receipt's authoritative impact. (2) Mathematical replay: every positive
+    decision recomputes from the recorded model, the prospect's own recorded
+    observation and the command seed. (3) Physical origin of the observation (that
+    it derives from the player's real attributes) is NOT provable on this older
+    path, which keeps no earlier-week sporting records; the native replay proves it.
+    Transitions recorded without decision evidence keep their genuine historical
+    reader and are accepted as recorded.
+    """
+    impact = receipt.result.get("impact", {})
+    recorded = [d.model_dump(mode="json") for d in transition.turn_pro_decisions]
+    model = transition.turn_pro_model
+    if impact.get("turn_pro_decisions", []) != recorded or impact.get(
+        "turn_pro_model"
+    ) != (None if model is None else model.model_dump(mode="json")):
+        raise ValueError("Turn Pro decisions differ from the confirmed transition impact")
+    if model is None or model.decision_evidence is None:
+        return
+    from beta_engine.domain.players.turn_pro_model import (
+        verify_turn_pro_decision_evidence,
+    )
+
+    seed = receipt.request.get("command", {}).get("seed")
+    if type(seed) is not int:
+        raise ValueError("Turn Pro replay requires the command seed")
+    for decision in transition.turn_pro_decisions:
+        verify_turn_pro_decision_evidence(decision, policy=model, seed=seed)
+
+
+def _verify_pre_tour_turn_pro(state, checkpoint, world):
+    """Every exhibition week before the Tour has exactly one recorded Turn Pro week."""
+    if world is None:
+        return
+    pre = state.pre_tour_turn_pro
+    exhibition = tuple(
+        e
+        for e in checkpoint.weekly_advances
+        if e.schema_version in {"calendar_sporting_week_advance.v1", "calendar_sporting_week_advance.v4"}
+    )
+    if not world.lifecycle_policy.requires_turn_pro or not exhibition:
+        if pre is not None:
+            raise ValueError("Pre-Tour Turn Pro exists without a v87 exhibition history")
+        return
+    if pre is None:
+        raise ValueError("v87 exhibition weeks lack their recorded Turn Pro evaluation")
+    if tuple((w.command_id, w.seed, w.completed_week, w.target_week) for w in pre.weeks) != tuple(
+        (e.command_id, e.seed, e.completed_week, e.target_week) for e in exhibition
+    ):
+        raise ValueError("Pre-Tour Turn Pro weeks differ from the signed exhibition history")
+    for week, event in zip(pre.weeks, exhibition):
+        if getattr(event, "turn_pro_model", None) is not None and (
+                event.turn_pro_model != pre.model or event.turn_pro_decisions != week.decisions
+                or event.fingerprint != week.sporting_advance_fingerprint
+                or event.retired_player_ids != week.retired_player_ids
+                or event.retired_without_turn_pro_player_ids != week.retired_without_turn_pro_player_ids):
+            raise ValueError("Pre-Tour record differs from its signed weekly model/decisions")
+    if any(
+        (d.run_id, d.branch_id) != (state.run_id, state.branch_id) for d in pre.decisions
+    ):
+        raise ValueError("Pre-Tour Turn Pro decision has a foreign Run or Branch")
+    if pre.model.decision_evidence is not None:
+        from beta_engine.domain.players.turn_pro_model import (
+            verify_turn_pro_decision_evidence,
+        )
+
+        for week in pre.weeks:
+            for decision in week.decisions:
+                verify_turn_pro_decision_evidence(decision, policy=pre.model, seed=week.seed)
+
+
 def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
     if (
         checkpoint is not None
@@ -108,6 +200,7 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
         raise ValueError(
             "Tour authority differs from its actual population sporting owner"
         )
+    _verify_pre_tour_turn_pro(state, checkpoint, world)
     events = {e.tournament_id: e for e in checkpoint.tournaments}
     sources = {a.edition.edition_id: a for a in state.editions}
     confirmations = {}
@@ -245,6 +338,19 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 if a.edition.announcement_week.ordinal == transition.target_week.ordinal
             ],
         }
+        if world is not None and world.lifecycle_policy.requires_turn_pro:
+            from beta_engine.domain.tournaments.calendar_tour import (
+                turn_pro_public_fields,
+            )
+
+            expected_public.update(
+                turn_pro_public_fields(
+                    transition.turn_pro_decisions,
+                    _turn_pro_replay_lifecycle(world, state, transition.target_week),
+                    transition.target_week,
+                )
+            )
+        _verify_turn_pro_receipt(transition, receipt)
         if transition.public_event != expected_public:
             raise ValueError(
                 "Public Week Transition event differs from effective announcements/ranking"
@@ -296,12 +402,22 @@ def verify_tour(state, checkpoint, world=None, *, _native_payload=None):
                 )
         # Rebuild each publication from actual immutable point sources and the
         # then-effective policy. Never take stored snapshot totals as inputs.
+        replay_lifecycle = None
+        if world is not None and world.lifecycle_policy.requires_turn_pro:
+            # v87 rosters come from Turn Pro: rebuild the lifecycle from the
+            # original World, actual applications and the recorded decisions.
+            replay_lifecycle = _turn_pro_replay_lifecycle(world, state, transition.target_week)
+        elif any(t.turn_pro_decisions or t.turn_pro_model for t in state.transitions):
+            raise ValueError(
+                "Turn Pro evidence requires the original World with the v87 lifecycle policy"
+            )
         prefix = state.model_copy(update={"rankings": state.rankings[: i + 1]})
         expected = calculate_tour_ranking(
             prefix,
             checkpoint,
             target=transition.target_week,
             retired=transition.retired_player_ids,
+            lifecycle=replay_lifecycle,
         )
         if expected != state.rankings[i + 1]:
             raise ValueError(

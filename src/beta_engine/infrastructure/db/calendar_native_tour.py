@@ -3,6 +3,7 @@
 import json
 
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.calendar_native_tour import CalendarNativeTourState
 from beta_engine.domain.tournaments.calendar_native_tour_week import (
@@ -11,7 +12,33 @@ from beta_engine.domain.tournaments.calendar_native_tour_week import (
 from beta_engine.domain.tournaments.calendar_tour import CalendarTourTransition
 
 
-def public_native_event(state, command, target, ranking_fingerprint):
+def _impact_lifecycle(impact):
+    """The target lifecycle, parsed only when Master v87 public fields need it.
+
+    Every Signed read replays all native transitions, so the historical rule must
+    not pay for parsing a whole-population lifecycle it never uses.
+    """
+    from beta_engine.infrastructure.db.player_lifecycle_state import _parse_lifecycle_json
+
+    raw = impact.get("lifecycle")
+    if raw is None or (raw.get("policy") or {}).get("tour_entry_rule") != "turn_pro.v87":
+        return None
+    return _parse_lifecycle_json(json.dumps(raw))
+
+
+def recorded_turn_pro_model(receipt_result):
+    """The exact Master v87 model a Signed native transition ran, if any."""
+    from beta_engine.domain.players.turn_pro_model import TurnProModelPolicy
+
+    raw = (receipt_result.get("impact") or {}).get("turn_pro_model")
+    return None if raw is None else TurnProModelPolicy.model_validate_json(json.dumps(raw))
+
+
+def public_native_event(
+    state, command, target, ranking_fingerprint, turn_pro_decisions=(), lifecycle=None
+):
+    from beta_engine.domain.tournaments.calendar_tour import turn_pro_public_fields
+
     return {
         "kind": "season_transition_completed"
         if command.action == "season-transition"
@@ -24,6 +51,7 @@ def public_native_event(state, command, target, ranking_fingerprint):
             for a in state.editions
             if a.edition.announcement_week.ordinal == target.ordinal
         ],
+        **turn_pro_public_fields(turn_pro_decisions, lifecycle, target),
     }
 
 
@@ -92,6 +120,8 @@ def verify_native_tour(state, checkpoint, world, *, payload):
             clock=entry.advance.target_week.calendar,
             knockout=knockout,
             command=command.model_dump(mode="json"),
+            # Re-run the exact recorded model: Signed decisions must rebuild.
+            turn_pro_model=recorded_turn_pro_model(receipt.result),
         )
         if prepared is None:
             raise ValueError("Native Tour cannot claim an absent birth transition")
@@ -131,8 +161,15 @@ def verify_native_tour(state, checkpoint, world, *, payload):
             ages=impact["ages"],
             retired_player_ids=impact["retired_player_ids"],
             public_event=public_native_event(
-                previous, command, next_cp.week, impact["ranking_fingerprint"]
+                previous, command, next_cp.week, impact["ranking_fingerprint"],
+                impact.get("turn_pro_decisions", ()),
+                _impact_lifecycle(impact),
             ),
+            turn_pro_decisions=tuple(
+                PlayerTurnProDecision.model_validate_json(json.dumps(raw))
+                for raw in impact.get("turn_pro_decisions", ())
+            ),
+            turn_pro_model=recorded_turn_pro_model({"impact": impact}),
         )
         ranking_index = len(root.rankings) + index
         if (

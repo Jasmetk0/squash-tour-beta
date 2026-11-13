@@ -52,7 +52,20 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        case: [lifecycle, careers_alerts, seasons]
+        case:
+          - opening
+          - pre_tour
+          - default_model
+          - birth
+          - fork_turn_pro
+          - canonical_admission
+          - canonical_played_ranked
+          - canonical_played_unranked
+          - canonical_ai
+          - careers_alerts
+          - seasons_same_rules
+          - seasons_changed_policy
+          - seasons_w6
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -71,23 +84,35 @@ jobs:
         shell: bash
         run: |
           case "$CASE" in
-            lifecycle)
-              python -m pytest -vv --maxfail=1 --durations=10 \
-                tests/api/test_calendar_turn_pro_opening_adoption.py \
-                tests/api/test_calendar_tour_turn_pro_v87_pre_tour.py \
-                tests/api/test_calendar_tour_turn_pro_v87_default_model.py \
-                tests/api/test_calendar_native_turn_pro_v87_birth.py \
-                tests/api/test_native_fork_turn_pro_v87.py \
-                tests/api/test_native_canonical_knockout_turn_pro_v87.py ;;
+            opening)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_calendar_turn_pro_opening_adoption.py ;;
+            pre_tour)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_calendar_tour_turn_pro_v87_pre_tour.py ;;
+            default_model)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_calendar_tour_turn_pro_v87_default_model.py ;;
+            birth)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_calendar_native_turn_pro_v87_birth.py ;;
+            fork_turn_pro)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_native_fork_turn_pro_v87.py ;;
+            canonical_admission)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_native_canonical_knockout_turn_pro_v87.py::test_v87_saved_fax_draw_admits_only_professionals ;;
+            canonical_played_ranked)
+              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_canonical_knockout_turn_pro_v87.py::test_v87_actual_q_to_main_played_confirmed_saved_and_reopened[ranked]' ;;
+            canonical_played_unranked)
+              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_canonical_knockout_turn_pro_v87.py::test_v87_actual_q_to_main_played_confirmed_saved_and_reopened[unranked]' ;;
+            canonical_ai)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_native_canonical_knockout_turn_pro_v87.py::test_v87_saved_fax_draw_accepts_players_who_turned_pro_through_the_ai ;;
             careers_alerts)
               python -m pytest -vv --maxfail=1 --durations=10 \
                 tests/api/test_calendar_tour_player_career_v87.py \
                 tests/api/test_follow_notifications_v87.py \
                 tests/api/test_native_fork_career_alerts_v87.py ;;
-            seasons)
-              python -m pytest -vv --maxfail=1 --durations=10 \
-                tests/api/test_native_season_archive_comparison.py \
-                tests/api/test_native_season_archive_wide.py -k 'not w52' ;;
+            seasons_same_rules)
+              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_season_archive_comparison.py::test_archive_and_comparison_survive_extension_and_restart[same-rules]' ;;
+            seasons_changed_policy)
+              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_season_archive_comparison.py::test_archive_and_comparison_survive_extension_and_restart[changed-ranking-policy]' ;;
+            seasons_w6)
+              python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_native_season_archive_wide.py -k 'not w52' ;;
           esac
       - name: Reject test writes to tracked inputs
         if: always()

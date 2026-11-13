@@ -104,7 +104,11 @@ def test_archive_and_comparison_survive_extension_and_restart(tmp_path, change_p
                         for field, value in row["delta"].items():
                             assert value == row["selected"][field] - row["comparison"][field]
             assert detail["comparability"]["compared_fields"]
-            assert "point_tables" in detail["comparability"]["not_compared"]
+            assert {"edition_point_tables_fingerprint", "edition_formats_fingerprint"} <= set(
+                detail["comparability"]["compared_fields"]
+            )
+            assert "point_tables" not in detail["comparability"]["not_compared"]
+            assert "qualification_geometry" in detail["comparability"]["not_compared"]
             assert before[key]["overview"] == detail["selected_overview"]
         # The reverse comparison negates every delta.
         forward = {r["country_code"]: r for r in before["s1_vs_s0"]["detail"]["countries"]}

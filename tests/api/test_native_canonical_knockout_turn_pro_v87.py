@@ -106,8 +106,14 @@ def test_v87_saved_fax_draw_accepts_players_who_turned_pro_through_the_ai(
     from beta_engine.application import calendar_pre_tour_turn_pro as pre_tour
     from tests.api.test_calendar_tour_turn_pro_v87_flow import EAGER
 
+    # Test-only calibration: a prospect's weekly chance is practically certain, whatever
+    # its self-view, so every prospect turns pro in the one pre-Tour week.
+    certain = EAGER.model_copy(update={
+        "model_id": "test-certain-turn-pro.v1", "readiness_weight": 400.0,
+        "readiness_reference": 0.0,
+    })
     _v87(monkeypatch, min_age=15, max_age=19)
-    monkeypatch.setattr(pre_tour, "default_turn_pro_model_policy", lambda: EAGER)
+    monkeypatch.setattr(pre_tour, "default_turn_pro_model_policy", lambda: certain)
     db = f"sqlite:///{tmp_path / 'v87-fax-ai.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(server, RunCalendar(61, 37, 2000, 3), count=40)

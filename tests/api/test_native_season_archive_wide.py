@@ -12,7 +12,7 @@ import pytest
 from tests.api.test_calendar_global_slots import ready
 from tests.api.test_calendar_sporting_horizon_extension import extend, extension
 from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour, tour_url
-from tests.api.test_saved_revision_history_api import ApiServer, _request
+from tests.api.test_saved_revision_history_api import ApiServer
 
 pytestmark = pytest.mark.smoke
 

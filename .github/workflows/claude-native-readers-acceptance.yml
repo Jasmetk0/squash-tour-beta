@@ -61,7 +61,8 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install locked backend test dependencies
-        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
+        run: |
+          python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
       - name: Run the actual source and persistence contracts
         env:
           CASE: ${{ matrix.case }}
@@ -112,7 +113,8 @@ jobs:
         with:
           node-version: '20'
       - name: Install locked browser test dependencies
-        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/saved-branch-browser.lock.txt
+        run: |
+          python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/saved-branch-browser.lock.txt
       - run: npm --prefix web ci --ignore-scripts
       - name: Prepare real Chromium
         run: |

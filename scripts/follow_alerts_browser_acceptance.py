@@ -124,6 +124,17 @@ def main():
                             expect(section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))).to_have_count(1)
                             section.get_by_role("button", name=unfollow_btn).first.click()
                             expect(section).to_contain_text(nothing)
+                            # The follow star in the Saved player profile uses the same Run-level follow.
+                            page.goto(f"{web}/admin/runs/run/people/{champion}")
+                            star = page.get_by_role("button", name=__import__("re").compile(follow_btn))
+                            expect(star).to_have_attribute("aria-pressed", "false")
+                            star.click()
+                            expect(page.get_by_role("button", name=__import__("re").compile(unfollow_btn))).to_have_attribute("aria-pressed", "true")
+                            page.goto(f"{web}/admin/runs/run/following")
+                            expect(page.get_by_role("region", name=title)).to_contain_text(champion)
+                            page.goto(f"{web}/admin/runs/run/people/{champion}")
+                            page.get_by_role("button", name=__import__("re").compile(unfollow_btn)).click()
+                            expect(page.get_by_role("button", name=__import__("re").compile(follow_btn))).to_have_attribute("aria-pressed", "false")
                             assert not errors, errors
                             context.close()
                         browser.close()

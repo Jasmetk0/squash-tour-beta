@@ -224,3 +224,31 @@ def test_decisions_replay_on_every_supported_run_year_length(w):
     # Another seed is not an acceptable replay of the same decisions.
     with pytest.raises(ValueError, match="draw|provenance"):
         verify_turn_pro_decision_evidence(made[0], policy=MODEL, seed=SEED + 1)
+
+
+def test_simultaneous_decisions_do_not_depend_on_order_or_on_other_candidates():
+    """Candidates of one Week Transition are logically simultaneous (Master slot rule)."""
+    clock, state = _population_for(52, 300)
+    target = RunWeekPosition(calendar=clock, season_index=0, week=2)
+    plain = advance_calendar_lifecycle(state, target, ())
+    records = [record(p.player_id, 120) for p in state.players]
+    candidates = turn_pro_candidates_for(MODEL, state, plain, records, seed=SEED, target=target)
+
+    def decide(items):
+        return decide_turn_pro(
+            predecessor=state, target=target, policy=MODEL, seed=SEED, candidates=items
+        )
+
+    forward = decide(candidates)
+    assert forward, "300 prospects at an eager-enough level must give at least one decision"
+    # Order of evaluation never matters: reversed input gives byte-identical decisions.
+    assert decide(tuple(reversed(candidates))) == forward
+    # One player's chance and draw never depend on who else is evaluated: the same
+    # provenance (chance, draw) and evidence come out when that player is decided alone.
+    first = forward[0]
+    alone = decide([c for c in candidates if c.player_id == first.player_id])
+    assert len(alone) == 1
+    assert alone[0].provenance == first.provenance
+    assert alone[0].evidence == first.evidence
+    # What does depend on the complete input set is the recorded source fingerprint.
+    assert alone[0].source_state_fingerprint != first.source_state_fingerprint

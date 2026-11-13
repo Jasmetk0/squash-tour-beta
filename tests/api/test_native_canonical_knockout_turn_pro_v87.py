@@ -91,3 +91,50 @@ def test_v87_actual_q_to_main_played_confirmed_saved_and_reopened(
     """
     _v87(monkeypatch, min_age=26, max_age=30)
     canonical.run_actual_q_main(tmp_path, fax_source, 24, ranked, monkeypatch, v87=True)
+
+
+@pytest.mark.parametrize("ranked", [False, True], ids=["unranked", "ranked"])
+def test_v87_saved_fax_draw_accepts_players_who_turned_pro_through_the_ai(
+    tmp_path, fax_source, monkeypatch, ranked
+):
+    """A Saved Draw of prospects is rejected (see the test above); once the player AI has
+    really turned them pro, the very same kind of Draw is admitted.
+
+    The pre-Tour week uses the test-only eager calibration, recorded like the default one,
+    so the participants are professionals from recorded AI decisions, not opening pros.
+    """
+    from beta_engine.application import calendar_pre_tour_turn_pro as pre_tour
+    from tests.api.test_calendar_tour_turn_pro_v87_flow import EAGER
+
+    _v87(monkeypatch, min_age=15, max_age=19)
+    monkeypatch.setattr(pre_tour, "default_turn_pro_model_policy", lambda: EAGER)
+    db = f"sqlite:///{tmp_path / 'v87-fax-ai.db'}"
+    with ApiServer(database_url=db) as server:
+        repo, _ = setup(server, RunCalendar(61, 37, 2000, 3), count=40)
+        pros, _ = _opening_pros(repo)
+        plan = canonical.authored_source(server, repo, fax_source, 24, ranked=ranked)
+        state = inspect(server)["state"]
+        by_ai = {
+            d["player_id"]
+            for w in state["pre_tour_turn_pro"]["weeks"]
+            for d in w["decisions"]
+        }
+        participants = _participants(plan)
+        # Real AI professionals are in the Draw, and not all participants are opening pros.
+        assert participants & by_ai, "the Draw must contain players the AI turned pro"
+        assert participants - pros, "the Draw must contain more than opening professionals"
+        assert participants <= pros | by_ai, "everyone in the Draw is a recorded professional"
+        before = inspect(server)
+        cmd = command(before, "adopt-saved-draw", data=_adoption(plan))
+        status, body = _request("POST", tour_url(server) + "/preview", cmd)
+        assert status == 200, body
+        execute(server, cmd)
+        saved = save_tour(server)
+        assert repo.verify_branch_saved_revision_hash(revision_id=saved["revision_id"])
+        edition_ids = {a["edition"]["edition_id"] for a in inspect(server)["state"]["editions"]}
+        assert plan.source.draw.event_id in edition_ids
+    # Cold restart keeps the adopted Edition and the recorded evidence.
+    with ApiServer(database_url=db) as restarted:
+        again = inspect(restarted)["state"]
+        assert plan.source.draw.event_id in {a["edition"]["edition_id"] for a in again["editions"]}
+        assert again["pre_tour_turn_pro"]["weeks"][0]["decisions"]

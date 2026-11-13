@@ -1,7 +1,7 @@
 """Real HTTP/SQLite: seasonal archive, world overview and honest season comparison.
 
-Two genuine Signed Seasons are completed with twelve real MatchEngine rally logs (the
-flow of ``test_native_overlapping_cross_season_signed``). The archive lists both, each
+Two genuine Signed Seasons with distinct point-table catalogs are completed with
+twelve real MatchEngine rally logs (the flow of ``test_native_overlapping_cross_season_signed``). The archive lists both, each
 season is compared with the other in both directions, and the Run is then extended and
 cold-restarted: the old summaries and their sources must not change. In the changed-
 policy variant the next season is played under another ranking policy, which must be
@@ -68,7 +68,7 @@ def read_everything(server):
     }
 
 
-@pytest.mark.parametrize("change_policy", [False, True], ids=["same-rules", "changed-ranking-policy"])
+@pytest.mark.parametrize("change_policy", [False, True], ids=["same-ranking-policy", "changed-ranking-policy"])
 def test_archive_and_comparison_survive_extension_and_restart(tmp_path, change_policy):
     db = f"sqlite:///{tmp_path / 'season-archive.sqlite'}"
     with ApiServer(database_url=db) as server:
@@ -118,13 +118,21 @@ def test_archive_and_comparison_survive_extension_and_restart(tmp_path, change_p
 
         comparability = before["s1_vs_s0"]["detail"]["comparability"]
         assert before["s0_vs_s1"]["detail"]["comparability"]["comparable"] is comparability["comparable"]
+        # The reused overlapping-Edition fixture awards 100/200 in S1 and
+        # 300/400 in S2. Equal ranking policy does not make those tables equal.
+        assert comparability["comparable"] is False
+        fields = {d["field"]: d for d in comparability["differences"]}
+        assert fields["edition_point_tables_fingerprint"]["selected"] != fields[
+            "edition_point_tables_fingerprint"
+        ]["comparison"]
         if change_policy:
-            assert comparability["comparable"] is False
-            fields = {d["field"]: d for d in comparability["differences"]}
             assert fields["ranking_best_n"] == {"field": "ranking_best_n", "selected": 1, "comparison": 15}
             assert fields["ranking_policy_id"]["selected"] == "Best1fromS2"
+            assert set(fields) == {
+                "ranking_policy_id", "ranking_best_n", "edition_point_tables_fingerprint"
+            }
         else:
-            assert comparability["comparable"] is True and comparability["differences"] == []
+            assert set(fields) == {"edition_point_tables_fingerprint"}
 
         # Continuing the Run (explicit horizon extension) must not touch closed seasons.
         status, review = extension(server, 4)

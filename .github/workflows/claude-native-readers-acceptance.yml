@@ -63,7 +63,7 @@ jobs:
           - canonical_played_unranked
           - canonical_ai
           - careers_alerts
-          - seasons_same_rules
+          - seasons_same_ranking
           - seasons_changed_policy
           - seasons_w6
     steps:
@@ -107,8 +107,8 @@ jobs:
                 tests/api/test_calendar_tour_player_career_v87.py \
                 tests/api/test_follow_notifications_v87.py \
                 tests/api/test_native_fork_career_alerts_v87.py ;;
-            seasons_same_rules)
-              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_season_archive_comparison.py::test_archive_and_comparison_survive_extension_and_restart[same-rules]' ;;
+            seasons_same_ranking)
+              python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_season_archive_comparison.py::test_archive_and_comparison_survive_extension_and_restart[same-ranking-policy]' ;;
             seasons_changed_policy)
               python -m pytest -vv --maxfail=1 --durations=10 'tests/api/test_native_season_archive_comparison.py::test_archive_and_comparison_survive_extension_and_restart[changed-ranking-policy]' ;;
             seasons_w6)

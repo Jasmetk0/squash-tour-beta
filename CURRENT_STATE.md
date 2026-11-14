@@ -13,8 +13,12 @@ inputs, raw before/after numbers and limits: `docs/NATIVE_LONG_RUN_SAVED_READ_PE
   fingerprint, seed and sporting rule. No Entry, tournament rule, point table,
   calibration, frontend or ATP file is touched.
 - `test_two_closed_seasons_archive_compare_extend_and_restart[w6|w52|w61|w80]`:
-  fast `w6` stays in the existing job by exact node id; the long clocks have a
-  separate `long_seasons` CI job. The 120 s read transport bound is unchanged.
+  `w6` and `w52` PASSED locally on the final source tree (W52: 5,111 s). Fast `w6`
+  stays in the existing job by exact node id; `w52` has a separate `long_seasons`
+  job. `w61`/`w80` cannot finish their cold restart within the unchanged 120 s read
+  bound (measured ~120–150 s even idle): open, owner storage/proof decision needed.
+- Extension review and the first read after an extension were also fixed
+  (W52 two seasons: 132–138 s → 34–39 s; 69–73 s → 13 s).
 
 Not certified: 50-season reference release, 1,000-player long Runs, browser execution.
 Per-read cost remains linear in the total bytes of the lineage (each Saved Revision is a

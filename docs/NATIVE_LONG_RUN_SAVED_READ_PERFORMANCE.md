@@ -284,7 +284,7 @@ each head). Earlier runs are reported because each found a real limit:
 | W52/W61/W80 #2 | `c630357` | infrastructure failure: session disk allowance exhausted by my own measurement copies (500 on every server) |
 | W52 #3 | `c630357` | every week of both seasons, both Season Transitions, archive, both comparisons and point doubling **passed**; horizon-extension review exceeded 120 s → fixed in `8c051d9` |
 | W52 #4 | `e3f9b03` | all of the above and the extension Save **passed**; first read after the extension exceeded 120 s → fixed in `e3f9b03`→`a3855c7` (proof re-keying, boundary replay) |
-| W52 #5 | final head | __W52_RESULT__ |
+| W52 #5 | `a3855c7` (same `src/` and test tree as the final head) | **PASSED**, 5,111 s, run alone: every week of both seasons, both Season Transitions, real MatchEngine Editions, points, explicit Saves, archive, both comparison directions, extension without rewriting closed seasons, cold restart with byte-equal reads |
 | W61, W80 | — | not completed: see the measured restart limit below |
 
 Measured cold restart (fresh process, idle host unless noted) on authentic inputs:

@@ -44,6 +44,49 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  sonar_issue_diagnostic_1802:
+    if: github.event_name == 'pull_request' && github.event.pull_request.number == 1802
+    name: Sonar PR 1802 issue evidence (temporary)
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Inspect public Sonar issues for exact remediation
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import urllib.error
+          import urllib.parse
+          import urllib.request
+          params = urllib.parse.urlencode({
+              "componentKeys": "Jasmetk0_squash-tour-beta",
+              "pullRequest": "1802",
+              "ps": "100",
+              "resolved": "false",
+          })
+          url = "https://sonarcloud.io/api/issues/search?" + params
+          try:
+              with urllib.request.urlopen(
+                  urllib.request.Request(url, headers={"User-Agent": "native-readers-pr-audit/1.0"}),
+                  timeout=20,
+              ) as response:
+                  data = json.load(response)
+              print("Sonar issues total:", data.get("total"))
+              for issue in data.get("issues", [])[:100]:
+                  print(json.dumps({
+                      "rule": issue.get("rule"),
+                      "type": issue.get("type"),
+                      "severity": issue.get("severity"),
+                      "message": issue.get("message"),
+                      "component": issue.get("component"),
+                      "line": issue.get("line"),
+                      "textRange": issue.get("textRange"),
+                      "status": issue.get("status"),
+                      "key": issue.get("key"),
+                  }, ensure_ascii=False))
+          except Exception as error:
+              print("Unable to retrieve public Sonar issue details:", type(error).__name__, str(error))
+          PY
   api:
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native readers / real HTTP SQLite / ${{ matrix.case }}

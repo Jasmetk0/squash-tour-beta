@@ -112,6 +112,8 @@ def main():
                             search_label = "Hledat hráče nebo zemi" if language == "cs" else "Search player or country"
                             event_label = "Druh události v kartě" if language == "cs" else "Event kind in card"
                             section.get_by_label(search_label).fill("no-such-player")
+                            # A read-only control must not dirty the Run Working Draft guard.
+                            assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') != 'true'
                             expect(section).to_contain_text(
                                 "Žádné karty neodpovídají filtrům." if language == "cs"
                                 else "No cards match these filters."

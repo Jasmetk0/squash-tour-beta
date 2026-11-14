@@ -114,18 +114,22 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
         : 'The response does not match the selected Branch, Saved revision or player and was not displayed.'}</p></section>
   }
   if (asOf !== undefined && data.as_of_ordinal !== asOf) return <section aria-label={title}><p role="alert">{cs ? 'Odpověď neodpovídá požadovanému týdnu.' : 'Response does not match requested week.'}</p></section>
+  const label = (k: string) => (LABEL[k] ?? [k, k])[cs ? 0 : 1]
   const rows = data.timeline.map((event, index) => ({ event, index }))
     .filter(({ event }) => (kind === 'all' || event.kind === kind) &&
-      (labelSearch(event).includes(search.trim().toLocaleLowerCase())))
+      [label(event.kind), weekText(event, cs), detailText(event, cs),
+        sourceText(event, cs), labelSearch(event)].join(' ')
+        .toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
     .sort((a, b) => {
-      const ordinal = (e: CareerEvent) => e.effective_week
-        ? e.effective_week.season_index * 10000 + e.effective_week.week : -1
-      const diff = ordinal(a.event) - ordinal(b.event)
+      const aw = a.event.effective_week
+      const bw = b.event.effective_week
+      const diff = aw === null ? (bw === null ? 0 : -1)
+        : bw === null ? 1
+          : (aw.season_index - bw.season_index || aw.week - bw.week)
       return (order === 'desc' ? -diff : diff) || a.index - b.index
     })
   const pages = readerPageCount(rows.length)
   const visible = readerSlice(rows, Math.min(page, pages))
-  const label = (k: string) => (LABEL[k] ?? [k, k])[cs ? 0 : 1]
   const o = data.overview
   return <section aria-label={title}>
     <h3>{title}</h3>

@@ -440,6 +440,10 @@ class BranchSavedRevisionRecord:
     created_at: str | None = None
 
 
+# Saved Revision kind of an explicit all-Branch Run horizon extension (its Run
+# calendar differs from every earlier revision's).
+_HORIZON_EXTENSION_KIND = "run_calendar_horizon_extension"
+
 # Metadata-only proofs (payload/change summary are empty), keyed by complete
 # physical signatures. The bound must exceed the longest lineage a read walks;
 # see docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md.
@@ -2862,6 +2866,10 @@ class SimulationPersistenceRepository:
             if head_signature in self._revision_validation_cache:
                 return  # warm HEAD: the ordinary walk reuses or revalidates as before
         unproven, seen = [], {head_model.revision_id}
+        # Replay evidence binds the Run calendar of the replayed payload. A
+        # horizon extension changes it, so the newest revision BELOW each
+        # extension needs its own replay too (as the HEAD-first order did).
+        replay_first, boundary = [], head_model.kind == _HORIZON_EXTENSION_KIND
         with session.no_autoflush:
             parent_id = head_model.parent_revision_id
             while parent_id:
@@ -2877,21 +2885,49 @@ class SimulationPersistenceRepository:
                 if known:
                     break
                 unproven.append(parent_id)
+                if boundary:
+                    replay_first.append(parent_id)
+                boundary = model.kind == _HORIZON_EXTENSION_KIND
                 parent_id = model.parent_revision_id
                 del model
             if len(unproven) < 2 or not is_global_slot_row(head_model, repository=self):
                 return  # nothing deep to unwind; keep the original order
             try:
-                self._prevalidate_oldest_first(session, head_model, unproven, sporting_component_proofs)
+                self._prevalidate_oldest_first(
+                    session, head_model, unproven, sporting_component_proofs, replay_first)
             except (BranchRevisionStateConflictError, KeyError, TypeError, ValueError):
                 return  # the ordinary walk below raises the original error
 
-    def _prevalidate_oldest_first(self, session, head_model, unproven, sporting_component_proofs):
-        # 1. HEAD's single complete component replay (records evidence only).
+    def _prevalidate_oldest_first(self, session, head_model, unproven, sporting_component_proofs,
+                                  replay_first=()):
+        from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
+
+        # The replay evidence keeps frozen Tour/checkpoint values that every
+        # ancestor's gates fingerprint again; memoize those pure fingerprints by
+        # exact object identity for this one cold pass only (as the Tour reader
+        # does). Nothing in the scope is a physical or source proof.
+        with global_replay_projection_scope():
+            self._prevalidate_oldest_first_in_scope(
+                session, head_model, unproven, sporting_component_proofs, replay_first)
+
+    def _prevalidate_oldest_first_in_scope(self, session, head_model, unproven,
+                                           sporting_component_proofs, replay_first):
+        # 1. HEAD's complete component replay, then (newest first) that of the
+        #    newest revision below each horizon extension. These only record
+        #    evidence; every revision is still validated in full below.
         self._to_branch_saved_revision(
             head_model, validate_components=True, validate_native_root=False,
             sporting_component_proofs=sporting_component_proofs,
         )
+        for revision_id in replay_first:
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            if model is None:
+                return
+            self._to_branch_saved_revision(
+                model, validate_components=True, validate_native_root=False,
+                sporting_component_proofs=sporting_component_proofs,
+            )
+            del model
         # 2. The ordinary validator, oldest unproven ancestor first.
         for revision_id in reversed(unproven):
             model = session.get(BranchSavedRevisionModel, revision_id)

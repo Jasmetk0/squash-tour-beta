@@ -162,3 +162,47 @@ def test_extension_revision_is_fully_validated_by_the_next_read(tmp_path, prepar
         with repository._session_factory() as session:
             row = session.get(repositories.BranchSavedRevisionModel, head_id)
             assert repositories._saved_revision_validation_signature(row) in repository._revision_validation_cache
+
+
+def test_cold_read_after_extension_replays_each_calendar_binding_once(tmp_path, prepared_slots, monkeypatch):
+    """Replay evidence binds the Run calendar; an extension changes it.
+
+    Without a replay of the newest pre-extension revision, oldest-first cold
+    validation replayed the whole history again for every ancestor.
+    """
+    from beta_engine.infrastructure.db import calendar_native_competition
+    from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+    from tests.api.test_saved_revision_history_api import ApiServer
+
+    path = tmp_path / "extended.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        status, review = extension(server, 4)
+        status, receipt = extend(server, review, "binding-replays")
+        assert status == 200, receipt
+    replays = []
+    original = calendar_native_competition._verify_competition_payload
+
+    def counted(*args, **kwargs):
+        replays.append(1)
+        return original(*args, **kwargs)
+
+    monkeypatch.setattr(calendar_native_competition, "_verify_competition_payload", counted)
+
+    def cold_replays(name, *, boundary_replay=True):
+        copy = tmp_path / name
+        copy_database(path, copy)
+        with monkeypatch.context() as patch:
+            if not boundary_replay:
+                patch.setattr(repositories, "_HORIZON_EXTENSION_KIND", "disabled-for-this-check")
+            replays.clear()
+            repository = build_runtime(database_url=f"sqlite:///{copy}").repository
+            view = read(repository)
+            return len(replays), view, oldest_global_ancestor(repository)[1]
+
+    without, expected, global_count = cold_replays("without.db", boundary_replay=False)
+    with_boundary, view, _count = cold_replays("with.db")
+    assert view == expected
+    # HEAD + the newest pre-extension revision (+ the unchanged live-state
+    # checks of the Tour reader), instead of one per pre-extension ancestor.
+    assert with_boundary <= 4 < without, (with_boundary, without, global_count)

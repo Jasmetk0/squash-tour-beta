@@ -649,6 +649,27 @@ def remember_committed_global_append(repository, signature, revision_ids, *, run
             heads.pop(next(iter(heads)))
 
 
+def remember_committed_ancestor_proofs(repository, signature, revision_ids):
+    """Only after commit: re-key proofs of already authenticated OLD revisions.
+
+    Unlike remember_committed_global_append this never records a HEAD proof:
+    the caller's newly appended revision has not passed the repository
+    validator, so it must not gain the complete-graph shortcut. Each key still
+    binds the COMPLETE actual graph; any later change makes it unusable.
+    """
+    keys = tuple(_dependency_proof_key((revision_id, signature[1], signature[2]))
+        for revision_id in revision_ids)
+    with repository._revision_validation_lock:
+        proofs = getattr(repository, "_native_dependency_proofs", None)
+        if proofs is None:
+            proofs = repository._native_dependency_proofs = {}
+        for key in keys:
+            proofs.pop(key, None)
+            proofs[key] = True
+        while len(proofs) > _MAX_DEPENDENCY_PROOFS:
+            proofs.pop(next(iter(proofs)))
+
+
 def verify_with_actual_dependencies(repository, session, revision, verify):
     """Reuse a complete proof only when its entire actual dependency graph matches."""
     signature = actual_dependency_signature(session, revision, repository=repository)

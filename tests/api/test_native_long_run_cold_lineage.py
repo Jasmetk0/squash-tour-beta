@@ -99,3 +99,66 @@ def test_changed_ancestor_is_rejected_cold_and_warm(tmp_path, prepared_slots, wh
         row.content_hash = "0" * 64
     with pytest.raises((ValueError, KeyError, TypeError)):
         read(repository)
+
+
+@pytest.mark.parametrize("target", ["extension_revision", "old_ancestor"])
+def test_extension_save_promotes_only_authenticated_ancestors(tmp_path, prepared_slots, target):
+    """After a horizon extension the next read must still reject changed rows.
+
+    The extension Save re-keys proofs of the already authenticated revisions so
+    the next read does not re-verify every historical source; the new extension
+    revision itself gets no proof and is fully validated by that read.
+    """
+    from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+    from tests.api.test_calendar_tour_flow import tour_url
+    from tests.api.test_saved_revision_history_api import ApiServer, _request
+
+    path = tmp_path / "extension.db"
+    copy_database(prepared_slots, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        assert _request("GET", tour_url(server))[0] == 200
+        status, review = extension(server, 4)
+        assert status == 200 and review["can_save"], review
+        status, receipt = extend(server, review, "promotion-proof")
+        assert status == 200, receipt
+        repository = server.app.state.runtime.repository
+        head_id = receipt["branches"][0]["saved_revision_id"]
+        if target == "extension_revision":
+            revision_id = head_id
+        else:
+            revision_id, _count = oldest_global_ancestor(repository)
+        rehash_component(repository, revision_id)
+        assert _request("GET", tour_url(server))[0] == 409
+        assert _request("GET", tour_url(server) + "/seasons")[0] == 409
+
+
+def test_extension_revision_is_fully_validated_by_the_next_read(tmp_path, prepared_slots, monkeypatch):
+    from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+    from tests.api.test_calendar_tour_flow import tour_url
+    from tests.api.test_saved_revision_history_api import ApiServer, _request
+
+    path = tmp_path / "extension-validation.db"
+    copy_database(prepared_slots, path)
+    validated = []
+    original = repositories.SimulationPersistenceRepository._validate_saved_revision_once
+
+    def observed(self, **kwargs):
+        validated.append(kwargs["model"].revision_id)
+        return original(self, **kwargs)
+
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        assert _request("GET", tour_url(server))[0] == 200
+        status, review = extension(server, 4)
+        status, receipt = extend(server, review, "validated-head")
+        assert status == 200, receipt
+        head_id = receipt["branches"][0]["saved_revision_id"]
+        monkeypatch.setattr(repositories.SimulationPersistenceRepository,
+                            "_validate_saved_revision_once", observed)
+        assert _request("GET", tour_url(server))[0] == 200
+        # The new revision went through the ordinary exact-byte validator
+        # (content hash, identity, components) and only then became proven.
+        assert head_id in validated
+        repository = server.app.state.runtime.repository
+        with repository._session_factory() as session:
+            row = session.get(repositories.BranchSavedRevisionModel, head_id)
+            assert repositories._saved_revision_validation_signature(row) in repository._revision_validation_cache

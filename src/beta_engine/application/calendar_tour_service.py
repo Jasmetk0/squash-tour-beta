@@ -27,6 +27,7 @@ from beta_engine.application.calendar_tour_season_summary import (
     saved_final_closure,
 )
 from beta_engine.application.calendar_tour_signed_records import signed_tour_records
+from beta_engine.infrastructure.db.cyclic_gc import with_paused_cyclic_gc
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_followup_points import (
     CalendarFollowupEightPointPolicy,
@@ -411,6 +412,7 @@ class CalendarTourService:
                 )
         return context, state, signed
 
+    @with_paused_cyclic_gc
     def records(
         self,
         *,
@@ -449,6 +451,7 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
+    @with_paused_cyclic_gc
     def player_career(self, *, run_id, branch_id, player_id, as_of_ordinal=None):
         """Read only the authenticated Saved Tour; never Working changes or other Branches."""
         from beta_engine.application.calendar_tour_player_career import native_player_career
@@ -474,6 +477,7 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
+    @with_paused_cyclic_gc
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""
         from beta_engine.application.native_fork_runtime_service import (
@@ -509,6 +513,7 @@ class CalendarTourService:
                 **season_summary_extras(signed, world, season_index, summary, compare_to, closure=closure),
             }
 
+    @with_paused_cyclic_gc
     def season_archive(self, *, run_id, branch_id):
         """Every completed season of the authenticated Saved Tour, oldest first."""
         from beta_engine.application.calendar_tour_season_archive import season_archive
@@ -534,6 +539,7 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
+    @with_paused_cyclic_gc
     def inspect(self, *, run_id, branch_id):
         from beta_engine.application.native_fork_runtime_service import (
             NativeForkRuntimeService,
@@ -758,6 +764,7 @@ class CalendarTourService:
             else ["tour_authority_missing"],
         }
 
+    @with_paused_cyclic_gc
     def player(self, *, run_id, branch_id, player_id):
         from beta_engine.application.native_fork_runtime_service import (
             NativeForkRuntimeService,
@@ -1006,6 +1013,7 @@ class CalendarTourService:
         preview["preview_fingerprint"] = canonical_hash(preview)
         return preview, ctx, state, authority, successor
 
+    @with_paused_cyclic_gc
     def preview(self, *, run_id, branch_id, command):
         from beta_engine.application.native_fork_runtime_service import (
             NativeForkRuntimeService,
@@ -1017,6 +1025,7 @@ class CalendarTourService:
             session.execute(text("BEGIN"))
             return self._prepare(session, run_id, branch_id, command)[0]
 
+    @with_paused_cyclic_gc
     def execute(self, *, run_id, branch_id, request, include_inspection=False):
         from beta_engine.application.native_fork_runtime_service import (
             NativeForkRuntimeService,

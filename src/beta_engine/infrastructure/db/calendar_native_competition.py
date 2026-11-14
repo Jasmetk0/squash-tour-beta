@@ -20,6 +20,9 @@ from beta_engine.domain.tournaments.calendar_tour import (
 )
 
 
+MAX_REPLAY_EVIDENCE = 4096
+
+
 def _raw_global_inputs(payload):
     content = payload['content']
     binding = canonical_hash({
@@ -441,11 +444,15 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
                     raw_inputs[0], raw_inputs[1][:life_indices[-1] + 1],
                     raw_inputs[2][:health_indices[-1] + 1],
                 )
-        while len(values) > 128:
+        # One walk's replay evidence must cover every state of the lineage it
+        # validates; with 128 entries, older ancestors of a long Run replayed
+        # the complete history again. Values are hashes and frozen states that
+        # share their receipts/events with the replay itself.
+        while len(values) > MAX_REPLAY_EVIDENCE:
             values.pop(next(iter(values)))
-        while len(tours) > 128:
+        while len(tours) > MAX_REPLAY_EVIDENCE:
             tours.pop(next(iter(tours)))
-        while len(checkpoint_values) > 128:
+        while len(checkpoint_values) > MAX_REPLAY_EVIDENCE:
             checkpoint_values.pop(next(iter(checkpoint_values)))
 
 

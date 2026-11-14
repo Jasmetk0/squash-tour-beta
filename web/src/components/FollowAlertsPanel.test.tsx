@@ -39,9 +39,9 @@ const alerts = (cards: unknown[] = [card()]) => ({
   saved_head_revision_id: 'rev-1', as_of_ordinal: 12, unread_cards: cards.length, cards,
   criteria: { domestic_leaders: 3, exceptional_rank: 1, group_window_weeks: 2, status: 'provisional calibration' }
 })
-function mount(cs = false) {
+function mount(cs = false, url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  return render(<MemoryRouter><QueryClientProvider client={client}>
+  return render(<MemoryRouter initialEntries={[url]}><QueryClientProvider client={client}>
     <FollowAlertsPanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} /></QueryClientProvider></MemoryRouter>)
 }
 
@@ -121,6 +121,27 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     mount()
     expect(await screen.findByText(/facts stay in the players’ career history/)).toBeInTheDocument()
   })
+
+  it('orders cards by their latest actual event rather than their earliest grouped milestone', async () => {
+    const older = { ...card(), first_week: { season_index: 0, week: 1 },
+      last_week: { season_index: 0, week: 15 } }
+    const updated = { ...card(), notification_key: 'b'.repeat(64), player_id: 'P2',
+      player_name: 'Bob', first_week: { season_index: 0, week: 2 },
+      last_week: { season_index: 0, week: 20 },
+      items: card().items.map(i => ({ ...i, player_id: 'P2', player_name: 'Bob' })) }
+    api.getFollowAlerts.mockResolvedValue(alerts([older, updated]))
+    mount()
+    await screen.findByLabelText(/^Bob /)
+    const cards = screen.getAllByRole('listitem').filter(row => row.getAttribute('aria-label')?.startsWith('A') ||
+      row.getAttribute('aria-label')?.startsWith('B'))
+    expect(cards.map(c => c.getAttribute('aria-label')!.split(' ')[0])).toEqual(['Bob', 'Alice'])
+    fireEvent.change(screen.getByLabelText('Chronological order'), { target: { value: 'asc' } })
+    const reversed = screen.getAllByRole('listitem').filter(row => row.getAttribute('aria-label')?.startsWith('A') ||
+      row.getAttribute('aria-label')?.startsWith('B'))
+    expect(reversed.map(c => c.getAttribute('aria-label')!.split(' ')[0])).toEqual(['Alice', 'Bob'])
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
   it('does not mutate alerts when filtering, and preserves every item in matching cards', async () => {
     mount()
     const row = await screen.findByLabelText(/^Alice /)

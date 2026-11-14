@@ -83,7 +83,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const query = useQuery({
     queryKey: ['saved-player-career', runId, branchId, savedHead, playerId, asOf],
     queryFn: () => getSavedPlayerCareer(runId, branchId, playerId, asOf),
-    enabled: !baseline.isPending && !baseline.error && maxOrdinal !== null && !badAsOf,
+    enabled: asOf !== undefined && !baseline.isPending && !baseline.error && maxOrdinal !== null && !badAsOf,
     retry: false
   })
   const title = cs ? 'Kariéra: časová osa a milníky' : 'Career: timeline and milestones'
@@ -97,16 +97,16 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   if (badAsOf) return <section aria-label={title}><h3>{title}</h3>
     <p role="alert">{cs ? 'Neplatný nebo budoucí týden. Zobrazení nebylo přepnuto na současnost.' : 'Invalid or future week. The view was not silently changed to the present.'}</p>
     <button type="button" onClick={() => { url.set({ asof: null, page: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
-  if (query.isPending) {
+  if (asOf !== undefined && query.isPending) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
   }
-  if (query.error) {
+  if (asOf !== undefined && query.error) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="status">{cs ? 'Kariérní osa není pro tuto revizi dostupná: ' : 'Career timeline is unavailable for this revision: '}
         {formatApiError(query.error)}</p></section>
   }
-  const data = query.data
+  const data = asOf === undefined ? baseline.data : query.data
   if (!validSavedPlayerCareer(data, { runId, branchId, savedHead, playerId })) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="alert">{cs
@@ -129,7 +129,8 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
       return (order === 'desc' ? -diff : diff) || a.index - b.index
     })
   const pages = readerPageCount(rows.length)
-  const visible = readerSlice(rows, Math.min(page, pages))
+  const current = Math.min(page, pages)
+  const visible = readerSlice(rows, current)
   const o = data.overview
   return <section aria-label={title}>
     <h3>{title}</h3>
@@ -199,14 +200,14 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     <button type="button" onClick={() => { url.reset(); setDraft('') }}>{cs ? 'Reset filtrů' : 'Reset filters'}</button>
     <p>{cs ? 'Zobrazené záznamy' : 'Matching entries'}: {rows.length} / {data.timeline.length}</p>
     {rows.length === 0 ? <p>{cs ? 'Žádné záznamy neodpovídají filtrům.' : 'No entries match the filters.'}</p>
-      : <ol start={(Math.min(page, pages) - 1) * 20 + 1}>{visible.map(({ event: e, index: i }) => <li key={e.kind + e.source.fingerprint + i}>
+      : <ol start={(current - 1) * 20 + 1}>{visible.map(({ event: e, index: i }) => <li key={e.kind + e.source.fingerprint + i}>
         <strong>{label(e.kind)}</strong> · {weekText(e, cs)}
         {detailText(e, cs) && ` · ${detailText(e, cs)}`}
         <br /><small>{sourceText(e, cs)}</small></li>)}</ol>}
     <nav aria-label={cs ? 'Stránkování kariéry' : 'Career pagination'}>
-      <button type="button" disabled={page <= 1} onClick={() => url.set({ page: String(page - 1) })}>{cs ? 'Předchozí' : 'Previous'}</button>
-      {' '}{cs ? 'Strana' : 'Page'} {Math.min(page, pages)} / {pages}{' '}
-      <button type="button" disabled={page >= pages} onClick={() => url.set({ page: String(page + 1) })}>{cs ? 'Další' : 'Next'}</button>
+      <button type="button" disabled={current <= 1} onClick={() => url.set({ page: String(current - 1) })}>{cs ? 'Předchozí' : 'Previous'}</button>
+      {' '}{cs ? 'Strana' : 'Page'} {current} / {pages}{' '}
+      <button type="button" disabled={current >= pages} onClick={() => url.set({ page: String(current + 1) })}>{cs ? 'Další' : 'Next'}</button>
     </nav>
   </section>
 }

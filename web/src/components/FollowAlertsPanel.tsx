@@ -88,7 +88,7 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
     if (it.kind === 'retirement' && d.without_turn_pro === true) return cs ? ' · bez přechodu mezi profesionály' : ' · without ever turning pro'
     return ''
   }
-  return <section aria-label={title}>
+  return <section aria-label={title} data-run-navigation-readonly>
     <h2>{title}</h2>
     <p>{cs
       ? 'Sledování je předvolba celého Runu (platí pro všechny Branche) a není součástí Saved revize. Upozornění se odvozují z doložených kariérních faktů vybrané Branch; čtení, skrytí ani ztišení nic nemaže a neovlivňuje simulaci.'
@@ -114,7 +114,6 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
     </form>
     {(follow.error || unfollow.error || mark.error) && <p role="alert">{formatApiError(follow.error ?? unfollow.error ?? mark.error)}</p>}
     <h3>{cs ? 'Upozornění' : 'Alerts'}</h3>
-    <div data-run-navigation-readonly>
     <label><input type="checkbox" checked={showHidden} onChange={e => url.set({ hidden: e.target.checked ? 'true' : null, page: null })} />{' '}
       {cs ? 'Zobrazit i skrytá' : 'Show hidden too'}</label>
     <div>
@@ -140,7 +139,6 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
           <option value="asc">{cs ? 'Od nejstarší události' : 'Earliest event first'}</option>
         </select></label>{' '}
       <button type="button" onClick={() => url.reset()}>{cs ? 'Reset filtrů' : 'Reset filters'}</button>
-    </div>
     </div>
     {follows.isPending || (list !== null && alerts.isPending) ? <p role="status">{cs ? 'Načítám upozornění…' : 'Loading alerts…'}</p>
       : !list ? null

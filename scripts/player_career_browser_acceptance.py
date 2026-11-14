@@ -122,12 +122,13 @@ def main():
                             expect(section).to_contain_text("played_edition")
                             expect(section).to_contain_text(no_inj)
                             if language == "en":
+                                dirty_before_reader_control = page.locator('.app-shell--admin').get_attribute('data-run-form-edited')
                                 section.get_by_label("View as of week (ordinal)").fill(
                                     str(edition_ordinal - 1)
                                 )
                                 section.get_by_role("button", name="Apply").click()
                                 # A read-only control must not dirty the Run Working Draft guard.
-                                assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') != 'true'
+                                assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') == dirty_before_reader_control
                                 expect(section).to_contain_text(
                                     f"Shown as of week no. {edition_ordinal - 1}"
                                 )

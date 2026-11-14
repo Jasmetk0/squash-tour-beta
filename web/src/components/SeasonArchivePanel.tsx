@@ -146,7 +146,7 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     <th>{cs ? 'Rozdíl finále' : 'Finals delta'}</th>
     <th>{cs ? 'Body (vybraná)' : 'Points (selected)'}</th><th>{cs ? 'Body (srovnávaná)' : 'Points (comparison)'}</th>
     <th>{cs ? 'Rozdíl bodů' : 'Points delta'}</th></tr></thead>
-  return <section aria-label={title}>
+  return <section aria-label={title} data-run-navigation-readonly>
     <h3>{title}</h3>
     <p>{cs
       ? 'Pouze čtení z uložené revize vybrané Branch. Neexistuje žádné složené skóre země; zobrazují se výslovné ukazatele. Přehled sám nic nezastavuje ani nevytváří.'

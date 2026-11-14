@@ -31,9 +31,9 @@ const data = (asOf: number, timeline: unknown[], milestones: unknown[]) => ({
     editions_played: timeline.includes(title) ? 1 : 0, career_high_rank: null, current_rank: null },
   milestones, timeline, unsupported: ['injury'],
 })
-function mount(cs = false) {
+function mount(cs = false, url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<MemoryRouter><QueryClientProvider client={client}>
+  return render(<MemoryRouter initialEntries={[url]}><QueryClientProvider client={client}>
     <SavedPlayerCareerTimeline runId="run" branchId="branch" savedHead="rev-1" playerId="P1" cs={cs} />
   </QueryClientProvider></MemoryRouter>)
 }
@@ -133,6 +133,20 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
     expect(await screen.findByRole('alert')).toHaveTextContent(/Invalid or future week/)
     expect(api.getSavedPlayerCareer).not.toHaveBeenCalledWith('run', 'branch', 'P1', 99)
+  })
+
+  it('rejects invalid as-of URL without ever issuing a historical request', async () => {
+    const params = new URLSearchParams()
+    params.set('career_scope', JSON.stringify(['run', 'branch', 'rev-1', 'P1']))
+    params.set('career_asof', 'not-a-week')
+    params.set('branch', 'branch')
+    api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
+    mount(false, '/?' + params.toString())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid or future week')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1', undefined)
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Return to present' }))
+    expect(await screen.findByText(/Shown as of week no\. 12/)).toBeInTheDocument()
   })
 
 })

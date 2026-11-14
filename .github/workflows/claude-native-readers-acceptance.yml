@@ -32,6 +32,7 @@ on:
       - 'src/beta_engine/infrastructure/db/calendar_native_competition.py'
       - 'src/beta_engine/infrastructure/db/cyclic_gc.py'
       - 'src/beta_engine/application/run_working_draft_service.py'
+      - 'src/beta_engine/application/run_calendar_extension_commit.py'
       - 'web/src/api/client.ts'
       - 'web/src/api/savedNativeReadiness.ts'
       - 'web/src/api/savedPlayerCareer.ts'

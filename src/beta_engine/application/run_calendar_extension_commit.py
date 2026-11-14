@@ -66,7 +66,8 @@ def _json_object(raw: str, label: str) -> dict:
     return item
 
 
-def _capture_live_content(session: Session, *, payload: dict, run_id: str, branch_id: str) -> dict:
+def _capture_live_content(session: Session, *, payload: dict, run_id: str, branch_id: str,
+                          repository=None) -> dict:
     if "native_fork_runtime" in payload.get("content", {}):
         # The caller has authenticated this complete Saved aggregate and requires
         # a clean draft. Its live authority IS this aggregate, not missing legacy
@@ -124,9 +125,20 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
         .get("state", {}).get("schema_version")
         in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
     )
+    # As in the Save coordinator: this exact Saved HEAD passed the complete
+    # physical lineage gate in the current transaction, so only Tour origins
+    # NEWER than it need another source fold (a clean draft has none). The
+    # captured live aggregate is still fully replayed below.
+    from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+
     storage.capture_saved_calendar_match(
         session, copy, run_id=run_id, branch_id=branch_id,
         _defer_full_verification=native_birth,
+        _authenticated_tour_prefix=(
+            decode_authenticated_tour(payload, run_id=run_id, branch_id=branch_id)
+            if repository is not None else None
+        ),
+        _repository=repository,
     )
     if native_birth:
         # A v11 source cannot be verified in isolation before its Tour/source
@@ -172,8 +184,11 @@ def review_run_calendar_extension(
         draft = None
         try:
             # Validate complete old lineage, including shared pre-fork ancestors.
+            # Every revision passes the same physical/source/replay gates; only
+            # the HEAD payload (read below) is needed, so do not also decode and
+            # retain every historical payload just to discard it.
             repository._validated_branch_revision_lineage_in_session(
-                session=session, branch=branch
+                session=session, branch=branch, payload_revision_ids=frozenset(),
             )
             state = repository._validated_branch_revision_state_in_session(
                 session=session, branch=branch
@@ -223,7 +238,7 @@ def review_run_calendar_extension(
                     try:
                         captured = _capture_live_content(
                             session, payload=head.payload, run_id=run_id,
-                            branch_id=branch.branch_id,
+                            branch_id=branch.branch_id, repository=repository,
                         )
                         # Some existing normal-Save adapters synthesize a
                         # canonical *empty* component on capture even when the

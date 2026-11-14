@@ -70,8 +70,8 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
       (eventFilter === 'all' || value.items.some(item => item.kind === eventFilter)) &&
       [value.player_name, value.player_id, value.country_code].join(' ').toLocaleLowerCase().includes(search))
     .sort((a, b) => {
-      const position = (c: typeof a.value) => c.first_week.season_index * 10000 + c.first_week.week
-      const diff = position(a.value) - position(b.value)
+      const diff = a.value.first_week.season_index - b.value.first_week.season_index ||
+        a.value.first_week.week - b.value.first_week.week
       return (order === 'asc' ? diff : -diff) || a.index - b.index
     })
   const pages = readerPageCount(filtered.length)

@@ -34,7 +34,8 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
   const url = useReaderParams('alert', JSON.stringify([runId, branchId, savedHead]))
   const showHidden = url.get('hidden') === 'true'
   const search = url.get('search').toLocaleLowerCase()
-  const stateFilter = url.get('state', 'all')
+  const stateValue = url.get('state', 'all')
+  const stateFilter = ['all', 'unread', 'read', 'hidden'].includes(stateValue) ? stateValue : 'all'
   const eventFilter = url.get('event', 'all')
   const order = url.get('order', 'desc')
   const page = readerPage(url.get('page', '1'))
@@ -70,7 +71,9 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
       (eventFilter === 'all' || value.items.some(item => item.kind === eventFilter)) &&
       [value.player_name, value.player_id, value.country_code].join(' ').toLocaleLowerCase().includes(search))
     .sort((a, b) => {
-      const diff = a.value.first_week.season_index - b.value.first_week.season_index ||
+      const diff = a.value.last_week.season_index - b.value.last_week.season_index ||
+        a.value.last_week.week - b.value.last_week.week ||
+        a.value.first_week.season_index - b.value.first_week.season_index ||
         a.value.first_week.week - b.value.first_week.week
       return (order === 'asc' ? diff : -diff) || a.index - b.index
     })
@@ -117,7 +120,7 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
       <label>{cs ? 'Hledat hráče nebo zemi' : 'Search player or country'}{' '}
         <input value={url.get('search')} onChange={e => url.set({ search: e.target.value, page: null }, true)} /></label>{' '}
       <label>{cs ? 'Stav karty' : 'Card state'}{' '}
-        <select value={['all', 'unread', 'read', 'hidden'].includes(stateFilter) ? stateFilter : 'all'}
+        <select value={stateFilter}
           onChange={e => url.set({ state: e.target.value, page: null })}>
           <option value="all">{cs ? 'Všechny' : 'All'}</option>
           <option value="unread">{cs ? 'Nepřečtené' : 'Unread'}</option>
@@ -132,8 +135,8 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
         </select></label>{' '}
       <label>{cs ? 'Chronologicky' : 'Chronological order'}{' '}
         <select value={order === 'asc' ? 'asc' : 'desc'} onChange={e => url.set({ order: e.target.value, page: null })}>
-          <option value="desc">{cs ? 'Od nejnovějších' : 'Newest first'}</option>
-          <option value="asc">{cs ? 'Od nejstarších' : 'Oldest first'}</option>
+          <option value="desc">{cs ? 'Od nejnovější události' : 'Latest event first'}</option>
+          <option value="asc">{cs ? 'Od nejstarší události' : 'Earliest event first'}</option>
         </select></label>{' '}
       <button type="button" onClick={() => url.reset()}>{cs ? 'Reset filtrů' : 'Reset filters'}</button>
     </div>

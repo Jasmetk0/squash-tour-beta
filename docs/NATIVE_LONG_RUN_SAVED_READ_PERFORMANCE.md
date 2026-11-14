@@ -95,6 +95,10 @@ not timing samples):
   object or a byte-for-byte equal one (`==`); any other text is hashed on its own.
   Nothing extra is kept alive; the memo dies with the snapshot.
 - **Dependency closure memo per read snapshot** (`native_fork_runtime_state.py`).
+  Corrected after Work's review: shared sorted graphs are keyed by **(Run, node
+  set)**; an earlier head keyed them by the revision-ID set alone and could return
+  another Run's graph for the same IDs (helper-level isolation defect, regression
+  in `test_native_long_run_work_review.py`).
   Inside one unchanged SQLite snapshot every row/owner/digest is fixed, so the
   complete walk from a node is fixed: a later walk merges it instead of re-expanding
   it, and identical node sets share their sorted graph and canonical JSON. The proof
@@ -119,15 +123,16 @@ not timing samples):
   in this walk's replay evidence, the parent's sources are not decoded/copied for
   a prefix that the component check would not use. If the actual values differ,
   the component check replays from the root without a prefix (same verdict).
-- **Content hash over the stored canonical text** (`run_revisions.py::
-  stored_canonical_payload_hash_matches`). Writers store `canonical_json(payload)`.
-  The canonical envelope is assembled with that stored text as the `payload`
-  value; a matching SHA-256 implies the ordinary check passes (the other tokens
-  are self-delimiting canonical JSON built here and the structural key
-  `,"payload_schema_version":` occurs exactly once after the payload in both
-  strings, so the stored text must equal the writer's canonical payload). Any
-  mismatch falls back to the ordinary decode-and-reserialize check. 3,000 random
-  and adversarial cases plus all real rows of the fixture agree.
+- **Retracted (Work review, 14 November 2026): content hash over the stored
+  text.** An earlier head accepted a revision when SHA-256 of the stored payload
+  text spliced into the envelope equalled the declared `content_hash`. That is not
+  a proof: both values are untrusted stored fields, so noncanonical text with a
+  hash computed over it was accepted where the base rejects it. My argument assumed
+  an honest writer, which is exactly what the validator must check, and my
+  3,000-case test only ever used honest hashes. The shortcut and those tests are
+  removed; the ordinary canonical computation runs again (Work's six regressions
+  pass; valid noncanonical legacy text stays readable). Measurements of heads
+  before `aac8f8d` include that shortcut and are labelled as such below.
 - **Horizon-extension review** (`run_calendar_extension_commit.py`). It validated
   the lineage with every payload materialized and then discarded the result,
   although the following state read validates the same lineage through the same
@@ -151,7 +156,11 @@ not timing samples):
   read after the extension, W52 after two seasons: 69–73 s → 13 s. The second
   two-season W52 run on the previous head failed exactly here.
 - **Scoped cyclic-GC pause** (`cyclic_gc.py`) around the native Tour service reads,
-  commands and `save_calendar_tour`. Reference counting still frees everything;
+  commands and `save_calendar_tour`. Bounded after Work's review: overlapping
+  operations could keep the process-wide count above zero forever, so whenever an
+  operation starts or ends after 30 s of continuous pause a full `gc.collect()`
+  runs (regression: cyclic garbage is collected while another operation stays
+  paused). Reference counting still frees everything;
   cycles are collected after the outermost operation. Reference counted across
   threads; an already disabled collector stays disabled.
 
@@ -167,6 +176,12 @@ Rejected after measurement (reverted, not shipped):
   ~2 s faster at W52/one season, but peak RSS 1.0 → 1.8 GB.
 
 ## Before/after (identical input copies, balanced order A1 B1 B2 A2)
+
+**Superseded candidate source.** The candidate runs in this section (`046ebca`,
+`c630357`, `bbef6da`) predate Work's review: they include the retracted stored-text
+hash shortcut and the unscoped graph key. They remain raw evidence of those heads,
+not of the repaired source; the repaired head is re-measured in
+"Re-measurement of the repaired head" below.
 
 Raw records, environment, input/output digests and memory of every case (including the
 failed baseline W52 two-season case and a superseded intermediate `27df2b1` case) are in
@@ -261,6 +276,10 @@ Runs: A1 baseline `342b826` (A2 not run: it would again exhaust host memory next
 Server peak RSS (GiB, VmHWM): baseline A1 server killed by the kernel OOM killer at 10.8 GB anon RSS (cgroup limit 15 GiB shared with the long tests); B1 2.50, B2 3.56. Restart byte-equal: B1, B2. Cold responses byte-identical across all runs with digests: yes.
 
 
+## Re-measurement of the repaired head
+
+__REMEASURE__
+
 ## Two full seasons on W52, W61 and W80
 
 `test_two_closed_seasons_archive_compare_extend_and_restart` is parametrized
@@ -285,7 +304,7 @@ each head). Earlier runs are reported because each found a real limit:
 | W52 #3 | `c630357` | every week of both seasons, both Season Transitions, archive, both comparisons and point doubling **passed**; horizon-extension review exceeded 120 s → fixed in `8c051d9` |
 | W52 #4 | `e3f9b03` | all of the above and the extension Save **passed**; first read after the extension exceeded 120 s → fixed in `e3f9b03`→`a3855c7` (proof re-keying, boundary replay) |
 | W52 #5 | `a3855c7` (same `src/` and test tree as the final head) | **PASSED**, 5,111 s, run alone: every week of both seasons, both Season Transitions, real MatchEngine Editions, points, explicit Saves, archive, both comparison directions, extension without rewriting closed seasons, cold restart with byte-equal reads |
-| W61, W80 | — | not completed: see the measured restart limit below |
+| W52/W61/W80 #6 | repaired head (`src/` `0d611805`) | __RUN6__ |
 
 Measured cold restart (fresh process, idle host unless noted) on authentic inputs:
 
@@ -293,20 +312,19 @@ Measured cold restart (fresh process, idle host unless noted) on authentic input
 | --- | ---: | ---: | ---: |
 | W52 after two seasons + extension (final test DB of run #4) | 127 | 1.61 GB | 96.5 s |
 | W80 in season 2 (133 revisions, before extension) | 133 | 1.63 GB | 80.1 s |
-| W80 two seasons + extension (extrapolated) | ~185 | ~2.6 GB | ~150 s |
-| W61 two seasons + extension (extrapolated) | ~146 | ~2.0 GB | ~120–125 s |
+| Same W52 input, repaired head (no stored-text shortcut) | 127 | 1.61 GB | 109.1 s |
+| W80 / W61 two seasons + extension | — | — | __RESTART6__ |
 
-So the cold restart of two complete W61/W80 seasons cannot meet the unchanged 120 s
-read bound with full re-validation of full-snapshot revisions, even on an idle host.
-Raising the bound is not a fix and was not done. The owner was asked for the
-storage/proof direction (options in the PR); W61/W80 two-season acceptance remains
-open until then.
+The 96.5 s and 80.1 s rows were measured on a head that still contained the
+retracted content-hash shortcut. The W61/W80 two-season numbers in an earlier
+version of this document were extrapolations, not completed tests; they are
+replaced by the actual run #6 results above. The 120 s bound is unchanged.
 
 CI: the fast job runs only the exact node id `[w6]` (the former `-k 'not w52'` would
-have selected `w61`/`w80`). A separate `long_seasons` job runs `w52` by exact node id with a
-300-minute job limit; like the other jobs it is skipped for Draft PRs. The `w61`/`w80`
-parameters stay ordinary, runnable tests (not skipped or xfail) but are not in that
-matrix until the restart limit below is resolved. The manual full suite excludes the `long_season` marker. The
+have selected `w61`/`w80`). A separate `long_seasons` job runs `w52`, `w61` and `w80` by exact node id with a
+300-minute job limit (skipped for Draft PRs like the other heavy jobs). The manual
+full suite excludes the `long_season` marker because that job executes every long
+clock; the CI-policy test derives the required clocks from the test parametrization. The
 120-second read transport bound is unchanged.
 
 ## Regressions
@@ -318,7 +336,17 @@ matrix until the restart limit below is resolved. The manual full suite excludes
 - `tests/infrastructure/test_native_long_run_read_proofs.py`: digest reuse bound to
   identical actual text, memoized graph equal to the original and invalidated by an
   actual rewrite, a changed actual row rejected inside a warm snapshot, and the GC
-  pause (nesting, exceptions, threads, already-disabled collector).
+  pause (nesting, exceptions, threads, already-disabled collector, bounded under
+  continuous overlap).
+- Work's review regressions `tests/infrastructure/test_native_long_run_work_review.py`
+  (noncanonical stored text with a stored-text hash rejected cold and warm, valid
+  legacy text readable, Run-scoped dependency graphs) and
+  `test_native_long_run_benchmark_review.py`, plus
+  `test_native_long_run_benchmark_contract.py` (complete vs censored restart).
+- `tests/api/test_native_long_run_cold_lineage.py`: flat cold depth with identical
+  results, changed ancestors rejected cold/warm/after extension, the new extension
+  revision validated by the next read, boundary replay count, and a failed
+  extension Save (after its append proof) that promotes nothing.
 
 ## Limits and next work
 

@@ -60,7 +60,8 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
   const name = (id: string) => playerName?.(id) ?? id
   const archiveRows = archive.seasons.map((value, index) => ({ value, index }))
     .filter(({ value }) => [value.season_label, String(value.season_index), value.leading_player?.name ?? '',
-      value.leading_player?.player_id ?? '', value.leading_country?.country_code ?? '']
+      value.leading_player?.player_id ?? '', value.leading_player ? name(value.leading_player.player_id) : '',
+      value.leading_country?.country_code ?? '']
       .join(' ').toLocaleLowerCase().includes(archiveSearch))
     .sort((a, b) => (archiveOrder === 'desc' ? -1 : 1) *
       (a.value.season_index - b.value.season_index) || a.index - b.index)
@@ -76,14 +77,18 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
       <td>{key === 'player_id' ? name(id) : id}</td>
       <td>{cell(r.selected, 'titles')}</td><td>{cell(r.comparison, 'titles')}</td>
       <td>{r.delta === null ? (cs ? 'bez rozdílu (chybí jedna strana)' : 'no delta (one side missing)') : r.delta.titles}</td>
+      <td>{cell(r.selected, 'finals')}</td><td>{cell(r.comparison, 'finals')}</td>
+      <td>{r.delta === null ? '—' : r.delta.finals}</td>
       <td>{cell(r.selected, 'awarded_points')}</td><td>{cell(r.comparison, 'awarded_points')}</td>
       <td>{r.delta === null ? '—' : r.delta.awarded_points}</td>
     </tr>
   })
   const comparisonTable = (items: PresenceRow[], key: 'country_code' | 'player_id') => {
-    const prefix = key === 'country_code' ? 'countries' : 'players'
+    const country = key === 'country_code'
+    const prefix = country ? 'countries' : 'players'
     const search = url.get(prefix + '_search').toLocaleLowerCase()
-    const presence = url.get(prefix + '_presence', 'all')
+    const presenceValue = url.get(prefix + '_presence', 'all')
+    const presence = ['all', 'both', 'only_selected', 'only_comparison'].includes(presenceValue) ? presenceValue : 'all'
     const sort = url.get(prefix + '_sort', 'name')
     const page = readerPage(url.get(prefix + '_page', '1'))
     const filtered = items.map((value, index) => ({ value, index })).filter(({ value }) =>
@@ -106,17 +111,17 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     const set = (field: string, value: string, replace = false) =>
       url.set({ [prefix + '_' + field]: value, [prefix + '_page']: null }, replace)
     return <>
-      <label>{cs ? 'Hledat' : 'Search'}{' '}
+      <label>{country ? (cs ? 'Hledat země' : 'Search countries') : (cs ? 'Hledat hráče' : 'Search players')}{' '}
         <input value={url.get(prefix + '_search')} onChange={e => set('search', e.target.value, true)} /></label>{' '}
-      <label>{cs ? 'Zastoupení' : 'Presence'}{' '}
-        <select value={['all', 'both', 'only_selected', 'only_comparison'].includes(presence) ? presence : 'all'}
+      <label>{country ? (cs ? 'Zastoupení zemí' : 'Country presence') : (cs ? 'Zastoupení hráčů' : 'Player presence')}{' '}
+        <select value={presence}
           onChange={e => set('presence', e.target.value)}>
           <option value="all">{cs ? 'Vše' : 'All'}</option>
           <option value="both">{cs ? 'Obě sezony' : 'Both seasons'}</option>
           <option value="only_selected">{cs ? 'Jen vybraná' : 'Selected only'}</option>
           <option value="only_comparison">{cs ? 'Jen srovnávaná' : 'Comparison only'}</option>
         </select></label>{' '}
-      <label>{cs ? 'Řazení' : 'Sort'}{' '}
+      <label>{country ? (cs ? 'Řazení zemí' : 'Sort countries') : (cs ? 'Řazení hráčů' : 'Sort players')}{' '}
         <select value={['name', 'titles', 'points'].includes(sort) ? sort : 'name'} onChange={e => set('sort', e.target.value)}>
           <option value="name">{cs ? 'Podle jména/ID' : 'Name/ID'}</option>
           <option value="titles">{cs ? 'Tituly ve vybrané' : 'Selected titles'}</option>
@@ -124,9 +129,9 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
         </select></label>
       <p>{cs ? 'Zobrazeno' : 'Matching'}: {filtered.length} / {items.length}</p>
       {filtered.length === 0 ? <p>{cs ? 'Žádné odpovídající záznamy.' : 'No matching records.'}</p>
-        : <div className="table-responsive"><table>{head(key === 'country_code' ? (cs ? 'Země' : 'Country') : (cs ? 'Hráč' : 'Player'))}
+        : <div className="table-responsive"><table aria-label={country ? (cs ? 'Porovnání zemí' : 'Country comparison') : (cs ? 'Porovnání hráčů' : 'Player comparison')}>{head(country ? (cs ? 'Země' : 'Country') : (cs ? 'Hráč' : 'Player'))}
           <tbody>{rows(readerSlice(filtered, current).map(e => e.value), key)}</tbody></table></div>}
-      <nav aria-label={cs ? 'Stránkování porovnání' : 'Comparison pagination'}>
+      <nav aria-label={country ? (cs ? 'Stránkování zemí' : 'Country pagination') : (cs ? 'Stránkování hráčů' : 'Player pagination')}>
         <button type="button" disabled={current <= 1} onClick={() => url.set({ [prefix + '_page']: String(current - 1) })}>{cs ? 'Předchozí' : 'Previous'}</button>
         {' '}{cs ? 'Strana' : 'Page'} {current} / {pages}{' '}
         <button type="button" disabled={current >= pages} onClick={() => url.set({ [prefix + '_page']: String(current + 1) })}>{cs ? 'Další' : 'Next'}</button>
@@ -137,6 +142,8 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     <th>{first}</th>
     <th>{cs ? 'Tituly (vybraná)' : 'Titles (selected)'}</th><th>{cs ? 'Tituly (srovnávaná)' : 'Titles (comparison)'}</th>
     <th>{cs ? 'Rozdíl titulů' : 'Titles delta'}</th>
+    <th>{cs ? 'Finále (vybraná)' : 'Finals (selected)'}</th><th>{cs ? 'Finále (srovnávaná)' : 'Finals (comparison)'}</th>
+    <th>{cs ? 'Rozdíl finále' : 'Finals delta'}</th>
     <th>{cs ? 'Body (vybraná)' : 'Points (selected)'}</th><th>{cs ? 'Body (srovnávaná)' : 'Points (comparison)'}</th>
     <th>{cs ? 'Rozdíl bodů' : 'Points delta'}</th></tr></thead>
   return <section aria-label={title}>

@@ -266,3 +266,83 @@ def test_revision_validation_cache_keeps_no_payloads_and_returns_independent_rea
     assert len(history.saved_revisions) == 3
     assert all(item.payload["run"]["display_name"] == "Revision History"
                for item in history.saved_revisions)
+
+
+def _save_many(repository: SimulationPersistenceRepository, count: int) -> None:
+    """Ordinary explicit Viewer-selection Saves on branch-two (real Saved rows)."""
+    service = RunWorkingDraftService(
+        repository=repository,
+        id_factory=_id_factory(*(f"{kind}-{index}" for index in range(count) for kind in ("long-revision", "long-audit"))),
+    )
+    version = 0
+    for index in range(count):
+        draft = service.stage_viewer_branch(
+            run_id="run-one", branch_id="branch-two",
+            viewer_branch_id="branch-one" if index % 2 else "branch-two",
+            expected_draft_version=version,
+        )
+        version = service.save(
+            run_id="run-one", branch_id="branch-two", expected_draft_version=draft.draft_version,
+        ).working_draft.draft_version
+
+
+@pytest.fixture(scope="module")
+def long_lineage_database(tmp_path_factory):
+    """150 ordinary explicit Saves (151 revisions), built once and only copied."""
+    path = tmp_path_factory.mktemp("long-lineage") / "source.db"
+    repository = _repository(f"sqlite:///{path}")
+    _create_run_and_fork(repository)
+    _save_many(repository, 150)
+    repository._engine.dispose()
+    return path
+
+
+@pytest.mark.pr_critical
+@pytest.mark.parametrize("corruption", ["payload", "summary", "content_hash", "parent"])
+def test_long_lineage_keeps_proofs_yet_rejects_changed_ancestor_after_success(
+        tmp_path, monkeypatch, long_lineage_database, corruption):
+    """A lineage longer than the former 128-entry FIFO bound stays proven.
+
+    The first-in-first-out bound evicted each proof right before the next walk
+    needed it. Now a repeated read re-decodes only the HEAD, yet a changed old
+    ancestor (bytes, summary, declared hash or lineage edge) is still rejected
+    after the successful reads.
+    """
+    from beta_engine.infrastructure.db import repositories
+
+    import sqlite3
+
+    copy = tmp_path / "long-history.db"
+    source, target = sqlite3.connect(long_lineage_database), sqlite3.connect(copy)
+    try:
+        source.backup(target)
+    finally:
+        target.close()
+        source.close()
+    repository = _repository(f"sqlite:///{copy}")
+    first = RunSavedRevisionHistoryService(repository=repository).list_history(
+        run_id="run-one", branch_id="branch-two")
+    assert len(first.saved_revisions) == 151
+    decoded = []
+    original = repositories.SimulationPersistenceRepository._to_branch_saved_revision
+
+    def counting(model, *args, **kwargs):
+        decoded.append(model.revision_id)
+        return original(model, *args, **kwargs)
+
+    monkeypatch.setattr(repositories.SimulationPersistenceRepository, "_to_branch_saved_revision",
+                        staticmethod(counting))
+    state = repository.get_branch_revision_state(branch_id="branch-two")
+    assert decoded == [state.saved_head_revision_id]
+    with repository._session_factory.begin() as session:
+        row = session.get(BranchSavedRevisionModel, "long-revision-3")
+        if corruption == "payload":
+            row.payload_json = row.payload_json.replace("Revision History", "Tampered History")
+        elif corruption == "summary":
+            row.change_summary_json = '{"tampered":true}'
+        elif corruption == "content_hash":
+            row.content_hash = "0" * 64
+        else:
+            row.parent_revision_id = "long-revision-1"
+    with pytest.raises(BranchRevisionStateConflictError):
+        repository.get_branch_revision_state(branch_id="branch-two")

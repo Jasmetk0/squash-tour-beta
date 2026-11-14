@@ -37,4 +37,5 @@ addopts = "-q"
 markers = [
   "pr_critical: tiny must-pass suite for fast pull-request feedback",
   "smoke: broader regression suite retained for targeted/manual use",
+  "long_season: multi-hour real HTTP/SQLite two-season scenarios; CI runs each in a dedicated job",
 ]

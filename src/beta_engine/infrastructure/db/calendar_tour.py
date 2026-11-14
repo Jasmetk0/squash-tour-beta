@@ -11,6 +11,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
     parse_tour_json,
 )
 from beta_engine.infrastructure.db.models import CalendarTourAuthorityModel
+from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
 
 COMPONENT_KEY = "calendar_tour_authority"
 
@@ -639,7 +640,7 @@ def remember_verified_origin_projection(row, payload, cache):
     source/ownership gates and the transaction have completed successfully.
     """
     key = (row.run_id, row.branch_id, row.revision_id,
-        hashlib.sha256(row.payload_json.encode('utf-8')).digest(), False)
+        row_text_sha256(row, 'payload_json'), False)
     _retain_origin_projection(cache, key, _origin_projection(payload))
 
 
@@ -650,7 +651,7 @@ def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
         component = payload.get('content', {}).get(COMPONENT_KEY, {})
         return payload, parse_tour_json(json.dumps(component['state'])) if component and _decode_tour else None
     key = (row.run_id, row.branch_id, row.revision_id,
-        hashlib.sha256(row.payload_json.encode('utf-8')).digest(), with_health)
+        row_text_sha256(row, 'payload_json'), with_health)
     known = cache.get(key)
     if known is not None:
         cache.pop(key)

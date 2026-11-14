@@ -1,3 +1,27 @@
+# Claude long native Run reads and two full seasons — 14 November 2026
+
+Base `buuk 342b826d20b43055f5e1117bab8d58176259360c` (#1801 merged). Claude's Draft PR
+(branch `claude/ecstatic-davinci-qpie07`) measures and speeds up Saved Tour/season-archive
+reads of long native Runs and adds two-complete-season W52/W61/W80 acceptance. Details,
+inputs, raw before/after numbers and limits: `docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md`.
+
+- Measured causes: FIFO-128 proof eviction (lineages >128 re-decoded every read), the
+  same Saved text hashed 3–4× per revision per read, quadratic dependency-graph
+  construction, cyclic GC, and a recursive cold validation keeping every decoded
+  payload alive at once (W52 after one season: 3.1 GB peak).
+- Changes keep every physical/owner/source/replay gate, public DTO, Saved byte,
+  fingerprint, seed and sporting rule. No Entry, tournament rule, point table,
+  calibration, frontend or ATP file is touched.
+- `test_two_closed_seasons_archive_compare_extend_and_restart[w6|w52|w61|w80]`:
+  fast `w6` stays in the existing job by exact node id; the long clocks have a
+  separate `long_seasons` CI job. The 120 s read transport bound is unchanged.
+
+Not certified: 50-season reference release, 1,000-player long Runs, browser execution.
+Per-read cost remains linear in the total bytes of the lineage (each Saved Revision is a
+full snapshot); longer horizons need a storage/proof decision (see the document).
+
+---
+
 # Work takeover of Claude native features — 13 November 2026
 
 Owner asked Work to review and finish Claude's implementation. Owner-merged base

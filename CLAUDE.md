@@ -43,6 +43,15 @@ PR does not approve its own product decisions.
   change approved sporting rules or re-sign historical Saved data without the
   owner's explicit instruction.
 
+## Model and effort reporting
+
+At the start of a task, at each significant phase change and in the final report,
+state briefly: the recommended concrete model and effort for the next work, why,
+and a cheaper sufficient alternative if one exists; and the actually active
+model/effort only when it can be verified (for example from the session tool),
+otherwise say it is not visible. A recommendation is not a performed switch, and
+a paid upgrade is never a precondition for continuing.
+
 Work continues as technical lead and active implementer. Claude has autonomy over
 the assigned area; shared files have one active writer. An actually independent
 review is different from an author's second review pass. Additional paid tools or

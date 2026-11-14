@@ -44,9 +44,9 @@ const detail = (comparable: boolean) => ({
     players: [], note: 'n'
   }
 })
-function mount(cs = false, resolveName: (id: string) => string = id => (id === 'P1' ? 'Alice' : id)) {
+function mount(cs = false, resolveName: (id: string) => string = id => (id === 'P1' ? 'Alice' : id), url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<MemoryRouter><QueryClientProvider client={client}>
+  return render(<MemoryRouter initialEntries={[url]}><QueryClientProvider client={client}>
     <SeasonArchivePanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} playerName={resolveName} />
   </QueryClientProvider></MemoryRouter>)
 }
@@ -133,6 +133,20 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     expect(api.getSeasonDetail).toHaveBeenCalledTimes(1)
   })
 
+
+
+  it('does not apply another Run or revision comparison selection to the present owner', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    const qs = new URLSearchParams({
+      season_scope: JSON.stringify(['other-run', 'branch', 'rev-1']),
+      season_selected: '1', season_other: '0'
+    })
+    mount(false, undefined, '/?' + qs.toString())
+    await screen.findByRole('table', { name: 'Completed season archive' })
+    expect(screen.getByLabelText('Selected season')).toHaveValue('')
+    expect(screen.getByLabelText('Compare with')).toHaveValue('')
+    expect(api.getSeasonDetail).not.toHaveBeenCalled()
+  })
 
   it('searches the actually displayed player name, not only the backend label', async () => {
     api.getSeasonArchive.mockResolvedValue(archive)

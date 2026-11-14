@@ -316,6 +316,49 @@ def saved_revision_hash_envelope(
     }
 
 
+def stored_canonical_payload_hash_matches(
+    *,
+    content_hash: str,
+    revision_id: str,
+    run_id: str,
+    branch_id: str,
+    sequence: int,
+    parent_revision_id: str | None,
+    kind: str,
+    payload_schema_version: str,
+    payload_json: str,
+    change_summary: dict[str, object],
+) -> bool:
+    """Sufficient check of ``saved_revision_content_hash`` on the STORED payload text.
+
+    Writers store ``canonical_json(payload)``. This hashes the canonical envelope
+    with that exact stored text spliced in as the ``payload`` value, without
+    re-serializing the decoded payload. A ``True`` result implies the ordinary
+    check passes: the other envelope tokens are self-delimiting canonical JSON
+    built here, and the structural key ``,"payload_schema_version":`` occurs
+    exactly once after the payload in both strings (string tokens escape every
+    quote), so equal SHA-256 digests force the stored text to equal the
+    writer's canonical payload exactly. ``False`` decides nothing: the caller
+    must then run the ordinary full computation (legacy non-canonical text,
+    corruption, or a different hash all take that path).
+    """
+    if type(payload_json) is not str:
+        return False
+    text = "".join((
+        '{"branch_id":', canonical_json(branch_id),
+        ',"change_summary":', canonical_json(change_summary),
+        ',"kind":', canonical_json(kind),
+        ',"parent_revision_id":', canonical_json(parent_revision_id),
+        ',"payload":', payload_json,
+        ',"payload_schema_version":', canonical_json(payload_schema_version),
+        ',"revision_id":', canonical_json(revision_id),
+        ',"run_id":', canonical_json(run_id),
+        ',"sequence":', canonical_json(sequence),
+        "}",
+    ))
+    return hashlib.sha256(text.encode("utf-8")).hexdigest() == content_hash
+
+
 def saved_revision_content_hash(
     *,
     revision_id: str,

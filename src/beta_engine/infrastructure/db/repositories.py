@@ -472,6 +472,25 @@ def _saved_revision_record_content_hash(
     )
 
 
+def _stored_canonical_text_hash_matches(model, revision) -> bool:
+    """Content hash over the stored canonical text; False falls back to the full check."""
+    from beta_engine.domain.run_revisions import stored_canonical_payload_hash_matches
+
+    if (model.revision_id, model.run_id, model.branch_id, model.sequence, model.parent_revision_id,
+            model.kind, model.payload_schema_version, model.content_hash) != (
+            revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
+            revision.parent_revision_id, revision.kind, revision.payload_schema_version,
+            revision.content_hash):
+        return False
+    return stored_canonical_payload_hash_matches(
+        content_hash=revision.content_hash, revision_id=revision.revision_id,
+        run_id=revision.run_id, branch_id=revision.branch_id, sequence=revision.sequence,
+        parent_revision_id=revision.parent_revision_id, kind=revision.kind,
+        payload_schema_version=revision.payload_schema_version,
+        payload_json=model.payload_json, change_summary=revision.change_summary,
+    )
+
+
 def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
     """Bind a metadata-only proof to the complete physical revision bytes."""
     from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
@@ -2618,10 +2637,17 @@ class SimulationPersistenceRepository:
                 # The prefix below only feeds the component replay, which
                 # _to_branch_saved_revision skips when this walk's complete
                 # replay already produced these exact actual values. Do not
-                # decode and copy the parent's sources for an unused prefix.
-                from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
-                already_replayed = has_replayed_global_components(
-                    decoded_value['value'][1], sporting_component_proofs)
+                # decode and copy the parent's sources for a prefix that is then
+                # unused. Only the declared identity selects this; if the actual
+                # values then differ, the component check replays the complete
+                # history without a prefix and reaches the same verdict.
+                content = decoded_value['value'][1].get('content', {}) if isinstance(
+                    decoded_value['value'][1], dict) else {}
+                identity = tuple(
+                    (content.get(key) or {}).get('fingerprint') if isinstance(content.get(key), dict) else None
+                    for key in ('calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
+                evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
+                already_replayed = None not in identity and identity in evidence
             if global_slots and needs_component_validation and model.parent_revision_id and not already_replayed:
                 parent_model = session.get(BranchSavedRevisionModel, model.parent_revision_id)
                 with self._revision_validation_lock:
@@ -2741,7 +2767,11 @@ class SimulationPersistenceRepository:
             )
         if (
             revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-            or revision.content_hash != _saved_revision_record_content_hash(revision)
+            or not (
+                # revision.payload was decoded from exactly model.payload_json.
+                _stored_canonical_text_hash_matches(model, revision)
+                or revision.content_hash == _saved_revision_record_content_hash(revision)
+            )
         ):
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"

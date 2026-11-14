@@ -143,7 +143,7 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
     mount(false, '/?' + params.toString())
     expect(await screen.findByRole('alert')).toHaveTextContent('Invalid or future week')
-    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1', undefined)
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1')
     expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
     fireEvent.click(screen.getByRole('button', { name: 'Return to present' }))
     expect(await screen.findByText(/Shown as of week no\. 12/)).toBeInTheDocument()

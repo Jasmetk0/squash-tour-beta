@@ -136,6 +136,19 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
   })
 
 
+
+  it('does not accept another player or Branch historical URL', async () => {
+    const qs = new URLSearchParams({
+      career_scope: JSON.stringify(['run', 'other-branch', 'rev-1', 'P1']),
+      career_asof: '9999', career_kind: 'retirement'
+    })
+    api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
+    mount(false, '/?' + qs.toString())
+    expect(await screen.findByText(/Shown as of week no\. 12/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Type')).toHaveValue('all')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
   it('uses a single present read and navigates from a clamped out-of-range page', async () => {
     const params = new URLSearchParams({
       career_scope: JSON.stringify(['run', 'branch', 'rev-1', 'P1']),

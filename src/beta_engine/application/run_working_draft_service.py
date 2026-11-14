@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass
 
+from beta_engine.infrastructure.db.cyclic_gc import with_paused_cyclic_gc
 from beta_engine.infrastructure.db import (
     SimulationPersistenceRepository,
     ViewerBranchSaveResult,
@@ -361,6 +362,7 @@ class RunWorkingDraftService:
             ),
         )
 
+    @with_paused_cyclic_gc
     def save_calendar_tour(self, *, run_id, branch_id, expected_draft_version, expected_calendar_tour_fingerprint):
         return self.repository.save_viewer_branch_selection_atomically(
             run_id=run_id, branch_id=branch_id, expected_draft_version=expected_draft_version,

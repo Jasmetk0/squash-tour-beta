@@ -8,6 +8,7 @@ from beta_engine.infrastructure.db.calendar_tour import (
     remember_verified_origin_projection,
     verify_tour_origins,
 )
+from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 
 
@@ -28,7 +29,7 @@ def verify_saved_global_origins(
     assert_current_saved_row(session, physical)
     signature = _saved_revision_validation_signature(physical)
     value_key = (physical.run_id, physical.branch_id, physical.revision_id,
-        hashlib.sha256(physical.payload_json.encode('utf-8')).digest(), False
+        row_text_sha256(physical, 'payload_json'), False
     ) if _reuse_actual_payload and _validated_value_signature == signature else None
 
     def seed_actual_payload():
@@ -154,7 +155,7 @@ def verify_saved_global_origins(
 
 def is_global_slot_row(row, *, repository=None, _decoded_out=None):
     """Routing only; malformed data still receives the ordinary strict verifier."""
-    signature = hashlib.sha256(row.payload_json.encode('utf-8')).digest()
+    signature = row_text_sha256(row, 'payload_json')
     if repository is not None:
         with repository._revision_validation_lock:
             hints = getattr(repository, '_global_kind_hints', {})

@@ -18,6 +18,7 @@ from beta_engine.application.native_fork_runtime_reducer import (
 from beta_engine.domain.native_fork_runtime import ForkRuntimeCommand, NativeForkRuntime
 from beta_engine.domain.run_revisions import canonical_json
 from beta_engine.domain.tournaments.calendar_tour import CalendarTourReceipt
+from beta_engine.infrastructure.db.exact_text_digest import physical_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 from beta_engine.infrastructure.db.run_prospect_source_state import (
     load_saved_run_prospect_source,
@@ -157,6 +158,10 @@ def assert_current_saved_row(session, revision):
     expected = tuple(getattr(revision, field.key) for field in fields)
     if actual is None or tuple(actual) != expected:
         raise ValueError("Native Saved row differs from its actual stored bytes")
+
+
+# Indexes into _physical_revision_fields(): payload_json and change_summary_json.
+_LARGE_TEXT_FIELDS = {9: "payload_json", 10: "change_summary_json"}
 
 
 def _physical_revision_fields():
@@ -468,7 +473,14 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 revisions[key] = (None, None, ())
             else:
                 digest = hashlib.sha256()
-                for value in row:
+                for index, value in enumerate(row):
+                    if type(value) is str and index in _LARGE_TEXT_FIELDS:
+                        # Commit to the exact SHA-256 of these actual bytes. The
+                        # same read scope hashes each physical text only once.
+                        digest.update(b"h")
+                        digest.update(physical_text_sha256(read_cache, run_id=row[1],
+                            revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
+                        continue
                     raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
                     digest.update(b"s" if isinstance(value, str) else b"j")
                     digest.update(len(raw).to_bytes(8, "big"))
@@ -477,10 +489,25 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 revisions[key] = (row, signature, _dependency_references(repository, row, signature))
         return revisions[key]
 
+    # Within ONE unchanged SQLite read snapshot every row, owner and digest is
+    # fixed, so the complete walk from a node is fixed as well. A later walk in
+    # the same snapshot that reaches such a node merges its complete closure
+    # instead of re-expanding it (exactly the nodes/entries the walk would add).
+    # A snapshot change (any own write, savepoint rollback or new transaction)
+    # discards this memo together with every cached row.
+    closures = read_cache.setdefault("dependency_closures", {}) if read_cache is not None else {}
     pending, visited, graph, source_heads = [revision.revision_id], set(), [], {}
     while pending:
         revision_id = pending.pop()
         if revision_id in visited:
+            continue
+        known = closures.get((revision.run_id, revision_id)) if revision_id != revision.revision_id else None
+        if known is not None:
+            for entry in known[0]:
+                if entry[0] not in visited:
+                    visited.add(entry[0])
+                    graph.append(entry)
+            source_heads.update(known[1])
             continue
         visited.add(revision_id)
         row, digest, branch_ids = actual_revision(revision_id)
@@ -508,11 +535,28 @@ def actual_dependency_signature(session, revision, *, repository=None):
             source_heads[branch_id] = source
             if source and source[-1]:
                 pending.append(source[-1])
-    return (
-        revision.revision_id,
-        tuple(sorted(graph)),
-        tuple(sorted(source_heads.items())),
-    )
+    if read_cache is None:
+        return (
+            revision.revision_id,
+            tuple(sorted(graph)),
+            tuple(sorted(source_heads.items())),
+        )
+    closures[(revision.run_id, revision.revision_id)] = (tuple(graph), dict(source_heads))
+    # Identical node sets in one snapshot have identical sorted graph values;
+    # share them (and their canonical JSON) instead of re-sorting/re-encoding.
+    shared = read_cache.setdefault("dependency_graphs", {})
+    node_set = frozenset(visited)
+    known_graph = shared.get(node_set)
+    if known_graph is None:
+        sorted_graph = tuple(sorted(graph))
+        sorted_heads = tuple(sorted(source_heads.items()))
+        known_graph = shared[node_set] = (
+            sorted_graph, sorted_heads, canonical_json(sorted_graph), canonical_json(sorted_heads))
+        if memo is not None:
+            encoded = memo.setdefault("dependency_graph_json", {})
+            encoded[id(sorted_graph)] = (sorted_graph, known_graph[2])
+            encoded[id(sorted_heads)] = (sorted_heads, known_graph[3])
+    return (revision.revision_id, known_graph[0], known_graph[1])
 
 
 def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):
@@ -532,6 +576,16 @@ def _dependency_proof_key(signature):
     # Keep only a compact cryptographic digest of the COMPLETE actual graph,
     # never mutable payloads. Longer histories can retain their proven prefixes
     # without an unbounded collection of overlapping graph tuples.
+    memo = _proofs.get()
+    encoded = memo.get("dependency_graph_json") if memo is not None else None
+    if encoded and type(signature) is tuple and len(signature) == 3 and type(signature[0]) is str:
+        graph = encoded.get(id(signature[1]))
+        heads = encoded.get(id(signature[2]))
+        if graph is not None and heads is not None and graph[0] is signature[1] and heads[0] is signature[2]:
+            # Exactly canonical_json(signature): a JSON array's encoding is its
+            # elements' encodings joined by "," (same separators/sort_keys).
+            text = "[" + canonical_json(signature[0]) + "," + graph[1] + "," + heads[1] + "]"
+            return hashlib.sha256(text.encode("utf-8")).hexdigest()
     return hashlib.sha256(canonical_json(signature).encode("utf-8")).hexdigest()
 
 

@@ -341,6 +341,12 @@ def verify_runtime(repository, session, *, runtime, revision, original, working=
         per_command.prospects = load_saved_run_prospect_source(
             record.payload, run_id=runtime.run_id
         )
+        from beta_engine.infrastructure.db.calendar_native_tour import (
+            recorded_turn_pro_model,
+        )
+
+        # Re-run the exact recorded Master v87 model, if this command ran one.
+        per_command.turn_pro_model = recorded_turn_pro_model(event.result)
         preview, candidate, result = prepare_command(
             expected,
             request.command,

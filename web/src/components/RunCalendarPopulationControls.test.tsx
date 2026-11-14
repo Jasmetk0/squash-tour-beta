@@ -51,6 +51,20 @@ describe('reviewed population adoption and explicit Save',()=>{
     const payload=api.reviewRunCalendarPopulation.mock.calls[0][2]
     expect(api.confirmRunCalendarPopulation).toHaveBeenCalledWith('run-a','branch-a',payload,population.fingerprint)
   })
+  it('defaults new Runs to the v87 Turn Pro rule and shows opening professionals',async()=>{
+    mount();await review()
+    const payload=api.reviewRunCalendarPopulation.mock.calls[0][2]
+    expect(payload.lifecycle_policy.tour_entry_rule).toBe('turn_pro.v87')
+    expect(screen.getByText(/Professionals already at Run start \(Turn Pro v87\): 1 \/ 1/)).toBeInTheDocument()
+  })
+  it('keeps the historical first-application rule as an explicit choice',async()=>{
+    mount()
+    fireEvent.change(await screen.findByLabelText('Tour entry rule'),{target:{value:'first_application'}})
+    await review()
+    const payload=api.reviewRunCalendarPopulation.mock.calls[0][2]
+    expect(payload).not.toHaveProperty('lifecycle_policy')
+    expect(screen.getByText(/creates no results or Tour entry events/)).toBeInTheDocument()
+  })
   it('revokes review and consent when a new preview arrives',async()=>{
     const view=mount();await review()
     fireEvent.click(screen.getByLabelText('Confirm population adoption'))
@@ -87,7 +101,10 @@ describe('reviewed population adoption and explicit Save',()=>{
     const policy={policy_id:'calendar-default.v2',automatic_retirement_age:46,provenance:'Resolved server policy'}
     api.reviewRunCalendarPopulation.mockImplementation(async(_r,_b,payload)=>reviewed({...payload,lifecycle_policy:policy}))
     api.confirmRunCalendarPopulation.mockRejectedValueOnce(Error('Connection lost'))
-    mount();let confirm=await review()
+    mount()
+    // Only the historical rule leaves the policy for the server to resolve.
+    fireEvent.change(await screen.findByLabelText('Tour entry rule'),{target:{value:'first_application'}})
+    let confirm=await review()
     fireEvent.click(screen.getByLabelText('Confirm population adoption'));fireEvent.click(confirm)
     expect(await screen.findByRole('alert')).toHaveTextContent('Connection lost')
     await waitFor(()=>expect(api.confirmRunCalendarPopulation).toHaveBeenCalledTimes(1))

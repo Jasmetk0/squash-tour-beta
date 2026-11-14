@@ -7,6 +7,10 @@ from pydantic import Field, model_validator
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.calendar.season_weeks import age_at_calendar_position
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+from beta_engine.domain.players.turn_pro import (
+    opening_turn_pro_tie_break_token,
+    turn_pro_decisions_by_player,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -20,6 +24,16 @@ class CalendarPlayerLifecycleIdentity(FrozenInput):
     source_generation_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class CalendarInitialProfessionalIdentity(CalendarPlayerLifecycleIdentity):
+    """Master v87: an opening player who had already turned pro before Run start.
+
+    A separate type keeps every population-only identity's bytes unchanged.
+    """
+
+    tour_entry_week: RunWeekPosition
+    tie_break_token: str = Field(min_length=1)
+
+
 class CalendarPlayerLifecycleState(FrozenInput):
     schema_version: Literal["player_lifecycle_calendar_state.v2"] = (
         "player_lifecycle_calendar_state.v2"
@@ -27,12 +41,15 @@ class CalendarPlayerLifecycleState(FrozenInput):
     run_id: str = Field(min_length=1)
     branch_id: str = Field(min_length=1)
     week: RunWeekPosition
-    players: tuple[CalendarPlayerLifecycleIdentity, ...]
+    players: tuple[
+        CalendarInitialProfessionalIdentity | CalendarPlayerLifecycleIdentity, ...
+    ]
     source_initial_world_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     predecessor_fingerprint: None = None
     policy: PlayerLifecyclePolicy
     # Population adoption creates no historical Tour entry or retirement event.
-    # The future ranking/entry migration must initialize those separately.
+    # Exception (Master v87 only): opening players who had turned pro before Run
+    # start carry Tour entry at opening Week 1 from the InitialWorld's evidence.
     initialization_stage: Literal["population_only"] = "population_only"
 
     @model_validator(mode="after")
@@ -59,6 +76,18 @@ class CalendarPlayerLifecycleState(FrozenInput):
                 raise ValueError(
                     "Initial player already reached the stored retirement age"
                 )
+            if isinstance(player, CalendarInitialProfessionalIdentity):
+                if not self.policy.requires_turn_pro:
+                    raise ValueError(
+                        "Opening Tour entry requires the v87 Turn Pro lifecycle policy"
+                    )
+                entry = player.tour_entry_week
+                if (entry.calendar, entry.ordinal) != (self.week.calendar, 0):
+                    raise ValueError("Opening professional must enter at opening Week 1")
+                if player.tie_break_token != opening_turn_pro_tie_break_token(
+                    run_id=self.run_id, player_id=player.player_id
+                ):
+                    raise ValueError("Opening professional has a foreign tie-break token")
         return self
 
     @property
@@ -132,8 +161,14 @@ class CalendarTourLifecycleState(FrozenInput):
         return canonical_hash(self.model_dump(mode="json"))
 
 
-def advance_calendar_lifecycle(predecessor, target, submissions=()):
-    """Birthdays/retirement and completed-week first Entry from actual authorities."""
+def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=()):
+    """Birthdays/retirement and first Entry from actual authorities.
+
+    Historical policy: first Entry is the earliest valid application of the
+    completed week. Master v87 ``turn_pro.v87`` policy: first Entry is only the
+    Turn Pro decision effective at ``target``; an application from a player who had
+    not already turned pro is rejected, and applications never create Entry.
+    """
     if target.ordinal != predecessor.week.ordinal + 1:
         raise ValueError("Native lifecycle requires a consecutive Week Transition")
     original = predecessor.week.calendar
@@ -147,6 +182,18 @@ def advance_calendar_lifecycle(predecessor, target, submissions=()):
         target.calendar.start_year,
     ) or original.season_count > target.calendar.season_count:
         raise ValueError("Native lifecycle cannot reinterpret its Run clock")
+    turn_pro_rule = predecessor.policy.requires_turn_pro
+    if turn_pro and not turn_pro_rule:
+        raise ValueError("Turn Pro decisions require the v87 lifecycle policy")
+    decisions = turn_pro_decisions_by_player(
+        turn_pro, run_id=predecessor.run_id, branch_id=predecessor.branch_id
+    )
+    known_ids = {p.player_id for p in predecessor.players}
+    if any(
+        d.effective_week.ordinal <= target.ordinal and pid not in known_ids
+        for pid, d in decisions.items()
+    ):
+        raise ValueError("Turn Pro decision references a player absent from lifecycle")
     first = {}
     for source in submissions:
         if (source.run_id, source.branch_id) != (
@@ -155,6 +202,18 @@ def advance_calendar_lifecycle(predecessor, target, submissions=()):
         ):
             raise ValueError("Foreign native lifecycle Entry authority")
         if source.submission_week.ordinal > predecessor.week.ordinal:
+            continue
+        if turn_pro_rule:
+            # v87: the application is a consequence of being a pro, never its cause.
+            known = next(
+                (p for p in predecessor.players if p.player_id == source.player_id),
+                None,
+            )
+            entered = getattr(known, "tour_entry_week", None)
+            if entered is None or entered.ordinal > source.submission_week.ordinal:
+                raise ValueError(
+                    "Application predates the player's Turn Pro week under policy v87"
+                )
             continue
         prior = first.get(source.player_id)
         if prior is None or source.decision_position < prior.decision_position:
@@ -176,6 +235,28 @@ def advance_calendar_lifecycle(predecessor, target, submissions=()):
         if entry is None and source is not None:
             entry = source.submission_week
             token = source.nr_tie_break_token
+        decision = decisions.get(old.player_id)
+        if decision is not None and decision.effective_week.ordinal <= target.ordinal:
+            clock = decision.effective_week.calendar
+            if (
+                clock.weeks_per_year,
+                clock.season_start_year_week,
+                clock.start_year,
+            ) != (
+                target.calendar.weeks_per_year,
+                target.calendar.season_start_year_week,
+                target.calendar.start_year,
+            ) or clock.season_count > target.calendar.season_count:
+                raise ValueError("Turn Pro decision uses a foreign Run calendar")
+            if entry is not None:
+                if entry.ordinal != decision.effective_week.ordinal:
+                    raise ValueError("Turn Pro decision conflicts with recorded Tour entry")
+            elif decision.effective_week.ordinal != target.ordinal:
+                raise ValueError("Turn Pro decision was not applied at its own week")
+            elif retired:
+                raise ValueError("A retired player cannot turn pro")
+            else:
+                entry, token = decision.effective_week, decision.tie_break_token
 
         # A compatible horizon extension retains the original birthday/entry
         # identity; dates in this newly owned snapshot use the extended horizon.
@@ -218,7 +299,7 @@ def advance_calendar_lifecycle(predecessor, target, submissions=()):
 
 
 def calendar_lifecycle_history(
-    bootstrap, target, submissions=(), *, effective_calendars=None
+    bootstrap, target, submissions=(), *, effective_calendars=None, turn_pro=()
 ):
     states = [bootstrap]
     for ordinal in range(1, target.ordinal + 1):
@@ -233,6 +314,42 @@ def calendar_lifecycle_history(
                     week=position.season_week,
                 ),
                 submissions,
+                turn_pro,
             )
         )
     return tuple(states)
+
+
+def bootstrap_calendar_lifecycle(world):
+    """Pure opening identities shared by population and recorded pre-Tour weeks."""
+    opening = RunWeekPosition(calendar=world.run_calendar, season_index=0, week=1)
+    pros = set(
+        world.initial_turn_pro.professional_player_ids if world.initial_turn_pro else ()
+    )
+
+    def identity(p):
+        common = dict(
+            player_id=p.player_id,
+            birth_year=p.birth_year,
+            birth_year_week=p.birth_year_week,
+            age=p.age_years_at_season_start,
+            source_generation_fingerprint=p.source_generation_fingerprint,
+        )
+        if p.player_id not in pros:
+            return CalendarPlayerLifecycleIdentity(**common)
+        return CalendarInitialProfessionalIdentity(
+            **common,
+            tour_entry_week=opening,
+            tie_break_token=opening_turn_pro_tie_break_token(
+                run_id=world.run_id, player_id=p.player_id
+            ),
+        )
+
+    return CalendarPlayerLifecycleState(
+        run_id=world.run_id,
+        branch_id=world.branch_id,
+        week=opening,
+        players=tuple(identity(p) for p in world.players),
+        source_initial_world_fingerprint=world.fingerprint,
+        policy=world.lifecycle_policy,
+    )

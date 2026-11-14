@@ -33,6 +33,19 @@ from beta_engine.domain.players.calendar_followup_points import (
     CalendarFollowupPointPolicy,
 )
 from beta_engine.domain.players.calendar_lifecycle import calendar_lifecycle_history
+from beta_engine.domain.players.calendar_lifecycle import advance_calendar_lifecycle
+from beta_engine.domain.players.turn_pro import (
+    PlayerTurnProDecision,
+    require_professional_for_entry,
+)
+from beta_engine.domain.players.turn_pro_model import (
+    TurnProModelPolicy,
+    build_turn_pro_candidates,
+    decide_turn_pro,
+    default_turn_pro_model_policy,
+    traits_from_world,
+    turn_pro_candidates_for,
+)
 from beta_engine.domain.players.calendar_sporting_week import age_in_run_years
 from beta_engine.domain.rankings.calendar_official import (
     calculate_calendar_official_ranking,
@@ -56,6 +69,10 @@ from beta_engine.domain.tournaments.calendar_tour import (
     CalendarTourTransition,
     build_draw,
     calculate_tour_ranking,
+    player_turn_pro_history,
+    tour_turn_pro_decisions,
+    turn_pro_home_opportunities,
+    turn_pro_public_fields,
     edition_results,
     effective_policy,
     lifecycle_calendars,
@@ -88,7 +105,8 @@ from beta_engine.infrastructure.db.tournament_application_submissions import (
 )
 
 
-def _lifecycle_history(world, week, state):
+def _lifecycle_history(world, week, state, *, pre_tour=None):
+    """Lifecycle weeks 1..``week``. ``pre_tour`` serves Tour initialization only."""
     from beta_engine.application.calendar_initial_world import (
         derive_calendar_bootstrap_lifecycle,
     )
@@ -98,7 +116,52 @@ def _lifecycle_history(world, week, state):
         week,
         tuple(s for a in state.editions for s in a.submissions) if state else (),
         effective_calendars=lifecycle_calendars(state) if state else None,
+        turn_pro=tour_turn_pro_decisions(state)
+        if state
+        else (pre_tour.decisions if pre_tour is not None else ()),
     )
+
+
+def _turn_pro_week(world, state, target, checkpoint, seed):
+    """Master v87: run the player-AI model at this Week Transition.
+
+    Uses only the completed week's lifecycle and sporting checkpoint. Returns the
+    target lifecycle including new decisions, plus the decisions and the policy.
+    Under the historical rule it returns the unchanged lifecycle and no decisions.
+    """
+    history = _lifecycle_history(world, target, state)
+    if not history[-1].policy.requires_turn_pro:
+        return history[-1], (), None
+    predecessor, plain_target = history[-2], history[-1]
+    model = default_turn_pro_model_policy()
+    candidates = turn_pro_candidates_for(
+        model,
+        predecessor,
+        plain_target,
+        checkpoint.players,
+        seed=seed,
+        target=target,
+        traits_by_player=traits_from_world(world),
+        home_opportunity_by_player=turn_pro_home_opportunities(
+            state,
+            target,
+            {p.player_id: p.country_code for p in getattr(world, "players", ())},
+        ),
+    )
+    decisions = decide_turn_pro(
+        predecessor=predecessor,
+        target=target,
+        candidates=candidates,
+        policy=model,
+        seed=seed,
+    )
+    lifecycle = advance_calendar_lifecycle(
+        predecessor,
+        target,
+        tuple(s for a in state.editions for s in a.submissions),
+        (*tour_turn_pro_decisions(state), *decisions),
+    )
+    return lifecycle, decisions, model
 
 
 class CalendarTourCommand(FrozenInput):
@@ -386,6 +449,31 @@ class CalendarTourService:
                 "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
+    def player_career(self, *, run_id, branch_id, player_id, as_of_ordinal=None):
+        """Read only the authenticated Saved Tour; never Working changes or other Branches."""
+        from beta_engine.application.calendar_tour_player_career import native_player_career
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(
+                run_id=run_id, branch_id=branch_id, kind="career",
+                player_id=player_id, as_of_ordinal=as_of_ordinal,
+            )
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Player career requires a Saved configured Tour")
+            from beta_engine.application.native_career_identity import saved_career_world
+            world = saved_career_world(world, signed, rev.saved_revision.payload)
+            return {
+                **native_player_career(signed, world, player_id, as_of_ordinal=as_of_ordinal),
+                "saved_head_revision_id": rev.saved_head_revision_id,
+            }
+
     def season_summary(self, *, run_id, branch_id, season_index, compare_to=None):
         """Read only an already authenticated Saved Tour, never the Working candidate."""
         from beta_engine.application.native_fork_runtime_service import (
@@ -407,12 +495,43 @@ class CalendarTourService:
                 compare_to,
                 closure=saved_final_closure(rev.saved_revision.payload, branch_id),
             )
+            from beta_engine.application.calendar_tour_season_archive import (
+                season_summary_extras,
+            )
+
+            closure = saved_final_closure(rev.saved_revision.payload, branch_id)
             return {
                 "schema_version": "calendar_tour_season_comparison.v1",
                 "run_id": run_id,
                 "branch_id": branch_id,
                 "saved_head_revision_id": rev.saved_head_revision_id,
                 **summary,
+                **season_summary_extras(signed, world, season_index, summary, compare_to, closure=closure),
+            }
+
+    def season_archive(self, *, run_id, branch_id):
+        """Every completed season of the authenticated Saved Tour, oldest first."""
+        from beta_engine.application.calendar_tour_season_archive import season_archive
+        from beta_engine.application.native_fork_runtime_service import (
+            NativeForkRuntimeService,
+            is_native_fork,
+        )
+        if is_native_fork(self.repository, run_id, branch_id):
+            return NativeForkRuntimeService(self.repository).report(
+                run_id=run_id, branch_id=branch_id, kind="archive"
+            )
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            ctx, _working, signed = self._context(session, run_id, branch_id)
+            _clock, rev, world, _health, _checkpoint, _saved, _evidence = ctx
+            if signed is None or world is None:
+                raise ValueError("Season archive requires a Saved configured Tour")
+            return {
+                **season_archive(
+                    signed, world,
+                    closure=saved_final_closure(rev.saved_revision.payload, branch_id),
+                ),
+                "saved_head_revision_id": rev.saved_head_revision_id,
             }
 
     def inspect(self, *, run_id, branch_id):
@@ -670,6 +789,11 @@ class CalendarTourService:
                 if life
                 else None
             )
+            history = (
+                player_turn_pro_history(identity, life.policy, tour_turn_pro_decisions(state))
+                if life
+                else None
+            )
             return {
                 "run_id": run_id,
                 "branch_id": branch_id,
@@ -677,6 +801,7 @@ class CalendarTourService:
                 "checkpoint_fingerprint": ctx[4].fingerprint,
                 "record": record.model_dump(mode="json"),
                 "lifecycle": identity.model_dump(mode="json") if identity else None,
+                **({"turn_pro": history} if history is not None else {}),
             }
 
     def _prepare(self, session, run_id, branch_id, command, *, loaded=None):
@@ -1221,10 +1346,14 @@ class CalendarTourService:
             season=command.action == "season-transition",
         )
         target = successor.week
-        lifecycle = _lifecycle_history(world, target, state)[-1]
+        lifecycle, turn_pro_decisions, turn_pro_model = _turn_pro_week(
+            world, state, target, cp, command.seed
+        )
         ages = tuple((p.player_id, p.age) for p in lifecycle.players)
         retired = tuple(p.player_id for p in lifecycle.players if p.status == "retired")
-        ranking = calculate_tour_ranking(state, cp, target=target, retired=retired)
+        ranking = calculate_tour_ranking(
+            state, cp, target=target, retired=retired, lifecycle=lifecycle
+        )
         return {
             "completed_week": prepared["advance"]["completed_week"],
             "target_week": target.model_dump(mode="json"),
@@ -1240,6 +1369,16 @@ class CalendarTourService:
             "health_fingerprint": health.fingerprint,
             "lifecycle": lifecycle.model_dump(mode="json"),
             "lifecycle_fingerprint": lifecycle.fingerprint,
+            **(
+                {
+                    "turn_pro_decisions": [
+                        d.model_dump(mode="json") for d in turn_pro_decisions
+                    ],
+                    "turn_pro_model": turn_pro_model.model_dump(mode="json"),
+                }
+                if turn_pro_model is not None
+                else {}
+            ),
         }, successor
 
     def _apply(
@@ -1316,7 +1455,14 @@ class CalendarTourService:
             effective_week = RunWeekPosition(
                 calendar=clock, season_index=cp.week.season_index, week=cp.week.week
             )
-            life = _lifecycle_history(world, effective_week, None)
+            from beta_engine.application.calendar_pre_tour_turn_pro import (
+                derive_pre_tour_turn_pro,
+            )
+
+            # Master v87: the exhibition weeks before the Tour are Week Transitions
+            # too. Evaluate Turn Pro for each of them from the signed history.
+            pre_tour = derive_pre_tour_turn_pro(world, cp, evidence)
+            life = _lifecycle_history(world, effective_week, None, pre_tour=pre_tour)
             if persist:
                 for item in life:
                     put_lifecycle(session, item)
@@ -1344,10 +1490,12 @@ class CalendarTourService:
                 lifecycle_fingerprint=life[-1].fingerprint,
                 policies=(policy,),
                 rankings=(ranking,),
+                pre_tour_turn_pro=pre_tour,
             )
         elif command.action == "adopt-saved-draw":
             from beta_engine.application.native_canonical_draw_adoption import (
                 adopt_saved_draw,
+                require_professional_saved_draw,
                 require_ranked_draw_tour_entry,
             )
 
@@ -1355,7 +1503,8 @@ class CalendarTourService:
                 self.repository, ctx, state, command,
                 replay_plan=_native_inputs[2] if session is None and _native_inputs else None,
             )
-            if adopted.edition.ranked:
+            turn_pro_rule = world is not None and world.lifecycle_policy.requires_turn_pro
+            if adopted.edition.ranked or turn_pro_rule:
                 lifecycle = (
                     _native_inputs[0]
                     if _native_inputs is not None
@@ -1364,7 +1513,11 @@ class CalendarTourService:
                         week=state.week,
                     )
                 )
-                require_ranked_draw_tour_entry(adopted, state, lifecycle)
+                if turn_pro_rule:
+                    # Master v87: Ranked or not, only professionals may play.
+                    require_professional_saved_draw(adopted, state, lifecycle)
+                else:
+                    require_ranked_draw_tour_entry(adopted, state, lifecycle)
             state = state.model_copy(update={"editions": (*state.editions, adopted)})
             result["adopted_source_plan_fingerprint"] = adopted.canonical_binding.source_plan_fingerprint
         elif command.action == "create-edition":
@@ -1499,6 +1652,12 @@ class CalendarTourService:
                     if a.edition.announcement_week.ordinal == successor.week.ordinal
                 ],
             }
+            # Master v87 public World Event fields; omitted when empty.
+            event.update(
+                turn_pro_public_fields(
+                    impact.get("turn_pro_decisions", ()), lifecycle, successor.week
+                )
+            )
             transition = CalendarTourTransition(
                 command_id=command.command_id,
                 completed_week=RunWeekPosition.model_validate_json(
@@ -1511,6 +1670,17 @@ class CalendarTourService:
                 ages=impact["ages"],
                 retired_player_ids=impact["retired_player_ids"],
                 public_event=event,
+                turn_pro_decisions=tuple(
+                    PlayerTurnProDecision.model_validate_json(json.dumps(raw))
+                    for raw in impact.get("turn_pro_decisions", ())
+                ),
+                turn_pro_model=(
+                    TurnProModelPolicy.model_validate_json(
+                        json.dumps(impact["turn_pro_model"])
+                    )
+                    if impact.get("turn_pro_model") is not None
+                    else None
+                ),
             )
             updates = {
                 "schema_version": (
@@ -1591,20 +1761,25 @@ class CalendarTourService:
                 native_competition = (
                     state.schema_version in {"calendar_tour_authority.v4", "calendar_tour_authority.v5", "native_fork_tour.v1"}
                 )
+                current_lifecycle = (
+                    (
+                        _native_inputs[0]
+                        if _native_inputs is not None
+                        else get_lifecycle(
+                            session,
+                            run_id=state.run_id,
+                            branch_id=state.branch_id,
+                            week=cp.week,
+                        )
+                    )
+                    if native_competition
+                    else None
+                )
                 owned = {
                     p.player_id: p
                     for p in (
-                        (
-                            _native_inputs[0]
-                            if _native_inputs is not None
-                            else get_lifecycle(
-                                session,
-                                run_id=state.run_id,
-                                branch_id=state.branch_id,
-                                week=cp.week,
-                            )
-                        ).players
-                        if native_competition
+                        current_lifecycle.players
+                        if current_lifecycle is not None
                         else world.players
                     )
                 }
@@ -1614,6 +1789,23 @@ class CalendarTourService:
                     raise ValueError(
                         "Application player is foreign or already submitted"
                     )
+                entry_policy = (
+                    current_lifecycle.policy
+                    if current_lifecycle is not None
+                    else world.lifecycle_policy
+                )
+                if entry_policy.requires_turn_pro:
+                    # Master v87: only a player who already turned pro may apply.
+                    # Without a stored native lifecycle, use the same derived
+                    # history (World + applications + recorded Turn Pro) that
+                    # the ranking roster is built from.
+                    gate_lifecycle = (
+                        current_lifecycle
+                        if current_lifecycle is not None
+                        else _lifecycle_history(world, cp.week, state)[-1]
+                    )
+                    for pid in sorted(ids):
+                        require_professional_for_entry(gate_lifecycle, pid, cp.week)
                 slot = authority.edition.start_slot
                 submissions = tuple(
                     sorted(

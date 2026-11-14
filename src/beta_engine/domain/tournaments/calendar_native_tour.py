@@ -28,6 +28,7 @@ class CalendarNativeTourState(CalendarTourState):
             or root.week.ordinal >= self.week.ordinal
             or self.policies != root.policies
             or self.editions != root.editions
+            or self.pre_tour_turn_pro != root.pre_tour_turn_pro
             or self.slot_cursor != 0
             or self.native_root_health_state_count > root.week.ordinal + 1
             or self.rankings[: len(root.rankings)] != root.rankings

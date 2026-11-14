@@ -21,6 +21,7 @@ from beta_engine.domain.players.calendar_sporting_week import (
     played_counts,
     records_fingerprint,
 )
+from beta_engine.domain.players.turn_pro_model import default_turn_pro_model_policy
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
@@ -47,7 +48,7 @@ class CalendarSportingWeekCommit(FrozenInput):
 class CalendarSportingWeekService:
     repository: object
 
-    def _preview(self, clock, revision, world, state, saved, evidence, command, *, policy=None, official=False, season=False):
+    def _preview(self, clock, revision, world, state, saved, evidence, command, *, policy=None, official=False, season=False, turn_pro_policy=None):
         if (
             state is None
             or saved is None
@@ -87,10 +88,22 @@ class CalendarSportingWeekService:
             counts=counts,
             official=official,
         )
+        turn_pro_model = None
+        turn_pro_impact = {}
+        if (not official and world.lifecycle_policy.requires_turn_pro
+                and world.initial_turn_pro.schema_version == "initial_turn_pro.v2"):
+            from beta_engine.domain.players.calendar_exhibition_turn_pro import exhibition_turn_pro_impact
+            recorded = next((e.turn_pro_model for e in state.weekly_advances
+                             if e.turn_pro_model is not None), None)
+            turn_pro_model = turn_pro_policy or recorded or default_turn_pro_model_policy()
+            turn_pro_impact = exhibition_turn_pro_impact(
+                world, state, model=turn_pro_model, seed=command.seed, target=target,
+            )
         event = CalendarSportingWeekAdvance(
             schema_version=(
                 "calendar_sporting_week_advance.v3" if season
                 else "calendar_sporting_week_advance.v2" if official
+                else "calendar_sporting_week_advance.v4" if turn_pro_model is not None
                 else "calendar_sporting_week_advance.v1"
             ),
             scope=(
@@ -119,6 +132,7 @@ class CalendarSportingWeekService:
             played_counts=counts,
             developed_players_fingerprint=records_fingerprint(developed),
             recovered_players_fingerprint=records_fingerprint(recovered),
+            **turn_pro_impact,
         )
         successor = append_sporting_week(state, world, knockout, event)
         changes = [
@@ -234,6 +248,7 @@ class CalendarSportingWeekService:
                         prefix,
                         evidence,
                         cmd,
+                        turn_pro_policy=existing.turn_pro_model,
                     )
                     if (
                         original["advance"] != existing.model_dump(mode="json")

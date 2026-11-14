@@ -3,8 +3,8 @@ import {useEffect,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {confirmRunCalendarPopulation,getBranchWorkingDraft,getRunCalendarPopulation,
   previewRunInitialWorldSave,reviewRunCalendarPopulation,saveRunOwnedInitialWorld} from '../api/client'
-import {validateCalendarPopulation,validateCalendarPopulationReview,validateCalendarPopulationSave,
-  type CalendarPopulationRequest,type CalendarPopulationReview} from '../api/calendarPopulation'
+import {lifecyclePolicyFor,validateCalendarPopulation,validateCalendarPopulationReview,validateCalendarPopulationSave,
+  type CalendarPopulationRequest,type CalendarPopulationReview,type TourEntryChoice} from '../api/calendarPopulation'
 import type {CalendarPoolPreview} from '../api/calendarInitialPool'
 import type {RunCalendarMetadata} from '../api/runCalendarCreation'
 import {formatApiError} from '../utils/apiErrors'
@@ -19,6 +19,7 @@ export function RunCalendarPopulationControls({runId,branchId,head,clock,package
   const [review,setReview]=useState<{request:CalendarPopulationRequest;value:CalendarPopulationReview}|null>(null)
   const [approved,setApproved]=useState(false),[saveApproved,setSaveApproved]=useState(false)
   const [error,setError]=useState('')
+  const [entry,setEntry]=useState<TourEntryChoice>('turn_pro.v87')
   const population=useQuery({queryKey:['calendar-initial-world',runId,branchId,head],retry:false,
     queryFn:async()=>{const p=await getRunCalendarPopulation(runId,branchId)
       return p===null?null:validateCalendarPopulation(p,runId,branchId,clock)}})
@@ -27,7 +28,7 @@ export function RunCalendarPopulationControls({runId,branchId,head,clock,package
   const world=population.data
   const draft=draftQuery.data?.run_id===runId && draftQuery.data.branch_id===branchId?draftQuery.data:null
   useEffect(()=>onInstalled(Boolean(world)),[world,onInstalled])
-  const signature=JSON.stringify([runId,branchId,head,packageFingerprint,pool?.preview_fingerprint,draft?.draft_version])
+  const signature=JSON.stringify([runId,branchId,head,packageFingerprint,pool?.preview_fingerprint,draft?.draft_version,entry])
   useEffect(()=>{setReview(null);setApproved(false);setSaveApproved(false);setError('')},[signature])
   const saveProof=useQuery({queryKey:['calendar-population-save',runId,branchId,head,world?.fingerprint],
     queryFn:()=>previewRunInitialWorldSave(runId,branchId),enabled:Boolean(world),retry:false})
@@ -43,10 +44,12 @@ export function RunCalendarPopulationControls({runId,branchId,head,clock,package
     retry:false,
     mutationFn:async()=>{
       if(!pool || !draft || !packageFingerprint)throw Error('Saved population source is unavailable')
+      const policy=lifecyclePolicyFor(entry)
       const payload:CalendarPopulationRequest={command_id:'calendar-population-'+crypto.randomUUID(),
         expected_saved_head:head,expected_draft_version:draft.draft_version,
         expected_package_fingerprint:packageFingerprint,generation:pool.request,
-        audit_label:'Admin',audit_reason:'Reviewed generated initial population for this Run calendar'}
+        audit_label:'Admin',audit_reason:'Reviewed generated initial population for this Run calendar',
+        ...(policy?{lifecycle_policy:policy}:{})}
       const value=await reviewRunCalendarPopulation(runId,branchId,payload)
       return {request:payload,value:validateCalendarPopulationReview(value,payload,pool,runId,branchId,clock),signature}
     },
@@ -110,14 +113,26 @@ export function RunCalendarPopulationControls({runId,branchId,head,clock,package
           clock={clock} population={world.fingerprint} playerIds={world.state.players.map(p=>p.player_id).sort()} locale={locale}/>}
       <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/players'}>{cs?'Otevřít seznam hráčů':'Open player list'} →</Link></p>
     </> : <>
+      {pool && <label className="calendar-population-entry-rule">{cs?'Vstup na Tour':'Tour entry'}{' '}
+        <select value={entry} disabled={busy} onChange={e=>setEntry(e.target.value as TourEntryChoice)}
+          aria-label={cs?'Pravidlo vstupu na Tour':'Tour entry rule'}>
+          <option value="turn_pro.v87">{cs?'Přechod mezi profesionály (v87, výchozí)':'Turn Pro (v87, default)'}</option>
+          <option value="first_application">{cs?'První platná přihláška (historické)':'First valid application (historical)'}</option>
+        </select></label>}
       {pool && <button disabled={!canReview} onClick={()=>{setReview(null);setApproved(false);reviewing.mutate()}}>
         {cs?'Zkontrolovat přidání hráčů':'Review adding players'}</button>}
       {pool && draft?.status!=='clean' && <p>{cs?'Nejdřív ulož změny zdrojových balíčků.':'Save source package changes first.'}</p>}
       {review && reviewCurrent && <>
         <h3>{cs?'Zkontroluj změnu populace':'Review population change'}</h3>
         <p>{cs?'Počet hráčů':'Player count'}: 0 → {review.value.player_count_after}</p>
-        <p>{cs?'Narození a věk použijí kalendář tohoto Runu. Výsledky ani vstupy na Tour se tím nevytvářejí.':
-          'Birthdays and ages use this Run calendar. This creates no results or Tour entry events.'}</p>
+        {review.value.opening_professional_count===undefined
+          ? <p>{cs?'Narození a věk použijí kalendář tohoto Runu. Výsledky ani vstupy na Tour se tím nevytvářejí.':
+            'Birthdays and ages use this Run calendar. This creates no results or Tour entry events.'}</p>
+          : <p>{cs?'Narození a věk použijí kalendář tohoto Runu. Profesionálové už na začátku Runu (Turn Pro v87): ':
+            'Birthdays and ages use this Run calendar. Professionals already at Run start (Turn Pro v87): '}
+            {review.value.opening_professional_count} / {review.value.player_count_after}.{' '}
+            {cs?'Ostatní se profesionály stanou postupně podle své AI; výsledky se nevytvářejí.':
+              'The others turn pro later by their AI; no results are created.'}</p>}
         <label className="calendar-population-approval"><input type="checkbox" checked={approved}
           onChange={e=>setApproved(e.target.checked)} aria-label={cs?'Potvrdit přidání populace':'Confirm population adoption'}/>
           {cs?'Zkontroloval jsem hráče a chci je přidat.':'I reviewed these players and want to add them.'}</label>

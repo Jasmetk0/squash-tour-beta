@@ -1,3 +1,20 @@
+## Native career, season and following acceptance — 13 November 2026
+
+The Ready/manual `Native career season and follow acceptance` workflow runs the
+actual new lifecycle/never-pro, career, follow/fork and short-clock seasonal
+HTTP/SQLite contracts, plus all four CS/EN Admin reader scripts against production
+API/SQLite in Chromium. It covers shared client changes as well as owned readers.
+Its skipped Draft jobs are not passes. Browser artifacts include the real temporary
+SQLite databases, logs and screenshots. No API mocking is used by these browser jobs.
+
+The wide two-season W52 archive test remains in the complete/manual test scope;
+the iteration workflow adds its W6 case, not a fabricated W52 pass. A read exceeding
+the normal 120-second transport bound remains a performance failure, rather than
+being hidden by a test-only timeout increase. Existing native/global-slot/reference
+acceptance and full pre-alpha release checks remain independently required.
+
+---
+
 # Pre-alpha test and internal release policy
 
 This file records the current engineering test policy for Squash Engine pre-alpha work.

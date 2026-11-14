@@ -3,6 +3,7 @@ import {tourDrawSlots} from '../api/calendarTour'
 import {useEffect,useRef,useState} from 'react'
 import {Link} from 'react-router-dom'
 import {useQueryClient} from '@tanstack/react-query'
+import {SeasonArchivePanel} from '../components/SeasonArchivePanel'
 import {inspectCalendarTour,inspectCalendarTourPlayer,previewCalendarTour,previewATPNextGenEdition,executeCalendarTour,saveCalendarTour,replayCalendarContinuation,inspectCalendarTourSeason,inspectCalendarTourRecords,inspectNativeTourProspectIntake,previewCalendarTourNativeBirthSporting} from '../api/client'
 import {confirmedSavedTourView,validateTourView,validateTourPreview,validateTourSeasonComparison,validateTourCareerRecords,validateNativeProspectIntake,validateNativeSportingBirthPreflight,type NativeSportingBirthPreflight,type NativeProspectIntakePreflight,type TourCareerRecords,type TourSeasonComparison,type TourView,type TourPreview,type TourCommand,type TourAction,type TourContribution,type TourPlayer} from '../api/calendarTour'
 import {newCommandId} from '../admin/branchSimulation'
@@ -455,6 +456,7 @@ export function CalendarTourPanel({runId,branchId,head}:{runId:string;branchId:s
           {view.season_transition_blockers.length>0&&<ul>{view.season_transition_blockers.map(b=><li key={b}>{b.startsWith('edition_not_terminal:')?b:blockerLabels[b]?.[cs?0:1]??b}</li>)}</ul>}
           <button disabled={!ready||!view.saved||view.season_transition_blockers.length>0} onClick={()=>void perform('season-transition')}>{cs?'Zkontrolovat Season Transition':'Review Season Transition'}</button>
         </section>}
+        {view.saved_completed_seasons.length>0&&<SeasonArchivePanel key={[runId,branchId,view.saved_head_revision_id].join('|')} runId={runId} branchId={branchId} savedHead={view.saved_head_revision_id} cs={cs} playerName={id=>names.get(id)??id}/>}
         {view.saved_completed_seasons.length>0&&<section aria-label="Saved native season summaries">
           <h3>{cs?'Uložená historie sezón':'Saved season history'}</h3>
           <p>{cs?'Pouze dokončené sezóny z ověřené Saved Revision. Udělené body nejsou totéž co aktuální Official Ranking.':'Only completed seasons from the verified Saved Revision. Awarded points differ from current Official Ranking points.'}</p>

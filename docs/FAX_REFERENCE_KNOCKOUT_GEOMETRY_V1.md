@@ -189,6 +189,14 @@ compatibility with native lifecycle replay, create Tour Entry, or change
 rankings, eligibility, or the Saved revision. An unsaved change cannot appear
 until the owner explicitly Saves it.
 
+### Master v87: professionals only
+
+Under a v87 World (Turn Pro) the adoption of a Saved Draw, Ranked or Unranked,
+requires every Main, Qualification and wild-card participant to have turned pro
+in the current native lifecycle by the adoption week. Applications, wild cards
+and Draw slots never create professional status. See
+[Turn Pro lifecycle v87](TURN_PRO_LIFECYCLE_V87.md#slice-12-saved-fax-draw-admits-only-professionals).
+
 ### Ranked result and award projection
 
 `prepare_native_canonical_ranked_awards` consumes an authenticated Saved plan and

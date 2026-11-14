@@ -15,10 +15,18 @@ from beta_engine.domain.players.calendar_initial_pool import (
     InitialPoolCalendarBasis,
 )
 from beta_engine.domain.players.calendar_lifecycle import (
+    CalendarInitialProfessionalIdentity,
     CalendarPlayerLifecycleIdentity,
     CalendarPlayerLifecycleState,
 )
 from beta_engine.domain.players.lifecycle import PlayerLifecyclePolicy
+from beta_engine.domain.players.turn_pro import opening_turn_pro_tie_break_token
+from beta_engine.domain.players.turn_pro_model import (
+    InitialTurnProEvidence,
+    InitialTurnProPlayer,
+    TurnProModelPolicy,
+    initial_professional_ids,
+)
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.run_packages import canonical_hash
 
@@ -75,6 +83,10 @@ class CalendarInitialWorldState(FrozenInput):
     audit_reason: str = Field(min_length=1, max_length=1000)
     adoption_request_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
     lifecycle_policy: PlayerLifecyclePolicy
+    # Master v87 only; omitted otherwise so every earlier world keeps its bytes.
+    initial_turn_pro: InitialTurnProEvidence | None = Field(
+        default=None, exclude_if=lambda v: v is None
+    )
 
     @model_validator(mode="after")
     def validate_world(self):
@@ -110,11 +122,75 @@ class CalendarInitialWorldState(FrozenInput):
                 raise ValueError(
                     "Initial player already reached the stored retirement age"
                 )
+        if self.lifecycle_policy.requires_turn_pro != (self.initial_turn_pro is not None):
+            raise ValueError(
+                "Opening Turn Pro evidence is required exactly under the v87 policy"
+            )
+        if self.initial_turn_pro is not None:
+            evidence = self.initial_turn_pro
+            expected = initial_turn_pro_evidence(
+                run_id=self.run_id,
+                run_calendar=self.run_calendar,
+                players=self.players,
+                model=evidence.model,
+                seed=evidence.seed,
+                sporting_bootstrap_policy=evidence.sporting_bootstrap_policy,
+            )
+            if expected != evidence:
+                raise ValueError("Opening Turn Pro evidence differs from its recomputation")
         return self
 
     @property
     def fingerprint(self) -> str:
         return canonical_hash(self.model_dump(mode="json"))
+
+
+def initial_turn_pro_evidence(
+    *, run_id, run_calendar: RunCalendar, players, model: TurnProModelPolicy, seed,
+    sporting_bootstrap_policy=None,
+) -> InitialTurnProEvidence:
+    """Master v87: who had already turned pro before opening Week 1 (pure)."""
+    from beta_engine.domain.players.sporting import PlayerSportingBootstrapPolicy
+    from beta_engine.domain.players.sporting_bootstrap import derive_bootstrap_record
+    from beta_engine.domain.players.turn_pro_perception import perceive_self
+
+    bootstrap = None
+    if model.uses_self_perception:
+        bootstrap = (PlayerSportingBootstrapPolicy.model_validate(sporting_bootstrap_policy)
+                     if sporting_bootstrap_policy is not None else PlayerSportingBootstrapPolicy())
+
+    def observation(player):
+        if bootstrap is None:
+            return None
+        traits = player.hidden_career_traits
+        return perceive_self(
+            policy=model.perception, run_id=run_id, player_id=player.player_id,
+            attributes=derive_bootstrap_record(player, bootstrap).attributes,
+            seed=seed, week_ordinal=0,
+            ambition=traits.ambition, professionalism=traits.professionalism,
+        )
+
+    return InitialTurnProEvidence(
+        schema_version="initial_turn_pro.v2" if model.uses_self_perception else "initial_turn_pro.v1",
+        model=model,
+        seed=seed,
+        sporting_bootstrap_policy=None if bootstrap is None else bootstrap.model_dump(mode="json"),
+        professional_player_ids=initial_professional_ids(
+            run_id=run_id,
+            players=tuple(
+                InitialTurnProPlayer(
+                    player_id=p.player_id,
+                    age_weeks=p.age_weeks_at_season_start,
+                    strength=float(p.current_ability),
+                    observation=observation(p),
+                )
+                for p in players
+            ),
+            policy=model,
+            seed=seed,
+            weeks_per_year=run_calendar.weeks_per_year,
+        ),
+    )
 
 
 def bootstrap_calendar_player(
@@ -166,20 +242,6 @@ def bootstrap_calendar_player(
 def derive_calendar_bootstrap_lifecycle(
     world: CalendarInitialWorldState,
 ) -> CalendarPlayerLifecycleState:
-    return CalendarPlayerLifecycleState(
-        run_id=world.run_id,
-        branch_id=world.branch_id,
-        week=RunWeekPosition(calendar=world.run_calendar, season_index=0, week=1),
-        players=tuple(
-            CalendarPlayerLifecycleIdentity(
-                player_id=p.player_id,
-                birth_year=p.birth_year,
-                birth_year_week=p.birth_year_week,
-                age=p.age_years_at_season_start,
-                source_generation_fingerprint=p.source_generation_fingerprint,
-            )
-            for p in world.players
-        ),
-        source_initial_world_fingerprint=world.fingerprint,
-        policy=world.lifecycle_policy,
-    )
+    from beta_engine.domain.players.calendar_lifecycle import bootstrap_calendar_lifecycle
+
+    return bootstrap_calendar_lifecycle(world)

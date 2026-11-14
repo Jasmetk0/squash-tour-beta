@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -32,9 +33,9 @@ const data = (asOf: number, timeline: unknown[], milestones: unknown[]) => ({
 })
 function mount(cs = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}>
+  return render(<MemoryRouter><QueryClientProvider client={client}>
     <SavedPlayerCareerTimeline runId="run" branchId="branch" savedHead="rev-1" playerId="P1" cs={cs} />
-  </QueryClientProvider>)
+  </QueryClientProvider></MemoryRouter>)
 }
 
 describe('SavedPlayerCareerTimeline (component, mocked API)', () => {

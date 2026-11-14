@@ -85,6 +85,8 @@ def main():
 
                         # Search changes only the archive display, not the compared seasons or warning.
                         section.get_by_label(search_label).fill("unmatched-season")
+                        # A read-only control must not dirty the Run Working Draft guard.
+                        assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') != 'true'
                         expect(section).to_contain_text(
                             "Žádná sezona neodpovídá hledání." if language == "cs"
                             else "No seasons match the search."

@@ -128,6 +128,17 @@ not timing samples):
   strings, so the stored text must equal the writer's canonical payload). Any
   mismatch falls back to the ordinary decode-and-reserialize check. 3,000 random
   and adversarial cases plus all real rows of the fixture agree.
+- **Horizon-extension review** (`run_calendar_extension_commit.py`). It validated
+  the lineage with every payload materialized and then discarded the result,
+  although the following state read validates the same lineage through the same
+  gates; that first walk is now metadata-only (HEAD's payload is still read). Its
+  live capture now gets the HEAD authenticated in the same transaction as the
+  Tour prefix, exactly as the Save coordinator does, so only origins newer than
+  HEAD are folded again; the captured live aggregate is still replayed and must
+  equal the Saved content exactly. W52 after two seasons, warm, contended host:
+  132–138 s → 34–39 s, identical result (`can_save` true, no blockers). The first
+  two-season W52 run on the previous head failed exactly here (transport timeout
+  after every sporting assertion had passed).
 - **Scoped cyclic-GC pause** (`cyclic_gc.py`) around the native Tour service reads,
   commands and `save_calendar_tour`. Reference counting still frees everything;
   cycles are collected after the outermost operation. Reference counted across

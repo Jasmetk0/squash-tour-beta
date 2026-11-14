@@ -1,4 +1,7 @@
-import { useSearchParams } from 'react-router-dom'
+import { useContext } from 'react'
+import { UNSAFE_DataRouterContext, useLocation, useSearchParams } from 'react-router-dom'
+
+import { allowConfirmedAdminNavigation } from '../navigation/runContextGuard'
 
 /**
  * URL-backed controls for a single Saved reader. A scope token prevents query
@@ -7,13 +10,26 @@ import { useSearchParams } from 'react-router-dom'
  */
 export function useReaderParams(prefix: 'career' | 'season' | 'alert', scope: string) {
   const [params, setParams] = useSearchParams()
+  const location = useLocation()
+  const dataRouter = useContext(UNSAFE_DataRouterContext)
   const key = (name: string) => `${prefix}_${name}`
   const active = params.get(key('scope')) === scope
   const get = (name: string, fallback = ''): string =>
     active ? params.get(key(name)) ?? fallback : fallback
+  const navigateReader = (next: URLSearchParams, replace = false): void => {
+    // Changing display-only filters must not require discarding a Working Draft.
+    // This exact URL retains pathname, hash, all foreign parameters and Branch.
+    // Other navigation remains fully subject to the Admin transition blocker.
+    const query = next.toString()
+    const href = location.pathname + (query ? '?' + query : '') + location.hash
+    if (dataRouter && href !== location.pathname + location.search + location.hash &&
+        next.get('branch') === params.get('branch')) {
+      allowConfirmedAdminNavigation(href)
+    }
+    setParams(next, { replace })
+  }
   const set = (values: Record<string, string | null>, replace = false): void => {
-    setParams(previous => {
-      const next = new URLSearchParams(previous)
+      const next = new URLSearchParams(params)
       for (const name of ['scope', ...Object.keys(values)]) next.delete(key(name))
       // Remove stale own selections whenever ownership changes.
       if (!active) {
@@ -25,17 +41,14 @@ export function useReaderParams(prefix: 'career' | 'season' | 'alert', scope: st
       for (const [name, value] of Object.entries(values)) {
         if (value !== null && value !== '') next.set(key(name), value)
       }
-      return next
-    }, { replace })
+      navigateReader(next, replace)
   }
   const reset = (): void => {
-    setParams(previous => {
-      const next = new URLSearchParams(previous)
+      const next = new URLSearchParams(params)
       for (const name of Array.from(next.keys())) {
         if (name.startsWith(prefix + '_')) next.delete(name)
       }
-      return next
-    })
+      navigateReader(next)
   }
   return { get, set, reset }
 }

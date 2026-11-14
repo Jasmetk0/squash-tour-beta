@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -40,8 +41,8 @@ const alerts = (cards: unknown[] = [card()]) => ({
 })
 function mount(cs = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  return render(<QueryClientProvider client={client}>
-    <FollowAlertsPanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} /></QueryClientProvider>)
+  return render(<MemoryRouter><QueryClientProvider client={client}>
+    <FollowAlertsPanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} /></QueryClientProvider></MemoryRouter>)
 }
 
 describe('FollowAlertsPanel (component, mocked API)', () => {

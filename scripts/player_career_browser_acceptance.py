@@ -122,15 +122,43 @@ def main():
                             expect(section).to_contain_text("played_edition")
                             expect(section).to_contain_text(no_inj)
                             if language == "en":
+                                dirty_before_reader_control = page.locator('.app-shell--admin').get_attribute('data-run-form-edited')
                                 section.get_by_label("View as of week (ordinal)").fill(
                                     str(edition_ordinal - 1)
                                 )
                                 section.get_by_role("button", name="Apply").click()
+                                # A read-only control must not dirty the Run Working Draft guard.
+                                assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') == dirty_before_reader_control
                                 expect(section).to_contain_text(
                                     f"Shown as of week no. {edition_ordinal - 1}"
                                 )
                                 expect(section).not_to_contain_text("First recorded title")
                                 expect(section).not_to_contain_text("played_edition")
+                                # The selected historical ordinal is a linkable, reloadable view.
+                                assert f"career_asof={edition_ordinal - 1}" in page.url
+                                page.reload()
+                                section = page.get_by_role("region", name=title)
+                                expect(section).to_contain_text(
+                                    f"Shown as of week no. {edition_ordinal - 1}"
+                                )
+                                expect(section).not_to_contain_text("played_edition")
+                                # Search and sorting only affect timeline rows, not recorded overview.
+                                overview = section.locator("dl").inner_text()
+                                section.get_by_label("Search entries").fill("no-such-event")
+                                expect(section).to_contain_text("No entries match the filters.")
+                                assert section.locator("dl").inner_text() == overview
+                                section.get_by_label("Search entries").fill("")
+                                section.get_by_label("Order").select_option("desc")
+                                assert "career_order=desc" in page.url
+                                page.go_back()
+                                expect(section.get_by_label("Order")).to_have_value("asc")
+                                page.go_forward()
+                                expect(section.get_by_label("Order")).to_have_value("desc")
+                                page.reload()
+                                expect(section.get_by_label("Order")).to_have_value("desc")
+                                section.get_by_role("button", name="Reset filters").click()
+                                assert "career_asof" not in page.url
+                                expect(section).to_contain_text("played_edition")
                             section.scroll_into_view_if_needed()
                             section.screenshot(path=str(root / f"career-{language}.png"))
                             assert not errors, errors

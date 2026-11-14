@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -30,11 +31,11 @@ const data = (asOf: number, timeline: unknown[], milestones: unknown[]) => ({
     editions_played: timeline.includes(title) ? 1 : 0, career_high_rank: null, current_rank: null },
   milestones, timeline, unsupported: ['injury'],
 })
-function mount(cs = false) {
+function mount(cs = false, url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}>
+  return render(<MemoryRouter initialEntries={[url]}><QueryClientProvider client={client}>
     <SavedPlayerCareerTimeline runId="run" branchId="branch" savedHead="rev-1" playerId="P1" cs={cs} />
-  </QueryClientProvider>)
+  </QueryClientProvider></MemoryRouter>)
 }
 
 describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
@@ -45,6 +46,7 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     mount()
     await screen.findByText(/Open · champion · 100 pts/)
     const region = screen.getByRole('region', { name: 'Career: timeline and milestones' })
+    expect(screen.getByRole('region', { name: 'Career: timeline and milestones' })).toHaveAttribute('data-run-navigation-readonly')
     expect(within(region).getAllByText(/First recorded title/).length).toBeGreaterThan(0)
     expect(region).toHaveTextContent(/does not mean first ever/)
     expect(region).toHaveTextContent(/Injuries and returns have no supported source/)
@@ -119,4 +121,65 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     const status = await screen.findByText(/unavailable for this revision/)
     expect(status).toHaveTextContent('Player career requires a Saved configured Tour')
   })
+  it('accepts ordinal zero without converting it to present, and rejects future ordinals', async () => {
+    api.getSavedPlayerCareer.mockImplementation(async (_r, _b, _p, asOf) =>
+      asOf === 0 ? data(0, [], []) : data(12, [turnPro, title], [turnPro, first]))
+    mount()
+    await screen.findByText(/champion · 100 pts/)
+    fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    await screen.findByText(/Shown as of week no\. 0/)
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1', 0)
+    fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '99' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Invalid or future week/)
+    expect(api.getSavedPlayerCareer).not.toHaveBeenCalledWith('run', 'branch', 'P1', 99)
+  })
+
+
+
+  it('does not accept another player or Branch historical URL', async () => {
+    const qs = new URLSearchParams({
+      career_scope: JSON.stringify(['run', 'other-branch', 'rev-1', 'P1']),
+      career_asof: '9999', career_kind: 'retirement'
+    })
+    api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
+    mount(false, '/?' + qs.toString())
+    expect(await screen.findByText(/Shown as of week no\. 12/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Type')).toHaveValue('all')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
+  it('uses a single present read and navigates from a clamped out-of-range page', async () => {
+    const params = new URLSearchParams({
+      career_scope: JSON.stringify(['run', 'branch', 'rev-1', 'P1']),
+      career_page: '999'
+    })
+    const events = Array.from({ length: 45 }, (_, index) => ({
+      ...turnPro, effective_week: { season_index: 0, week: index + 1 }
+    }))
+    api.getSavedPlayerCareer.mockResolvedValue(data(52, events, []))
+    mount(false, '/?' + params.toString())
+    const navigation = await screen.findByRole('navigation', { name: 'Career pagination' })
+    expect(navigation).toHaveTextContent('Page 3 / 3')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+    fireEvent.click(within(navigation).getByRole('button', { name: 'Previous' }))
+    expect(navigation).toHaveTextContent('Page 2 / 3')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
+  it('rejects invalid as-of URL without ever issuing a historical request', async () => {
+    const params = new URLSearchParams()
+    params.set('career_scope', JSON.stringify(['run', 'branch', 'rev-1', 'P1']))
+    params.set('career_asof', 'not-a-week')
+    params.set('branch', 'branch')
+    api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
+    mount(false, '/?' + params.toString())
+    expect(await screen.findByRole('alert')).toHaveTextContent('Invalid or future week')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+    fireEvent.click(screen.getByRole('button', { name: 'Return to present' }))
+    expect(await screen.findByText(/Shown as of week no\. 12/)).toBeInTheDocument()
+  })
+
 })

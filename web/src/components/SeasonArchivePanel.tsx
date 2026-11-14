@@ -44,7 +44,7 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     enabled: validPair && Boolean(archiveQuery.data && validSeasonArchive(archiveQuery.data, { runId, branchId, savedHead })), retry: false
   })
   if (archiveQuery.isPending) {
-    return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Načítám archiv…' : 'Loading archive…'}</p></section>
+    return <section aria-label={title} data-run-navigation-readonly><h3>{title}</h3><p role="status">{cs ? 'Načítám archiv…' : 'Loading archive…'}</p></section>
   }
   if (archiveQuery.error) {
     return <section aria-label={title}><h3>{title}</h3><p role="status">

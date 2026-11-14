@@ -1,10 +1,11 @@
-import { useState } from 'react'
+import * as React from 'react'
 import { useQuery } from '@tanstack/react-query'
 
 import { getSavedPlayerCareer } from '../api/client'
 import { CAREER_KINDS, validSavedPlayerCareer } from '../api/savedPlayerCareer'
 import type { CareerEvent } from '../api/savedPlayerCareer'
 import { formatApiError } from '../utils/apiErrors'
+import { readerPage, readerPageCount, readerSlice, useReaderParams } from './readerUrlState'
 
 type Props = { runId: string; branchId: string; savedHead: string; playerId: string; cs: boolean }
 
@@ -50,21 +51,49 @@ function detailText(e: CareerEvent, cs: boolean): string {
   return ''
 }
 
+function labelSearch(e: CareerEvent): string {
+  return [e.kind, e.source.kind, e.source.fingerprint, JSON.stringify(e.detail)].join(' ').toLocaleLowerCase()
+}
+
 function sourceText(e: CareerEvent, cs: boolean): string {
   const short = e.source.fingerprint.slice(0, 12)
   return `${cs ? 'Zdroj' : 'Source'}: ${e.source.kind} · ${short}`
 }
 
 export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId, cs }: Props): JSX.Element {
-  const [kind, setKind] = useState('all')
-  const [draft, setDraft] = useState('')
-  const [asOf, setAsOf] = useState<number | undefined>(undefined)
+  const url = useReaderParams('career', JSON.stringify([runId, branchId, savedHead, playerId]))
+  const requested = url.get('asof')
+  const kind = url.get('kind', 'all')
+  const search = url.get('search')
+  const order = url.get('order', 'asc')
+  const page = readerPage(url.get('page', '1'))
+  const [draft, setDraft] = React.useState(requested)
+  const baseline = useQuery({
+    queryKey: ['saved-player-career', runId, branchId, savedHead, playerId, 'present'],
+    queryFn: () => getSavedPlayerCareer(runId, branchId, playerId),
+    retry: false
+  })
+  const maxOrdinal = baseline.data && validSavedPlayerCareer(baseline.data, { runId, branchId, savedHead, playerId })
+    ? baseline.data.as_of_ordinal : null
+  const parsed = /^(0|[1-9]\\d*)$/.test(requested) ? Number(requested) : NaN
+  const badAsOf = requested !== '' && (!Number.isSafeInteger(parsed) || parsed < 0 ||
+    (maxOrdinal !== null && parsed > maxOrdinal))
+  const asOf = requested === '' ? undefined : parsed
   const query = useQuery({
     queryKey: ['saved-player-career', runId, branchId, savedHead, playerId, asOf],
     queryFn: () => getSavedPlayerCareer(runId, branchId, playerId, asOf),
+    enabled: !baseline.isPending && !baseline.error && maxOrdinal !== null && !badAsOf,
     retry: false
   })
   const title = cs ? 'Kariéra: časová osa a milníky' : 'Career: timeline and milestones'
+  if (baseline.isPending) {
+    return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
+  }
+  if (baseline.error) return <section aria-label={title}><h3>{title}</h3><p role="alert">{formatApiError(baseline.error)}</p></section>
+  if (maxOrdinal === null) return <section aria-label={title}><h3>{title}</h3><p role="alert">{cs ? 'Neplatná odpověď kariéry.' : 'Invalid career response.'}</p></section>
+  if (badAsOf) return <section aria-label={title}><h3>{title}</h3>
+    <p role="alert">{cs ? 'Neplatný nebo budoucí týden. Zobrazení nebylo přepnuto na současnost.' : 'Invalid or future week. The view was not silently changed to the present.'}</p>
+    <button type="button" onClick={() => { url.set({ asof: null, page: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
   if (query.isPending) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
@@ -81,7 +110,18 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
         ? 'Odpověď neodpovídá vybrané Branch, uložené revizi nebo hráči a nebyla zobrazena.'
         : 'The response does not match the selected Branch, Saved revision or player and was not displayed.'}</p></section>
   }
-  const rows = data.timeline.filter(e => kind === 'all' || e.kind === kind)
+  if (asOf !== undefined && data.as_of_ordinal !== asOf) return <section aria-label={title}><p role="alert">{cs ? 'Odpověď neodpovídá požadovanému týdnu.' : 'Response does not match requested week.'}</p></section>
+  const rows = data.timeline.map((event, index) => ({ event, index }))
+    .filter(({ event }) => (kind === 'all' || event.kind === kind) &&
+      (labelSearch(event).includes(search.trim().toLocaleLowerCase())))
+    .sort((a, b) => {
+      const ordinal = (e: CareerEvent) => e.effective_week
+        ? e.effective_week.season_index * 10000 + e.effective_week.week : -1
+      const diff = ordinal(a.event) - ordinal(b.event)
+      return (order === 'desc' ? -diff : diff) || a.index - b.index
+    })
+  const pages = readerPageCount(rows.length)
+  const visible = readerSlice(rows, Math.min(page, pages))
   const label = (k: string) => (LABEL[k] ?? [k, k])[cs ? 0 : 1]
   const o = data.overview
   return <section aria-label={title}>
@@ -104,8 +144,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     </dl>
     <form onSubmit={ev => {
       ev.preventDefault()
-      const n = Number(draft)
-      setAsOf(draft.trim() !== '' && Number.isInteger(n) && n >= 0 ? n : undefined)
+      url.set({ asof: draft.trim() === '' ? null : draft.trim(), page: null })
     }}>
       <label>{cs ? 'Zobrazit k týdnu (pořadové číslo)' : 'View as of week (ordinal)'}{' '}
         <input inputMode="numeric" value={draft} placeholder={String(data.as_of_ordinal)}
@@ -139,14 +178,28 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
       : 'Injuries and returns have no supported source yet and are not shown.'}</p>
     <h4>{cs ? 'Časová osa' : 'Timeline'}</h4>
     <label>{cs ? 'Typ' : 'Type'}{' '}
-      <select value={kind} onChange={ev => setKind(ev.target.value)}>
+      <select value={kind} onChange={ev => url.set({ kind: ev.target.value === 'all' ? null : ev.target.value, page: null })}>
         <option value="all">{cs ? 'Vše' : 'All'}</option>
         {CAREER_KINDS.map(k => <option key={k} value={k}>{label(k)}</option>)}
       </select></label>
-    {rows.length === 0 ? <p>{cs ? 'Žádné záznamy.' : 'No entries.'}</p>
-      : <ol>{rows.map((e, i) => <li key={e.kind + e.source.fingerprint + i}>
+    {' '}<label>{cs ? 'Hledat v záznamech' : 'Search entries'}{' '}
+      <input value={search} onChange={e => url.set({ search: e.target.value, page: null }, true)} /></label>
+    {' '}<label>{cs ? 'Pořadí' : 'Order'}{' '}
+      <select value={order === 'desc' ? 'desc' : 'asc'} onChange={e => url.set({ order: e.target.value, page: null })}>
+        <option value="asc">{cs ? 'Od nejstarších' : 'Oldest first'}</option>
+        <option value="desc">{cs ? 'Od nejnovějších' : 'Newest first'}</option>
+      </select></label>{' '}
+    <button type="button" onClick={() => { url.reset(); setDraft('') }}>{cs ? 'Reset filtrů' : 'Reset filters'}</button>
+    <p>{cs ? 'Zobrazené záznamy' : 'Matching entries'}: {rows.length} / {data.timeline.length}</p>
+    {rows.length === 0 ? <p>{cs ? 'Žádné záznamy neodpovídají filtrům.' : 'No entries match the filters.'}</p>
+      : <ol start={(Math.min(page, pages) - 1) * 20 + 1}>{visible.map(({ event: e, index: i }) => <li key={e.kind + e.source.fingerprint + i}>
         <strong>{label(e.kind)}</strong> · {weekText(e, cs)}
         {detailText(e, cs) && ` · ${detailText(e, cs)}`}
         <br /><small>{sourceText(e, cs)}</small></li>)}</ol>}
+    <nav aria-label={cs ? 'Stránkování kariéry' : 'Career pagination'}>
+      <button type="button" disabled={page <= 1} onClick={() => url.set({ page: String(page - 1) })}>{cs ? 'Předchozí' : 'Previous'}</button>
+      {' '}{cs ? 'Strana' : 'Page'} {Math.min(page, pages)} / {pages}{' '}
+      <button type="button" disabled={page >= pages} onClick={() => url.set({ page: String(page + 1) })}>{cs ? 'Další' : 'Next'}</button>
+    </nav>
   </section>
 }

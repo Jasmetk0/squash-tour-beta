@@ -171,6 +171,30 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     expect(within(aut).getAllByText('—')).toHaveLength(2)
   })
 
+
+  it('sorts players by visible names, not by unrelated opaque player IDs', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    const template = detail(true)
+    api.getSeasonDetail.mockResolvedValue({
+      ...template, detail: {
+        ...template.detail,
+        players: [
+          { player_id: 'A1', presence: 'both', selected: m(1, 100), comparison: m(1, 100), delta: m(0, 0) },
+          { player_id: 'Z1', presence: 'both', selected: m(1, 100), comparison: m(1, 100), delta: m(0, 0) }
+        ]
+      }
+    })
+    mount(false, id => id === 'A1' ? 'Zoe' : id === 'Z1' ? 'Aaron' : id)
+    await compare()
+    await screen.findByLabelText('Season comparison')
+    fireEvent.click(screen.getByText('Players'))
+    const table = screen.getByRole('table', { name: 'Player comparison' })
+    const names = within(table).getAllByRole('row').slice(1)
+      .map(row => within(row).getAllByRole('cell')[0].textContent)
+    expect(names).toEqual(['Aaron', 'Zoe'])
+    expect(api.getSeasonDetail).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects the same selected and comparison season without fetching detail', async () => {
     api.getSeasonArchive.mockResolvedValue(archive)
     mount()

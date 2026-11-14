@@ -194,12 +194,16 @@ class Server:
         raise RuntimeError('server did not start')
 
     def memory(self):
+        """Server RSS/peak RSS and cumulative user+system CPU seconds so far."""
         values = {}
         with open(f'/proc/{self.process.pid}/status') as status:
             for line in status:
                 key, _, rest = line.partition(':')
                 if key in ('VmRSS', 'VmHWM'):
                     values[key] = int(rest.split()[0]) * 1024
+        with open(f'/proc/{self.process.pid}/stat') as stat:
+            fields = stat.read().rsplit(')', 1)[1].split()
+        values['cpu_seconds'] = (int(fields[11]) + int(fields[12])) / os.sysconf('SC_CLK_TCK')
         return values
 
     def stop(self):

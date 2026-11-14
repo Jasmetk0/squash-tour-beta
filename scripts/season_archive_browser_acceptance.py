@@ -66,12 +66,36 @@ def main():
                         expect(section).to_be_visible()
                         archive = section.get_by_role("table", name=table)
                         expect(archive.get_by_role("row")).to_have_count(3)  # header + two seasons
-                        selects = section.get_by_role("combobox")
-                        selects.nth(0).select_option("1")
-                        selects.nth(1).select_option("0")
+                        selected_label = "Vybraná sezóna" if language == "cs" else "Selected season"
+                        compare_label = "Porovnat s" if language == "cs" else "Compare with"
+                        search_label = "Hledat v archivu" if language == "cs" else "Search archive"
+                        section.get_by_label(selected_label).select_option("1")
+                        section.get_by_label(compare_label).select_option("0")
                         expect(section.get_by_role("alert")).to_contain_text(warning)
                         expect(section.get_by_role("alert")).to_contain_text(best)
                         assert section.get_by_role("button", name="Apply").count() == 0
+                        # URL selection persists on reload, including the unrelated Branch parameter.
+                        assert "branch=branch" in page.url
+                        assert "season_selected=1" in page.url and "season_other=0" in page.url
+                        page.reload()
+                        section = page.get_by_role("region", name=title)
+                        expect(section.get_by_label(selected_label)).to_have_value("1")
+                        expect(section.get_by_label(compare_label)).to_have_value("0")
+                        expect(section.get_by_role("alert")).to_contain_text(warning)
+
+                        # Search changes only the archive display, not the compared seasons or warning.
+                        section.get_by_label(search_label).fill("unmatched-season")
+                        expect(section).to_contain_text(
+                            "Žádná sezona neodpovídá hledání." if language == "cs"
+                            else "No seasons match the search."
+                        )
+                        expect(section.get_by_role("alert")).to_contain_text(warning)
+                        section.get_by_label(search_label).fill("")
+                        expect(section.get_by_role("table", name=table).get_by_role("row")).to_have_count(3)
+                        section.get_by_role("button", name="Reset filtrů" if language == "cs" else "Reset filters").click()
+                        assert "season_selected" not in page.url
+                        assert "branch=branch" in page.url
+
                         section.scroll_into_view_if_needed()
                         section.screenshot(path=str(root / f"archive-{language}.png"))
                         assert not errors, errors

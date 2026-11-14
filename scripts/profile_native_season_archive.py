@@ -270,11 +270,18 @@ def http(method, url, payload=None):
     return {'status': code, 'seconds': seconds, 'bytes': len(raw)}, raw
 
 
-def read_set(server, phase, records, values, seasons=2):
+def expected_reads(seasons):
     skip = set() if seasons >= 2 else {'season1', 'season1_vs_0', 'season0_vs_1'}
-    for name, path in READS:
-        if name in skip:
-            continue
+    return [(name, path) for name, path in READS if name not in skip]
+
+
+def completeness(expected, values):
+    missing = [name for name in expected if name not in values]
+    return {'complete': not missing, 'missing': missing}
+
+
+def read_set(server, phase, records, values, seasons=2):
+    for name, path in expected_reads(seasons):
         record, raw = http('GET', server.base + TOUR + path)
         record.update(phase=phase, read=name)
         records.append(record)
@@ -353,6 +360,8 @@ def read(args):
         profile_dir.mkdir()
     records, memory = [], {}
     values = {}
+    expected = [name for name, _path in expected_reads(args.seasons)]
+    result['completeness'] = {}
 
     def boundary(server, name):
         memory[name] = server.memory()
@@ -367,11 +376,13 @@ def read(args):
         cold = {}
         read_set(server, 'cold', records, cold, args.seasons)
         cold_values = dict(cold)
+        result['completeness']['cold'] = completeness(expected, cold)
         boundary(server, 'cold')
         for repeat in range(args.repeats):
             warm = {}
             read_set(server, f'warm{repeat + 1}', records, warm, args.seasons)
-            assert all(warm[k] == cold[k] for k in cold), 'repeated read changed a response'
+            assert all(warm[k] == cold[k] for k in cold if k in warm), 'repeated read changed a response'
+            result['completeness'][f'warm{repeat + 1}'] = completeness(expected, warm)
             cold.update({k: v for k, v in warm.items() if k not in cold})
         boundary(server, 'warm')
         if not args.read_only:
@@ -379,16 +390,24 @@ def read(args):
             boundary(server, 'write')
             after = {}
             read_set(server, 'after_save', records, after, args.seasons)
+            result['completeness']['after_save'] = completeness(expected, after)
             boundary(server, 'after_save')
+            compared = []
             # One more week cannot change closed seasons: their reads stay byte-identical.
             # Only the new Saved HEAD identifier and the fingerprint of the
             # current (advanced) Tour state may differ; closed seasons may not.
             for name in ('archive', *CLOSED_SEASON_READS):
+                if name not in expected:
+                    continue
                 if name not in cold or name not in after:
-                    continue  # censored read: nothing to compare
+                    continue  # censored: reported as missing, never as compared
                 old, new = json.loads(cold[name]), json.loads(after[name])
                 assert old.pop('saved_head_revision_id') != new.pop('saved_head_revision_id'), name
                 assert without_current_tour(old) == without_current_tour(new), name
+                compared.append(name)
+            result['closed_seasons_unchanged_after_save'] = {
+                'compared': compared,
+                'missing': [n for n in ('archive', *CLOSED_SEASON_READS) if n in expected and n not in compared]}
             values = after
         else:
             values = cold
@@ -399,8 +418,14 @@ def read(args):
         again = {}
         read_set(restarted, 'restart_cold', records, again, args.seasons)
         boundary(restarted, 'restart_cold')
-        # Complete byte equality of every response across a real process restart.
-        result['restart_equal'] = {name: again[name] == values[name] for name in values if name in again}
+        # Byte equality across a real process restart is claimed only when EVERY
+        # expected read completed on both sides; censored reads are reported.
+        result['completeness']['restart_cold'] = completeness(expected, again)
+        result['restart_equal'] = {name: again[name] == values[name]
+                                   for name in expected if name in again and name in values}
+        result['restart_missing'] = [name for name in expected
+                                     if name not in again or name not in values]
+        result['restart_complete'] = not result['restart_missing'] and bool(result['restart_equal'])
         assert all(result['restart_equal'].values()), result['restart_equal']
     finally:
         restarted.stop()
@@ -419,8 +444,13 @@ def read(args):
             Path(str(database) + suffix).unlink(missing_ok=True)
     summary = {}
     for item in records:
-        summary.setdefault(item['phase'], {})[item['read']] = round(item['seconds'], 3)
-    print(json.dumps({'summary': summary, 'memory': memory}, indent=2))
+        summary.setdefault(item['phase'], {})[item['read']] = (
+            f"TO {item['seconds']:.1f}" if item.get('timeout') else round(item['seconds'], 3))
+    print(json.dumps({'summary': summary, 'memory': memory,
+                      'restart_complete': result['restart_complete']}, indent=2))
+    if not result['restart_complete']:
+        # The report is written, but an incomplete case is not a successful run.
+        raise SystemExit('incomplete: censored or missing reads ' + ', '.join(result['restart_missing']))
 
 
 def main(argv=None):

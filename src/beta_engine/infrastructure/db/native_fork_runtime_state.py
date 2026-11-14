@@ -542,10 +542,12 @@ def actual_dependency_signature(session, revision, *, repository=None):
             tuple(sorted(source_heads.items())),
         )
     closures[(revision.run_id, revision.revision_id)] = (tuple(graph), dict(source_heads))
-    # Identical node sets in one snapshot have identical sorted graph values;
-    # share them (and their canonical JSON) instead of re-sorting/re-encoding.
+    # Identical node sets OF THE SAME RUN in one snapshot have identical sorted
+    # graph values (rows and owners are looked up by Run); share them and their
+    # canonical JSON instead of re-sorting/re-encoding. Another Run's equal
+    # revision-ID set is a different physical graph.
     shared = read_cache.setdefault("dependency_graphs", {})
-    node_set = frozenset(visited)
+    node_set = (revision.run_id, frozenset(visited))
     known_graph = shared.get(node_set)
     if known_graph is None:
         sorted_graph = tuple(sorted(graph))

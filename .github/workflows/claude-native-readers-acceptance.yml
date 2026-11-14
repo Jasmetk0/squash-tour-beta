@@ -146,9 +146,7 @@ jobs:
     # Two complete real seasons per fixed Run clock (every week, both Season
     # Transitions, MatchEngine matches, explicit Saves, extension, cold restart).
     # Each clock is its own job; see docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md.
-    # w61/w80 exist as tests but their cold restart of two full seasons exceeds
-    # the unchanged 120 s read bound (measured); they join this matrix after the
-    # owner's Saved storage/proof decision.
+    # The manual full suite excludes long_season because these jobs execute them.
     if: github.event_name != 'pull_request' || github.event.pull_request.draft == false
     name: Native readers / two full seasons / ${{ matrix.clock }}
     runs-on: ubuntu-latest
@@ -156,7 +154,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        clock: [w52]
+        clock: [w52, w61, w80]
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:

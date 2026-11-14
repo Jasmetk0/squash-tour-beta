@@ -476,25 +476,6 @@ def _saved_revision_record_content_hash(
     )
 
 
-def _stored_canonical_text_hash_matches(model, revision) -> bool:
-    """Content hash over the stored canonical text; False falls back to the full check."""
-    from beta_engine.domain.run_revisions import stored_canonical_payload_hash_matches
-
-    if (model.revision_id, model.run_id, model.branch_id, model.sequence, model.parent_revision_id,
-            model.kind, model.payload_schema_version, model.content_hash) != (
-            revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
-            revision.parent_revision_id, revision.kind, revision.payload_schema_version,
-            revision.content_hash):
-        return False
-    return stored_canonical_payload_hash_matches(
-        content_hash=revision.content_hash, revision_id=revision.revision_id,
-        run_id=revision.run_id, branch_id=revision.branch_id, sequence=revision.sequence,
-        parent_revision_id=revision.parent_revision_id, kind=revision.kind,
-        payload_schema_version=revision.payload_schema_version,
-        payload_json=model.payload_json, change_summary=revision.change_summary,
-    )
-
-
 def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
     """Bind a metadata-only proof to the complete physical revision bytes."""
     from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
@@ -2771,11 +2752,7 @@ class SimulationPersistenceRepository:
             )
         if (
             revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-            or not (
-                # revision.payload was decoded from exactly model.payload_json.
-                _stored_canonical_text_hash_matches(model, revision)
-                or revision.content_hash == _saved_revision_record_content_hash(revision)
-            )
+            or revision.content_hash != _saved_revision_record_content_hash(revision)
         ):
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"

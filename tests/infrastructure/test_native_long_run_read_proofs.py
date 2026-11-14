@@ -9,6 +9,7 @@ import gc
 import hashlib
 import json
 import threading
+import time
 
 import pytest
 from sqlalchemy import text
@@ -140,87 +141,46 @@ def test_cyclic_gc_pause_is_nested_thread_safe_and_restored():
         gc.enable()
 
 
-def _envelope_fields(**overrides):
-    fields = dict(revision_id="saved-revision-1", run_id="run", branch_id="branch", sequence=7,
-                  parent_revision_id="saved-revision-0", kind="calendar_tour_authority",
-                  payload_schema_version="run_saved_revision_v1")
-    fields.update(overrides)
-    return fields
 
+def test_cyclic_gc_pause_is_bounded_under_continuous_overlap(monkeypatch):
+    """Overlapping operations never let the count reach zero; cycles still go."""
+    import weakref
 
-def test_stored_canonical_text_hash_is_a_sound_sufficient_check():
-    import random
+    from beta_engine.infrastructure.db import cyclic_gc
 
-    from beta_engine.domain.run_revisions import (
-        saved_revision_content_hash,
-        stored_canonical_payload_hash_matches,
-    )
+    monkeypatch.setattr(cyclic_gc, "MAX_CONTINUOUS_PAUSE_SECONDS", 0.05)
 
-    rng = random.Random(1803)
+    class Node:
+        pass
 
-    def value(depth=0):
-        kind = rng.randrange(8 if depth < 4 else 5)
-        if kind == 0:
-            return rng.choice([None, True, False])
-        if kind == 1:
-            return rng.randrange(-10**20, 10**20)
-        if kind == 2:
-            return rng.choice([0.0, -0.0, 1e16, 2.5, -1e-7, float("nan"), float("inf")])
-        if kind in (3, 4):
-            return rng.choice(['', 'a"b', '\\', '\ud800', 'ž', ',"payload_schema_version":"x"', '}'])
-        if kind == 5:
-            return [value(depth + 1) for _ in range(rng.randrange(4))]
-        return {rng.choice(['b', 'a', 'payload', 'ž', '"q']) + str(i): value(depth + 1)
-                for i in range(rng.randrange(4))}
+    def cycle():
+        a, b = Node(), Node()
+        a.other, b.other = b, a
+        return weakref.ref(a)
 
-    for case in range(3000):
-        payload = {"content": value(), "run": {"run_id": "run"}}
-        summary = {"kind": value()}
-        fields = _envelope_fields(parent_revision_id=None if case % 5 == 0 else "saved-revision-0")
-        stored = canonical_json(payload)
-        expected = saved_revision_content_hash(**fields, payload=json.loads(stored), change_summary=summary)
-        assert stored_canonical_payload_hash_matches(
-            content_hash=expected, payload_json=stored, change_summary=summary, **fields)
-        variants = [
-            json.dumps(payload),  # non-canonical spacing/order: must fall back
-            stored + " ",
-            stored[:-1],
-            stored.replace(":", ": ", 1),
-            stored + ',"payload_schema_version":"run_saved_revision_v1"',
-        ]
-        for variant in variants:
-            if variant == stored:
-                continue
-            if stored_canonical_payload_hash_matches(
-                    content_hash=expected, payload_json=variant, change_summary=summary, **fields):
-                # Never accept different bytes unless the full check agrees.
-                assert saved_revision_content_hash(
-                    **fields, payload=json.loads(variant), change_summary=summary) == expected
-                raise AssertionError("different stored bytes accepted by the fast path")
-        # Any other metadata value rejects (and the full check rejects as well).
-        for key, changed in (("sequence", 8), ("kind", "other"), ("run_id", "other"),
-                             ("parent_revision_id", "saved-revision-x")):
-            assert not stored_canonical_payload_hash_matches(
-                content_hash=expected, payload_json=stored, change_summary=summary,
-                **{**fields, key: changed})
+    gc.collect()
+    holder_inside, release = threading.Event(), threading.Event()
 
+    def long_operation():
+        with paused_cyclic_gc():
+            holder_inside.set()
+            release.wait()
 
-def test_stored_canonical_text_hash_agrees_with_the_full_check_on_real_rows(source):  # noqa: F811
-    from beta_engine.domain.run_revisions import (
-        saved_revision_content_hash,
-        stored_canonical_payload_hash_matches,
-    )
-
-    _engine, factory = source
-    with factory() as session:
-        rows = session.query(BranchSavedRevisionModel).all()
-        assert rows
-        for row in rows:
-            fields = {k: getattr(row, k) for k in (
-                "revision_id", "run_id", "branch_id", "sequence", "parent_revision_id", "kind",
-                "payload_schema_version")}
-            summary = json.loads(row.change_summary_json)
-            full = saved_revision_content_hash(**fields, payload=json.loads(row.payload_json), change_summary=summary)
-            fast = stored_canonical_payload_hash_matches(
-                content_hash=row.content_hash, payload_json=row.payload_json, change_summary=summary, **fields)
-            assert fast == (full == row.content_hash) is True
+    holder = threading.Thread(target=long_operation)
+    holder.start()
+    holder_inside.wait()
+    try:
+        assert not gc.isenabled()
+        refs = [cycle() for _ in range(1000)]
+        assert any(ref() is not None for ref in refs)  # nothing collects them yet
+        deadline = time.monotonic() + 5
+        while any(ref() is not None for ref in refs) and time.monotonic() < deadline:
+            with paused_cyclic_gc():  # another overlapping short operation
+                pass
+            time.sleep(0.01)
+        assert all(ref() is None for ref in refs), "cyclic garbage survived the bound"
+        assert not gc.isenabled()  # the long operation is still paused
+    finally:
+        release.set()
+        holder.join()
+    assert gc.isenabled()

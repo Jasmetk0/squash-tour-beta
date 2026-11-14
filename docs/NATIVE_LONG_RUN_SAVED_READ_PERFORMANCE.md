@@ -146,7 +146,98 @@ Rejected after measurement (reverted, not shipped):
 
 ## Before/after (identical input copies, balanced order A1 B1 B2 A2)
 
-__AB__
+Raw records, environment, input/output digests and memory of every case (including the
+failed baseline W52 two-season case and a superseded intermediate `27df2b1` case) are in
+`docs/evidence/native-long-run-reads-20261114.json`. Reproduce one case with
+`python scripts/profile_native_season_archive.py read --input <input.db> --root <new dir> --seasons 2`
+from each checkout (`build --width 52 --root <dir>` creates the inputs).
+
+All pairs: fresh OS process per phase start, identical copies of the immutable input, measurement script identical in both trees (SHA-256 recorded per run), host shared with up to three long tests. Mean ± sample SD over every raw observation; `TO` is a read censored at the 120 s transport bound, never a latency.
+
+### W6 after two seasons (34 revisions, 217 MB)
+
+Runs: A1 `342b826d20`, A2 `342b826d20`, B1 `c63035748e`, B2 `c63035748e`
+
+| Phase / read (s) | Baseline A1, A2 | Candidate B1, B2 |
+| --- | --- | --- |
+| cold / tour | 32.32, 33.11; **32.72 ± 0.56** | 23.06, 20.04; **21.55 ± 2.14** |
+| cold / archive | 2.39, 2.78; **2.58 ± 0.27** | 2.51, 2.15; **2.33 ± 0.25** |
+| warm / tour | 4.28, 3.91, 4.28, 3.63; **4.02 ± 0.31** | 2.98, 2.99, 2.36, 2.47; **2.70 ± 0.33** |
+| warm / archive | 2.68, 2.33, 3.05, 2.62; **2.67 ± 0.29** | 1.88, 1.97, 1.78, 1.79; **1.86 ± 0.09** |
+| warm / season0 | 2.45, 3.20, 2.44, 3.21; **2.83 ± 0.44** | 1.93, 2.34, 1.77, 1.66; **1.93 ± 0.30** |
+| write / preview | 4.26, 4.65; **4.46 ± 0.28** | 3.03, 2.87; **2.95 ± 0.11** |
+| write / execute | 13.57, 15.08; **14.33 ± 1.06** | 10.31, 8.58; **9.44 ± 1.22** |
+| write / save | 9.29, 10.88; **10.09 ± 1.12** | 6.56, 6.14; **6.35 ± 0.30** |
+| after_save / tour | 4.01, 4.23; **4.12 ± 0.15** | 2.44, 2.40; **2.42 ± 0.04** |
+| after_save / archive | 3.04, 3.44; **3.24 ± 0.28** | 1.60, 1.55; **1.58 ± 0.03** |
+| restart_cold / tour | 32.68, 32.91; **32.80 ± 0.17** | 21.02, 22.21; **21.61 ± 0.84** |
+| restart_cold / archive | 3.30, 3.06; **3.18 ± 0.17** | 2.45, 2.27; **2.36 ± 0.13** |
+
+Server peak RSS (GiB, VmHWM): A1 1.49, A2 1.49, B1 0.92, B2 0.91. Restart byte-equal: A1, A2, B1, B2. Cold responses byte-identical across all runs with digests: yes.
+
+### W52 after one season (66 revisions, 532 MB) — candidate at the intermediate head `046ebca` (before the stored-text content hash and evidence probe)
+
+Runs: A1 `342b826d20`, A2 `342b826d20`, B1 `046ebca6a9`, B2 `046ebca6a9`
+
+| Phase / read (s) | Baseline A1, A2 | Candidate B1, B2 |
+| --- | --- | --- |
+| cold / tour | 49.12, 49.05; **49.09 ± 0.05** | 38.85, 39.01; **38.93 ± 0.11** |
+| cold / archive | 3.57, 3.85; **3.71 ± 0.19** | 2.27, 2.33; **2.30 ± 0.04** |
+| warm / tour | 4.36, 4.22, 4.03, 4.01; **4.15 ± 0.17** | 2.63, 2.78, 2.67, 2.80; **2.72 ± 0.08** |
+| warm / archive | 3.43, 3.40, 3.74, 3.91; **3.62 ± 0.24** | 2.24, 2.24, 2.20, 2.32; **2.25 ± 0.05** |
+| warm / season0 | 3.34, 3.84, 3.37, 3.40; **3.49 ± 0.23** | 2.24, 2.13, 2.32, 2.18; **2.22 ± 0.08** |
+| write / preview | 4.34, 4.53; **4.43 ± 0.13** | 3.13, 2.85; **2.99 ± 0.19** |
+| write / execute | 12.13, 13.25; **12.69 ± 0.79** | 8.21, 7.97; **8.09 ± 0.17** |
+| write / save | 11.85, 11.70; **11.77 ± 0.11** | 8.14, 7.98; **8.06 ± 0.11** |
+| after_save / tour | 3.86, 4.32; **4.09 ± 0.33** | 2.42, 2.49; **2.46 ± 0.05** |
+| after_save / archive | 3.69, 3.41; **3.55 ± 0.19** | 1.92, 1.96; **1.94 ± 0.03** |
+| restart_cold / tour | 48.31, 49.58; **48.94 ± 0.90** | 37.79, 39.72; **38.76 ± 1.37** |
+| restart_cold / archive | 3.44, 3.60; **3.52 ± 0.11** | 2.42, 2.53; **2.47 ± 0.08** |
+
+Server peak RSS (GiB, VmHWM): A1 3.17, A2 3.17, B1 1.19, B2 1.18. Restart byte-equal: A1, A2, B1, B2.
+
+### W80 after one season (94 revisions, 891 MB)
+
+Runs: A1 `342b826d20`, A2 `342b826d20`, B1 `c63035748e`, B2 `c63035748e`
+
+| Phase / read (s) | Baseline A1, A2 | Candidate B1, B2 |
+| --- | --- | --- |
+| cold / tour | 87.51, 85.27; **86.39 ± 1.58** | 48.17, 46.44; **47.30 ± 1.22** |
+| cold / archive | 6.24, 5.62; **5.93 ± 0.44** | 3.42, 3.58; **3.50 ± 0.11** |
+| warm / tour | 6.75, 6.14, 6.10, 6.62; **6.40 ± 0.33** | 3.72, 3.66, 4.02, 4.12; **3.88 ± 0.22** |
+| warm / archive | 5.91, 5.53, 5.44, 5.65; **5.63 ± 0.20** | 3.43, 3.55, 3.43, 3.20; **3.40 ± 0.14** |
+| warm / season0 | 5.62, 5.11, 5.26, 5.85; **5.46 ± 0.34** | 3.41, 3.63, 3.51, 3.38; **3.48 ± 0.11** |
+| write / preview | 6.57, 6.76; **6.66 ± 0.14** | 4.35, 4.51; **4.43 ± 0.12** |
+| write / execute | 17.90, 19.51; **18.70 ± 1.14** | 11.22, 11.16; **11.19 ± 0.04** |
+| write / save | 18.04, 18.66; **18.35 ± 0.44** | 11.79, 11.50; **11.65 ± 0.20** |
+| after_save / tour | 6.21, 6.78; **6.50 ± 0.40** | 3.87, 3.78; **3.82 ± 0.07** |
+| after_save / archive | 5.66, 5.30; **5.48 ± 0.25** | 2.89, 2.73; **2.81 ± 0.11** |
+| restart_cold / tour | 85.01, 98.35; **91.68 ± 9.43** | 46.65, 45.83; **46.24 ± 0.58** |
+| restart_cold / archive | 6.20, 6.18; **6.19 ± 0.01** | 3.45, 3.54; **3.50 ± 0.07** |
+
+Server peak RSS (GiB, VmHWM): A1 5.22, A2 5.22, B1 1.59, B2 1.60. Restart byte-equal: A1, A2, B1, B2. Cold responses byte-identical across all runs with digests: yes.
+
+### W52 after two seasons (126 revisions, 1.59 GB)
+
+Runs: A1 baseline `342b826` (A2 not run: it would again exhaust host memory next to the long tests), B1/B2 `bbef6da` (same source tree as `c630357`)
+
+| Phase / read (s) | Baseline A1, A2 | Candidate B1, B2 |
+| --- | --- | --- |
+| cold / tour | TO 120; censored | 82.09, 86.09; **84.09 ± 2.83** |
+| cold / archive | TO 68; censored | 5.32, 5.83; **5.58 ± 0.36** |
+| warm / tour | server gone (OOM-killed) | 5.95, 6.14, 6.59, 6.50; **6.30 ± 0.30** |
+| warm / archive | server gone (OOM-killed) | 5.29, 5.49, 5.31, 5.75; **5.46 ± 0.21** |
+| warm / season0 | server gone (OOM-killed) | 5.07, 5.47, 5.43, 5.76; **5.43 ± 0.29** |
+| write / preview | — | 6.28, 7.02; **6.65 ± 0.52** |
+| write / execute | — | 17.92, 17.98; **17.95 ± 0.04** |
+| write / save | — | 18.61, 19.90; **19.26 ± 0.91** |
+| after_save / tour | — | 5.70, 6.78; **6.24 ± 0.76** |
+| after_save / archive | — | 4.96, 5.36; **5.16 ± 0.28** |
+| restart_cold / tour | — | 92.40, 88.75; **90.57 ± 2.58** |
+| restart_cold / archive | — | 5.51, 6.25; **5.88 ± 0.52** |
+
+Server peak RSS (GiB, VmHWM): baseline A1 server killed by the kernel OOM killer at 10.8 GB anon RSS (cgroup limit 15 GiB shared with the long tests); B1 2.50, B2 3.56. Restart byte-equal: B1, B2. Cold responses byte-identical across all runs with digests: yes.
+
 
 ## Two full seasons on W52, W61 and W80
 

@@ -90,6 +90,7 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     const presenceValue = url.get(prefix + '_presence', 'all')
     const presence = ['all', 'both', 'only_selected', 'only_comparison'].includes(presenceValue) ? presenceValue : 'all'
     const sort = url.get(prefix + '_sort', 'name')
+    const displayName = (item: PresenceRow) => key === 'player_id' ? name(String(item.player_id)) : String(item.country_code)
     const page = readerPage(url.get(prefix + '_page', '1'))
     const filtered = items.map((value, index) => ({ value, index })).filter(({ value }) =>
       (presence === 'all' || value.presence === presence) &&
@@ -103,7 +104,8 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
               const bv = b.value.selected?.[field]
               return av === undefined ? (bv === undefined ? 0 : 1) : bv === undefined ? -1 : bv - av
             })()
-          : String(a.value[key]).localeCompare(String(b.value[key]))
+          : displayName(a.value).localeCompare(displayName(b.value)) ||
+            String(a.value[key]).localeCompare(String(b.value[key]))
         return compare || a.index - b.index
       })
     const pages = readerPageCount(filtered.length)

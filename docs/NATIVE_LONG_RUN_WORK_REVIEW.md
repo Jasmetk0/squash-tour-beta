@@ -87,11 +87,13 @@ labelled; this finding does not invalidate samples that did complete fully.
 
 ## 4. Acceptance and CI are still incomplete
 
-- At the reviewed author head SonarCloud failed **C Security Rating on New Code**
-  (check `132604623677`). CodeQL success does not override it. Resolve actual
-  reported issues; do not call this advisory, lower the gate or suppress it.
-  Work could read the GitHub gate result, but the public Sonar issue-detail API
-  returned 403 in this environment, so no particular rule is invented here.
+- **Newer explicit owner instruction, 14 November 2026:** Sonar is advisory,
+  not a mandatory merge condition. A red Sonar result alone does not block
+  approval. Assess substantive findings on their merits; the demonstrated
+  integrity/Run-isolation defects and required runtime tests below remain
+  blockers independently of Sonar. No requirement to make all Sonar checks green
+  is part of this return task. The reviewed author's C Security Rating
+  (check `132604623677`) remains a recorded observation, not a gate requirement.
 - Heavy native/fork/browser gates are Draft skips, not execution evidence.
   Do not launch the expensive matrix until the new quick regressions pass.
 - `long_seasons` runs only `w52`, while the manual full suite excludes **every**

@@ -176,8 +176,8 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
         </select></label>{' '}
       <label>{cs ? 'Porovnat s' : 'Compare with'}{' '}
         <select value={other ?? ''} onChange={e => url.set({ other: e.target.value || null })}>
-          <option value="">—</option>{archive.seasons.filter(s => s.season_index !== selected)
-            .map(s => <option key={s.season_index} value={s.season_index}>{s.season_label}</option>)}
+          <option value="">—</option>{archive.seasons.map(s =>
+            <option key={s.season_index} value={s.season_index}>{s.season_label}</option>)}
         </select></label>
     </>}
     {(selectedRaw !== '' || otherRaw !== '') && !validPair && <p role="alert">{cs

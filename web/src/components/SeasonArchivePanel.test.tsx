@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -45,13 +46,14 @@ const detail = (comparable: boolean) => ({
 })
 function mount(cs = false) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
-  return render(<QueryClientProvider client={client}>
+  return render(<MemoryRouter><QueryClientProvider client={client}>
     <SeasonArchivePanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} playerName={id => (id === 'P1' ? 'Alice' : id)} />
-  </QueryClientProvider>)
+  </QueryClientProvider></MemoryRouter>)
 }
 async function compare() {
   await screen.findByRole('table', { name: 'Completed season archive' })
-  const [selected, other] = screen.getAllByRole('combobox')
+  const selected = screen.getByLabelText('Selected season')
+  const other = screen.getByLabelText('Compare with')
   fireEvent.change(selected, { target: { value: '1' } })
   fireEvent.change(other, { target: { value: '0' } })
 }
@@ -87,7 +89,8 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     api.getSeasonDetail.mockResolvedValue(detail(false))
     mount(true)
     await screen.findByRole('table', { name: 'Archiv dokončených sezón' })
-    const [selected, other] = screen.getAllByRole('combobox')
+    const selected = screen.getByLabelText('Vybraná sezóna')
+    const other = screen.getByLabelText('Porovnat s')
     fireEvent.change(selected, { target: { value: '1' } })
     fireEvent.change(other, { target: { value: '0' } })
     const alert = await screen.findByRole('alert')

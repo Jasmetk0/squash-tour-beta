@@ -89,7 +89,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   })
   const title = cs ? 'Kariéra: časová osa a milníky' : 'Career: timeline and milestones'
   if (baseline.isPending) {
-    return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
+    return <section aria-label={title} data-run-navigation-readonly><h3>{title}</h3><p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
   }
   if (baseline.error) return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Kariérní osa není pro tuto revizi dostupná: ' : 'Career timeline is unavailable for this revision: '}{formatApiError(baseline.error)}</p></section>
   if (maxOrdinal === null) return <section aria-label={title}><h3>{title}</h3><p role="alert">{cs

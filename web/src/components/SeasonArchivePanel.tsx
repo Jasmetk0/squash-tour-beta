@@ -22,7 +22,7 @@ const FIELD: Record<string, [string, string]> = {
 
 export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName }: Props): JSX.Element {
   const url = useReaderParams('season', JSON.stringify([runId, branchId, savedHead]))
-  const parseSeason = (value: string) => /^(0|[1-9]\\d*)$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null
+  const parseSeason = (value: string) => /^(0|[1-9]\d*)$/.test(value) && Number.isSafeInteger(Number(value)) ? Number(value) : null
   const selectedRaw = url.get('selected')
   const otherRaw = url.get('other')
   const selected = parseSeason(selectedRaw)

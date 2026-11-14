@@ -127,7 +127,7 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     await screen.findByText(/champion · 100 pts/)
     fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '0' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
-    await screen.findByText(/Shown as of week no\\. 0/)
+    await screen.findByText(/Shown as of week no\. 0/)
     expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1', 0)
     fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '99' } })
     fireEvent.click(screen.getByRole('button', { name: 'Apply' }))

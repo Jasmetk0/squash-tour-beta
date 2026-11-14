@@ -77,7 +77,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   })
   const maxOrdinal = baseline.data && validSavedPlayerCareer(baseline.data, { runId, branchId, savedHead, playerId })
     ? baseline.data.as_of_ordinal : null
-  const parsed = /^(0|[1-9]\d*)$/.test(requested) ? Number(requested) : NaN
+  const parsed = /^(0|[1-9]\d*)$/.test(requested) ? Number(requested) : Number.NaN
   const badAsOf = requested !== '' && (!Number.isSafeInteger(parsed) || parsed < 0 ||
     (maxOrdinal !== null && parsed > maxOrdinal))
   const asOf = requested === '' ? undefined : parsed

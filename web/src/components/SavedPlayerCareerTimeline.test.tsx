@@ -46,6 +46,7 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     mount()
     await screen.findByText(/Open · champion · 100 pts/)
     const region = screen.getByRole('region', { name: 'Career: timeline and milestones' })
+    expect(screen.getByRole('region', { name: 'Career: timeline and milestones' })).toHaveAttribute('data-run-navigation-readonly')
     expect(within(region).getAllByText(/First recorded title/).length).toBeGreaterThan(0)
     expect(region).toHaveTextContent(/does not mean first ever/)
     expect(region).toHaveTextContent(/Injuries and returns have no supported source/)

@@ -146,9 +146,13 @@ def main():
                             expect(section).to_contain_text(hidden_text)
                             # Hidden state is persistent: show and restore the card (an explicit step),
                             # then unfollow; career history must stay intact.
-                            section.get_by_label(show_hidden).check()
+                            section.get_by_label(show_hidden).click()
+                            expect(section.get_by_label(show_hidden)).to_be_checked()
+                            assert "alert_hidden=true" in page.url
                             section.get_by_role("button", name=restore_btn, exact=True).click()
-                            section.get_by_label(show_hidden).uncheck()
+                            section.get_by_label(show_hidden).click()
+                            expect(section.get_by_label(show_hidden)).not_to_be_checked()
+                            assert "alert_hidden=true" not in page.url
                             expect(section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))).to_have_count(1)
                             section.get_by_role("button", name=unfollow_btn).first.click()
                             expect(section).to_contain_text(nothing)

@@ -274,12 +274,39 @@ closed seasons after a horizon extension, and byte-equal archive/summaries/compa
 after a cold process restart. No result is inserted by hand, no week is skipped and
 the sporting simulation is not shortened.
 
-__LONG__
+Local runs on this host (each a real HTTP/SQLite pytest process; see the commit for
+each head). Earlier runs are reported because each found a real limit:
+
+| Run | Head | Result |
+| --- | --- | --- |
+| W6 | `c630357` and earlier | PASSED (601 s, contended host) |
+| W52/W61/W80 #1 | `046ebca` | stopped by me (code changed mid-run) |
+| W52/W61/W80 #2 | `c630357` | infrastructure failure: session disk allowance exhausted by my own measurement copies (500 on every server) |
+| W52 #3 | `c630357` | every week of both seasons, both Season Transitions, archive, both comparisons and point doubling **passed**; horizon-extension review exceeded 120 s → fixed in `8c051d9` |
+| W52 #4 | `e3f9b03` | all of the above and the extension Save **passed**; first read after the extension exceeded 120 s → fixed in `e3f9b03`→`a3855c7` (proof re-keying, boundary replay) |
+| W52 #5 | final head | __W52_RESULT__ |
+| W61, W80 | — | not completed: see the measured restart limit below |
+
+Measured cold restart (fresh process, idle host unless noted) on authentic inputs:
+
+| Input | Revisions | Saved bytes | Cold inspect |
+| --- | ---: | ---: | ---: |
+| W52 after two seasons + extension (final test DB of run #4) | 127 | 1.61 GB | 96.5 s |
+| W80 in season 2 (133 revisions, before extension) | 133 | 1.63 GB | 80.1 s |
+| W80 two seasons + extension (extrapolated) | ~185 | ~2.6 GB | ~150 s |
+| W61 two seasons + extension (extrapolated) | ~146 | ~2.0 GB | ~120–125 s |
+
+So the cold restart of two complete W61/W80 seasons cannot meet the unchanged 120 s
+read bound with full re-validation of full-snapshot revisions, even on an idle host.
+Raising the bound is not a fix and was not done. The owner was asked for the
+storage/proof direction (options in the PR); W61/W80 two-season acceptance remains
+open until then.
 
 CI: the fast job runs only the exact node id `[w6]` (the former `-k 'not w52'` would
-have selected `w61`/`w80`). A separate `long_seasons` matrix job runs `w52`, `w61`,
-`w80` by exact node id with a 300-minute job limit; like the other jobs it is skipped
-for Draft PRs. The manual full suite excludes the `long_season` marker. The
+have selected `w61`/`w80`). A separate `long_seasons` job runs `w52` by exact node id with a
+300-minute job limit; like the other jobs it is skipped for Draft PRs. The `w61`/`w80`
+parameters stay ordinary, runnable tests (not skipped or xfail) but are not in that
+matrix until the restart limit below is resolved. The manual full suite excludes the `long_season` marker. The
 120-second read transport bound is unchanged.
 
 ## Regressions

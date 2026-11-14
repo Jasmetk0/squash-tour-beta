@@ -151,7 +151,8 @@ def test_long_season_clocks_are_separate_from_the_fast_w6_case():
     assert ' -k ' not in api_run
     long_job = native['jobs']['long_seasons']
     assert long_job['if'] == GATE
-    assert set(long_job['strategy']['matrix']['clock']) == {'w52', 'w61', 'w80'}
+    # w61/w80 wait for the Saved storage/proof decision (measured restart limit).
+    assert set(long_job['strategy']['matrix']['clock']) == {'w52'}
     assert int(long_job['timeout-minutes']) <= 360
     long_run = next(step['run'] for step in long_job['steps'] if 'pytest' in step.get('run', ''))
     assert 'unset GITHUB_EVENT_NAME' in long_run

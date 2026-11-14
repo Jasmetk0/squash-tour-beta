@@ -84,9 +84,10 @@ def main():
                         expect(section.get_by_role("alert")).to_contain_text(warning)
 
                         # Search changes only the archive display, not the compared seasons or warning.
+                        dirty_before_reader_control = page.locator('.app-shell--admin').get_attribute('data-run-form-edited')
                         section.get_by_label(search_label).fill("unmatched-season")
                         # A read-only control must not dirty the Run Working Draft guard.
-                        assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') != 'true'
+                        assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') == dirty_before_reader_control
                         expect(section).to_contain_text(
                             "Žádná sezona neodpovídá hledání." if language == "cs"
                             else "No seasons match the search."

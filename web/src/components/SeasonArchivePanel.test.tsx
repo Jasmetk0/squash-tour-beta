@@ -44,10 +44,10 @@ const detail = (comparable: boolean) => ({
     players: [], note: 'n'
   }
 })
-function mount(cs = false) {
+function mount(cs = false, resolveName: (id: string) => string = id => (id === 'P1' ? 'Alice' : id)) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   return render(<MemoryRouter><QueryClientProvider client={client}>
-    <SeasonArchivePanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} playerName={id => (id === 'P1' ? 'Alice' : id)} />
+    <SeasonArchivePanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} playerName={resolveName} />
   </QueryClientProvider></MemoryRouter>)
 }
 async function compare() {
@@ -79,7 +79,7 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     await screen.findByText(/recorded rules .* are the same/)
     const panel = screen.getByLabelText('Season comparison')
     const aut = within(panel).getByText('AUT').closest('tr')!
-    expect(within(aut).getAllByText('not represented')).toHaveLength(2)
+    expect(within(aut).getAllByText('not represented')).toHaveLength(3)
     expect(within(aut).getByText('no delta (one side missing)')).toBeInTheDocument()
     expect(api.getSeasonDetail).toHaveBeenLastCalledWith('run', 'branch', 1, 0)
   })
@@ -125,12 +125,35 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     mount()
     await compare()
     await screen.findByLabelText('Season comparison')
-    fireEvent.change(screen.getAllByLabelText('Presence')[0], { target: { value: 'only_comparison' } })
+    fireEvent.change(screen.getByLabelText('Country presence'), { target: { value: 'only_comparison' } })
     const panel = screen.getByLabelText('Season comparison')
     expect(within(panel).getByText('AUT')).toBeInTheDocument()
     expect(within(panel).queryByText('CZE')).not.toBeInTheDocument()
-    expect(within(panel).getAllByText('not represented')).toHaveLength(2)
+    expect(within(panel).getAllByText('not represented')).toHaveLength(3)
     expect(api.getSeasonDetail).toHaveBeenCalledTimes(1)
+  })
+
+
+  it('searches the actually displayed player name, not only the backend label', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    mount(false, id => id === 'P1' ? 'Local player alias' : id)
+    const table = await screen.findByRole('table', { name: 'Completed season archive' })
+    fireEvent.change(screen.getByLabelText('Search archive'), { target: { value: 'local player alias' } })
+    expect(within(table).getAllByText('Local player alias (2)')).toHaveLength(2)
+    expect(api.getSeasonDetail).not.toHaveBeenCalled()
+  })
+
+  it('shows all supported title, final and point metrics without treating missing data as zero', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    api.getSeasonDetail.mockResolvedValue(detail(true))
+    mount()
+    await compare()
+    const table = await screen.findByRole('table', { name: 'Country comparison' })
+    expect(within(table).getByRole('columnheader', { name: 'Finals (selected)' })).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Finals (comparison)' })).toBeInTheDocument()
+    const aut = within(table).getByText('AUT').closest('tr')!
+    expect(within(aut).getAllByText('not represented')).toHaveLength(3)
+    expect(within(aut).getAllByText('—')).toHaveLength(2)
   })
 
   it('rejects the same selected and comparison season without fetching detail', async () => {

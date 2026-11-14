@@ -42,7 +42,7 @@ export function useReaderParams(prefix: 'career' | 'season' | 'alert', scope: st
 
 export function readerPage(value: string): number {
   const n = Number(value)
-  return /^\\d+$/.test(value) && Number.isSafeInteger(n) && n > 0 ? n : 1
+  return /^\d+$/.test(value) && Number.isSafeInteger(n) && n > 0 ? n : 1
 }
 
 export function readerSlice<T>(rows: readonly T[], page: number, size = 20): T[] {

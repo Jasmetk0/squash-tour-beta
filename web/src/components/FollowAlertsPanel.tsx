@@ -80,7 +80,7 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
   const pages = readerPageCount(filtered.length)
   const current = Math.min(page, pages)
   const visible = readerSlice(filtered, current)
-  const eventKinds = Array.from(new Set((cards?.cards ?? []).flatMap(card => card.items.map(item => item.kind)))).sort()
+  const eventKinds = Array.from(new Set((cards?.cards ?? []).flatMap(card => card.items.map(item => item.kind)))).sort((a, b) => a.localeCompare(b))
   const label = (it: AlertItem) => (KIND[it.kind] ?? [it.kind, it.kind])[cs ? 0 : 1]
   const detail = (it: AlertItem) => {
     const d = it.detail

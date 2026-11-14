@@ -65,6 +65,7 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     api.getSeasonArchive.mockResolvedValue(archive)
     mount()
     const table = await screen.findByRole('table', { name: 'Completed season archive' })
+    expect(screen.getByRole('region', { name: 'Season archive and comparison' })).toHaveAttribute('data-run-navigation-readonly')
     expect(within(table).getByText('2000/01')).toBeInTheDocument()
     expect(within(table).getByText('2001/02')).toBeInTheDocument()
     expect(within(table).getAllByText('Alice (2)')).toHaveLength(2)

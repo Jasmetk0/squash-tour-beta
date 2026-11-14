@@ -120,4 +120,19 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     const status = await screen.findByText(/unavailable for this revision/)
     expect(status).toHaveTextContent('Player career requires a Saved configured Tour')
   })
+  it('accepts ordinal zero without converting it to present, and rejects future ordinals', async () => {
+    api.getSavedPlayerCareer.mockImplementation(async (_r, _b, _p, asOf) =>
+      asOf === 0 ? data(0, [], []) : data(12, [turnPro, title], [turnPro, first]))
+    mount()
+    await screen.findByText(/champion · 100 pts/)
+    fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '0' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    await screen.findByText(/Shown as of week no\\. 0/)
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledWith('run', 'branch', 'P1', 0)
+    fireEvent.change(screen.getByLabelText(/View as of week/), { target: { value: '99' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Apply' }))
+    expect(await screen.findByRole('alert')).toHaveTextContent(/Invalid or future week/)
+    expect(api.getSavedPlayerCareer).not.toHaveBeenCalledWith('run', 'branch', 'P1', 99)
+  })
+
 })

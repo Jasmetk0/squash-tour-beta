@@ -133,7 +133,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const current = Math.min(page, pages)
   const visible = readerSlice(rows, current)
   const o = data.overview
-  return <section aria-label={title}>
+  return <section aria-label={title} data-run-navigation-readonly>
     <h3>{title}</h3>
     <p>{cs
       ? 'Pouze čtení z uložené revize vybrané Branch. Zobrazuje jen doložená fakta do zvoleného týdne; nic nevytváří ani neovlivňuje simulaci.'

@@ -133,4 +133,15 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     expect(api.getSeasonDetail).toHaveBeenCalledTimes(1)
   })
 
+  it('rejects the same selected and comparison season without fetching detail', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    mount()
+    await screen.findByRole('table', { name: 'Completed season archive' })
+    fireEvent.change(screen.getByLabelText('Selected season'), { target: { value: '0' } })
+    fireEvent.change(screen.getByLabelText('Compare with'), { target: { value: '0' } })
+    expect(await screen.findByText(/Select two distinct existing seasons/)).toBeInTheDocument()
+    expect(screen.getByLabelText('Compare with')).toHaveValue('0')
+    expect(api.getSeasonDetail).not.toHaveBeenCalled()
+  })
+
 })

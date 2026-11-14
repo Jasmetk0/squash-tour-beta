@@ -156,6 +156,20 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     expect(api.putAlertState).not.toHaveBeenCalled()
   })
 
+
+  it('sorts available kinds explicitly and keeps grouped source events intact', async () => {
+    const reversed = { ...card(), items: [...card().items].reverse() }
+    api.getFollowAlerts.mockResolvedValue(alerts([reversed]))
+    mount()
+    const grouped = await screen.findByLabelText(/^Alice /)
+    const choices = within(screen.getByLabelText('Event kind in card'))
+      .getAllByRole('option').map(option => (option as HTMLOptionElement).value)
+    expect(choices).toEqual(['all', 'first_recorded_title', 'first_top_rank'])
+    expect(within(grouped).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded title')
+    expect(within(grouped).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded TOP 100')
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
   it('does not mutate alerts when filtering, and preserves every item in matching cards', async () => {
     mount()
     const row = await screen.findByLabelText(/^Alice /)

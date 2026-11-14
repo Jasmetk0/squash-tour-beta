@@ -135,6 +135,25 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     expect(api.getSavedPlayerCareer).not.toHaveBeenCalledWith('run', 'branch', 'P1', 99)
   })
 
+
+  it('uses a single present read and navigates from a clamped out-of-range page', async () => {
+    const params = new URLSearchParams({
+      career_scope: JSON.stringify(['run', 'branch', 'rev-1', 'P1']),
+      career_page: '999'
+    })
+    const events = Array.from({ length: 45 }, (_, index) => ({
+      ...turnPro, effective_week: { season_index: 0, week: index + 1 }
+    }))
+    api.getSavedPlayerCareer.mockResolvedValue(data(52, events, []))
+    mount(false, '/?' + params.toString())
+    const navigation = await screen.findByRole('navigation', { name: 'Career pagination' })
+    expect(navigation).toHaveTextContent('Page 3 / 3')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+    fireEvent.click(within(navigation).getByRole('button', { name: 'Previous' }))
+    expect(navigation).toHaveTextContent('Page 2 / 3')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
   it('rejects invalid as-of URL without ever issuing a historical request', async () => {
     const params = new URLSearchParams()
     params.set('career_scope', JSON.stringify(['run', 'branch', 'rev-1', 'P1']))

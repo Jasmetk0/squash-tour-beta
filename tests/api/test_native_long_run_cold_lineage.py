@@ -206,3 +206,37 @@ def test_cold_read_after_extension_replays_each_calendar_binding_once(tmp_path, 
     # HEAD + the newest pre-extension revision (+ the unchanged live-state
     # checks of the Tour reader), instead of one per pre-extension ancestor.
     assert with_boundary <= 4 < without, (with_boundary, without, global_count)
+
+
+def test_failed_extension_save_rolls_back_without_promoting_any_proof(tmp_path, prepared_slots, monkeypatch):
+    """Promotion happens only after a successful commit; a rollback leaves none."""
+    from beta_engine.application import run_calendar_extension_commit as commit
+    from tests.api.test_calendar_sporting_horizon_extension import extend, extension
+    from tests.api.test_calendar_tour_flow import tour_url
+    from tests.api.test_saved_revision_history_api import ApiServer, _request
+
+    path = tmp_path / "rollback.db"
+    copy_database(prepared_slots, path)
+    promoted, computed = [], []
+    original_appends = commit._verified_ancestor_appends
+
+    def failing_after_promotions(*args, **kwargs):
+        result = original_appends(*args, **kwargs)
+        computed.append(result)
+        raise ValueError("injected failure after the append proof, before commit")
+
+    monkeypatch.setattr(commit, "_verified_ancestor_appends", failing_after_promotions)
+    monkeypatch.setattr(commit, "_remember_promotions", lambda *a, **k: promoted.append(a))
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        before = _request("GET", tour_url(server))
+        assert before[0] == 200
+        repository = server.app.state.runtime.repository
+        proofs_before = dict(getattr(repository, "_native_dependency_proofs", {}))
+        status, review = extension(server, 4)
+        status, _receipt = extend(server, review, "rolled-back")
+        assert status == 409
+        assert computed and computed[0], "the append proof was computed (non-vacuous)"
+        assert promoted == []
+        assert dict(getattr(repository, "_native_dependency_proofs", {})) == proofs_before
+        after = _request("GET", tour_url(server))
+        assert after == before  # the same Saved HEAD; nothing was installed

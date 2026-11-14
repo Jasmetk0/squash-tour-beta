@@ -121,4 +121,18 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     mount()
     expect(await screen.findByText(/facts stay in the players’ career history/)).toBeInTheDocument()
   })
+  it('does not mutate alerts when filtering, and preserves every item in matching cards', async () => {
+    mount()
+    const row = await screen.findByLabelText(/^Alice /)
+    fireEvent.change(screen.getByLabelText('Event kind in card'), { target: { value: 'first_top_rank' } })
+    const filtered = await screen.findByLabelText(/^Alice /)
+    expect(filtered).toBe(row)
+    expect(within(filtered).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded title')
+    fireEvent.change(screen.getByLabelText('Search player or country'), { target: { value: 'nobody' } })
+    expect(await screen.findByText('No cards match these filters.')).toBeInTheDocument()
+    expect(api.putAlertState).not.toHaveBeenCalled()
+    expect(api.putRunFollow).not.toHaveBeenCalled()
+    expect(api.deleteRunFollow).not.toHaveBeenCalled()
+  })
+
 })

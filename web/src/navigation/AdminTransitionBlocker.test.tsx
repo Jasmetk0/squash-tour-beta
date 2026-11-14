@@ -12,12 +12,16 @@ function Harness(): JSX.Element {
   return <div>
     <AdminTransitionBlocker isDirty={() => dirty} warning="Unsaved edits?" />
     <output aria-label="Current route">{location.pathname}</output>
+    <output aria-label="Current search">{location.search}</output>
     <label>Edit <input aria-label="Edit" defaultValue="original" /></label>
     <button type="button" onClick={() => setDirty(value => !value)}>Toggle dirty</button>
     <Link to="/next">Next link</Link>
     <button onClick={() => navigate('/next')}>Imperative next</button>
     <button onClick={() => navigate(-1)}>Back</button>
     <button onClick={() => navigate(1)}>Forward</button>
+    <button onClick={() => navigate('/initial?branch=one&career_page=2')}>Reader next</button>
+    <button onClick={() => navigate('/initial?branch=two&career_page=3')}>Different Branch</button>
+    <button onClick={() => navigate('/initial?branch=one&tab=health&career_page=2')}>Different tab</button>
     <button onClick={() => {
       allowConfirmedAdminNavigation('/approved')
       navigate('/approved')
@@ -59,6 +63,30 @@ describe('data-router Admin blocker',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Forward'}))
     await waitFor(()=>expect(screen.getByLabelText('Current route')).toHaveTextContent('/future'))
     expect(confirm).toHaveBeenCalledTimes(2)
+  })
+
+  it('restores reader-only Back/Forward even with an unsaved Run draft, but blocks Branch/tab/path changes', async () => {
+    setup(['/initial?branch=one&career_page=1'])
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValue(false)
+    fireEvent.click(screen.getByRole('button', { name: 'Toggle dirty' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Reader next' }))
+    await waitFor(() => expect(screen.getByLabelText('Current search')).toHaveTextContent('career_page=2'))
+    expect(confirm).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await waitFor(() => expect(screen.getByLabelText('Current search')).toHaveTextContent('career_page=1'))
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }))
+    await waitFor(() => expect(screen.getByLabelText('Current search')).toHaveTextContent('career_page=2'))
+    expect(confirm).not.toHaveBeenCalled()
+
+    fireEvent.click(screen.getByRole('button', { name: 'Different Branch' }))
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(1))
+    expect(screen.getByLabelText('Current search')).toHaveTextContent('branch=one')
+    fireEvent.click(screen.getByRole('button', { name: 'Different tab' }))
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(2))
+    expect(screen.getByLabelText('Current search')).not.toHaveTextContent('tab=health')
+    fireEvent.click(screen.getByRole('button', { name: 'Imperative next' }))
+    await waitFor(() => expect(confirm).toHaveBeenCalledTimes(3))
+    expect(screen.getByLabelText('Current route')).toHaveTextContent('/initial')
   })
 
   it('does not warn in a clean context and skips an explicitly preapproved navigation',async()=>{

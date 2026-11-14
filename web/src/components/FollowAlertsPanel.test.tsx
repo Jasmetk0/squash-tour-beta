@@ -1,3 +1,4 @@
+import { MemoryRouter } from 'react-router-dom'
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -38,10 +39,10 @@ const alerts = (cards: unknown[] = [card()]) => ({
   saved_head_revision_id: 'rev-1', as_of_ordinal: 12, unread_cards: cards.length, cards,
   criteria: { domestic_leaders: 3, exceptional_rank: 1, group_window_weeks: 2, status: 'provisional calibration' }
 })
-function mount(cs = false) {
+function mount(cs = false, url = '/') {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
-  return render(<QueryClientProvider client={client}>
-    <FollowAlertsPanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} /></QueryClientProvider>)
+  return render(<MemoryRouter initialEntries={[url]}><QueryClientProvider client={client}>
+    <FollowAlertsPanel runId="run" branchId="branch" savedHead="rev-1" cs={cs} /></QueryClientProvider></MemoryRouter>)
 }
 
 describe('FollowAlertsPanel (component, mocked API)', () => {
@@ -50,6 +51,7 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
   it('shows ONE grouped card with separately sourced details and the dedup reasons', async () => {
     mount()
     const cardRow = await screen.findByLabelText(/^Alice /)
+    expect(screen.getByRole('region', { name: 'Following and alerts' })).toHaveAttribute('data-run-navigation-readonly')
     expect(cardRow).toHaveTextContent('2 milestones')
     expect(cardRow).toHaveTextContent('followed player; followed country: domestic leader')
     expect(screen.getAllByLabelText(/^Alice /)).toHaveLength(1)
@@ -120,4 +122,66 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     mount()
     expect(await screen.findByText(/facts stay in the players’ career history/)).toBeInTheDocument()
   })
+
+
+  it('ignores foreign Saved or Branch filters and does not reveal hidden alerts', async () => {
+    const qs = new URLSearchParams({
+      alert_scope: JSON.stringify(['run', 'other-branch', 'rev-1']),
+      alert_hidden: 'true', alert_search: 'never-match', alert_state: 'hidden'
+    })
+    mount(false, '/?' + qs.toString())
+    expect(await screen.findByLabelText(/^Alice /)).toBeInTheDocument()
+    expect(screen.getByLabelText('Show hidden too')).not.toBeChecked()
+    expect(api.getFollowAlerts).toHaveBeenCalledWith('run', 'branch', false)
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
+  it('orders cards by their latest actual event rather than their earliest grouped milestone', async () => {
+    const older = { ...card(), first_week: { season_index: 0, week: 1 },
+      last_week: { season_index: 0, week: 15 } }
+    const updated = { ...card(), notification_key: 'b'.repeat(64), player_id: 'P2',
+      player_name: 'Bob', first_week: { season_index: 0, week: 2 },
+      last_week: { season_index: 0, week: 20 },
+      items: card().items.map(i => ({ ...i, player_id: 'P2', player_name: 'Bob' })) }
+    api.getFollowAlerts.mockResolvedValue(alerts([older, updated]))
+    mount()
+    await screen.findByLabelText(/^Bob /)
+    const cards = screen.getAllByRole('listitem').filter(row => row.getAttribute('aria-label')?.startsWith('A') ||
+      row.getAttribute('aria-label')?.startsWith('B'))
+    expect(cards.map(c => c.getAttribute('aria-label')!.split(' ')[0])).toEqual(['Bob', 'Alice'])
+    fireEvent.change(screen.getByLabelText('Chronological order'), { target: { value: 'asc' } })
+    const reversed = screen.getAllByRole('listitem').filter(row => row.getAttribute('aria-label')?.startsWith('A') ||
+      row.getAttribute('aria-label')?.startsWith('B'))
+    expect(reversed.map(c => c.getAttribute('aria-label')!.split(' ')[0])).toEqual(['Alice', 'Bob'])
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
+
+  it('sorts available kinds explicitly and keeps grouped source events intact', async () => {
+    const reversed = { ...card(), items: [...card().items].reverse() }
+    api.getFollowAlerts.mockResolvedValue(alerts([reversed]))
+    mount()
+    const grouped = await screen.findByLabelText(/^Alice /)
+    const choices = within(screen.getByLabelText('Event kind in card'))
+      .getAllByRole('option').map(option => (option as HTMLOptionElement).value)
+    expect(choices).toEqual(['all', 'first_recorded_title', 'first_top_rank'])
+    expect(within(grouped).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded title')
+    expect(within(grouped).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded TOP 100')
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
+  it('does not mutate alerts when filtering, and preserves every item in matching cards', async () => {
+    mount()
+    const row = await screen.findByLabelText(/^Alice /)
+    fireEvent.change(screen.getByLabelText('Event kind in card'), { target: { value: 'first_top_rank' } })
+    const filtered = await screen.findByLabelText(/^Alice /)
+    expect(filtered).toBe(row)
+    expect(within(filtered).getByText('Details and sources').closest('details')).toHaveTextContent('First recorded title')
+    fireEvent.change(screen.getByLabelText('Search player or country'), { target: { value: 'nobody' } })
+    expect(await screen.findByText('No cards match these filters.')).toBeInTheDocument()
+    expect(api.putAlertState).not.toHaveBeenCalled()
+    expect(api.putRunFollow).not.toHaveBeenCalled()
+    expect(api.deleteRunFollow).not.toHaveBeenCalled()
+  })
+
 })

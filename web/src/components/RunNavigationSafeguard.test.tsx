@@ -1,8 +1,9 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Link, MemoryRouter } from 'react-router-dom'
+import { createMemoryRouter, Link, MemoryRouter, RouterProvider, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { acknowledgeSavedRunForm, RunNavigationSafeguard } from './RunNavigationSafeguard'
+import { useReaderParams } from './readerUrlState'
 
 const context = vi.hoisted(() => ({
   branch: { run_id: 'run-a', branch_id: 'branch-a', saved_head_revision_id: 'head-a' }
@@ -49,12 +50,69 @@ function edit(value:string) {
   fireEvent.change(field,{target:{value}})
 }
 
+function GuardedReader(): JSX.Element {
+  const reader = useReaderParams('career', 'run-a:branch-a:head-a:P1')
+  const location = useLocation()
+  const navigate = useNavigate()
+  return <div className="app-shell--admin">
+    <RunNavigationSafeguard runId="run-a" />
+    <main>
+      <input aria-label="Audit reason" defaultValue="initial" />
+      <section data-run-navigation-readonly>
+        <input aria-label="Reader search" value={reader.get('search')}
+          onChange={event => reader.set({ search: event.target.value }, true)} />
+        <button onClick={() => reader.set({ page: '2' })}>Reader page</button>
+        <button onClick={() => reader.reset()}>Reset reader</button>
+      </section>
+      <output aria-label="Location">{location.pathname + location.search + location.hash}</output>
+      <button onClick={() => navigate(-1)}>Back</button>
+      <button onClick={() => navigate(1)}>Forward</button>
+      <button onClick={() => navigate('?branch=other&career_page=3#timeline')}>Other Branch</button>
+      <button onClick={() => navigate('?branch=branch-a&tab=health&career_page=3#timeline')}>Other tab</button>
+      <button onClick={() => navigate('?branch=branch-a&tab=career#other')}>Other anchor</button>
+    </main>
+  </div>
+}
+
 describe('Run dirty navigation evidence',()=>{
   beforeEach(()=>{
     vi.restoreAllMocks();vi.clearAllMocks()
     context.branch={run_id:'run-a',branch_id:'branch-a',saved_head_revision_id:'head-a'}
     api.getBranchWorkingDraft.mockResolvedValue(clean)
     vi.spyOn(window,'confirm').mockReturnValue(true)
+  })
+
+  it.each(['local form', 'server Working Draft'])('preserves %s through real reader controls and history with an anchor', async source => {
+    if (source === 'server Working Draft') api.getBranchWorkingDraft.mockResolvedValue({ ...clean, status: 'dirty' })
+    const cache = new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: 0 } } })
+    const router = createMemoryRouter([{ path: '*', element: <GuardedReader /> }], {
+      initialEntries: ['/admin/runs/run-a/player/P1?branch=branch-a&tab=career#timeline']
+    })
+    render(<QueryClientProvider client={cache}><RouterProvider router={router} /></QueryClientProvider>)
+    await loaded()
+    vi.mocked(window.confirm).mockReturnValue(false)
+    const field = screen.getByRole('textbox', { name: 'Audit reason' })
+    if (source === 'local form') edit('keep my unsaved reason')
+    const shell = document.querySelector('.app-shell--admin')!
+    await waitFor(() => expect(shell).toHaveAttribute('data-run-form-edited', 'true'))
+    fireEvent.change(screen.getByLabelText('Reader search'), { target: { value: 'title' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Reader page' }))
+    await waitFor(() => expect(screen.getByLabelText('Location')).toHaveTextContent('career_page=2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    await waitFor(() => expect(screen.getByLabelText('Location')).not.toHaveTextContent('career_page=2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }))
+    await waitFor(() => expect(screen.getByLabelText('Location')).toHaveTextContent('career_page=2'))
+    fireEvent.click(screen.getByRole('button', { name: 'Reset reader' }))
+    expect(screen.getByLabelText('Location')).toHaveTextContent('branch=branch-a&tab=career#timeline')
+    expect(window.confirm).not.toHaveBeenCalled()
+    for (const [index, action] of ['Other Branch', 'Other tab', 'Other anchor'].entries()) {
+      fireEvent.click(screen.getByRole('button', { name: action }))
+      await waitFor(() => expect(window.confirm).toHaveBeenCalledTimes(index + 1))
+      expect(screen.getByLabelText('Location')).toHaveTextContent('branch=branch-a&tab=career#timeline')
+    }
+    expect(screen.getByRole('textbox', { name: 'Audit reason' })).toBe(field)
+    expect(field).toHaveValue(source === 'local form' ? 'keep my unsaved reason' : 'initial')
+    expect(shell).toHaveAttribute('data-run-form-edited', 'true')
   })
 
   it('does not prompt when leaving an unchanged Run',async()=>{

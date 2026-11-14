@@ -55,6 +55,9 @@ jobs:
               - '!scripts/saved_player_replay_browser_checks.py'
               - '!scripts/saved_tour_calendar_browser_checks.py'
               - '!scripts/edition_entry_timing_browser.py'
+              - '!scripts/player_career_browser_acceptance.py'
+              - '!scripts/season_archive_browser_acceptance.py'
+              - '!scripts/follow_alerts_browser_acceptance.py'
               - 'src/**'
               - 'tests/**'
               - 'pyproject.toml'
@@ -97,6 +100,9 @@ jobs:
               - '!scripts/saved_player_replay_browser_checks.py'
               - '!scripts/saved_tour_calendar_browser_checks.py'
               - '!scripts/edition_entry_timing_browser.py'
+              - '!scripts/player_career_browser_acceptance.py'
+              - '!scripts/season_archive_browser_acceptance.py'
+              - '!scripts/follow_alerts_browser_acceptance.py'
               - 'src/**'
               - 'tests/**'
               - '!tests/application/test_earth_seed_progress.py'
@@ -188,7 +194,9 @@ jobs:
       - name: Run PR critical backend tests
         if: needs.changes.outputs.backend_core == 'true'
         run: |
-          python -m pytest -m pr_critical --maxfail=1 --durations=10
+          # Show the current test in live logs, rather than only a quiet dot
+          # after a potentially long integration case has finished.
+          python -m pytest -v -m pr_critical --maxfail=1 --durations=10
       # A dependency-only PR need not change any test modules. Bypass the
       # changed-test selector only for this explicit environment baseline.
       - name: Verify the locked environment against the backend

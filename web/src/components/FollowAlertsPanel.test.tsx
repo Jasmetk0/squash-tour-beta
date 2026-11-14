@@ -122,6 +122,19 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
     expect(await screen.findByText(/facts stay in the players’ career history/)).toBeInTheDocument()
   })
 
+
+  it('ignores foreign Saved or Branch filters and does not reveal hidden alerts', async () => {
+    const qs = new URLSearchParams({
+      alert_scope: JSON.stringify(['run', 'other-branch', 'rev-1']),
+      alert_hidden: 'true', alert_search: 'never-match', alert_state: 'hidden'
+    })
+    mount(false, '/?' + qs.toString())
+    expect(await screen.findByLabelText(/^Alice /)).toBeInTheDocument()
+    expect(screen.getByLabelText('Show hidden too')).not.toBeChecked()
+    expect(api.getFollowAlerts).toHaveBeenCalledWith('run', 'branch', false)
+    expect(api.putAlertState).not.toHaveBeenCalled()
+  })
+
   it('orders cards by their latest actual event rather than their earliest grouped milestone', async () => {
     const older = { ...card(), first_week: { season_index: 0, week: 1 },
       last_week: { season_index: 0, week: 15 } }

@@ -90,8 +90,10 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   if (baseline.isPending) {
     return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
   }
-  if (baseline.error) return <section aria-label={title}><h3>{title}</h3><p role="alert">{formatApiError(baseline.error)}</p></section>
-  if (maxOrdinal === null) return <section aria-label={title}><h3>{title}</h3><p role="alert">{cs ? 'Neplatná odpověď kariéry.' : 'Invalid career response.'}</p></section>
+  if (baseline.error) return <section aria-label={title}><h3>{title}</h3><p role="status">{cs ? 'Kariérní osa není pro tuto revizi dostupná: ' : 'Career timeline is unavailable for this revision: '}{formatApiError(baseline.error)}</p></section>
+  if (maxOrdinal === null) return <section aria-label={title}><h3>{title}</h3><p role="alert">{cs
+    ? 'Odpověď neodpovídá vybrané Branch, uložené revizi nebo hráči a nebyla zobrazena.'
+    : 'The response does not match the selected Branch, Saved revision or player and was not displayed.'}</p></section>
   if (badAsOf) return <section aria-label={title}><h3>{title}</h3>
     <p role="alert">{cs ? 'Neplatný nebo budoucí týden. Zobrazení nebylo přepnuto na současnost.' : 'Invalid or future week. The view was not silently changed to the present.'}</p>
     <button type="button" onClick={() => { url.set({ asof: null, page: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>

@@ -51,6 +51,7 @@ describe('FollowAlertsPanel (component, mocked API)', () => {
   it('shows ONE grouped card with separately sourced details and the dedup reasons', async () => {
     mount()
     const cardRow = await screen.findByLabelText(/^Alice /)
+    expect(screen.getByRole('region', { name: 'Following and alerts' })).toHaveAttribute('data-run-navigation-readonly')
     expect(cardRow).toHaveTextContent('2 milestones')
     expect(cardRow).toHaveTextContent('followed player; followed country: domestic leader')
     expect(screen.getAllByLabelText(/^Alice /)).toHaveLength(1)

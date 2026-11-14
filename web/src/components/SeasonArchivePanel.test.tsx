@@ -119,4 +119,18 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     mount()
     expect(await screen.findByText(/archive is unavailable for this revision/)).toHaveTextContent('requires a Saved configured Tour')
   })
+  it('keeps a missing comparison side distinct while presence filtering', async () => {
+    api.getSeasonArchive.mockResolvedValue(archive)
+    api.getSeasonDetail.mockResolvedValue(detail(true))
+    mount()
+    await compare()
+    await screen.findByLabelText('Season comparison')
+    fireEvent.change(screen.getByLabelText('Presence'), { target: { value: 'only_comparison' } })
+    const panel = screen.getByLabelText('Season comparison')
+    expect(within(panel).getByText('AUT')).toBeInTheDocument()
+    expect(within(panel).queryByText('CZE')).not.toBeInTheDocument()
+    expect(within(panel).getAllByText('not represented')).toHaveLength(2)
+    expect(api.getSeasonDetail).toHaveBeenCalledTimes(1)
+  })
+
 })

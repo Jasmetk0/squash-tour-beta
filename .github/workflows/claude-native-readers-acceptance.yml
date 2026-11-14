@@ -83,6 +83,10 @@ jobs:
           GITHUB_EVENT_NAME: native_readers_acceptance
         shell: bash
         run: |
+          # GitHub owns GITHUB_EVENT_NAME for pull_request jobs, so an env: override
+          # is not a reliable bypass for tests/conftest.py's changed-file filter.
+          # Every case below requests explicit acceptance tests, not a PR-delta subset.
+          unset GITHUB_EVENT_NAME
           case "$CASE" in
             opening)
               python -m pytest -vv --maxfail=1 --durations=10 tests/api/test_calendar_turn_pro_opening_adoption.py ;;

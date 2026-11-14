@@ -354,13 +354,12 @@ clock; the CI-policy test derives the required clocks from the test parametrizat
   Revision is a complete snapshot (W52 after two seasons: 126 revisions, 1.59 GB),
   and every read rereads and hashes every ancestor once; a cold process also decodes
   and validates every revision. This is the authority rule (fail closed on any
-  changed history), not a cache defect. W52 two seasons, candidate, contended host:
-  cold inspect ~98 s (direct measurement), i.e. close to the 120 s transport bound.
-  Horizons much beyond two W80 seasons, 50-season Runs and 1,000-player long Runs
-  will exceed it. Removing that limit needs an owner decision on storage or proof
-  design (for example content-addressed/delta component storage, or a restart
-  proof that cannot be forged from inside the same database); it is not attempted
-  here.
+  changed history), not a cache defect. W52 two seasons + extension, repaired head,
+  idle host: cold inspect 109 s, close to the 120 s transport bound. 50-season and
+  1,000-player long Runs will exceed it. The structural fix is the
+  backward-compatible content-addressed component storage in
+  `docs/NATIVE_SAVED_COMPONENT_STORAGE_PROPOSAL.md` (remaining engineering work,
+  not attempted here).
 - Cold validation depth is now ~2, but the *warm* single-revision paths are
   unchanged; the per-walk replay-evidence bound (4,096) and the proof bound (4,096)
   are sized for lineages up to a few thousand revisions; the dependency-proof
@@ -371,5 +370,5 @@ clock; the CI-policy test derives the required clocks from the test parametrizat
   W52 two-season cold read (baseline was OOM-killed on that input on this host).
 - Timings are from one 4-vCPU host with concurrent jobs; GitHub runners differ.
   No browser, frontend or 1,000-player scenario was run for this change.
-- Next dependency: owner review of this Draft; then, if longer horizons are needed
-  before release, a storage/proof decision for Saved history.
+- Next dependency: Work's re-review of the repaired head; then the storage proposal
+  as its own task.

@@ -68,6 +68,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const order = url.get('order', 'asc')
   const page = readerPage(url.get('page', '1'))
   const [draft, setDraft] = React.useState(requested)
+  React.useEffect(() => { setDraft(requested) }, [requested, runId, branchId, savedHead, playerId])
   const baseline = useQuery({
     queryKey: ['saved-player-career', runId, branchId, savedHead, playerId, 'present'],
     queryFn: () => getSavedPlayerCareer(runId, branchId, playerId),

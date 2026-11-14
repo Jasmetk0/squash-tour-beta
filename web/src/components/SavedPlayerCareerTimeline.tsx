@@ -63,7 +63,8 @@ function sourceText(e: CareerEvent, cs: boolean): string {
 export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId, cs }: Props): JSX.Element {
   const url = useReaderParams('career', JSON.stringify([runId, branchId, savedHead, playerId]))
   const requested = url.get('asof')
-  const kind = url.get('kind', 'all')
+  const kindValue = url.get('kind', 'all')
+  const kind = kindValue === 'all' || CAREER_KINDS.some(k => k === kindValue) ? kindValue : 'all'
   const search = url.get('search')
   const order = url.get('order', 'asc')
   const page = readerPage(url.get('page', '1'))

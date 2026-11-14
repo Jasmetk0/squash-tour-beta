@@ -410,7 +410,13 @@ def read(args):
     result['response_sha256'] = {k: hashlib.sha256(v).hexdigest() for k, v in values.items()}
     # Cold responses of the immutable input: comparable across source trees.
     result['cold_response_sha256'] = {k: hashlib.sha256(v).hexdigest() for k, v in cold_values.items()}
+    result['data_after_sha256'] = sha256(database)
     (args.root / 'result.json').write_text(json.dumps(result, indent=2))
+    if not args.keep_database:
+        # Each case copies the whole input (1.6 GB for W52 after two seasons);
+        # keeping every copy exhausted the measurement host's disk allowance.
+        for suffix in ('', '-wal', '-shm', '-journal'):
+            Path(str(database) + suffix).unlink(missing_ok=True)
     summary = {}
     for item in records:
         summary.setdefault(item['phase'], {})[item['read']] = round(item['seconds'], 3)
@@ -429,6 +435,8 @@ def main(argv=None):
     r.add_argument('--repeats', type=int, default=2)
     r.add_argument('--read-only', action='store_true')
     r.add_argument('--profile', action='store_true')
+    r.add_argument('--keep-database', action='store_true',
+                   help='keep the measured SQLite copy (deleted by default after its digest is recorded)')
     r.add_argument('--seasons', type=int, choices=(1, 2), default=2,
                    help='closed seasons in the input (after-season0 inputs have one)')
     args = parser.parse_args(argv)

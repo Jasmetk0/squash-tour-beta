@@ -103,19 +103,46 @@ not timing samples):
   new transaction creates a new snapshot and discards the memo with the rows.
   A differential check on every revision of real inputs found identical signatures
   and proof keys.
+- **Cold lineage order** (`repositories.py::_prevalidate_cold_global_lineage`). Only
+  when HEAD is not yet proven: HEAD's single complete component replay runs first
+  (exactly the replay HEAD's own validation runs first; it only records evidence),
+  then the contiguous unproven ancestors are validated oldest first by the ordinary
+  validator, then the ordinary HEAD-to-root walk runs unchanged. Each child now
+  finds its parent's completed proof, so validations no longer nest (depth 59 → 2)
+  and each decoded payload is released before the next. Any error in this pass is
+  discarded and the ordinary walk raises its original error in its original order.
+- **Replay evidence covers the lineage** (`calendar_native_competition.py`): the
+  per-walk evidence maps grow from 128 to 4,096 entries (hashes and frozen states
+  that share receipts/events with the replay). With 128, ancestors older than 128
+  states replayed the whole history again.
+- **No unused parent prefix**: when the declared component identity is already
+  in this walk's replay evidence, the parent's sources are not decoded/copied for
+  a prefix that the component check would not use. If the actual values differ,
+  the component check replays from the root without a prefix (same verdict).
+- **Content hash over the stored canonical text** (`run_revisions.py::
+  stored_canonical_payload_hash_matches`). Writers store `canonical_json(payload)`.
+  The canonical envelope is assembled with that stored text as the `payload`
+  value; a matching SHA-256 implies the ordinary check passes (the other tokens
+  are self-delimiting canonical JSON built here and the structural key
+  `,"payload_schema_version":` occurs exactly once after the payload in both
+  strings, so the stored text must equal the writer's canonical payload). Any
+  mismatch falls back to the ordinary decode-and-reserialize check. 3,000 random
+  and adversarial cases plus all real rows of the fixture agree.
 - **Scoped cyclic-GC pause** (`cyclic_gc.py`) around the native Tour service reads,
   commands and `save_calendar_tour`. Reference counting still frees everything;
   cycles are collected after the outermost operation. Reference counted across
   threads; an already disabled collector stays disabled.
 
 Not changed: physical rereading of every ancestor, owners, topology/reachability,
-source HEADs, strict decoding, content hashes, component replay, Save receipts,
+source HEADs, strict decoding, component replay/evidence matching, Save receipts,
 transaction gates, the 120-second transport bound and every existing cache budget.
 
-A rejected candidate is recorded honestly: validating ancestors oldest-first before
-HEAD removed the recursion (depth 59 → 1) but made W6 cold reads 188 s instead of
-~34 s, because HEAD's single complete replay normally supplies the ancestors'
-component proofs. It was reverted.
+Rejected after measurement (reverted, not shipped):
+
+- validating ancestors oldest first *before* HEAD's replay: depth 1 but W6 cold
+  188 s instead of ~34 s, because each ancestor then replayed the whole history;
+- keeping loaded ORM rows referenced during the cold pass: 242 → 201 row loads and
+  ~2 s faster at W52/one season, but peak RSS 1.0 → 1.8 GB.
 
 ## Before/after (identical input copies, balanced order A1 B1 B2 A2)
 
@@ -155,4 +182,26 @@ for Draft PRs. The manual full suite excludes the `long_season` marker. The
 
 ## Limits and next work
 
-__LIMITS__
+- **Every read is still linear in the total bytes of the lineage.** Each Saved
+  Revision is a complete snapshot (W52 after two seasons: 126 revisions, 1.59 GB),
+  and every read rereads and hashes every ancestor once; a cold process also decodes
+  and validates every revision. This is the authority rule (fail closed on any
+  changed history), not a cache defect. W52 two seasons, candidate, contended host:
+  cold inspect ~98 s (direct measurement), i.e. close to the 120 s transport bound.
+  Horizons much beyond two W80 seasons, 50-season Runs and 1,000-player long Runs
+  will exceed it. Removing that limit needs an owner decision on storage or proof
+  design (for example content-addressed/delta component storage, or a restart
+  proof that cannot be forged from inside the same database); it is not attempted
+  here.
+- Cold validation depth is now ~2, but the *warm* single-revision paths are
+  unchanged; the per-walk replay-evidence bound (4,096) and the proof bound (4,096)
+  are sized for lineages up to a few thousand revisions; the dependency-proof
+  bound (256 per repository) is unchanged and exceeded by lineages longer than 256.
+- Remaining dominant costs: defensive deep copies of the decoded HEAD checkpoint,
+  JSON decoding of every revision on a cold start, replay fingerprints and
+  ancestor rereads. Memory: server peak ~1.1–1.6 GB at one season, ~2.3 GB for the
+  W52 two-season cold read (baseline was OOM-killed on that input on this host).
+- Timings are from one 4-vCPU host with concurrent jobs; GitHub runners differ.
+  No browser, frontend or 1,000-player scenario was run for this change.
+- Next dependency: owner review of this Draft; then, if longer horizons are needed
+  before release, a storage/proof decision for Saved history.

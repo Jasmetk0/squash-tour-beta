@@ -139,6 +139,17 @@ not timing samples):
   132–138 s → 34–39 s, identical result (`can_save` true, no blockers). The first
   two-season W52 run on the previous head failed exactly here (transport timeout
   after every sporting assertion had passed).
+- **Extension Save re-keys authenticated ancestor proofs** (`run_calendar_extension_commit.py`,
+  `native_fork_runtime_state.py::remember_committed_ancestor_proofs`). The complete
+  actual dependency graph of each native HEAD is taken before the append and
+  again after it; `assert_global_save_append` must find exactly the one appended
+  revision and the HEAD advance. Only after commit are the OLD revisions' proofs
+  re-keyed to the new graph (as the ordinary Save coordinator does). No HEAD proof
+  is recorded: the new extension revision is fully validated by the next read
+  (regression: it enters the validation cache only through the exact-byte
+  validator; a re-hashed change to it or to an old ancestor is rejected). First
+  read after the extension, W52 after two seasons: 69–73 s → 13 s. The second
+  two-season W52 run on the previous head failed exactly here.
 - **Scoped cyclic-GC pause** (`cyclic_gc.py`) around the native Tour service reads,
   commands and `save_calendar_tour`. Reference counting still frees everything;
   cycles are collected after the outermost operation. Reference counted across

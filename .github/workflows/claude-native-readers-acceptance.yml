@@ -167,8 +167,10 @@ jobs:
         env:
           CLOCK: ${{ matrix.clock }}
           PYTHONPATH: src:.:tests/api
-          GITHUB_EVENT_NAME: native_readers_acceptance
+        shell: bash
         run: |
+          # As in the api job: never let the PR changed-test filter deselect it.
+          unset GITHUB_EVENT_NAME
           python -m pytest -vv --maxfail=1 --durations=10 \
             "tests/api/test_native_season_archive_wide.py::test_two_closed_seasons_archive_compare_extend_and_restart[${CLOCK}]"
       - name: Reject test writes to tracked inputs

@@ -122,7 +122,7 @@ def test_native_reader_scripts_keep_their_real_gate_without_general_backend_sele
     assert any(fnmatchcase(path, pattern) for pattern in native['on']['pull_request']['paths'])
     assert set(native['on']['pull_request']['types']) == {'opened', 'synchronize', 'reopened', 'ready_for_review'}
     assert 'workflow_dispatch' in native['on']
-    assert len(native['jobs']['api']['strategy']['matrix']['case']) == 13
+    assert len(native['jobs']['api']['strategy']['matrix']['case']) == 14
     for job in native['jobs'].values():
         assert job['if'] == GATE
     browser = native['jobs']['browser']
@@ -139,3 +139,22 @@ def test_native_reader_shared_url_and_guard_changes_trigger_actual_acceptance():
     paths = workflow['on']['pull_request']['paths']
     assert 'web/src/components/readerUrlState.ts' in paths
     assert 'web/src/navigation/AdminTransitionBlocker.tsx' in paths
+
+
+def test_long_season_clocks_are_separate_from_the_fast_w6_case():
+    """`-k 'not w52'` would also select w61/w80; long clocks need their own jobs."""
+    workflows = ROOT / '.github/workflows'
+    native = yaml.load((workflows / 'claude-native-readers-acceptance.yml').read_text(), Loader=yaml.BaseLoader)
+    api_run = next(step['run'] for step in native['jobs']['api']['steps'] if 'case "$CASE"' in step.get('run', ''))
+    w6 = api_run.split('seasons_w6)', 1)[1].split(';;', 1)[0]
+    assert "test_two_closed_seasons_archive_compare_extend_and_restart[w6]'" in w6
+    assert ' -k ' not in api_run
+    long_job = native['jobs']['long_seasons']
+    assert long_job['if'] == GATE
+    assert set(long_job['strategy']['matrix']['clock']) == {'w52', 'w61', 'w80'}
+    assert int(long_job['timeout-minutes']) <= 360
+    long_run = next(step['run'] for step in long_job['steps'] if 'pytest' in step.get('run', ''))
+    assert 'unset GITHUB_EVENT_NAME' in long_run
+    assert 'test_two_closed_seasons_archive_compare_extend_and_restart[${CLOCK}]' in long_run
+    full = yaml.load((workflows / 'full-test-suite.yml').read_text(), Loader=yaml.BaseLoader)
+    assert any('-m "not long_season"' in step.get('run', '') for step in full['jobs']['backend-full']['steps'])

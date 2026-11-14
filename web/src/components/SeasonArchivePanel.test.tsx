@@ -95,7 +95,7 @@ describe('SeasonArchivePanel (component, mocked API)', () => {
     fireEvent.change(other, { target: { value: '0' } })
     const alert = await screen.findByText(/Omezená srovnatelnost/)
     expect(alert).toHaveTextContent('Omezená srovnatelnost')
-    expect(alert).toHaveTextContent('Best N: 1 → 15')
+    expect(alert.closest('[role="alert"]')).toHaveTextContent('Best N: 1 → 15')
   })
 
   it('does not display a response for another Saved revision', async () => {

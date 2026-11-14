@@ -105,6 +105,30 @@ def main():
                             section.get_by_role("button", name=follow_btn, exact=True).click()
                             card = section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))
                             expect(card).to_have_count(1)
+                            # Client-only filters must not call follow/alert mutation endpoints.
+                            writes = []
+                            page.on("request", lambda req: writes.append((req.method, req.url))
+                                    if req.method in ("POST", "PUT", "PATCH", "DELETE") else None)
+                            search_label = "Hledat hráče nebo zemi" if language == "cs" else "Search player or country"
+                            event_label = "Druh události v kartě" if language == "cs" else "Event kind in card"
+                            section.get_by_label(search_label).fill("no-such-player")
+                            expect(section).to_contain_text(
+                                "Žádné karty neodpovídají filtrům." if language == "cs"
+                                else "No cards match these filters."
+                            )
+                            section.get_by_label(search_label).fill(champion)
+                            expect(card).to_have_count(1)
+                            section.get_by_label(event_label).select_option("first_recorded_title")
+                            expect(card).to_have_count(1)
+                            assert "alert_event=first_recorded_title" in page.url
+                            page.reload()
+                            section = page.get_by_role("region", name=title)
+                            card = section.get_by_label(__import__("re").compile(r"^.+ [0-9a-f]{8}$"))
+                            expect(section.get_by_label(event_label)).to_have_value("first_recorded_title")
+                            expect(card).to_have_count(1)
+                            assert not writes, writes
+                            section.get_by_role("button", name="Reset filtrů" if language == "cs" else "Reset filters").click()
+                            assert "alert_event" not in page.url
                             card.locator("details summary").click()
                             expect(card).to_contain_text("played_edition")
                             section.scroll_into_view_if_needed()

@@ -126,6 +126,8 @@ def main():
                                     str(edition_ordinal - 1)
                                 )
                                 section.get_by_role("button", name="Apply").click()
+                                # A read-only control must not dirty the Run Working Draft guard.
+                                assert page.locator('.app-shell--admin').get_attribute('data-run-form-edited') != 'true'
                                 expect(section).to_contain_text(
                                     f"Shown as of week no. {edition_ordinal - 1}"
                                 )

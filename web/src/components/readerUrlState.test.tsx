@@ -33,15 +33,39 @@ describe('reader URL state (router-only, no HTTP)', () => {
     expect(screen.getByTestId('location')).not.toHaveTextContent('career_')
   })
 
-  it('ignores selections belonging to another Saved owner', () => {
+  it('does not leak controls when the displayed Run, Branch, Saved revision or player changes', () => {
     const { rerender } = render(<MemoryRouter initialEntries={['/?career_scope=old&career_kind=retirement&foo=bar']}>
-      <Reader owner="new" />
+      <Reader owner="old" />
     </MemoryRouter>)
+    expect(screen.getByTestId('value')).toHaveTextContent('retirement')
+    rerender(<MemoryRouter><Reader owner="new" /></MemoryRouter>)
     expect(screen.getByTestId('value')).toHaveTextContent('all')
     fireEvent.click(screen.getByRole('button', { name: 'Choose' }))
-    expect(screen.getByTestId('location')).toHaveTextContent('foo=bar')
-    expect(screen.getByTestId('location')).toHaveTextContent('career_scope=new')
-    rerender(<MemoryRouter initialEntries={['/?career_scope=old&career_kind=retirement']}><Reader owner="new" /></MemoryRouter>)
+    const location = screen.getByTestId('location')
+    expect(location).toHaveTextContent('foo=bar')
+    expect(location).toHaveTextContent('career_scope=new')
+    expect(location).toHaveTextContent('career_kind=retirement')
+    expect(location).not.toHaveTextContent('career_scope=old')
+    rerender(<MemoryRouter><Reader owner="other-run|other-branch|other-revision|other-player" /></MemoryRouter>)
+    expect(screen.getByTestId('value')).toHaveTextContent('all')
+  })
+
+  it('preserves other reader controls and history without adding a step for typed search', () => {
+    render(<MemoryRouter initialEntries={['/?branch=one&season_selected=2&alert_hidden=true']}>
+      <Reader owner="scope" />
+    </MemoryRouter>)
+    fireEvent.click(screen.getByRole('button', { name: 'Choose' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Search' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('career_search=hello')
+    fireEvent.click(screen.getByRole('button', { name: 'Back' }))
+    expect(screen.getByTestId('value')).toHaveTextContent('all')
+    fireEvent.click(screen.getByRole('button', { name: 'Forward' }))
+    expect(screen.getByTestId('value')).toHaveTextContent('retirement')
+    fireEvent.click(screen.getByRole('button', { name: 'Reset' }))
+    expect(screen.getByTestId('location')).toHaveTextContent('season_selected=2')
+    expect(screen.getByTestId('location')).toHaveTextContent('alert_hidden=true')
+    expect(screen.getByTestId('location')).toHaveTextContent('branch=one')
+    expect(screen.getByTestId('location')).not.toHaveTextContent('career_')
   })
 
   it('paginates without mutating source and rejects invalid page values', () => {

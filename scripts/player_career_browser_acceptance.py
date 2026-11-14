@@ -147,6 +147,10 @@ def main():
                                 section.get_by_label("Search entries").fill("")
                                 section.get_by_label("Order").select_option("desc")
                                 assert "career_order=desc" in page.url
+                                page.go_back()
+                                expect(section.get_by_label("Order")).to_have_value("asc")
+                                page.go_forward()
+                                expect(section.get_by_label("Order")).to_have_value("desc")
                                 page.reload()
                                 expect(section.get_by_label("Order")).to_have_value("desc")
                                 section.get_by_role("button", name="Reset filters").click()

@@ -88,7 +88,7 @@ export function FollowAlertsPanel({ runId, branchId, savedHead, cs }: Props): JS
     if (it.kind === 'retirement' && d.without_turn_pro === true) return cs ? ' · bez přechodu mezi profesionály' : ' · without ever turning pro'
     return ''
   }
-  return <section aria-label={title}>
+  return <section aria-label={title} data-run-navigation-readonly>
     <h2>{title}</h2>
     <p>{cs
       ? 'Sledování je předvolba celého Runu (platí pro všechny Branche) a není součástí Saved revize. Upozornění se odvozují z doložených kariérních faktů vybrané Branch; čtení, skrytí ani ztišení nic nemaže a neovlivňuje simulaci.'

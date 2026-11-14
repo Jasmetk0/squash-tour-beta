@@ -29,6 +29,8 @@ on:
       - 'web/src/api/followNotifications.ts'
       - 'web/src/components/SavedDrawNativeReadiness.tsx'
       - 'web/src/components/SavedPlayerCareerTimeline.tsx'
+      - 'web/src/components/readerUrlState.ts'
+      - 'web/src/navigation/AdminTransitionBlocker.tsx'
       - 'web/src/components/SeasonArchivePanel.tsx'
       - 'web/src/components/Follow*.tsx'
       - 'web/src/pages/FollowAlertsPage.tsx'

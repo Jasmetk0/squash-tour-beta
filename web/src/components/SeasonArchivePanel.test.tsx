@@ -61,6 +61,18 @@ async function compare() {
 describe('SeasonArchivePanel (component, mocked API)', () => {
   beforeEach(() => { api.getSeasonArchive.mockClear(); api.getSeasonDetail.mockClear() })
 
+  it.each([null, {}, [null]])('rejects malformed seasons before resolving URL selections: %j', async seasons => {
+    api.getSeasonArchive.mockResolvedValue({ ...archive, seasons })
+    const params = new URLSearchParams({
+      season_scope: JSON.stringify(['run', 'branch', 'rev-1']),
+      season_selected: '1', season_other: '0'
+    })
+    mount(false, undefined, '/?' + params.toString())
+    expect(await screen.findByRole('alert')).toHaveTextContent('was not displayed')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(api.getSeasonDetail).not.toHaveBeenCalled()
+  })
+
   it('lists every completed season with its rules and overview', async () => {
     api.getSeasonArchive.mockResolvedValue(archive)
     mount()

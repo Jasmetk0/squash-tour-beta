@@ -10,6 +10,7 @@ function Reader({ owner }: { owner: string }) {
   return <div>
     <output data-testid="value">{url.get('kind', 'all')}</output>
     <output data-testid="location">{location.search}</output>
+    <output data-testid="hash">{location.hash}</output>
     <button onClick={() => url.set({ kind: 'retirement' })}>Choose</button>
     <button onClick={() => url.set({ search: 'hello' }, true)}>Search</button>
     <button onClick={() => navigate(-1)}>Back</button>
@@ -19,6 +20,15 @@ function Reader({ owner }: { owner: string }) {
 }
 
 describe('reader URL state (router-only, no HTTP)', () => {
+  it('preserves the current anchor for selection, search, reset and history', () => {
+    render(<MemoryRouter initialEntries={['/?branch=one#timeline']}><Reader owner="scope" /></MemoryRouter>)
+    for (const action of ['Choose', 'Search', 'Reset', 'Back', 'Forward']) {
+      fireEvent.click(screen.getByRole('button', { name: action }))
+      expect(screen.getByTestId('hash')).toHaveTextContent('#timeline')
+      expect(screen.getByTestId('location')).toHaveTextContent('branch=one')
+    }
+  })
+
   it('preserves foreign parameters and restores choices with Back/Forward', () => {
     render(<MemoryRouter initialEntries={['/?branch=one&external=keep']}><Reader owner="run|branch|revision|player" /></MemoryRouter>)
     fireEvent.click(screen.getByRole('button', { name: 'Choose' }))

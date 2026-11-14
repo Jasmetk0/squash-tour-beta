@@ -1,4 +1,4 @@
-import { useSearchParams } from 'react-router-dom'
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom'
 
 /**
  * URL-backed controls for a single Saved reader. A scope token prevents query
@@ -6,7 +6,15 @@ import { useSearchParams } from 'react-router-dom'
  * Search uses replace so typing does not fill the browser's Back stack.
  */
 export function useReaderParams(prefix: 'career' | 'season' | 'alert', scope: string) {
-  const [params, setParams] = useSearchParams()
+  const [params] = useSearchParams()
+  const { hash } = useLocation()
+  const navigate = useNavigate()
+  const setParams = (update: (previous: URLSearchParams) => URLSearchParams, options?: { replace: boolean }) => {
+    const next = update(params)
+    // A display-only query update must not remove an anchor and become a
+    // different navigation under the unsaved Working Draft guard.
+    navigate({ search: next.toString(), hash }, options)
+  }
   const key = (name: string) => `${prefix}_${name}`
   const active = params.get(key('scope')) === scope
   const get = (name: string, fallback = ''): string =>

@@ -34,14 +34,16 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
     queryKey: ['season-archive', runId, branchId, savedHead],
     queryFn: () => getSeasonArchive(runId, branchId), retry: false
   })
-  const seasons = archiveQuery.data?.seasons ?? []
+  const archive = validSeasonArchive(archiveQuery.data, { runId, branchId, savedHead })
+    ? archiveQuery.data : null
+  const seasons = archive?.seasons ?? []
   const hasSelected = selected !== null && seasons.some(s => s.season_index === selected)
   const hasOther = other !== null && seasons.some(s => s.season_index === other)
   const validPair = hasSelected && hasOther && selected !== other
   const detailQuery = useQuery({
     queryKey: ['season-detail', runId, branchId, savedHead, selected, other],
     queryFn: () => getSeasonDetail(runId, branchId, selected!, other!),
-    enabled: validPair && Boolean(archiveQuery.data && validSeasonArchive(archiveQuery.data, { runId, branchId, savedHead })), retry: false
+    enabled: validPair, retry: false
   })
   if (archiveQuery.isPending) {
     return <section aria-label={title} data-run-navigation-readonly><h3>{title}</h3><p role="status">{cs ? 'Načítám archiv…' : 'Loading archive…'}</p></section>
@@ -51,8 +53,7 @@ export function SeasonArchivePanel({ runId, branchId, savedHead, cs, playerName 
       {cs ? 'Archiv sezón není pro tuto revizi dostupný: ' : 'The season archive is unavailable for this revision: '}
       {formatApiError(archiveQuery.error)}</p></section>
   }
-  const archive = archiveQuery.data
-  if (!validSeasonArchive(archive, { runId, branchId, savedHead })) {
+  if (!archive) {
     return <section aria-label={title}><h3>{title}</h3><p role="alert">{cs
       ? 'Odpověď neodpovídá vybrané Branch nebo uložené revizi a nebyla zobrazena.'
       : 'The response does not match the selected Branch or Saved revision and was not displayed.'}</p></section>

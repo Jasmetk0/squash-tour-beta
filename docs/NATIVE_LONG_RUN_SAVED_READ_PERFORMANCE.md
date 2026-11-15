@@ -278,7 +278,55 @@ Server peak RSS (GiB, VmHWM): baseline A1 server killed by the kernel OOM killer
 
 ## Re-measurement of the repaired head
 
-__REMEASURE__
+Identical immutable input copies, balanced order A1 B1 B2 A2, idle 4-vCPU host (no other jobs), baseline `buuk 320e476` (`src/` `33f8878c`, unchanged since `342b826`) vs the repaired head (`src/` `0d611805`), same measurement script (SHA-256 in the evidence file). Mean ± sample SD over all raw observations; `TO 120` is a read censored at the unchanged 120 s transport bound, never a latency; a later read waiting for the same single-flight validation shows when it ended. CPU is the server process's user+system time for the whole case.
+
+### W80 after one season (94 revisions, 891 MB)
+
+Runs (commit, `src/` tree): A1 `320e4766ec` `33f8878c02`; A2 `320e4766ec` `33f8878c02`; B1 `bcb8dfbbcb` `0d61180512`; B2 `bcb8dfbbcb` `0d61180512`
+
+| Phase / read (s) | Baseline A1, A2 | Repaired B1, B2 |
+| --- | --- | --- |
+| cold / tour | 79.40, 76.64; **78.02 ± 1.95** | 48.94, 50.59; **49.76 ± 1.17** |
+| cold / archive | 4.81, 4.91; **4.86 ± 0.07** | 3.34, 3.36; **3.35 ± 0.01** |
+| cold / season0 | 5.06, 5.24; **5.15 ± 0.13** | 2.97, 3.54; **3.25 ± 0.40** |
+| warm / tour | 5.66, 5.69, 5.50, 5.73; **5.64 ± 0.10** | 3.78, 3.84, 3.53, 3.59; **3.68 ± 0.15** |
+| warm / archive | 5.25, 4.95, 4.78, 4.87; **4.96 ± 0.21** | 3.20, 3.35, 3.67, 3.41; **3.41 ± 0.19** |
+| write / preview | 6.43, 5.97; **6.20 ± 0.32** | 4.05, 4.25; **4.15 ± 0.14** |
+| write / execute | 15.80, 16.51; **16.15 ± 0.50** | 10.01, 10.48; **10.24 ± 0.33** |
+| write / save | 16.17, 17.34; **16.75 ± 0.83** | 11.09, 12.02; **11.55 ± 0.66** |
+| after_save / tour | 5.89, 6.33; **6.11 ± 0.31** | 3.75, 3.78; **3.76 ± 0.03** |
+| after_save / archive | 4.20, 4.28; **4.24 ± 0.06** | 2.86, 3.16; **3.01 ± 0.22** |
+| restart_cold / tour | 79.06, 80.64; **79.85 ± 1.12** | 51.18, 50.33; **50.76 ± 0.60** |
+| restart_cold / archive | 5.63, 5.33; **5.48 ± 0.21** | 3.59, 3.48; **3.53 ± 0.08** |
+
+A1: peak RSS 5.22 GiB, server CPU 191 s, restart_complete True; A2: peak RSS 5.21 GiB, server CPU 188 s, restart_complete True; B1: peak RSS 1.61 GiB, server CPU 123 s, restart_complete True; B2: peak RSS 1.57 GiB, server CPU 127 s, restart_complete True.
+Cold responses present in every run (archive, season0, tour) byte-identical across baseline and repaired: yes.
+
+### W52 after two seasons (126 revisions, 1.59 GB)
+
+Runs (commit, `src/` tree): A1 `320e4766ec` `33f8878c02`; A2 `320e4766ec` `33f8878c02`; B1 `bcb8dfbbcb` `0d61180512`; B2 `bcb8dfbbcb` `0d61180512`
+
+| Phase / read (s) | Baseline A1, A2 | Repaired B1, B2 |
+| --- | --- | --- |
+| cold / tour | TO 120, TO 120; censored | 86.67, 85.34; **86.00 ± 0.94** |
+| cold / archive | 89.15, 98.15; **93.65 ± 6.36** | 5.06, 5.01; **5.04 ± 0.03** |
+| cold / season0 | 9.04, 8.68; **8.86 ± 0.26** | 5.35, 4.96; **5.15 ± 0.27** |
+| warm / tour | 10.24, 9.99, 9.81, 9.98; **10.00 ± 0.18** | 6.06, 5.87, 6.38, 5.85; **6.04 ± 0.24** |
+| warm / archive | 8.62, 9.01, 8.27, 7.97; **8.47 ± 0.45** | 5.24, 5.14, 5.06, 5.27; **5.18 ± 0.09** |
+| write / preview | 10.57, 10.39; **10.48 ± 0.13** | 6.13, 6.55; **6.34 ± 0.29** |
+| write / execute | 28.20, 29.27; **28.74 ± 0.76** | 15.55, 16.66; **16.11 ± 0.79** |
+| write / save | 29.30, 28.45; **28.87 ± 0.60** | 18.28, 17.78; **18.03 ± 0.35** |
+| after_save / tour | 9.88, 10.06; **9.97 ± 0.13** | 5.29, 5.68; **5.48 ± 0.28** |
+| after_save / archive | 8.62, 8.18; **8.40 ± 0.31** | 4.81, 4.63; **4.72 ± 0.13** |
+| restart_cold / tour | TO 120, TO 120; censored | 87.20, 91.79; **89.50 ± 3.24** |
+| restart_cold / archive | 118.15, 83.56; **100.85 ± 24.46** | 5.23, 5.20; **5.22 ± 0.02** |
+
+A1: peak RSS 11.86 GiB, server CPU 513 s, restart_complete False; A2: peak RSS 10.07 GiB, server CPU 511 s, restart_complete False; B1: peak RSS 2.49 GiB, server CPU 258 s, restart_complete True; B2: peak RSS 2.49 GiB, server CPU 260 s, restart_complete True.
+Cold responses present in every run (archive, season0, season0_vs_1, season1, season1_vs_0) byte-identical across baseline and repaired: yes.
+
+On the W52 two-season input the baseline cannot complete a cold read within the bound (validation ends ~210–240 s after start, 10–12 GiB peak); the repaired head completes every read (restart_complete true) at 86–92 s with 2.5 GiB. This is the only input where the repaired head was measured on two complete seasons in the A/B protocol; the W61/W80 two-season results are the actual final-DB measurements in the next section.
+
+Raw records: `docs/evidence/native-long-run-reads-20261115-repaired.json`.
 
 ## Two full seasons on W52, W61 and W80
 
@@ -304,7 +352,8 @@ each head). Earlier runs are reported because each found a real limit:
 | W52 #3 | `c630357` | every week of both seasons, both Season Transitions, archive, both comparisons and point doubling **passed**; horizon-extension review exceeded 120 s → fixed in `8c051d9` |
 | W52 #4 | `e3f9b03` | all of the above and the extension Save **passed**; first read after the extension exceeded 120 s → fixed in `e3f9b03`→`a3855c7` (proof re-keying, boundary replay) |
 | W52 #5 | `a3855c7` (same `src/` and test tree as the final head) | **PASSED**, 5,111 s, run alone: every week of both seasons, both Season Transitions, real MatchEngine Editions, points, explicit Saves, archive, both comparison directions, extension without rewriting closed seasons, cold restart with byte-equal reads |
-| W52/W61/W80 #6 | repaired head (`src/` `0d611805`) | __RUN6__ |
+| W52/W61/W80 #6 | repaired head (`src/` `0d611805`), three tests in parallel | each clock: every week of both seasons, both Season Transitions, Editions, points, Saves, archive, both comparisons and the extension **passed**; each **failed** at the first read after the cold restart (120 s transport timeout). W52 5,111 s, W61 6,726 s, W80 10,175 s |
+| W52 #7 | repaired head (`src/` `0d611805`), run alone | **PASSED**, 4,982 s: every week of both seasons, both Season Transitions, Editions, points, Saves, archive, both comparisons, extension and cold restart with byte-equal reads |
 
 Measured cold restart (fresh process, idle host unless noted) on authentic inputs:
 
@@ -313,7 +362,8 @@ Measured cold restart (fresh process, idle host unless noted) on authentic input
 | W52 after two seasons + extension (final test DB of run #4) | 127 | 1.61 GB | 96.5 s |
 | W80 in season 2 (133 revisions, before extension) | 133 | 1.63 GB | 80.1 s |
 | Same W52 input, repaired head (no stored-text shortcut) | 127 | 1.61 GB | 109.1 s |
-| W80 / W61 two seasons + extension | — | — | __RESTART6__ |
+| W61 two seasons + extension (final DB of run #6), W80 test running alongside | 145 | 2.02 GB | **~191 s**: `inspect` censored at 120 s; the next read completed 70.8 s later after the same single-flight validation (`restart_complete: false`) |
+| W80 two seasons + extension (final DB of run #6), W52 test running alongside | 183 | 2.80 GB | **~260 s**: `inspect` and `archive` both censored at 120 s; `season0` then completed in 19.5 s (`restart_complete: false`) |
 
 The 96.5 s and 80.1 s rows were measured on a head that still contained the
 retracted content-hash shortcut. The W61/W80 two-season numbers in an earlier

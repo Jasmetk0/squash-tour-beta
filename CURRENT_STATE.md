@@ -1,28 +1,24 @@
-# Claude long native Run reads and two full seasons — 14 November 2026
+# Claude long native Run reads and two full seasons — 14–15 November 2026
 
-Base `buuk 342b826d20b43055f5e1117bab8d58176259360c` (#1801 merged). Claude's Draft PR
-(branch `claude/ecstatic-davinci-qpie07`) measures and speeds up Saved Tour/season-archive
-reads of long native Runs and adds two-complete-season W52/W61/W80 acceptance. Details,
-inputs, raw before/after numbers and limits: `docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md`.
+Base `buuk 320e4766ec8b` (#1802). Claude's Draft PR #1803 (branch
+`claude/ecstatic-davinci-qpie07`) speeds up Saved Tour/season-archive reads of long
+native Runs and adds two-complete-season W52/W61/W80 acceptance. Work returned it
+(REQUEST CHANGES, `docs/NATIVE_LONG_RUN_WORK_REVIEW.md`); the demonstrated defects are
+repaired in the same PR: the stored-text content-hash shortcut is removed (it accepted
+noncanonical text hashed by whoever wrote it), shared dependency graphs are Run-scoped,
+the benchmark fails on incomplete restart reads, and the GC pause is bounded.
 
-- Measured causes: FIFO-128 proof eviction (lineages >128 re-decoded every read), the
-  same Saved text hashed 3–4× per revision per read, quadratic dependency-graph
-  construction, cyclic GC, and a recursive cold validation keeping every decoded
-  payload alive at once (W52 after one season: 3.1 GB peak).
-- Changes keep every physical/owner/source/replay gate, public DTO, Saved byte,
-  fingerprint, seed and sporting rule. No Entry, tournament rule, point table,
-  calibration, frontend or ATP file is touched.
-- `test_two_closed_seasons_archive_compare_extend_and_restart[w6|w52|w61|w80]`:
-  `w6` and `w52` PASSED locally on the final source tree (W52: 5,111 s). Fast `w6`
-  stays in the existing job by exact node id; `w52` has a separate `long_seasons`
-  job. `w61`/`w80` cannot finish their cold restart within the unchanged 120 s read
-  bound (measured ~120–150 s even idle): open, owner storage/proof decision needed.
-- Extension review and the first read after an extension were also fixed
-  (W52 two seasons: 132–138 s → 34–39 s; 69–73 s → 13 s).
-
-Not certified: 50-season reference release, 1,000-player long Runs, browser execution.
-Per-read cost remains linear in the total bytes of the lineage (each Saved Revision is a
-full snapshot); longer horizons need a storage/proof decision (see the document).
+- Repaired head (`src/` tree `0d611805`): W6 and W52 two seasons **passed** (W52 alone
+  4,982 s, incl. extension and cold restart). W61 and W80 complete every week, both
+  Season Transitions, Editions, archive, comparisons and the extension, but their
+  first read after a cold restart exceeds the unchanged 120 s bound (actual final
+  DBs: ~191 s and ~260 s; not extrapolated). Open.
+- Cause: every Saved Revision stores the complete Run state and a cold start must
+  re-validate all of it. Remaining engineering work:
+  `docs/NATIVE_SAVED_COMPONENT_STORAGE_PROPOSAL.md` (backward-compatible, new writer
+  version only; no migration, re-signing or same-database proof).
+- No API/DTO, Saved byte, fingerprint, seed, sporting rule, Entry, calibration,
+  frontend or ATP change. Not certified: 50 seasons, 1,000-player long Runs.
 
 ---
 

@@ -518,6 +518,25 @@ def _saved_revision_model_content_hash(
     return digest.hexdigest()
 
 
+def _declared_global_identity(model: BranchSavedRevisionModel):
+    """Declared (checkpoint, Tour) fingerprints from proven text; selection only."""
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, span
+
+    if not isinstance(model.payload_json, str):
+        return None
+    proof = PROOFS.prove(model.payload_json, scope=model.run_id)
+    if proof is None:
+        return None
+    identity = []
+    for key in ('calendar_player_sporting_checkpoint', 'calendar_tour_authority'):
+        text = span(proof, ('content', key, 'fingerprint'))
+        value = json.loads(text) if text is not None else None
+        if type(value) is not str:
+            return None
+        identity.append(value)
+    return tuple(identity)
+
+
 def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
     """Bind a metadata-only proof to the complete physical revision bytes."""
     from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
@@ -2675,6 +2694,13 @@ class SimulationPersistenceRepository:
                     for key in ('calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
                 evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
                 already_replayed = None not in identity and identity in evidence
+            elif global_slots and needs_component_validation:
+                # A cached routing hint skipped the decode. The same declared
+                # identity (selection only, as above) is read from the exact
+                # spans of the PROVEN canonical stored text, if available.
+                identity = _declared_global_identity(model)
+                evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
+                already_replayed = identity is not None and identity in evidence
             if global_slots and needs_component_validation and model.parent_revision_id and not already_replayed:
                 parent_model = session.get(BranchSavedRevisionModel, model.parent_revision_id)
                 with self._revision_validation_lock:

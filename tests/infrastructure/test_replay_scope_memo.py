@@ -61,3 +61,25 @@ def test_birth_steps_are_reused_only_for_an_identical_prefix_and_inputs():
         assert birth._reusable_birth_steps(longer, source, "other", subs)[1] == 0
         changed = (states[0], states[1], week(2), *states[3:], week(6))
         assert birth._reusable_birth_steps(changed, source, "world", subs)[1] == 1
+
+
+def test_replay_evidence_requires_one_exact_replayed_input_set(monkeypatch):
+    from beta_engine.infrastructure.db import calendar_native_competition as competition
+
+    payload = {"content": {
+        "calendar_player_sporting_checkpoint": {"state": {"schema_version": "calendar_sporting_checkpoint.v13"},
+                                                "fingerprint": "cp"},
+        "calendar_tour_authority": {"state": {"schema_version": "calendar_tour_authority.v5"},
+                                    "fingerprint": "tour"},
+    }}
+    monkeypatch.setattr(competition, "_proven_hash", lambda proof, path, value: "cp" if "checkpoint" in path[1] else "tour")
+    actual = ("binding-c-prime", ("l",), ("h",))
+    monkeypatch.setattr(competition, "_raw_global_inputs", lambda payload, proof=None: actual)
+
+    def proofs(*inputs):
+        return {"_prefixes": {"_global_replayed_values": {("cp", "tour"): inputs}}}
+
+    assert competition.has_replayed_global_components(payload, proofs(actual))
+    assert competition.has_replayed_global_components(payload, proofs(("binding-c", ("l",), ("h",)), actual))
+    assert not competition.has_replayed_global_components(payload, proofs(("binding-c", ("l",), ("h",))))
+    assert not competition.has_replayed_global_components(payload, proofs(("binding-c-prime", ("l",), ("h", "x"))))

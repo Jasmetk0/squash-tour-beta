@@ -21,6 +21,7 @@ from beta_engine.domain.tournaments.calendar_tour import (
 
 
 MAX_REPLAY_EVIDENCE = 4096
+MAX_INPUTS_PER_IDENTITY = 4
 
 
 def _raw_global_inputs(payload, payload_proof=None):
@@ -121,7 +122,7 @@ def has_replayed_global_components(payload, proofs, *, _payload_proof=None):
     if _proven_hash(_payload_proof, ('content', 'calendar_tour_authority', 'state'), tour['state']) != identity[1]:
         return False
     actual = _raw_global_inputs(payload, _payload_proof)
-    return actual == evidence
+    return actual in evidence
 
 
 def replayed_global_tour_value(payload, proofs, *, run_id, branch_id, _payload_proof=None):
@@ -483,10 +484,18 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
             health_indices = [i for i, h in enumerate(health)
                 if h.week.ordinal <= verified_cp.week.ordinal]
             if life_indices and health_indices:
-                values[(verified_cp.fingerprint, verified_tour.fingerprint)] = (
+                # The same component values can be replayed under different
+                # bindings (a horizon extension changes only the Run calendar).
+                # Keep each distinct replayed input set; a reader must match one
+                # of them EXACTLY, so this never widens what is accepted.
+                key = (verified_cp.fingerprint, verified_tour.fingerprint)
+                replayed = (
                     raw_inputs[0], raw_inputs[1][:life_indices[-1] + 1],
                     raw_inputs[2][:health_indices[-1] + 1],
                 )
+                known_inputs = values.get(key, ())
+                if replayed not in known_inputs:
+                    values[key] = (known_inputs + (replayed,))[-MAX_INPUTS_PER_IDENTITY:]
         # One walk's replay evidence must cover every state of the lineage it
         # validates; with 128 entries, older ancestors of a long Run replayed
         # the complete history again. Values are hashes and frozen states that

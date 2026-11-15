@@ -124,7 +124,7 @@ def has_replayed_global_components(payload, proofs, *, _payload_proof=None):
     return actual == evidence
 
 
-def replayed_global_tour_value(payload, proofs, *, run_id, branch_id):
+def replayed_global_tour_value(payload, proofs, *, run_id, branch_id, _payload_proof=None):
     """A private decode value, never a physical/source authorization proof.
 
     The full replay already constructed these frozen intermediate values. Bind
@@ -137,7 +137,7 @@ def replayed_global_tour_value(payload, proofs, *, run_id, branch_id):
     if (not isinstance(component, dict) or set(component) != {'state', 'fingerprint'}
         or not isinstance(component.get('state'), dict)):
         return None
-    actual = canonical_hash(component['state'])
+    actual = _proven_hash(_payload_proof, ('content', 'calendar_tour_authority', 'state'), component['state'])
     value = (proofs or {}).get('_prefixes', {}).get('_global_replayed_tours', {}).get(actual)
     if (not isinstance(value, GlobalTourState)
         or (value.run_id, value.branch_id) != (run_id, branch_id)

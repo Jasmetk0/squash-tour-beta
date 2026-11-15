@@ -51,8 +51,12 @@ def verify_saved_global_origins(
     state = None
     if _validated_value_signature == signature:
         from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_tour_value
+        from beta_engine.infrastructure.db.canonical_text import PROOFS
+        # revision.payload is the fresh decode of exactly physical.payload_json
+        # (same signature): its Tour span hash equals the re-encoded value hash.
         state = replayed_global_tour_value(revision.payload, sporting_component_proofs,
-            run_id=revision.run_id, branch_id=revision.branch_id)
+            run_id=revision.run_id, branch_id=revision.branch_id,
+            _payload_proof=PROOFS.prove(physical.payload_json, scope=physical.run_id))
         if state is None and _reuse_actual_payload:
             seed_actual_payload()
     if state is None:

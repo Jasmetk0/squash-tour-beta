@@ -136,3 +136,48 @@ def test_noncanonical_legacy_spelling_keeps_the_ordinary_verdict(tmp_path, prepa
         row = session.get(BranchSavedRevisionModel, oldest)
         row.payload_json = json.dumps(json.loads(row.payload_json), indent=1, sort_keys=True)
     assert dump(read(repository)) == expected
+
+
+def test_replay_memos_equal_a_fresh_computation_during_a_real_cold_read(tmp_path, prepared_slots, monkeypatch):
+    from beta_engine.domain import replay_scope
+    from beta_engine.domain.players import calendar_native_birth_replay as birth
+    from beta_engine.domain.players import calendar_native_health_transition as health
+    from beta_engine.domain.players import calendar_native_ranking_bridge as bridge
+    from beta_engine.domain.tournaments import calendar_native_tour_week as week
+
+    calls = {"birth": 0, "health": 0, "reused": 0}
+    original_birth = birth.verify_calendar_native_birth_history
+    original_health = health.prepare_native_health_history
+    original_steps = birth._reusable_birth_steps
+
+    def fresh(function, **kwargs):
+        token = replay_scope._memo.set(None)
+        try:
+            return function(**kwargs)
+        finally:
+            replay_scope._memo.reset(token)
+
+    def checked_birth(**kwargs):
+        value = original_birth(**kwargs)
+        assert value == fresh(original_birth, **kwargs)
+        calls["birth"] += 1
+        return value
+
+    def checked_health(**kwargs):
+        value = original_health(**kwargs)
+        assert value == fresh(original_health, **kwargs)
+        calls["health"] += 1
+        return value
+
+    def counted_steps(*args):
+        steps, reused = original_steps(*args)
+        calls["reused"] += reused
+        return steps, reused
+
+    monkeypatch.setattr(bridge, "verify_calendar_native_birth_history", checked_birth)
+    monkeypatch.setattr(birth, "verify_calendar_native_birth_history", checked_birth)
+    monkeypatch.setattr(health, "prepare_native_health_history", checked_health)
+    monkeypatch.setattr(week, "prepare_native_health_history", checked_health)
+    monkeypatch.setattr(birth, "_reusable_birth_steps", counted_steps)
+    read(cold_repository(tmp_path, prepared_slots, "memo.db"))
+    assert calls["birth"] > 0 and calls["health"] > 0 and calls["reused"] > 0, calls

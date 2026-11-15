@@ -1,3 +1,128 @@
+# Owner-expanded assignment — whole-engine performance, 15 November 2026
+
+Radim explicitly broadened Claude's task: **speed up all simulation paths and
+other expensive engine operations as far as safely justified by measurements,
+so development and genuine tests become faster too**. This supersedes the
+earlier narrow performance scope below. The integrity repairs and W61/W80
+cold-restart blockers still come first. Work reviews; Radim alone merges.
+Sonar is advisory, not a mandatory merge gate.
+
+This is authorization to implement improvements, not merely produce another
+audit/proposal. Work autonomously through the useful, measurable areas below;
+do not stop after one small optimization or ask Radim to select individual
+technical hot paths. Preserve the current fixes and pull the latest branch
+before editing. Check other active work before touching shared files.
+
+## Delivery order
+
+1. Finish current correctness and cold-start/history blockers, including actual
+   two-season W52/W61/W80 acceptance with the 120-second transport bound.
+2. Profile representative whole operations and identify the largest remaining
+   costs. Implement the largest safe improvements in coherent, reviewable batches.
+3. Broaden to the remaining simulation/read/write/test-setup paths when measured
+   benefit warrants it. Continue useful work while recording precisely which
+   areas are completed, still slow, or not measured.
+
+Continue current work in PR #1803. Keep it reviewable with clear commit groups.
+If an independent later architectural slice truly needs another PR, document
+its dependency and exact handoff; do not create overlapping or duplicate stacks
+or merge anything yourself. A faster partial candidate is not completion of the
+whole assignment or full pre-alpha acceptance.
+
+## Measure and improve these areas
+
+Use production profiles and actual operation counts; this list is a coverage map,
+not an instruction to rewrite every subsystem regardless of evidence:
+
+- Match/rally simulation, complete matches, tournament brackets and simultaneous
+  Editions/slots, Week/Season Transitions, native and legacy Full Simulation
+  workers, and the relevant Match/Tournament/Player Lab calculations.
+- Entry/player-AI/population/lifecycle/development/ranking/history calculations
+  when they are significant measured costs of those operations.
+- Preview/confirmed execute/Save, repeated validation and replay, Saved lineage,
+  immutable component storage, fork/restore/restart and cold/warm readers.
+- SQLite query counts/plans/indexes, transaction boundaries, ORM object churn,
+  JSON decoding/encoding, canonical hashing, copying, memory allocation and GC.
+- Career, ranking, archive/comparison, alerts and other heavy API reads; Package
+  import/export/validation and startup where profiles show meaningful cost.
+  Do not change ATP data/content or sporting defaults as a performance shortcut.
+- Frontend request waterfalls/duplicate requests/rendering only when measured
+  as part of a real slow user operation and not owned by another active task.
+- Test fixture construction, safe reuse of immutable inputs, isolated SQLite
+  backups, server lifecycle and CI/test selection overhead.
+
+Batch repeated pure calculations or share immutable data where correctness is
+demonstrated. Remove redundant work, not the assurance the work provided.
+Consider algorithm/data-layout improvements before simply enlarging caches.
+
+## Non-negotiable equivalence
+
+- Same authoritative input/configuration/seed/command yields the same sporting
+  outputs, recorded history, RNG behavior and relevant component fingerprints.
+  No reduced rally fidelity, skipped simulation weeks, smaller real fields or
+  changed MatchEngine/Entry/development/calibration rules to make a benchmark fast.
+- Preserve explicit Preview/confirmation/Save, slot simultaneity, historical
+  knowledge, Run/Branch/revision isolation, rollback and concurrency guarantees.
+- Old Saved bytes/hashes and historical semantics remain valid. If a new storage
+  format is needed, version it explicitly and test mixed/legacy/fork paths;
+  do not silently migrate, re-sign or delete history.
+- Every reused validation proof must still bind actual verified bytes, metadata,
+  ownership, source reachability, version and snapshot. No trusted proof merely
+  stored alongside mutable data in the same DB; no unchecked declared-hash cache.
+- No skipped integrity/replay/source checks, weakened assertions, new xfails,
+  raised HTTP timeouts or removed mandatory scenarios to report a speedup.
+- Parallel execution is allowed only when isolation and deterministic outcomes
+  are proved. Do not reorder dependent commands, change random-number consumption
+  or run simultaneous sporting actions against different pre-slot snapshots.
+  Bound CPU/RSS/concurrency; faster single requests must not cause server deadlocks
+  or excessive memory under overlapping requests.
+
+## Faster tests without weaker tests
+
+Separate these three benefits in the report:
+
+1. **Production speedup:** the same real simulation/read/write operation is faster.
+2. **Harness speedup:** equivalent assertions run with less setup/teardown/fixture
+   overhead; reuse only immutable authenticated inputs and independent copies.
+3. **CI scheduling/selection:** relevant checks run at appropriate phases with
+   measured wall time and bounded resource contention.
+
+All three are useful, but selecting fewer tests is not an engine speedup.
+Use short clocks and small isolated cases for the inner loop, while retaining
+the actual required wide calendars, original/reference populations, negative
+integrity cases, restart/fork/rollback/browser and release scenarios.
+Do not rebuild multi-hour fixtures after every edit: establish the small proof,
+reuse genuine immutable inputs for diagnosis, then run complete acceptance on a
+stable candidate. Run very large cases sequentially if parallel execution causes
+memory/CPU contention or unrepresentative timeouts.
+
+## Required evidence per completed batch
+
+- Exact base/candidate commit and source tree, scenario, seed/configuration,
+  calendar, population/field size, revisions and stored bytes.
+- Before/after end-to-end latency, CPU time, peak RSS, DB/query counts or other
+  dominant cost counters, plus the most useful profile. Report cold and warm
+  separately. Use identical authentic inputs and repeated balanced A/B samples
+  where feasible; record shared-host contention and measurement limits.
+- Real public-output/component/history equality and appropriate adversarial
+  checks. Distinguish expected new-format envelope identity from unchanged
+  sporting outputs; do not falsely promise identical IDs/hashes across formats.
+- Every expected response must complete before claiming a complete restart
+  equality proof. Timeouts remain censored/incomplete, not successful samples.
+- Actual tests executed on the relevant final source, failures and unmeasured
+  cases. Draft skips and previous-source green checks are not final acceptance.
+- A compact table of improvements, remaining largest bottlenecks and the next
+  implemented/queued batch. Do not infer a 50-season speedup from one-season reads.
+
+Aim for materially faster normal development AND real growing-horizon simulation,
+not only one impressive microbenchmark. Include small/medium/reference scale and
+growing-history cases as practical; stage the costly 50-season release proof after
+the relevant path scales. No fabricated extrapolation as a passed test.
+Continue to report recommended versus actually visible model/effort per CLAUDE.md;
+no paid upgrade is a precondition.
+
+---
+
 # Work re-review / continuation for Claude — PR #1803, 15 November 2026
 
 ## Latest decision: keep Draft; substantial cold-restart work remains

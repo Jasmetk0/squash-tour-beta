@@ -112,6 +112,49 @@ def _compatible_calendar(previous: RunWeekPosition, target: RunWeekPosition) -> 
     )
 
 
+def _reusable_birth_steps(states, source, world_package_id, submissions):
+    """Already-verified consecutive steps of an identical prefix (replay only).
+
+    Step ``k`` derives ``states[k]`` from ``states[k-1]``, the birth event of
+    ``source.for_week(k)`` and ONLY those submissions whose week is at most
+    ``states[k-1].week`` (advance_calendar_lifecycle skips later ones; the
+    foreign Run/Branch check of every submission runs above on each call). A
+    step is reused only for the very same state objects, the very same source
+    object and world, and the identical ordered relevant submissions. Outside
+    a replay scope nothing is reused.
+    """
+    from beta_engine.domain.replay_scope import active_memo
+
+    memo = active_memo()
+    cached = memo.get("birth_history") if memo is not None else None
+    if cached is None or cached["source"] is not source or cached["world"] != world_package_id:
+        return [], 0
+    old_states = cached["states"]
+    same = 0
+    limit = min(len(old_states), len(states))
+    while same < limit and old_states[same] is states[same]:
+        same += 1
+    if same < 2:
+        return [], 0
+    threshold = states[same - 2].week.ordinal
+    relevant = [s for s in submissions if s.submission_week.ordinal <= threshold]
+    previous = [s for s in cached["submissions"] if s.submission_week.ordinal <= threshold]
+    if len(relevant) != len(previous) or any(a is not b for a, b in zip(relevant, previous)):
+        return [], 0
+    return list(cached["steps"][:same - 1]), same - 1
+
+
+def _remember_birth_steps(states, source, world_package_id, submissions, steps):
+    from beta_engine.domain.replay_scope import active_memo
+
+    memo = active_memo()
+    if memo is not None and len(steps) == len(states) - 1:
+        memo["birth_history"] = {
+            "states": tuple(states), "source": source, "world": world_package_id,
+            "submissions": tuple(submissions), "steps": tuple(steps),
+        }
+
+
 def verify_calendar_native_birth_history(
     *,
     states: tuple[CalendarPlayerLifecycleState | CalendarTourLifecycleState | CalendarTourLifecycleIntakeState, ...],
@@ -185,10 +228,11 @@ def verify_calendar_native_birth_history(
     tokens = tuple(s.nr_tie_break_token for s in first_by_id.values())
     if len(tokens) != len(set(tokens)):
         raise ValueError("Native replay has duplicate first Entry tie-break tokens")
-    all_previous = states[0]
-    birth_fingerprints = []
-    admitted_ids: set[str] = set()
-    for current in states[1:]:
+    steps, reused = _reusable_birth_steps(states, source, world_package_id, submissions)
+    all_previous = states[reused]
+    birth_fingerprints = [step[0] for step in steps]
+    admitted_ids: set[str] = set(player_id for step in steps for player_id in step[1])
+    for current in states[reused + 1:]:
         if (
             not isinstance(current, (CalendarTourLifecycleState, CalendarTourLifecycleIntakeState))
             or current.week.ordinal != all_previous.week.ordinal + 1
@@ -210,6 +254,7 @@ def verify_calendar_native_birth_history(
             )
             birth_fingerprints.append(event.fingerprint)
             admitted_ids.update(b.player_id for b in event.births)
+            steps.append((event.fingerprint, tuple(b.player_id for b in event.births)))
         else:
             if event.births:
                 raise ValueError("Native replay legacy lifecycle silently omitted a 15yo birth")
@@ -218,9 +263,11 @@ def verify_calendar_native_birth_history(
                 _signed_turn_pro_entries(all_previous, current),
             )
             birth_fingerprints.append(None)
+            steps.append((None, ()))
         if current != expected or current.predecessor_fingerprint != all_previous.fingerprint:
             raise ValueError("Native replay lifecycle differs from genuine birthdays or first Tour Entry")
         all_previous = current
+    _remember_birth_steps(states, source, world_package_id, submissions, steps)
 
     # Verify that signed entry receipts could not have been published before
     # their player existed, INCLUDING earlier v3 steps without birth events.

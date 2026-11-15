@@ -12,6 +12,7 @@ from beta_engine.domain.players.turn_pro import (
     turn_pro_decisions_by_player,
 )
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.replay_scope import identity_value
 from beta_engine.domain.run_packages import canonical_hash
 
 
@@ -92,7 +93,8 @@ class CalendarPlayerLifecycleState(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return canonical_hash(self.model_dump(mode="json"))
+        # Frozen model: the same object always has the same canonical hash.
+        return identity_value(self, "fingerprint", lambda: canonical_hash(self.model_dump(mode="json")))
 
 
 class CalendarTourLifecycleIdentity(CalendarPlayerLifecycleIdentity):
@@ -158,7 +160,8 @@ class CalendarTourLifecycleState(FrozenInput):
 
     @property
     def fingerprint(self):
-        return canonical_hash(self.model_dump(mode="json"))
+        # Frozen model: the same object always has the same canonical hash.
+        return identity_value(self, "fingerprint", lambda: canonical_hash(self.model_dump(mode="json")))
 
 
 def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=()):

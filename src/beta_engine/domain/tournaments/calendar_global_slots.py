@@ -94,9 +94,12 @@ def global_replay_projection_scope():
     rows, source graphs and later calls still get their ordinary byte checks.
     Callers must neither expose nor mutate these private models during replay.
     """
+    from beta_engine.domain.replay_scope import replay_value_scope
+
     token = _replay_projections.set({"fingerprints": {}, "tournaments": {}}) if _replay_projections.get() is None else None
     try:
-        yield
+        with replay_value_scope():
+            yield
     finally:
         if token is not None:
             _replay_projections.reset(token)

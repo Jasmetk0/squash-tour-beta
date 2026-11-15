@@ -110,6 +110,8 @@ def _replay_fingerprint(value, *, sporting=False):
     if known is not None and known[0] is value:
         return known[1]
     fingerprint = _incremental_checkpoint_fingerprint(value, scope) if scope is not None and not sporting else None
+    if fingerprint is None and scope is not None and not sporting:
+        fingerprint = _incremental_tour_fingerprint(value, scope)
     if fingerprint is None:
         body = value.model_dump(mode="json")
         if sporting:
@@ -205,6 +207,74 @@ def _incremental_checkpoint_fingerprint(value, scope):
         while len(values) > 128:
             values.pop(next(iter(values)))
     return fingerprint
+
+
+_TOUR_ELEMENT_FIELDS = ('receipts', 'rankings', 'transitions')
+MAX_TOUR_ELEMENT_ENCODINGS = 65536
+
+
+def _tour_element_type(field):
+    """``X`` for a field annotated exactly ``tuple[X, ...]``; otherwise None."""
+    import typing
+
+    annotation = field.annotation
+    args = typing.get_args(annotation)
+    if typing.get_origin(annotation) is not tuple or len(args) != 2 or args[1] is not Ellipsis:
+        return None
+    return args[0] if isinstance(args[0], type) else None
+
+
+def _incremental_tour_fingerprint(value, scope):
+    """The SAME canonical hash of a growing Tour, reusing element encodings.
+
+    A replay creates one new Tour per step; each shares all earlier receipts,
+    rankings and transitions as the very same immutable element objects. The
+    canonical JSON of the whole model is the sorted-key object of its fields,
+    and each of these three fields is the array of its elements' own
+    ``model_dump(mode="json")`` encodings (exact declared element type, so the
+    nested serializer is the element's own). Only those per-element encodings
+    are reused, keyed by object identity within this private replay scope.
+    Everything else is dumped and encoded freshly; outside the scope, or for
+    any unexpected type or serializer, the ordinary full hash runs.
+    """
+    model = type(value)
+    if (model is not GlobalTourState
+        or model.model_computed_fields
+        or model.__pydantic_decorators__.model_serializers
+        or model.__pydantic_decorators__.field_serializers):
+        return None
+    element_types = {}
+    for name in _TOUR_ELEMENT_FIELDS:
+        field = model.model_fields.get(name)
+        if field is None or field.exclude is not None or field.exclude_if is not None:
+            return None
+        element_type = _tour_element_type(field)
+        items = getattr(value, name)
+        if element_type is None or type(items) is not tuple or any(type(item) is not element_type for item in items):
+            return None
+        element_types[name] = element_type
+
+    def encode(body):
+        return json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+
+    body = value.model_dump(mode='json', exclude=set(_TOUR_ELEMENT_FIELDS))
+    if any(name in body for name in _TOUR_ELEMENT_FIELDS) or not set(body) <= set(model.model_fields):
+        return None
+    memo = scope.setdefault('tour_element_json', {})
+    members = {key: encode(item) for key, item in body.items()}
+    for name in _TOUR_ELEMENT_FIELDS:
+        parts = []
+        for item in getattr(value, name):
+            known = memo.get(id(item))
+            if known is None or known[0] is not item:
+                known = (item, encode(item.model_dump(mode='json')))
+                memo[id(item)] = known
+            parts.append(known[1])
+        members[name] = b'[' + b','.join(parts) + b']'
+    while len(memo) > MAX_TOUR_ELEMENT_ENCODINGS:
+        memo.pop(next(iter(memo)))
+    text = b'{' + b','.join(encode(key) + b':' + members[key] for key in sorted(members)) + b'}'
+    return hashlib.sha256(text).hexdigest()
 
 
 def _prime_private_fingerprint(value, fingerprint):

@@ -23,28 +23,67 @@ from beta_engine.domain.tournaments.calendar_tour import (
 MAX_REPLAY_EVIDENCE = 4096
 
 
-def _raw_global_inputs(payload):
+def _raw_global_inputs(payload, payload_proof=None):
     content = payload['content']
-    binding = canonical_hash({
+    binding_members = {
         'run_id': payload.get('run', {}).get('run_id'),
         'branch_id': payload.get('branch', {}).get('branch_id'),
         'calendar': payload.get('run', {}).get('run_calendar'),
         'population_clock_origin': payload.get('run', {}).get('run_calendar_content_origin'),
         **{key: content.get(key) for key in ('initial_world', 'calendar_standalone_match', 'run_prospect_source')},
-    })
+    }
+    binding = _composite_hash(payload_proof, binding_members) or canonical_hash(binding_members)
     histories = []
     for key in ('player_lifecycle', 'player_health_state'):
         component = content.get(key)
         if (not isinstance(component, dict)
             or set(component) != {'states', 'fingerprint'}
             or not isinstance(component['states'], list)
-            or canonical_hash(component['states']) != component['fingerprint']):
+            or _proven_hash(payload_proof, ('content', key, 'states'), component['states']) != component['fingerprint']):
             raise ValueError('Global source history has an invalid actual value fingerprint')
-        histories.append(tuple(canonical_hash(state) for state in component['states']))
+        histories.append(tuple(
+            _proven_hash(payload_proof, ('content', key, 'states', index), state)
+            for index, state in enumerate(component['states'])))
     return binding, *histories
 
 
-def has_replayed_global_components(payload, proofs):
+def _proven_hash(payload_proof, path, value):
+    """canonical_hash(value), over the PROVEN exact stored span when available.
+
+    ``payload_proof`` proves that the stored text the payload was decoded from
+    is its own canonical encoding, so the span at ``path`` is the canonical
+    encoding of ``value``. Without a proof or span: the ordinary re-encoding.
+    """
+    if payload_proof is not None:
+        from beta_engine.infrastructure.db.canonical_text import span_canonical_hash
+        known = span_canonical_hash(payload_proof, path)
+        if known is not None:
+            return known
+    return canonical_hash(value)
+
+
+def _composite_hash(payload_proof, members):
+    if payload_proof is None:
+        return None
+    from beta_engine.infrastructure.db.canonical_text import composite_canonical_hash, span
+
+    paths = {'run_id': ('run', 'run_id'), 'branch_id': ('branch', 'branch_id'),
+             'calendar': ('run', 'run_calendar'),
+             'population_clock_origin': ('run', 'run_calendar_content_origin'),
+             'initial_world': ('content', 'initial_world'),
+             'calendar_standalone_match': ('content', 'calendar_standalone_match'),
+             'run_prospect_source': ('content', 'run_prospect_source')}
+    texts = {}
+    for key, value in members.items():
+        text = span(payload_proof, paths[key]) if value is not None else None
+        if text is None:
+            # Small or absent values: encode the decoded value as canonical_hash does.
+            text = json.dumps(value, sort_keys=True, separators=(',', ':'), ensure_ascii=False)
+        texts[key] = text
+    return composite_canonical_hash(texts)
+
+
+def has_replayed_global_components(payload, proofs, *, _payload_proof=None):
     """Reuse exact values produced by an earlier full replay in this one walk.
 
     This certifies component math only. The repository still authenticates each
@@ -68,16 +107,20 @@ def has_replayed_global_components(payload, proofs):
     # The declared fingerprint only selects a candidate. Hash EVERY actual
     # value and compare with the independently replayed value's digest. This
     # optional ordered-JSON digest is not a persisted hash or a source proof.
-    auxiliary = (proofs or {}).get('_prefixes', {}).get('_global_checkpoint_json_values', {}).get(identity[0])
-    try:
-        same_checkpoint = auxiliary is not None and hashlib.sha256(to_json(cp['state'], inf_nan_mode='constants')).digest() == auxiliary
-    except (TypeError, ValueError):
-        same_checkpoint = False
-    if not same_checkpoint and canonical_hash(cp['state']) != identity[0]:
+    checkpoint_path = ('content', 'calendar_player_sporting_checkpoint', 'state')
+    same_checkpoint = False
+    if _payload_proof is None:
+        auxiliary = (proofs or {}).get('_prefixes', {}).get('_global_checkpoint_json_values', {}).get(identity[0])
+        try:
+            same_checkpoint = auxiliary is not None and hashlib.sha256(to_json(cp['state'], inf_nan_mode='constants')).digest() == auxiliary
+        except (TypeError, ValueError):
+            same_checkpoint = False
+    if not same_checkpoint and _proven_hash(
+            _payload_proof, checkpoint_path, cp['state']) != identity[0]:
         return False
-    if canonical_hash(tour['state']) != identity[1]:
+    if _proven_hash(_payload_proof, ('content', 'calendar_tour_authority', 'state'), tour['state']) != identity[1]:
         return False
-    actual = _raw_global_inputs(payload)
+    actual = _raw_global_inputs(payload, _payload_proof)
     return actual == evidence
 
 

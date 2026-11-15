@@ -55,11 +55,13 @@ from beta_engine.domain.run_revisions import (
     VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
     WORKING_DRAFT_SCHEMA_VERSION,
     branch_restore_saved_revision_change_summary,
+    canonical_json,
     initial_saved_revision_change_summary,
     initial_saved_revision_payload,
     saved_revision_checkpoint_content_hash,
     saved_viewer_branch_id,
     saved_revision_content_hash,
+    saved_revision_hash_envelope,
     viewer_branch_id_from_changes,
     viewer_branch_saved_revision_change_summary,
     viewer_branch_saved_revision_payload,
@@ -474,6 +476,46 @@ def _saved_revision_record_content_hash(
         payload=revision.payload,
         change_summary=revision.change_summary,
     )
+
+
+def _saved_revision_model_content_hash(
+    model: BranchSavedRevisionModel, revision: BranchSavedRevisionRecord,
+) -> str:
+    """The SAME content hash, computed over the actual stored payload bytes.
+
+    ``revision`` must be the record just decoded from exactly
+    ``model.payload_json``. The hash is defined over
+    ``canonical_json(json.loads(payload_json))``. When those exact stored
+    characters are PROVEN to already be that canonical encoding (byte-identical
+    proven segments are compared, every other segment is decoded and re-encoded,
+    see canonical_text.py), hashing them is hashing the defined input. Any other
+    text takes the ordinary full re-encoding. No declared hash is trusted.
+    """
+    from beta_engine.infrastructure.db.canonical_text import PROOFS
+
+    if (revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
+            revision.parent_revision_id, revision.kind, revision.payload_schema_version) != (
+            model.revision_id, model.run_id, model.branch_id, model.sequence,
+            model.parent_revision_id, model.kind, model.payload_schema_version):
+        return _saved_revision_record_content_hash(revision)
+    proof = PROOFS.prove(model.payload_json, scope=model.run_id)
+    if proof is None:
+        return _saved_revision_record_content_hash(revision)
+    envelope = saved_revision_hash_envelope(
+        revision_id=revision.revision_id, run_id=revision.run_id,
+        branch_id=revision.branch_id, sequence=revision.sequence,
+        parent_revision_id=revision.parent_revision_id, kind=revision.kind,
+        payload_schema_version=revision.payload_schema_version,
+        payload=None, change_summary=revision.change_summary,
+    )
+    digest = hashlib.sha256(b"{")
+    for index, key in enumerate(sorted(envelope)):
+        if index:
+            digest.update(b",")
+        digest.update(canonical_json(key).encode("utf-8") + b":")
+        digest.update((proof.text if key == "payload" else canonical_json(envelope[key])).encode("utf-8"))
+    digest.update(b"}")
+    return digest.hexdigest()
 
 
 def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
@@ -2752,7 +2794,7 @@ class SimulationPersistenceRepository:
             )
         if (
             revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-            or revision.content_hash != _saved_revision_record_content_hash(revision)
+            or revision.content_hash != _saved_revision_model_content_hash(model, revision)
         ):
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
@@ -4315,7 +4357,13 @@ class SimulationPersistenceRepository:
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
                 from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
-                if not has_replayed_global_components(payload, sporting_component_proofs):
+                from beta_engine.infrastructure.db.canonical_text import PROOFS as _canonical_text_proofs
+                # ``payload`` was decoded from exactly these stored characters
+                # just above; the proof lets component hashes use their spans.
+                payload_proof = (_canonical_text_proofs.prove(model.payload_json, scope=model.run_id)
+                    if isinstance(model.payload_json, str) else None)
+                if not has_replayed_global_components(payload, sporting_component_proofs,
+                                                      _payload_proof=payload_proof):
                     load_saved_calendar_match(
                         payload, run_id=model.run_id, branch_id=model.branch_id,
                         _sporting_component_proofs=sporting_component_proofs,

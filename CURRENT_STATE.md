@@ -13,6 +13,11 @@ the benchmark fails on incomplete restart reads, and the GC pause is bounded.
   Season Transitions, Editions, archive, comparisons and the extension, but their
   first read after a cold restart exceeds the unchanged 120 s bound (actual final
   DBs: ~191 s and ~260 s; not extrapolated). Open.
+- 15 Nov continuation (head `29ca584`, Work's GC-lock fix kept): proven canonical
+  stored text replaces re-encoding for content/component hashes and the replay is
+  linear inside its private scope. First HTTP read after a cold start on those same
+  final DBs: W61 152 s → 84 s, W80 226 s → 108–111 s, byte-identical responses.
+  Hosted two-season acceptance on this head: run 43713955097 (pending at writing).
 - Cause: every Saved Revision stores the complete Run state and a cold start must
   re-validate all of it. Remaining engineering work:
   `docs/NATIVE_SAVED_COMPONENT_STORAGE_PROPOSAL.md` (backward-compatible, new writer

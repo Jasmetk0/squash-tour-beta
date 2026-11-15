@@ -378,6 +378,82 @@ full suite excludes the `long_season` marker because that job executes every lon
 clock; the CI-policy test derives the required clocks from the test parametrization. The
 120-second read transport bound is unchanged.
 
+## Continuation, 15 November: cold restart of two full seasons (Work's follow-up)
+
+Work's follow-up (`docs/NATIVE_LONG_RUN_WORK_REVIEW.md`, 15 November) kept the
+repairs, added the GC-lock fix and asked for the W61/W80 cold-restart blocker to be
+fixed before broader engine work. Profiles of a cold read of the actual final W61
+DB (the run #6 failure input) showed the time was not in SQLite but in Python work
+proportional to every revision's full snapshot:
+
+| W61 cold read (cProfile, 207 s) | Share |
+| --- | ---: |
+| two complete component replays (HEAD; newest revision below the extension) | 80 s |
+| re-encoding every decoded revision for its content hash | 30 s |
+| origin checks, replay-evidence fingerprints, dependency signatures, routing decode | 18–20 s each |
+
+Changes (each behind an equality check against the original computation):
+
+1. **Proven canonical text** (`canonical_text.py`). The content hash is defined over
+   `canonical_json(json.loads(text))`. `verify_canonical_text` now *proves* that the
+   exact stored characters already are that encoding: a segment is accepted only if it
+   is byte-identical to a segment of an earlier text this module proved (held as the
+   actual string), or if it is decoded and re-encoded to the same characters; container
+   syntax, key encoding, strictly ascending keys (no duplicates) and separators are
+   checked. Only then are the content hash, the replay-evidence component hashes, the
+   replayed-Tour lookup and the dependency references computed over those exact bytes.
+   Non-canonical text keeps the ordinary path. This is the sound form of the removed
+   shortcut: that one *assumed* canonical text; this one proves it every time. Proof
+   objects are unforgeable (only the module constructs them).
+2. **Replay** (`replay_scope.py`, active only inside the private replay scope): the
+   growing Tour fingerprint reuses per-element encodings of identical immutable
+   receipts/rankings/transitions; lifecycle and health-transition fingerprints are
+   memoized per frozen object; a passed health step is not re-checked for the same
+   objects; birth-history steps of an identical prefix are reused only for the same
+   state objects, source object, world and ordered relevant submissions (week ≤ the
+   predecessor week, exactly what `advance_calendar_lifecycle` reads; every
+   submission's foreign check still runs). Live commands (no replay scope) are
+   unchanged.
+3. **Replay evidence per binding**: an extension changes only the Run calendar, so the
+   boundary replay overwrote HEAD's evidence and HEAD then decoded its parent for an
+   incremental replay. Evidence keeps up to four distinct replayed input sets per
+   identity; a reader must match one exactly.
+
+Equality evidence on the actual inputs: all 145 W61 content hashes and 139 replay
+input hashes equal the ordinary computation; 290 incremental Tour fingerprints, 121
+birth histories and 121 health histories equal a fresh computation during a real
+replay; 179/183 W80 dependency-reference sets equal the original parser (4 small rows
+keep it). Random and adversarial tests (`test_canonical_text_proofs.py`, 3,000 random
+values × 16 non-canonical edits, 1,500 random parent/child references with descent,
+forged references) and real SQLite/API tests (`test_native_long_run_text_proofs.py`:
+cross-checks during a real cold read, byte-identical response with proofs disabled,
+canonically rewritten + re-hashed ancestors rejected cold and after a warm read,
+whitespace respelling keeps the ordinary verdict) pass.
+
+First HTTP read after a cold server start, identical final DBs of run #6 (fresh copy
+per run, idle 4-vCPU host), base `7ef4b3a` (Work's head, `src/` with Work's GC fix) vs
+candidate `29ca584`:
+
+| Input | Base | Candidate | Response |
+| --- | ---: | ---: | --- |
+| W61 two seasons + extension (145 revisions, 2.02 GB) | 152.1 s | 84.0 s (78.1 s on a warm page cache) | byte-identical (`7c6b8150…`) |
+| W80 two seasons + extension (183 revisions, 2.80 GB) | 225.6 s | 111.0, 109.3, 108.0 s (103–105 s on a warm page cache) | byte-identical (`e71b6145…`) |
+
+Peak server RSS: W61 3.1 GB, W80 4.0 GB (unchanged from the base). The W80 HEAD
+component replay alone went from 31.5 s to 20.8 s.
+
+**Not yet shown:** the complete W52/W61/W80 two-season acceptance on this head
+(`workflow_dispatch` run 43713955097, `long_seasons` matrix, started 15 November
+12:27 UTC; result recorded when finished). W80 locally is under 120 s but without a
+wide margin; hosted runners ran W52 about 15% faster than this host. An experiment
+that shared byte-identical text objects across the read caches raised W80 peak memory
+to 5.1 GB without a speedup and was reverted.
+
+Known difference: the content hash is computed over the stored text the payload was
+decoded from. If a later validator mutated the decoded payload in place (a code bug;
+none is known), the original order would have reported an integrity failure; the
+candidate validates the stored bytes.
+
 ## Regressions
 
 - `tests/application/test_saved_revision_history.py::test_long_lineage_keeps_proofs_yet_rejects_changed_ancestor_after_success`

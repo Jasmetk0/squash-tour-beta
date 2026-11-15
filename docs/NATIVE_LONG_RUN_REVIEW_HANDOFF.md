@@ -1,5 +1,26 @@
 # Review handoff for Work — long native Saved reads (Draft #1803)
 
+**Update, 15 November (continuation after Work's follow-up).** Work's GC-lock fix is
+kept. The cold-restart blocker is addressed without a new storage format: proven
+canonical stored text (`canonical_text.py`) replaces re-encoding for the content hash
+and component hashes, and the replay is made linear inside its private scope
+(`replay_scope.py`). Actual first HTTP read after a cold start on the run #6 final
+DBs: W61 152 s → 84 s, W80 226 s → 108–111 s, byte-identical responses. Review
+priority, highest first:
+
+| Risk | File / function | What must still hold |
+| --- | --- | --- |
+| High | `canonical_text.py::verify_canonical_text` | Verdict == `canonical_json(json.loads(t)) == t` for every text; references only byte-compared, unforgeable |
+| High | `repositories.py::_saved_revision_model_content_hash` | Same hash as the ordinary computation; non-canonical text takes the ordinary path |
+| High | `calendar_native_birth_replay.py::_reusable_birth_steps` | A step reused only for identical objects and identical ordered relevant submissions |
+| Medium | `calendar_native_competition.py` evidence per binding, `_proven_hash`, `_raw_global_inputs` | Actual inputs must equal one replayed set exactly |
+| Medium | `native_fork_runtime_state.py::_proven_dependency_branches` | Same Branch set as the original projection parser |
+| Low | `calendar_global_slots.py::_incremental_tour_fingerprint`, lifecycle/health fingerprint memo | Same canonical hash; scope-only, identity-keyed |
+
+The storage proposal remains valid for growth beyond two seasons (bytes still grow
+quadratically); it is not needed for this blocker. Details and evidence:
+`docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md`, section "Continuation, 15 November".
+
 **Update after Work's REQUEST CHANGES (`docs/NATIVE_LONG_RUN_WORK_REVIEW.md`).** The
 three demonstrated defects are repaired in this branch: the stored-text content-hash
 shortcut is removed (ordinary canonical check), shared dependency graphs are keyed by

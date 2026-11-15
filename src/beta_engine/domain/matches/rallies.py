@@ -18,11 +18,23 @@ from beta_engine.domain.matches.rally_rules import (
     StandardRallyRuleContext,
 )
 
+from beta_engine.domain.matches.content_hash import create_with_validated_hash, hash_check_deferred
+
 if TYPE_CHECKING:
     from beta_engine.domain.matches.timeline import MatchTimelineLog
 
 
 def _json_value(value: object) -> object:
+    # Exact JSON-native types first (the overwhelming majority: values from a
+    # mode="json" dump). Same results and fresh containers as the general
+    # path below, which keeps the original order for every other type.
+    kind = type(value)
+    if kind is str or kind is int or kind is float or kind is bool or value is None:
+        return value
+    if kind is dict:
+        return {key: _json_value(item) for key, item in value.items()}
+    if kind is list or kind is tuple:
+        return [_json_value(item) for item in value]
     if isinstance(value, BaseModel):
         return value.model_dump(mode="json")
     if isinstance(value, Enum):
@@ -399,13 +411,18 @@ class RallyEvent(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> RallyEvent:
-        draft = cls.model_construct(**values, event_hash="0" * 64)
-        payload = cls._hash_payload(
-            draft.model_dump(
-                mode="json", exclude={"event_hash", "event_hash_algorithm"}
+        return create_with_validated_hash(cls, values, "event_hash", cls._validated_event_hash)
+
+    @classmethod
+    def _validated_event_hash(cls, event: RallyEvent) -> str:
+        return cls._content_hash(
+            cls._hash_payload(
+                event.model_dump(
+                    mode="json", exclude={"event_hash", "event_hash_algorithm"}
+                ),
+                _fresh_json_dump=True,
             )
         )
-        return cls(**values, event_hash=cls._content_hash(payload))
 
     @model_validator(mode="after")
     def validate_event(self) -> RallyEvent:
@@ -675,20 +692,27 @@ class RallyEvent(BaseModel):
                     raise ValueError("rally cannot use a future gameplan revision")
         elif self.gameplan_context is not None:
             raise ValueError("legacy rally event cannot contain gameplan context")
+        if hash_check_deferred(self):
+            return self  # create() stores the hash of exactly this validated value
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
                     mode="json", exclude={"event_hash", "event_hash_algorithm"}
-                )
+                ),
+                _fresh_json_dump=True,
             )
         ):
             raise ValueError("rally event hash mismatch")
         return self
 
     @staticmethod
-    def _hash_payload(values: dict[str, object]) -> dict[str, object]:
+    def _hash_payload(values: dict[str, object], *, _fresh_json_dump: bool = False) -> dict[str, object]:
+        # A fresh model_dump(mode="json") already holds only JSON-native values
+        # and is discarded by the caller: copying it again yields equal values of
+        # the same types, so the same bytes are hashed. Any other caller keeps
+        # the defensive conversion and copy.
         payload = {
-            key: _json_value(value)
+            key: (value if _fresh_json_dump else _json_value(value))
             for key, value in values.items()
             if key not in {"event_hash", "event_hash_algorithm"}
         }

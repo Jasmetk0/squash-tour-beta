@@ -10,6 +10,7 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from beta_engine.domain.matches.content_hash import create_with_validated_hash, hash_check_deferred
 from beta_engine.domain.matches.timing import RestartDecisionFactor, RestartIntent
 
 
@@ -30,14 +31,16 @@ class MatchTimelineEventBase(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> Self:
-        draft = cls.model_construct(**values, event_hash="0" * 64)
-        payload = draft.model_dump(
-            mode="json", exclude={"event_hash", "event_hash_algorithm"}
+        return create_with_validated_hash(
+            cls, values, "event_hash",
+            lambda event: cls._content_hash(event.model_dump(
+                mode="json", exclude={"event_hash", "event_hash_algorithm"})),
         )
-        return cls(**values, event_hash=cls._content_hash(payload))
 
     @model_validator(mode="after")
     def validate_event_hash(self) -> MatchTimelineEventBase:
+        if hash_check_deferred(self):
+            return self  # create() stores the hash of exactly this validated value
         payload = self.model_dump(
             mode="json", exclude={"event_hash", "event_hash_algorithm"}
         )

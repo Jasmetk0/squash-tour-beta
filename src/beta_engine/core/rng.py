@@ -21,7 +21,16 @@ class DeterministicRng:
 
     def __init__(self, seed: Seed | int):
         self._seed = seed if isinstance(seed, Seed) else Seed(int(seed))
-        self._random = random.Random(self._seed.value)
+        # Created on first draw from the same seed: identical state and
+        # sequence. Many child RNGs only derive further seeds and never draw.
+        self._generator: random.Random | None = None
+
+    @property
+    def _random(self) -> random.Random:
+        generator = self._generator
+        if generator is None:
+            generator = self._generator = random.Random(self._seed.value)
+        return generator
 
     @property
     def seed(self) -> Seed:

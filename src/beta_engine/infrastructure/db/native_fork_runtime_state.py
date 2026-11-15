@@ -375,6 +375,47 @@ def verify_runtime(repository, session, *, runtime, revision, original, working=
     return runtime
 
 
+def _proven_dependency_branches(row):
+    """The same reference set, read from PROVEN canonical actual payload text.
+
+    Only when these exact freshly read characters are proven to be their own
+    canonical JSON encoding (canonical_text.py) are the two inputs taken from
+    their exact spans: whether ``content`` has ``calendar_tour_authority`` and
+    ``content.native_fork_baseline.state.selected_source_branch_id``. Any other
+    shape or text returns None and the original parser decides.
+    """
+    import json as _json
+
+    from beta_engine.infrastructure.db.canonical_text import PROOFS
+
+    raw = row[9]
+    if type(raw) is not str or len(raw) < 64 * 1024:
+        return None  # small rows: the original projection parse is cheap
+    proof = PROOFS.prove(raw, scope=row[1])
+    if proof is None or proof.layout.keys is None:
+        return None
+    content = proof.layout.keys.get("content")
+    if content is None or content.keys is None:
+        return None
+    branches = set()
+    baseline = content.keys.get("native_fork_baseline")
+    if baseline is not None:
+        value = _json.loads(raw[baseline.start:baseline.end])
+        if not isinstance(value, dict):
+            return None
+        state = value.get("state")
+        if isinstance(state, dict):
+            selected = state.get("selected_source_branch_id")
+            if selected is not None and type(selected) is not str:
+                return None
+            branches.add(selected)
+        elif state is not None:
+            return None
+    if "calendar_tour_authority" in content.keys:
+        branches.add(row[2])
+    return branches
+
+
 def _dependency_references(repository, row, digest):
     """Bounded parse hints, never a validation proof or a stored hash shortcut.
 
@@ -389,11 +430,13 @@ def _dependency_references(repository, row, digest):
             if digest in hints:
                 return hints[digest]
     try:
-        content = _dependency_content(row[9])
-        baseline = content.get("native_fork_baseline", {}).get("state")
-        branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
-        if "calendar_tour_authority" in content:
-            branches.add(row[2])
+        branches = _proven_dependency_branches(row)
+        if branches is None:
+            content = _dependency_content(row[9])
+            baseline = content.get("native_fork_baseline", {}).get("state")
+            branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
+            if "calendar_tour_authority" in content:
+                branches.add(row[2])
         result = tuple(branches)
     except (TypeError, ValueError, AttributeError) as exc:
         raise ValueError("Native Saved row contains malformed JSON dependency data") from exc

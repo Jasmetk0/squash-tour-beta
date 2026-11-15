@@ -201,3 +201,50 @@ def test_reference_descent_equals_full_verdict_on_random_children(monkeypatch):
                 assert verdict.text is text
             checked += 1
     assert checked > 10000
+
+
+def _original_dependency_branches(row):
+    from beta_engine.infrastructure.db.native_fork_runtime_state import _dependency_content
+
+    content = _dependency_content(row[9])
+    baseline = content.get("native_fork_baseline", {}).get("state")
+    branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
+    if "calendar_tour_authority" in content:
+        branches.add(row[2])
+    return branches
+
+
+@pytest.mark.parametrize("baseline", [
+    "absent", {"state": {"selected_source_branch_id": "src"}}, {"state": {"selected_source_branch_id": None}},
+    {"state": {}}, {"other": 1}, {"state": {"selected_source_branch_id": 7}}, {"state": [1]}, [1, 2], "text",
+])
+@pytest.mark.parametrize("tour", [True, False])
+@pytest.mark.parametrize("canonical", [True, False])
+def test_proven_dependency_branches_equal_the_original_parser(monkeypatch, baseline, tour, canonical):
+    from beta_engine.infrastructure.db import native_fork_runtime_state
+
+    monkeypatch.setattr(canonical_text, "PROOFS", CanonicalTextProofs())
+    content = {"filler": "z" * 70000}
+    if baseline != "absent":
+        content["native_fork_baseline"] = baseline
+    if tour:
+        content["calendar_tour_authority"] = {"state": {"x": 1}}
+    text = canonical_json({"content": content, "run": {"run_id": "run"}})
+    if not canonical:
+        text = text.replace(",", ", ", 1)
+    row = [None] * 12
+    row[0], row[1], row[2], row[9] = "rev", "run", "branch", text
+    proven = native_fork_runtime_state._proven_dependency_branches(row)
+    try:
+        original = _original_dependency_branches(row)
+    except (TypeError, ValueError, AttributeError):
+        original = "error"
+    if proven is not None:
+        # Otherwise (None) the caller runs exactly the original parser below.
+        assert canonical and proven == original
+    references = native_fork_runtime_state._dependency_references
+    try:
+        result = set(references(None, row, "digest"))
+    except ValueError:
+        result = "error"
+    assert result == original

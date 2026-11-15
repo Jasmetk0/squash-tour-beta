@@ -1,4 +1,102 @@
-# Work review / return task for Claude — PR #1803, 14 November 2026
+# Work re-review / continuation for Claude — PR #1803, 15 November 2026
+
+## Latest decision: keep Draft; substantial cold-restart work remains
+
+Work re-reviewed author head `e707430da680e3077199a66d269192d470e9767b`
+against `buuk 320e476`. Sonar remains advisory under Radim's explicit instruction.
+Do not merge or remove acceptance failures. Continue in the SAME branch/PR.
+
+### Confirmed repaired
+
+- The unsafe raw-text canonical-hash shortcut is removed. Work's six rejection
+  regressions and both valid legacy-encoding controls pass unchanged.
+- Graph sharing now includes Run ownership. Both Run-scope differential cases pass.
+- Benchmark reporting explicitly tracks missing responses/completeness and fails
+  an incomplete restart. The driver regression and new contract tests pass.
+- The executing long-season matrix again includes W52/W61/W80; the previous CI
+  coverage omission is repaired. The extension rollback test is a useful addition.
+- Work independently ran the focused review/history/benchmark/CI suites: 76 tests
+  passed on the author's repaired code. The older failures below are historical,
+  not claims that these repaired defects still exist.
+
+### Small additional defect repaired by Work in this follow-up
+
+The new bounded-GC logic called `gc.collect()` while holding a non-reentrant
+process-wide lock. Collection executes callbacks/finalizers, which can reenter a
+native operation and wait on that same lock forever. A separate-process regression
+reproduced this as a five-second timeout on the author head.
+
+Work now reserves a collection under the tracking lock, then runs it AFTER
+releasing the lock. An in-flight flag prevents recursive/overlapping reservations;
+the cleanup resets it even on an exception. The active-operation count and prior
+GC enabled state remain protected. The reentrant callback test and existing
+nested/threaded/continuous-overlap tests pass: **77 focused tests passed** after
+this repair. Pull this follow-up before changing shared files.
+
+This is a source change: the author's earlier timing/source-tree statements and
+hosted acceptance cannot certify this new final head. No sporting/config/schema
+or transport-timeout change was made by Work.
+
+### Independently verified remaining blocker
+
+Work fetched completed hosted run **43665809817**, not just the PR summary:
+
+- All 14 API matrix jobs and all 4 actual Chromium reader jobs succeeded.
+- Two-season W52 job **132664784403** succeeded.
+- Two-season W61 job **132664784409** failed at
+  `tests/api/test_native_season_archive_wide.py:193`, the first cold-restart
+  inspection, with `TimeoutError` (test 6,032 seconds).
+- Two-season W80 job **132664784228** failed at the same cold-restart inspection
+  with `TimeoutError` (test 12,124 seconds).
+
+These are actual runtime failures, no longer extrapolated limits. Neither can be
+waived by Sonar being advisory, a Draft skip, a longer HTTP timeout, an xfail or
+an incomplete benchmark equality assertion. No merge approval is given.
+
+### Next implementation task
+
+1. Keep the already-correct repairs and Work's GC fix. Start by rerunning the
+   focused tests from the original handoff below, including the unchanged Work
+   regressions. Do not reintroduce the raw-text hash shortcut.
+2. Fix cold-start scalability while preserving every actual-byte, canonical-hash,
+   ownership, source, lineage, replay and rollback check. The proposal in
+   `docs/NATIVE_SAVED_COMPONENT_STORAGE_PROPOSAL.md` is a useful starting point,
+   **not an implementation or an approved proof of correctness**. Choose a
+   technically sound approach and implement a bounded vertical slice rather than
+   returning only the same proposal again.
+3. If using a new component-storage format, make writer selection/versioning
+   explicit and keep old revisions/bytes/hashes/readers valid. Do not migrate or
+   re-sign history silently or trust a proof merely stored in the same database.
+   Versioned revision hashes may naturally differ between formats: differential
+   tests must distinguish expected storage-envelope identity from unchanged
+   sporting component values, fingerprints, results and public response shape.
+4. Prove the new path first with short-clock real SQLite/API scenarios, adversarial
+   component corruption, wrong Run/Branch, missing/cyclic segments, cold/warm
+   reads, extension, fork, restore and transaction rollback. Keep authoritative
+   checks even when stored components or prefixes are shared.
+5. Reuse immutable failing DB copies to diagnose read-only costs before spending
+   hours rebuilding the same fixtures. For a new writer format, build genuinely
+   new Runs using that format; do not call a rewritten legacy DB a valid migration
+   proof. Report old-format limitations separately and honestly.
+6. Measure complete/censored reads, CPU, memory and bytes on exact source trees.
+   Then complete actual W52/W61/W80 two-season runs within the unchanged 120-second
+   transport bound, including extension and cold restart. Keep every calendar week,
+   real MatchEngine result, explicit Save, both comparison directions and Saved
+   integrity checks. Do not repeatedly launch the multi-hour matrix before the
+   relevant cold-read path has a credible focused proof.
+7. Return one stable candidate to Work with actual final-head evidence and the
+   relevant API/browser/fork/Save gates. Preserve the existing scoped workflows
+   and the full-release obligations; 50-season performance is not inferred from
+   a two-season success. Radim alone merges. Report recommended/actually visible
+   model and effort according to CLAUDE.md, without assuming a paid upgrade.
+
+No new product decision is needed to fix these engineering defects. If a genuinely
+new product/trust-boundary choice becomes unavoidable, explain it concretely;
+do not make Radim select the old A-D menu before continuing useful implementation.
+
+---
+
+# Original Work review / return task — 14 November 2026 (historical)
 
 **Decision: REQUEST CHANGES. Do not merge. Radim alone merges.**
 

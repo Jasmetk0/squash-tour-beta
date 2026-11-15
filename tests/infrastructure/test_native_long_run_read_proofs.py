@@ -29,6 +29,37 @@ from tests.infrastructure.test_native_dependency_read_snapshot import rewrite_so
 pytestmark = pytest.mark.pr_critical
 
 
+def test_gc_collection_callback_can_reenter_a_paused_operation():
+    """Collection may execute arbitrary finalizers/callbacks; never hold our lock."""
+    import subprocess
+    import sys
+    import textwrap
+
+    code = textwrap.dedent('''
+        import gc, time
+        from beta_engine.infrastructure.db import cyclic_gc
+        called = []
+        def callback(phase, info):
+            if phase == 'start':
+                with cyclic_gc.paused_cyclic_gc():
+                    called.append(True)
+        with cyclic_gc.paused_cyclic_gc():
+            gc.callbacks.append(callback)
+            try:
+                cyclic_gc._paused_since = time.monotonic() - 31
+                with cyclic_gc.paused_cyclic_gc():
+                    pass
+                assert called
+            finally:
+                gc.callbacks.remove(callback)
+        assert gc.isenabled()
+        assert cyclic_gc._active == 0
+    ''')
+    result = subprocess.run([sys.executable, '-c', code], capture_output=True,
+                            text=True, timeout=5, check=False)
+    assert result.returncode == 0, result.stderr
+
+
 def plain(text_value):
     return hashlib.sha256(text_value.encode("utf-8")).digest()
 

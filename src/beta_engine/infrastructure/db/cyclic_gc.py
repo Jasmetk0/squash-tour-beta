@@ -30,30 +30,50 @@ _lock = Lock()
 _active = 0
 _restore = False
 _paused_since = 0.0
+_collecting = False
 
 
-def _collect_if_overdue_locked():
-    global _paused_since
+def _reserve_collection_locked():
+    """Reserve one collection; execute callbacks only after releasing the lock."""
+    global _paused_since, _collecting
     now = time.monotonic()
-    if now - _paused_since > MAX_CONTINUOUS_PAUSE_SECONDS:
-        gc.collect()  # runs although automatic collection is disabled
-        _paused_since = time.monotonic()
+    if not _collecting and now - _paused_since > MAX_CONTINUOUS_PAUSE_SECONDS:
+        _collecting = True
+        _paused_since = now
+        return True
+    return False
+
+
+def _collect_reserved():
+    global _paused_since, _collecting
+    try:
+        # Finalizers and gc.callbacks can reenter a native operation. Holding
+        # _lock here deadlocks those callbacks (including on the same thread).
+        gc.collect()
+    finally:
+        with _lock:
+            _paused_since = time.monotonic()
+            _collecting = False
 
 
 @contextmanager
 def paused_cyclic_gc():
     global _active, _restore, _paused_since
+    collect = False
     with _lock:
         if _active == 0:
             _restore = gc.isenabled()
             gc.disable()
             _paused_since = time.monotonic()
         else:
-            _collect_if_overdue_locked()
+            collect = _reserve_collection_locked()
         _active += 1
     try:
+        if collect:
+            _collect_reserved()
         yield
     finally:
+        collect = False
         with _lock:
             _active -= 1
             if _active == 0:
@@ -61,7 +81,9 @@ def paused_cyclic_gc():
                     _restore = False
                     gc.enable()
             else:
-                _collect_if_overdue_locked()
+                collect = _reserve_collection_locked()
+        if collect:
+            _collect_reserved()
 
 
 def with_paused_cyclic_gc(function):

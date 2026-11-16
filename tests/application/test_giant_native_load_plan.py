@@ -41,6 +41,13 @@ def test_requested_qualifying_profile_and_strict_engine_limit_detection():
     assert len(qualifying) > 50
     assert all(e.qualifier_spots == 4 and e.qualification_size in (16, 32)
                for e in qualifying)
+    assert all(tuple(e.qualifying_point_table) == (
+        ("qualification_winner", "qualification_final", "qualification_semifinal")
+        if e.qualification_size == 16
+        else ("qualification_winner", "qualification_final",
+              "qualification_semifinal", "qualification_round"))
+        for e in qualifying)
+    assert all(not e.qualifying_point_table for e in scenario if not e.qualification_size)
     assert all(e.expected_played_matches ==
                e.size - 1 + max(0, e.qualification_size - e.qualifier_spots)
                for e in scenario)
@@ -80,6 +87,7 @@ def test_separate_compatible_profile_has_no_fake_large_draw_or_qualification():
     assert all(e.is_world_championship and e.size == 8 for e in compatible
                if e.week == 51)
     assert unsupported_execution_capabilities(compatible) == []
+    assert all(not e.qualifying_point_table for e in compatible)
     assert len({e.edition_id for e in compatible}) == 300
     for e in compatible:
         assert tuple(e.point_table) == required_stages(e.size)

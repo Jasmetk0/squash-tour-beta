@@ -16,8 +16,6 @@ import resource
 import sqlite3
 import time
 
-SOURCE_SHA = "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76db96ab39fb0ae51ab78e7"
-# Correct pinned real source digest is below; use the exact audited database.
 SOURCE_SHA = "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7"
 
 

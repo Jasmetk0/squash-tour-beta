@@ -22,7 +22,7 @@ def _state(week, *, corrupt_rankings=False):
     return {
         "journal": [{"n": i} for i in rows],
         "advances": [{"n": i} for i in rows],
-        "tournaments": [{"n": i} for i in rows[-1:]],
+        "tournaments": [{"n": i} for i in rows],
         "tour": {
             "receipts": [{"n": i} for i in rows],
             "transitions": [{"n": i} for i in rows],

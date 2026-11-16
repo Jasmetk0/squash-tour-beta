@@ -17,6 +17,10 @@ from beta_engine.infrastructure.db import calendar_event_content_store_prototype
 pytestmark = pytest.mark.pr_critical
 RUN, BRANCH = "run", "branch"
 
+# Test-only independent source authority, populated from original caller values.
+# Intentionally never read the experimental manifest to decide trusted bytes.
+ORIGINAL_SAVED_BINDINGS = {}
+
 
 def hashed(value):
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
@@ -43,18 +47,34 @@ def db():
 
 
 def add(connection, num, history, previous=None, run=RUN, branch=BRANCH):
-    return ev.append(
+    prior = (ORIGINAL_SAVED_BINDINGS.get((connection, run, branch, previous))
+             if previous else None)
+    result = ev.append(
         connection, run_id=run, branch_id=branch, revision_id=f"rev-{num}",
         independently_verified_source_hash=hashed(f"source {run}/{branch}/{num}"),
         events=history,
         preceding_manifest_revision_id=previous,
+        preceding_independently_verified_source_hash=(
+            prior["source_hash"] if prior else None),
+        preceding_independently_verified_event_array_sha256=(
+            prior["array_hash"] if prior else None),
     )
+    ORIGINAL_SAVED_BINDINGS[(connection, run, branch, f"rev-{num}")] = {
+        "source_hash": hashed(f"source {run}/{branch}/{num}"),
+        "array_hash": hashed(ev._canonical(history)),
+    }
+    return result
 
 
 def read(connection, num, run=RUN, branch=BRANCH):
+    original = ORIGINAL_SAVED_BINDINGS.get(
+        (connection, run, branch, f"rev-{num}"))
+    if original is None:
+        raise ev.SportingEventStoreError("No independent original Saved row for this owner")
     return ev.restore(
         connection, run_id=run, branch_id=branch, revision_id=f"rev-{num}",
-        independently_verified_source_hash=hashed(f"source {run}/{branch}/{num}"),
+        independently_verified_source_hash=original["source_hash"],
+        independently_verified_event_array_sha256=original["array_hash"],
     )
 
 
@@ -150,6 +170,7 @@ def test_independently_verified_source_hash_must_bind_manifest():
         ev.restore(
             conn, run_id=RUN, branch_id=BRANCH, revision_id="rev-1",
             independently_verified_source_hash=hashed("different actual signed Saved"),
+            independently_verified_event_array_sha256=hashed(ev._canonical(rows(2))),
         )
 
 
@@ -198,3 +219,53 @@ def test_duplicate_revision_cannot_be_overwritten_or_resigned():
         add(conn, 1, rows(2))
     assert ev.stats(conn) == baseline
     assert read(conn, 1) == rows(2)
+
+
+def test_self_consistent_rewritten_manifest_and_node_still_fail_original_array_auth():
+    """A manifest's own SHA is NOT an authorization to rewrite signed history."""
+    conn = db()
+    original_events = rows(2)
+    add(conn, 1, original_events)
+    manifest_json = conn.execute(
+        "SELECT manifest_json FROM experimental_sporting_event_manifests "
+        "WHERE revision_id='rev-1'"
+    ).fetchone()[0]
+    manifest = json.loads(manifest_json)
+    forged = {**original_events[0], "rallies": "forged actual event"}
+    new_raw = ev._canonical(forged)
+    new_digest = hashed(new_raw)
+    conn.execute(
+        "INSERT INTO experimental_sporting_event_nodes "
+        "(run_id,branch_id,event_sha256,canonical_event_json) "
+        "VALUES (?,?,?,?)", (RUN, BRANCH, new_digest, new_raw),
+    )
+    manifest["events"][0] = new_digest
+    forged_array = [forged, original_events[1]]
+    manifest["event_sha256"] = hashed(ev._canonical(forged_array))
+    new_manifest = ev._canonical(manifest)
+    conn.execute(
+        "UPDATE experimental_sporting_event_manifests "
+        "SET manifest_json=?,manifest_sha256=? WHERE revision_id='rev-1'",
+        (new_manifest, hashed(new_manifest)),
+    )
+    # Without an externally signed events-array digest, the old prototype
+    # would accept this self-consistent rewrite under the unchanged Saved hash.
+    with pytest.raises(ev.SportingEventStoreError, match="Original event"):
+        read(conn, 1)
+
+
+def test_preceding_physical_event_array_must_match_external_signed_original():
+    conn = db()
+    add(conn, 1, rows(2))
+    original = ORIGINAL_SAVED_BINDINGS[(conn, RUN, BRANCH, "rev-1")]
+    with pytest.raises(ev.SportingEventStoreError, match="Predecessor signed"):
+        ev.append(
+            conn, run_id=RUN, branch_id=BRANCH, revision_id="rev-2",
+            independently_verified_source_hash=hashed("source run/branch/2"),
+            events=rows(3), preceding_manifest_revision_id="rev-1",
+            preceding_independently_verified_source_hash=original["source_hash"],
+            preceding_independently_verified_event_array_sha256=hashed(
+                ev._canonical(rows(3))
+            ),
+        )
+    assert ev.stats(conn)["manifests"] == 1

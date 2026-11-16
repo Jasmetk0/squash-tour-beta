@@ -44,7 +44,9 @@ jobs:
         run: |
           set -euo pipefail
           find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' -print
-          mapfile -t databases < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db')
+          # pytest --basetemp archives both the numbered case and its "current" alias.
+          # Always select the numbered test case, never an arbitrary duplicate.
+          mapfile -t databases < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
           if [ "${#databases[@]}" -ne 1 ]; then
             echo "::error::Expected exactly one real disposable W12 SQLite fixture"
             exit 1

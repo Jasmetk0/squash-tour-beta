@@ -10,6 +10,8 @@ import json
 
 import pytest
 
+from beta_engine.application import native_fork_runtime_service as writer
+
 from beta_engine.application.native_fork_runtime_service import (
     NativeForkRuntimeService,
     _copy_append_payload_without_replaced_runtime,
@@ -102,3 +104,58 @@ def test_absent_previous_runtime_does_not_discard_other_components():
     source = sample()
     del source["content"][KEY]
     assert _copy_append_payload_without_replaced_runtime(source) == source
+
+
+def test_append_builds_independent_persisted_bytes_and_valid_content_hash(monkeypatch):
+    source = sample()
+    original = deepcopy(source)
+    updated_runtime = {"state": {"new": ["value", {"nested": [1, 2]}]}}
+    monkeypatch.setattr(writer, "component", lambda runtime: updated_runtime)
+
+    class MemorySession:
+        def __init__(self):
+            self.rows = []
+
+        def add(self, value):
+            self.rows.append(value)
+
+        def flush(self):
+            pass
+
+    class RecordingRepository:
+        def _validated_saved_revision_in_session(self, *, session, model):
+            payload = json.loads(model.payload_json)
+            assert model.content_hash == saved_revision_content_hash(
+                revision_id=model.revision_id,
+                run_id=model.run_id,
+                branch_id=model.branch_id,
+                sequence=model.sequence,
+                parent_revision_id=model.parent_revision_id,
+                kind=model.kind,
+                payload_schema_version=model.payload_schema_version,
+                payload=payload,
+                change_summary=json.loads(model.change_summary_json),
+            )
+            return SimpleNamespace(revision_id=model.revision_id, payload=payload)
+
+    run = SimpleNamespace(run_id="r")
+    branch = SimpleNamespace(branch_id="b", saved_head_revision_id="saved-1")
+    previous = SimpleNamespace(payload=source, revision_id="saved-1", sequence=1)
+    draft = SimpleNamespace(draft_version=3)
+    session = MemorySession()
+    record, audit = NativeForkRuntimeService(RecordingRepository())._append(
+        session, (run, branch, previous, draft), object(),
+        revision_id="saved-2", audit_event_id="audit-2",
+        summary={"kind": "native_fork_save", "runtime_fingerprint": "a" * 64},
+        viewer_id="b",
+    )
+    expected = deepcopy(original)
+    expected["content"][KEY] = updated_runtime
+    expected["run"]["viewer_branch_id"] = "b"
+    assert record.payload == expected
+    assert source == original
+    assert branch.saved_head_revision_id == "saved-2"
+    assert audit.saved_revision_id == "saved-2"
+    # Even after the write returns, a consumer cannot mutate the original root.
+    record.payload["content"]["original_source"]["nested"][0]["value"] = 123
+    assert source["content"]["original_source"]["nested"][0]["value"] == 1.5

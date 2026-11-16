@@ -1,8 +1,8 @@
 name: Isolated giant native five-season load
 
 # Explicitly scoped: unrelated PRs never trigger this expensive benchmark.
-# Opening this dedicated Draft PR starts exactly one load job. Later runs may
-# be requested manually after the workflow exists on the default branch.
+# This workflow is opt-in and path-scoped. GitHub may require registration on
+# the default branch before a newly introduced workflow can execute.
 on:
   pull_request:
     types: [opened, synchronize, reopened]
@@ -23,7 +23,7 @@ concurrency:
 
 jobs:
   plan-contracts:
-    name: Giant native load / static schedule contracts
+    name: Giant native load / requested 16-128 Q world plan contracts
     runs-on: ubuntu-latest
     timeout-minutes: 12
     steps:
@@ -41,14 +41,15 @@ jobs:
           GITHUB_EVENT_NAME: giant_native_load
         run: |
           python -m pytest -q -x tests/application/test_giant_native_load_plan.py
-          python scripts/giant_native_five_season_load.py --plan-only
+          python scripts/giant_native_five_season_load.py --profile requested --plan-only
+          python scripts/giant_native_five_season_load.py --profile compatible --plan-only
 
   five-seasons:
-    name: Giant native load / 1000 players / 5 x 52 weeks / 120 Editions
+    name: Giant native load / 1000 players / 5x52 weeks / 300 compatible Editions
     needs: plan-contracts
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # This long job intentionally is NOT a normal required Fast CI/merge gate.
+    # This long job is a genuine 4/8 Main-only compatibility load, NOT a\n  # simulation of the larger requested Main/Qualification/World profile.\n  # It is intentionally NOT a required Fast CI/merge gate.
     # Its independent, strict time budget is shorter than Actions' job timeout.
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
@@ -68,10 +69,11 @@ jobs:
         run: |
           set -o pipefail
           python scripts/giant_native_five_season_load.py \
+            --profile compatible \
             --players 1000 \
             --seasons 5 \
-            --editions-per-season 24 \
-            --born-per-season 16 \
+            --editions-per-season 60 \
+            --born-per-season 80 \
             --budget-minutes 315 \
             --output-dir giant-load-evidence \
             2>&1 | tee giant-load-console.log

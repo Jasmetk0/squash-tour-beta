@@ -203,7 +203,13 @@ def _case(case_name, db_path, out):
             total_wall_s = time.perf_counter() - started
             total_cpu_s = time.process_time() - cpu_started
             check_after = _assert_real_sporting(final, week=2)
-            assert check_before == check_after
+            # A real native week transition MAY develop/change player
+            # attributes. Preserve old match evidence, not the previous
+            # week's player state; compare resulting players BETWEEN A/B.
+            assert (
+                check_before["edition_evidence_sha256"]
+                == check_after["edition_evidence_sha256"]
+            )
             assert final["saved_head_revision_id"] != old_head
             counters = {}
             for row in request_rows:

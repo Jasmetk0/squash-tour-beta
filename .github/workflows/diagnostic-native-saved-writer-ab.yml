@@ -1,0 +1,125 @@
+name: Native Saved Writer One-Encoding A-B
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/beta_engine/domain/run_revisions.py'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
+      - 'tests/api/test_native_saved_new_json_hash.py'
+      - '.github/workflows/diagnostic-native-saved-writer-ab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-one-encoding-write-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  authentic-manual-save-ab:
+    name: Original vs candidate; actual 46-revision W12 Saved POST and 47th immutable revision
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact original buuk
+        uses: actions/checkout@v4
+        with:
+          ref: 320e4766ec8ba78e3de20153b8aaada90585b0cf
+          path: original
+          persist-credentials: false
+      - name: Checkout previously passing W12 Save diagnostic harness
+        uses: actions/checkout@v4
+        with:
+          ref: b95553844d9a9d525729efa9d6c21238bdf0fb1e
+          path: probe
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install backend + regression test dependencies
+        run: python -m pip install -e . pytest
+      - name: Verify exact hash equivalence and real SQLite tampering rejection
+        run: |
+          PYTHONPATH="$PWD/src:$PWD" python -m pytest \
+            tests/api/test_native_saved_new_json_hash.py \
+            -q -s --maxfail=1 --durations=10
+      - name: Download genuine completed W12 physical SQLite
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/baseline-native-w12
+      - name: A-B-B-A actual manual Save, full post-write physical history validation
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t sources < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#sources[@]}" -ne 1 ]; then
+            echo "::error::Original real 256-player W12 database was not uniquely found"
+            exit 1
+          fi
+          sha="$(sha256sum "${sources[0]}" | cut -d' ' -f1)"
+          if [ "$sha" != "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7" ]; then
+            echo "::error::Incorrect physical Saved source SQLite"
+            exit 1
+          fi
+          cp probe/scripts/profile_native_w12_saved_growth_write.py original/scripts/
+          cp probe/scripts/profile_native_w12_saved_growth_write.py scripts/
+          mkdir -p "$RUNNER_TEMP/native-write-ab"
+          for case in A1 B1 B2 A2; do
+            if [[ "$case" == A* ]]; then directory=original; else directory=.; fi
+            cp "${sources[0]}" "$RUNNER_TEMP/native-case.sqlite"
+            (
+              cd "$directory"
+              PYTHONPATH="$PWD/src:$PWD" python scripts/profile_native_w12_saved_growth_write.py \
+                --mode write --database "$RUNNER_TEMP/native-case.sqlite" \
+                --out "$RUNNER_TEMP/native-write-ab/$case"
+            )
+            rm -f "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-case.sqlite-wal" "$RUNNER_TEMP/native-case.sqlite-shm"
+          done
+          python - <<'PY'
+          import json, os, statistics
+          from pathlib import Path
+          root=Path(os.environ["RUNNER_TEMP"])/"native-write-ab"
+          samples={case:json.loads((root/case/"write.json").read_text())
+                   for case in ("A1","B1","B2","A2")}
+          assert all(x["run_preserved"] and x["after_sqlite"]["revision_count"] == 47
+                     and x["original_real_matches"] == 24 for x in samples.values())
+          durations={case:round(x["timing"]["manual_save"]["wall_s"],3)
+                     for case,x in samples.items()}
+          a=statistics.median([durations["A1"],durations["A2"]])
+          b=statistics.median([durations["B1"],durations["B2"]])
+          details={
+            "source_run":43919075227,
+            "original_baseline_commit":"320e4766ec8ba78e3de20153b8aaada90585b0cf",
+            "candidate_head":os.environ.get("GITHUB_SHA"),
+            "case_order":["A1","B1","B2","A2"],
+            "manual_save_wall_s":durations,
+            "original_median_s":round(a,3),
+            "candidate_median_s":round(b,3),
+            "median_change_percent":round(100*(b/a-1),2),
+            "validated_new_revisions":4,
+            "caution":"4 independent real requests on the same baseline source, "
+                      "no claim of full season speedup; hashes/IDs differ across "
+                      "new UUID saves and are individually authenticated",
+          }
+          (root/"summary.json").write_text(json.dumps(details,indent=2))
+          print("W12_WRITER_AB_SUMMARY "+json.dumps(details,sort_keys=True),flush=True)
+          PY
+      - name: Retain only small phase reports; never upload full Run database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-saved-one-encoding-ab-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-write-ab/
+          if-no-files-found: warn
+          retention-days: 7

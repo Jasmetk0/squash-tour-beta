@@ -49,7 +49,9 @@ jobs:
     needs: plan-contracts
     runs-on: ubuntu-latest
     timeout-minutes: 350
-    # This long job is a genuine 4/8 Main-only compatibility load, NOT a\n  # simulation of the larger requested Main/Qualification/World profile.\n  # It is intentionally NOT a required Fast CI/merge gate.
+    # This long job is genuine 4/8 Main-only compatibility load, NOT a
+    # simulation of the larger requested Main/Qualification/World profile.
+    # It is intentionally NOT a required Fast CI/merge gate.
     # Its independent, strict time budget is shorter than Actions' job timeout.
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4

@@ -182,22 +182,43 @@ def native_read_proof_scope():
             _proofs.reset(token)
 
 
+def _canonical_runtime_identity(raw):
+    """Canonical component proof and state JSON, each large subtree encoded once.
+
+    The component is REQUIRED to have exactly two keys: fingerprint and state.
+    With sort_keys=True its original canonical JSON is precisely
+    {"fingerprint":<json>,"state":<json>}. Hash the same UTF-8 bytes in
+    pieces; do not re-encode the potentially multi-MB state a second time.
+    SHA-256 identity, Unicode/float JSON semantics and cache byte limits
+    remain identical to canonical_json(raw).encode("utf-8").
+    """
+    state_json = canonical_json(raw["state"]).encode("utf-8")
+    prefix = (
+        b'{"fingerprint":'
+        + canonical_json(raw["fingerprint"]).encode("utf-8")
+        + b',"state":'
+    )
+    digest = hashlib.sha256()
+    digest.update(prefix)
+    digest.update(state_json)
+    digest.update(b"}")
+    return digest.digest(), len(prefix) + len(state_json) + 1, state_json
+
+
 def load_runtime(payload):
     raw = payload.get("content", {}).get(KEY)
     if not isinstance(raw, dict) or set(raw) != {"state", "fingerprint"}:
         raise ValueError("Malformed native fork runtime component")
-    serialized = canonical_json(raw).encode("utf-8")
-    signature = hashlib.sha256(serialized).digest()
+    signature, size, state_json = _canonical_runtime_identity(raw)
     memo = _proofs.get()
     cache = memo.setdefault("parsed_native_runtimes", {}) if memo is not None else {}
     prior = cache.pop(signature, None)
     if prior is not None:
         cache[signature] = prior
         return prior[1]
-    runtime = NativeForkRuntime.model_validate_json(canonical_json(raw["state"]))
+    runtime = NativeForkRuntime.model_validate_json(state_json)
     if runtime.fingerprint != raw["fingerprint"]:
         raise ValueError("Native fork runtime fingerprint differs")
-    size = len(serialized)
     if memo is not None and size <= _MAX_PARSED_RUNTIME_BYTES:
         cache[signature] = (size, runtime)
         while len(cache) > _MAX_PARSED_RUNTIMES or sum(item[0] for item in cache.values()) > _MAX_PARSED_RUNTIME_BYTES:

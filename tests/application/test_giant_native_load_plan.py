@@ -28,7 +28,7 @@ def test_every_ranked_edition_has_exact_engine_stage_table():
         assert tuple(row.point_table) == required_stages(row.size)
         assert row.point_table["champion"] == row.points
         values = list(row.point_table.values())
-        assert len(values) == row.size.bit_length() + 1
+        assert len(values) == row.size.bit_length()
         assert all(x > y >= 0 for x, y in zip(values, values[1:]))
 
 

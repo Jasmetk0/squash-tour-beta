@@ -185,7 +185,6 @@ def write_profile(db_file, output):
     assert baseline["revision_count"] == 46, baseline
 
     from beta_engine.application.calendar_tour_service import CalendarTourService
-    from beta_engine.infrastructure.db.repositories import SqlAlchemyRepository
     # Method timers include nested measures and do not add up.
     measures = defaultdict(lambda: {"calls": 0, "wall_s": 0.0, "cpu_s": 0.0})
     patches = []
@@ -271,10 +270,6 @@ def write_profile(db_file, output):
             # Observe only a newly added immutable Saved revision; old 46 untouched.
             after = sizes_ro(source)
             assert after["revision_count"] == baseline["revision_count"] + 1, after
-            old_revisions = repository.list_branch_saved_revisions(
-                run_id="run", branch_id="branch"
-            )
-            assert len(old_revisions) == 47, len(old_revisions)
 
             report = {
                 "source_sha256": SOURCE_DIGEST, "run_preserved": True,

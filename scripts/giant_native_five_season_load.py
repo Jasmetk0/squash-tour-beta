@@ -201,7 +201,7 @@ class Evidence:
         tmp.replace(self.summary_path)
 
 
-def _save_prospects(server, repo, *, season: int, target_week: int, count: int, horizon: int):
+def _save_prospects(server, repo, *, season: int, count: int, horizon: int):
     """Sign exactly the same source and Save gate exercised by native birth tests."""
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -214,12 +214,13 @@ def _save_prospects(server, repo, *, season: int, target_week: int, count: int, 
         return ()
     world = repo.get_initial_world(run_id="run", branch_id="branch")
     clock = RunCalendar(WEEKS_PER_SEASON, 1, 2030, horizon)
-    target = RunWeekPosition(calendar=clock, season_index=season, week=target_week)
+    targets = tuple(RunWeekPosition(calendar=clock, season_index=season, week=week)
+                    for week in cohort_weeks(season))
     records = []
     ids = []
     for index in range(count):
         player_id = f"load-born-{season:02d}-{index:03d}"
-        source = source_at(clock, target, pid=player_id)
+        source = source_at(clock, targets[index % len(targets)], pid=player_id)
         # Reuse the real native cohort provenance and canonical sporting profile.
         record = RunProspectRecord(**(_record().__dict__ | {
             "prospect_id": player_id, "run_id": "run",
@@ -261,7 +262,9 @@ def _plan_edition(server, edition: Edition):
     payload = {
         "schema_version": "calendar_tournament_edition.v2",
         "edition_id": edition.edition_id,
-        "name": f"{edition.tier.title()} Load Cup S{edition.season + 1} W{edition.week}",
+        "name": (f"World Championship compatibility surrogate ({edition.size}-entrant Main)"
+                 if edition.is_world_championship and edition.size <= 8
+                 else f"{edition.tier.title()} Load Cup S{edition.season + 1} W{edition.week}"),
         "week": {**week, "week": edition.week},
         "announcement_week": {**week, "week": edition.week - 1},
         "start_slot": 1, "simulation_seed": 90100 + edition.number,
@@ -272,54 +275,78 @@ def _plan_edition(server, edition: Edition):
     save_tour(server)
 
 
-def _play_edition(server, edition: Edition, initial_professionals: tuple[str, ...]):
-    """Only real signed Entry, actual global-slot rally matches and confirmation."""
+def _play_week(server, editions: tuple[Edition, ...], initial_professionals: tuple[str, ...]):
+    """Prepare all same-week fields first, then execute *shared* real slots.
+
+    Multiple simultaneous Editions are independent only when their player
+    fields are disjoint, so prevent cross-Edition sporting-input conflicts.
+    """
     from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour
+    if not editions:
+        return []
     view = inspect(server)
     active = {p["player_id"] for p in view["players"]}
     eligible = [pid for pid in initial_professionals if pid in active]
-    if len(eligible) < edition.size:
-        raise RuntimeError(
-            f"Cannot truthfully play {edition.size}-entrant Edition: "
-            f"only {len(eligible)} initially signed professionals still present"
-        )
-    start = (edition.number * 17) % len(eligible)
-    entrants = [eligible[(start + n) % len(eligible)] for n in range(edition.size)]
-    execute(server, command(view, "submit", name=edition.edition_id + ":submit",
-                            edition_id=edition.edition_id, data={"player_ids": entrants}))
-    for action in ("approve", "draw"):
-        execute(server, command(inspect(server), action,
-                                name=edition.edition_id + ":" + action,
-                                edition_id=edition.edition_id))
-    save_tour(server)
-
-    slots = 0
-    match_count = 0
+    required = max(e.entrant_offset + e.size for e in editions)
+    if len(eligible) < required:
+        raise RuntimeError(f"Need {required} separate eligible initial professionals; got {len(eligible)}")
+    week = editions[0].week
+    season = editions[0].season
+    assert all((e.week, e.season) == (week, season) for e in editions)
+    base = (season * 127 + week * 19) % len(eligible)
+    fields = {}
+    for event in editions:
+        entrants = [eligible[(base + event.entrant_offset + n) % len(eligible)]
+                    for n in range(event.size)]
+        fields[event.edition_id] = entrants
+    flat = [player for ids in fields.values() for player in ids]
+    assert len(flat) == len(set(flat)), "A simultaneous player must not enter two tournaments"
+    for event in editions:
+        event_id = event.edition_id
+        execute(server, command(inspect(server), "submit", name=event_id + ":submit",
+                                edition_id=event_id, data={"player_ids": fields[event_id]}))
+        for action in ("approve", "draw"):
+            execute(server, command(inspect(server), action,
+                                    name=event_id + ":" + action, edition_id=event_id))
+        save_tour(server)
+    slot_count = 0
+    slot_match_count = 0
     while True:
         view = inspect(server)
         slot = view["next_slot"]
         if slot is None:
             break
         assert not slot["conflicts"] and slot["matches"], slot
-        slots += 1
-        if slots > int(math.log2(edition.size)) + 4:
-            raise RuntimeError(f"Unexpected number of global slots for {edition.edition_id}")
-        match_count += len(slot["matches"])
-        execute(server, command(view, "next-slot", name=edition.edition_id + f":slot-{slots}"))
+        slot_count += 1
+        if slot_count > 16:
+            raise RuntimeError(f"Unbounded global slots at season={season} week={week}")
+        slot_match_count += len(slot["matches"])
+        execute(server, command(view, "next-slot",
+                                name=f"load-s{season + 1}-w{week}-slot-{slot_count}"))
         save_tour(server)
-    execute(server, command(inspect(server), "confirm-result",
-                            name=edition.edition_id + ":confirm", edition_id=edition.edition_id))
-    save_tour(server)
-    view = inspect(server)
-    assert next(row for row in view["state"]["editions"]
-                if row["edition"]["edition_id"] == edition.edition_id)["result_confirmed"]
-    # Keep compact evidence for later sporting analysis; no raw database upload needed.
-    source = view["edition_evidence"][edition.edition_id]
-    assert len(source["matches"]) == edition.size - 1
-    assert len(source["results"]) == edition.size
-    return {"edition_id": edition.edition_id, "tier": edition.tier,
-            "entrant_ids": entrants, "slots": slots, "match_count": match_count,
-            "results": source["results"]}
+
+    completed = []
+    for event in editions:
+        event_id = event.edition_id
+        execute(server, command(inspect(server), "confirm-result",
+                                name=event_id + ":confirm", edition_id=event_id))
+        save_tour(server)
+        view = inspect(server)
+        assert next(row for row in view["state"]["editions"]
+                    if row["edition"]["edition_id"] == event_id)["result_confirmed"]
+        evidence = view["edition_evidence"][event_id]
+        assert len(evidence["matches"]) == event.size - 1
+        assert len(evidence["results"]) == event.size
+        completed.append({
+            "edition_id": event_id, "tier": event.tier,
+            "world_championship_compatibility_surrogate": event.is_world_championship,
+            "main_entrants": event.size,
+            "qualification_entrants": 0,
+            "entrant_ids": fields[event_id], "slots_in_week": slot_count,
+            "match_count": len(evidence["matches"]), "results": evidence["results"],
+        })
+    assert sum(item["match_count"] for item in completed) == slot_match_count
+    return completed
 
 
 def run(args, evidence: Evidence):

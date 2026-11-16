@@ -1,0 +1,56 @@
+name: Diagnostic W12 Repeated Player Snapshots Inside Events
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/profile_w12_event_player_snapshots.py'
+      - '.github/workflows/diagnostic-w12-event-player-snapshots.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: w12-event-player-snapshot-diag-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  real-event-player-object-accounting:
+    name: Account 256-player full record copies inside 15 distinct original real events
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/real-w12
+      - name: Measure exact per-player JSON duplication within actual original 15 sporting events
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t sources < <(find "$RUNNER_TEMP/real-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#sources[@]}" -ne 1 ]; then
+            echo "::error::Exactly one original W12 source expected"
+            exit 1
+          fi
+          python scripts/profile_w12_event_player_snapshots.py \
+            --database "${sources[0]}" \
+            --out "$RUNNER_TEMP/player-records-report"
+      - name: Archive derived statistics only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-w12-player-records-${{ github.run_id }}
+          path: ${{ runner.temp }}/player-records-report/
+          if-no-files-found: warn
+          retention-days: 7

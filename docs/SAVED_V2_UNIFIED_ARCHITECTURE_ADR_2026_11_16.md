@@ -39,9 +39,10 @@ not a unilateral approval.
 
 | Source/workload | Genuine observation | What it does NOT prove |
 | --- | --- | --- |
-| #1820, real HTTP/SQLite, 1,000 initial players | W2 52.89 s; W3 69.77 s; W4 352.56 s; W5 586.25 s; W6 1,133.34 s; at W6 ~1.085 GB SQLite and 3.56 GiB peak RSS (reported telemetry) | Not a finished five-season benchmark; W4–6 contain more tournament work and test-harness GETs, so cannot attribute all growth to Saved history |
+| #1820 final failed real 1,000-player run | W2 52.89 s → W6 1,133.34 s → **W7 1,819.413 s**; W7 SQLite 1,665,794,048 B, peak RSS 4,729,152 KiB; only **4 real compatible 4/8 Editions / 20 actual matches** completed. At W8 physical SQLite already 1,849,057,280 B, peak RSS 5,395,384 KiB; actual `POST /calendar-tour/save` timed out at HTTP-client **120s** after 82.66 total elapsed minutes. | Not a finished five-season benchmark; W4–8 have differing tournament workloads. A client timeout does not prove engine crash/corrupt Save, nor identify precise Server CPU hotspot. No Main16–128/Q played |
 | #1816, genuine 256-player/8 played Edition/24 real match, 46-Saved W12 | cProfiled cold GET 114.35 s; SQL cursor-execute 1.20 s; JSON/Pydantic and lineage replay dominate | Does not measure full actual SQL fetch, player sport, later-season complexity, or uninstrumented execution |
 | #1817 matched W12 A–B–B–A | #1803 cold GET median 54.949 s vs original 98.652 s; same complete response SHA-256 | Not a claim that whole simulated week or season is 44.3% faster |
+| #1822 authentic W12 256-player no-match week, A–B–B–A | Existing giant test helpers 215.290s median vs minimal real HTTP preview/execute/Save sequence 192.881s; **22.409s / 10.41% test request overhead**. Duplicate idempotency execute ~10.817s and extra GET ~11.752s; identical full original 8 Edition/24 match evidence; physical Saved 47th revision. 3 necessary GETs alone ~110s; SQL cursor execute ~6s. | This is **test-harness-request amplification**, not faster engine; deliberately repeated idempotency tests must remain in separate acceptance tests. W12 and giant W8 have different Run sizes/work |
 | #1818 physical W12 v1 Saved | 46 revision payloads: 742,677,941 B; `calendar_player_sporting_checkpoint` 586,070,200 B; `events` 566,039,006 B over 39 snapshots | Nested canonical component byte sums are not disjoint SQLite file savings |
 | #1818 exact historical event reconstruction | 15 true unique event JSON objects 39,026,296 B; 39/39 arrays exact; all 38 observed adjacent lists preserve prefix; 93.103% *event-array text* hypothetical reduction | Append-only is proven only in this source. No production conversion, fork/restore, or whole database gain yet |
 | #1818 finer nested player values | 12,288 player record occurrences / 22,457,260 B vs 3,955 unique / 7,225,081 B; 67.827% repeated player-object bytes | This duplication is **inside** the unique event bytes, not additive to 93.103% event-array result |
@@ -207,9 +208,11 @@ current/peak RSS, WAL, SQLite and new physical node bytes, revision count,
 actual matches and exact resulting sport. Execute W6/W12 first, then signed
 W52, W61/W80 multiple seasons; compare native Calendar Tour separately from
 Native Fork v2. Monitor growth *slope* per week, not only one final number.
-The benchmark-harness extra GET and idempotency POST work isolated by
-diagnostic #1822 must be reported separately, not mislabelled as an
-engine-only speedup.
+The #1822 real W12 A–B–B–A isolated 10.41% of one no-match week's
+test-harness-request amplification (**215.290s vs 192.881s median**) from
+a deliberate duplicate idempotency `POST /execute` and a redundant GET.
+This is not a production speedup; keep idempotency tests in acceptance
+and separately report the actual full HTTP/SQLite engine workload.
 
 **Stage 5 — larger authentic acceptance**. Only after Stage 4 pass, run 1,000+
 players, progressively increasing actual 4/8 tournament load; then 50-season

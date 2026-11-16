@@ -276,7 +276,7 @@ def _install_spans(monkeypatch, spans):
 
 
 @pytest.mark.pr_critical
-def test_instrumented_original_w52_worker_without_changes(tmp_path, monkeypatch, capsys):
+def test_instrumented_original_w52_worker_with_verified_payload_experiment(tmp_path, monkeypatch, capsys):
     spans = BackendSpans()
     _install_spans(monkeypatch, spans)
 
@@ -310,3 +310,64 @@ def test_instrumented_original_w52_worker_without_changes(tmp_path, monkeypatch,
     assert result["sum_instrumented_exclusive_cpu_s"] > 0
     with capsys.disabled():
         print("W52_EXACT_1803_SERVER_PROFILE " + json.dumps(result, sort_keys=True), flush=True)
+
+    # Exercise the *same* real W52 SQLite snapshot after the throughput sample.
+    # This validates that the new private handoff is only populated after full
+    # content-hash authentication and cannot conceal changed physical bytes.
+    import shutil
+    import sqlite3
+    from sqlalchemy import create_engine, select, text
+    from sqlalchemy.orm import Session
+    from beta_engine.application.run_calendar_read_authority import resolve_saved_run_calendar
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+
+    db_file = tmp_path / "matrix.db"
+    with sqlite3.connect(db_file) as source:
+        original_head = source.execute(
+            "SELECT run_id, branch_id, revision_id, payload_json "
+            "FROM branch_saved_revisions WHERE payload_schema_version=? "
+            "ORDER BY sequence DESC LIMIT 1", ("native_fork_saved_root.v2",)
+        ).fetchone()
+        assert original_head is not None
+    run_id, branch_id, rev_id, raw = original_head
+
+    engine = create_engine(f"sqlite:///{db_file}")
+    try:
+        with Session(engine) as session:
+            session.execute(text("BEGIN"))
+            out = []
+            clock = resolve_saved_run_calendar(
+                session, run_id=run_id, branch_id=branch_id,
+                _verified_payload_out=out,
+            )
+            assert clock.weeks_per_year == 52
+            assert len(out) == 1
+            assert out[0]["run"]["run_id"] == run_id
+            assert out[0]["content"]["native_fork_runtime"]["fingerprint"]
+            assert session.get(BranchSavedRevisionModel, rev_id).payload_json == raw
+    finally:
+        engine.dispose()
+
+    tampered = tmp_path / "tampered-progress.db"
+    shutil.copyfile(db_file, tampered)
+    with sqlite3.connect(tampered) as sql:
+        modified = raw.replace('"run_id":', '"corrupted_run_id":', 1)
+        assert modified != raw
+        sql.execute(
+            "UPDATE branch_saved_revisions SET payload_json=? WHERE revision_id=?",
+            (modified, rev_id),
+        )
+        sql.commit()
+    corrupt_engine = create_engine(f"sqlite:///{tampered}")
+    try:
+        with Session(corrupt_engine) as session:
+            session.execute(text("BEGIN"))
+            captured = []
+            with pytest.raises(ValueError, match="hash|Hash"):
+                resolve_saved_run_calendar(
+                    session, run_id=run_id, branch_id=branch_id,
+                    _verified_payload_out=captured,
+                )
+            assert captured == [], "Corrupt Saved was exposed before its hash check"
+    finally:
+        corrupt_engine.dispose()

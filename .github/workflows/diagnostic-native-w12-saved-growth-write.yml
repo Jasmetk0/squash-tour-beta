@@ -1,0 +1,71 @@
+name: Diagnostic Native W12 Saved Growth and Manual Write
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/profile_native_w12_saved_growth_write.py'
+      - '.github/workflows/diagnostic-native-w12-saved-growth-write.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-w12-saved-growth-write-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  saved-growth-and-real-write:
+    name: Read-only 46-revision growth + one real HTTP week transition and explicit Save
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install real backend and API dependencies
+        run: python -m pip install -e . pytest
+      - name: Download exact archived successful 256-player W12 SQLite
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/baseline-native-w12
+      - name: Profile which Saved components duplicate or grow
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "::error::Expected one numbered genuine completed W12 database"
+            exit 1
+          fi
+          cp "${files[0]}" "$RUNNER_TEMP/native-case.sqlite"
+          mkdir -p "$RUNNER_TEMP/w12-saved-write-metrics"
+          python scripts/profile_native_w12_saved_growth_write.py \
+            --mode storage --database "${files[0]}" \
+            --out "$RUNNER_TEMP/w12-saved-write-metrics"
+      - name: Run genuine next-week preview, execute, explicit Save and check persisted result
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          python scripts/profile_native_w12_saved_growth_write.py \
+            --mode write --database "$RUNNER_TEMP/native-case.sqlite" \
+            --out "$RUNNER_TEMP/w12-saved-write-metrics"
+      - name: Retain tiny numeric evidence without large private Run database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-w12-saved-growth-write-${{ github.run_id }}
+          path: ${{ runner.temp }}/w12-saved-write-metrics/
+          if-no-files-found: warn
+          retention-days: 7

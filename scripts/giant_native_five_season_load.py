@@ -63,6 +63,20 @@ class Edition:
         }
 
     @property
+    def qualifying_point_table(self) -> dict[str, int]:
+        """Synthetic requested-only Q ranking points, never a real v2 award."""
+        if not self.qualification_size:
+            return {}
+        first_round = self.point_table[STAGES[self.size][-1]]
+        top = max(4, first_round // 2)
+        stages = ("qualification_winner", "qualification_final",
+                  "qualification_semifinal") + (
+                      ("qualification_round",) if self.qualification_size == 32 else ()
+                  )
+        return {stage: max(0, round(top * 0.60 ** index))
+                for index, stage in enumerate(stages)}
+
+    @property
     def expected_played_matches(self) -> int:
         # Only a planned minimum for an ordinary, fully contested binary Q/Main
         # with four independent qualifier brackets and no BYEs/WOs.
@@ -124,7 +138,7 @@ def make_schedule(seasons: int = 5, editions_per_season: int = 60,
                             e.number, e.qualification_size, e.qualifier_spots,
                             e.is_world_championship, offset)
             schedule.append(e)
-            offset += e.size
+            offset += e.size + e.qualification_size
     return tuple(schedule)
 
 
@@ -475,6 +489,8 @@ def main():
     parser.add_argument("--budget-minutes", type=int, default=315)
     parser.add_argument("--output-dir", type=Path, default=Path("giant-load-evidence"))
     parser.add_argument("--plan-only", action="store_true")
+    parser.add_argument("--plan-json", type=Path,
+                        help="Write the full per-Edition JSON schedule for inspection")
     args = parser.parse_args()
     schedule = make_schedule(args.seasons, args.editions_per_season, profile=args.profile)
     if args.players < 128 or args.born_per_season < 0 or args.budget_minutes < 1:
@@ -500,9 +516,32 @@ def main():
         "min_expected_match_engine_matches": sum(e.expected_played_matches for e in schedule),
         "event_weeks": sorted({e.week for e in schedule}),
         "blockers": blockers,
+        "edition_schedule": [
+            {
+                "edition_id": e.edition_id, "season_index": e.season,
+                "week": e.week, "tier": e.tier,
+                "main_draw_size": e.size,
+                "qualification_draw_size": e.qualification_size,
+                "qualifier_spots": e.qualifier_spots,
+                "start_offset_for_disjoint_fields": e.entrant_offset,
+                "champion_points": e.points,
+                "main_point_table": e.point_table,
+                "qualification_point_table": e.qualifying_point_table,
+                "world_championship": e.is_world_championship,
+                "expected_played_matches_if_fully_contested": e.expected_played_matches,
+            }
+            for e in schedule
+        ],
     }
+    if args.plan_json is not None:
+        args.plan_json.parent.mkdir(parents=True, exist_ok=True)
+        args.plan_json.write_text(json.dumps(plan, indent=2, ensure_ascii=False) + "\n",
+                                  encoding="utf-8")
     if args.plan_only:
-        print(json.dumps(plan, indent=2))
+        if args.plan_json:
+            print(json.dumps({k: v for k, v in plan.items() if k != "edition_schedule"}, indent=2))
+        else:
+            print(json.dumps(plan, indent=2))
         return 0
     args.output_dir.mkdir(parents=True, exist_ok=True)
     args.database = args.output_dir / "run.sqlite"

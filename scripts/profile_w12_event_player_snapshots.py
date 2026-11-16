@@ -51,8 +51,12 @@ def run(source, out):
             advance=event.get("advance")
             if not isinstance(advance,dict):
                 raise AssertionError("Missing actual signed week advance")
-            arrays={"completed_players":advance.get("completed_players"),
-                    "target_players":advance.get("target_players")}
+            arrays={
+                "completed_players":advance.get("completed_players"),
+                "developed_players":advance.get("developed_players"),
+                "recovered_players":advance.get("recovered_players"),
+                "target_players":advance.get("target_players"),
+            }
         elif kind=="calendar_global_slot.v1":
             arrays={"players":event.get("players")}
         else:

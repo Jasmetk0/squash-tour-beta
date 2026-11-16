@@ -234,11 +234,14 @@ def _install_spans(monkeypatch, spans):
     # API requests, task worker and task status, in *server* execution threads.
     instrument(simulation.NativeFullSimulationDriver, "simulate_full_simulation", "driver.simulate")
     instrument(simulation.NativeFullSimulationDriver, "plan", "driver.plan")
+    instrument(simulation.NativeFullSimulationDriver, "_parent", "driver._parent")
+    instrument(simulation.NativeFullSimulationDriver, "_terminal", "driver._terminal")
     instrument(simulation, "native_context", "native_context")
     instrument(simulation, "validate_native_parent", "parent_validation")
     instrument(simulation, "authenticate_children", "child_receipts_validation")
     instrument(simulation, "read_native_task_progress", "task_progress_read")
     instrument(task_service, "_project", "task_status_project")
+    instrument(task_service, "_parent", "task_status_parent")
     instrument(task_service, "_progress_evidence", "task_progress_evidence")
     instrument(task_service, "inspect_tasks", "task_status_inspect")
     instrument(task_service, "validate_native_parent", "task_parent_validation")
@@ -266,6 +269,7 @@ def _install_spans(monkeypatch, spans):
 
     repository = repositories.SimulationPersistenceRepository
     instrument(repository, "_validated_saved_revision_in_session", "saved_revision_validate")
+    instrument(repository, "_validated_saved_revision_core_in_session", "saved_revision_core")
     instrument(repository, "_validated_branch_revision_lineage_in_session", "saved_lineage_walk")
     event.listen(Engine, "before_cursor_execute", spans.sql_start)
     event.listen(Engine, "after_cursor_execute", spans.sql_end)

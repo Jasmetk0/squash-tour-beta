@@ -1,0 +1,40 @@
+{
+  "schema": "w52_offline_six_historical_lists_merkle_append_audit.v1",
+  "date": "2026-11-16",
+  "source": {
+    "name": "diag_w52_1803.db",
+    "sha256": "c1324fcb1e86564e6e65e71f573148ed4a41f30e61a8a2dd0e85a08d1156bbe8",
+    "source_pr": 1803,
+    "source_sha": "136b277a6b246da8bd01bca7b2e1668f35983fad"
+  },
+  "scope": "Read-only real 4-player one-tournament W52 Saved root .v2, 55 snapshots, six arrays only. No actual Save writer or season-time benchmark.",
+  "snapshots": 55,
+  "fields": [
+    "journal",
+    "advances",
+    "tournaments",
+    "tour.receipts",
+    "tour.transitions",
+    "tour.rankings"
+  ],
+  "append_only_in_this_source": true,
+  "new_events_by_field": {
+    "journal": 56,
+    "advances": 51,
+    "tournaments": 1,
+    "tour.receipts": 56,
+    "tour.transitions": 51,
+    "tour.rankings": 52
+  },
+  "total_original_list_snapshot_bytes": 69598147,
+  "unique_merkle_node_bytes": 4300054,
+  "unique_nodes": 263,
+  "reduction_pct": 93.82,
+  "all_revision_exact_reconstruction_cpu_s": 1.952,
+  "writer_cpu_s_including_full_prior_chain_authentication": 0.919,
+  "external_full_prefix_comparison_cpu_s": 0.067,
+  "exact_reconstructions": 330,
+  "physical_corruption_rejected": true,
+  "known_mutable_field": "tour.editions (actually changed in snapshot sequence 59)",
+  "limitation": "The audit rejects non-append-only corrections rather than supporting them. No production schema wiring, cross-Run permission checks, transactional rollback, semantic validation, concurrency or 50-season coverage. CPU times local and environment-dependent."
+}

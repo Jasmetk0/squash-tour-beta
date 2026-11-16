@@ -1,0 +1,64 @@
+name: Diagnostic W12 Physical SQLite Merkle Thresholds
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/benchmark_w12_physical_sqlite_merkle_thresholds.py'
+      - '.github/workflows/diagnostic-w12-physical-merkle-sqlite.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: real-w12-physical-merkle-sqlite-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  original-generic-merkle-physical-sqlite:
+    name: Actual W12 events / Run-scoped SQLite 4K vs 2K vs 1K vs 512B
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Checkout exact unchanged Claude Merkle prototype for fair comparison
+        uses: actions/checkout@v4
+        with:
+          ref: 4c7271144e02580d8d33a9b2bfb56f12d9ad2156
+          path: claude-original-merkle
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download exact physical W12/256-player/8-played-Edition/24-match SQLite source
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/original-played-w12
+      - name: Benchmark true SQLite bytes + WAL, verify and restore identical sporting events
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t sources < <(find "$RUNNER_TEMP/original-played-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#sources[@]}" -ne 1 ]; then
+            echo "::error::Expected exact single original played W12 SQLite"
+            exit 1
+          fi
+          python scripts/benchmark_w12_physical_sqlite_merkle_thresholds.py \
+            --database "${sources[0]}" \
+            --claude-module claude-original-merkle/src/beta_engine/infrastructure/db/merkle_json_prototype.py \
+            --output-dir "$RUNNER_TEMP/physical-merkle-w12"
+      - name: Retain metrics only, never original Run or generated physical SQLite
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-w12-physical-merkle-granularity-${{ github.run_id }}
+          path: ${{ runner.temp }}/physical-merkle-w12/physical-sqlite-merkle-thresholds.json
+          if-no-files-found: warn
+          retention-days: 7

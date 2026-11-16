@@ -119,18 +119,19 @@ class Evidence:
         tmp.replace(self.summary_path)
 
 
-def _save_prospects(server, repo, *, season: int, target_week: int, count: int):
+def _save_prospects(server, repo, *, season: int, target_week: int, count: int, horizon: int):
     """Sign exactly the same source and Save gate exercised by native birth tests."""
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from beta_engine.domain.calendar.run_week_position import RunWeekPosition
     from beta_engine.infrastructure.db.repositories import RunProspectRecord
-    from tests.api.test_calendar_native_birth_week_execution import _record, source_at
+    from tests.application.test_calendar_native_prospect_intake import source_at
+    from tests.application.test_prospect_persistence import _record
     from tests.api.test_saved_revision_history_api import _request
 
     if not count:
         return ()
     world = repo.get_initial_world(run_id="run", branch_id="branch")
-    clock = RunCalendar(WEEKS_PER_SEASON, 1, 2030, 6)
+    clock = RunCalendar(WEEKS_PER_SEASON, 1, 2030, horizon)
     target = RunWeekPosition(calendar=clock, season_index=season, week=target_week)
     records = []
     ids = []
@@ -272,7 +273,8 @@ def run(args, evidence: Evidence):
             birth_week = 3 if season == 0 else 2
             with evidence.timed("signed-prospect-source", season=season):
                 new_ids = _save_prospects(server, repo, season=season,
-                                          target_week=birth_week, count=args.born_per_season)
+                                          target_week=birth_week, count=args.born_per_season,
+                                          horizon=args.seasons + 1)
             all_new_ids.update(new_ids)
             season_start = time.perf_counter()
             for week in range(starting_week, WEEKS_PER_SEASON + 1):

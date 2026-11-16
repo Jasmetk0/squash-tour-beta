@@ -50,13 +50,14 @@ def test_verified_saved_calendar_payload_is_hash_checked_and_request_local(tmp_p
         # Direct physical-row tampering is not a legitimate Saved write. It
         # must fail the exact same content-hash validation before any payload
         # can be handed to the progress reader.
-        with Session(engine).begin() as session:
-            row = session.get(BranchSavedRevisionModel, revision_id)
-            modified = row.payload_json.replace(
-                '"display_name":', '"corrupted_display_name":', 1
-            )
-            assert modified != row.payload_json
-            row.payload_json = modified
+        with Session(engine) as session:
+            with session.begin():
+                row = session.get(BranchSavedRevisionModel, revision_id)
+                modified = row.payload_json.replace(
+                    '"display_name":', '"corrupted_display_name":', 1
+                )
+                assert modified != row.payload_json
+                row.payload_json = modified
 
         with Session(engine) as session:
             session.execute(text("BEGIN"))

@@ -41,8 +41,18 @@ jobs:
           GITHUB_EVENT_NAME: giant_native_load
         run: |
           python -m pytest -q -x tests/application/test_giant_native_load_plan.py
-          python scripts/giant_native_five_season_load.py --profile requested --plan-only
-          python scripts/giant_native_five_season_load.py --profile compatible --plan-only
+          python scripts/giant_native_five_season_load.py --profile requested --plan-only \
+            --plan-json giant-load-plans/requested-16-128-qualification-world.json
+          python scripts/giant_native_five_season_load.py --profile compatible --plan-only \
+            --plan-json giant-load-plans/compatible-4-8.json
+      - name: Upload the two exact, explicitly different tournament plans
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: giant-native-plans-${{ github.run_id }}
+          path: giant-load-plans/
+          if-no-files-found: warn
+          retention-days: 21
 
   five-seasons:
     name: Giant native load / 1000 players / 5x52 weeks / 300 compatible Editions

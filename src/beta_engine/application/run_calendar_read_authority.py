@@ -29,7 +29,8 @@ def _json_object(raw: str, *, label: str) -> dict:
 
 
 def resolve_revision_run_calendar(
-    session: Session, *, run_id: str, revision_id: str, _repository=None
+    session: Session, *, run_id: str, revision_id: str, _repository=None,
+    _verified_payload_out: list[dict] | None = None,
 ) -> RunCalendar:
     """Read one hash-verified immutable calendar selected by an existing authority.
 
@@ -62,8 +63,15 @@ def resolve_revision_run_calendar(
             ) != revision.content_hash
         ):
             raise ValueError("Run calendar Saved Revision failed content-hash validation")
+        # Deliver the already parsed FULL content only *after* the original
+        # immutable Saved envelope hash has been verified in this transaction.
+        # No cached proof or trust shortcut is introduced.
+        if _verified_payload_out is not None:
+            _verified_payload_out.append(payload)
         saved_run = payload.get("run")
     else:
+        if _verified_payload_out is not None:
+            raise ValueError("Verified full payload requires full Saved validation")
         # This repository already checked the original FULL content hash for
         # these exact actual bytes. The immutable projection omits no part of
         # this reader's Run identity/calendar contract. Changed bytes miss.
@@ -80,7 +88,8 @@ def resolve_revision_run_calendar(
 
 
 def resolve_saved_run_calendar(
-    session: Session, *, run_id: str, branch_id: str, _repository=None
+    session: Session, *, run_id: str, branch_id: str, _repository=None,
+    _verified_payload_out: list[dict] | None = None,
 ) -> RunCalendar:
     """Return the verified calendar without modifying Run or Saved history.
 
@@ -114,7 +123,8 @@ def resolve_saved_run_calendar(
         return current_calendar
 
     saved_calendar = resolve_revision_run_calendar(
-        session, run_id=run_id, revision_id=branch.saved_head_revision_id, _repository=_repository
+        session, run_id=run_id, revision_id=branch.saved_head_revision_id,
+        _repository=_repository, _verified_payload_out=_verified_payload_out,
     )
 
     if saved_calendar != current_calendar:

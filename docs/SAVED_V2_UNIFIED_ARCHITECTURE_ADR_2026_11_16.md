@@ -46,6 +46,7 @@ not a unilateral approval.
 | #1818 exact historical event reconstruction | 15 true unique event JSON objects 39,026,296 B; 39/39 arrays exact; all 38 observed adjacent lists preserve prefix; 93.103% *event-array text* hypothetical reduction | Append-only is proven only in this source. No production conversion, fork/restore, or whole database gain yet |
 | #1818 finer nested player values | 12,288 player record occurrences / 22,457,260 B vs 3,955 unique / 7,225,081 B; 67.827% repeated player-object bytes | This duplication is **inside** the unique event bytes, not additive to 93.103% event-array result |
 | #1805 generic Merkle threshold trial on those 15 original events | 4KB nodes 29,215,309 B / 2,141 nodes; 1KB nodes 24,914,276 B / 11,712; 512B nodes 22,110,151 B / 24,365; all 15 rebuild exactly | In-memory prototype only; no SQLite rows/indices, semantic replay, real Save performance |
+| #1818 physical SQLite threshold × page-size trial, 16 cases | With ordinary 4KB SQLite pages: Merkle cutoff 4KB = **33.53MB** file, 1KB = **53.78MB**, 512B = **59.73MB**. With scratch 32KB SQLite pages: 512B cutoff = **28.48MB** (smallest of tested). All 15 events rebuild exactly, physical tamper rejected. | SQLite B-tree/WAL/padding dominates small-node JSON savings. Single small event set only; choosing 32KB pages affects the **whole database** and existing DBs cannot be silently rewritten. No full Saved Save/replay throughput measured |
 
 **Consequence:** performance work must reduce both the *quadratic bytes* stored
 across complete snapshots and the *quadratic verification/decoding* on cold
@@ -147,14 +148,20 @@ source-provenance equivalence.
 
 ## 5. Explicit thresholds, choices, and version gates
 
-- **Do not silently change Claude's 4096 B default** on the prototype. Use
-  an explicit benchmark-configurable threshold. 1024 B looks promising for
-  source W12 sporting objects, but 11,712 nodes vs 2,141 at 4KB affects
-  SQLite indexes, cursor fetches, RSS, WAL and writer latency. Compare
-  4096/2048/1024/512 B on a *physical SQLite* node table under cold and
-  warm reads, with independent integrity/semantic validation; retain
-  original byte counts as ground truth. Work chooses versioned default
-  only after end-to-end measurements.
+- **Do not silently change Claude's 4096 B prototype default.** Actual
+  physical SQLite (without rowid, Run-scoped SHA-256 digest key, 4KB pages)
+  **reversed** the in-memory result: 4KB Merkle nodes produced 33.53MB DB,
+  whereas 1KB nodes produced 53.78MB and 512B nodes 59.73MB because of page
+  packing and index overhead. A follow-on 4×4 matrix using *fresh scratch*
+  SQLite files found the smallest file for 512B nodes on 32KB pages (28.48MB).
+  This is a data-specific physical packing effect, **not** proof 32KB pages
+  should be set on production Runs. SQLite page_size belongs to the whole
+  database, not a node table; reconfiguring an existing database may require
+  rebuilding it, which is forbidden for v1 data without explicit migration.
+  Work should choose a versioned default only after full-run Save/GET,
+  write amplification, WAL/checkpoints, query fetch, RSS and domain replay
+  measurements with the same physical schema; consider a smaller binary
+  digest representation or page-efficient node packing separately.
 - **Do not introduce parallel production stores** from #1811 or #1821. Their
   adversarial tests become gate fixtures for one canonical generic DAG.
 - A v2 Save must still allow a mixed v1 ancestor/v2 descendant if Work

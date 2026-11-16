@@ -386,6 +386,58 @@ def append_child(payload, request, result):
     payload.pop("pending_child_season_closure", None)
 
 
+def completed_tournament_ids(state, children):
+    """Index already-authenticated child receipts for terminal projection.
+
+    The old terminal view searched every child and then every Tour receipt for
+    each Edition (quadratic/cubic on a long multi-Edition history). Build a
+    request-local index instead. The caller still performs the ORIGINAL full
+    Saved/child/receipt validation; this is only a deterministic output
+    projection, not an authority or a new persistence/cache boundary.
+
+    Match IDs use the existing literal `edition_id + ':'` prefix contract.
+    Consider every colon boundary, including Edition IDs containing colons.
+    """
+    confirmed = [
+        a.edition.edition_id
+        for a in state.editions
+        if a.result_confirmed
+    ]
+    if not confirmed:
+        return []
+
+    play_ids = set()
+    slot_command_ids = set()
+    for child in children:
+        command = child["request"]["command"]
+        if command["action"] == "play":
+            play_ids.add(command["edition_id"])
+        elif command["action"] in {"next-slot", "next-match"}:
+            slot_command_ids.add(command["command_id"])
+
+    # If all confirmations have a direct Play command, original short-circuit
+    # behavior avoids examining any unrelated slot match evidence.
+    if all(edition_id in play_ids for edition_id in confirmed):
+        return confirmed
+
+    slot_edition_ids = set()
+    for receipt in state.receipts:
+        if receipt.command_id not in slot_command_ids:
+            continue
+        for match_id in receipt.result.get("match_ids", []):
+            # Do not split at only the first ':'; Edition IDs may contain ':'.
+            colon = match_id.find(":")
+            while colon != -1:
+                slot_edition_ids.add(match_id[:colon])
+                colon = match_id.find(":", colon + 1)
+
+    return [
+        edition_id
+        for edition_id in confirmed
+        if edition_id in play_ids or edition_id in slot_edition_ids
+    ]
+
+
 def authenticate_children(payload, ctx):
     receipts = {r.command_id: r for r in ctx["state"].receipts}
     for child in payload["children"]:
@@ -514,11 +566,9 @@ class NativeFullSimulationDriver:
             "persisted_child_command_count": len(payload["children"]),
             "reason": "run_completed" if status == "complete" else "week_target_reached" if status == "target_reached" else "operator_stop",
             "target_reached": status == "target_reached",
-            "completed_tournaments": [a.edition.edition_id for a in ctx["state"].editions if a.result_confirmed and any(
-                (c["request"]["command"]["action"] == "play" and c["request"]["command"]["edition_id"] == a.edition.edition_id)
-                or (c["request"]["command"]["action"] in {"next-slot", "next-match"} and any(
-                    mid.startswith(a.edition.edition_id + ":") for r in ctx["state"].receipts if r.command_id == c["request"]["command"]["command_id"] for mid in r.result.get("match_ids", [])))
-                for c in payload["children"])],
+            "completed_tournaments": completed_tournament_ids(
+                ctx["state"], payload["children"]
+            ),
         }
         payload["terminal_summary"] = {**summary, "summary_fingerprint": fingerprint(summary)}
         _write(row, payload)

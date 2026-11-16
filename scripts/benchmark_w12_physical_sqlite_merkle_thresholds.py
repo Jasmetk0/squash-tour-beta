@@ -37,11 +37,16 @@ def _module(path):
 class SqliteNodeStore:
     """Same insert-only Run-scoped node body concept as #1805 spec."""
 
-    def __init__(self, path, *, read_only=False):
+    def __init__(self, path, *, read_only=False, page_size=4096):
         if read_only:
             self.db = sqlite3.connect(f"file:{path}?mode=ro", uri=True)
         else:
+            if page_size not in (4096, 8192, 16384, 32768):
+                raise ValueError("Only audited SQLite power-of-two page sizes")
             self.db = sqlite3.connect(str(path))
+            # SQLite page size must be chosen on the EMPTY database before
+            # any table creation and before enabling WAL journal mode.
+            self.db.execute(f"PRAGMA page_size={page_size}")
             self.db.execute("PRAGMA journal_mode=WAL")
             self.db.execute("PRAGMA synchronous=FULL")
             self.db.execute(
@@ -104,11 +109,13 @@ def _physical(source):
     return events
 
 
-def _one(mj, events, threshold, directory):
-    db_path = directory / f"nodes-{threshold}.db"
+def _one(mj, events, threshold, page_size, directory):
+    db_path = directory / f"nodes-{threshold}-page-{page_size}.db"
     if db_path.exists():
         raise RuntimeError("Refusing to reuse previous benchmark database")
-    store = SqliteNodeStore(db_path)
+    store = SqliteNodeStore(db_path, page_size=page_size)
+    actual_page_size = store.db.execute("PRAGMA page_size").fetchone()[0]
+    assert actual_page_size == page_size, (actual_page_size, page_size)
     roots = []
     wall = time.perf_counter()
     cpu = time.process_time()
@@ -128,6 +135,7 @@ def _one(mj, events, threshold, directory):
     insert_lookup_count = store.select_queries
     store.close()
     actual_bytes = db_path.stat().st_size
+    assert actual_bytes % page_size == 0, (actual_bytes, page_size)
 
     cold = SqliteNodeStore(db_path, read_only=True)
     start = time.perf_counter()
@@ -172,6 +180,7 @@ def _one(mj, events, threshold, directory):
 
     return {
         "threshold": threshold,
+        "sqlite_page_size": page_size,
         "inserted_nodes": unique_nodes,
         "raw_node_text_bytes": raw_nodes,
         "sqlite_file_bytes_after_checkpoint": actual_bytes,
@@ -213,15 +222,20 @@ def main():
         "production_code_changed": False,
         "physical_sqlite_thresholds": [],
     }
-    for threshold in (4096, 2048, 1024, 512):
-        case = _one(mj, events, threshold, out)
-        case["sqlite_file_percent_vs_original_event_bytes"] = round(
-            100 * case["sqlite_file_bytes_after_checkpoint"] / original_bytes, 3
-        )
-        report["physical_sqlite_thresholds"].append(case)
-        print("W12_PHYSICAL_MERKLE " + json.dumps(
-            {"phase": "case", **case}, sort_keys=True
-        ), flush=True)
+    # A smaller Merkle cutoff saves *node text*, but with default 4KB SQLite
+    # pages some rows straddle or waste whole pages, inflating the file.
+    # Use a paired full threshold × physical PAGE SIZE matrix to separate
+    # logical node granularity from physical B-tree packing and WAL.
+    for page_size in (4096, 8192, 16384, 32768):
+        for threshold in (4096, 2048, 1024, 512):
+            case = _one(mj, events, threshold, page_size, out)
+            case["sqlite_file_percent_vs_original_event_bytes"] = round(
+                100 * case["sqlite_file_bytes_after_checkpoint"] / original_bytes, 3
+            )
+            report["physical_sqlite_thresholds"].append(case)
+            print("W12_PHYSICAL_MERKLE " + json.dumps(
+                {"phase": "case", **case}, sort_keys=True
+            ), flush=True)
     (out / "physical-sqlite-merkle-thresholds.json").write_text(
         json.dumps(report, indent=2, sort_keys=True), encoding="utf-8"
     )

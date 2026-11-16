@@ -20,18 +20,21 @@ from dataclasses import dataclass
 from pathlib import Path
 
 WEEKS_PER_SEASON = 52
-EVENT_WEEKS = tuple(range(4, 51, 2))  # 24 Editions/season, weeks 4..50
+MAIN_WEEKS = tuple(range(4, 51))  # one regular event in each week 4..50
+EXTRA_WEEKS = tuple(range(8, 49, 4)) + (44,)  # concurrent, diverse events
+EVENT_WEEKS = tuple(sorted({*MAIN_WEEKS, *EXTRA_WEEKS, 51}))
+EDITION_COUNT_PER_SEASON = len(MAIN_WEEKS) + len(EXTRA_WEEKS) + 1  # 60
 TIERS = (
-    ("satellite", 4, 100),
-    ("challenger", 8, 250),
-    ("international", 16, 500),
-    ("major", 32, 1000),
+    ("regional", 16, 100),
+    ("challenger", 32, 250),
+    ("international", 64, 500),
+    ("major", 128, 1000),
+    ("elite", 32, 1500),
 )
 STAGES = {
-    4: ("champion", "finalist", "semifinal"),
-    8: ("champion", "finalist", "semifinal", "quarterfinal"),
-    16: ("champion", "finalist", "semifinal", "quarterfinal", "round16"),
-    32: ("champion", "finalist", "semifinal", "quarterfinal", "round16", "round32"),
+    n: tuple(("champion", "finalist", "semifinal", "quarterfinal",
+              "round16", "round32", "round64", "round128")[:n.bit_length()])
+    for n in (4, 8, 16, 32, 64, 128)
 }
 
 
@@ -43,10 +46,14 @@ class Edition:
     size: int
     points: int
     number: int
+    qualification_size: int = 0
+    qualifier_spots: int = 0
+    is_world_championship: bool = False
+    entrant_offset: int = 0
 
     @property
     def edition_id(self) -> str:
-        return f"load-s{self.season + 1:02d}-w{self.week:02d}-{self.tier}"
+        return f"load-s{self.season + 1:02d}-w{self.week:02d}-{self.number:03d}-{self.tier}"
 
     @property
     def point_table(self) -> dict[str, int]:
@@ -55,15 +62,90 @@ class Edition:
             for index, stage in enumerate(STAGES[self.size])
         }
 
+    @property
+    def expected_played_matches(self) -> int:
+        # Only a planned minimum for an ordinary, fully contested binary Q/Main
+        # with four independent qualifier brackets and no BYEs/WOs.
+        return self.size - 1 + (
+            self.qualification_size - self.qualifier_spots if self.qualification_size else 0
+        )
 
-def make_schedule(seasons: int = 5, editions_per_season: int = 24) -> tuple[Edition, ...]:
-    if not 1 <= seasons <= 5 or not 1 <= editions_per_season <= len(EVENT_WEEKS):
-        raise ValueError("seasons must be 1..5; Editions per season must be 1..24")
-    return tuple(
-        Edition(season, week, *TIERS[index % len(TIERS)], number=season * editions_per_season + index)
-        for season in range(seasons)
-        for index, week in enumerate(EVENT_WEEKS[:editions_per_season])
-    )
+
+def cohort_weeks(season: int) -> tuple[int, ...]:
+    """Four signed birth waves; none is retroactive to the current Tour week."""
+    return (3, 15, 28, 41) if season == 0 else (2, 14, 27, 40)
+
+
+def make_schedule(seasons: int = 5, editions_per_season: int = 60,
+                  *, profile: str = "requested") -> tuple[Edition, ...]:
+    if profile not in {"requested", "compatible"}:
+        raise ValueError("Unknown benchmark profile")
+    if not 1 <= seasons <= 5 or not 1 <= editions_per_season <= EDITION_COUNT_PER_SEASON:
+        raise ValueError("seasons must be 1..5; Editions per season must be 1..60")
+    schedule = []
+    for season in range(seasons):
+        entries = []
+        for i, week in enumerate(MAIN_WEEKS):
+            tier, size, points = TIERS[i % len(TIERS)]
+            qualifying = i % 3 == 0
+            q_size = (16 if size <= 32 else 32) if qualifying else 0
+            entries.append(Edition(season, week, tier, size, points,
+                                   number=season * 60 + i,
+                                   qualification_size=q_size,
+                                   qualifier_spots=4 if qualifying else 0))
+        for i, week in enumerate(EXTRA_WEEKS):
+            size = (16, 32, 64)[i % 3]
+            q_size = 16 if i % 2 == 0 else 0
+            entries.append(Edition(season, week, "side", size, 125 + 50 * (i % 3),
+                                   number=season * 60 + len(MAIN_WEEKS) + i,
+                                   qualification_size=q_size,
+                                   qualifier_spots=4 if q_size else 0))
+        entries.append(Edition(season, 51, "world-championship", 128, 3000,
+                               number=season * 60 + 59,
+                               qualification_size=32, qualifier_spots=4,
+                               is_world_championship=True))
+        entries.sort(key=lambda e: (e.week, e.number))
+        entries = entries[:editions_per_season]
+        previous_week = None
+        offset = 0
+        for e in entries:
+            if e.week != previous_week:
+                offset = 0
+            previous_week = e.week
+            # In the compatible run, a real supported v2 Main-only event
+            # replaces the unexecutable requested draw; never label it as 128.
+            if profile == "compatible":
+                e = Edition(e.season, e.week, e.tier + "-compatible",
+                            4 if e.size <= 32 else 8, e.points, e.number,
+                            is_world_championship=e.is_world_championship,
+                            entrant_offset=offset)
+            else:
+                e = Edition(e.season, e.week, e.tier, e.size, e.points,
+                            e.number, e.qualification_size, e.qualifier_spots,
+                            e.is_world_championship, offset)
+            schedule.append(e)
+            offset += e.size
+    return tuple(schedule)
+
+
+def unsupported_execution_capabilities(schedule: tuple[Edition, ...]) -> list[dict]:
+    """Never silently substitute an imagined 128-player engine executor."""
+    problems = []
+    large = sum(e.size not in (4, 8) for e in schedule)
+    qualifying = sum(e.qualification_size > 0 for e in schedule)
+    if large:
+        problems.append({
+            "code": "configured_native_v2_main_not_16_to_128",
+            "affected_editions": large,
+            "detail": "The v2 global-slot configured knockout executor has actual full-match support for 4/8 only.",
+        })
+    if qualifying:
+        problems.append({
+            "code": "native_v2_qualification_not_supported",
+            "affected_editions": qualifying,
+            "detail": "Canonical v4 needs source-bound Saved Draw Q/Main adoption; a v2 Edition has no Q phase.",
+        })
+    return problems
 
 
 class BudgetExpired(RuntimeError):

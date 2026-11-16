@@ -60,6 +60,7 @@ from beta_engine.domain.run_revisions import (
     saved_revision_checkpoint_content_hash,
     saved_viewer_branch_id,
     saved_revision_content_hash,
+    _saved_revision_content_hash_from_new_canonical_parts,
     viewer_branch_id_from_changes,
     viewer_branch_saved_revision_change_summary,
     viewer_branch_saved_revision_payload,
@@ -6529,16 +6530,23 @@ class SimulationPersistenceRepository:
                 sequence = state.saved_revision.sequence + 1
                 if 'native_branch_closures' in payload.get('run', {}):
                     global_append_before = None
-                content_hash = saved_revision_content_hash(
+                # Canonicalize the new body once. The old hash builder encoded
+                # the complete multi-MB payload inside the envelope, then
+                # _to_json(payload) encoded the same body again for the row.
+                # Independent post-insert checks below still parse/hash the
+                # actual flushed bytes; no historical proof is weakened.
+                canonical_payload_json = _to_json(payload)
+                canonical_change_summary_json = _to_json(summary)
+                content_hash = _saved_revision_content_hash_from_new_canonical_parts(
                     revision_id=revision_id,
                     run_id=run_id,
                     branch_id=branch_id,
                     sequence=sequence,
                     parent_revision_id=state.saved_revision.revision_id,
                     kind=revision_kind,
-                    payload_schema_version=(RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION),
-                    payload=payload,
-                    change_summary=summary,
+                    payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                    payload_json=canonical_payload_json,
+                    change_summary_json=canonical_change_summary_json,
                 )
                 previous_current_viewer_id = (run.official_branch_id or "").strip()
                 if not previous_current_viewer_id:
@@ -6578,8 +6586,8 @@ class SimulationPersistenceRepository:
                         ),
                         content_hash_algorithm=CONTENT_HASH_ALGORITHM,
                         content_hash=content_hash,
-                        payload_json=_to_json(payload),
-                        change_summary_json=_to_json(summary),
+                        payload_json=canonical_payload_json,
+                        change_summary_json=canonical_change_summary_json,
                     )
                 )
                 # For a verified global append, keep the old HEAD installed

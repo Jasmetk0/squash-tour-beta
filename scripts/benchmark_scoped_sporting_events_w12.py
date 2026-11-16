@@ -36,6 +36,7 @@ def run(source_file: Path, output: Path):
             raise ValueError("Not the exact audited W12/256-player source SQLite")
     started = time.perf_counter()
     original_bytes = 0
+    append_wall_s = 0.0
     parent_manifest = None
     accepted = []
     state_schema_versions = {}
@@ -81,24 +82,37 @@ def run(source_file: Path, output: Path):
                 state_schema_versions.get(state["schema_version"], 0) + 1
             )
             events = state["events"]
-            original_array_bytes = len(ev._canonical(events).encode())
+            source_array = ev._canonical(events)
+            original_array_bytes = len(source_array.encode())
+            source_array_sha256 = sha256(source_array.encode()).hexdigest()
             original_bytes += original_array_bytes
+            previous_binding = accepted[-1] if accepted else None
+            before_append = time.perf_counter()
             ev.append(
                 sink, run_id=run_id, branch_id=branch_id,
                 revision_id=revision_id,
                 independently_verified_source_hash=actual_hash,
                 events=events, preceding_manifest_revision_id=parent_manifest,
+                preceding_independently_verified_source_hash=(
+                    previous_binding["content_hash"] if previous_binding else None
+                ),
+                preceding_independently_verified_event_array_sha256=(
+                    previous_binding["original_event_array_sha256"]
+                    if previous_binding else None
+                ),
             )
+            append_wall_s += time.perf_counter() - before_append
             rebuilt = ev.restore(
                 sink, run_id=run_id, branch_id=branch_id,
                 revision_id=revision_id,
                 independently_verified_source_hash=actual_hash,
+                independently_verified_event_array_sha256=source_array_sha256,
             )
-            if ev._canonical(rebuilt) != ev._canonical(events):
+            if ev._canonical(rebuilt) != source_array:
                 raise AssertionError("Reconstructed physical sport differs")
             accepted.append({
                 "revision_id": revision_id, "content_hash": actual_hash,
-                "original_event_array_sha256": sha256(ev._canonical(events).encode()).hexdigest(),
+                "original_event_array_sha256": source_array_sha256,
                 "original_event_count": len(events),
                 "original_event_array_bytes": original_array_bytes,
             })
@@ -134,6 +148,7 @@ def run(source_file: Path, output: Path):
             sink, run_id="run", branch_id="branch",
             revision_id=latest["revision_id"],
             independently_verified_source_hash=latest["content_hash"],
+            independently_verified_event_array_sha256=latest["original_event_array_sha256"],
         )
     except ev.SportingEventStoreError:
         tampering_rejected = True
@@ -147,6 +162,7 @@ def run(source_file: Path, output: Path):
         sink, run_id="run", branch_id="branch",
         revision_id=latest["revision_id"],
         independently_verified_source_hash=latest["content_hash"],
+            independently_verified_event_array_sha256=latest["original_event_array_sha256"],
     )) == "":
         raise AssertionError("Nonsensical repaired source")
 
@@ -162,6 +178,7 @@ def run(source_file: Path, output: Path):
             sink, run_id="run", branch_id="branch",
             revision_id=latest["revision_id"],
             independently_verified_source_hash=latest["content_hash"],
+            independently_verified_event_array_sha256=latest["original_event_array_sha256"],
         )
     except ev.SportingEventStoreError:
         ancestor_tamper_rejected = True
@@ -187,6 +204,7 @@ def run(source_file: Path, output: Path):
         "physical_node_tamper_rejected": tampering_rejected,
         "ancestor_manifest_tamper_rejected": ancestor_tamper_rejected,
         "analysis_wall_s": round(time.perf_counter() - started, 3),
+        "append_only_total_wall_s": round(append_wall_s, 3),
         "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
         "production_integration": False,
         "not_measured": [

@@ -198,10 +198,18 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
     branch = session.get(RunBranchModel, branch_id)
     if branch is None or branch.run_id != run_id:
         raise ValueError("Native task progress Branch is unavailable")
-    available_clock = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
+    # resolve_saved_run_calendar fully hash-authenticates the immutable Saved
+    # envelope. Reuse its parsed JSON while remaining inside THIS same DB
+    # transaction, rather than decoding the full history a second time.
+    # The native component's separate canonical hash check remains mandatory.
+    verified_payloads: list[dict] = []
+    available_clock = resolve_saved_run_calendar(
+        session, run_id=run_id, branch_id=branch_id,
+        _verified_payload_out=verified_payloads,
+    )
     head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
     if head.payload_schema_version == "native_fork_saved_root.v2":
-        saved = json.loads(head.payload_json)["content"]["native_fork_runtime"]
+        saved = verified_payloads[0]["content"]["native_fork_runtime"]
         component = saved
         draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
         if draft is None or draft.base_revision_id != head.revision_id:

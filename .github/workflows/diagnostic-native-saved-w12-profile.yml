@@ -1,0 +1,62 @@
+name: Diagnostic Native Saved W12 Hotspot Profile
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/profile_native_saved_w12_inspect.py'
+      - '.github/workflows/diagnostic-native-saved-w12-profile.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-saved-w12-profile-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  cold-saved-hotspots:
+    name: cProfile original 256-player/8-Edition Saved head, cold+warm HTTP SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install backend and test HTTP server
+        run: python -m pip install -e . pytest
+      - name: Download actual last Saved state from successful W12 acceptance
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/baseline-native-w12
+      - name: Profile actual cold and warm Saved inspection without re-simulating matches
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' -print
+          mapfile -t databases < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db')
+          if [ "${#databases[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one real disposable W12 SQLite fixture"
+            exit 1
+          fi
+          python scripts/profile_native_saved_w12_inspect.py \
+            --database "${databases[0]}" \
+            --report-dir "$RUNNER_TEMP/native-saved-profile"
+      - name: Retain measurements only (no full database duplication)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-w12-saved-profile-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-saved-profile/
+          if-no-files-found: warn
+          retention-days: 7

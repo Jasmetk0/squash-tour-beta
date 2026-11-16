@@ -350,25 +350,33 @@ def _play_week(server, editions: tuple[Edition, ...], initial_professionals: tup
 
 
 def run(args, evidence: Evidence):
+    from collections import defaultdict
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour, setup, tour_url
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
-    schedule = make_schedule(args.seasons, args.editions_per_season)
-    by_play = {(event.season, event.week): event for event in schedule}
-    by_plan = {(event.season, event.week - 2): event for event in schedule}
+    schedule = make_schedule(args.seasons, args.editions_per_season, profile=args.profile)
+    blockers = unsupported_execution_capabilities(schedule)
+    if blockers:
+        raise RuntimeError(f"The requested profile is not playable by native v2: {blockers}")
+    by_play = defaultdict(list)
+    by_plan = defaultdict(list)
+    for event in schedule:
+        by_play[(event.season, event.week)].append(event)
+        by_plan[(event.season, event.week - 2)].append(event)
     all_new_ids = set()
     with ApiServer(database_url=f"sqlite:///{args.database}") as server:
         evidence.check_budget()
-        with evidence.timed("initial-1000-player-world-and-tour"):
+        with evidence.timed("initial-world-and-tour", player_count=args.players):
             repo, _ = setup(server, RunCalendar(52, 1, 2030, args.seasons + 1), count=args.players)
         world = repo.get_initial_world(run_id="run", branch_id="branch")
         if world.lifecycle_policy.requires_turn_pro:
             initial_professionals = tuple(sorted(world.initial_turn_pro.professional_player_ids))
         else:
             initial_professionals = tuple(sorted(p.player_id for p in world.players))
-        if len(initial_professionals) < 32:
-            raise RuntimeError(f"Large Edition requires 32 signed opening professionals; got {len(initial_professionals)}")
+        needed = max(sum(event.size for event in by_play[key]) for key in by_play)
+        if len(initial_professionals) < needed:
+            raise RuntimeError(f"Simultaneous fields require {needed} independently signed pros; got {len(initial_professionals)}")
         evidence.total["initial_players"] = len(world.players)
         assert evidence.total["initial_players"] == args.players
         evidence.metric("initialized", players=args.players, eligible_professionals=len(initial_professionals),
@@ -378,30 +386,34 @@ def run(args, evidence: Evidence):
             starting_week = view["state"]["week"]["week"]
             assert view["state"]["week"]["season_index"] == season
             assert starting_week == (2 if season == 0 else 1), view["state"]["week"]
-            # The initial Tour has already completed Week 1; use Week 3 birth in S1.
-            birth_week = 3 if season == 0 else 2
-            with evidence.timed("signed-prospect-source", season=season):
+            with evidence.timed("four-signed-prospect-waves", season=season,
+                                wave_weeks=cohort_weeks(season), planned_players=args.born_per_season):
                 new_ids = _save_prospects(server, repo, season=season,
-                                          target_week=birth_week, count=args.born_per_season,
+                                          count=args.born_per_season,
                                           horizon=args.seasons + 1)
+            assert len(new_ids) == args.born_per_season
             all_new_ids.update(new_ids)
+            evidence.metric("cohort_source_signed", season=season,
+                            source_players=len(new_ids), wave_weeks=cohort_weeks(season))
             season_start = time.perf_counter()
             for week in range(starting_week, WEEKS_PER_SEASON + 1):
                 evidence.check_budget()
                 view = inspect(server)
                 assert (view["state"]["week"]["season_index"], view["state"]["week"]["week"]) == (season, week)
                 week_start = time.perf_counter()
-                if (season, week) in by_plan:
-                    with evidence.timed("edition-plan-and-save", season=season, week=week):
-                        _plan_edition(server, by_plan[(season, week)])
-                if (season, week) in by_play:
-                    event = by_play[(season, week)]
-                    with evidence.timed("edition-real-match-play-and-save", season=season, week=week,
+                for event in by_plan[(season, week)]:
+                    with evidence.timed("edition-plan-and-save", season=season, week=week,
                                         edition_id=event.edition_id, entrants=event.size):
-                        result = _play_edition(server, event, initial_professionals)
-                    evidence.total["editions_completed"] += 1
-                    evidence.total["matches_completed"] += result["match_count"]
-                    evidence.metric("edition_completed", season=season, week=week, **result)
+                        _plan_edition(server, event)
+                if by_play[(season, week)]:
+                    events = tuple(by_play[(season, week)])
+                    with evidence.timed("week-real-match-play-and-save", season=season, week=week,
+                                        edition_count=len(events), entrants=sum(e.size for e in events)):
+                        completed = _play_week(server, events, initial_professionals)
+                    for result in completed:
+                        evidence.total["editions_completed"] += 1
+                        evidence.total["matches_completed"] += result["match_count"]
+                        evidence.metric("edition_completed", season=season, week=week, **result)
                 with evidence.timed("week-transition-and-save", season=season, week=week):
                     action = "transition" if week < WEEKS_PER_SEASON else "season-transition"
                     execute(server, command(inspect(server), action,
@@ -417,6 +429,7 @@ def run(args, evidence: Evidence):
                 evidence.metric("week_completed", season=season, week=week,
                                 duration_seconds=round(time.perf_counter() - week_start, 3),
                                 players=len(current["players"]),
+                                new_arrivals_active=len(new_active),
                                 editions_completed=evidence.total["editions_completed"])
                 evidence.write_summary("running")
             completed = inspect(server)["saved_completed_seasons"]
@@ -429,13 +442,20 @@ def run(args, evidence: Evidence):
                             signed_seasons=completed,
                             overview=season_view["selected"].get("overview", {}))
             evidence.write_summary("running")
-        # Current Saved HEAD is genuinely closed after the fifth Season Transition.
         final = inspect(server)
         assert final["saved_completed_seasons"] == list(range(args.seasons))
         assert final["saved"], "Must finish on an explicit signed Saved Revision"
         assert evidence.total["editions_completed"] == len(schedule)
         assert evidence.total["new_player_ids_seen"] >= args.born_per_season * args.seasons
         evidence.total["saved_revision_count"] = _saved_revision_count(args.database)
+    # Cold-start reads of five signed seasons are part of the true benchmark.
+    with evidence.timed("final-cold-restart-and-signed-season-archive"):
+        with ApiServer(database_url=f"sqlite:///{args.database}") as restarted:
+            actual = inspect(restarted)
+            assert actual["saved_completed_seasons"] == list(range(args.seasons))
+            code, archived = _request("GET", tour_url(restarted) + "/seasons")
+            assert code == 200 and len(archived["seasons"]) == args.seasons
+            assert actual["saved"]
     evidence.metric("finished", **evidence.total)
 
 
@@ -446,27 +466,40 @@ def _saved_revision_count(path: Path) -> int:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--profile", choices=("requested", "compatible"), default="requested",
+                        help="requested is a 16-128/Q/world specification; compatible is an explicitly separate 4/8 Main-only benchmark")
     parser.add_argument("--seasons", type=int, default=5)
     parser.add_argument("--players", type=int, default=1000)
-    parser.add_argument("--editions-per-season", type=int, default=24)
-    parser.add_argument("--born-per-season", type=int, default=16)
+    parser.add_argument("--editions-per-season", type=int, default=60)
+    parser.add_argument("--born-per-season", type=int, default=80)
     parser.add_argument("--budget-minutes", type=int, default=315)
     parser.add_argument("--output-dir", type=Path, default=Path("giant-load-evidence"))
     parser.add_argument("--plan-only", action="store_true")
     args = parser.parse_args()
-    schedule = make_schedule(args.seasons, args.editions_per_season)
-    if args.players < 32 or args.born_per_season < 0 or args.budget_minutes < 1:
-        parser.error("players must be >=32, births >=0, budget >=1")
+    schedule = make_schedule(args.seasons, args.editions_per_season, profile=args.profile)
+    if args.players < 128 or args.born_per_season < 0 or args.budget_minutes < 1:
+        parser.error("initial players must be >=128; arrivals >=0; budget >=1")
+    blockers = unsupported_execution_capabilities(schedule)
     plan = {
+        "profile": args.profile, "status": "blocked" if blockers else "runnable",
         "simulated_seasons": args.seasons, "weeks_per_season": WEEKS_PER_SEASON,
         "simulated_week_positions": args.seasons * WEEKS_PER_SEASON,
-        "clock_horizon_seasons": args.seasons + 1, "initial_players": args.players,
-        "signed_births_planned": args.seasons * args.born_per_season,
-        "editions": len(schedule),
+        "clock_horizon_seasons": args.seasons + 1,
+        "initial_players": args.players, "planned_annual_arrivals": args.born_per_season,
+        "total_signed_births_planned": args.seasons * args.born_per_season,
+        "birth_week_waves": {str(s + 1): cohort_weeks(s) for s in range(args.seasons)},
+        "editions": len(schedule), "editions_per_season": args.editions_per_season,
         "category_counts": {tier: sum(e.tier == tier for e in schedule)
-                            for tier, _, _ in TIERS},
+                            for tier in sorted({e.tier for e in schedule})},
         "field_sizes": sorted({e.size for e in schedule}),
+        "qualifying_editions": sum(e.qualification_size > 0 for e in schedule),
+        "qualifying_field_sizes": sorted({e.qualification_size for e in schedule if e.qualification_size}),
+        "world_championship_editions": sum(e.is_world_championship for e in schedule),
+        "world_championships_are_compatible_surrogates": (
+            args.profile == "compatible"),
+        "min_expected_match_engine_matches": sum(e.expected_played_matches for e in schedule),
         "event_weeks": sorted({e.week for e in schedule}),
+        "blockers": blockers,
     }
     if args.plan_only:
         print(json.dumps(plan, indent=2))
@@ -477,18 +510,22 @@ def main():
         parser.error("Refusing to overwrite an existing benchmark SQLite Run")
     evidence = Evidence(args.output_dir, args.database, args.budget_minutes)
     evidence.metric("plan", **plan)
+    if blockers:
+        evidence.write_summary("unsupported", blockers=blockers, profile=args.profile)
+        evidence.metric("not_executed", reason="Required production tournament capabilities are absent")
+        return 4
     try:
         run(args, evidence)
     except BudgetExpired as exc:
         evidence.metric("budget_exhausted", message=str(exc))
-        evidence.write_summary("budget_exhausted", message=str(exc))
+        evidence.write_summary("budget_exhausted", message=str(exc), profile=args.profile)
         return 3
     except BaseException as exc:
         evidence.metric("failed", message=str(exc), traceback=traceback.format_exc())
-        evidence.write_summary("failed", message=str(exc))
+        evidence.write_summary("failed", message=str(exc), profile=args.profile)
         raise
     else:
-        evidence.write_summary("complete")
+        evidence.write_summary("complete", profile=args.profile)
         return 0
 
 

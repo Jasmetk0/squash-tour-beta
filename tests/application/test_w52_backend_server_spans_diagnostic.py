@@ -371,3 +371,84 @@ def test_instrumented_original_w52_worker_with_verified_payload_experiment(tmp_p
             assert captured == [], "Corrupt Saved was exposed before its hash check"
     finally:
         corrupt_engine.dispose()
+
+    # Identical-runner A/B: execute the ORIGINAL exact progress function and
+    # optimized function on the SAME immutable final W52 DB, alternating order.
+    # We reconstruct ONLY the two changed source expressions for the baseline,
+    # not any sporting or security helper. Both versions run production
+    # SQLAlchemy, Saved hashes, draft and child history checks in fresh sessions.
+    import inspect
+    import statistics
+
+    optimized = simulation.read_native_task_progress.__wrapped__
+    old_source = inspect.getsource(optimized)
+    old_source = old_source.replace(
+        "def read_native_task_progress(", "def baseline_read_native_task_progress(", 1
+    )
+    start_marker = "    # resolve_saved_run_calendar fully hash-authenticates"
+    first, rest = old_source.split(start_marker, 1)
+    _optimized_block, after_head = rest.split(
+        "    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)",
+        1,
+    )
+    old_source = (
+        first
+        + "    available_clock = resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)\n"
+        + "    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)"
+        + after_head
+    )
+    optimized_value = 'saved = verified_payloads[0]["content"]["native_fork_runtime"]'
+    original_value = 'saved = json.loads(head.payload_json)["content"]["native_fork_runtime"]'
+    assert old_source.count(optimized_value) == 1
+    old_source = old_source.replace(optimized_value, original_value)
+    globals_copy = dict(simulation.__dict__)
+    exec(compile(old_source, "<original-1803-progress>", "exec"), globals_copy)
+    baseline = globals_copy["baseline_read_native_task_progress"]
+
+    with sqlite3.connect(db_file) as sql:
+        parent_row = sql.execute(
+            "SELECT result_json FROM authoritative_simulation_commands "
+            "WHERE run_id=? AND branch_id=? ORDER BY command_id LIMIT 1",
+            (run_id, branch_id),
+        ).fetchone()
+        assert parent_row is not None
+    frozen_parent = json.loads(parent_row[0])
+    samples = {"baseline": [], "verified_payload_reuse": []}
+    outputs = {"baseline": None, "verified_payload_reuse": None}
+    paired_engine = create_engine(f"sqlite:///{db_file}")
+    try:
+        for iteration in range(9):
+            variants = [
+                ("baseline", baseline),
+                ("verified_payload_reuse", optimized),
+            ]
+            if iteration % 2:
+                variants.reverse()
+            for label, fn in variants:
+                with Session(paired_engine) as session:
+                    session.execute(text("BEGIN"))
+                    now = time.thread_time_ns()
+                    output = fn(session, run_id=run_id, branch_id=branch_id,
+                                parent=frozen_parent)
+                    elapsed = (time.thread_time_ns() - now) / 1e6
+                    samples[label].append(elapsed)
+                    outputs[label] = output
+    finally:
+        paired_engine.dispose()
+    assert outputs["baseline"] == outputs["verified_payload_reuse"]
+    original_ms = statistics.median(samples["baseline"])
+    candidate_ms = statistics.median(samples["verified_payload_reuse"])
+    assert candidate_ms > 0
+    with capsys.disabled():
+        print(
+            "W52_SAME_RUNNER_PAIRED_PROGRESS_BENCH "
+            + json.dumps({
+                "method": "real W52 final SQLite, 9 alternating pairs, full production reader",
+                "original_median_thread_cpu_ms": round(original_ms, 3),
+                "candidate_median_thread_cpu_ms": round(candidate_ms, 3),
+                "candidate_to_original_ratio": round(candidate_ms / original_ms, 4),
+                "outputs_equal": True,
+                "original_samples_ms": [round(x, 3) for x in samples["baseline"]],
+                "candidate_samples_ms": [round(x, 3) for x in samples["verified_payload_reuse"]],
+            }, sort_keys=True), flush=True,
+        )

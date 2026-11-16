@@ -61,6 +61,24 @@ def is_native_fork(repository, run_id, branch_id):
         )
 
 
+def _copy_append_payload_without_replaced_runtime(source):
+    """Deep-copy only Saved JSON values that survive the new native fork Save.
+
+    The large previous native runtime is always replaced with component(runtime)
+    before hashing, serialization or publication. Deep-copying that discarded
+    tree is wasted work. All retained nested values are STILL deep-copied: no
+    caller receives a mutable alias to the previous authoritative Saved state.
+    This helper never creates a stored value or grants verification authority.
+    """
+    kept = {
+        **source,
+        "content": {
+            name: value for name, value in source["content"].items() if name != KEY
+        },
+    }
+    return deepcopy(kept)
+
+
 @dataclass
 class NativeForkRuntimeService:
     repository: object
@@ -401,7 +419,9 @@ class NativeForkRuntimeService:
         viewer_id=None,
     ):
         run, branch, previous, draft = ctx[:4]
-        payload = deepcopy(payload or previous.payload)
+        payload = _copy_append_payload_without_replaced_runtime(
+            payload or previous.payload
+        )
         # Restore changes this timeline's state, never the Run-wide time basis or
         # an already committed strict horizon extension. Old target bytes stay exact.
         payload["run"]["run_calendar"] = deepcopy(

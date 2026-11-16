@@ -103,7 +103,7 @@ class BackendSpans:
             start_wall = time.perf_counter_ns()
             start_cpu = time.thread_time_ns()
             phase = self.phase
-            frame = {"child_cpu": 0, "child_wall": 0}
+            frame = {"child_cpu": 0, "child_wall": 0, "label": name, "phase": phase}
             stack.append(frame)
             try:
                 return original(*args, **kwargs)

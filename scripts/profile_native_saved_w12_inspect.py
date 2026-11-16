@@ -79,8 +79,8 @@ def _profile_to_json(stats, top=45):
                 "line": key[1],
                 "function": key[2],
                 "calls": int(details[1]),
-                "self_cpu_s": round(details[2], 3),
-                "cumulative_cpu_s": round(details[3], 3),
+                "self_profile_s": round(details[2], 3),
+                "cumulative_profile_s": round(details[3], 3),
             }
             for key, details in rows[:top]
         ]
@@ -99,7 +99,8 @@ def main():
     out.mkdir(parents=True, exist_ok=True)
 
     # Input identity and validity. No interpolation of any user-controlled SQL.
-    input_sha256 = hashlib.file_digest(original_db.open("rb"), "sha256").hexdigest()
+    with original_db.open("rb") as source_stream:
+        input_sha256 = hashlib.file_digest(source_stream, "sha256").hexdigest()
     sizes = _source_metrics(original_db)
     assert sizes["saved_revision_count"] == 46, sizes
     _report("input-verified", sha256=input_sha256, **sizes)

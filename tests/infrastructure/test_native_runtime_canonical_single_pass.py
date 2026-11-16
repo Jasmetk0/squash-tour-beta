@@ -12,7 +12,7 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.native_fork_runtime import NativeForkRuntime
 from beta_engine.domain.run_revisions import canonical_json
 from beta_engine.infrastructure.db import native_fork_runtime_state as storage
-from tests.api.test_native_full_simulation_tasks import test_native_task_actual_match_points_all_weeks_and_real_season_rollover
+from tests.api import test_native_full_simulation_tasks as native_w52_flow
 from tests.infrastructure.test_native_fork_runtime_format import runtime_root
 
 pytestmark = pytest.mark.pr_critical
@@ -66,7 +66,7 @@ def test_actual_native_w52_server_and_paired_runtime_parser(tmp_path, monkeypatc
                 stats["calls"] += 1
                 stats["cpu_ns"] += time.thread_time_ns() - t
     monkeypatch.setattr(service, "load_runtime", observed)
-    test_native_task_actual_match_points_all_weeks_and_real_season_rollover(
+    native_w52_flow.test_native_task_actual_match_points_all_weeks_and_real_season_rollover(
         tmp_path, RunCalendar(52, 51, 2030, 2)
     )
     assert stats["calls"] >= 100

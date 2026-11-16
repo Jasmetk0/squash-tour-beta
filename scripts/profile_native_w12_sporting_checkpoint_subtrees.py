@@ -38,6 +38,19 @@ def run(source: Path, result_dir: Path):
     sample_count = 0
     checkpoint_bytes = 0
     last_keys = {}
+    event_groups = defaultdict(lambda: {
+        "occurrences": 0, "aggregate_encoded_bytes": 0,
+        "distinct_hashes": set(), "unique_encoded_bytes": 0,
+    })
+    event_seen = set()
+    previous_event_hashes = None
+    event_snapshots = 0
+    event_prefix_identical_pairs = 0
+    event_unchanged_pairs = 0
+    event_non_prefix_cases = []
+    total_event_occurrence_bytes = 0
+    unique_event_bytes = 0
+    last_events = []
     with sqlite3.connect(f"file:{source}?mode=ro", uri=True) as db:
         for seq, raw in db.execute(
             "SELECT sequence, payload_json FROM branch_saved_revisions "
@@ -71,6 +84,50 @@ def run(source: Path, result_dir: Path):
                     row["identical_prior_bytes"] += len(b)
                     row["identical_prior_count"] += 1
                 previous_digest[key] = digest
+            # Every event is a genuine validated Saved object from the physical
+            # input, not a synthetic sporting outcome. A prefix check here is
+            # only an empirical property of this one Run; a future editing
+            # operation can invalidate it and the real writer must fail closed.
+            if isinstance(state.get("events"), list):
+                event_snapshots += 1
+                current_hashes = []
+                current_details = []
+                for index, event in enumerate(state["events"]):
+                    raw_event = _encoded(event)
+                    event_hash = hashlib.sha256(raw_event).hexdigest()
+                    kind = (event.get("schema_version", event.get("kind", "unknown"))
+                            if isinstance(event, dict) else type(event).__name__)
+                    group = event_groups[kind]
+                    group["occurrences"] += 1
+                    group["aggregate_encoded_bytes"] += len(raw_event)
+                    if event_hash not in group["distinct_hashes"]:
+                        group["distinct_hashes"].add(event_hash)
+                        group["unique_encoded_bytes"] += len(raw_event)
+                    if event_hash not in event_seen:
+                        event_seen.add(event_hash)
+                        unique_event_bytes += len(raw_event)
+                    total_event_occurrence_bytes += len(raw_event)
+                    current_hashes.append(event_hash)
+                    current_details.append({
+                        "index": index, "kind": kind, "bytes": len(raw_event),
+                        "sha256": event_hash,
+                    })
+                if previous_event_hashes is not None:
+                    if (len(current_hashes) >= len(previous_event_hashes)
+                        and current_hashes[:len(previous_event_hashes)]
+                            == previous_event_hashes):
+                        event_prefix_identical_pairs += 1
+                        if current_hashes == previous_event_hashes:
+                            event_unchanged_pairs += 1
+                    else:
+                        event_non_prefix_cases.append({
+                            "sequence": int(seq),
+                            "previous_length": len(previous_event_hashes),
+                            "current_length": len(current_hashes),
+                        })
+                previous_event_hashes = current_hashes
+                last_events = current_details
+
             last_keys = {key: {"kind": type(v).__name__,
                                "length": len(v) if isinstance(v, (dict, list)) else None}
                          for key, v in state.items()}
@@ -91,8 +148,32 @@ def run(source: Path, result_dir: Path):
             reverse=True,
         )
     }
+    event_report = {
+        "snapshots": event_snapshots,
+        "adjacent_pairs": max(0, event_snapshots - 1),
+        "exact_prior_prefix_pairs": event_prefix_identical_pairs,
+        "exact_unchanged_pairs": event_unchanged_pairs,
+        "non_prefix_cases": event_non_prefix_cases,
+        "all_occurrences_encoded_bytes": total_event_occurrence_bytes,
+        "unique_exact_event_bytes": unique_event_bytes,
+        "distinct_exact_event_values": len(event_seen),
+        "last_event_list": last_events,
+        "by_event_kind": {
+            kind: {**{k: v for k, v in values.items()
+                       if k != "distinct_hashes"},
+                   "distinct_exact_values": len(values["distinct_hashes"])}
+            for kind, values in sorted(
+                event_groups.items(),
+                key=lambda pair: pair[1]["aggregate_encoded_bytes"],
+                reverse=True,
+            )
+        },
+        "scope": "Original physical W12 Run only: observed prefix identity "
+                 "is NOT a global schema guarantee",
+    }
     data = {
         "source_db_sha256": SOURCE_SHA256,
+        "event_report": event_report,
         "checkpoints": sample_count,
         "checkpoint_total_canonical_bytes": checkpoint_bytes,
         "state_fields": summarized,
@@ -115,6 +196,17 @@ def run(source: Path, result_dir: Path):
             {"key": key, **value} for key, value in list(summarized.items())[:18]
         ],
         "peak_rss_kib": data["peak_rss_kib"],
+        "events_detail": {
+            "snapshots": event_report["snapshots"],
+            "pairs": event_report["adjacent_pairs"],
+            "exact_prefix_pairs": event_report["exact_prior_prefix_pairs"],
+            "non_prefix_cases": event_report["non_prefix_cases"],
+            "all_occurrences_encoded_bytes": event_report["all_occurrences_encoded_bytes"],
+            "unique_exact_event_bytes": event_report["unique_exact_event_bytes"],
+            "distinct_exact_event_values": event_report["distinct_exact_event_values"],
+            "last_event_list": event_report["last_event_list"],
+            "by_event_kind": event_report["by_event_kind"],
+        },
     }, sort_keys=True), flush=True)
 
 

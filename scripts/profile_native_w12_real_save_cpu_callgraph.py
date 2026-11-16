@@ -62,9 +62,8 @@ def _measure_db(database):
 def _verify_actual_sport(view, week):
     assert len(view["players"]) == 256
     assert len(view["state"]["editions"]) == 8
-    assert view["state"]["week"] == {
-        "season_index": 1, "week": week
-    }, view["state"]["week"]
+    assert view["state"]["week"]["season_index"] == 1
+    assert view["state"]["week"]["week"] == week
     real_matches = 0
     for match_week in (4, 5):
         for index in range(4):

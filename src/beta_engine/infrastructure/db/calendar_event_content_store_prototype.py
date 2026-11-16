@@ -4,8 +4,9 @@ Not imported by any production path. No Run/Branch Saved storage format changes.
 This deliberately handles the original calendar_sporting_checkpoint.v13
 `state.events` problem measured in the real W12/256-player acceptance.
 
-The *caller* must independently validate the source immutable Saved row and its
-source_content_hash with ordinary production validators. A self-described SHA-256
+The *caller* must independently validate the source immutable Saved row,
+its source_content_hash and the canonical events-array digest with ordinary
+production validators. A self-described SHA-256
 is not an authorization or a cryptographic signature. The manifest includes
 that independently supplied identity so reconstruction can be cross-checked
 against the original canonical Saved event array.
@@ -164,16 +165,20 @@ def _physical_event(db, run_id, branch_id, digest):
 def restore(
     db: sqlite3.Connection, *, run_id: str, branch_id: str,
     revision_id: str, independently_verified_source_hash: str,
+    independently_verified_event_array_sha256: str,
 ):
     """Rebuild exact canonical array from verified PHYSICAL SQLite bytes.
 
-    The expected Saved hash must come from the caller's independent validation
-    of the actual immutable row, not from this store's own manifest.
+    The caller must independently authenticate the REAL original Saved row and
+    derive BOTH its complete envelope hash and its events-array canonical hash.
+    A manifest's self-hash alone is not a binding to that signed original row.
+    This prototype does not yet authenticate every ancestral Saved owner row.
     """
     _identity(run_id, "Run")
     _identity(branch_id, "Branch")
     _identity(revision_id, "Saved revision")
     _digest(independently_verified_source_hash, "independently verified Saved hash")
+    _digest(independently_verified_event_array_sha256, "independently verified events digest")
     chain = _verified_manifest_chain(db, run_id, branch_id, revision_id)
     result = chain[-1]
     if result["source_content_hash"] != independently_verified_source_hash:
@@ -185,7 +190,8 @@ def restore(
             verified_blobs[digest] = _physical_event(db, run_id, branch_id, digest)
         ordered.append(verified_blobs[digest])
     canonical_json = "[" + ",".join(ordered) + "]"
-    if _sha(canonical_json) != result["event_sha256"]:
+    if (_sha(canonical_json) != result["event_sha256"]
+            or _sha(canonical_json) != independently_verified_event_array_sha256):
         raise SportingEventStoreError("Original event ordering or contents changed")
     return json.loads(canonical_json)
 
@@ -194,6 +200,8 @@ def append(
     db: sqlite3.Connection, *, run_id: str, branch_id: str,
     revision_id: str, independently_verified_source_hash: str, events: list,
     preceding_manifest_revision_id: str | None = None,
+    preceding_independently_verified_source_hash: str | None = None,
+    preceding_independently_verified_event_array_sha256: str | None = None,
 ):
     """One SQLite-savepoint append, with exact original-prefix proof.
 
@@ -222,16 +230,42 @@ def append(
         encoded.append(raw)
 
     if preceding_manifest_revision_id is not None:
-        previous = restore(
-            db, run_id=run_id, branch_id=branch_id,
-            revision_id=preceding_manifest_revision_id,
-            independently_verified_source_hash=_read_manifest(
-                db, run_id, branch_id, preceding_manifest_revision_id,
-            )["source_content_hash"],
-        )
-        previous_hashes = [_sha(_canonical(item)) for item in previous]
+        # Never use the parent's *self-declared* hash as an authority. The
+        # caller must have checked the actual predecessor Saved row and its
+        # canonical event array independently from this prototype storage.
+        _digest(preceding_independently_verified_source_hash,
+                "independently verified predecessor Saved hash")
+        _digest(preceding_independently_verified_event_array_sha256,
+                "independently verified predecessor events digest")
+        predecessor = _verified_manifest_chain(
+            db, run_id, branch_id, preceding_manifest_revision_id
+        )[-1]
+        if predecessor["source_content_hash"] != preceding_independently_verified_source_hash:
+            raise SportingEventStoreError("Predecessor Saved source binding changed")
+        previous_hashes = predecessor["events"]
         if len(hashes) < len(previous_hashes) or hashes[:len(previous_hashes)] != previous_hashes:
             raise SportingEventStoreError("Non-append-only Saved sporting history")
+        # Verify the original physically stored predecessor nodes before we
+        # link another immutable revision. Avoid JSON materialization and
+        # re-encoding of the predecessor's full event list as in old restore().
+        prior_bytes = hashlib.sha256()
+        prior_bytes.update(b"[")
+        seen_nodes = {}
+        for index, event_sha in enumerate(previous_hashes):
+            if index:
+                prior_bytes.update(b",")
+            if event_sha not in seen_nodes:
+                seen_nodes[event_sha] = _physical_event(
+                    db, run_id, branch_id, event_sha
+                )
+            prior_bytes.update(seen_nodes[event_sha].encode("utf-8"))
+        prior_bytes.update(b"]")
+        if (prior_bytes.hexdigest() != predecessor["event_sha256"]
+            or prior_bytes.hexdigest() != preceding_independently_verified_event_array_sha256):
+            raise SportingEventStoreError("Predecessor signed event array changed")
+    elif (preceding_independently_verified_source_hash is not None
+          or preceding_independently_verified_event_array_sha256 is not None):
+        raise SportingEventStoreError("Unexpected predecessor source without a manifest")
 
     manifest = {
         "schema": _SCHEMA, "run_id": run_id, "branch_id": branch_id,

@@ -1,0 +1,66 @@
+name: Diagnostic Native W12 Real Manual Save CPU Callgraph
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/profile_native_w12_real_save_cpu_callgraph.py'
+      - 'tests/application/test_native_w12_real_save_callgraph_helpers.py'
+      - '.github/workflows/diagnostic-native-w12-manual-save-cpu.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-w12-real-save-cpu-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  genuine-saved-physical-writer-callgraph:
+    name: Original 46 Saved source, true 47th manual Save, exclusive and inclusive CPU hotspots
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install actual backend and API test dependencies
+        run: python -m pip install -e . pytest
+      - name: Check independent profiling helpers
+        run: PYTHONPATH="$PWD/src:$PWD" python -m pytest tests/application/test_native_w12_real_save_callgraph_helpers.py -q --maxfail=1
+      - name: Download exactly previously played 256-player 8-Edition 24-real-match W12 source
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/original-native-w12
+      - name: Profile original production Saved writer on independent physical copy
+        env:
+          PYTHONUNBUFFERED: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t sources < <(find "$RUNNER_TEMP/original-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#sources[@]}" -ne 1 ]; then
+            echo "::error::Expected one original 46-Saved real W12 source"
+            exit 1
+          fi
+          cp "${sources[0]}" "$RUNNER_TEMP/native-case.sqlite"
+          PYTHONPATH="$PWD/src:$PWD" python scripts/profile_native_w12_real_save_cpu_callgraph.py \
+            --database "$RUNNER_TEMP/native-case.sqlite" \
+            --out "$RUNNER_TEMP/native-w12-save-cpu-report"
+      - name: Keep only aggregate function timings, never Saved payloads or SQLite
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: actual-native-w12-save-cpu-callgraph-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-w12-save-cpu-report/
+          if-no-files-found: warn
+          retention-days: 7

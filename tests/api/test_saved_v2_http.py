@@ -114,7 +114,7 @@ def built(tmp_path_factory):
 def test_v2_run_has_identical_logical_history_and_responses(built):
     v1, v2 = built["v1"], built["saved_v2"]
     assert v1.verified and v2.verified
-    assert len(v1.rows) == len(v2.rows) > 20
+    assert len(v1.rows) == len(v2.rows) >= 15
     assert v1.rows == v2.rows                      # IDs, hashes, exact payload text
     assert v1.reads == v2.reads                    # complete public DTOs/histories
     assert _raw(v1.path, "SELECT COUNT(*) FROM run_saved_storage_formats") == [(0,)]

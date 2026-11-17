@@ -88,6 +88,7 @@ def _copy(value, memo, active_tuples):
         isinstance(value, FrozenInput)
         and getattr(t, "__deepcopy__", None) is BaseModel.__deepcopy__
         and getattr(t, "__copy__", None) is BaseModel.__copy__
+        and getattr(t, "__new__", None) is BaseModel.__new__
         and value.__pydantic_extra__ is None
         and value.__pydantic_private__ is None
         and type(value.__dict__) is dict

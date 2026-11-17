@@ -342,3 +342,49 @@ def saved_revision_content_hash(
         change_summary=change_summary,
     )
     return hashlib.sha256(canonical_json(envelope).encode("utf-8")).hexdigest()
+
+
+def _saved_revision_content_hash_from_new_canonical_parts(
+    *,
+    revision_id: str,
+    run_id: str,
+    branch_id: str,
+    sequence: int,
+    parent_revision_id: str | None,
+    kind: str,
+    payload_schema_version: str,
+    payload_json: str,
+    change_summary_json: str,
+) -> str:
+    """Hash the exact Saved envelope from newly encoded canonical JSON strings.
+
+    This writer-only helper takes canonical_json(payload/summary) produced
+    *in this same Save transaction*. It is never valid as proof for arbitrary
+    stored raw JSON: physical reads must retain the independent normal
+    saved_revision_content_hash() parse/canonicalization and provenance gates.
+
+    Matching canonical field ordering lets the hasher process the already
+    encoded (possibly multi-megabyte) body without encoding that body again.
+    No signature, envelope key, hash algorithm, content or Save format changes.
+    """
+    encoded_fields = {
+        "branch_id": canonical_json(branch_id),
+        "change_summary": change_summary_json,
+        "kind": canonical_json(kind),
+        "parent_revision_id": canonical_json(parent_revision_id),
+        "payload": payload_json,
+        "payload_schema_version": canonical_json(payload_schema_version),
+        "revision_id": canonical_json(revision_id),
+        "run_id": canonical_json(run_id),
+        "sequence": canonical_json(sequence),
+    }
+    digest = hashlib.sha256()
+    digest.update(b"{")
+    for index, (key, encoded_value) in enumerate(sorted(encoded_fields.items())):
+        if index:
+            digest.update(b",")
+        digest.update(canonical_json(key).encode("utf-8"))
+        digest.update(b":")
+        digest.update(encoded_value.encode("utf-8"))
+    digest.update(b"}")
+    return digest.hexdigest()

@@ -23,6 +23,7 @@ from beta_engine.domain.players.calendar_prospect_birth import (
     CalendarProspectBirthEvent, CalendarTourLifecycleIntakeState,
 )
 from beta_engine.domain.rankings.official import FrozenInput
+from beta_engine.domain.replay_scope import already_checked, identity_value, remember_checked
 from beta_engine.domain.run_packages import canonical_hash
 
 
@@ -85,7 +86,8 @@ class CalendarNativeHealthTransitionState(FrozenInput):
 
     @property
     def fingerprint(self):
-        return canonical_hash(self.model_dump(mode="json"))
+        # Frozen model: the same object always has the same canonical hash.
+        return identity_value(self, "fingerprint", lambda: canonical_hash(self.model_dump(mode="json")))
 
 
 NativeHealthPredecessor = (
@@ -248,13 +250,16 @@ def prepare_native_health_history(
             ))
         ):
             raise ValueError("Native Health preparation differs from its exact Saved prefix")
-        if isinstance(health, CalendarNativeHealthTransitionState) and (
-            ordinal == 0 or health != advance_native_health_week(
+        if isinstance(health, CalendarNativeHealthTransitionState):
+            # A pure comparison of immutable models: inside one replay scope the
+            # same passed check for the very same objects is not repeated.
+            step = (health, saved_health[ordinal-1], signed_lifecycle[ordinal-1], life) if ordinal else ()
+            if ordinal == 0 or (not already_checked("native_health_step", step) and health != advance_native_health_week(
                 previous_health=saved_health[ordinal-1],
                 previous_lifecycle=signed_lifecycle[ordinal-1], next_lifecycle=life,
-            )
-        ):
-            raise ValueError("Native Health preparation has forged natural Health history")
+            )):
+                raise ValueError("Native Health preparation has forged natural Health history")
+            remember_checked("native_health_step", step)
     prepared = list(saved_health)
     for life in (*signed_lifecycle[len(saved_health):], next_lifecycle):
         predecessor = signed_lifecycle[prepared[-1].week.ordinal]

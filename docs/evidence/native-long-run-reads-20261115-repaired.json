@@ -1,0 +1,2919 @@
+{
+ "cases": {
+  "w52s1-A1": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0",
+     "season1",
+     "season1_vs_0",
+     "season0_vs_1"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "231e1c464a4e29f5fd3bc74e854f3b0cf2193dbc0af1e9be04f57aa252f55b03",
+    "season0": "d7b321e85ab7b8a2919e63b57a18452da5ec3cd583d7e042af3c575ea4c4d8d5",
+    "season0_vs_1": "7d1d1770e1a55d27dcc66715b56f22438623186b480c0aa653806b1ec7d0bf85",
+    "season1": "0c2fda3729e1a151bfec8c6a81de2ff384df851308b3dc56f33678ddd0ea7023",
+    "season1_vs_0": "d3956b2161cbbc448fd289a509b8282b6632c35107def69128caf514be8aa18d"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "restart_cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "data_after": {
+    "largest_saved_payload_bytes": 20762881,
+    "saved_payload_bytes": 1612064401,
+    "saved_revisions": 127,
+    "sqlite_bytes": 1636089856
+   },
+   "data_after_sha256": "fa25367236d061e68ad890a6bd1b7b64e8d92db6be6f5a8bf2eeb455c4a462b6",
+   "data_before": {
+    "largest_saved_payload_bytes": 20675101,
+    "saved_payload_bytes": 1591301520,
+    "saved_revisions": 126,
+    "sqlite_bytes": 1615216640
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "320e4766ec8ba78e3de20153b8aaada90585b0cf",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "33f8878c027eade16efc2857e37c979fd9390191"
+   },
+   "input_sha256": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "error": "TimeoutError",
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 120.10057449699889,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2801,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 89.1518035730005,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 9.042802705000213,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 8.483284794998326,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 8.930809040997701,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 9.36259490899829,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 10.242380481999135,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 8.616793782002787,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 8.624027159003163,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 8.960676208997029,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 9.428094639999472,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 9.246643439000763,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 9.985352140000032,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 9.014648696000222,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 8.199064093998459,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm2",
+     "read": "season1",
+     "seconds": 8.494575744996837,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm2",
+     "read": "season1_vs_0",
+     "seconds": 9.003352441999596,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm2",
+     "read": "season0_vs_1",
+     "seconds": 8.247492167000019,
+     "status": 200
+    },
+    {
+     "bytes": 14624,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 10.571652770999208,
+     "status": 200
+    },
+    {
+     "bytes": 13885,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 28.19856661599988,
+     "status": 201
+    },
+    {
+     "bytes": 2219209,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 12.080524379998678,
+     "status": 200
+    },
+    {
+     "bytes": 1596,
+     "phase": "write",
+     "read": "save",
+     "seconds": 29.300324434996583,
+     "status": 201
+    },
+    {
+     "bytes": 2219207,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 9.878329005001433,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 8.618354619000456,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 8.995983237000473,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "after_save",
+     "read": "season1",
+     "seconds": 9.035899444999814,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "after_save",
+     "read": "season1_vs_0",
+     "seconds": 9.024532061997888,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "after_save",
+     "read": "season0_vs_1",
+     "seconds": 8.697307851001824,
+     "status": 200
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 120.07190933899983,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2801,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 118.14983881199805,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 8.200400025998533,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 8.434521279999899,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 8.420350850999966,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 8.726850997998554,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "68217693d2a38eef8605c39ff70478ad040bb63a90b1e575eae3493b2217e0f4",
+    "season0": "40a37b4020ffe12b9746791e98f78b7ca901dd97040db14b93f4cff211d6d98f",
+    "season0_vs_1": "0fa88666e611d34075dfdd0db41cb699c53cd0a775a9048d9911c13dba1a9f60",
+    "season1": "a6a9e2a1d352a10768008c5d2259c5dae282d72d0f04a192d016d58c3e43bbdc",
+    "season1_vs_0": "474c2b95fcd9d7a4e3418cb01570ed248786c8a0b17ddfc3cd6c2df994a73ea0",
+    "tour": "769ffd33c38e8af0b3167d923b61c12a4e926a0dffc922edac49ccf24a4863e4"
+   },
+   "restart_complete": false,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true
+   },
+   "restart_missing": [
+    "tour"
+   ],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 10319716352,
+     "VmRSS": 5967773696,
+     "cpu_seconds": 512.69
+    },
+    "cold": {
+     "VmHWM": 10319716352,
+     "VmRSS": 5971795968,
+     "cpu_seconds": 261.91
+    },
+    "restart_cold": {
+     "VmHWM": 12738457600,
+     "VmRSS": 5928361984,
+     "cpu_seconds": 292.49
+    },
+    "started": {
+     "VmHWM": 206163968,
+     "VmRSS": 206163968,
+     "cpu_seconds": 3.47
+    },
+    "warm": {
+     "VmHWM": 10319716352,
+     "VmRSS": 5971795968,
+     "cpu_seconds": 369.48
+    },
+    "write": {
+     "VmHWM": 10319716352,
+     "VmRSS": 5970919424,
+     "cpu_seconds": 458.62
+    }
+   }
+  },
+  "w52s1-A2": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0",
+     "season1",
+     "season1_vs_0",
+     "season0_vs_1"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "231e1c464a4e29f5fd3bc74e854f3b0cf2193dbc0af1e9be04f57aa252f55b03",
+    "season0": "d7b321e85ab7b8a2919e63b57a18452da5ec3cd583d7e042af3c575ea4c4d8d5",
+    "season0_vs_1": "7d1d1770e1a55d27dcc66715b56f22438623186b480c0aa653806b1ec7d0bf85",
+    "season1": "0c2fda3729e1a151bfec8c6a81de2ff384df851308b3dc56f33678ddd0ea7023",
+    "season1_vs_0": "d3956b2161cbbc448fd289a509b8282b6632c35107def69128caf514be8aa18d"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "restart_cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "data_after": {
+    "largest_saved_payload_bytes": 20762881,
+    "saved_payload_bytes": 1612064401,
+    "saved_revisions": 127,
+    "sqlite_bytes": 1636089856
+   },
+   "data_after_sha256": "ca04f26a1b2a6115f4cf487bff53c4c49856875ec078829007791b8107cd3c04",
+   "data_before": {
+    "largest_saved_payload_bytes": 20675101,
+    "saved_payload_bytes": 1591301520,
+    "saved_revisions": 126,
+    "sqlite_bytes": 1615216640
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "320e4766ec8ba78e3de20153b8aaada90585b0cf",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "33f8878c027eade16efc2857e37c979fd9390191"
+   },
+   "input_sha256": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "error": "TimeoutError",
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 120.10093133000191,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2801,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 98.1480900509996,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 8.68062254799952,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 8.806053956999676,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 8.515992154996638,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 8.161871711999993,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 9.805169360999571,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 8.272759909999877,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 9.011062181998568,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 7.961163197000133,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 9.028530462001072,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 8.681365084998106,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 9.976273778000177,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 7.9685331500004395,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 8.415495182998711,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm2",
+     "read": "season1",
+     "seconds": 8.036091862999456,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm2",
+     "read": "season1_vs_0",
+     "seconds": 7.740979690999666,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm2",
+     "read": "season0_vs_1",
+     "seconds": 8.045027817002847,
+     "status": 200
+    },
+    {
+     "bytes": 14624,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 10.394625081000413,
+     "status": 200
+    },
+    {
+     "bytes": 13885,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 29.27499270199769,
+     "status": 201
+    },
+    {
+     "bytes": 2219209,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 10.659792090998963,
+     "status": 200
+    },
+    {
+     "bytes": 1596,
+     "phase": "write",
+     "read": "save",
+     "seconds": 28.447165183002653,
+     "status": 201
+    },
+    {
+     "bytes": 2219207,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 10.057848756998283,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 8.183393414998136,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 8.029236246002256,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "after_save",
+     "read": "season1",
+     "seconds": 8.506502866999654,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "after_save",
+     "read": "season1_vs_0",
+     "seconds": 7.5581097659996885,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "after_save",
+     "read": "season0_vs_1",
+     "seconds": 9.374808243999723,
+     "status": 200
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 120.09982616200068,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2801,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 83.55959054599953,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 8.26204193599915,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 7.9774870940018445,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 8.266333363997546,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 8.555791496000893,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "2c359e64d9c52eaf7f6c968fabd4cd6c708c166d049cc16090d89edea011919b",
+    "season0": "31a125d5794488221f08916024c0da6d1a023e78e5ddae8249f96876f9b6471e",
+    "season0_vs_1": "aa5d778f2b5e2394d46d7d80de0af692b60cb273dbb90e48fcf1f97f450c88d7",
+    "season1": "edb64ae87d6ebdbbd7a6acebea93164ac9241da294e34508188e0d045722c23f",
+    "season1_vs_0": "f99eb6d4481e7dbedd11103cc757e2e1a48ad797e873d6d991752b653cf04e45",
+    "tour": "a88ab3cf0361f57561dc385f6652a90e75b800c3a5d9c21b660d849dcfb725cf"
+   },
+   "restart_complete": false,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true
+   },
+   "restart_missing": [
+    "tour"
+   ],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 10816974848,
+     "VmRSS": 5922615296,
+     "cpu_seconds": 511.23
+    },
+    "cold": {
+     "VmHWM": 10816974848,
+     "VmRSS": 5927825408,
+     "cpu_seconds": 270.38
+    },
+    "restart_cold": {
+     "VmHWM": 10488598528,
+     "VmRSS": 5828497408,
+     "cpu_seconds": 253.17
+    },
+    "started": {
+     "VmHWM": 206041088,
+     "VmRSS": 206041088,
+     "cpu_seconds": 3.79
+    },
+    "warm": {
+     "VmHWM": 10816974848,
+     "VmRSS": 5927825408,
+     "cpu_seconds": 372.8
+    },
+    "write": {
+     "VmHWM": 10816974848,
+     "VmRSS": 5925761024,
+     "cpu_seconds": 459.9
+    }
+   }
+  },
+  "w52s1-B1": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0",
+     "season1",
+     "season1_vs_0",
+     "season0_vs_1"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "231e1c464a4e29f5fd3bc74e854f3b0cf2193dbc0af1e9be04f57aa252f55b03",
+    "season0": "d7b321e85ab7b8a2919e63b57a18452da5ec3cd583d7e042af3c575ea4c4d8d5",
+    "season0_vs_1": "7d1d1770e1a55d27dcc66715b56f22438623186b480c0aa653806b1ec7d0bf85",
+    "season1": "0c2fda3729e1a151bfec8c6a81de2ff384df851308b3dc56f33678ddd0ea7023",
+    "season1_vs_0": "d3956b2161cbbc448fd289a509b8282b6632c35107def69128caf514be8aa18d",
+    "tour": "f68bd175ec3cbcf43d866b23c467bef38542601d767fe29b346e698613489ecf"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "data_after": {
+    "largest_saved_payload_bytes": 20762881,
+    "saved_payload_bytes": 1612064401,
+    "saved_revisions": 127,
+    "sqlite_bytes": 1636089856
+   },
+   "data_after_sha256": "6794df69d777030fef2707aea40c836a2890f0878abb96e6cb7ab3240720a2ac",
+   "data_before": {
+    "largest_saved_payload_bytes": 20675101,
+    "saved_payload_bytes": 1591301520,
+    "saved_revisions": 126,
+    "sqlite_bytes": 1615216640
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 2199304,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 86.67170872299903,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 5.056921219998912,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 5.345702259000973,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 4.6840272919980634,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 4.9629136659968935,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 4.951206839999941,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 6.055133896999905,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 5.237598691997846,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 5.124075792002259,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 5.179960490997473,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 4.97526100399773,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 4.927630128997407,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 5.874861730000703,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 5.139304919001006,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 5.010773731999507,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm2",
+     "read": "season1",
+     "seconds": 4.989012277997972,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm2",
+     "read": "season1_vs_0",
+     "seconds": 5.011626327002887,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm2",
+     "read": "season0_vs_1",
+     "seconds": 4.917868670003372,
+     "status": 200
+    },
+    {
+     "bytes": 14624,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 6.133785065001575,
+     "status": 200
+    },
+    {
+     "bytes": 13885,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 15.552309811999294,
+     "status": 201
+    },
+    {
+     "bytes": 2219209,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 7.431251776000863,
+     "status": 200
+    },
+    {
+     "bytes": 1596,
+     "phase": "write",
+     "read": "save",
+     "seconds": 18.281762873000844,
+     "status": 201
+    },
+    {
+     "bytes": 2219207,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 5.287976052000886,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 4.8101347090014315,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 4.61481192300198,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "after_save",
+     "read": "season1",
+     "seconds": 4.6259508120019746,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "after_save",
+     "read": "season1_vs_0",
+     "seconds": 4.7457578139983525,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "after_save",
+     "read": "season0_vs_1",
+     "seconds": 4.597863700000744,
+     "status": 200
+    },
+    {
+     "bytes": 2219207,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 87.20338826800071,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 5.234216886998183,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 5.173710572998971,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 4.889556002999598,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 5.23660633399777,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 5.210736584002007,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "6785fdfe927321aa170b32e5953f6b1fe48741f1e5f49bdb5dc69fc3eb1d4355",
+    "season0": "e6024178bbaae38c0b4a4caa78cab1f4b71b6b11629d20051a1201ad3fe7fafb",
+    "season0_vs_1": "c58d2d55eb09a1038eb9f6927d41aa71ddb727d9c2a474b42cd4e92d4a92b3a2",
+    "season1": "04e4c58eb80a719001a4b5f5a38a250c7359742cb0f1344aa1280ef16140e7c2",
+    "season1_vs_0": "14f7c27d9ee7e89f4a0c384907f850b4819a6d9c7e631b2b8316ab5c5135d644",
+    "tour": "b8f6b0debb26eaa5c1a3266e5a4258d2215b9d7a11cd1e670b7c143620137c35"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 2674003968,
+     "VmRSS": 2485473280,
+     "cpu_seconds": 257.94
+    },
+    "cold": {
+     "VmHWM": 2462859264,
+     "VmRSS": 2282520576,
+     "cpu_seconds": 114.9
+    },
+    "restart_cold": {
+     "VmHWM": 2500083712,
+     "VmRSS": 2100232192,
+     "cpu_seconds": 115.8
+    },
+    "started": {
+     "VmHWM": 206102528,
+     "VmRSS": 206102528,
+     "cpu_seconds": 3.79
+    },
+    "warm": {
+     "VmHWM": 2462859264,
+     "VmRSS": 2282520576,
+     "cpu_seconds": 176.94
+    },
+    "write": {
+     "VmHWM": 2674003968,
+     "VmRSS": 2485456896,
+     "cpu_seconds": 229.45
+    }
+   }
+  },
+  "w52s1-B2": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0",
+     "season1",
+     "season1_vs_0",
+     "season0_vs_1"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "231e1c464a4e29f5fd3bc74e854f3b0cf2193dbc0af1e9be04f57aa252f55b03",
+    "season0": "d7b321e85ab7b8a2919e63b57a18452da5ec3cd583d7e042af3c575ea4c4d8d5",
+    "season0_vs_1": "7d1d1770e1a55d27dcc66715b56f22438623186b480c0aa653806b1ec7d0bf85",
+    "season1": "0c2fda3729e1a151bfec8c6a81de2ff384df851308b3dc56f33678ddd0ea7023",
+    "season1_vs_0": "d3956b2161cbbc448fd289a509b8282b6632c35107def69128caf514be8aa18d",
+    "tour": "f68bd175ec3cbcf43d866b23c467bef38542601d767fe29b346e698613489ecf"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "data_after": {
+    "largest_saved_payload_bytes": 20762881,
+    "saved_payload_bytes": 1612064401,
+    "saved_revisions": 127,
+    "sqlite_bytes": 1636089856
+   },
+   "data_after_sha256": "26858ef91ef509b414fed92dfa954ff205d8d3c8b60212e374a86ae30f29fe02",
+   "data_before": {
+    "largest_saved_payload_bytes": 20675101,
+    "saved_payload_bytes": 1591301520,
+    "saved_revisions": 126,
+    "sqlite_bytes": 1615216640
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "ba8b0e5288a24bc5eba59172eaa03eaa14929d37edb5a08d8febfcb1b7326d23",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 2199304,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 85.33814798100138,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 5.014409288000024,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 4.958264206001331,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 4.754690336998465,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 5.082581583999854,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 5.490202586999658,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 6.378521996997733,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 5.06484986599753,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 4.935494249999465,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 5.050580590999743,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 5.314785443999426,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 5.065084510999441,
+     "status": 200
+    },
+    {
+     "bytes": 2199304,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 5.84896357999969,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 5.266419629999291,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 5.1061807420010155,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "warm2",
+     "read": "season1",
+     "seconds": 4.531048893000843,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "warm2",
+     "read": "season1_vs_0",
+     "seconds": 5.14669172199865,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "warm2",
+     "read": "season0_vs_1",
+     "seconds": 5.622352989001229,
+     "status": 200
+    },
+    {
+     "bytes": 14624,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 6.546070790001977,
+     "status": 200
+    },
+    {
+     "bytes": 13885,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 16.66374365000229,
+     "status": 201
+    },
+    {
+     "bytes": 2219209,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 7.561514222998085,
+     "status": 200
+    },
+    {
+     "bytes": 1596,
+     "phase": "write",
+     "read": "save",
+     "seconds": 17.783781740999984,
+     "status": 201
+    },
+    {
+     "bytes": 2219207,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 5.681366856999375,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 4.631043671000953,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 4.813785849000851,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "after_save",
+     "read": "season1",
+     "seconds": 4.92543532900163,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "after_save",
+     "read": "season1_vs_0",
+     "seconds": 4.609140802000184,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "after_save",
+     "read": "season0_vs_1",
+     "seconds": 4.839186080000218,
+     "status": 200
+    },
+    {
+     "bytes": 2219207,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 91.79213860899836,
+     "status": 200
+    },
+    {
+     "bytes": 2801,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 5.203440645000228,
+     "status": 200
+    },
+    {
+     "bytes": 4107,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 5.223304011000437,
+     "status": 200
+    },
+    {
+     "bytes": 3944,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 5.173094101999595,
+     "status": 200
+    },
+    {
+     "bytes": 11873,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 5.38353668900163,
+     "status": 200
+    },
+    {
+     "bytes": 12032,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 5.350647576000483,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "0c6bf2101eeb07ae2ef820fc6c09696e4872c4b6e21fd68d7f7c7c2223d214d2",
+    "season0": "3ade98dba0e168f4b754425cc523624f6ea486e96e12c4e7e8b17b69167c39b2",
+    "season0_vs_1": "d9ddad7b550ea54126bf14c9866a9c70ca5107f245c32a8bb115571892e9d6f3",
+    "season1": "a8816175439b72a6ebe7beac03ff856f56b09945034e890eb36a284f319e6040",
+    "season1_vs_0": "67edcdcec58e1eb229d58c0478ad3f5cb24ea12c5edb4e3c3f2178123441cdf5",
+    "tour": "cb9e5f9ac254d694b4d2d537b8b44bd409fc2b1d72d9c2a704ea675b52faaa8f"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 2673229824,
+     "VmRSS": 2485096448,
+     "cpu_seconds": 259.66
+    },
+    "cold": {
+     "VmHWM": 2462801920,
+     "VmRSS": 2283065344,
+     "cpu_seconds": 113.71
+    },
+    "restart_cold": {
+     "VmHWM": 2520403968,
+     "VmRSS": 2297720832,
+     "cpu_seconds": 121.44
+    },
+    "started": {
+     "VmHWM": 206118912,
+     "VmRSS": 206118912,
+     "cpu_seconds": 3.58
+    },
+    "warm": {
+     "VmHWM": 2462801920,
+     "VmRSS": 2283065344,
+     "cpu_seconds": 176.6
+    },
+    "write": {
+     "VmHWM": 2673229824,
+     "VmRSS": 2485456896,
+     "cpu_seconds": 230.4
+    }
+   }
+  },
+  "w61final-B1": {
+   "cold_response_sha256": {
+    "archive": "4885e50f66ab1c3553f421a82991c20319dddbda2a8b6f86e321a69a72ff9646",
+    "season0": "23486094daf663a92efce3802ca69f9ac306fd38420c765170a5b3588ef51a9e",
+    "season0_vs_1": "b55901a4d3e68abab478da3875ee45ff4bfd70293d9909137a6d443e6794a68e",
+    "season1": "7cc9b5400f1d2419f22adf129c83fbb104d5538930d1b29b2fe2bffb6f09170f",
+    "season1_vs_0": "3f83e9c0d8233e95b52d6c3b5b9fecd8608e961815e76a19cea1ffecb8049654"
+   },
+   "completeness": {
+    "cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "restart_cold": {
+     "complete": false,
+     "missing": [
+      "tour"
+     ]
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "3405f36a35d74577455f2e72d13cc6f27af13ba9290b22320b5cc4f5eb46cf1e",
+   "data_after": {
+    "largest_saved_payload_bytes": 23090614,
+    "saved_payload_bytes": 2015387638,
+    "saved_revisions": 145,
+    "sqlite_bytes": 2042191872
+   },
+   "data_after_sha256": "7afe81a3621c42353a729c23c503d3b20705e9dad3f55c675f9b65428f35bb97",
+   "data_before": {
+    "largest_saved_payload_bytes": 23090614,
+    "saved_payload_bytes": 2015387638,
+    "saved_revisions": 145,
+    "sqlite_bytes": 2042191872
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "b93f29957ad29d4e84a68b54ebc83b04f774c0023f497b1f813491d06c41a8e3",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "error": "TimeoutError",
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 120.0978641519996,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2800,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 70.82393008300096,
+     "status": 200
+    },
+    {
+     "bytes": 4101,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 6.961912280999968,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 6.4118983230000595,
+     "status": 200
+    },
+    {
+     "bytes": 11870,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 6.609404695000194,
+     "status": 200
+    },
+    {
+     "bytes": 12029,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 6.834309025998664,
+     "status": 200
+    },
+    {
+     "bytes": 2563544,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 7.727797960000316,
+     "status": 200
+    },
+    {
+     "bytes": 2800,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 6.354117990000304,
+     "status": 200
+    },
+    {
+     "bytes": 4101,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 6.2568429760012805,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 6.337578136000957,
+     "status": 200
+    },
+    {
+     "bytes": 11870,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 6.4106111059991235,
+     "status": 200
+    },
+    {
+     "bytes": 12029,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 6.2083914459999505,
+     "status": 200
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 120.09830157799843,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 2800,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 74.42371978900155,
+     "status": 200
+    },
+    {
+     "bytes": 4101,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 6.379325743000663,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 6.630016842998884,
+     "status": 200
+    },
+    {
+     "bytes": 11870,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 6.882624122001289,
+     "status": 200
+    },
+    {
+     "bytes": 12029,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 6.754525864000243,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "4885e50f66ab1c3553f421a82991c20319dddbda2a8b6f86e321a69a72ff9646",
+    "season0": "23486094daf663a92efce3802ca69f9ac306fd38420c765170a5b3588ef51a9e",
+    "season0_vs_1": "b55901a4d3e68abab478da3875ee45ff4bfd70293d9909137a6d443e6794a68e",
+    "season1": "7cc9b5400f1d2419f22adf129c83fbb104d5538930d1b29b2fe2bffb6f09170f",
+    "season1_vs_0": "3f83e9c0d8233e95b52d6c3b5b9fecd8608e961815e76a19cea1ffecb8049654",
+    "tour": "7c6b8150856c1034e4fc05a721bfc0764593ba3123baac2a1cfe16e8a234c9ac"
+   },
+   "restart_complete": false,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true
+   },
+   "restart_missing": [
+    "tour"
+   ],
+   "server_memory": {
+    "cold": {
+     "VmHWM": 4164882432,
+     "VmRSS": 2647420928,
+     "cpu_seconds": 221.35
+    },
+    "restart_cold": {
+     "VmHWM": 4271878144,
+     "VmRSS": 3040186368,
+     "cpu_seconds": 225.33
+    },
+    "started": {
+     "VmHWM": 206110720,
+     "VmRSS": 206110720,
+     "cpu_seconds": 3.47
+    },
+    "warm": {
+     "VmHWM": 4164882432,
+     "VmRSS": 3794108416,
+     "cpu_seconds": 260.41
+    }
+   }
+  },
+  "w80final-B1": {
+   "cold_response_sha256": {
+    "season0": "c03e358865d26c5b105253c5ab06ba4c041dde049043edc1da24c719192a4702",
+    "season0_vs_1": "323608c160c558f2ff28347a673eaddb3348528c939de8ee212325c902e47a31",
+    "season1": "ce8b685b24fbde0150689bcc5fef72cb2935bb5dd98a7cbb48c429a8f12159c9",
+    "season1_vs_0": "fc1ff22a0842cc5cb44ad42afe158cc15f96e29c7d52468dcf42d97a546a3c7f"
+   },
+   "completeness": {
+    "cold": {
+     "complete": false,
+     "missing": [
+      "tour",
+      "archive"
+     ]
+    },
+    "restart_cold": {
+     "complete": false,
+     "missing": [
+      "tour",
+      "archive"
+     ]
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "a0f0cb1956afc28de473eb7e0ee7d025d3493335b280e168157b925d0d96fda4",
+   "data_after": {
+    "largest_saved_payload_bytes": 25535881,
+    "saved_payload_bytes": 2801916519,
+    "saved_revisions": 183,
+    "sqlite_bytes": 2832019456
+   },
+   "data_after_sha256": "083a84623e24907aa90a8f530fe507debbaf4f2a6cbfffd256dbc0ca7e2c475b",
+   "data_before": {
+    "largest_saved_payload_bytes": 25535881,
+    "saved_payload_bytes": 2801916519,
+    "saved_revisions": 183,
+    "sqlite_bytes": 2832019456
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "18382b936bf7a652d789ef237d496848f380bbda865e96966b5d075d5dea6d6c",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "error": "TimeoutError",
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 120.07947005599999,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 120.10073287500018,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 4101,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 19.50555761099895,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "cold",
+     "read": "season1",
+     "seconds": 17.261388851000447,
+     "status": 200
+    },
+    {
+     "bytes": 11872,
+     "phase": "cold",
+     "read": "season1_vs_0",
+     "seconds": 12.446751948000383,
+     "status": 200
+    },
+    {
+     "bytes": 12028,
+     "phase": "cold",
+     "read": "season0_vs_1",
+     "seconds": 9.519083045001025,
+     "status": 200
+    },
+    {
+     "bytes": 3313721,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 8.975972139000078,
+     "status": 200
+    },
+    {
+     "bytes": 2800,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 8.225430062999294,
+     "status": 200
+    },
+    {
+     "bytes": 4101,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 8.009360854999613,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "warm1",
+     "read": "season1",
+     "seconds": 7.600394619999861,
+     "status": 200
+    },
+    {
+     "bytes": 11872,
+     "phase": "warm1",
+     "read": "season1_vs_0",
+     "seconds": 7.75871276900034,
+     "status": 200
+    },
+    {
+     "bytes": 12028,
+     "phase": "warm1",
+     "read": "season0_vs_1",
+     "seconds": 8.066649456999585,
+     "status": 200
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 120.09736854099901,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "error": "TimeoutError",
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 120.05841993399918,
+     "status": null,
+     "timeout": true
+    },
+    {
+     "bytes": 4101,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 20.171846641998854,
+     "status": 200
+    },
+    {
+     "bytes": 3938,
+     "phase": "restart_cold",
+     "read": "season1",
+     "seconds": 13.332268783000472,
+     "status": 200
+    },
+    {
+     "bytes": 11872,
+     "phase": "restart_cold",
+     "read": "season1_vs_0",
+     "seconds": 12.308125313000346,
+     "status": 200
+    },
+    {
+     "bytes": 12028,
+     "phase": "restart_cold",
+     "read": "season0_vs_1",
+     "seconds": 7.685394490001272,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "80dabaa5171009f8457fe61234841377da848deb82d64a14831aafe8b33803e2",
+    "season0": "c03e358865d26c5b105253c5ab06ba4c041dde049043edc1da24c719192a4702",
+    "season0_vs_1": "323608c160c558f2ff28347a673eaddb3348528c939de8ee212325c902e47a31",
+    "season1": "ce8b685b24fbde0150689bcc5fef72cb2935bb5dd98a7cbb48c429a8f12159c9",
+    "season1_vs_0": "fc1ff22a0842cc5cb44ad42afe158cc15f96e29c7d52468dcf42d97a546a3c7f",
+    "tour": "e71b6145c4dcc2aff22ecd76a49e24ac0a4b3e917fc4483b1ed20c1f54fe4879"
+   },
+   "restart_complete": false,
+   "restart_equal": {
+    "season0": true,
+    "season0_vs_1": true,
+    "season1": true,
+    "season1_vs_0": true
+   },
+   "restart_missing": [
+    "tour",
+    "archive"
+   ],
+   "server_memory": {
+    "cold": {
+     "VmHWM": 7121612800,
+     "VmRSS": 4007845888,
+     "cpu_seconds": 322.41
+    },
+    "restart_cold": {
+     "VmHWM": 7078281216,
+     "VmRSS": 4334764032,
+     "cpu_seconds": 314.59
+    },
+    "started": {
+     "VmHWM": 206270464,
+     "VmRSS": 206270464,
+     "cpu_seconds": 3.31
+    },
+    "warm": {
+     "VmHWM": 7121612800,
+     "VmRSS": 3970093056,
+     "cpu_seconds": 370.78
+    }
+   }
+  },
+  "w80s0-A1": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "f0096f2bf799b963dc3527c6ce74a3ea8ac8139e4cc1e030d4bcc456cc1c5028",
+    "season0": "1181b1de51412c17583d0d8cb2f2a44ba70b918ec0b37f52c90df2127bf30abc",
+    "tour": "adb8a6cca5430010ccceb0594f17f9fc45a3ae760baea9a9969c75098d54c907"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "data_after": {
+    "largest_saved_payload_bytes": 14273430,
+    "saved_payload_bytes": 904862405,
+    "saved_revisions": 95,
+    "sqlite_bytes": 921636864
+   },
+   "data_after_sha256": "adfe6eed5b17f48b869333b613487fd7aac8e961d699c1621ac0361d4c7d4d26",
+   "data_before": {
+    "largest_saved_payload_bytes": 14186256,
+    "saved_payload_bytes": 890588975,
+    "saved_revisions": 94,
+    "sqlite_bytes": 907259904
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "320e4766ec8ba78e3de20153b8aaada90585b0cf",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "33f8878c027eade16efc2857e37c979fd9390191"
+   },
+   "input_sha256": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 1673266,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 79.40016120099972,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 4.81235751299937,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 5.06118134999997,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 5.656196945999909,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 5.248749393000253,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 4.91548749300091,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 5.6863054069999635,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 4.945825736000188,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 5.106900649001545,
+     "status": 200
+    },
+    {
+     "bytes": 14515,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 6.427170897999531,
+     "status": 200
+    },
+    {
+     "bytes": 13775,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 15.802836450999166,
+     "status": 201
+    },
+    {
+     "bytes": 1693109,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 7.479506277000837,
+     "status": 200
+    },
+    {
+     "bytes": 1593,
+     "phase": "write",
+     "read": "save",
+     "seconds": 16.16880787700029,
+     "status": 201
+    },
+    {
+     "bytes": 1693107,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 5.893238229000417,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 4.198904614000639,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 5.150070511999729,
+     "status": 200
+    },
+    {
+     "bytes": 1693107,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 79.06157277199964,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 5.630089964000945,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 5.508481822000249,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "779dd49f527f1419dec62a3243a6a4e2c22d6526c4f55644ddff15ffe0da3cda",
+    "season0": "47eb29bdeedf26db709f99bc2644cc98d8ec3cbaf507933b079c868822bb5156",
+    "tour": "c50d86dbf38640f9a8e2130a6165c739c305a6aaa152dac25cab72ded2316a74"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 5513629696,
+     "VmRSS": 1966014464,
+     "cpu_seconds": 190.78
+    },
+    "cold": {
+     "VmHWM": 5513629696,
+     "VmRSS": 1954627584,
+     "cpu_seconds": 93.32
+    },
+    "restart_cold": {
+     "VmHWM": 5608218624,
+     "VmRSS": 2419208192,
+     "cpu_seconds": 93.33
+    },
+    "started": {
+     "VmHWM": 209522688,
+     "VmRSS": 209522688,
+     "cpu_seconds": 4.29
+    },
+    "warm": {
+     "VmHWM": 5513629696,
+     "VmRSS": 1954627584,
+     "cpu_seconds": 124.72
+    },
+    "write": {
+     "VmHWM": 5513629696,
+     "VmRSS": 1970909184,
+     "cpu_seconds": 175.61
+    }
+   }
+  },
+  "w80s0-A2": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "f0096f2bf799b963dc3527c6ce74a3ea8ac8139e4cc1e030d4bcc456cc1c5028",
+    "season0": "1181b1de51412c17583d0d8cb2f2a44ba70b918ec0b37f52c90df2127bf30abc",
+    "tour": "adb8a6cca5430010ccceb0594f17f9fc45a3ae760baea9a9969c75098d54c907"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "data_after": {
+    "largest_saved_payload_bytes": 14273430,
+    "saved_payload_bytes": 904862405,
+    "saved_revisions": 95,
+    "sqlite_bytes": 921636864
+   },
+   "data_after_sha256": "f60f33096aa54c7205580ce3c112acaf18aaf573feea062cde2626029780ddf6",
+   "data_before": {
+    "largest_saved_payload_bytes": 14186256,
+    "saved_payload_bytes": 890588975,
+    "saved_revisions": 94,
+    "sqlite_bytes": 907259904
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "320e4766ec8ba78e3de20153b8aaada90585b0cf",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "33f8878c027eade16efc2857e37c979fd9390191"
+   },
+   "input_sha256": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 1673266,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 76.64481375600008,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 4.909282615000848,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 5.243162041999312,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 5.501101346999349,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 4.77510693700242,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 4.583220658998471,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 5.730923587001598,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 4.866818124999554,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 5.135313203998521,
+     "status": 200
+    },
+    {
+     "bytes": 14515,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 5.970930314000725,
+     "status": 200
+    },
+    {
+     "bytes": 13775,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 16.50609178599916,
+     "status": 201
+    },
+    {
+     "bytes": 1693109,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 6.9307783500007645,
+     "status": 200
+    },
+    {
+     "bytes": 1593,
+     "phase": "write",
+     "read": "save",
+     "seconds": 17.338296027999604,
+     "status": 201
+    },
+    {
+     "bytes": 1693107,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 6.32859021600234,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 4.282309089001501,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 4.740147355001682,
+     "status": 200
+    },
+    {
+     "bytes": 1693107,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 80.64319469300244,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 5.334685850000824,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 5.346787451999262,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "d6cb0e1119b248a88ce8865d416234f30ad64896c9114911ccb2d3a7f5c0d012",
+    "season0": "8e6d19fcd5785980426b7e834ba811eba1c9d477abfb49367861cd58b1d314fc",
+    "tour": "0aaceb0f4f5be57821c06648c33a3ba1b6561585e6906d58500b048617659b96"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 5518364672,
+     "VmRSS": 1941549056,
+     "cpu_seconds": 187.76
+    },
+    "cold": {
+     "VmHWM": 5518364672,
+     "VmRSS": 1927057408,
+     "cpu_seconds": 90.02
+    },
+    "restart_cold": {
+     "VmHWM": 5597151232,
+     "VmRSS": 2010923008,
+     "cpu_seconds": 94.44
+    },
+    "started": {
+     "VmHWM": 206213120,
+     "VmRSS": 206213120,
+     "cpu_seconds": 3.48
+    },
+    "warm": {
+     "VmHWM": 5518364672,
+     "VmRSS": 1924960256,
+     "cpu_seconds": 120.48
+    },
+    "write": {
+     "VmHWM": 5518364672,
+     "VmRSS": 1945604096,
+     "cpu_seconds": 172.49
+    }
+   }
+  },
+  "w80s0-B1": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "f0096f2bf799b963dc3527c6ce74a3ea8ac8139e4cc1e030d4bcc456cc1c5028",
+    "season0": "1181b1de51412c17583d0d8cb2f2a44ba70b918ec0b37f52c90df2127bf30abc",
+    "tour": "adb8a6cca5430010ccceb0594f17f9fc45a3ae760baea9a9969c75098d54c907"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "data_after": {
+    "largest_saved_payload_bytes": 14273430,
+    "saved_payload_bytes": 904862405,
+    "saved_revisions": 95,
+    "sqlite_bytes": 921636864
+   },
+   "data_after_sha256": "1a1dec88fcd13fdcceba7882b84447b1bee2497e8289d0f8f5f442676ba65f93",
+   "data_before": {
+    "largest_saved_payload_bytes": 14186256,
+    "saved_payload_bytes": 890588975,
+    "saved_revisions": 94,
+    "sqlite_bytes": 907259904
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 1673266,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 48.93566431600084,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 3.341526396001427,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 2.9679129809992446,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 3.7839357079974434,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 3.2025459130018135,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 3.655705459001183,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 3.8353580479997618,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 3.3537803569997777,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 2.9823456349986373,
+     "status": 200
+    },
+    {
+     "bytes": 14515,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 4.052918704001058,
+     "status": 200
+    },
+    {
+     "bytes": 13775,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 10.009780819000298,
+     "status": 201
+    },
+    {
+     "bytes": 1693109,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 4.723397185000067,
+     "status": 200
+    },
+    {
+     "bytes": 1593,
+     "phase": "write",
+     "read": "save",
+     "seconds": 11.086296531000698,
+     "status": 201
+    },
+    {
+     "bytes": 1693107,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 3.745697754999128,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 2.8555750099985744,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 2.970269012999779,
+     "status": 200
+    },
+    {
+     "bytes": 1693107,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 51.18474332800179,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 3.591801217000466,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 3.4075518520003243,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "522a2badd9437e18afa21be2011b3396a2694ee21b2b8fbf4601ea4e2c4bd83c",
+    "season0": "bb4ab475550dfcf69b6cbc2da777ea233a85204b9ae5b2178d36d72f16841582",
+    "tour": "a0ae8301a33df09c6ea7bf53ffa7ace79bac11dc3d77aa1820deb96e14fa6432"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 1724039168,
+     "VmRSS": 1602150400,
+     "cpu_seconds": 122.52
+    },
+    "cold": {
+     "VmHWM": 1581707264,
+     "VmRSS": 1468067840,
+     "cpu_seconds": 58.89
+    },
+    "restart_cold": {
+     "VmHWM": 1601187840,
+     "VmRSS": 893870080,
+     "cpu_seconds": 61.17
+    },
+    "started": {
+     "VmHWM": 206368768,
+     "VmRSS": 206368768,
+     "cpu_seconds": 3.85
+    },
+    "warm": {
+     "VmHWM": 1581707264,
+     "VmRSS": 1468063744,
+     "cpu_seconds": 79.61
+    },
+    "write": {
+     "VmHWM": 1724039168,
+     "VmRSS": 1603059712,
+     "cpu_seconds": 112.99
+    }
+   }
+  },
+  "w80s0-B2": {
+   "closed_seasons_unchanged_after_save": {
+    "compared": [
+     "archive",
+     "season0"
+    ],
+    "missing": []
+   },
+   "cold_response_sha256": {
+    "archive": "f0096f2bf799b963dc3527c6ce74a3ea8ac8139e4cc1e030d4bcc456cc1c5028",
+    "season0": "1181b1de51412c17583d0d8cb2f2a44ba70b918ec0b37f52c90df2127bf30abc",
+    "tour": "adb8a6cca5430010ccceb0594f17f9fc45a3ae760baea9a9969c75098d54c907"
+   },
+   "completeness": {
+    "after_save": {
+     "complete": true,
+     "missing": []
+    },
+    "cold": {
+     "complete": true,
+     "missing": []
+    },
+    "restart_cold": {
+     "complete": true,
+     "missing": []
+    },
+    "warm1": {
+     "complete": true,
+     "missing": []
+    },
+    "warm2": {
+     "complete": true,
+     "missing": []
+    }
+   },
+   "copy_sha256_before_open": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "data_after": {
+    "largest_saved_payload_bytes": 14273430,
+    "saved_payload_bytes": 904862405,
+    "saved_revisions": 95,
+    "sqlite_bytes": 921636864
+   },
+   "data_after_sha256": "75bc70c0c56cf67eb77d0c0532065f3f7d4a8c06607863a58b38bc7030b91091",
+   "data_before": {
+    "largest_saved_payload_bytes": 14186256,
+    "saved_payload_bytes": 890588975,
+    "saved_revisions": 94,
+    "sqlite_bytes": 907259904
+   },
+   "environment": {
+    "cpu_count": 4,
+    "dependencies": {
+     "fastapi": "0.162.7",
+     "pydantic": "2.14.3",
+     "sqlalchemy": "2.1.8",
+     "uvicorn": "0.54.0"
+    },
+    "git_sha": "bcb8dfbbcbb24fce86d9f6b5e4cb7b9437b2edf3",
+    "platform": "Linux-6.18.44-fc-v470-x86_64-with-glibc2.39",
+    "python": "3.11.18",
+    "script_sha256": "75b8a268a12d414de4f91c0ba9b957ff99d1464b2771fd99eef6c3a5cc570e5f",
+    "source_tree": "0d611805121ed3dfda50e7671f689fa0f58dd07c"
+   },
+   "input_sha256": "8d4ebd5c66d99f387867365ca5468347fbe4947a98e321f143b6341c160f0b93",
+   "phases": {},
+   "profile": false,
+   "records": [
+    {
+     "bytes": 1673266,
+     "phase": "cold",
+     "read": "tour",
+     "seconds": 50.58956386100181,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "cold",
+     "read": "archive",
+     "seconds": 3.3620750740010408,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "cold",
+     "read": "season0",
+     "seconds": 3.5359208199988643,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm1",
+     "read": "tour",
+     "seconds": 3.5323171929994714,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm1",
+     "read": "archive",
+     "seconds": 3.6690949320000072,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm1",
+     "read": "season0",
+     "seconds": 3.477296758999728,
+     "status": 200
+    },
+    {
+     "bytes": 1673266,
+     "phase": "warm2",
+     "read": "tour",
+     "seconds": 3.58683819900034,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "warm2",
+     "read": "archive",
+     "seconds": 3.411831544999586,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "warm2",
+     "read": "season0",
+     "seconds": 3.302814134000073,
+     "status": 200
+    },
+    {
+     "bytes": 14515,
+     "phase": "write",
+     "read": "preview",
+     "seconds": 4.2502569159987615,
+     "status": 200
+    },
+    {
+     "bytes": 13775,
+     "phase": "write",
+     "read": "execute",
+     "seconds": 10.478018138001062,
+     "status": 201
+    },
+    {
+     "bytes": 1693109,
+     "phase": "write",
+     "read": "draft_tour",
+     "seconds": 4.572737998998491,
+     "status": 200
+    },
+    {
+     "bytes": 1593,
+     "phase": "write",
+     "read": "save",
+     "seconds": 12.021144570000615,
+     "status": 201
+    },
+    {
+     "bytes": 1693107,
+     "phase": "after_save",
+     "read": "tour",
+     "seconds": 3.783401913999114,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "after_save",
+     "read": "archive",
+     "seconds": 3.159636569002032,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "after_save",
+     "read": "season0",
+     "seconds": 3.0736647529993206,
+     "status": 200
+    },
+    {
+     "bytes": 1693107,
+     "phase": "restart_cold",
+     "read": "tour",
+     "seconds": 50.33005923399833,
+     "status": 200
+    },
+    {
+     "bytes": 1610,
+     "phase": "restart_cold",
+     "read": "archive",
+     "seconds": 3.4764502920006635,
+     "status": 200
+    },
+    {
+     "bytes": 4112,
+     "phase": "restart_cold",
+     "read": "season0",
+     "seconds": 3.346756701997947,
+     "status": 200
+    }
+   ],
+   "response_sha256": {
+    "archive": "911911cea5f6f7d8cda2e8be7f911363307b5b35e282f303b5ca657b9a448bd0",
+    "season0": "04e657927c0ed99bd0b84bbb67dd93de056fd21dd4fb3bb98712c94421212eb5",
+    "tour": "fde4d4a0eecddcf0f033a2c3a79adbb0c9ded50095db7786733dde5770d77b98"
+   },
+   "restart_complete": true,
+   "restart_equal": {
+    "archive": true,
+    "season0": true,
+    "tour": true
+   },
+   "restart_missing": [],
+   "server_memory": {
+    "after_save": {
+     "VmHWM": 1690513408,
+     "VmRSS": 1486016512,
+     "cpu_seconds": 126.69
+    },
+    "cold": {
+     "VmHWM": 1563979776,
+     "VmRSS": 894951424,
+     "cpu_seconds": 60.91
+    },
+    "restart_cold": {
+     "VmHWM": 1582419968,
+     "VmRSS": 897388544,
+     "cpu_seconds": 60.4
+    },
+    "started": {
+     "VmHWM": 206270464,
+     "VmRSS": 206270464,
+     "cpu_seconds": 3.67
+    },
+    "warm": {
+     "VmHWM": 1563979776,
+     "VmRSS": 894951424,
+     "cpu_seconds": 81.86
+    },
+    "write": {
+     "VmHWM": 1689477120,
+     "VmRSS": 1461248000,
+     "cpu_seconds": 116.74
+    }
+   }
+  }
+ },
+ "description": "Repaired-head A/B and final-DB cold measurements for docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md (15 November 2026).",
+ "final_test_databases": {
+  "w52-final-repaired.db": "f8bc74b55d5e865f0d9bf005600910e2eb30dd19d8804047c9e0c35504fe47ec",
+  "w61-final-repaired.db": "b93f29957ad29d4e84a68b54ebc83b04f774c0023f497b1f813491d06c41a8e3",
+  "w80-final-repaired.db": "18382b936bf7a652d789ef237d496848f380bbda865e96966b5d075d5dea6d6c"
+ }
+}

@@ -28,7 +28,9 @@ jobs:
       - name: Install backend dependencies
         run: pip install -e '.[dev]'
       - name: Run full backend suite
-        run: pytest --durations=20
+        # The multi-hour two-season W52/W61/W80 scenarios (marker long_season)
+        # each have a dedicated job in claude-native-readers-acceptance.yml.
+        run: pytest --durations=20 -m "not long_season"
 
   frontend-full:
     name: Frontend full tests + build

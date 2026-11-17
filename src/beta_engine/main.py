@@ -2,11 +2,13 @@
 
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from beta_engine.api.deps import build_runtime
 from beta_engine.api.routes import router as api_router
+from beta_engine.infrastructure.db.saved_v2_store import SavedV2IntegrityError
 
 DEV_ALLOWED_ORIGINS = [
     "http://localhost:5173",
@@ -58,6 +60,12 @@ def create_app(
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    @app.exception_handler(SavedV2IntegrityError)
+    async def _saved_v2_integrity(_request: Request, exc: SavedV2IntegrityError):
+        # Physical Saved v2 storage failed authentication: fail closed as a
+        # conflict on every endpoint, never as a partial or unverified read.
+        return JSONResponse(status_code=409, content={"detail": str(exc)})
     if countries_config_path is not None:
         app.state.countries_config_path = countries_config_path
     if manual_player_overrides_config_path is not None:

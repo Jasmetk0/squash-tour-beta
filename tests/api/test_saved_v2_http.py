@@ -37,10 +37,19 @@ def _deterministic_ids(monkeypatch):
     monkeypatch.setattr(deps, "uuid4", lambda: SimpleNamespace(hex=f"{next(counter):032x}"))
 
 
+def _without_wall_clock(value):
+    """``created_at`` is the SQLite wall-clock insert time, not Saved content."""
+    if isinstance(value, dict):
+        return {k: _without_wall_clock(v) for k, v in value.items() if k != "created_at"}
+    if isinstance(value, list):
+        return [_without_wall_clock(v) for v in value]
+    return value
+
+
 def _history(server, branch):
     code, body = _request("GET", server.base_url + HISTORY.format(branch=branch))
     assert code == 200, body
-    return body
+    return _without_wall_clock(body)
 
 
 def _scenario(server):
@@ -182,9 +191,9 @@ def test_corruption_after_successful_warm_read_fails_closed(built, tmp_path, cas
         assert _history(server, "branch") == built["saved_v2"].reads["histories"]["branch"]
         _tamper(path, statements)
         code, body = _request("GET", tour_url(server))
-        assert code != 200, label
+        assert code == 409, (label, code, body)
         code, body = _request("GET", server.base_url + HISTORY.format(branch="branch"))
-        assert code != 200, label
+        assert code == 409, (label, code, body)
 
 
 def test_downgraded_inline_row_in_v2_run_fails_closed(built, tmp_path):
@@ -196,8 +205,8 @@ def test_downgraded_inline_row_in_v2_run_fails_closed(built, tmp_path):
     _tamper(path, [("UPDATE branch_saved_revisions SET payload_json=? WHERE revision_id=?",
                     (logical[revision_id], revision_id))])
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        code, _ = _request("GET", server.base_url + HISTORY.format(branch="branch"))
-        assert code != 200
+        code, body = _request("GET", server.base_url + HISTORY.format(branch="branch"))
+        assert code == 409, body
 
 
 def test_v2_envelope_in_v1_run_fails_closed(built, tmp_path):
@@ -210,8 +219,8 @@ def test_v2_envelope_in_v1_run_fails_closed(built, tmp_path):
     _tamper(path, [("UPDATE branch_saved_revisions SET payload_json=? WHERE revision_id=?",
                     (envelope, revision_id))])
     with ApiServer(database_url=f"sqlite:///{path}") as server:
-        code, _ = _request("GET", server.base_url + HISTORY.format(branch="branch"))
-        assert code != 200
+        code, body = _request("GET", server.base_url + HISTORY.format(branch="branch"))
+        assert code == 409, body
 
 
 def test_existing_v1_run_stays_v1_when_new_runs_opt_in(built, tmp_path, monkeypatch):
@@ -264,7 +273,7 @@ def test_rehashed_forged_ancestor_is_rejected_like_v1(built, tmp_path):
     assert logical[revision_id][5] != forged
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         code, _ = _request("GET", tour_url(server))
-        assert code != 200
+        assert 400 <= code < 500, code
 
 
 def test_stale_concurrent_save_is_rejected_and_writes_no_nodes(built, tmp_path):

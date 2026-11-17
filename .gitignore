@@ -36,3 +36,6 @@ htmlcov/
 # Node dependencies / TypeScript build cache
 node_modules/
 *.tsbuildinfo
+
+# Local measurement workspaces (scripts/profile_*.py, measure_saved_v2_growth.py)
+work/

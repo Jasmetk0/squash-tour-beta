@@ -14,6 +14,11 @@ class DatabaseSettings:
 
     url: str = "sqlite:///./beta_engine.db"
     echo: bool = False
+    # Saved storage for Runs CREATED through this engine. None reads the
+    # BETA_ENGINE_NEW_RUN_SAVED_STORAGE environment variable; unset/"v1" keeps
+    # the original inline v1 storage. "saved_v2" is an explicit opt-in. Existing
+    # Runs always keep the format recorded (or not recorded) at their creation.
+    new_run_saved_storage: str | None = None
 
 
 def create_sqlite_engine(settings: DatabaseSettings) -> Engine:
@@ -37,6 +42,9 @@ def create_sqlite_engine(settings: DatabaseSettings) -> Engine:
             cursor.execute("PRAGMA journal_mode=WAL")
             cursor.close()
 
+    from beta_engine.infrastructure.db.saved_v2_hooks import configure_new_run_storage
+
+    configure_new_run_storage(engine, settings.new_run_saved_storage)
     return engine
 
 

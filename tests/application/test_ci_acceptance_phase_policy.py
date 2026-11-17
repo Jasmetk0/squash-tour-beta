@@ -67,6 +67,22 @@ def test_python312_security_command_always_executes_its_explicit_test_file():
     assert "GITHUB_EVENT_NAME=world_package_security_acceptance" in security_command
 
 
+def test_browser_structure_guard_runs_before_the_unchanged_critical_suite():
+    workflow = yaml.load(
+        (ROOT / ".github/workflows/ci.yml").read_text(), Loader=yaml.BaseLoader
+    )
+    steps = workflow["jobs"]["backend-tests"]["steps"]
+    early = next(index for index, step in enumerate(steps)
+        if step.get("name") == "Check browser authority structure before long backend tests")
+    critical = next(index for index, step in enumerate(steps)
+        if step.get("name") == "Run PR critical backend tests")
+    assert early < critical
+    assert steps[early]["if"] == steps[critical]["if"]
+    assert "tests/application/test_admin_group_browser_ui_contract.py" in steps[early]["run"]
+    assert "GITHUB_EVENT_NAME=browser_authority_structure_acceptance" in steps[early]["run"]
+    assert "python -m pytest -v -m pr_critical --maxfail=1" in steps[critical]["run"]
+
+
 def test_small_shell_does_not_replace_the_required_large_population_gates():
     workflows = ROOT / ".github/workflows"
     native = yaml.load(
@@ -122,7 +138,7 @@ def test_native_reader_scripts_keep_their_real_gate_without_general_backend_sele
     assert any(fnmatchcase(path, pattern) for pattern in native['on']['pull_request']['paths'])
     assert set(native['on']['pull_request']['types']) == {'opened', 'synchronize', 'reopened', 'ready_for_review'}
     assert 'workflow_dispatch' in native['on']
-    assert len(native['jobs']['api']['strategy']['matrix']['case']) == 13
+    assert len(native['jobs']['api']['strategy']['matrix']['case']) == 14
     for job in native['jobs'].values():
         assert job['if'] == GATE
     browser = native['jobs']['browser']
@@ -139,3 +155,28 @@ def test_native_reader_shared_url_and_guard_changes_trigger_actual_acceptance():
     paths = workflow['on']['pull_request']['paths']
     assert 'web/src/components/readerUrlState.ts' in paths
     assert 'web/src/navigation/AdminTransitionBlocker.tsx' in paths
+
+
+def test_long_season_clocks_are_separate_from_the_fast_w6_case():
+    """`-k 'not w52'` would also select w61/w80; long clocks need their own jobs."""
+    workflows = ROOT / '.github/workflows'
+    native = yaml.load((workflows / 'claude-native-readers-acceptance.yml').read_text(), Loader=yaml.BaseLoader)
+    api_run = next(step['run'] for step in native['jobs']['api']['steps'] if 'case "$CASE"' in step.get('run', ''))
+    w6 = api_run.split('seasons_w6)', 1)[1].split(';;', 1)[0]
+    assert "test_two_closed_seasons_archive_compare_extend_and_restart[w6]'" in w6
+    assert ' -k ' not in api_run
+    long_job = native['jobs']['long_seasons']
+    assert long_job['if'] == GATE
+    # Every long clock must have an executing path: the full suite excludes
+    # long_season, so this job must cover all of them.
+    from tests.api import test_native_season_archive_wide as wide
+    long_ids = {p.id for p in wide.test_two_closed_seasons_archive_compare_extend_and_restart.pytestmark[0].args[1]
+                if any(m.name == 'long_season' for m in p.marks)}
+    assert long_ids == {'w52', 'w61', 'w80'}
+    assert set(long_job['strategy']['matrix']['clock']) == long_ids
+    assert int(long_job['timeout-minutes']) <= 360
+    long_run = next(step['run'] for step in long_job['steps'] if 'pytest' in step.get('run', ''))
+    assert 'unset GITHUB_EVENT_NAME' in long_run
+    assert 'test_two_closed_seasons_archive_compare_extend_and_restart[${CLOCK}]' in long_run
+    full = yaml.load((workflows / 'full-test-suite.yml').read_text(), Loader=yaml.BaseLoader)
+    assert any('-m "not long_season"' in step.get('run', '') for step in full['jobs']['backend-full']['steps'])

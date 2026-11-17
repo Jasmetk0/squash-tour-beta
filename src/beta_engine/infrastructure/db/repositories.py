@@ -55,11 +55,14 @@ from beta_engine.domain.run_revisions import (
     VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
     WORKING_DRAFT_SCHEMA_VERSION,
     branch_restore_saved_revision_change_summary,
+    canonical_json,
     initial_saved_revision_change_summary,
     initial_saved_revision_payload,
     saved_revision_checkpoint_content_hash,
     saved_viewer_branch_id,
     saved_revision_content_hash,
+    saved_revision_hash_envelope,
+    _saved_revision_content_hash_from_new_canonical_parts,
     viewer_branch_id_from_changes,
     viewer_branch_saved_revision_change_summary,
     viewer_branch_saved_revision_payload,
@@ -440,6 +443,16 @@ class BranchSavedRevisionRecord:
     created_at: str | None = None
 
 
+# Saved Revision kind of an explicit all-Branch Run horizon extension (its Run
+# calendar differs from every earlier revision's).
+_HORIZON_EXTENSION_KIND = "run_calendar_horizon_extension"
+
+# Metadata-only proofs (payload/change summary are empty), keyed by complete
+# physical signatures. The bound must exceed the longest lineage a read walks;
+# see docs/NATIVE_LONG_RUN_SAVED_READ_PERFORMANCE.md.
+MAX_VALIDATED_REVISION_PROOFS = 4096
+
+
 @dataclass(frozen=True)
 class BranchSavedRevisionHistoryRecord:
     """Validated oldest-to-newest Saved Revision lineage for one Branch."""
@@ -466,14 +479,75 @@ def _saved_revision_record_content_hash(
     )
 
 
+def _saved_revision_model_content_hash(
+    model: BranchSavedRevisionModel, revision: BranchSavedRevisionRecord,
+) -> str:
+    """The SAME content hash, computed over the actual stored payload bytes.
+
+    ``revision`` must be the record just decoded from exactly
+    ``model.payload_json``. The hash is defined over
+    ``canonical_json(json.loads(payload_json))``. When those exact stored
+    characters are PROVEN to already be that canonical encoding (byte-identical
+    proven segments are compared, every other segment is decoded and re-encoded,
+    see canonical_text.py), hashing them is hashing the defined input. Any other
+    text takes the ordinary full re-encoding. No declared hash is trusted.
+    """
+    from beta_engine.infrastructure.db.canonical_text import PROOFS
+
+    if (revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
+            revision.parent_revision_id, revision.kind, revision.payload_schema_version) != (
+            model.revision_id, model.run_id, model.branch_id, model.sequence,
+            model.parent_revision_id, model.kind, model.payload_schema_version):
+        return _saved_revision_record_content_hash(revision)
+    proof = PROOFS.prove(model.payload_json, scope=model.run_id)
+    if proof is None:
+        return _saved_revision_record_content_hash(revision)
+    envelope = saved_revision_hash_envelope(
+        revision_id=revision.revision_id, run_id=revision.run_id,
+        branch_id=revision.branch_id, sequence=revision.sequence,
+        parent_revision_id=revision.parent_revision_id, kind=revision.kind,
+        payload_schema_version=revision.payload_schema_version,
+        payload=None, change_summary=revision.change_summary,
+    )
+    digest = hashlib.sha256(b"{")
+    for index, key in enumerate(sorted(envelope)):
+        if index:
+            digest.update(b",")
+        digest.update(canonical_json(key).encode("utf-8") + b":")
+        digest.update((proof.text if key == "payload" else canonical_json(envelope[key])).encode("utf-8"))
+    digest.update(b"}")
+    return digest.hexdigest()
+
+
+def _declared_global_identity(model: BranchSavedRevisionModel):
+    """Declared (checkpoint, Tour) fingerprints from proven text; selection only."""
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, span
+
+    if not isinstance(model.payload_json, str):
+        return None
+    proof = PROOFS.prove(model.payload_json, scope=model.run_id)
+    if proof is None:
+        return None
+    identity = []
+    for key in ('calendar_player_sporting_checkpoint', 'calendar_tour_authority'):
+        text = span(proof, ('content', key, 'fingerprint'))
+        value = json.loads(text) if text is not None else None
+        if type(value) is not str:
+            return None
+        identity.append(value)
+    return tuple(identity)
+
+
 def _saved_revision_validation_signature(model: BranchSavedRevisionModel) -> tuple:
     """Bind a metadata-only proof to the complete physical revision bytes."""
+    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
+
     return (
         model.revision_id, model.run_id, model.branch_id, model.sequence,
         model.parent_revision_id, model.kind, model.payload_schema_version,
         model.content_hash_algorithm, model.content_hash, model.created_at,
-        hashlib.sha256(model.payload_json.encode()).digest(),
-        hashlib.sha256(model.change_summary_json.encode()).digest(),
+        row_text_sha256(model, "payload_json"),
+        row_text_sha256(model, "change_summary_json"),
     )
 
 
@@ -2573,7 +2647,7 @@ class SimulationPersistenceRepository:
                 if complete:
                     if not materialize_payload:
                         with self._revision_validation_lock:
-                            metadata = self._revision_validation_cache.get(signature)
+                            metadata = self._touch_validated_revision(signature)
                             no_closure = signature in self._revision_validation_no_closure
                         if metadata is not None and no_closure:
                             # The COMPLETE actual dependency graph just matched
@@ -2605,7 +2679,30 @@ class SimulationPersistenceRepository:
             verified_global_prefix = None
             with self._revision_validation_lock:
                 needs_component_validation = signature not in self._revision_validation_cache
-            if global_slots and needs_component_validation and model.parent_revision_id:
+            already_replayed = False
+            if global_slots and needs_component_validation and decoded_value.get('value') is not None:
+                # The prefix below only feeds the component replay, which
+                # _to_branch_saved_revision skips when this walk's complete
+                # replay already produced these exact actual values. Do not
+                # decode and copy the parent's sources for a prefix that is then
+                # unused. Only the declared identity selects this; if the actual
+                # values then differ, the component check replays the complete
+                # history without a prefix and reaches the same verdict.
+                content = decoded_value['value'][1].get('content', {}) if isinstance(
+                    decoded_value['value'][1], dict) else {}
+                identity = tuple(
+                    (content.get(key) or {}).get('fingerprint') if isinstance(content.get(key), dict) else None
+                    for key in ('calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
+                evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
+                already_replayed = None not in identity and identity in evidence
+            elif global_slots and needs_component_validation:
+                # A cached routing hint skipped the decode. The same declared
+                # identity (selection only, as above) is read from the exact
+                # spans of the PROVEN canonical stored text, if available.
+                identity = _declared_global_identity(model)
+                evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get('_global_replayed_values', {})
+                already_replayed = identity is not None and identity in evidence
+            if global_slots and needs_component_validation and model.parent_revision_id and not already_replayed:
                 parent_model = session.get(BranchSavedRevisionModel, model.parent_revision_id)
                 with self._revision_validation_lock:
                     parent_component_known = (
@@ -2680,7 +2777,7 @@ class SimulationPersistenceRepository:
     ):
         """One exact-byte validation in flight; every waiter still checks owner."""
         with self._revision_validation_lock:
-            verified = self._revision_validation_cache.get(signature)
+            verified = self._touch_validated_revision(signature)
         revision = (
             self._to_branch_saved_revision(model, validate_components=verified is None,
                 validate_native_root=False,
@@ -2724,7 +2821,7 @@ class SimulationPersistenceRepository:
             )
         if (
             revision.content_hash_algorithm != CONTENT_HASH_ALGORITHM
-            or revision.content_hash != _saved_revision_record_content_hash(revision)
+            or revision.content_hash != _saved_revision_model_content_hash(model, revision)
         ):
             raise BranchRevisionStateConflictError(
                 f"Saved Revision {revision.revision_id} failed content integrity validation"
@@ -2746,7 +2843,6 @@ class SimulationPersistenceRepository:
         # physical source/lineage gates remain independently mandatory.
         run_projection = _to_json(revision.payload.get('run'))
         with self._revision_validation_lock:
-            self._revision_validation_cache[signature] = metadata
             if len(run_projection.encode('utf-8')) <= 32 * 1024:
                 self._revision_run_projection_cache[signature] = run_projection
                 while len(self._revision_run_projection_cache) > 128:
@@ -2755,11 +2851,27 @@ class SimulationPersistenceRepository:
                 self._revision_validation_no_closure.add(signature)
             else:
                 self._revision_validation_no_closure.discard(signature)
-            if len(self._revision_validation_cache) > 128:
+            self._revision_validation_cache.pop(signature, None)
+            self._revision_validation_cache[signature] = metadata
+            while len(self._revision_validation_cache) > MAX_VALIDATED_REVISION_PROOFS:
                 oldest = next(iter(self._revision_validation_cache))
                 self._revision_validation_cache.pop(oldest)
                 self._revision_validation_no_closure.discard(oldest)
                 self._revision_run_projection_cache.pop(oldest, None)
+        return metadata
+
+    def _touch_validated_revision(self, signature):
+        """Caller holds the lock. Least-recently-used order for lineage walks.
+
+        Every read walks the complete lineage from HEAD to the root. With
+        first-in-first-out eviction, a lineage longer than the bound evicted
+        each proof just before the next walk needed it, so every request
+        re-decoded every revision. The key is still the complete physical
+        signature (all metadata and SHA-256 of the exact stored bytes).
+        """
+        metadata = self._revision_validation_cache.get(signature)
+        if metadata is not None:
+            self._revision_validation_cache[signature] = self._revision_validation_cache.pop(signature)
         return metadata
 
     def _known_saved_run_projection(self, model):
@@ -2769,6 +2881,108 @@ class SimulationPersistenceRepository:
             if signature not in self._revision_validation_cache:
                 return None
             return self._revision_run_projection_cache.get(signature)
+
+    def _prevalidate_cold_global_lineage(self, *, session, head_model, sporting_component_proofs):
+        """Cold native Tour lineage: same validations, bounded memory and depth.
+
+        A cold global-slot validation authenticates each parent inside its
+        child's source gate. Starting at HEAD therefore nested one complete
+        validation per ancestor: every decoded payload stayed alive at once
+        (peak memory linear in the whole history, ~5x its bytes) and the call
+        depth grew with every Save. Here, only when HEAD is not yet proven:
+
+        1. HEAD's complete component replay runs first, exactly as HEAD's own
+           validation would run it first. It only records replay evidence (each
+           value still has to be matched by every ancestor's ACTUAL values).
+        2. The not-yet-proven ancestors are then validated oldest first by the
+           ordinary validator, so each finds its parent's completed proof and
+           releases its decoded payload before the next one.
+
+        Nothing is granted: a proof enters the cache only after that revision's
+        own complete physical, owner, source and replay validation. Any failure
+        here is discarded; the ordinary walk that follows re-validates in the
+        original order and raises its original error.
+        """
+        if session.new or session.dirty or session.deleted:
+            return  # never flush or reorder a writer's pending unit of work
+        from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+
+        head_signature = _saved_revision_validation_signature(head_model)
+        with self._revision_validation_lock:
+            if head_signature in self._revision_validation_cache:
+                return  # warm HEAD: the ordinary walk reuses or revalidates as before
+        unproven, seen = [], {head_model.revision_id}
+        # Replay evidence binds the Run calendar of the replayed payload. A
+        # horizon extension changes it, so the newest revision BELOW each
+        # extension needs its own replay too (as the HEAD-first order did).
+        replay_first, boundary = [], head_model.kind == _HORIZON_EXTENSION_KIND
+        with session.no_autoflush:
+            parent_id = head_model.parent_revision_id
+            while parent_id:
+                if parent_id in seen:
+                    return  # the ordinary walk reports the cycle
+                seen.add(parent_id)
+                model = session.get(BranchSavedRevisionModel, parent_id)
+                if model is None or model.run_id != head_model.run_id:
+                    return  # the ordinary walk reports the missing/foreign parent
+                signature = _saved_revision_validation_signature(model)
+                with self._revision_validation_lock:
+                    known = signature in self._revision_validation_cache
+                if known:
+                    break
+                unproven.append(parent_id)
+                if boundary:
+                    replay_first.append(parent_id)
+                boundary = model.kind == _HORIZON_EXTENSION_KIND
+                parent_id = model.parent_revision_id
+                del model
+            if len(unproven) < 2 or not is_global_slot_row(head_model, repository=self):
+                return  # nothing deep to unwind; keep the original order
+            try:
+                self._prevalidate_oldest_first(
+                    session, head_model, unproven, sporting_component_proofs, replay_first)
+            except (BranchRevisionStateConflictError, KeyError, TypeError, ValueError):
+                return  # the ordinary walk below raises the original error
+
+    def _prevalidate_oldest_first(self, session, head_model, unproven, sporting_component_proofs,
+                                  replay_first=()):
+        from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
+
+        # The replay evidence keeps frozen Tour/checkpoint values that every
+        # ancestor's gates fingerprint again; memoize those pure fingerprints by
+        # exact object identity for this one cold pass only (as the Tour reader
+        # does). Nothing in the scope is a physical or source proof.
+        with global_replay_projection_scope():
+            self._prevalidate_oldest_first_in_scope(
+                session, head_model, unproven, sporting_component_proofs, replay_first)
+
+    def _prevalidate_oldest_first_in_scope(self, session, head_model, unproven,
+                                           sporting_component_proofs, replay_first):
+        # 1. HEAD's complete component replay, then (newest first) that of the
+        #    newest revision below each horizon extension. These only record
+        #    evidence; every revision is still validated in full below.
+        self._to_branch_saved_revision(
+            head_model, validate_components=True, validate_native_root=False,
+            sporting_component_proofs=sporting_component_proofs,
+        )
+        for revision_id in replay_first:
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            if model is None:
+                return
+            self._to_branch_saved_revision(
+                model, validate_components=True, validate_native_root=False,
+                sporting_component_proofs=sporting_component_proofs,
+            )
+            del model
+        # 2. The ordinary validator, oldest unproven ancestor first.
+        for revision_id in reversed(unproven):
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            if model is None:
+                return
+            self._validated_saved_revision_in_session(
+                session=session, model=model, materialize_payload=False,
+                sporting_component_proofs=sporting_component_proofs,
+            )
 
     def _validated_branch_revision_lineage_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
@@ -2809,6 +3023,10 @@ class SimulationPersistenceRepository:
         # Local to one lineage walk; raw bytes/hash/identity still verify for
         # EVERY revision, including those sharing exact sporting components.
         sporting_component_proofs = sporting_component_proofs if sporting_component_proofs is not None else {}
+        self._prevalidate_cold_global_lineage(
+            session=session, head_model=head_model,
+            sporting_component_proofs=sporting_component_proofs,
+        )
         while current_model is not None:
             if current_model.revision_id in visited_revision_ids:
                 raise BranchRevisionStateConflictError(
@@ -4166,7 +4384,13 @@ class SimulationPersistenceRepository:
                     payload, run_id=model.run_id, branch_id=model.branch_id
                 )
                 from beta_engine.infrastructure.db.calendar_native_competition import has_replayed_global_components
-                if not has_replayed_global_components(payload, sporting_component_proofs):
+                from beta_engine.infrastructure.db.canonical_text import PROOFS as _canonical_text_proofs
+                # ``payload`` was decoded from exactly these stored characters
+                # just above; the proof lets component hashes use their spans.
+                payload_proof = (_canonical_text_proofs.prove(model.payload_json, scope=model.run_id)
+                    if isinstance(model.payload_json, str) else None)
+                if not has_replayed_global_components(payload, sporting_component_proofs,
+                                                      _payload_proof=payload_proof):
                     load_saved_calendar_match(
                         payload, run_id=model.run_id, branch_id=model.branch_id,
                         _sporting_component_proofs=sporting_component_proofs,
@@ -6529,16 +6753,23 @@ class SimulationPersistenceRepository:
                 sequence = state.saved_revision.sequence + 1
                 if 'native_branch_closures' in payload.get('run', {}):
                     global_append_before = None
-                content_hash = saved_revision_content_hash(
+                # Canonicalize the new body once. The old hash builder encoded
+                # the complete multi-MB payload inside the envelope, then
+                # _to_json(payload) encoded the same body again for the row.
+                # Independent post-insert checks below still parse/hash the
+                # actual flushed bytes; no historical proof is weakened.
+                canonical_payload_json = _to_json(payload)
+                canonical_change_summary_json = _to_json(summary)
+                content_hash = _saved_revision_content_hash_from_new_canonical_parts(
                     revision_id=revision_id,
                     run_id=run_id,
                     branch_id=branch_id,
                     sequence=sequence,
                     parent_revision_id=state.saved_revision.revision_id,
                     kind=revision_kind,
-                    payload_schema_version=(RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION),
-                    payload=payload,
-                    change_summary=summary,
+                    payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
+                    payload_json=canonical_payload_json,
+                    change_summary_json=canonical_change_summary_json,
                 )
                 previous_current_viewer_id = (run.official_branch_id or "").strip()
                 if not previous_current_viewer_id:
@@ -6578,8 +6809,8 @@ class SimulationPersistenceRepository:
                         ),
                         content_hash_algorithm=CONTENT_HASH_ALGORITHM,
                         content_hash=content_hash,
-                        payload_json=_to_json(payload),
-                        change_summary_json=_to_json(summary),
+                        payload_json=canonical_payload_json,
+                        change_summary_json=canonical_change_summary_json,
                     )
                 )
                 # For a verified global append, keep the old HEAD installed

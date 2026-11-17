@@ -1,3 +1,63 @@
+# Performance integration checkpoint — 17 November 2026 (unmerged candidate)
+
+Owner-merged baseline is still `buuk 320e4766ec8b` (#1802). Work's single
+`fix/performance-integration-20261117` candidate combines these pinned tips:
+#1803 `136b277a6b24`, #1809 `ebbe995b3489`, #1810 `bb0cfdbfa2`,
+#1814 `40804cf34f`, and #1819 `ecc5eb104d`. The writer/reader import conflict is
+resolved without replacing either independent verifier. No GitHub merge was made.
+
+Work additionally repaired the stale browser-click AST guard: it now checks the
+pure-groups and hybrid mode labels separately. Fast CI runs that cheap guard
+before its unchanged critical suite. A failing-before/passing-after regression
+also demonstrated that one oversized canonical JSON proof could exceed the
+process cache's entire text budget; it is now verified but not retained there.
+The candidate's initial focused suite passes 135 tests, including format,
+canonical proof, GC/replay, CI and browser-structure contracts. Actual HTTP/SQLite
+integration and hosted final-head acceptance are separate requirements, not
+implied by these component checks. The PR check results are authoritative.
+
+The source #1803 head has successful hosted two-full-season W52/W61/W80 evidence;
+that does not certify the combined head or 1,000-player long-world scaling.
+The giant #1820 run timed out at a real Week 8 manual Save (120 seconds), with
+about 1.85 GB of SQLite and 5.15 GiB peak RSS, not five completed seasons.
+No production Saved v2 is implemented in this candidate. Existing prototypes
+#1805/#1811/#1821 and ADR #1823 must become one coherent storage implementation.
+The next Claude boundary and negative/scale acceptance are in
+`docs/NATIVE_LONG_RUN_REVIEW_HANDOFF.md`; Work's integration review is in
+`docs/NATIVE_LONG_RUN_WORK_REVIEW.md`. #1804 remains independent; #1825 has no
+demonstrated end-to-end gain. Sonar is advisory. Radim alone merges.
+
+---
+
+# Claude long native Run reads and two full seasons — 14–15 November 2026
+
+Base `buuk 320e4766ec8b` (#1802). Claude's Draft PR #1803 (branch
+`claude/ecstatic-davinci-qpie07`) speeds up Saved Tour/season-archive reads of long
+native Runs and adds two-complete-season W52/W61/W80 acceptance. Work returned it
+(REQUEST CHANGES, `docs/NATIVE_LONG_RUN_WORK_REVIEW.md`); the demonstrated defects are
+repaired in the same PR: the stored-text content-hash shortcut is removed (it accepted
+noncanonical text hashed by whoever wrote it), shared dependency graphs are Run-scoped,
+the benchmark fails on incomplete restart reads, and the GC pause is bounded.
+
+- Repaired head (`src/` tree `0d611805`): W6 and W52 two seasons **passed** (W52 alone
+  4,982 s, incl. extension and cold restart). W61 and W80 complete every week, both
+  Season Transitions, Editions, archive, comparisons and the extension, but their
+  first read after a cold restart exceeds the unchanged 120 s bound (actual final
+  DBs: ~191 s and ~260 s; not extrapolated). Open.
+- 15 Nov continuation (head `29ca584`, Work's GC-lock fix kept): proven canonical
+  stored text replaces re-encoding for content/component hashes and the replay is
+  linear inside its private scope. First HTTP read after a cold start on those same
+  final DBs: W61 152 s → 84 s, W80 226 s → 108–111 s, byte-identical responses.
+  Hosted two-season acceptance on this head: run 43713955097 (pending at writing).
+- Cause: every Saved Revision stores the complete Run state and a cold start must
+  re-validate all of it. Remaining engineering work:
+  `docs/NATIVE_SAVED_COMPONENT_STORAGE_PROPOSAL.md` (backward-compatible, new writer
+  version only; no migration, re-signing or same-database proof).
+- No API/DTO, Saved byte, fingerprint, seed, sporting rule, Entry, calibration,
+  frontend or ATP change. Not certified: 50 seasons, 1,000-player long Runs.
+
+---
+
 # Work takeover of Claude native features — 13 November 2026
 
 Owner asked Work to review and finish Claude's implementation. Owner-merged base

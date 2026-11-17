@@ -18,6 +18,7 @@ from beta_engine.application.native_fork_runtime_reducer import (
 from beta_engine.domain.native_fork_runtime import ForkRuntimeCommand, NativeForkRuntime
 from beta_engine.domain.run_revisions import canonical_json
 from beta_engine.domain.tournaments.calendar_tour import CalendarTourReceipt
+from beta_engine.infrastructure.db.exact_text_digest import physical_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 from beta_engine.infrastructure.db.run_prospect_source_state import (
     load_saved_run_prospect_source,
@@ -159,6 +160,10 @@ def assert_current_saved_row(session, revision):
         raise ValueError("Native Saved row differs from its actual stored bytes")
 
 
+# Indexes into _physical_revision_fields(): payload_json and change_summary_json.
+_LARGE_TEXT_FIELDS = {9: "payload_json", 10: "change_summary_json"}
+
+
 def _physical_revision_fields():
     return tuple(getattr(BranchSavedRevisionModel, key) for key in (
         "revision_id", "run_id", "branch_id", "sequence", "parent_revision_id",
@@ -177,22 +182,43 @@ def native_read_proof_scope():
             _proofs.reset(token)
 
 
+def _canonical_runtime_identity(raw):
+    """Canonical component proof and state JSON, each large subtree encoded once.
+
+    The component is REQUIRED to have exactly two keys: fingerprint and state.
+    With sort_keys=True its original canonical JSON is precisely
+    {"fingerprint":<json>,"state":<json>}. Hash the same UTF-8 bytes in
+    pieces; do not re-encode the potentially multi-MB state a second time.
+    SHA-256 identity, Unicode/float JSON semantics and cache byte limits
+    remain identical to canonical_json(raw).encode("utf-8").
+    """
+    state_json = canonical_json(raw["state"]).encode("utf-8")
+    prefix = (
+        b'{"fingerprint":'
+        + canonical_json(raw["fingerprint"]).encode("utf-8")
+        + b',"state":'
+    )
+    digest = hashlib.sha256()
+    digest.update(prefix)
+    digest.update(state_json)
+    digest.update(b"}")
+    return digest.digest(), len(prefix) + len(state_json) + 1, state_json
+
+
 def load_runtime(payload):
     raw = payload.get("content", {}).get(KEY)
     if not isinstance(raw, dict) or set(raw) != {"state", "fingerprint"}:
         raise ValueError("Malformed native fork runtime component")
-    serialized = canonical_json(raw).encode("utf-8")
-    signature = hashlib.sha256(serialized).digest()
+    signature, size, state_json = _canonical_runtime_identity(raw)
     memo = _proofs.get()
     cache = memo.setdefault("parsed_native_runtimes", {}) if memo is not None else {}
     prior = cache.pop(signature, None)
     if prior is not None:
         cache[signature] = prior
         return prior[1]
-    runtime = NativeForkRuntime.model_validate_json(canonical_json(raw["state"]))
+    runtime = NativeForkRuntime.model_validate_json(state_json)
     if runtime.fingerprint != raw["fingerprint"]:
         raise ValueError("Native fork runtime fingerprint differs")
-    size = len(serialized)
     if memo is not None and size <= _MAX_PARSED_RUNTIME_BYTES:
         cache[signature] = (size, runtime)
         while len(cache) > _MAX_PARSED_RUNTIMES or sum(item[0] for item in cache.values()) > _MAX_PARSED_RUNTIME_BYTES:
@@ -370,6 +396,47 @@ def verify_runtime(repository, session, *, runtime, revision, original, working=
     return runtime
 
 
+def _proven_dependency_branches(row):
+    """The same reference set, read from PROVEN canonical actual payload text.
+
+    Only when these exact freshly read characters are proven to be their own
+    canonical JSON encoding (canonical_text.py) are the two inputs taken from
+    their exact spans: whether ``content`` has ``calendar_tour_authority`` and
+    ``content.native_fork_baseline.state.selected_source_branch_id``. Any other
+    shape or text returns None and the original parser decides.
+    """
+    import json as _json
+
+    from beta_engine.infrastructure.db.canonical_text import PROOFS
+
+    raw = row[9]
+    if type(raw) is not str or len(raw) < 64 * 1024:
+        return None  # small rows: the original projection parse is cheap
+    proof = PROOFS.prove(raw, scope=row[1])
+    if proof is None or proof.layout.keys is None:
+        return None
+    content = proof.layout.keys.get("content")
+    if content is None or content.keys is None:
+        return None
+    branches = set()
+    baseline = content.keys.get("native_fork_baseline")
+    if baseline is not None:
+        value = _json.loads(raw[baseline.start:baseline.end])
+        if not isinstance(value, dict):
+            return None
+        state = value.get("state")
+        if isinstance(state, dict):
+            selected = state.get("selected_source_branch_id")
+            if selected is not None and type(selected) is not str:
+                return None
+            branches.add(selected)
+        elif state is not None:
+            return None
+    if "calendar_tour_authority" in content.keys:
+        branches.add(row[2])
+    return branches
+
+
 def _dependency_references(repository, row, digest):
     """Bounded parse hints, never a validation proof or a stored hash shortcut.
 
@@ -384,11 +451,13 @@ def _dependency_references(repository, row, digest):
             if digest in hints:
                 return hints[digest]
     try:
-        content = _dependency_content(row[9])
-        baseline = content.get("native_fork_baseline", {}).get("state")
-        branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
-        if "calendar_tour_authority" in content:
-            branches.add(row[2])
+        branches = _proven_dependency_branches(row)
+        if branches is None:
+            content = _dependency_content(row[9])
+            baseline = content.get("native_fork_baseline", {}).get("state")
+            branches = {baseline.get("selected_source_branch_id")} if isinstance(baseline, dict) else set()
+            if "calendar_tour_authority" in content:
+                branches.add(row[2])
         result = tuple(branches)
     except (TypeError, ValueError, AttributeError) as exc:
         raise ValueError("Native Saved row contains malformed JSON dependency data") from exc
@@ -468,7 +537,14 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 revisions[key] = (None, None, ())
             else:
                 digest = hashlib.sha256()
-                for value in row:
+                for index, value in enumerate(row):
+                    if type(value) is str and index in _LARGE_TEXT_FIELDS:
+                        # Commit to the exact SHA-256 of these actual bytes. The
+                        # same read scope hashes each physical text only once.
+                        digest.update(b"h")
+                        digest.update(physical_text_sha256(read_cache, run_id=row[1],
+                            revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
+                        continue
                     raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
                     digest.update(b"s" if isinstance(value, str) else b"j")
                     digest.update(len(raw).to_bytes(8, "big"))
@@ -477,10 +553,25 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 revisions[key] = (row, signature, _dependency_references(repository, row, signature))
         return revisions[key]
 
+    # Within ONE unchanged SQLite read snapshot every row, owner and digest is
+    # fixed, so the complete walk from a node is fixed as well. A later walk in
+    # the same snapshot that reaches such a node merges its complete closure
+    # instead of re-expanding it (exactly the nodes/entries the walk would add).
+    # A snapshot change (any own write, savepoint rollback or new transaction)
+    # discards this memo together with every cached row.
+    closures = read_cache.setdefault("dependency_closures", {}) if read_cache is not None else {}
     pending, visited, graph, source_heads = [revision.revision_id], set(), [], {}
     while pending:
         revision_id = pending.pop()
         if revision_id in visited:
+            continue
+        known = closures.get((revision.run_id, revision_id)) if revision_id != revision.revision_id else None
+        if known is not None:
+            for entry in known[0]:
+                if entry[0] not in visited:
+                    visited.add(entry[0])
+                    graph.append(entry)
+            source_heads.update(known[1])
             continue
         visited.add(revision_id)
         row, digest, branch_ids = actual_revision(revision_id)
@@ -508,11 +599,30 @@ def actual_dependency_signature(session, revision, *, repository=None):
             source_heads[branch_id] = source
             if source and source[-1]:
                 pending.append(source[-1])
-    return (
-        revision.revision_id,
-        tuple(sorted(graph)),
-        tuple(sorted(source_heads.items())),
-    )
+    if read_cache is None:
+        return (
+            revision.revision_id,
+            tuple(sorted(graph)),
+            tuple(sorted(source_heads.items())),
+        )
+    closures[(revision.run_id, revision.revision_id)] = (tuple(graph), dict(source_heads))
+    # Identical node sets OF THE SAME RUN in one snapshot have identical sorted
+    # graph values (rows and owners are looked up by Run); share them and their
+    # canonical JSON instead of re-sorting/re-encoding. Another Run's equal
+    # revision-ID set is a different physical graph.
+    shared = read_cache.setdefault("dependency_graphs", {})
+    node_set = (revision.run_id, frozenset(visited))
+    known_graph = shared.get(node_set)
+    if known_graph is None:
+        sorted_graph = tuple(sorted(graph))
+        sorted_heads = tuple(sorted(source_heads.items()))
+        known_graph = shared[node_set] = (
+            sorted_graph, sorted_heads, canonical_json(sorted_graph), canonical_json(sorted_heads))
+        if memo is not None:
+            encoded = memo.setdefault("dependency_graph_json", {})
+            encoded[id(sorted_graph)] = (sorted_graph, known_graph[2])
+            encoded[id(sorted_heads)] = (sorted_heads, known_graph[3])
+    return (revision.revision_id, known_graph[0], known_graph[1])
 
 
 def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):
@@ -532,6 +642,16 @@ def _dependency_proof_key(signature):
     # Keep only a compact cryptographic digest of the COMPLETE actual graph,
     # never mutable payloads. Longer histories can retain their proven prefixes
     # without an unbounded collection of overlapping graph tuples.
+    memo = _proofs.get()
+    encoded = memo.get("dependency_graph_json") if memo is not None else None
+    if encoded and type(signature) is tuple and len(signature) == 3 and type(signature[0]) is str:
+        graph = encoded.get(id(signature[1]))
+        heads = encoded.get(id(signature[2]))
+        if graph is not None and heads is not None and graph[0] is signature[1] and heads[0] is signature[2]:
+            # Exactly canonical_json(signature): a JSON array's encoding is its
+            # elements' encodings joined by "," (same separators/sort_keys).
+            text = "[" + canonical_json(signature[0]) + "," + graph[1] + "," + heads[1] + "]"
+            return hashlib.sha256(text.encode("utf-8")).hexdigest()
     return hashlib.sha256(canonical_json(signature).encode("utf-8")).hexdigest()
 
 
@@ -593,6 +713,27 @@ def remember_committed_global_append(repository, signature, revision_ids, *, run
         heads[key] = head
         while len(heads) > 16:
             heads.pop(next(iter(heads)))
+
+
+def remember_committed_ancestor_proofs(repository, signature, revision_ids):
+    """Only after commit: re-key proofs of already authenticated OLD revisions.
+
+    Unlike remember_committed_global_append this never records a HEAD proof:
+    the caller's newly appended revision has not passed the repository
+    validator, so it must not gain the complete-graph shortcut. Each key still
+    binds the COMPLETE actual graph; any later change makes it unusable.
+    """
+    keys = tuple(_dependency_proof_key((revision_id, signature[1], signature[2]))
+        for revision_id in revision_ids)
+    with repository._revision_validation_lock:
+        proofs = getattr(repository, "_native_dependency_proofs", None)
+        if proofs is None:
+            proofs = repository._native_dependency_proofs = {}
+        for key in keys:
+            proofs.pop(key, None)
+            proofs[key] = True
+        while len(proofs) > _MAX_DEPENDENCY_PROOFS:
+            proofs.pop(next(iter(proofs)))
 
 
 def verify_with_actual_dependencies(repository, session, revision, verify):

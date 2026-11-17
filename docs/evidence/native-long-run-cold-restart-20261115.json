@@ -1,0 +1,20 @@
+{
+  "purpose": "First HTTP read after a cold server start on the actual final two-season DBs of local run #6 (scripts/profile_native_season_archive.py Server, one GET /admin/runs/run/branches/branch/calendar-tour, timeout 900 s for measurement only; the acceptance bound stays 120 s).",
+  "host": "4 vCPU, idle except where noted; each run uses a fresh sqlite3 backup copy of the input",
+  "base": {"commit": "7ef4b3abc", "note": "Work's head before this continuation (includes Work's GC-lock fix)"},
+  "candidate": {"commit": "29ca584f0"},
+  "inputs": {
+    "w61": {"file": "w61-final-repaired.db", "revisions": 145, "payload_mb": 2015},
+    "w80": {"file": "w80-final-repaired.db", "revisions": 183, "payload_mb": 2800}
+  },
+  "results": [
+    {"input": "w61", "head": "base", "http_cold_s": 152.1, "server_cpu_s": 155.6, "peak_rss_bytes": 3135660032, "response_sha256": "7c6b8150856c1034e4fc05a721bfc0764593ba3123baac2a1cfe16e8a234c9ac"},
+    {"input": "w61", "head": "candidate", "http_cold_s": 84.0, "server_cpu_s": 86.6, "peak_rss_bytes": 3095203840, "response_sha256": "7c6b8150856c1034e4fc05a721bfc0764593ba3123baac2a1cfe16e8a234c9ac"},
+    {"input": "w80", "head": "base", "http_cold_s": 225.6, "server_cpu_s": 225.2, "peak_rss_bytes": 4033613824, "response_sha256": "e71b6145c4dcc2aff22ecd76a49e24ac0a4b3e917fc4483b1ed20c1f54fe4879"},
+    {"input": "w80", "head": "candidate", "http_cold_s": 111.0, "server_cpu_s": 113.3, "peak_rss_bytes": 3971411968, "response_sha256": "e71b6145c4dcc2aff22ecd76a49e24ac0a4b3e917fc4483b1ed20c1f54fe4879"},
+    {"input": "w80", "head": "candidate", "http_cold_s": 109.3, "server_cpu_s": 113.2, "peak_rss_bytes": 3971608576, "response_sha256": "e71b6145c4dcc2aff22ecd76a49e24ac0a4b3e917fc4483b1ed20c1f54fe4879"},
+    {"input": "w80", "head": "candidate", "http_cold_s": 108.0, "server_cpu_s": 111.9, "peak_rss_bytes": 4008828928, "response_sha256": "e71b6145c4dcc2aff22ecd76a49e24ac0a4b3e917fc4483b1ed20c1f54fe4879"}
+  ],
+  "replay_only": {"w80_head_component_replay_s": {"before_7ef4b3a": 31.5, "after": 20.8}},
+  "limits": "Single host; base measured once per input; the complete W52/W61/W80 two-season acceptance on the candidate is hosted run 43713955097."
+}

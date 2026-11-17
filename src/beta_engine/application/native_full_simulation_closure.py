@@ -212,7 +212,11 @@ class NativeFullSimulationClosureService:
             approval = payload.get("closure_approval")
             if not approval or approval["review"] != review or request["review_fingerprint"] != review["review_fingerprint"]:
                 raise ValueError("Explicit current closure approval is required before manual final Save")
-            facts = closure_facts(self.repository, session, ctx["revision"])
+            # _review computed these immutable, source-verified facts in this
+            # same write transaction. Avoid repeating the Saved source traversal
+            # and closing ranking calculation prior to persisting the marker.
+            facts = {k: v for k, v in review.items()
+                if k not in {"parent_command_id", "expected_position_fingerprint", "review_fingerprint"}}
             marker = {**facts, "approval": approval["request"], "save": request,
                 "parent_command_id": command.command_id}
             marker["fingerprint"] = canonical_hash(marker)

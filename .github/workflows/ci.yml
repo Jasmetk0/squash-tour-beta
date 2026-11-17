@@ -185,6 +185,14 @@ jobs:
           python -m py_compile scripts/admin_first_tournament_smoke.py
           python -m py_compile scripts/saved_tour_calendar_browser_checks.py
           python -m py_compile scripts/edition_entry_timing_browser.py
+      # Fail a broken browser authority structure in seconds, before expensive
+      # HTTP/SQLite critical tests. This does not replace the real browser gate.
+      - name: Check browser authority structure before long backend tests
+        if: needs.changes.outputs.backend_core == 'true'
+        run: |
+          GITHUB_EVENT_NAME=browser_authority_structure_acceptance \
+            python -m pytest tests/application/test_admin_group_browser_ui_contract.py \
+            --maxfail=1 --durations=5
       - name: Run focused Earth-data validation
         if: needs.changes.outputs.earth_data == 'true' && needs.changes.outputs.backend_core != 'true'
         run: |

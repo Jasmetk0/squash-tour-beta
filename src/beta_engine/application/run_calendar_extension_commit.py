@@ -66,7 +66,8 @@ def _json_object(raw: str, label: str) -> dict:
     return item
 
 
-def _capture_live_content(session: Session, *, payload: dict, run_id: str, branch_id: str) -> dict:
+def _capture_live_content(session: Session, *, payload: dict, run_id: str, branch_id: str,
+                          repository=None) -> dict:
     if "native_fork_runtime" in payload.get("content", {}):
         # The caller has authenticated this complete Saved aggregate and requires
         # a clean draft. Its live authority IS this aggregate, not missing legacy
@@ -124,9 +125,20 @@ def _capture_live_content(session: Session, *, payload: dict, run_id: str, branc
         .get("state", {}).get("schema_version")
         in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
     )
+    # As in the Save coordinator: this exact Saved HEAD passed the complete
+    # physical lineage gate in the current transaction, so only Tour origins
+    # NEWER than it need another source fold (a clean draft has none). The
+    # captured live aggregate is still fully replayed below.
+    from beta_engine.infrastructure.db.calendar_tour import decode_authenticated_tour
+
     storage.capture_saved_calendar_match(
         session, copy, run_id=run_id, branch_id=branch_id,
         _defer_full_verification=native_birth,
+        _authenticated_tour_prefix=(
+            decode_authenticated_tour(payload, run_id=run_id, branch_id=branch_id)
+            if repository is not None else None
+        ),
+        _repository=repository,
     )
     if native_birth:
         # A v11 source cannot be verified in isolation before its Tour/source
@@ -172,8 +184,11 @@ def review_run_calendar_extension(
         draft = None
         try:
             # Validate complete old lineage, including shared pre-fork ancestors.
+            # Every revision passes the same physical/source/replay gates; only
+            # the HEAD payload (read below) is needed, so do not also decode and
+            # retain every historical payload just to discard it.
             repository._validated_branch_revision_lineage_in_session(
-                session=session, branch=branch
+                session=session, branch=branch, payload_revision_ids=frozenset(),
             )
             state = repository._validated_branch_revision_state_in_session(
                 session=session, branch=branch
@@ -223,7 +238,7 @@ def review_run_calendar_extension(
                     try:
                         captured = _capture_live_content(
                             session, payload=head.payload, run_id=run_id,
-                            branch_id=branch.branch_id,
+                            branch_id=branch.branch_id, repository=repository,
                         )
                         # Some existing normal-Save adapters synthesize a
                         # canonical *empty* component on capture even when the
@@ -417,6 +432,7 @@ def save_run_calendar_extension(
             )
             for item in review["branches"]
         }
+        before_graphs = _actual_global_graphs(repository, session, run_id, prepared_states)
         updated_heads = []
         for source in review["branches"]:
             branch_id = source["branch_id"]
@@ -532,5 +548,75 @@ def save_run_calendar_extension(
             result_json=canonical_json(result),
         ))
         session.flush()
+        promotions = _verified_ancestor_appends(
+            repository, session, run_id, before_graphs, updated_heads)
         # All the above rows, including receipt, roll back on any exception.
+    # Only after a successful commit (as the ordinary Save coordinator does).
+    _remember_promotions(repository, run_id, promotions)
     return result
+
+
+def _actual_global_graphs(repository, session, run_id, prepared_states):
+    """Complete actual dependency graphs of each authenticated native Tour HEAD."""
+    from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        actual_dependency_signature,
+        native_read_proof_scope,
+    )
+
+    graphs = {}
+    with native_read_proof_scope():
+        for branch_id, state in prepared_states.items():
+            head = session.get(BranchSavedRevisionModel, state.saved_revision.revision_id)
+            if head is not None and head.run_id == run_id and is_global_slot_row(head, repository=repository):
+                graphs[branch_id] = actual_dependency_signature(session, head, repository=repository)
+    return graphs
+
+
+def _verified_ancestor_appends(repository, session, run_id, before_graphs, updated_heads):
+    """Old revisions whose complete graph changed ONLY by this exact append.
+
+    The extension Save appends one revision per Branch and advances its HEAD.
+    The ordinary Save coordinator then re-installs the dependency proofs of the
+    Branch's already authenticated revisions under the new graph; without that,
+    the next read re-verified every historical source again. The NEW extension
+    revision is deliberately NOT promoted: it has not passed the repository
+    validator and is fully validated by the next read. Any other change (a
+    source HEAD moved by another Branch in this cohort, an owner change, a
+    missing row) means no promotion at all for that Branch.
+    """
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        actual_dependency_signature,
+        assert_global_save_append,
+        native_read_proof_scope,
+    )
+
+    promotions = []
+    with native_read_proof_scope():
+        for head in updated_heads:
+            branch_id, revision_id = head["branch_id"], head["saved_revision_id"]
+            before = before_graphs.get(branch_id)
+            row = session.get(BranchSavedRevisionModel, revision_id)
+            if before is None or row is None:
+                continue
+            try:
+                after = actual_dependency_signature(session, row, repository=repository)
+                owned = assert_global_save_append(
+                    before, after, run_id=run_id, branch_id=branch_id,
+                    revision_id=revision_id, installed=True,
+                )
+            except (TypeError, ValueError):
+                continue
+            ancestors = tuple(item for item in owned if item != revision_id)
+            if ancestors:
+                promotions.append((after, ancestors, branch_id))
+    return promotions
+
+
+def _remember_promotions(repository, run_id, promotions):
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        remember_committed_ancestor_proofs,
+    )
+
+    for signature, revision_ids, _branch_id in promotions:
+        remember_committed_ancestor_proofs(repository, signature, revision_ids)

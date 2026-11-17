@@ -30,19 +30,58 @@ AUTHORITY_WRITE_PATHS = (
 )
 
 
-def test_browser_setup_authorities_are_confirmed_by_admin_controls():
-    syntax = ast.parse(SCRIPT.read_text(encoding="utf-8"))
-    clicked = {
-        node.args[1].value
+def _click_label(expression, *, hybrid_preparation):
+    """Resolve the literal label for one supported browser mode, fail closed.
+
+    Only the script's explicit mode choice is understood. A matching string in
+    a condition, another call or the opposite branch is not a click in this mode.
+    """
+    if isinstance(expression, ast.Constant) and isinstance(expression.value, str):
+        return expression.value
+    if (isinstance(expression, ast.IfExp)
+            and isinstance(expression.test, ast.Name)
+            and expression.test.id == "hybrid_preparation"):
+        return _click_label(
+            expression.body if hybrid_preparation else expression.orelse,
+            hybrid_preparation=hybrid_preparation,
+        )
+    return None
+
+
+def _clicked_labels(syntax, *, hybrid_preparation):
+    return {
+        _click_label(node.args[1], hybrid_preparation=hybrid_preparation)
         for node in ast.walk(syntax)
         if isinstance(node, ast.Call)
         and isinstance(node.func, ast.Name)
         and node.func.id == "browser_click"
         and len(node.args) >= 2
-        and isinstance(node.args[1], ast.Constant)
-        and isinstance(node.args[1].value, str)
+    } - {None}
+
+
+@pytest.mark.parametrize("hybrid_preparation", [False, True])
+def test_browser_setup_authorities_are_confirmed_by_admin_controls(hybrid_preparation):
+    syntax = ast.parse(SCRIPT.read_text(encoding="utf-8"))
+    required = REQUIRED_CLICKS
+    if hybrid_preparation:
+        required = (required - {
+            "Choose pure round-robin groups", "Configure pure-groups Format",
+        }) | {"Choose groups + knockout", "Configure groups + knockout Format"}
+    assert required <= _clicked_labels(syntax, hybrid_preparation=hybrid_preparation)
+
+
+@pytest.mark.parametrize("hybrid_preparation", [False, True])
+def test_click_guard_distinguishes_modes_and_ignores_unclicked_strings(hybrid_preparation):
+    syntax = ast.parse('''
+browser_click(page, "hybrid" if hybrid_preparation else "pure")
+browser_click(page, "literal")
+browser_click(page, choose("not a literal click"))
+browser_click(page, "unknown true" if other_flag else "unknown false")
+other_call(page, "not a browser click")
+''')
+    assert _clicked_labels(syntax, hybrid_preparation=hybrid_preparation) == {
+        "hybrid" if hybrid_preparation else "pure", "literal",
     }
-    assert REQUIRED_CLICKS <= clicked
 
 
 def test_group_setup_authorities_have_no_direct_http_post_bypass():

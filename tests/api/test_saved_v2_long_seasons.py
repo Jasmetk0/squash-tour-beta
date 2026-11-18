@@ -66,24 +66,42 @@ def _in_fresh_process(target, *args):
     out of the measured phases)."""
     import multiprocessing
 
-    queue = multiprocessing.get_context("spawn").Queue()
-    child = multiprocessing.get_context("spawn").Process(target=_phase, args=(queue, target, *args))
-    child.start()
-    result = queue.get()
-    child.join()
-    assert child.exitcode == 0 and result[0] == "ok", result
+    context = multiprocessing.get_context("spawn")
+    receiver, sender = context.Pipe(duplex=False)
+    with receiver, sender:
+        child = context.Process(target=_phase, args=(sender, target, *args))
+        child.start()
+        sender.close()
+        try:
+            result = receiver.recv()
+        except (EOFError, OSError) as exc:
+            child.join()
+            raise AssertionError(
+                f"Saved v2 phase {target.__name__} exited without a result (exit {child.exitcode})"
+            ) from exc
+        child.join()
+        assert child.exitcode == 0 and result[0] == "ok", result
     return result[1]
 
 
-def _phase(queue, target, *args):
+def _phase(sender, target, *args):
     import os
     import traceback
 
     os.environ[ENVIRONMENT_VARIABLE] = "saved_v2"
-    try:
-        queue.put(("ok", globals()[target](*args)))
-    except BaseException:  # reported to the parent, which fails the test
-        queue.put(("error", traceback.format_exc()))
+    with sender:
+        try:
+            result = ("ok", target(*args))
+        except BaseException:  # reported to the parent, which fails the test
+            result = ("error", traceback.format_exc())
+        sender.send(result)
+
+
+def test_saved_v2_phase_reports_child_exit_without_a_message():
+    import os
+
+    with pytest.raises(AssertionError, match=r"exited without a result \(exit 17\)"):
+        _in_fresh_process(os._exit, 17)
 
 
 def _scenario(directory, width):
@@ -122,7 +140,7 @@ def _restarted_inspection(path):
     pytest.param(80, id="w80", marks=pytest.mark.long_season),
 ])
 def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width):
-    _in_fresh_process("_scenario", str(tmp_path), width)
+    _in_fresh_process(_scenario, str(tmp_path), width)
     path = tmp_path / "wide-archive.sqlite"
     revisions, node_bytes = _assert_v2_storage(path)
     lineage = _lineage(path)
@@ -130,11 +148,11 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width):
     # lineage[-1] is the extension, [-2] the second Season Transition, [-3] the
     # transition to Week W and [-4] the transition to Week W-1 of the second
     # season (its Editions are terminal, so a Week Transition is legal).
-    final = _in_fresh_process("_restore_and_save", str(path), lineage[-4][0])
+    final = _in_fresh_process(_restore_and_save, str(path), lineage[-4][0])
     final_lineage = _lineage(path)
     assert final_lineage[-1][0] == json.loads(final)["saved_head_revision_id"]
     assert [r[0] for r in final_lineage[:-2]] == [r[0] for r in lineage]
-    assert _in_fresh_process("_restarted_inspection", str(path)) == final
+    assert _in_fresh_process(_restarted_inspection, str(path)) == final
     assert _lineage(path) == final_lineage
     after, _ = _assert_v2_storage(path)
     assert after == revisions + 2

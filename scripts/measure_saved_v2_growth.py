@@ -31,6 +31,7 @@ import json
 import multiprocessing
 import os
 import platform
+import re
 import resource
 import sqlite3
 import subprocess
@@ -41,6 +42,16 @@ from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path[:0] = [str(ROOT / "src"), str(ROOT), str(ROOT / "tests" / "api")]
+WORK = ROOT / "work"
+_CASE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}")
+
+
+def case_root(value):
+    """Only ``work/<case-name>`` of this checkout; rebuilt from the fixed base."""
+    name = Path(value).name
+    if _CASE.fullmatch(name) is None or Path(value).parent.resolve() != WORK.resolve():
+        raise argparse.ArgumentTypeError("Output must be work/<case-name> (letters, digits, _ or -)")
+    return WORK / _CASE.fullmatch(name).group(0)
 
 
 def proc_status():
@@ -97,7 +108,7 @@ def case(args):
     from tests.api.test_native_season_archive_wide import play_season_editions, run_to_season_end
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
-    root = Path(args.root)
+    root = args.root
     root.mkdir(parents=True, exist_ok=False)
     db = root / "run.db"
     rows = []
@@ -160,11 +171,11 @@ def case(args):
 
 def restart(root, storage):
     sys.path[:0] = [str(ROOT / "src"), str(ROOT), str(ROOT / "tests" / "api")]
+    root = case_root(root)
     os.environ["BETA_ENGINE_NEW_RUN_SAVED_STORAGE"] = storage
     from tests.api.test_calendar_tour_flow import tour_url
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
-    root = Path(root)
     expected = json.loads((root / "expected.json").read_text())
     result = {}
     with ApiServer(database_url=f"sqlite:///{root / 'run.db'}") as server:
@@ -182,14 +193,13 @@ def restart(root, storage):
 
 def compare(args):
     cases = []
-    for name in args.roots:
-        root = Path(name)
+    for root in args.roots:
         summary = json.loads((root / "summary.json").read_text())
         requests = [json.loads(line) for line in (root / "requests.jsonl").read_text().splitlines()]
         saves = [r for r in requests if r["method"] == "POST" and r["path"].endswith("/save")]
         cases.append((root.name, summary, requests, saves))
     identities = {c[1]["logical"]["identity_hash_digest"] for c in cases}
-    expected = {hashlib.sha256((Path(name) / "expected.json").read_bytes()).hexdigest() for name in args.roots}
+    expected = {hashlib.sha256((root / "expected.json").read_bytes()).hexdigest() for root in args.roots}
     report = {"identical_saved_ids_and_hashes": len(identities) == 1,
               "identical_final_inspection": len(expected) == 1, "cases": []}
     for name, summary, requests, saves in cases:
@@ -218,9 +228,9 @@ def main(argv=None):
     c.add_argument("--players", type=int, default=8)
     c.add_argument("--width", type=int, default=12)
     c.add_argument("--weeks", type=int, default=0, help="Week Transitions after the Editions (0 = to season end)")
-    c.add_argument("--root", required=True)
+    c.add_argument("--root", type=case_root, required=True)
     m = sub.add_parser("compare")
-    m.add_argument("roots", nargs="+")
+    m.add_argument("roots", nargs="+", type=case_root)
     args = parser.parse_args(argv)
     case(args) if args.command == "case" else compare(args)
 

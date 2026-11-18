@@ -60,10 +60,38 @@ def new_run_storage(engine: Engine) -> str | None:
 
 # --------------------------------------------------------------------------- engine
 
+_STATE = "saved_v2_connection_state"
+
+
 @event.listens_for(Engine, "connect")
-def _register_functions(dbapi_connection, _record):
+def _register_functions(dbapi_connection, record):
     if isinstance(dbapi_connection, sqlite3.Connection):
-        store.register_sqlite_functions(dbapi_connection)
+        state = record.info[_STATE] = store.ConnectionState()
+        store.register_sqlite_functions(dbapi_connection, state)
+
+
+def _state_of(conn):
+    try:
+        return conn.connection.info.get(_STATE)
+    except Exception:  # invalidated/closed connection: nothing cached for it
+        return None
+
+
+def _boundary(conn, *_args, **_kwargs):
+    store.bump_snapshot(_state_of(conn))
+
+
+for _name in ("begin", "commit", "rollback", "savepoint", "rollback_savepoint",
+              "release_savepoint", "begin_twophase", "prepare_twophase"):
+    event.listen(Engine, _name, _boundary)
+
+
+@event.listens_for(Engine, "before_cursor_execute")
+def _statement_boundary(conn, _cursor, statement, _parameters, _context, _executemany):
+    # Any non-SELECT (BEGIN/COMMIT/ROLLBACK TO/SAVEPOINT/DML/DDL issued as SQL)
+    # ends the reuse of bytes authenticated in the previous snapshot state.
+    if statement.lstrip()[:6].upper() != "SELECT":
+        _boundary(conn)
 
 
 @event.listens_for(Engine, "handle_error")
@@ -204,11 +232,11 @@ def _verify_v2_payload(_mapper, connection, target):
     if pending is None:
         return
     logical, encoder, root = pending
-    stored = connection.execute(
+    stored = store.take_handed_off(connection.execute(
         text("SELECT saved_v2_payload(run_id, payload_json) FROM branch_saved_revisions "
              "WHERE revision_id = :id"),
         {"id": target.revision_id},
-    ).scalar_one()
+    ).scalar_one())
     if stored != logical:
         raise store.SavedV2IntegrityError("Stored Saved v2 payload differs from the written text")
     set_committed_value(target, "payload_json", logical)

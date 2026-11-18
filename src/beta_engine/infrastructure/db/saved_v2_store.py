@@ -173,16 +173,26 @@ def parse_node(body: str):
     return kind, tuple(children), tuple(pieces)
 
 
-def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None):
+def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, verified=None):
     """Authenticate the complete DAG from ACTUAL bytes and return its exact text.
 
     ``fetch(run_id, digests)`` returns {digest: body} of rows that physically exist
-    for this Run only. Every body is hashed here; nothing is cached across calls.
+    for this Run only. Every body fetched is hashed here. ``verified`` may hold
+    nodes of this Run already fetched AND hashed in the SAME SQLite transaction
+    snapshot (see ``SnapshotCache``); newly verified nodes are added to it.
     """
     nodes, pending = {}, [root]
     while pending:
-        batch = [d for d in dict.fromkeys(pending) if d not in nodes]
-        pending = []
+        batch, following = [], []
+        for digest in dict.fromkeys(pending):
+            if digest in nodes:
+                continue
+            known = verified.get(digest) if verified is not None else None
+            if known is not None:
+                nodes[digest] = known
+                following.extend(known[1])
+            else:
+                batch.append(digest)
         for start in range(0, len(batch), 500):
             chunk = batch[start:start + 500]
             found = fetch(run_id, chunk)
@@ -193,9 +203,12 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None):
                 if sha256_hex(body) != digest:
                     raise SavedV2IntegrityError(f"v2 node {digest[:12]} does not match its digest")
                 nodes[digest] = parse_node(body)
-                if len(nodes) > MAX_NODES:
-                    raise SavedV2IntegrityError("v2 node graph is too large")
-                pending.extend(nodes[digest][1])
+                if verified is not None:
+                    verified[digest] = nodes[digest]
+                following.extend(nodes[digest][1])
+        if len(nodes) > MAX_NODES:
+            raise SavedV2IntegrityError("v2 node graph is too large")
+        pending = following
     # Sizes bottom-up with cycle and depth detection (iterative post-order).
     sizes, state = {}, {}
     stack = [(root, 0, 0)]
@@ -535,7 +548,93 @@ def take_error():
     return exc
 
 
-def run_is_v2(dbapi_connection, run_id) -> bool:
+# --------------------------------------------------------------------------- snapshot cache
+
+class ConnectionState:
+    """Per-DBAPI-connection snapshot bookkeeping (owned by the pool record)."""
+
+    __slots__ = ("epoch", "cache")
+
+    def __init__(self):
+        self.epoch = 0
+        self.cache = None
+
+
+SNAPSHOT_TEXT_CHARS = 384 * 1024 * 1024
+
+
+def bump_snapshot(state):
+    """Called for every transaction boundary and every non-SELECT statement."""
+    if state is not None:
+        state.epoch += 1
+        state.cache = None
+
+
+class SnapshotCache:
+    """Bytes already authenticated inside ONE unchanged SQLite read snapshot.
+
+    Valid only while the connection stays inside the same explicit transaction
+    with no own write: the key is (transaction/statement epoch, total_changes).
+    Outside a transaction nothing is cached. It never outlives the snapshot, is
+    never persisted and is not a proof for any later request.
+    """
+
+    __slots__ = ("key", "formats", "nodes", "texts", "chars")
+
+    def __init__(self, key):
+        self.key = key
+        self.formats = {}
+        self.nodes = {}               # (run_id, digest) -> parsed verified node
+        self.texts = OrderedDict()    # (run_id, root, chars) -> text
+        self.chars = 0
+
+    def remember_text(self, key, text):
+        if len(text) > SNAPSHOT_TEXT_CHARS:
+            return
+        self.texts[key] = text
+        self.chars += len(text)
+        while self.chars > SNAPSHOT_TEXT_CHARS and self.texts:
+            _, old = self.texts.popitem(last=False)
+            self.chars -= len(old)
+
+
+def snapshot_cache(dbapi_connection, state):
+    if state is None or not getattr(dbapi_connection, "in_transaction", False):
+        return None
+    changes = getattr(dbapi_connection, "total_changes", None)
+    if type(changes) is not int:
+        return None
+    key = (state.epoch, changes)
+    cache = state.cache
+    if cache is None or cache.key != key:
+        cache = state.cache = SnapshotCache(key)
+    return cache
+
+
+class _RunView(dict):
+    """``verified`` mapping of one Run inside a SnapshotCache (no cross-Run keys)."""
+
+    def __init__(self, cache, run_id):
+        super().__init__()
+        self._cache, self._run = cache, run_id
+
+    def get(self, digest, default=None):
+        return self._cache.nodes.get((self._run, digest), default)
+
+    def __setitem__(self, digest, value):
+        self._cache.nodes[(self._run, digest)] = value
+
+
+def run_is_v2(dbapi_connection, run_id, cache=None) -> bool:
+    if cache is not None and run_id in cache.formats:
+        return cache.formats[run_id]
+    result = _run_is_v2(dbapi_connection, run_id)
+    if cache is not None:
+        cache.formats[run_id] = result
+    return result
+
+
+def _run_is_v2(dbapi_connection, run_id) -> bool:
     cursor = dbapi_connection.cursor()
     try:
         exists = cursor.execute(
@@ -555,12 +654,13 @@ def run_is_v2(dbapi_connection, run_id) -> bool:
     return True
 
 
-def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None):
+def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None, state=None):
     """The exact logical payload text of one stored row, or a fail-closed error."""
     if type(run_id) is not str:
         raise SavedV2IntegrityError("Saved row has no Run identity")
     is_envelope = type(stored) is str and stored.startswith(ENVELOPE_PREFIX)
-    v2 = run_is_v2(dbapi_connection, run_id)
+    cache = snapshot_cache(dbapi_connection, state)
+    v2 = run_is_v2(dbapi_connection, run_id, cache)
     if not is_envelope:
         if v2:
             raise SavedV2IntegrityError("v2 Run contains an inline (downgraded) Saved payload")
@@ -568,14 +668,57 @@ def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None):
     if not v2:
         raise SavedV2IntegrityError("v1 Run contains a v2 Saved storage envelope")
     root, chars = parse_envelope(stored, run_id=run_id)
-    return materialize(connection_fetch(dbapi_connection), run_id=run_id, root=root,
-                       expected_chars=chars, on_value_node=on_value_node)
+    key = (run_id, root, chars)
+    if cache is not None and on_value_node is None:
+        known = cache.texts.get(key)
+        if known is not None:
+            cache.texts.move_to_end(key)
+            return known
+    text = materialize(connection_fetch(dbapi_connection), run_id=run_id, root=root,
+                       expected_chars=chars, on_value_node=on_value_node,
+                       verified=_RunView(cache, run_id) if cache is not None else None)
+    if cache is not None:
+        cache.remember_text(key, text)
+    return text
 
 
-def _sql_saved_v2_payload(dbapi_connection):
+# Hand the verified text to the result processor of the SAME Python process by a
+# short token instead of copying it through SQLite (str -> UTF-8 -> str) on every
+# repeated SELECT. A token is single use; stored row text can never be a token
+# (the reader rejects any stored value starting with NUL).
+_TOKEN = "\x00saved_v2_text:"
+_handoff = OrderedDict()
+_handoff_lock = threading.Lock()
+_token_counter = __import__("itertools").count(1)
+MAX_HANDOFF = 100_000
+
+
+def _hand_off(text):
+    token = _TOKEN + str(next(_token_counter))
+    with _handoff_lock:
+        _handoff[token] = text
+        while len(_handoff) > MAX_HANDOFF:
+            _handoff.popitem(last=False)
+    return token
+
+
+def take_handed_off(value):
+    if type(value) is not str or not value.startswith(_TOKEN):
+        return value
+    with _handoff_lock:
+        text = _handoff.pop(value, None)
+    if text is None:
+        raise SavedV2IntegrityError("v2 Saved text hand-off is unavailable")
+    return text
+
+
+def _sql_saved_v2_payload(dbapi_connection, state):
     def saved_v2_payload(run_id, stored):
         try:
-            return read_payload(dbapi_connection, run_id, stored)
+            if type(stored) is str and stored.startswith("\x00"):
+                raise SavedV2IntegrityError("Stored Saved payload text is malformed")
+            text = read_payload(dbapi_connection, run_id, stored, state=state)
+            return _hand_off(text)
         except Exception as exc:  # reported through the engine's handle_error hook
             _remember_error(exc if isinstance(exc, SavedV2IntegrityError)
                             else SavedV2IntegrityError(f"v2 Saved read failed: {exc}"))
@@ -583,10 +726,11 @@ def _sql_saved_v2_payload(dbapi_connection):
     return saved_v2_payload
 
 
-def _sql_saved_v2_run(dbapi_connection):
+def _sql_saved_v2_run(dbapi_connection, state):
     def saved_v2_run(run_id):
         try:
-            return 1 if type(run_id) is str and run_is_v2(dbapi_connection, run_id) else 0
+            return 1 if type(run_id) is str and run_is_v2(
+                dbapi_connection, run_id, snapshot_cache(dbapi_connection, state)) else 0
         except Exception as exc:
             _remember_error(exc if isinstance(exc, SavedV2IntegrityError)
                             else SavedV2IntegrityError(f"v2 Saved format read failed: {exc}"))
@@ -594,12 +738,22 @@ def _sql_saved_v2_run(dbapi_connection):
     return saved_v2_run
 
 
-def register_sqlite_functions(dbapi_connection):
+def register_sqlite_functions(dbapi_connection, state=None):
     create = getattr(dbapi_connection, "create_function", None)
     if create is None:
         return
-    create("saved_v2_payload", 2, _sql_saved_v2_payload(dbapi_connection))
-    create("saved_v2_run", 1, _sql_saved_v2_run(dbapi_connection))
+    create("saved_v2_payload", 2, _sql_saved_v2_payload(dbapi_connection, state))
+    create("saved_v2_run", 1, _sql_saved_v2_run(dbapi_connection, state))
+
+
+class _HandedOffText(TypeDecorator):
+    """Result type of the routed expression: resolves a hand-off token."""
+
+    impl = Text
+    cache_ok = True
+
+    def process_result_value(self, value, dialect):
+        return take_handed_off(value)
 
 
 class SavedPayloadText(TypeDecorator):
@@ -618,6 +772,7 @@ class SavedPayloadText(TypeDecorator):
             return column
         routed = or_(
             func.substr(column, 1, len(ENVELOPE_PREFIX)) == ENVELOPE_PREFIX,
+            func.substr(column, 1, 1) == func.char(0),
             func.saved_v2_run(run_id) == 1,
         )
-        return type_coerce(case((routed, func.saved_v2_payload(run_id, column)), else_=column), Text())
+        return type_coerce(case((routed, func.saved_v2_payload(run_id, column)), else_=column), _HandedOffText())

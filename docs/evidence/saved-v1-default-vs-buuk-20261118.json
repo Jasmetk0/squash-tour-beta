@@ -1,0 +1,205 @@
+{
+ "description": "Default v1 storage: clean buuk f82bd81 (a1, a2) versus PR head e7a2f5e (b1, b2), A-B-B-A, sequential on one 4-vCPU host; identical deterministic workload (1,000 players, W12 clock, real MatchEngine matches, two overlapping Editions, every Week Transition to season end, explicit Save after every operation: 170 requests, 21 Saves, 26 revisions). Fresh-process restart per case. Script scripts/measure_saved_v2_growth.py (copied untracked into the buuk checkout; production src of both clean).",
+ "compare": {
+  "identical_saved_ids_and_hashes": true,
+  "identical_final_inspection": true,
+  "cases": [
+   {
+    "case": "v1b-a1",
+    "storage": "v1",
+    "git_sha": "f82bd81985dad82020d49bb99fa808ea31c57e87",
+    "dirty": false,
+    "build_wall_s": 1350.05,
+    "request_wall_s": 1347.853,
+    "request_cpu_s": 1332.188,
+    "save_count": 21,
+    "save_wall_s": 318.499,
+    "last5_save_wall_s": [
+     25.8624,
+     30.0877,
+     34.6973,
+     38.0692,
+     42.4507
+    ],
+    "get_wall_s": 454.703,
+    "final_sqlite_bytes": 999403520,
+    "final_wal_bytes": 106415512,
+    "build_peak_rss_kib": 4573056,
+    "restart": {
+     "cold_get": {
+      "status": 200,
+      "wall_s": 96.317,
+      "cpu_s": 95.16,
+      "VmHWM": 2992296,
+      "VmRSS": 1384064
+     },
+     "warm_get": {
+      "status": 200,
+      "wall_s": 16.133,
+      "cpu_s": 16.04,
+      "VmHWM": 2992296,
+      "VmRSS": 1341636
+     },
+     "equal_to_pre_restart": true,
+     "peak_rss_kib": 4573056
+    },
+    "logical": {
+     "revisions": 26,
+     "identity_hash_digest": "279a513fb147eee906d0f602080b00f06bae1b2a02158779855a9d74c01ea8ca",
+     "stored_payload_column_bytes": 891372456,
+     "nodes": 0,
+     "node_body_bytes": 0,
+     "page_size": 4096,
+     "page_count": 243995
+    }
+   },
+   {
+    "case": "v1b-b1",
+    "storage": "v1",
+    "git_sha": "e7a2f5e5ab0c0a3324f62dc341e72e803d1aa358",
+    "dirty": false,
+    "build_wall_s": 1357.659,
+    "request_wall_s": 1355.982,
+    "request_cpu_s": 1340.835,
+    "save_count": 21,
+    "save_wall_s": 319.566,
+    "last5_save_wall_s": [
+     24.816,
+     32.9947,
+     33.3869,
+     37.2496,
+     41.2911
+    ],
+    "get_wall_s": 455.648,
+    "final_sqlite_bytes": 999424000,
+    "final_wal_bytes": 106415512,
+    "build_peak_rss_kib": 4572020,
+    "restart": {
+     "cold_get": {
+      "status": 200,
+      "wall_s": 90.689,
+      "cpu_s": 89.846,
+      "VmHWM": 2991200,
+      "VmRSS": 1381596
+     },
+     "warm_get": {
+      "status": 200,
+      "wall_s": 16.052,
+      "cpu_s": 15.905,
+      "VmHWM": 2991200,
+      "VmRSS": 1327864
+     },
+     "equal_to_pre_restart": true,
+     "peak_rss_kib": 4572020
+    },
+    "logical": {
+     "revisions": 26,
+     "identity_hash_digest": "279a513fb147eee906d0f602080b00f06bae1b2a02158779855a9d74c01ea8ca",
+     "stored_payload_column_bytes": 891372456,
+     "nodes": 0,
+     "node_body_bytes": 0,
+     "page_size": 4096,
+     "page_count": 244000
+    }
+   },
+   {
+    "case": "v1b-b2",
+    "storage": "v1",
+    "git_sha": "e7a2f5e5ab0c0a3324f62dc341e72e803d1aa358",
+    "dirty": false,
+    "build_wall_s": 1329.086,
+    "request_wall_s": 1327.3,
+    "request_cpu_s": 1313.254,
+    "save_count": 21,
+    "save_wall_s": 314.084,
+    "last5_save_wall_s": [
+     24.4421,
+     31.4752,
+     34.542,
+     38.2516,
+     44.6601
+    ],
+    "get_wall_s": 447.538,
+    "final_sqlite_bytes": 999424000,
+    "final_wal_bytes": 106415512,
+    "build_peak_rss_kib": 4563112,
+    "restart": {
+     "cold_get": {
+      "status": 200,
+      "wall_s": 106.388,
+      "cpu_s": 105.81,
+      "VmHWM": 2991216,
+      "VmRSS": 1377744
+     },
+     "warm_get": {
+      "status": 200,
+      "wall_s": 15.812,
+      "cpu_s": 15.738,
+      "VmHWM": 2991216,
+      "VmRSS": 1322888
+     },
+     "equal_to_pre_restart": true,
+     "peak_rss_kib": 4563112
+    },
+    "logical": {
+     "revisions": 26,
+     "identity_hash_digest": "279a513fb147eee906d0f602080b00f06bae1b2a02158779855a9d74c01ea8ca",
+     "stored_payload_column_bytes": 891372456,
+     "nodes": 0,
+     "node_body_bytes": 0,
+     "page_size": 4096,
+     "page_count": 244000
+    }
+   },
+   {
+    "case": "v1b-a2",
+    "storage": "v1",
+    "git_sha": "f82bd81985dad82020d49bb99fa808ea31c57e87",
+    "dirty": false,
+    "build_wall_s": 1340.088,
+    "request_wall_s": 1338.197,
+    "request_cpu_s": 1323.216,
+    "save_count": 21,
+    "save_wall_s": 322.043,
+    "last5_save_wall_s": [
+     23.8321,
+     29.9922,
+     36.874,
+     41.8715,
+     42.7927
+    ],
+    "get_wall_s": 449.103,
+    "final_sqlite_bytes": 999403520,
+    "final_wal_bytes": 106415512,
+    "build_peak_rss_kib": 4643256,
+    "restart": {
+     "cold_get": {
+      "status": 200,
+      "wall_s": 98.588,
+      "cpu_s": 98.283,
+      "VmHWM": 2992368,
+      "VmRSS": 1371344
+     },
+     "warm_get": {
+      "status": 200,
+      "wall_s": 17.248,
+      "cpu_s": 17.12,
+      "VmHWM": 2992368,
+      "VmRSS": 1324908
+     },
+     "equal_to_pre_restart": true,
+     "peak_rss_kib": 4643256
+    },
+    "logical": {
+     "revisions": 26,
+     "identity_hash_digest": "279a513fb147eee906d0f602080b00f06bae1b2a02158779855a9d74c01ea8ca",
+     "stored_payload_column_bytes": 891372456,
+     "nodes": 0,
+     "node_body_bytes": 0,
+     "page_size": 4096,
+     "page_count": 243995
+    }
+   }
+  ]
+ }
+}

@@ -752,6 +752,9 @@ _GUARD_SQL = {
     for name, table, event in GUARD_TRIGGERS
 }
 _GUARD_NAMES = tuple(name for name, _table, _event in GUARD_TRIGGERS)
+_GUARD_EXISTING_SQL = (
+    "SELECT name FROM sqlite_temp_master WHERE type = 'trigger' AND name IN (?, ?, ?, ?, ?, ?)"
+)
 _GUARD_COUNT_SQL = (
     "SELECT COUNT(*) FROM sqlite_temp_master WHERE type = 'trigger' AND name IN ("
     + ",".join("?" * len(_GUARD_NAMES)) + ")"
@@ -769,8 +772,12 @@ def install_guards(dbapi_connection):
             (NODES_TABLE, FORMATS_TABLE))}
         if present != {NODES_TABLE, FORMATS_TABLE}:
             return False
+        # Issue DDL only when a guard is actually missing: other read caches of
+        # this connection treat any non-SELECT statement as a snapshot change.
+        existing = {name for (name,) in cursor.execute(_GUARD_EXISTING_SQL, _GUARD_NAMES)}
         for name in _GUARD_NAMES:
-            cursor.execute(_GUARD_SQL[name])
+            if name not in existing:
+                cursor.execute(_GUARD_SQL[name])
     finally:
         cursor.close()
     return True

@@ -82,9 +82,10 @@ def _ensure_guards(conn):
         return
     if isinstance(dbapi_connection, sqlite3.Connection):
         state = _state_of(conn)
-        if state is not None and not state.guarded:
-            store.install_guards(dbapi_connection)
+        if state is not None and not state.guarded and store.install_guards(dbapi_connection):
             store.bump_snapshot(state)
+            state.guarded = True
+            state.guard_epoch = state.epoch
 
 
 def _state_of(conn):

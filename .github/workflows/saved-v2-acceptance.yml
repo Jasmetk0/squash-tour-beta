@@ -44,11 +44,20 @@ jobs:
         env:
           CLOCK: ${{ matrix.clock }}
           PYTHONPATH: src:.:tests/api
+          SAVED_V2_RESTORE_FIXTURE_DIR: ${{ runner.temp }}/saved-v2-restore-fixture
         shell: bash
         run: |
           unset GITHUB_EVENT_NAME
           python -m pytest -vv -s --maxfail=1 --durations=10 \
             "tests/api/test_saved_v2_long_seasons.py::test_saved_v2_two_closed_seasons_save_restart_restore[${CLOCK}]"
+      - name: Keep the synthetic pre-Restore database on failure
+        if: failure()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: saved-v2-before-restore-${{ matrix.clock }}
+          path: ${{ runner.temp }}/saved-v2-restore-fixture/
+          if-no-files-found: ignore
+          retention-days: 2
       - name: Reject test writes to tracked inputs
         if: always()
         run: git diff --exit-code HEAD -- .

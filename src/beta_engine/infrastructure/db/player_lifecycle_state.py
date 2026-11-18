@@ -626,26 +626,29 @@ def restore_saved_lifecycle(
         )
         .order_by(PlayerLifecycleWeekStateModel.week_ordinal)
     ).all()
-    live = tuple(
-        _load(
-            r,
-            run_id,
-            branch_id,
-            r.week_ordinal,
-        )
-        for r in rows
-    )
-    if tuple(s.fingerprint for s in live) != tuple(
+    for row in rows:
+        _load(row, run_id, branch_id, row.week_ordinal)
+    if tuple(row.fingerprint for row in rows) != tuple(
         s.fingerprint for s in (expected or ())
     ):
         raise ValueError("Live player lifecycle differs from saved head")
-    session.execute(
-        delete(PlayerLifecycleWeekStateModel).where(
+    # Every existing row has been decoded and authenticated above. Preserve
+    # only the prefix whose actual row bytes match the target writer output.
+    # A restored or divergent tail still goes through the ordinary writer.
+    target_states = target or ()
+    preserved = 0
+    for row, state in zip(rows, target_states, strict=False):
+        if row.week_ordinal != state.week.ordinal or row.payload_json != state.model_dump_json():
+            break
+        preserved += 1
+    if preserved < len(rows):
+        delete_tail = delete(PlayerLifecycleWeekStateModel).where(
             PlayerLifecycleWeekStateModel.run_id == run_id,
             PlayerLifecycleWeekStateModel.branch_id == branch_id,
+            PlayerLifecycleWeekStateModel.week_ordinal >= rows[preserved].week_ordinal,
         )
-    )
-    for state in target or ():
+        session.execute(delete_tail)
+    for state in target_states[preserved:]:
         put_lifecycle(session, state)
     if target is None and target_world is not None:
         from beta_engine.infrastructure.db.initial_world_state import get_initial_world

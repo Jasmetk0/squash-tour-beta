@@ -5832,7 +5832,9 @@ class SimulationPersistenceRepository:
                     restored_viewer_branch_id=restored_viewer_branch_id,
                 )
                 sequence = state.saved_revision.sequence + 1
-                revision_hash = saved_revision_content_hash(
+                payload_json = _to_json(payload)
+                summary_json = _to_json(summary)
+                revision_hash = _saved_revision_content_hash_from_new_canonical_parts(
                     revision_id=restore_saved_revision_id,
                     run_id=run_id,
                     branch_id=branch_id,
@@ -5840,8 +5842,8 @@ class SimulationPersistenceRepository:
                     parent_revision_id=previous_head_revision_id,
                     kind=BRANCH_RESTORE_SAVED_REVISION_KIND,
                     payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
-                    payload=payload,
-                    change_summary=summary,
+                    payload_json=payload_json,
+                    change_summary_json=summary_json,
                 )
                 checkpoint_hash = saved_revision_checkpoint_content_hash(
                     checkpoint_id=checkpoint_id,
@@ -5910,8 +5912,8 @@ class SimulationPersistenceRepository:
                         ),
                         content_hash_algorithm=CONTENT_HASH_ALGORITHM,
                         content_hash=revision_hash,
-                        payload_json=_to_json(payload),
-                        change_summary_json=_to_json(summary),
+                        payload_json=payload_json,
+                        change_summary_json=summary_json,
                     )
                 )
                 head_claimed = session.execute(
@@ -5968,18 +5970,37 @@ class SimulationPersistenceRepository:
                     )
                 )
                 session.flush()
+                # Validate the actual flushed head and draft together. A failure
+                # here rolls back the entire Restore, including its checkpoint.
+                # No separate head or draft read is needed to build the receipt.
+                session.expire_all()
+                try:
+                    working_draft, restored_state = self._viewer_branch_working_draft_in_session(
+                        session=session, run_id=run_id, branch_id=branch_id,
+                        include_revision_state=True,
+                    )
+                except (WorkingDraftConflictError, WorkingDraftNotFoundError) as exc:
+                    raise SavedRevisionRestoreConflictError(str(exc)) from exc
+                revision = restored_state.saved_revision
+                checkpoint_row = session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
+                audit_row = session.get(BranchRevisionAuditEventModel, audit_event_id)
+                if (
+                    revision.revision_id != restore_saved_revision_id
+                    or revision.content_hash != revision_hash
+                    or working_draft.status != CLEAN_WORKING_DRAFT_STATUS
+                    or working_draft.draft_version != expected_draft_version + 1
+                    or working_draft.current_viewer_branch_id != restored_viewer_branch_id
+                    or checkpoint_row is None
+                    or audit_row is None
+                ):
+                    raise SavedRevisionRestoreConflictError("Restore receipt could not be verified")
+                checkpoint = self._to_branch_saved_revision_checkpoint(checkpoint_row)
+                audit = self._to_branch_revision_audit_event(audit_row)
         except IntegrityError as exc:
             raise SavedRevisionRestoreIdentityConflictError(
                 "generated restore checkpoint, revision, or audit identity collided"
             ) from exc
 
-        checkpoint = self.get_branch_saved_revision_checkpoint(
-            checkpoint_id=checkpoint_id
-        )
-        revision = self.get_branch_saved_revision(revision_id=restore_saved_revision_id)
-        audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
-        if checkpoint is None or revision is None or audit is None:  # pragma: no cover
-            raise RuntimeError("Saved Revision restore result could not be reloaded")
         return BranchSavedRevisionRestoreResult(
             run_id=run_id,
             branch_id=branch_id,
@@ -5989,9 +6010,7 @@ class SimulationPersistenceRepository:
             viewer_branch_id=restored_viewer_branch_id,
             safety_checkpoint=checkpoint,
             saved_revision=revision,
-            working_draft=self.get_viewer_branch_working_draft(
-                run_id=run_id, branch_id=branch_id
-            ),
+            working_draft=working_draft,
             audit_event=audit,
         )
 

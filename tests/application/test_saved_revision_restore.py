@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterator
 import json
 
 import pytest
-from sqlalchemy import event
+from sqlalchemy import event, text
 
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
@@ -343,6 +343,43 @@ def test_restore_is_scoped_and_rolls_back_a_late_write_failure(tmp_path) -> None
     assert (
         repository.get_branch_working_draft(branch_id="branch-one").draft_version == 2
     )
+
+
+@pytest.mark.pr_critical
+def test_restore_rolls_back_if_the_written_receipt_fails_integrity(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-receipt.db'}")
+    _run_with_saved_viewer_change(repository)
+    with repository._session_factory.begin() as session:
+        session.execute(text("""
+            CREATE TRIGGER corrupt_restore_receipt
+            AFTER INSERT ON branch_saved_revisions
+            WHEN NEW.revision_id = 'receipt-restore'
+            BEGIN
+                UPDATE branch_saved_revisions SET change_summary_json = '{}'
+                WHERE revision_id = NEW.revision_id;
+            END
+        """))
+    service = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("receipt-checkpoint", "receipt-restore", "receipt-audit"),
+    )
+    with pytest.raises(SavedRevisionRestoreConflictError, match="integrity"):
+        service.restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+    assert repository.get_branch_saved_revision(revision_id="receipt-restore") is None
+    assert repository.get_branch_saved_revision_checkpoint(checkpoint_id="receipt-checkpoint") is None
+    assert repository.get_branch_revision_audit_event(audit_event_id="receipt-audit") is None
+    state = repository.get_branch_revision_state(branch_id="branch-one")
+    assert state.saved_head_revision_id == "revision-two"
+    assert state.working_draft.draft_version == 2
+    assert repository.get_run_container(run_id="run-one").viewer_branch_id == "branch-two"
 
 
 def test_restore_fails_closed_for_state_not_captured_by_saved_revision(

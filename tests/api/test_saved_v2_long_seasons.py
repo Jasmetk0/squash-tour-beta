@@ -15,7 +15,10 @@ W6 is the fast variant; W52/W61/W80 are ``long_season`` (dedicated CI jobs).
 from __future__ import annotations
 
 import json
+import os
 import sqlite3
+from contextlib import closing
+from pathlib import Path
 
 import pytest
 
@@ -85,7 +88,6 @@ def _in_fresh_process(target, *args):
 
 
 def _phase(sender, target, *args):
-    import os
     import traceback
 
     os.environ[ENVIRONMENT_VARIABLE] = "saved_v2"
@@ -105,8 +107,6 @@ def test_saved_v2_phase_reports_child_exit_without_a_message():
 
 
 def _scenario(directory, width):
-    from pathlib import Path
-
     # Unchanged acceptance scenario: all Saves, archive/comparison, extension, restart.
     wide.test_two_closed_seasons_archive_compare_extend_and_restart(Path(directory), width)
 
@@ -148,6 +148,18 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width):
     # lineage[-1] is the extension, [-2] the second Season Transition, [-3] the
     # transition to Week W and [-4] the transition to Week W-1 of the second
     # season (its Editions are terminal, so a Week Transition is legal).
+    if fixture_dir := os.environ.get("SAVED_V2_RESTORE_FIXTURE_DIR"):
+        destination = Path(fixture_dir)
+        destination.mkdir(parents=True, exist_ok=True)
+        with (
+            closing(sqlite3.connect(path.resolve().as_uri() + "?mode=ro", uri=True)) as source,
+            closing(sqlite3.connect(destination / "before-restore.sqlite")) as copy,
+        ):
+            source.backup(copy)
+        (destination / "restore-target.json").write_text(
+            json.dumps({"width": width, "target_revision_id": lineage[-4][0]}) + "\n",
+            encoding="utf-8",
+        )
     final = _in_fresh_process(_restore_and_save, str(path), lineage[-4][0])
     final_lineage = _lineage(path)
     assert final_lineage[-1][0] == json.loads(final)["saved_head_revision_id"]

@@ -1,12 +1,21 @@
-# Saved v2 Restore performance checkpoint — 18 November 2026
+# Saved v2 Restore performance checkpoint — 19 November 2026
 
 PR #1827 targets `buuk f82bd8198`. The hosted W52 and W61 cases on
 `4e6302193` completed both seasons and restarted, then exceeded the 120-second
-client limit on the confirmed Restore. The standard matrix does not include
-this additional explicit Saved v2 Restore.
+client limit on the confirmed Restore. The W52, W61 and W80 Saved v2 cases on
+`47397b218` all reproduced that same timeout after both seasons and restart.
+The standard matrix does not include this additional explicit Saved v2 Restore.
 
-The Restore repository now validates the entire reachable lineage once in
-each preview and confirmation transaction and requests complete payloads only
+The follow-up verifies the actual flushed Restore revision and clean draft
+together before commit. A failed receipt validation now aborts the entire
+transaction. It encodes the restored payload once for both the new identity
+hash and storage. Restoring the live lifecycle only replaces the suffix after
+the byte-identical, freshly validated prefix. CI preserves a consistent copy of
+the synthetic pre-Restore database and the target ID on a failure after fixture
+creation, so the next Restore can be profiled without replaying both seasons.
+
+The earlier change validates the entire reachable lineage once while resolving
+the Restore inputs in each transaction and requests complete payloads only
 for the current head and selected target. Confirm still starts with
 `BEGIN IMMEDIATE` and independently checks the actual lineage, live state,
 expected draft version and viewer.

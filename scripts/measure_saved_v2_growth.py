@@ -155,7 +155,7 @@ def case(args):
         expected = flow.inspect(server)
     log.close()
     (root / "expected.json").write_text(json.dumps(expected, sort_keys=True))
-    summary = {"environment": environment(args.storage), "args": vars(args),
+    summary = {"environment": environment(args.storage), "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
                "build_wall_s": round(time.perf_counter() - started, 3),
                "build_peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                "files": file_sizes(db), "logical": logical_summary(db)}

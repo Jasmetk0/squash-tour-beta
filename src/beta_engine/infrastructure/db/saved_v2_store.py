@@ -264,17 +264,21 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
     return text
 
 
+# Static SQL only; digests are bound as one JSON array parameter.
+_FETCH_NODES_SQL = (
+    "SELECT digest, body FROM saved_revision_nodes "
+    "WHERE run_id = ? AND digest IN (SELECT value FROM json_each(?))"
+)
+_RUN_FORMAT_SQL = "SELECT storage_format FROM run_saved_storage_formats WHERE run_id = ?"
+
+
 def connection_fetch(dbapi_connection):
     def fetch(run_id, digests):
         if not digests:
             return {}
         cursor = dbapi_connection.cursor()
         try:
-            rows = cursor.execute(
-                f"SELECT digest, body FROM {NODES_TABLE} WHERE run_id = ? AND digest IN ("
-                + ",".join("?" * len(digests)) + ")",
-                (run_id, *digests),
-            ).fetchall()
+            rows = cursor.execute(_FETCH_NODES_SQL, (run_id, json.dumps(list(digests)))).fetchall()
         finally:
             cursor.close()
         return {digest: body for digest, body in rows}
@@ -643,7 +647,7 @@ def _run_is_v2(dbapi_connection, run_id) -> bool:
         if exists is None:
             return False
         row = cursor.execute(
-            f"SELECT storage_format FROM {FORMATS_TABLE} WHERE run_id = ?", (run_id,)
+            _RUN_FORMAT_SQL, (run_id,)
         ).fetchone()
     finally:
         cursor.close()

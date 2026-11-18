@@ -105,15 +105,23 @@ def _integrity_error(context):
 
 # --------------------------------------------------------------------------- immutability
 
-for _table in (RunSavedStorageFormatModel.__table__, SavedRevisionNodeModel.__table__):
-    event.listen(_table, "after_create", DDL(
-        f"CREATE TRIGGER IF NOT EXISTS {_table.name}_no_update BEFORE UPDATE ON {_table.name} "
-        f"BEGIN SELECT RAISE(ABORT, '{_table.name} is insert-only'); END"
-    ))
-    event.listen(_table, "after_create", DDL(
-        f"CREATE TRIGGER IF NOT EXISTS {_table.name}_no_delete BEFORE DELETE ON {_table.name} "
-        f"BEGIN SELECT RAISE(ABORT, '{_table.name} is insert-only'); END"
-    ))
+_INSERT_ONLY_TRIGGERS = {
+    RunSavedStorageFormatModel.__table__: (
+        "CREATE TRIGGER IF NOT EXISTS run_saved_storage_formats_no_update BEFORE UPDATE ON "
+        "run_saved_storage_formats BEGIN SELECT RAISE(ABORT, 'run_saved_storage_formats is insert-only'); END",
+        "CREATE TRIGGER IF NOT EXISTS run_saved_storage_formats_no_delete BEFORE DELETE ON "
+        "run_saved_storage_formats BEGIN SELECT RAISE(ABORT, 'run_saved_storage_formats is insert-only'); END",
+    ),
+    SavedRevisionNodeModel.__table__: (
+        "CREATE TRIGGER IF NOT EXISTS saved_revision_nodes_no_update BEFORE UPDATE ON "
+        "saved_revision_nodes BEGIN SELECT RAISE(ABORT, 'saved_revision_nodes is insert-only'); END",
+        "CREATE TRIGGER IF NOT EXISTS saved_revision_nodes_no_delete BEFORE DELETE ON "
+        "saved_revision_nodes BEGIN SELECT RAISE(ABORT, 'saved_revision_nodes is insert-only'); END",
+    ),
+}
+for _table, _statements in _INSERT_ONLY_TRIGGERS.items():
+    for _statement in _statements:
+        event.listen(_table, "after_create", DDL(_statement))
 
 
 def _immutable(_mapper, _connection, target):

@@ -71,8 +71,10 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width, monke
     with ApiServer(database_url=db) as server:
         lineage = _history(server)["saved_revisions"]
         assert len(lineage) == revisions
-        # A Week Transition revision of the second season, well before its end.
-        target = lineage[-8]
+        # lineage[-1] is the extension, [-2] the second Season Transition, [-3]
+        # the transition to Week W and [-4] the transition to Week W-1 of the
+        # second season (its Editions are terminal, so a Week Transition is legal).
+        target = lineage[-4]
         repository = server.app.state.runtime.repository
         target_payload = repository.get_branch_saved_revision(revision_id=target["revision_id"]).payload
         restored = restore(server, target["revision_id"])

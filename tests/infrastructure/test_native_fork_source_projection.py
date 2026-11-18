@@ -153,7 +153,8 @@ def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(m
     assert retained == before
 
 
-def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(monkeypatch):
+@pytest.mark.parametrize("owned_capture", [False, True])
+def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(monkeypatch, owned_capture):
     from copy import deepcopy
     from beta_engine.domain.run_packages import canonical_hash
     from beta_engine.infrastructure.db import native_fork_source_projection as cache
@@ -181,8 +182,8 @@ def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(m
     assert cache.decoded_global_tour_source(repo, src, lambda _: captured,
         _retain_miss=False) == captured
     assert copies == [] and not hasattr(repo, '_global_tour_projection_cache')
-    cache.remember_committed_global_sources(repo, src, captured)
-    assert copies == [cp, (captured[0], captured[2])]
+    cache.remember_committed_global_sources(repo, src, captured, _take_ownership=owned_capture)
+    assert copies == ([] if owned_capture else [cp, (captured[0], captured[2])])
     retained = repo._global_tour_projection_cache
     assert len(retained) == 2
     assert sum(v[0] for v in retained.values()) == len(cache.canonical_json(src.payload).encode())
@@ -191,8 +192,9 @@ def test_whole_dto_adapter_retains_one_checkpoint_and_preserves_complete_reuse(m
         pytest.fail('complete DTO or component was needlessly decoded again')
 
     expected = deepcopy(captured)
-    cp.body['nested']['values'].append('capturing caller')
-    captured[0].nested[0]['evidence'] = 'capturing caller'
+    if not owned_capture:
+        cp.body['nested']['values'].append('capturing caller')
+        captured[0].nested[0]['evidence'] = 'capturing caller'
     first = cache.decoded_global_tour_source(repo, deepcopy(src), forbidden)
     assert first == expected
     first[1].body['nested']['values'].clear()

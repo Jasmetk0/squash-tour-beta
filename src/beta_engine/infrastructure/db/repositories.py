@@ -6955,11 +6955,13 @@ class SimulationPersistenceRepository:
                 run_id=run_id, branch_id=branch_id)
             # These exact models were strictly captured from actual live rows,
             # their complete payload passed math and physical origin gates, and
-            # the inserted row matched it before successful commit. Retain only
-            # an isolated DTO copy, keyed by the complete authenticated payload;
-            # subsequent independent readers still authenticate physical sources.
+            # the inserted row matched it before successful commit. Transfer
+            # these private models to the decode cache. The receipt holds the
+            # separate JSON payload and independent readers still verify and copy.
             from beta_engine.infrastructure.db.native_fork_source_projection import remember_committed_global_sources
-            remember_committed_global_sources(self, verified_native_save_receipt, captured_sources)
+            remember_committed_global_sources(
+                self, verified_native_save_receipt, captured_sources, _take_ownership=True,
+            )
             # Publish only immutable JSON values after the complete Save
             # transaction succeeds. No typed source/math proofs survive it.
             from beta_engine.infrastructure.db.calendar_tour import (

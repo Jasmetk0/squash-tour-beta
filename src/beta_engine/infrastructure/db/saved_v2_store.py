@@ -220,9 +220,13 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
                 body = found.get(digest)
                 if type(body) is not str:
                     raise SavedV2IntegrityError(f"v2 node {digest[:12]} is missing for this Run")
-                if sha256_hex(body) != digest:
-                    raise SavedV2IntegrityError(f"v2 node {digest[:12]} does not match its digest")
-                nodes[digest] = parse_node(body)
+                parsed = BODIES.parsed_if_identical(run_id, digest, body)
+                if parsed is None:
+                    if sha256_hex(body) != digest:
+                        raise SavedV2IntegrityError(f"v2 node {digest[:12]} does not match its digest")
+                    parsed = parse_node(body)
+                    BODIES.remember(run_id, digest, body, parsed)
+                nodes[digest] = parsed
                 if verified is not None:
                     verified[digest] = nodes[digest]
                 following.extend(nodes[digest][1])
@@ -316,6 +320,52 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         for digest, start, size in marks:
             on_value_node(digest, text, start, start + size)
     return text
+
+
+class VerifiedBodies:
+    """Bounded process cache: node body text known to hash to its digest.
+
+    Not an authority: every transaction still fetches the ACTUAL body. Only a body
+    that is byte-for-byte equal (``==`` of the exact strings) to text that already
+    hashed to this digest reuses that SHA-256 result and its parse, as
+    ``exact_text_digest`` does for whole rows. Different bytes are hashed again.
+    """
+
+    def __init__(self, max_chars=256 * 1024 * 1024):
+        self._lock = threading.Lock()
+        self._entries = OrderedDict()   # (run_id, digest) -> (body, parsed)
+        self._chars = 0
+        self._max = max_chars
+
+    def parsed_if_identical(self, run_id, digest, body):
+        with self._lock:
+            entry = self._entries.get((run_id, digest))
+            if entry is not None:
+                self._entries.move_to_end((run_id, digest))
+        if entry is not None and (entry[0] is body or entry[0] == body):
+            return entry[1]
+        return None
+
+    def remember(self, run_id, digest, body, parsed):
+        if len(body) > self._max:
+            return
+        with self._lock:
+            old = self._entries.pop((run_id, digest), None)
+            if old is not None:
+                self._chars -= len(old[0])
+            self._entries[(run_id, digest)] = (body, parsed)
+            self._chars += len(body)
+            while self._chars > self._max and self._entries:
+                _, (old_body, _parsed) = self._entries.popitem(last=False)
+                self._chars -= len(old_body)
+
+    def clear(self):
+        with self._lock:
+            self._entries.clear()
+            self._chars = 0
+
+
+BODIES = VerifiedBodies()
 
 
 # Static SQL only; digests are bound as one JSON array parameter.

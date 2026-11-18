@@ -381,3 +381,17 @@ def test_writer_refuses_a_node_beyond_the_reference_limit():
     parts = [("ref", "a" * 64)] * (st.WRITE_MAX_CHILDREN + 1)
     with pytest.raises(st.SavedV2IntegrityError, match="references"):
         st.node_body("s", parts)
+
+
+def test_process_body_cache_reuses_only_byte_identical_bodies(tmp_path):
+    """A changed body with the same digest key is hashed again and rejected, even
+    right after the unchanged body was verified and remembered."""
+    text = canonical(payload(events=2))
+    store, root = Store(), None
+    root, _, _ = store.write("run", text)
+    st.BODIES.clear()
+    assert store.read("run", root, len(text)) == text
+    key = next(k for k in store.rows if k[1] != root)
+    store.rows[key] = store.rows[key][:-1] + ("0" if store.rows[key][-1] != "0" else "1")
+    with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
+        store.read("run", root, len(text))

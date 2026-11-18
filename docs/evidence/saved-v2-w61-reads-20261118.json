@@ -1,0 +1,37 @@
+{
+ "description": "Two-season W61 Run (145 Saved Revisions) produced by the v2 long-season test; an offline v1 copy stores the identical materialized payload texts inline (formats row and nodes removed, VACUUM). Fresh process per run, A-B-B-A order, same host; a W52 test ran concurrently during the history runs.",
+ "sizes": {
+  "v1_inline_sqlite_bytes": 2042187776,
+  "v2_sqlite_bytes": 68546560
+ },
+ "cold_history_get_s": {
+  "note": "GET /run-containers/run/branches/branch/saved-revisions, no client timeout; then inspect; then warm history",
+  "runs": [
+   "{\"db\": \"work/w61cmp/run-v1.db\", \"history_cold\": [161.76, 200, 34219], \"inspect\": [12.28, 200, 2563206], \"history_warm\": [55.19, 200, 34219], \"peak_rss_mib\": 9913}",
+   "{\"db\": \"work/w61cmp/run-v2.db\", \"history_cold\": [162.41, 200, 34219], \"inspect\": [18.4, 200, 2563206], \"history_warm\": [62.55, 200, 34219], \"peak_rss_mib\": 11636}",
+   "{\"db\": \"work/w61cmp/run-v2.db\", \"history_cold\": [166.68, 200, 34219], \"inspect\": [19.6, 200, 2563206], \"history_warm\": [62.6, 200, 34219], \"peak_rss_mib\": 10180}",
+   "{\"db\": \"work/w61cmp/run-v1.db\", \"history_cold\": [153.4, 200, 34219], \"inspect\": [10.9, 200, 2563206], \"history_warm\": [54.28, 200, 34219], \"peak_rss_mib\": 9919}"
+  ],
+  "code": "ba40903 (before the snapshot/trace fixes)"
+ },
+ "inspect_cold_warm_warm": {
+  "body_cache_d1bc26d": [
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [84.75, 10.64, 9.83] peak MiB 3237",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [92.09, 7.41, 7.53] peak MiB 2915",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [83.09, 6.84, 6.79] peak MiB 2919",
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [86.39, 11.75, 10.64] peak MiB 3249"
+  ],
+  "guard_ddl_fix_11893ed": [
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [91.55, 10.92, 10.92] peak MiB 3295",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [89.69, 7.6, 7.66] peak MiB 2862",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [88.28, 7.34, 7.0] peak MiB 2912",
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [82.34, 10.77, 10.88] peak MiB 3294"
+  ],
+  "nested_select_trace_fix_6b1c4fb": [
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [85.38, 8.24, 7.61] peak MiB 3257",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [87.5, 7.55, 7.24] peak MiB 2898",
+   "work/w61cmp/q-v1.db inspect cold/warm/warm [80.33, 6.83, 6.82] peak MiB 2932",
+   "work/w61cmp/q-v2.db inspect cold/warm/warm [79.9, 7.05, 7.26] peak MiB 3277"
+  ]
+ }
+}

@@ -12,6 +12,8 @@ import pytest
 
 from beta_engine.infrastructure.db import saved_v2_store as st
 
+pytestmark = pytest.mark.pr_critical
+
 
 def canonical(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"))

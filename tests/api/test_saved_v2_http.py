@@ -25,7 +25,8 @@ from tests.api.test_calendar_tour_flow import command, execute, inspect, save_to
 from tests.api.test_native_fork_public_continuation import Tour, fork
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
-pytestmark = pytest.mark.smoke
+# The PR gate for Saved v2: CI runs exactly these changed pr_critical modules.
+pytestmark = [pytest.mark.pr_critical, pytest.mark.smoke]
 
 HISTORY = "/run-containers/run/branches/{branch}/saved-revisions"
 

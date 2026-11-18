@@ -179,14 +179,27 @@ def parse_node(body: str):
     return kind, tuple(children), tuple(pieces)
 
 
+MAX_FLAT_PIECES = 1 << 24
+
+
 def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, verified=None):
     """Authenticate the complete DAG from ACTUAL bytes and return its exact text.
 
     ``fetch(run_id, digests)`` returns {digest: body} of rows that physically exist
     for this Run only. Every body fetched is hashed here. ``verified`` may hold
     nodes of this Run already fetched AND hashed in the SAME SQLite transaction
-    snapshot (see ``SnapshotCache``); newly verified nodes are added to it.
+    snapshot (see ``SnapshotCache``) together with values derived from them in that
+    snapshot (subtree size and the flattened tuple of its piece strings); newly
+    verified nodes and derived values are added to it.
     """
+    derived = getattr(verified, "derived", None)
+    known_root = derived.get(root) if derived is not None else None
+    if known_root is not None and on_value_node is None:
+        # The complete subtree was authenticated, size-checked and flattened in
+        # this unchanged snapshot: only the size binding to this envelope remains.
+        if known_root[0] != expected_chars:
+            raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
+        return "".join(known_root[1])
     nodes, pending = {}, [root]
     while pending:
         batch, following = [], []
@@ -196,7 +209,8 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
             known = verified.get(digest) if verified is not None else None
             if known is not None:
                 nodes[digest] = known
-                following.extend(known[1])
+                if derived is None or derived.get(digest) is None:
+                    following.extend(known[1])
             else:
                 batch.append(digest)
         for start in range(0, len(batch), 500):
@@ -215,8 +229,14 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         if len(nodes) > MAX_NODES:
             raise SavedV2IntegrityError("v2 node graph is too large")
         pending = following
-    # Sizes bottom-up with cycle and depth detection (iterative post-order).
-    sizes, state = {}, {}
+    # Sizes and piece counts bottom-up with cycle and depth detection (iterative
+    # post-order). A node with a derived value of this snapshot is a closed leaf.
+    sizes, counts, state = {}, {}, {}
+    for digest in nodes:
+        known = derived.get(digest) if derived is not None else None
+        if known is not None:
+            sizes[digest], counts[digest], state[digest] = known[0], len(known[1]), 2
+    order = []
     stack = [(root, 0, 0)]
     while stack:
         digest, index, depth = stack.pop()
@@ -240,10 +260,38 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         total = sum(len(p) for p in pieces) + sum(sizes[c] for c in children)
         if total > MAX_CHARS:
             raise SavedV2IntegrityError("v2 node graph expands beyond the size limit")
-        sizes[digest] = total
+        count = sum(1 for p in pieces if p) + sum(counts[c] for c in children)
+        if count > MAX_FLAT_PIECES:
+            raise SavedV2IntegrityError("v2 node graph expands beyond the piece limit")
+        sizes[digest], counts[digest] = total, count
         state[digest] = 2
+        order.append(digest)
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
+    if on_value_node is None:
+        # Flatten bottom-up (children before parents in ``order``), reusing the
+        # flattened tuples of this snapshot; join once at C speed.
+        flat = {}
+        for digest in order:
+            _, children, pieces = nodes[digest]
+            parts = [pieces[0]] if pieces[0] else []
+            for child, piece in zip(children, pieces[1:]):
+                child_flat = flat.get(child)
+                if child_flat is None:
+                    child_flat = derived.get(child)[1]
+                parts.extend(child_flat)
+                if piece:
+                    parts.append(piece)
+            flat[digest] = tuple(parts)
+            if derived is not None:
+                derived[digest] = (sizes[digest], flat[digest])
+        root_flat = flat.get(root)
+        if root_flat is None:
+            root_flat = derived.get(root)[1]
+        text = "".join(root_flat)
+        if len(text) != expected_chars:
+            raise SavedV2IntegrityError("v2 Saved text differs from its envelope size")
+        return text
     out, marks = [], []
     position = 0
     work = [("n", root)]
@@ -606,13 +654,14 @@ class SnapshotCache:
     request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "node_chars", "texts", "chars")
+    __slots__ = ("key", "formats", "nodes", "node_chars", "derived", "texts", "chars")
 
     def __init__(self, key):
         self.key = key
         self.formats = {}
         self.nodes = {}               # (run_id, digest) -> parsed verified node
         self.node_chars = 0
+        self.derived = {}             # (run_id, digest) -> (size, flattened pieces)
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
 
@@ -621,6 +670,15 @@ class SnapshotCache:
         if self.node_chars + size > SNAPSHOT_NODE_CHARS:
             return
         self.nodes[key] = parsed
+        self.node_chars += size
+
+    def remember_derived(self, key, value):
+        # References to piece strings already held by verified nodes: charge
+        # 8 characters per reference against the same data-volume budget.
+        size = 8 * len(value[1]) + 64
+        if self.node_chars + size > SNAPSHOT_NODE_CHARS:
+            return
+        self.derived[key] = value
         self.node_chars += size
 
     def remember_text(self, key, text):
@@ -697,12 +755,26 @@ class _RunView(dict):
     def __init__(self, cache, run_id):
         super().__init__()
         self._cache, self._run = cache, run_id
+        self.derived = _DerivedView(cache, run_id)
 
     def get(self, digest, default=None):
         return self._cache.nodes.get((self._run, digest), default)
 
     def __setitem__(self, digest, value):
         self._cache.remember_node((self._run, digest), value)
+
+
+class _DerivedView:
+    __slots__ = ("_cache", "_run")
+
+    def __init__(self, cache, run_id):
+        self._cache, self._run = cache, run_id
+
+    def get(self, digest, default=None):
+        return self._cache.derived.get((self._run, digest), default)
+
+    def __setitem__(self, digest, value):
+        self._cache.remember_derived((self._run, digest), value)
 
 
 def run_is_v2(dbapi_connection, run_id, cache=None) -> bool:

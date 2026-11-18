@@ -193,7 +193,7 @@ def test_rejects_cycles_and_expansion(monkeypatch):
     shape = {d: ("v", (levels[i + 1], levels[i + 1]), ("[", ",", "]")) if i + 1 < len(levels)
              else ("v", (), ("[]",)) for i, d in enumerate(levels)}
     monkeypatch.setattr(st, "parse_node", lambda body: shape[body.split("|", 1)[0]])
-    with pytest.raises(st.SavedV2IntegrityError, match="size limit"):
+    with pytest.raises(st.SavedV2IntegrityError, match="size limit|piece limit"):
         store.read("run", levels[0], 10)
 
 

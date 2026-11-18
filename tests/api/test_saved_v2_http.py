@@ -100,6 +100,34 @@ def _raw(path, sql, *args):
         return connection.execute(sql, args).fetchall()
 
 
+def test_v2_branch_routing_does_not_read_the_saved_payload(tmp_path, monkeypatch):
+    from beta_engine.application.native_fork_runtime_service import is_native_fork
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "saved_v2")
+    path = tmp_path / "routing.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        status, run = _request("POST", server.base_url + "/run-containers", {"display_name": "Routing"})
+        assert status == 201, run
+        repository = server.app.state.runtime.repository
+        run_id = run["run_id"]
+        branch_id = run["viewer_branch_id"]
+        branch = repository.get_run_branch(branch_id=branch_id)
+        original = saved_v2_store.read_payload
+        reads = []
+
+        def count_read(connection, run_id, stored, **kwargs):
+            reads.append(run_id)
+            return original(connection, run_id, stored, **kwargs)
+
+        monkeypatch.setattr(saved_v2_store, "read_payload", count_read)
+        assert not is_native_fork(repository, run_id, branch_id)
+        assert not is_native_fork(repository, "different-run", branch_id)
+        assert not reads
+        assert repository.get_branch_saved_revision(revision_id=branch.saved_head_revision_id)
+        assert reads == [run_id]
+
+
 @pytest.fixture(scope="module")
 def built(tmp_path_factory):
     patch = pytest.MonkeyPatch()

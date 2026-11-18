@@ -88,10 +88,17 @@ for _name in ("begin", "commit", "rollback", "savepoint", "rollback_savepoint",
 
 @event.listens_for(Engine, "before_cursor_execute")
 def _statement_boundary(conn, _cursor, statement, _parameters, _context, _executemany):
-    # Any non-SELECT (BEGIN/COMMIT/ROLLBACK TO/SAVEPOINT/DML/DDL issued as SQL)
-    # ends the reuse of bytes authenticated in the previous snapshot state.
-    if statement.lstrip()[:6].upper() != "SELECT":
-        _boundary(conn)
+    # SELECT keeps the snapshot. Own DML keeps authenticated insert-only nodes
+    # (see note_own_write). Everything else issued as SQL (BEGIN, COMMIT,
+    # ROLLBACK [TO], SAVEPOINT, RELEASE, DDL such as DROP TRIGGER, PRAGMA, ...)
+    # ends all reuse.
+    verb = statement.lstrip()[:7].upper()
+    if verb.startswith(("SELECT", "WITH")):
+        return
+    if verb.startswith(("INSERT", "UPDATE", "DELETE", "REPLACE")):
+        store.note_own_write(_state_of(conn))
+        return
+    _boundary(conn)
 
 
 @event.listens_for(Engine, "handle_error")

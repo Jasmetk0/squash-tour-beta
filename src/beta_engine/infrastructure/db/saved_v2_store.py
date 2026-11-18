@@ -238,6 +238,12 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         state[digest] = 2
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
+    subtrees = getattr(verified, "subtrees", None) if on_value_node is None else None
+    if subtrees is not None:
+        text = _assemble_shared(nodes, sizes, root, subtrees)
+        if len(text) != expected_chars:
+            raise SavedV2IntegrityError("v2 Saved text differs from its envelope size")
+        return text
     out, marks = [], []
     position = 0
     work = [("n", root)]
@@ -262,6 +268,34 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         for digest, start, size in marks:
             on_value_node(digest, text, start, start + size)
     return text
+
+
+MEMO_NODE_CHARS = 4 * 1024 * 1024
+
+
+def _assemble_shared(nodes, sizes, root, subtrees):
+    """Assemble from authenticated nodes, reusing subtree texts of this snapshot.
+
+    ``subtrees`` holds texts assembled earlier in the SAME snapshot from nodes
+    that were authenticated in it; a shared history prefix is joined once.
+    """
+    def build(digest):
+        known = subtrees.get(digest)
+        if known is not None:
+            return known
+        _kind, children, pieces = nodes[digest]
+        if not children:
+            text = pieces[0]
+        else:
+            parts = [pieces[0]]
+            for child, piece in zip(children, pieces[1:]):
+                parts.append(build(child))
+                parts.append(piece)
+            text = "".join(parts)
+        if sizes[digest] <= MEMO_NODE_CHARS:
+            subtrees[digest] = text
+        return text
+    return build(root)
 
 
 # Static SQL only; digests are bound as one JSON array parameter.
@@ -568,26 +602,40 @@ SNAPSHOT_TEXT_CHARS = 384 * 1024 * 1024
 
 
 def bump_snapshot(state):
-    """Called for every transaction boundary and every non-SELECT statement."""
+    """Transaction boundary, savepoint operation or DDL: forget everything."""
     if state is not None:
         state.epoch += 1
         state.cache = None
 
 
+def note_own_write(state):
+    """Own INSERT/UPDATE/DELETE inside the same transaction.
+
+    Nodes are insert-only (ORM guard plus SQLite triggers that only DDL can drop,
+    and DDL is a full boundary), so bytes authenticated earlier in this
+    transaction stay exactly as they were: keep verified nodes and texts. A new
+    format row may appear, so the per-Run format answers are recomputed.
+    """
+    if state is not None and state.cache is not None:
+        state.cache.formats.clear()
+
+
 class SnapshotCache:
     """Bytes already authenticated inside ONE unchanged SQLite read snapshot.
 
-    Valid only while the connection stays inside the same explicit transaction
-    with no own write: the key is (transaction/statement epoch, total_changes).
+    Valid only while the connection stays inside the same explicit transaction:
+    the key is an epoch bumped at every transaction/savepoint boundary and DDL.
     Outside a transaction nothing is cached. It never outlives the snapshot, is
     never persisted and is not a proof for any later request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "texts", "chars")
+    __slots__ = ("key", "formats", "nodes", "texts", "chars", "subtrees", "subtree_chars")
 
     def __init__(self, key):
         self.key = key
         self.formats = {}
+        self.subtrees = {}            # (run_id, digest) -> assembled subtree text
+        self.subtree_chars = 0
         self.nodes = {}               # (run_id, digest) -> parsed verified node
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
@@ -605,10 +653,7 @@ class SnapshotCache:
 def snapshot_cache(dbapi_connection, state):
     if state is None or not getattr(dbapi_connection, "in_transaction", False):
         return None
-    changes = getattr(dbapi_connection, "total_changes", None)
-    if type(changes) is not int:
-        return None
-    key = (state.epoch, changes)
+    key = state.epoch
     cache = state.cache
     if cache is None or cache.key != key:
         cache = state.cache = SnapshotCache(key)
@@ -621,12 +666,33 @@ class _RunView(dict):
     def __init__(self, cache, run_id):
         super().__init__()
         self._cache, self._run = cache, run_id
+        self.subtrees = _SubtreeView(cache, run_id)
 
     def get(self, digest, default=None):
         return self._cache.nodes.get((self._run, digest), default)
 
     def __setitem__(self, digest, value):
         self._cache.nodes[(self._run, digest)] = value
+
+
+SNAPSHOT_SUBTREE_CHARS = 256 * 1024 * 1024
+
+
+class _SubtreeView:
+    __slots__ = ("_cache", "_run")
+
+    def __init__(self, cache, run_id):
+        self._cache, self._run = cache, run_id
+
+    def get(self, digest):
+        return self._cache.subtrees.get((self._run, digest))
+
+    def __setitem__(self, digest, text):
+        cache = self._cache
+        if cache.subtree_chars + len(text) > SNAPSHOT_SUBTREE_CHARS:
+            return
+        cache.subtrees[(self._run, digest)] = text
+        cache.subtree_chars += len(text)
 
 
 def run_is_v2(dbapi_connection, run_id, cache=None) -> bool:

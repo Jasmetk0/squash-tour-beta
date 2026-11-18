@@ -210,3 +210,57 @@ def test_node_digest_is_sha256_of_actual_body():
     store, _, root = _written()
     for (run_id, digest), body in store.rows.items():
         assert digest == hashlib.sha256(body.encode()).hexdigest()
+
+
+def _sqlite_store(tmp_path, text):
+    import sqlite3
+
+    path = tmp_path / "nodes.db"
+    connection = sqlite3.connect(path, isolation_level=None)
+    connection.execute("PRAGMA journal_mode=WAL")
+    connection.execute("CREATE TABLE run_saved_storage_formats(run_id TEXT PRIMARY KEY, storage_format TEXT)")
+    connection.execute("CREATE TABLE saved_revision_nodes(run_id TEXT, digest TEXT, body TEXT, PRIMARY KEY(run_id, digest))")
+    connection.execute("INSERT INTO run_saved_storage_formats VALUES ('run', ?)", (st.FORMAT,))
+    encoder = st.Encoder("run", index=None)
+    root = encoder.encode(text)
+    connection.executemany("INSERT INTO saved_revision_nodes VALUES ('run', ?, ?)", list(encoder.nodes.items()))
+    return path, connection, st.envelope_text(run_id="run", root=root, chars=len(text))
+
+
+def test_snapshot_reuse_is_bounded_by_the_transaction(tmp_path):
+    import sqlite3
+
+    text = canonical(payload(events=3))
+    path, connection, envelope = _sqlite_store(tmp_path, text)
+    state = st.ConnectionState()
+    connection.execute("BEGIN")
+    first = st.read_payload(connection, "run", envelope, state=state)
+    assert first == text
+    assert st.read_payload(connection, "run", envelope, state=state) is first   # same snapshot
+    # Another connection changes a node and commits; this snapshot is isolated.
+    other = sqlite3.connect(path)
+    digest = next(d for (d,) in other.execute("SELECT digest FROM saved_revision_nodes") if d not in envelope)
+    other.execute("UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?", (digest,))
+    other.commit()
+    assert st.read_payload(connection, "run", envelope, state=state) == text
+    connection.execute("COMMIT")
+    st.bump_snapshot(state)                       # transaction boundary
+    connection.execute("BEGIN")
+    with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
+        st.read_payload(connection, "run", envelope, state=state)
+    connection.execute("ROLLBACK")
+    # Outside an explicit transaction nothing is cached at all.
+    st.bump_snapshot(state)
+    assert st.snapshot_cache(connection, state) is None
+
+
+def test_shared_assembly_equals_flat_assembly():
+    store = Store()
+    texts = [canonical(payload(events=n, edit=(5 if n == 3 else None))) for n in (1, 2, 3, 4)]
+    roots = [store.write("run", t)[0] for t in texts]
+    cache = st.SnapshotCache(0)
+    view = st._RunView(cache, "run")
+    for root, text in zip(roots, texts):
+        assert st.materialize(store.fetch, run_id="run", root=root, expected_chars=len(text), verified=view) == text
+        assert st.materialize(store.fetch, run_id="run", root=root, expected_chars=len(text)) == text
+    assert cache.subtrees

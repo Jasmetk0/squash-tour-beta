@@ -60,26 +60,41 @@ def _assert_v2_storage(path):
         return len(rows), sum(len(body) for _, body in nodes)
 
 
-@pytest.mark.parametrize("width", [
-    pytest.param(6, id="w6"),
-    pytest.param(52, id="w52", marks=pytest.mark.long_season),
-    pytest.param(61, id="w61", marks=pytest.mark.long_season),
-    pytest.param(80, id="w80", marks=pytest.mark.long_season),
-])
-def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width, monkeypatch):
-    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "saved_v2")
+def _in_fresh_process(target, *args):
+    """Run one phase in a NEW interpreter (a real restart; also keeps the
+    in-process growth of repeated server lifetimes, which v1 shows as well,
+    out of the measured phases)."""
+    import multiprocessing
+
+    queue = multiprocessing.get_context("spawn").Queue()
+    child = multiprocessing.get_context("spawn").Process(target=_phase, args=(queue, target, *args))
+    child.start()
+    result = queue.get()
+    child.join()
+    assert child.exitcode == 0 and result[0] == "ok", result
+    return result[1]
+
+
+def _phase(queue, target, *args):
+    import os
+    import traceback
+
+    os.environ[ENVIRONMENT_VARIABLE] = "saved_v2"
+    try:
+        queue.put(("ok", globals()[target](*args)))
+    except BaseException:  # reported to the parent, which fails the test
+        queue.put(("error", traceback.format_exc()))
+
+
+def _scenario(directory, width):
+    from pathlib import Path
+
     # Unchanged acceptance scenario: all Saves, archive/comparison, extension, restart.
-    wide.test_two_closed_seasons_archive_compare_extend_and_restart(tmp_path, width)
-    path = tmp_path / "wide-archive.sqlite"
-    revisions, node_bytes = _assert_v2_storage(path)
-    db = f"sqlite:///{path}"
-    with ApiServer(database_url=db) as server:
-        lineage = _lineage(path)
-        assert len(lineage) == revisions
-        # lineage[-1] is the extension, [-2] the second Season Transition, [-3]
-        # the transition to Week W and [-4] the transition to Week W-1 of the
-        # second season (its Editions are terminal, so a Week Transition is legal).
-        target = lineage[-4][0]
+    wide.test_two_closed_seasons_archive_compare_extend_and_restart(Path(directory), width)
+
+
+def _restore_and_save(path, target):
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
         repository = server.app.state.runtime.repository
         target_payload = repository.get_branch_saved_revision(revision_id=target).payload
         restored = restore(server, target)
@@ -92,11 +107,34 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width, monke
         save_tour(server)
         final = inspect(server)
         assert final["saved"]
-        final_lineage = _lineage(path)
-        assert final_lineage[-1][0] == final["saved_head_revision_id"]
-        assert [r[0] for r in final_lineage[:-2]] == [r[0] for r in lineage]
-    with ApiServer(database_url=db) as restarted:
-        assert inspect(restarted) == final
+        return json.dumps(final, sort_keys=True)
+
+
+def _restarted_inspection(path):
+    with ApiServer(database_url=f"sqlite:///{path}") as restarted:
+        return json.dumps(inspect(restarted), sort_keys=True)
+
+
+@pytest.mark.parametrize("width", [
+    pytest.param(6, id="w6"),
+    pytest.param(52, id="w52", marks=pytest.mark.long_season),
+    pytest.param(61, id="w61", marks=pytest.mark.long_season),
+    pytest.param(80, id="w80", marks=pytest.mark.long_season),
+])
+def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width):
+    _in_fresh_process("_scenario", str(tmp_path), width)
+    path = tmp_path / "wide-archive.sqlite"
+    revisions, node_bytes = _assert_v2_storage(path)
+    lineage = _lineage(path)
+    assert len(lineage) == revisions
+    # lineage[-1] is the extension, [-2] the second Season Transition, [-3] the
+    # transition to Week W and [-4] the transition to Week W-1 of the second
+    # season (its Editions are terminal, so a Week Transition is legal).
+    final = _in_fresh_process("_restore_and_save", str(path), lineage[-4][0])
+    final_lineage = _lineage(path)
+    assert final_lineage[-1][0] == json.loads(final)["saved_head_revision_id"]
+    assert [r[0] for r in final_lineage[:-2]] == [r[0] for r in lineage]
+    assert _in_fresh_process("_restarted_inspection", str(path)) == final
     assert _lineage(path) == final_lineage
     after, _ = _assert_v2_storage(path)
     assert after == revisions + 2

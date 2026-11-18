@@ -32,7 +32,8 @@ may hold v1 and v2 Runs side by side; an existing Run never changes format.
 * Splitting follows JSON structure of the exact text: every container ≥ 4,096
   characters is its own value node; a container whose own literal text exceeds
   32 KiB or that has more than 64 child nodes is cut into content-defined chunks
-  (CRC-32 of each member, ≈ 8 members per chunk, forced cut at 64 KiB), and wide
+  (CRC-32 of each member, ≈ 8 members per chunk, forced cuts at 64 KiB and at 64
+  child references, so runs of identical large members are bounded too), and wide
   chunk lists are grouped into a content-defined tree. Text that is not compact
   JSON is stored exactly as 64 KiB segments.
 * Consequence: an append, a historical correction, a deletion or a Restore changes
@@ -42,8 +43,10 @@ may hold v1 and v2 Runs side by side; an existing Run never changes format.
 ## Authority chain and reads (fail closed)
 
 The column type compiles each SELECT of `payload_json` to
-`CASE WHEN <envelope prefix> OR saved_v2_run(run_id) THEN saved_v2_payload(run_id,
-payload_json) ELSE payload_json END`. v1 rows never call Python. The SQLite
+`CASE WHEN <envelope prefix> OR run_id IN (SELECT run_id FROM
+run_saved_storage_formats) THEN saved_v2_payload(run_id, payload_json) ELSE
+payload_json END`. A v1 row of a v1 Run is routed in pure SQL: no Python call and
+no extra query (the uncorrelated subquery is evaluated once per statement). The SQLite
 function runs on the SAME connection, hence inside the caller's own transaction
 snapshot, and for every call:
 
@@ -56,15 +59,22 @@ snapshot, and for every call:
 4. returns the exact text, which then passes through every existing v1 gate
    (content hash, lineage, owners, sources, replay, closure).
 
-Reuse is limited to ONE explicit SQLite transaction on one connection: verified
-nodes and assembled row texts are kept in a per-connection snapshot cache whose
-epoch is bumped at every transaction/savepoint boundary and every DDL or other
-non-DML statement; outside an explicit transaction nothing is cached. Own DML
-keeps the nodes (they are insert-only: ORM guard plus `RAISE(ABORT)` triggers that
-only DDL can drop). The verified text is handed to the ORM result processor by a
-single-use in-process token instead of being copied through SQLite again. There
-is no persisted or cross-request "verified" flag, so corruption after a
-successful warm read fails the next read (next transaction). A
+Reuse is limited to ONE explicit SQLite transaction on one connection. Verified
+nodes and assembled row texts are kept in a per-connection snapshot cache bounded
+by data volume (128 Mi characters of texts and 128 Mi characters of node data per
+connection). Its epoch is bumped at every transaction/savepoint boundary, every
+DDL or other non-DML statement and every failed statement. Each connection also
+holds TEMP guard triggers on `saved_revision_nodes` and
+`run_saved_storage_formats`: any INSERT, UPDATE or DELETE of those rows on that
+connection, including raw driver SQL that bypasses SQLAlchemy and even after the
+persistent insert-only triggers were dropped, calls `saved_v2_invalidate()` and
+drops the cache, so an earlier authentication can never cover changed bytes. A
+connection without verified guards caches nothing. Outside an explicit transaction
+nothing is cached. The verified text is returned through SQLite like any column
+value; nothing is registered per row, so an unconsumed, abandoned or failing
+result retains no content. There is no persisted or cross-request "verified"
+flag, so corruption after a successful warm read fails the next read (next
+transaction). A
 self-consistent re-hashed forgery (new nodes + envelope + recomputed content hash)
 is in the same threat class as a re-hashed v1 row and is rejected by the same
 semantic gates (tested). Integrity failures surface as `SavedV2IntegrityError`
@@ -72,7 +82,9 @@ semantic gates (tested). Integrity failures surface as `SavedV2IntegrityError`
 
 ## Writes (atomic, incremental)
 
-In the same flush as the Saved row (`before_insert`): encode the exact logical text,
+In the same flush as the Saved row (`before_insert`): encode the exact logical text
+(every emitted node is checked against the 128-reference writer limit; the reader
+limit is 4,096),
 `INSERT OR IGNORE` only nodes this Save produced, store the envelope. In
 `after_insert`: re-read the ACTUAL stored row through the same verified read and
 require exactly the original text; otherwise the flush fails and the whole Save
@@ -124,6 +136,11 @@ nine weeks in both formats: that growth is CPU in JSON/Pydantic/deep copies and
 replay (the v1 profile of a 1,000-player Save shows ~2.5 s `json.dumps`, ~2 s
 deep copies, ~0.55 s SQL), which this storage PR does not change. The #1820
 W8 120 s Save timeout is therefore **not** shown to be fixed by this PR.
+
+These numbers were measured on `5bdbaaf`. Work's review of `6823118` then found
+three blockers (retained hand-off texts, same-transaction node changes covered by
+an earlier authentication, unbounded references for repeated large members); the
+fixed head is measured again in the PR description.
 
 An intermediate variant that also memoized assembled subtree texts per snapshot
 was measured worse (peak RSS 5.3 GiB, GET +10%) and removed (`5bdbaaf`).

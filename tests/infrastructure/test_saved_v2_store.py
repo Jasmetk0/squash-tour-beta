@@ -214,35 +214,48 @@ def test_node_digest_is_sha256_of_actual_body():
         assert digest == hashlib.sha256(body.encode()).hexdigest()
 
 
-def _sqlite_store(tmp_path, text):
+def _sqlite_store(tmp_path, text, *, guards=True, name="nodes.db"):
+    """Real SQLite file with the two v2 tables but WITHOUT the persistent insert-only
+    triggers (as after a tamperer dropped them), the read functions and, unless
+    ``guards`` is False, this connection's TEMP guard triggers."""
     import sqlite3
 
-    path = tmp_path / "nodes.db"
+    path = tmp_path / name
     connection = sqlite3.connect(path, isolation_level=None)
     connection.execute("PRAGMA journal_mode=WAL")
     connection.execute("CREATE TABLE run_saved_storage_formats(run_id TEXT PRIMARY KEY, storage_format TEXT)")
     connection.execute("CREATE TABLE saved_revision_nodes(run_id TEXT, digest TEXT, body TEXT, PRIMARY KEY(run_id, digest))")
+    connection.execute("CREATE TABLE branch_saved_revisions(revision_id TEXT PRIMARY KEY, run_id TEXT, payload_json TEXT)")
     connection.execute("INSERT INTO run_saved_storage_formats VALUES ('run', ?)", (st.FORMAT,))
+    state = st.ConnectionState()
+    st.register_sqlite_functions(connection, state)
+    if guards:
+        assert st.install_guards(connection)
     encoder = st.Encoder("run", index=None)
     root = encoder.encode(text)
     connection.executemany("INSERT INTO saved_revision_nodes VALUES ('run', ?, ?)", list(encoder.nodes.items()))
-    return path, connection, st.envelope_text(run_id="run", root=root, chars=len(text))
+    envelope = st.envelope_text(run_id="run", root=root, chars=len(text))
+    connection.execute("INSERT INTO branch_saved_revisions VALUES ('r1', 'run', ?)", (envelope,))
+    return path, connection, envelope, state
+
+
+def _child_digest(connection, envelope):
+    return next(d for (d,) in connection.execute("SELECT digest FROM saved_revision_nodes") if d not in envelope)
 
 
 def test_snapshot_reuse_is_bounded_by_the_transaction(tmp_path):
     import sqlite3
 
     text = canonical(payload(events=3))
-    path, connection, envelope = _sqlite_store(tmp_path, text)
-    state = st.ConnectionState()
+    path, connection, envelope, state = _sqlite_store(tmp_path, text)
     connection.execute("BEGIN")
     first = st.read_payload(connection, "run", envelope, state=state)
     assert first == text
     assert st.read_payload(connection, "run", envelope, state=state) is first   # same snapshot
     # Another connection changes a node and commits; this snapshot is isolated.
     other = sqlite3.connect(path)
-    digest = next(d for (d,) in other.execute("SELECT digest FROM saved_revision_nodes") if d not in envelope)
-    other.execute("UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?", (digest,))
+    other.execute("UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?",
+                  (_child_digest(other, envelope),))
     other.commit()
     assert st.read_payload(connection, "run", envelope, state=state) == text
     connection.execute("COMMIT")
@@ -254,3 +267,117 @@ def test_snapshot_reuse_is_bounded_by_the_transaction(tmp_path):
     # Outside an explicit transaction nothing is cached at all.
     st.bump_snapshot(state)
     assert st.snapshot_cache(connection, state) is None
+
+
+@pytest.mark.parametrize("change", [
+    "UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?",
+    "DELETE FROM saved_revision_nodes WHERE digest = ?",
+    "INSERT OR REPLACE INTO saved_revision_nodes SELECT run_id, digest, body || ' ' FROM saved_revision_nodes WHERE digest = ?",
+])
+def test_same_transaction_node_change_cannot_reuse_old_authentication(tmp_path, change):
+    """Work blocker 2: a change on the SAME connection inside the SAME transaction,
+    issued as raw driver SQL (no SQLAlchemy event) with the persistent triggers
+    absent, must invalidate earlier authentication."""
+    text = canonical(payload(events=3))
+    _path, connection, envelope, state = _sqlite_store(tmp_path, text)
+    connection.execute("BEGIN")
+    assert st.read_payload(connection, "run", envelope, state=state) == text   # authenticated + cached
+    assert state.cache is not None and state.cache.texts
+    connection.execute(change, (_child_digest(connection, envelope),))
+    assert state.cache is None                     # guard trigger fired
+    with pytest.raises(st.SavedV2IntegrityError):
+        st.read_payload(connection, "run", envelope, state=state)
+    connection.execute("ROLLBACK")
+
+
+def test_format_change_in_same_transaction_is_seen(tmp_path):
+    text = canonical(payload(events=1))
+    _path, connection, envelope, state = _sqlite_store(tmp_path, text)
+    connection.execute("BEGIN")
+    assert st.read_payload(connection, "run", envelope, state=state) == text
+    connection.execute("DELETE FROM run_saved_storage_formats")
+    with pytest.raises(st.SavedV2IntegrityError, match="v1 Run contains a v2"):
+        st.read_payload(connection, "run", envelope, state=state)
+    connection.execute("ROLLBACK")
+
+
+def test_no_reuse_without_this_connections_guards(tmp_path):
+    text = canonical(payload(events=2))
+    _path, connection, envelope, state = _sqlite_store(tmp_path, text, guards=False)
+    connection.execute("BEGIN")
+    assert st.read_payload(connection, "run", envelope, state=state) == text
+    assert st.snapshot_cache(connection, state) is None and state.cache is None
+    connection.execute("UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?",
+                       (_child_digest(connection, envelope),))
+    with pytest.raises(st.SavedV2IntegrityError):
+        st.read_payload(connection, "run", envelope, state=state)
+    connection.execute("ROLLBACK")
+
+
+def test_retained_text_is_bounded_by_data_volume(tmp_path, monkeypatch):
+    """Work blocker 1: retention is bounded by characters, not entry counts."""
+    texts = [canonical(payload(events=n)) for n in (1, 2, 3, 4)]
+    _path, connection, envelope, state = _sqlite_store(tmp_path, texts[0])
+    envelopes = [envelope]
+    for text in texts[1:]:
+        encoder = st.Encoder("run", index=None)
+        root = encoder.encode(text)
+        connection.executemany("INSERT OR IGNORE INTO saved_revision_nodes VALUES ('run', ?, ?)",
+                               list(encoder.nodes.items()))
+        envelopes.append(st.envelope_text(run_id="run", root=root, chars=len(text)))
+    budget = len(texts[-1]) + len(texts[-2])
+    monkeypatch.setattr(st, "SNAPSHOT_TEXT_CHARS", budget)
+    monkeypatch.setattr(st, "SNAPSHOT_NODE_CHARS", len(texts[1]))
+    connection.execute("BEGIN")
+    for _ in range(3):
+        for envelope, text in zip(envelopes, texts):
+            assert st.read_payload(connection, "run", envelope, state=state) == text
+            assert state.cache.chars <= budget
+            assert state.cache.node_chars <= len(texts[1])
+    connection.execute("ROLLBACK")
+
+
+def test_unconsumed_or_failing_sql_result_retains_nothing(tmp_path):
+    """Work blocker 1: verified text goes back to SQLite as an ordinary value; an
+    abandoned or failing statement leaves no per-row registry and drops the cache."""
+    import gc
+
+    text = canonical(payload(events=3))
+    _path, connection, envelope, state = _sqlite_store(tmp_path, text)
+    for index in range(2, 6):
+        connection.execute("INSERT INTO branch_saved_revisions VALUES (?, 'run', ?)", (f"r{index}", envelope))
+    assert not hasattr(st, "_handoff") and not hasattr(st, "take_handed_off")
+    connection.execute("BEGIN")
+    cursor = connection.execute("SELECT saved_v2_payload(run_id, payload_json) FROM branch_saved_revisions")
+    assert cursor.fetchone()[0] == text       # first row only, then abandon
+    cursor.close()
+    del cursor
+    gc.collect()
+    assert set(state.cache.texts) == {("run", st.parse_envelope(envelope, run_id="run")[0], len(text))}
+    connection.execute("UPDATE branch_saved_revisions SET payload_json = ? WHERE revision_id = 'r3'",
+                       (envelope.replace('"chars":', '"chars":9', 1),))
+    with pytest.raises(Exception):
+        connection.execute("SELECT saved_v2_payload(run_id, payload_json) FROM branch_saved_revisions").fetchall()
+    assert state.cache is None                 # failed statement: nothing reusable kept
+    connection.execute("ROLLBACK")
+
+
+def test_writer_bounds_references_for_repeated_large_items():
+    """Work blocker 3: identical large members (same digest, same CRC) must still be
+    chunked; every written node respects the reader's limit."""
+    big = {"blob": "x" * 5000}
+    for value in ([big] * 9000, {f"k{i:05d}": big for i in range(9000)},
+                  [[big] * 3] * 3000, {"a": [big] * 9000, "b": [{"c": big}] * 5000}):
+        text = canonical(value)
+        store = Store()
+        root, _new, encoder = store.write("run", text)
+        for body in encoder.nodes.values():
+            _kind, children, _pieces = st.parse_node(body)
+            assert len(children) <= st.WRITE_MAX_CHILDREN <= st.MAX_CHILDREN
+        assert store.read("run", root, len(text)) == text
+
+
+def test_writer_refuses_a_node_beyond_the_reference_limit():
+    parts = [("ref", "a" * 64)] * (st.WRITE_MAX_CHILDREN + 1)
+    with pytest.raises(st.SavedV2IntegrityError, match="references"):
+        st.node_body("s", parts)

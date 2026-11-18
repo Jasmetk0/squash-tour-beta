@@ -56,7 +56,8 @@ import zlib
 from collections import OrderedDict
 from json.decoder import scanstring
 
-from sqlalchemy import Text, case, func, or_, type_coerce
+from sqlalchemy import Text, case, func, literal_column, or_, select, type_coerce
+from sqlalchemy import table as sql_table
 from sqlalchemy.types import TypeDecorator
 
 FORMAT = "saved_v2.rope.1"
@@ -78,6 +79,8 @@ INDEX_TAIL = 64
 
 # Reader limits (forged size / expansion / depth defences).
 MAX_CHILDREN = 4096
+# Writer limit, enforced on every emitted node (well below the reader limit).
+WRITE_MAX_CHILDREN = 2 * 64
 MAX_DEPTH = 256
 MAX_CHARS = (1 << 31) - 1
 MAX_NODES = 1_000_000
@@ -140,6 +143,9 @@ def node_body(kind, parts):
             current = []
             children.append(part[1])
     pieces.append("".join(current))
+    if len(children) > WRITE_MAX_CHILDREN:
+        raise SavedV2IntegrityError(
+            f"v2 node would hold {len(children)} references (limit {WRITE_MAX_CHILDREN})")
     header = canonical({"c": children, "k": kind, "n": [len(p) for p in pieces]})
     return header + "\n" + "".join(pieces)
 
@@ -486,14 +492,18 @@ class Encoder:
                     parts.append(("ref", member[1]))
             parts.append(closing)
         else:
-            chunks, current, size = [], [], 0
+            chunks, current, size, refs_in_chunk = [], [], 0, 0
             for member in members:
                 current.append(member)
                 size += len(member[0])
+                refs_in_chunk += len(member) == 2
                 boundary = (zlib.crc32(member[1].encode()) if len(member) == 2 else _crc(member[0])) & CHUNK_MASK
-                if boundary == 0 or size >= MAX_CHUNK:
+                # Content-defined cut, plus hard cuts by size AND by reference
+                # count: identical large members share one digest/CRC, so the
+                # content rule alone never cuts a run of repeated items.
+                if boundary == 0 or size >= MAX_CHUNK or refs_in_chunk >= FANOUT:
                     chunks.append(current)
-                    current, size = [], 0
+                    current, size, refs_in_chunk = [], 0, 0
             if current:
                 chunks.append(current)
             chunk_refs = []
@@ -555,54 +565,63 @@ def take_error():
 # --------------------------------------------------------------------------- snapshot cache
 
 class ConnectionState:
-    """Per-DBAPI-connection snapshot bookkeeping (owned by the pool record)."""
+    """Per-DBAPI-connection snapshot bookkeeping (owned by the pool record).
 
-    __slots__ = ("epoch", "cache")
+    ``guarded`` is True only while this connection's TEMP guard triggers exist:
+    they call ``saved_v2_invalidate()`` for every INSERT/UPDATE/DELETE of a node or
+    format row executed on this connection (also raw driver SQL), so no
+    authentication from before such a change can be reused afterwards.
+    """
+
+    __slots__ = ("epoch", "cache", "guard_epoch", "guarded")
 
     def __init__(self):
         self.epoch = 0
         self.cache = None
+        self.guard_epoch = -1
+        self.guarded = False
 
 
-SNAPSHOT_TEXT_CHARS = 384 * 1024 * 1024
+# Data-volume budgets per connection (Python characters of retained text).
+SNAPSHOT_TEXT_CHARS = 128 * 1024 * 1024
+SNAPSHOT_NODE_CHARS = 128 * 1024 * 1024
 
 
 def bump_snapshot(state):
-    """Transaction boundary, savepoint operation or DDL: forget everything."""
+    """Transaction/savepoint boundary, DDL, failed statement or a guarded write."""
     if state is not None:
         state.epoch += 1
         state.cache = None
 
 
-def note_own_write(state):
-    """Own INSERT/UPDATE/DELETE inside the same transaction.
-
-    Nodes are insert-only (ORM guard plus SQLite triggers that only DDL can drop,
-    and DDL is a full boundary), so bytes authenticated earlier in this
-    transaction stay exactly as they were: keep verified nodes and texts. A new
-    format row may appear, so the per-Run format answers are recomputed.
-    """
-    if state is not None and state.cache is not None:
-        state.cache.formats.clear()
-
-
 class SnapshotCache:
     """Bytes already authenticated inside ONE unchanged SQLite read snapshot.
 
-    Valid only while the connection stays inside the same explicit transaction:
-    the key is an epoch bumped at every transaction/savepoint boundary and DDL.
-    Outside a transaction nothing is cached. It never outlives the snapshot, is
-    never persisted and is not a proof for any later request.
+    Valid only while the connection stays inside the same explicit transaction
+    and no node/format row was written on it (guard triggers bump the epoch);
+    every transaction/savepoint boundary and DDL bumps it as well. Outside a
+    transaction, or without verified guards, nothing is cached. Retained text is
+    bounded by ``SNAPSHOT_TEXT_CHARS`` and ``SNAPSHOT_NODE_CHARS``. It never
+    outlives the snapshot, is never persisted and is not a proof for any later
+    request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "texts", "chars")
+    __slots__ = ("key", "formats", "nodes", "node_chars", "texts", "chars")
 
     def __init__(self, key):
         self.key = key
         self.formats = {}
         self.nodes = {}               # (run_id, digest) -> parsed verified node
+        self.node_chars = 0
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
+
+    def remember_node(self, key, parsed):
+        size = sum(len(piece) for piece in parsed[2]) + 80 * len(parsed[1])
+        if self.node_chars + size > SNAPSHOT_NODE_CHARS:
+            return
+        self.nodes[key] = parsed
+        self.node_chars += size
 
     def remember_text(self, key, text):
         if len(text) > SNAPSHOT_TEXT_CHARS:
@@ -614,8 +633,56 @@ class SnapshotCache:
             self.chars -= len(old)
 
 
+GUARD_TRIGGERS = tuple(
+    (f"saved_v2_guard_{table}_{event.lower()}", table, event)
+    for table in (NODES_TABLE, FORMATS_TABLE)
+    for event in ("INSERT", "UPDATE", "DELETE")
+)
+_GUARD_SQL = {
+    name: f"CREATE TEMP TRIGGER IF NOT EXISTS {name} AFTER {event} ON main.{table} "
+          "BEGIN SELECT saved_v2_invalidate(); END"
+    for name, table, event in GUARD_TRIGGERS
+}
+_GUARD_NAMES = tuple(name for name, _table, _event in GUARD_TRIGGERS)
+_GUARD_COUNT_SQL = (
+    "SELECT COUNT(*) FROM sqlite_temp_master WHERE type = 'trigger' AND name IN ("
+    + ",".join("?" * len(_GUARD_NAMES)) + ")"
+)
+
+
+def install_guards(dbapi_connection):
+    """Create the TEMP guard triggers when both tables exist (outside a transaction)."""
+    if getattr(dbapi_connection, "in_transaction", True):
+        return False
+    cursor = dbapi_connection.cursor()
+    try:
+        present = {name for (name,) in cursor.execute(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name IN (?, ?)",
+            (NODES_TABLE, FORMATS_TABLE))}
+        if present != {NODES_TABLE, FORMATS_TABLE}:
+            return False
+        for name in _GUARD_NAMES:
+            cursor.execute(_GUARD_SQL[name])
+    finally:
+        cursor.close()
+    return True
+
+
+def _guards_present(dbapi_connection):
+    cursor = dbapi_connection.cursor()
+    try:
+        return cursor.execute(_GUARD_COUNT_SQL, _GUARD_NAMES).fetchone()[0] == len(_GUARD_NAMES)
+    finally:
+        cursor.close()
+
+
 def snapshot_cache(dbapi_connection, state):
     if state is None or not getattr(dbapi_connection, "in_transaction", False):
+        return None
+    if state.guard_epoch != state.epoch:
+        state.guarded = _guards_present(dbapi_connection)
+        state.guard_epoch = state.epoch
+    if not state.guarded:
         return None
     key = state.epoch
     cache = state.cache
@@ -635,7 +702,7 @@ class _RunView(dict):
         return self._cache.nodes.get((self._run, digest), default)
 
     def __setitem__(self, digest, value):
-        self._cache.nodes[(self._run, digest)] = value
+        self._cache.remember_node((self._run, digest), value)
 
 
 def run_is_v2(dbapi_connection, run_id, cache=None) -> bool:
@@ -695,60 +762,19 @@ def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None, state=
     return text
 
 
-# Hand the verified text to the result processor of the SAME Python process by a
-# short token instead of copying it through SQLite (str -> UTF-8 -> str) on every
-# repeated SELECT. A token is single use; stored row text can never be a token
-# (the reader rejects any stored value starting with NUL).
-_TOKEN = "\x00saved_v2_text:"
-_handoff = OrderedDict()
-_handoff_lock = threading.Lock()
-_token_counter = __import__("itertools").count(1)
-MAX_HANDOFF = 100_000
-
-
-def _hand_off(text):
-    token = _TOKEN + str(next(_token_counter))
-    with _handoff_lock:
-        _handoff[token] = text
-        while len(_handoff) > MAX_HANDOFF:
-            _handoff.popitem(last=False)
-    return token
-
-
-def take_handed_off(value):
-    if type(value) is not str or not value.startswith(_TOKEN):
-        return value
-    with _handoff_lock:
-        text = _handoff.pop(value, None)
-    if text is None:
-        raise SavedV2IntegrityError("v2 Saved text hand-off is unavailable")
-    return text
-
-
 def _sql_saved_v2_payload(dbapi_connection, state):
     def saved_v2_payload(run_id, stored):
+        # The verified text is returned to SQLite like any column value: nothing
+        # is retained outside the bounded snapshot cache, whether or not the
+        # caller consumes or finishes the result.
         try:
-            if type(stored) is str and stored.startswith("\x00"):
-                raise SavedV2IntegrityError("Stored Saved payload text is malformed")
-            text = read_payload(dbapi_connection, run_id, stored, state=state)
-            return _hand_off(text)
+            return read_payload(dbapi_connection, run_id, stored, state=state)
         except Exception as exc:  # reported through the engine's handle_error hook
+            bump_snapshot(state)
             _remember_error(exc if isinstance(exc, SavedV2IntegrityError)
                             else SavedV2IntegrityError(f"v2 Saved read failed: {exc}"))
             raise
     return saved_v2_payload
-
-
-def _sql_saved_v2_run(dbapi_connection, state):
-    def saved_v2_run(run_id):
-        try:
-            return 1 if type(run_id) is str and run_is_v2(
-                dbapi_connection, run_id, snapshot_cache(dbapi_connection, state)) else 0
-        except Exception as exc:
-            _remember_error(exc if isinstance(exc, SavedV2IntegrityError)
-                            else SavedV2IntegrityError(f"v2 Saved format read failed: {exc}"))
-            raise
-    return saved_v2_run
 
 
 def register_sqlite_functions(dbapi_connection, state=None):
@@ -756,17 +782,7 @@ def register_sqlite_functions(dbapi_connection, state=None):
     if create is None:
         return
     create("saved_v2_payload", 2, _sql_saved_v2_payload(dbapi_connection, state))
-    create("saved_v2_run", 1, _sql_saved_v2_run(dbapi_connection, state))
-
-
-class _HandedOffText(TypeDecorator):
-    """Result type of the routed expression: resolves a hand-off token."""
-
-    impl = Text
-    cache_ok = True
-
-    def process_result_value(self, value, dialect):
-        return take_handed_off(value)
+    create("saved_v2_invalidate", 0, lambda: bump_snapshot(state))
 
 
 class SavedPayloadText(TypeDecorator):
@@ -783,9 +799,13 @@ class SavedPayloadText(TypeDecorator):
         run_id = table.c.run_id if table is not None and "run_id" in table.c else None
         if run_id is None:
             return column
+        # Pure SQL routing: a v1 row of a v1 Run never calls Python and issues no
+        # extra query (the uncorrelated format subquery is evaluated once per
+        # statement). Envelope rows and every row of a v2 Run go to the verified
+        # reader, which also rejects an envelope in a v1 Run and an inline
+        # (downgraded) row in a v2 Run.
         routed = or_(
             func.substr(column, 1, len(ENVELOPE_PREFIX)) == ENVELOPE_PREFIX,
-            func.substr(column, 1, 1) == func.char(0),
-            func.saved_v2_run(run_id) == 1,
+            run_id.in_(select(literal_column("run_id")).select_from(sql_table(FORMATS_TABLE))),
         )
-        return type_coerce(case((routed, func.saved_v2_payload(run_id, column)), else_=column), _HandedOffText())
+        return type_coerce(case((routed, func.saved_v2_payload(run_id, column)), else_=column), Text())

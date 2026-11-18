@@ -68,6 +68,23 @@ def _register_functions(dbapi_connection, record):
     if isinstance(dbapi_connection, sqlite3.Connection):
         state = record.info[_STATE] = store.ConnectionState()
         store.register_sqlite_functions(dbapi_connection, state)
+        store.install_guards(dbapi_connection)
+
+
+@event.listens_for(Engine, "engine_connect")
+def _ensure_guards(conn):
+    # Pool checkout, before any transaction: (re)create the TEMP guard triggers
+    # for connections opened before the tables existed. Without them a
+    # connection simply does not reuse authenticated bytes (no correctness gap).
+    try:
+        dbapi_connection = conn.connection.driver_connection
+    except Exception:
+        return
+    if isinstance(dbapi_connection, sqlite3.Connection):
+        state = _state_of(conn)
+        if state is not None and not state.guarded:
+            store.install_guards(dbapi_connection)
+            store.bump_snapshot(state)
 
 
 def _state_of(conn):
@@ -88,21 +105,22 @@ for _name in ("begin", "commit", "rollback", "savepoint", "rollback_savepoint",
 
 @event.listens_for(Engine, "before_cursor_execute")
 def _statement_boundary(conn, _cursor, statement, _parameters, _context, _executemany):
-    # SELECT keeps the snapshot. Own DML keeps authenticated insert-only nodes
-    # (see note_own_write). Everything else issued as SQL (BEGIN, COMMIT,
-    # ROLLBACK [TO], SAVEPOINT, RELEASE, DDL such as DROP TRIGGER, PRAGMA, ...)
-    # ends all reuse.
+    # SELECT and ordinary DML keep the snapshot: any INSERT/UPDATE/DELETE of a
+    # node or format row on this connection fires a TEMP guard trigger that drops
+    # the cache itself (including raw driver SQL that bypasses these events).
+    # Everything else issued as SQL (BEGIN, COMMIT, ROLLBACK [TO], SAVEPOINT,
+    # RELEASE, PRAGMA, any DDL such as DROP TRIGGER) ends all reuse.
     verb = statement.lstrip()[:7].upper()
-    if verb.startswith(("SELECT", "WITH")):
-        return
-    if verb.startswith(("INSERT", "UPDATE", "DELETE", "REPLACE")):
-        store.note_own_write(_state_of(conn))
+    if verb.startswith(("SELECT", "WITH", "INSERT", "UPDATE", "DELETE", "REPLACE")):
         return
     _boundary(conn)
 
 
 @event.listens_for(Engine, "handle_error")
 def _integrity_error(context):
+    # A failed or abandoned statement never leaves reusable authentication.
+    if context.connection is not None:
+        _boundary(context.connection)
     original = context.original_exception
     if isinstance(original, sqlite3.OperationalError) and "user-defined function" in str(original):
         error = store.take_error()
@@ -247,11 +265,11 @@ def _verify_v2_payload(_mapper, connection, target):
     if pending is None:
         return
     logical, encoder, root = pending
-    stored = store.take_handed_off(connection.execute(
+    stored = connection.execute(
         text("SELECT saved_v2_payload(run_id, payload_json) FROM branch_saved_revisions "
              "WHERE revision_id = :id"),
         {"id": target.revision_id},
-    ).scalar_one())
+    ).scalar_one()
     if stored != logical:
         raise store.SavedV2IntegrityError("Stored Saved v2 payload differs from the written text")
     set_committed_value(target, "payload_json", logical)

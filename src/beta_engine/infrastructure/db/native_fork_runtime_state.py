@@ -77,6 +77,19 @@ def _invalidate_physical_read_cache(connection, cursor, statement, parameters, c
     memo[key] = memo.get(key, 0) + 1
 
 
+def _statement_may_change_snapshot(statement):
+    """Everything except a plain or function-nested SELECT counts as a change.
+
+    SQLite's trace reports statements run inside a user function (the Saved v2
+    reader's own node SELECTs) as ``-- <sql>``; a nested SELECT cannot change
+    this snapshot. Trigger bodies and any other statement still count.
+    """
+    text = statement.lstrip()
+    if text.startswith("-- "):
+        text = text[3:].lstrip()
+    return text[:6].upper() != "SELECT"
+
+
 def _physical_read_cache(session):
     """Reuse actual bytes only inside one unchanged SQLite read snapshot.
 
@@ -96,7 +109,7 @@ def _physical_read_cache(session):
         # direct driver savepoints/transactions cannot reuse an earlier snapshot.
         connection_info = sqlalchemy_connection.info
         def trace(statement):
-            if statement.lstrip()[:6].upper() != "SELECT":
+            if _statement_may_change_snapshot(statement):
                 # Connection-local, including calls from another Python context.
                 # Do not retain SQL text, parameters, rows or request objects.
                 connection_info["native_dependency_sqlite_generation"] = connection_info.get("native_dependency_sqlite_generation", 0) + 1

@@ -395,3 +395,25 @@ def test_process_body_cache_reuses_only_byte_identical_bodies(tmp_path):
     store.rows[key] = store.rows[key][:-1] + ("0" if store.rows[key][-1] != "0" else "1")
     with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
         store.read("run", root, len(text))
+
+
+def test_native_snapshot_trace_ignores_only_nested_selects():
+    """The v2 reader's own SELECTs inside its SQL function are traced as "-- SELECT";
+    they must not reset the native physical read cache, while writes, savepoint
+    operations and trigger bodies still do."""
+    import sqlite3
+
+    from beta_engine.infrastructure.db.native_fork_runtime_state import _statement_may_change_snapshot
+
+    for statement in ("SELECT 1", "  select x from t", "-- SELECT digest, body FROM saved_revision_nodes"):
+        assert not _statement_may_change_snapshot(statement)
+    for statement in ("BEGIN", "ROLLBACK TO s", "UPDATE t SET x=1", "-- UPDATE t SET x=1",
+                      "-- TRIGGER guard", "--SELECT 1", "WITH x AS (SELECT 1) DELETE FROM t"):
+        assert _statement_may_change_snapshot(statement)
+    # SQLite really reports function-nested statements with the "-- " prefix.
+    connection = sqlite3.connect(":memory:")
+    seen = []
+    connection.create_function("nested", 0, lambda: connection.execute("SELECT 2").fetchone()[0])
+    connection.set_trace_callback(seen.append)
+    connection.execute("SELECT nested()").fetchone()
+    assert "-- SELECT 2" in seen

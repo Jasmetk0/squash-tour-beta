@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/saved-v2-acceptance.yml'
       - '.github/requirements/fast-ci-linux.lock.txt'
+      - 'src/beta_engine/infrastructure/db/repositories.py'
       - 'src/beta_engine/infrastructure/db/saved_v2_*.py'
       - 'tests/api/test_saved_v2_*.py'
       - 'tests/api/test_native_season_archive_wide.py'

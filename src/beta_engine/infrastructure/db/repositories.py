@@ -4586,6 +4586,17 @@ class SimulationPersistenceRepository:
                 )
             else:
                 revision = replace(revision, payload={'run': _from_json(run_projection)})
+        return self._branch_revision_state_from_verified_head(
+            session=session, branch=branch, revision=revision
+        )
+
+    def _branch_revision_state_from_verified_head(
+        self,
+        *,
+        session: Session,
+        branch: RunBranchModel,
+        revision: BranchSavedRevisionRecord,
+    ) -> BranchRevisionStateRecord:
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == branch.branch_id
@@ -4931,6 +4942,27 @@ class SimulationPersistenceRepository:
                 self._to_branch_saved_revision_checkpoint(model) for model in models
             ]
 
+    def _restore_source_revisions_in_session(
+        self, *, session: Session, branch: RunBranchModel, target_saved_revision_id: str
+    ) -> tuple[BranchRevisionStateRecord, BranchSavedRevisionRecord | None]:
+        # Authenticate the full reachable lineage in this transaction. Only the
+        # head and selected target need their complete payloads for Restore.
+        lineage = self._validated_branch_revision_lineage_in_session(
+            session=session,
+            branch=branch,
+            payload_revision_ids=frozenset(
+                {branch.saved_head_revision_id, target_saved_revision_id}
+            ),
+        )
+        state = self._branch_revision_state_from_verified_head(
+            session=session, branch=branch, revision=lineage[0]
+        )
+        target = next(
+            (revision for revision in lineage if revision.revision_id == target_saved_revision_id),
+            None,
+        )
+        return state, target
+
     def preview_branch_saved_revision_restore(
         self,
         *,
@@ -4963,23 +4995,13 @@ class SimulationPersistenceRepository:
                 )
 
             try:
-                state = self._validated_branch_revision_state_in_session(
-                    session=session, branch=branch
-                )
-                lineage = self._validated_branch_revision_lineage_in_session(
-                    session=session, branch=branch
+                state, target_revision = self._restore_source_revisions_in_session(
+                    session=session, branch=branch,
+                    target_saved_revision_id=target_saved_revision_id,
                 )
             except BranchRevisionStateConflictError as exc:
                 raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
-            target_revision = next(
-                (
-                    revision
-                    for revision in lineage
-                    if revision.revision_id == target_saved_revision_id
-                ),
-                None,
-            )
             if target_revision is None:
                 raise SavedRevisionRestoreNotFoundError(
                     f"Saved Revision {target_saved_revision_id!r} was not found "
@@ -5210,18 +5232,9 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
-                    # Both reads walk the same immutable revision lineage.
-                    # Share content-scoped source proofs only within this
-                    # transaction; every stored revision still authenticates
-                    # bytes, signature, identity and ancestry.
-                    source_proofs = {}
-                    state = self._validated_branch_revision_state_in_session(
+                    state, target_revision = self._restore_source_revisions_in_session(
                         session=session, branch=branch,
-                        sporting_component_proofs=source_proofs,
-                    )
-                    lineage = self._validated_branch_revision_lineage_in_session(
-                        session=session, branch=branch,
-                        sporting_component_proofs=source_proofs,
+                        target_saved_revision_id=target_saved_revision_id,
                     )
                 except BranchRevisionStateConflictError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
@@ -5244,14 +5257,6 @@ class SimulationPersistenceRepository:
                         "selected Saved Revision is already the current Branch head"
                     )
 
-                target_revision = next(
-                    (
-                        revision
-                        for revision in lineage
-                        if revision.revision_id == target_saved_revision_id
-                    ),
-                    None,
-                )
                 if target_revision is None:
                     raise SavedRevisionRestoreNotFoundError(
                         f"Saved Revision {target_saved_revision_id!r} was not found "

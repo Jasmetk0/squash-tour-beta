@@ -1,3 +1,27 @@
+# Saved v2 Restore performance checkpoint — 18 November 2026
+
+PR #1827 targets `buuk f82bd8198`. The hosted W52 and W61 cases on
+`4e6302193` completed both seasons and restarted, then exceeded the 120-second
+client limit on the confirmed Restore. The standard matrix does not include
+this additional explicit Saved v2 Restore.
+
+The Restore repository now validates the entire reachable lineage once in
+each preview and confirmation transaction and requests complete payloads only
+for the current head and selected target. Confirm still starts with
+`BEGIN IMMEDIATE` and independently checks the actual lineage, live state,
+expected draft version and viewer.
+
+One local HTTP/SQLite A/B pair used fresh copies of the same actual Saved v2
+two-season W6 database (37 revisions). Preview was 42.9 → 38.1 s and confirmed
+Restore was 68.3 → 55.3 s. Peak RSS was 2.63 → 1.88 GiB. The restored
+payloads hashed identically and the previous revision identities and hashes
+stayed equal. A targeted regression corrupts an unselected ancestor after a
+successful preview and requires confirmation to fail without publishing a
+checkpoint. These measurements cover Restore, and the final-head wide matrix
+remains required for W52/W61/W80 acceptance.
+
+---
+
 # Performance integration checkpoint — 17 November 2026 (unmerged candidate)
 
 Owner-merged baseline is still `buuk 320e4766ec8b` (#1802). Work's single

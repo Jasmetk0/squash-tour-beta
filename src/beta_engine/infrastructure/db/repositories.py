@@ -2952,7 +2952,7 @@ class SimulationPersistenceRepository:
         # ancestor's gates fingerprint again; memoize those pure fingerprints by
         # exact object identity for this one cold pass only (as the Tour reader
         # does). Nothing in the scope is a physical or source proof.
-        with global_replay_projection_scope():
+        with global_replay_projection_scope(_reuse_simulated_matches=True):
             self._prevalidate_oldest_first_in_scope(
                 session, head_model, unproven, sporting_component_proofs, replay_first)
 

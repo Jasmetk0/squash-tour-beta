@@ -44,6 +44,50 @@ def test_identity_values_and_checks_are_per_object():
         assert not replay_scope.already_checked("other", (a, b))
 
 
+def test_cold_match_replay_reuses_only_exact_inputs_and_returns_isolated_logs(monkeypatch):
+    from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
+    from beta_engine.domain.tournaments import calendar_global_slots as slots
+    from tests.domain.test_match_stamina import _context
+
+    context = _context().model_copy(update={"best_of": 1, "games_to": 3})
+    health = EffectiveMatchHealthSnapshot.create_healthy(player_a_id="A", player_b_id="B")
+    anchor = "1" * 64
+    simulate = slots.MatchEngine.simulate
+    calls = []
+
+    def count_simulation(engine, context, **kwargs):
+        calls.append(context.match_id)
+        return simulate(engine, context, **kwargs)
+
+    monkeypatch.setattr(slots.MatchEngine, "simulate", count_simulation)
+    with slots.global_replay_projection_scope(_reuse_simulated_matches=True):
+        first = slots._simulate_slot_match(context, seed=123, anchor=anchor, health=health)
+        expected = first.model_dump_json()
+        first.sets_won.clear()
+        replayed = slots._simulate_slot_match(context, seed=123, anchor=anchor, health=health)
+        assert replayed.model_dump_json() == expected
+        assert len(calls) == 1
+        slots._simulate_slot_match(context, seed=124, anchor=anchor, health=health)
+        slots._simulate_slot_match(context, seed=123, anchor="2" * 64, health=health)
+        changed = context.model_copy(update={"upset_variance": 0.2})
+        slots._simulate_slot_match(changed, seed=123, anchor=anchor, health=health)
+        changed_health = health.model_copy(update={"unsupported_components": ("health_check",)})
+        slots._simulate_slot_match(context, seed=123, anchor=anchor, health=changed_health)
+        assert len(calls) == 5
+
+    with slots.global_replay_projection_scope():
+        for _ in range(2):
+            replayed = slots._simulate_slot_match(context, seed=123, anchor=anchor, health=health)
+            assert replayed.model_dump_json() == expected
+        assert len(calls) == 7
+
+    monkeypatch.setattr(slots, "_MATCH_REPLAY_BYTES", 1)
+    with slots.global_replay_projection_scope(_reuse_simulated_matches=True):
+        slots._simulate_slot_match(context, seed=123, anchor=anchor, health=health)
+        slots._simulate_slot_match(context, seed=123, anchor=anchor, health=health)
+        assert len(calls) == 9
+
+
 def test_birth_steps_are_reused_only_for_an_identical_prefix_and_inputs():
     with replay_scope.replay_value_scope():
         source = object()

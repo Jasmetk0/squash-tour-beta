@@ -21,7 +21,7 @@ from beta_engine.domain.matches.health import (
     project_player_health,
 )
 from beta_engine.domain.matches.match_engine import MatchEngine
-from beta_engine.domain.matches.models import MatchContext
+from beta_engine.domain.matches.models import MatchContext, MatchResult
 from beta_engine.domain.players.calendar_canonical_match import canonical_participant
 from beta_engine.domain.players.calendar_continuation_match import (
     CalendarContinuationMatch,
@@ -83,10 +83,11 @@ from beta_engine.domain.tournaments.native_canonical_knockout import (
 )
 
 _replay_projections = ContextVar("global_slot_private_replay_projections", default=None)
+_MATCH_REPLAY_BYTES = 32 * 1024 * 1024
 
 
 @contextmanager
-def global_replay_projection_scope():
+def global_replay_projection_scope(*, _reuse_simulated_matches=False):
     """Memoize private frozen values only during one pure verification replay.
 
     The verifier owns freshly decoded inputs and creates new frozen models for
@@ -96,7 +97,13 @@ def global_replay_projection_scope():
     """
     from beta_engine.domain.replay_scope import replay_value_scope
 
-    token = _replay_projections.set({"fingerprints": {}, "tournaments": {}}) if _replay_projections.get() is None else None
+    token = None
+    if _replay_projections.get() is None:
+        scope = {"fingerprints": {}, "tournaments": {}}
+        if _reuse_simulated_matches:
+            scope["match_results"] = {}
+            scope["match_result_bytes"] = 0
+        token = _replay_projections.set(scope)
     try:
         with replay_value_scope():
             yield
@@ -963,15 +970,41 @@ def calculate_match(slot, item):
         "effective_health": item.health,
     }
     anchor = continuation_anchor(SimpleNamespace(**inputs))
-    result = MatchEngine(DeterministicRng(item.seed)).simulate(
-        ctx, log_anchor_hash=anchor, effective_match_health=item.health
-    )
+    result = _simulate_slot_match(ctx, seed=item.seed, anchor=anchor, health=item.health)
     _, effects = continuation_effects(
         SimpleNamespace(players=slot.players), ctx, result, inputs["state_policy"]
     )
     return CalendarContinuationMatch(
         **inputs, result=result, effects=effects, log_anchor_hash=anchor
     )
+
+
+def _simulate_slot_match(context, *, seed, anchor, health):
+    scope = _replay_projections.get()
+    cache = scope.get("match_results") if scope is not None else None
+    if cache is None:
+        return MatchEngine(DeterministicRng(seed)).simulate(
+            context, log_anchor_hash=anchor, effective_match_health=health,
+        )
+    # Memoize expected engine output, never the match supplied by Saved storage.
+    # Exact inputs bind the replay; fresh decoding keeps nested logs isolated.
+    key = (seed, anchor, context.model_dump_json().encode(), health.model_dump_json().encode())
+    previous = cache.pop(key, None)
+    if previous is not None:
+        cache[key] = previous
+        return MatchResult.model_validate_json(previous[1])
+    result = MatchEngine(DeterministicRng(seed)).simulate(
+        context, log_anchor_hash=anchor, effective_match_health=health,
+    )
+    encoded = result.model_dump_json().encode()
+    size = 128 + len(anchor) + len(key[2]) + len(key[3]) + len(encoded)
+    if size <= _MATCH_REPLAY_BYTES:
+        while scope["match_result_bytes"] + size > _MATCH_REPLAY_BYTES:
+            removed_size, _ = cache.pop(next(iter(cache)))
+            scope["match_result_bytes"] -= removed_size
+        cache[key] = (size, encoded)
+        scope["match_result_bytes"] += size
+    return result
 
 
 def accept_slot(checkpoint, slot, *, match_id=None):

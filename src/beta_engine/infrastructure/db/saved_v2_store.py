@@ -331,7 +331,8 @@ class VerifiedBodies:
     ``exact_text_digest`` does for whole rows. Different bytes are hashed again.
     """
 
-    def __init__(self, max_chars=256 * 1024 * 1024):
+    def __init__(self, max_chars=64 * 1024 * 1024):
+        # Each entry holds the body and its parsed pieces (copies): ~2x chars.
         self._lock = threading.Lock()
         self._entries = OrderedDict()   # (run_id, digest) -> (body, parsed)
         self._chars = 0

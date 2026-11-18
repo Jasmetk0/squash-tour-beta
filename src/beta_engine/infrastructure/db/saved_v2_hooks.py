@@ -18,6 +18,7 @@ import weakref
 
 from sqlalchemy import DDL, event, insert, inspect as sa_inspect, text
 from sqlalchemy.engine import Engine
+from sqlalchemy.pool import Pool
 from sqlalchemy.exc import StatementError
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.attributes import set_committed_value
@@ -86,6 +87,18 @@ def _ensure_guards(conn):
             store.bump_snapshot(state)
             state.guarded = True
             state.guard_epoch = state.epoch
+
+
+def _drop_pooled_snapshot(_dbapi_connection, record, *_args):
+    # Pool reset/check-in/close roll back on the DBAPI level without a
+    # Connection "rollback" event: never keep authenticated bytes (or their
+    # memory) on an idle pooled connection.
+    state = getattr(record, "info", {}).get(_STATE)
+    store.bump_snapshot(state)
+
+
+for _name in ("reset", "checkin", "close", "invalidate", "soft_invalidate", "detach"):
+    event.listen(Pool, _name, _drop_pooled_snapshot)
 
 
 def _state_of(conn):

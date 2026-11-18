@@ -28,19 +28,25 @@ from tests.api.test_saved_revision_history_api import ApiServer
 
 pytestmark = pytest.mark.smoke
 
-def _history(server):
-    """Complete Branch lineage through the production history service, in process.
+def _lineage(path):
+    """Branch lineage metadata (oldest first) read directly from SQLite.
 
-    A cold full-history GET of a two-season W61/W80 Run takes ~160 s for v1 and v2
-    alike (measured), beyond the 120 s HTTP client bound of these helpers; this is
-    a pre-existing read cost, not part of the storage check.
+    Only selects a Restore target and compares identities; product reads are
+    exercised through the HTTP inspection. (A full validated history read of a
+    two-season W61 Run costs ~160 s and ~10 GiB for v1 and v2 alike, measured;
+    that pre-existing read cost is not part of this storage check.)
     """
-    from beta_engine.application.run_saved_revision_history_service import RunSavedRevisionHistoryService
-
-    repository = server.app.state.runtime.repository
-    history = RunSavedRevisionHistoryService(repository).list_history(run_id="run", branch_id="branch")
-    return [(item.revision_id, item.sequence, item.parent_revision_id, item.content_hash)
-            for item in history.saved_revisions]
+    with sqlite3.connect(path) as connection:
+        head = connection.execute(
+            "SELECT saved_head_revision_id FROM run_branches WHERE branch_id='branch'").fetchone()[0]
+        rows = {rid: (rid, seq, parent, digest) for rid, seq, parent, digest in connection.execute(
+            "SELECT revision_id, sequence, parent_revision_id, content_hash FROM branch_saved_revisions "
+            "WHERE run_id='run'")}
+    lineage, current = [], head
+    while current is not None:
+        lineage.append(rows[current])
+        current = rows[current][2]
+    return lineage[::-1]
 
 
 def _assert_v2_storage(path):
@@ -68,7 +74,7 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width, monke
     revisions, node_bytes = _assert_v2_storage(path)
     db = f"sqlite:///{path}"
     with ApiServer(database_url=db) as server:
-        lineage = _history(server)
+        lineage = _lineage(path)
         assert len(lineage) == revisions
         # lineage[-1] is the extension, [-2] the second Season Transition, [-3]
         # the transition to Week W and [-4] the transition to Week W-1 of the
@@ -86,10 +92,12 @@ def test_saved_v2_two_closed_seasons_save_restart_restore(tmp_path, width, monke
         save_tour(server)
         final = inspect(server)
         assert final["saved"]
-        final_history = _history(server)
+        final_lineage = _lineage(path)
+        assert final_lineage[-1][0] == final["saved_head_revision_id"]
+        assert [r[0] for r in final_lineage[:-2]] == [r[0] for r in lineage]
     with ApiServer(database_url=db) as restarted:
         assert inspect(restarted) == final
-        assert _history(restarted) == final_history
+    assert _lineage(path) == final_lineage
     after, _ = _assert_v2_storage(path)
     assert after == revisions + 2
     print(json.dumps({"width": width, "revisions": after, "node_body_bytes": node_bytes,

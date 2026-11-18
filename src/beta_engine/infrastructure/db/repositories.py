@@ -2997,10 +2997,11 @@ class SimulationPersistenceRepository:
         visiting_branch_ids: frozenset[str] = frozenset(),
         payload_revision_ids: frozenset[str] | None = None,
         sporting_component_proofs: dict | None = None,
+        include_change_summaries: bool = False,
     ) -> list[BranchSavedRevisionRecord]:
         """Validate every ancestor; retain only requested payloads for internal reads.
 
-        Public history uses the default to materialize the complete lineage.
+        History summaries can retain the verified change summaries alone.
         """
 
         if branch.branch_id in visiting_branch_ids:
@@ -3046,6 +3047,10 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateConflictError(
                     "Saved Revision lineage crosses Run boundaries"
                 )
+            if include_change_summaries:
+                # The verifier matched the actual row, including these exact
+                # summary bytes, before returning a payload-free record.
+                current = replace(current, change_summary=_from_json(current_model.change_summary_json))
             lineage.append(current)
             if current.parent_revision_id is None:
                 current_model = None
@@ -4475,9 +4480,9 @@ class SimulationPersistenceRepository:
             ]
 
     def get_branch_saved_revision_history(
-        self, *, run_id: str, branch_id: str
+        self, *, run_id: str, branch_id: str, summary_only: bool = False
     ) -> BranchSavedRevisionHistoryRecord:
-        """Return the complete reachable lineage after validating every revision."""
+        """Validate the complete lineage and optionally return summary fields alone."""
 
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
@@ -4493,6 +4498,8 @@ class SimulationPersistenceRepository:
                 newest_to_oldest = self._validated_branch_revision_lineage_in_session(
                     session=session,
                     branch=branch,
+                    payload_revision_ids=frozenset() if summary_only else None,
+                    include_change_summaries=summary_only,
                 )
             except BranchRevisionStateConflictError as exc:
                 raise SavedRevisionHistoryConflictError(str(exc)) from exc

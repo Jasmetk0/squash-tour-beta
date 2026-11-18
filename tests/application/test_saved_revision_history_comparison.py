@@ -17,7 +17,9 @@ class _Repository:
     def __init__(self, history: BranchSavedRevisionHistoryRecord) -> None:
         self.history = history
 
-    def get_branch_saved_revision_history(self, *, run_id: str, branch_id: str):
+    def get_branch_saved_revision_history(
+        self, *, run_id: str, branch_id: str, summary_only: bool = False
+    ):
         assert run_id == self.history.run_id
         assert branch_id == self.history.branch_id
         return self.history

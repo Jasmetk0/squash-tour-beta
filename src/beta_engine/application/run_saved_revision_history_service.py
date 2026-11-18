@@ -95,16 +95,20 @@ class RunSavedRevisionHistoryService:
         limit: int | None = None,
         before_sequence: int | None = None,
     ) -> BranchSavedRevisionHistoryRecord | RunSavedRevisionHistoryPage:
-        history = self.repository.get_branch_saved_revision_history(
-            run_id=run_id,
-            branch_id=branch_id,
-        )
         if limit is None and before_sequence is None:
-            return history
+            return self.repository.get_branch_saved_revision_history(
+                run_id=run_id,
+                branch_id=branch_id,
+            )
         if limit is None:
             limit = 50
         if limit < 1 or limit > 200:
             raise ValueError("Saved Revision history limit must be between 1 and 200")
+        history = self.repository.get_branch_saved_revision_history(
+            run_id=run_id,
+            branch_id=branch_id,
+            summary_only=True,
+        )
         candidates = tuple(
             revision
             for revision in history.saved_revisions

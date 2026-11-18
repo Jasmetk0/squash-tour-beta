@@ -238,12 +238,6 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         state[digest] = 2
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
-    subtrees = getattr(verified, "subtrees", None) if on_value_node is None else None
-    if subtrees is not None:
-        text = _assemble_shared(nodes, sizes, root, subtrees)
-        if len(text) != expected_chars:
-            raise SavedV2IntegrityError("v2 Saved text differs from its envelope size")
-        return text
     out, marks = [], []
     position = 0
     work = [("n", root)]
@@ -268,34 +262,6 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         for digest, start, size in marks:
             on_value_node(digest, text, start, start + size)
     return text
-
-
-MEMO_NODE_CHARS = 4 * 1024 * 1024
-
-
-def _assemble_shared(nodes, sizes, root, subtrees):
-    """Assemble from authenticated nodes, reusing subtree texts of this snapshot.
-
-    ``subtrees`` holds texts assembled earlier in the SAME snapshot from nodes
-    that were authenticated in it; a shared history prefix is joined once.
-    """
-    def build(digest):
-        known = subtrees.get(digest)
-        if known is not None:
-            return known
-        _kind, children, pieces = nodes[digest]
-        if not children:
-            text = pieces[0]
-        else:
-            parts = [pieces[0]]
-            for child, piece in zip(children, pieces[1:]):
-                parts.append(build(child))
-                parts.append(piece)
-            text = "".join(parts)
-        if sizes[digest] <= MEMO_NODE_CHARS:
-            subtrees[digest] = text
-        return text
-    return build(root)
 
 
 # Static SQL only; digests are bound as one JSON array parameter.
@@ -629,13 +595,11 @@ class SnapshotCache:
     never persisted and is not a proof for any later request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "texts", "chars", "subtrees", "subtree_chars")
+    __slots__ = ("key", "formats", "nodes", "texts", "chars")
 
     def __init__(self, key):
         self.key = key
         self.formats = {}
-        self.subtrees = {}            # (run_id, digest) -> assembled subtree text
-        self.subtree_chars = 0
         self.nodes = {}               # (run_id, digest) -> parsed verified node
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
@@ -666,33 +630,12 @@ class _RunView(dict):
     def __init__(self, cache, run_id):
         super().__init__()
         self._cache, self._run = cache, run_id
-        self.subtrees = _SubtreeView(cache, run_id)
 
     def get(self, digest, default=None):
         return self._cache.nodes.get((self._run, digest), default)
 
     def __setitem__(self, digest, value):
         self._cache.nodes[(self._run, digest)] = value
-
-
-SNAPSHOT_SUBTREE_CHARS = 256 * 1024 * 1024
-
-
-class _SubtreeView:
-    __slots__ = ("_cache", "_run")
-
-    def __init__(self, cache, run_id):
-        self._cache, self._run = cache, run_id
-
-    def get(self, digest):
-        return self._cache.subtrees.get((self._run, digest))
-
-    def __setitem__(self, digest, text):
-        cache = self._cache
-        if cache.subtree_chars + len(text) > SNAPSHOT_SUBTREE_CHARS:
-            return
-        cache.subtrees[(self._run, digest)] = text
-        cache.subtree_chars += len(text)
 
 
 def run_is_v2(dbapi_connection, run_id, cache=None) -> bool:

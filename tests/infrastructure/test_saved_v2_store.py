@@ -252,15 +252,3 @@ def test_snapshot_reuse_is_bounded_by_the_transaction(tmp_path):
     # Outside an explicit transaction nothing is cached at all.
     st.bump_snapshot(state)
     assert st.snapshot_cache(connection, state) is None
-
-
-def test_shared_assembly_equals_flat_assembly():
-    store = Store()
-    texts = [canonical(payload(events=n, edit=(5 if n == 3 else None))) for n in (1, 2, 3, 4)]
-    roots = [store.write("run", t)[0] for t in texts]
-    cache = st.SnapshotCache(0)
-    view = st._RunView(cache, "run")
-    for root, text in zip(roots, texts):
-        assert st.materialize(store.fetch, run_id="run", root=root, expected_chars=len(text), verified=view) == text
-        assert st.materialize(store.fetch, run_id="run", root=root, expected_chars=len(text)) == text
-    assert cache.subtrees

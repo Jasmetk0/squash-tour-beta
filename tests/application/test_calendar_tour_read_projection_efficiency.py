@@ -9,6 +9,9 @@ import pytest
 from beta_engine.application.calendar_tour_service import CalendarTourService
 
 
+pytestmark = pytest.mark.pr_critical
+
+
 def _owner(*, week, years, final_week, pending, nonneutral_health):
     clock = NS(weeks_per_year=final_week, season_count=years)
     position = NS(week=week, season_index=years - 1 if week == 0 else 0,

@@ -467,6 +467,9 @@ def run(args, evidence: Evidence):
     from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour, setup, tour_url
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
+    if args.saved_v2:
+        # Select the immutable storage format before creating the Run.
+        os.environ["BETA_ENGINE_NEW_RUN_SAVED_STORAGE"] = "saved_v2"
     schedule = make_schedule(args.seasons, args.editions_per_season, profile=args.profile)
     blockers = unsupported_execution_capabilities(schedule)
     if blockers:
@@ -534,6 +537,8 @@ def run(args, evidence: Evidence):
                 current = inspect(server)
                 new_active = {p["player_id"] for p in current["players"]} & all_new_ids
                 evidence.total.update(
+                    last_completed_week=week,
+                    last_completed_season=season + 1,
                     last_position=current["state"]["week"],
                     final_players=len(current["players"]),
                     new_player_ids_seen=len(new_active),
@@ -544,6 +549,13 @@ def run(args, evidence: Evidence):
                                 new_arrivals_active=len(new_active),
                                 editions_completed=evidence.total["editions_completed"])
                 evidence.write_summary("running")
+                if args.stop_after_week is not None and season == 0 and week == args.stop_after_week:
+                    # W9 is complete only AFTER the explicit Save of W9 -> W10.
+                    # No sporting or Save command for W10 is ever attempted.
+                    break
+            if args.stop_after_week is not None:
+                assert evidence.total["last_completed_week"] == args.stop_after_week
+                break
             completed = inspect(server)["saved_completed_seasons"]
             assert completed == list(range(season + 1)), completed
             code, season_view = _request("GET", tour_url(server) + f"/seasons/{season}")
@@ -555,20 +567,37 @@ def run(args, evidence: Evidence):
                             overview=season_view["selected"].get("overview", {}))
             evidence.write_summary("running")
         final = inspect(server)
-        assert final["saved_completed_seasons"] == list(range(args.seasons))
         assert final["saved"], "Must finish on an explicit signed Saved Revision"
-        assert evidence.total["editions_completed"] == len(schedule)
-        assert evidence.total["new_player_ids_seen"] >= args.born_per_season * args.seasons
-        evidence.total["saved_revision_count"] = _saved_revision_count(args.database)
-    # Cold-start reads of five signed seasons are part of the true benchmark.
+        if args.stop_after_week is not None:
+            assert final["saved_completed_seasons"] == []
+            position = final["state"]["week"]
+            assert (position["season_index"], position["week"]) == (
+                0, args.stop_after_week + 1
+            ), position
+            assert evidence.total["last_completed_week"] == args.stop_after_week
+            evidence.total["saved_revision_count"] = verify_saved_v2_sqlite_history(
+                args.database, final["saved_head_revision_id"]
+            )
+        else:
+            assert final["saved_completed_seasons"] == list(range(args.seasons))
+            assert evidence.total["editions_completed"] == len(schedule)
+            assert evidence.total["new_player_ids_seen"] >= args.born_per_season * args.seasons
+            evidence.total["saved_revision_count"] = _saved_revision_count(args.database)
+    # Cold restart is mandatory for both the bounded checkpoint and full profile.
     with evidence.timed("final-cold-restart-and-signed-season-archive"):
         with ApiServer(database_url=f"sqlite:///{args.database}") as restarted:
             actual = inspect(restarted)
-            assert actual["saved_completed_seasons"] == list(range(args.seasons))
-            code, archived = _request("GET", tour_url(restarted) + "/seasons")
-            assert code == 200 and len(archived["seasons"]) == args.seasons
             assert actual["saved"]
-    evidence.metric("finished", **evidence.total)
+            if args.stop_after_week is not None:
+                assert actual == final, "Cold Saved v2 restart changed the final view"
+                verify_saved_history_http(restarted, final["saved_head_revision_id"])
+            else:
+                assert actual["saved_completed_seasons"] == list(range(args.seasons))
+                code, archived = _request("GET", tour_url(restarted) + "/seasons")
+                assert code == 200 and len(archived["seasons"]) == args.seasons
+    outcome = "stopped_after_week" if args.stop_after_week is not None else "finished"
+    evidence.metric(outcome, **evidence.total)
+    return outcome
 
 
 def _saved_revision_count(path: Path) -> int:
@@ -576,7 +605,7 @@ def _saved_revision_count(path: Path) -> int:
         return int(connection.execute("SELECT COUNT(*) FROM branch_saved_revisions").fetchone()[0])
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--profile", choices=("requested", "compatible"), default="requested",
                         help="requested is a 16-128/Q/world specification; compatible is an explicitly separate 4/8 Main-only benchmark")
@@ -587,12 +616,26 @@ def main():
     parser.add_argument("--budget-minutes", type=int, default=315)
     parser.add_argument("--output-dir", type=Path, default=Path("giant-load-evidence"))
     parser.add_argument("--plan-only", action="store_true")
+    parser.add_argument("--stop-after-week", type=int, default=None,
+                        help="Finish the selected first-season week and its signed transition; never play the following week")
+    parser.add_argument("--saved-v2", action="store_true",
+                        help="Opt the NEW Run into immutable production Saved v2 storage")
+    parser.add_argument("--allow-five-season-run", action="store_true",
+                        help="Explicitly authorize the costly five-season real run; NEVER supplied in PR CI")
     parser.add_argument("--plan-json", type=Path,
                         help="Write the full per-Edition JSON schedule for inspection")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     schedule = make_schedule(args.seasons, args.editions_per_season, profile=args.profile)
     if args.players < 128 or args.born_per_season < 0 or args.budget_minutes < 1:
         parser.error("initial players must be >=128; arrivals >=0; budget >=1")
+    if args.stop_after_week is not None:
+        if not 2 <= args.stop_after_week < WEEKS_PER_SEASON:
+            parser.error("--stop-after-week must be between 2 and 51")
+        if args.profile != "compatible" or not args.saved_v2:
+            parser.error("bounded real run requires --profile compatible --saved-v2")
+    if not args.plan_only and args.seasons == 5 and args.stop_after_week is None:
+        if not args.allow_five_season_run:
+            parser.error("Five seasons disabled: explicit --allow-five-season-run required")
     blockers = unsupported_execution_capabilities(schedule)
     plan = {
         "profile": args.profile, "status": "blocked" if blockers else "runnable",
@@ -652,7 +695,7 @@ def main():
         evidence.metric("not_executed", reason="Required production tournament capabilities are absent")
         return 4
     try:
-        run(args, evidence)
+        outcome = run(args, evidence)
     except BudgetExpired as exc:
         evidence.metric("budget_exhausted", message=str(exc))
         evidence.write_summary("budget_exhausted", message=str(exc), profile=args.profile)
@@ -662,7 +705,8 @@ def main():
         evidence.write_summary("failed", message=str(exc), profile=args.profile)
         raise
     else:
-        evidence.write_summary("complete", profile=args.profile)
+        evidence.write_summary("stopped_after_week" if outcome == "stopped_after_week" else "complete",
+                               profile=args.profile, saved_v2=args.saved_v2)
         return 0
 
 

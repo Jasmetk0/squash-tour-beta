@@ -10,6 +10,7 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
 import resource
 import sqlite3
 import sys
@@ -166,6 +167,92 @@ class BudgetExpired(RuntimeError):
     pass
 
 
+@contextmanager
+def timed_http_saves(evidence):
+    """Observe every real HTTP /save including the setup and prospect Saves.
+
+    Original urlopen request, timeout, response and errors pass through unchanged.
+    No Save, preview, confirmation or history integrity gate is replaced.
+    """
+    from unittest.mock import patch
+    from urllib import request as urlrequest
+    from urllib.parse import urlsplit
+
+    original = urlrequest.urlopen
+
+    def open_timed(req, *args, **kwargs):
+        target = req.full_url if hasattr(req, "full_url") else str(req)
+        endpoint = urlsplit(target).path
+        if not endpoint.endswith("/save"):
+            return original(req, *args, **kwargs)
+        started = time.perf_counter()
+        status = None
+        try:
+            response = original(req, *args, **kwargs)
+            status = getattr(response, "status", None)
+            return response
+        except BaseException as exc:
+            status = getattr(exc, "code", None)
+            raise
+        finally:
+            evidence.total["save_count"] += 1
+            evidence.metric(
+                "save", save_index=evidence.total["save_count"],
+                endpoint=endpoint, http_status=status,
+                duration_seconds=round(time.perf_counter() - started, 3),
+            )
+            evidence.write_summary("running")
+
+    with patch.object(urlrequest, "urlopen", open_timed):
+        yield
+
+
+def verify_saved_v2_sqlite_history(database: Path, expected_head: str) -> int:
+    """Verify immutable v2 selection, all physical v2 rows and complete ancestry."""
+    from beta_engine.infrastructure.db.saved_v2_store import ENVELOPE_PREFIX, FORMAT
+
+    with sqlite3.connect(database) as connection:
+        formats = connection.execute(
+            "SELECT run_id, storage_format FROM run_saved_storage_formats"
+        ).fetchall()
+        assert formats == [("run", FORMAT)], formats
+        rows = connection.execute(
+            "SELECT revision_id, parent_revision_id, payload_json "
+            "FROM branch_saved_revisions WHERE run_id='run'"
+        ).fetchall()
+        assert rows and all(payload.startswith(ENVELOPE_PREFIX)
+                            for _, _, payload in rows), "Found a non-v2 Saved row"
+        head = connection.execute(
+            "SELECT saved_head_revision_id FROM run_branches "
+            "WHERE run_id='run' AND branch_id='branch'"
+        ).fetchone()
+        assert head is not None and head[0] == expected_head
+        nodes = connection.execute(
+            "SELECT COUNT(*) FROM saved_revision_nodes WHERE run_id='run'"
+        ).fetchone()[0]
+        assert nodes > 0, "Saved v2 did not write Merkle nodes"
+    parents = {revision: parent for revision, parent, _ in rows}
+    cursor, visited = expected_head, set()
+    while cursor is not None:
+        assert cursor in parents and cursor not in visited, "Broken Saved ancestry"
+        visited.add(cursor)
+        cursor = parents[cursor]
+    assert visited == set(parents), "Unreachable or unexpected Saved revisions"
+    return len(rows)
+
+
+def verify_saved_history_http(server, expected_head: str):
+    """Exercise original authenticated history API after cold restart."""
+    from tests.api.test_saved_revision_history_api import _request
+
+    url = server.base_url + "/run-containers/run/branches/branch/saved-revisions?limit=1"
+    status, history = _request("GET", url)  # original 120-second transport timeout
+    assert status == 200, history
+    assert history["saved_head_revision_id"] == expected_head, history
+    assert any(item["revision_id"] == expected_head
+               for item in history["saved_revisions"]), history
+
+
 class Evidence:
     def __init__(self, root: Path, db: Path, budget_minutes: int):
         root.mkdir(parents=True, exist_ok=True)
@@ -177,15 +264,24 @@ class Evidence:
         self.total = {"seasons_completed": 0, "editions_completed": 0,
                       "matches_completed": 0, "last_position": None,
                       "initial_players": None, "final_players": None,
-                      "new_player_ids_seen": 0, "saved_revision_count": None}
+                      "new_player_ids_seen": 0, "saved_revision_count": None,
+                      "save_count": 0, "last_completed_week": None,
+                      "last_completed_season": None}
         self.write_summary("running")
 
     def elapsed(self) -> float:
         return time.perf_counter() - self.started
 
+    def database_sizes(self):
+        main = self.db.stat().st_size if self.db.exists() else 0
+        wal = Path(str(self.db) + "-wal")
+        wal_bytes = wal.stat().st_size if wal.exists() else 0
+        return {"sqlite_bytes": main, "sqlite_wal_bytes": wal_bytes,
+                "sqlite_total_bytes": main + wal_bytes}
+
     def metric(self, kind: str, **fields):
         obj = {"kind": kind, "elapsed_seconds": round(self.elapsed(), 3),
-               "sqlite_bytes": self.db.stat().st_size if self.db.exists() else 0,
+               **self.database_sizes(),
                "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                **fields}
         with self.path.open("a", encoding="utf-8") as stream:
@@ -208,7 +304,9 @@ class Evidence:
     def write_summary(self, status: str, **extra):
         report = {"status": status, "elapsed_seconds": round(self.elapsed(), 3),
                   "budget_minutes": self.budget_seconds // 60,
-                  "db_bytes": self.db.stat().st_size if self.db.exists() else 0,
+                  "db_bytes": self.database_sizes()["sqlite_bytes"],
+                  **self.database_sizes(),
+                  "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
                   **self.total, **extra}
         tmp = self.summary_path.with_suffix(".json.tmp")
         tmp.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
@@ -379,7 +477,7 @@ def run(args, evidence: Evidence):
         by_play[(event.season, event.week)].append(event)
         by_plan[(event.season, event.week - 2)].append(event)
     all_new_ids = set()
-    with ApiServer(database_url=f"sqlite:///{args.database}") as server:
+    with timed_http_saves(evidence), ApiServer(database_url=f"sqlite:///{args.database}") as server:
         evidence.check_budget()
         with evidence.timed("initial-world-and-tour", player_count=args.players):
             repo, _ = setup(server, RunCalendar(52, 1, 2030, args.seasons + 1), count=args.players)

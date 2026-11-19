@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import nullcontext
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from threading import Lock
@@ -5207,6 +5208,15 @@ class SimulationPersistenceRepository:
         previous_head_revision_id = ""
         previous_viewer_branch_id = ""
         restored_viewer_branch_id = ""
+        committed_ancestors = None
+        from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+            actual_dependency_signature,
+            native_read_proof_scope,
+            remember_committed_ancestor_proofs,
+            reuse_verified_append_ancestors,
+        )
+
         try:
             with self._session_factory.begin() as session:
                 # Hold the SQLite writer reservation from the first recovery read.
@@ -5232,11 +5242,18 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
-                    state, target_revision = self._restore_source_revisions_in_session(
-                        session=session, branch=branch,
-                        target_saved_revision_id=target_saved_revision_id,
-                    )
-                except BranchRevisionStateConflictError as exc:
+                    with native_read_proof_scope():
+                        state, target_revision = self._restore_source_revisions_in_session(
+                            session=session, branch=branch,
+                            target_saved_revision_id=target_saved_revision_id,
+                        )
+                        original_head = session.get(BranchSavedRevisionModel, state.saved_head_revision_id)
+                        before_graph = (
+                            actual_dependency_signature(session, original_head, repository=self)
+                            if original_head is not None and is_global_slot_row(original_head, repository=self)
+                            else None
+                        )
+                except ValueError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
                 previous_head_revision_id = state.saved_head_revision_id
@@ -5805,13 +5822,8 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=native_birth_restore,
                 )
-                if native_birth_restore:
-                    # Capture every coupled live owner first, then authenticate
-                    # the COMPLETE post-restore aggregate before any revision or
-                    # pointer is published. No bare v11 capture is authority.
-                    load_saved_calendar_sources(
-                        payload, run_id=run_id, branch_id=branch_id
-                    )
+                # A deferred native capture is validated from the actual
+                # flushed row below, while the whole Restore can still roll back.
                 if SEASON_CLOSURE_COMPONENT_KEY in target_content:
                     try:
                         rebind_saved_revision_season_closure(
@@ -5975,11 +5987,23 @@ class SimulationPersistenceRepository:
                 # No separate head or draft read is needed to build the receipt.
                 session.expire_all()
                 try:
-                    working_draft, restored_state = self._viewer_branch_working_draft_in_session(
-                        session=session, run_id=run_id, branch_id=branch_id,
-                        include_revision_state=True,
-                    )
-                except (WorkingDraftConflictError, WorkingDraftNotFoundError) as exc:
+                    with native_read_proof_scope():
+                        restored_head = session.get(BranchSavedRevisionModel, restore_saved_revision_id)
+                        reuse = nullcontext()
+                        after_graph = None
+                        if before_graph is not None and restored_head is not None:
+                            after_graph = actual_dependency_signature(session, restored_head, repository=self)
+                            reuse = reuse_verified_append_ancestors(
+                                self, before_graph, after_graph, run_id=run_id, branch_id=branch_id,
+                            )
+                        with reuse as verified_ancestors:
+                            working_draft, restored_state = self._viewer_branch_working_draft_in_session(
+                                session=session, run_id=run_id, branch_id=branch_id,
+                                include_revision_state=True,
+                            )
+                        if after_graph is not None and verified_ancestors:
+                            committed_ancestors = after_graph, verified_ancestors
+                except ValueError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
                 revision = restored_state.saved_revision
                 checkpoint_row = session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
@@ -6001,6 +6025,8 @@ class SimulationPersistenceRepository:
                 "generated restore checkpoint, revision, or audit identity collided"
             ) from exc
 
+        if committed_ancestors is not None:
+            remember_committed_ancestor_proofs(self, *committed_ancestors)
         return BranchSavedRevisionRestoreResult(
             run_id=run_id,
             branch_id=branch_id,

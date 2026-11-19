@@ -3,6 +3,7 @@
 import hashlib
 import json
 
+from beta_engine.domain.run_revisions import BRANCH_RESTORE_SAVED_REVISION_KIND
 from beta_engine.infrastructure.db.calendar_tour import (
     _origin_inputs,
     remember_verified_origin_projection,
@@ -118,17 +119,39 @@ def verify_saved_global_origins(
         row = actual_saved_revision_reference(session, revision.run_id, source_id)
         if row is None or row[1:3] != (revision.run_id, revision.branch_id):
             raise ValueError("Global slot command source has a foreign owner")
+    prefix_row = parent_row if parent_is_global else None
+    if revision.kind == BRANCH_RESTORE_SAVED_REVISION_KIND and _validated_value_signature == signature:
+        # Restore appends to the current HEAD, but its sporting history comes
+        # from an earlier reachable revision. Authenticate that exact physical
+        # owner independently before it can provide the command prefix.
+        target_id = revision.change_summary.get("target_saved_revision_id")
+        if (
+            isinstance(target_id, str)
+            and target_id in reachable
+            and target_id != revision.parent_revision_id
+        ):
+            target = session.get(BranchSavedRevisionModel, target_id)
+            if (
+                target is not None
+                and (target.run_id, target.branch_id) == (revision.run_id, revision.branch_id)
+                and target.sequence < revision.sequence
+                and is_global_slot_row(target, repository=repository)
+            ):
+                repository._validated_saved_revision_in_session(
+                    session=session, model=target, materialize_payload=False,
+                    sporting_component_proofs=sporting_component_proofs,
+                )
+                prefix_row = target
     verified_prefix = None
-    if parent_is_global:
-        assert_current_saved_row(session, parent_row)
-        # The parent passed its COMPLETE physical dependency/source gate above,
-        # after this read snapshot authenticated all actual dependency bytes.
-        # Reuse only its exact immutable command prefix, never a declared hash.
-        parent_value = (sporting_component_proofs or {}).get('_global_verified_origin_tours', {}).get(
-            _saved_revision_validation_signature(parent_row))
-        previous = parent_value[1] if parent_value is not None and parent_value[1].fingerprint == parent_value[0] else None
+    if prefix_row is not None:
+        assert_current_saved_row(session, prefix_row)
+        # Every selected prefix passed its complete physical/source gate.
+        # Reuse it only if its actual immutable command values match.
+        prefix_value = (sporting_component_proofs or {}).get('_global_verified_origin_tours', {}).get(
+            _saved_revision_validation_signature(prefix_row))
+        previous = prefix_value[1] if prefix_value is not None and prefix_value[1].fingerprint == prefix_value[0] else None
         if previous is None:
-            _, previous = _origin_inputs(parent_row, cache)
+            _, previous = _origin_inputs(prefix_row, cache)
         if (
             previous is not None
             and (previous.run_id, previous.branch_id) == (state.run_id, state.branch_id)

@@ -6,6 +6,21 @@ client limit on the confirmed Restore. The W52, W61 and W80 Saved v2 cases on
 `47397b218` all reproduced that same timeout after both seasons and restart.
 The standard matrix does not include this additional explicit Saved v2 Restore.
 
+The next hosted run on `0f46a76a` reproduced the confirmed Restore timeout
+at W52, W61 and W80 and retained all three pre-Restore SQLite fixtures
+(127, 145 and 183 revisions). The A/B writer diagnostic passed.
+
+Restore can now reuse an individually proved ancestor only when the actual
+dependency graph changes by the exact new append. The new row still gets the
+ordinary validator before commit. The temporary proofs are scoped to the
+operation and retained by the repository only after the commit succeeds.
+The verifier can take its matching command prefix from the independently
+authenticated target revision. It still checks current origins and reachability.
+The native snapshot is replayed once from the flushed row. With the initial
+ancestor-reuse change, the actual W52 fixture confirmed in 99.1 s locally
+under the unchanged 120 s timeout. All previous revision identities/hashes
+and the target sporting and Tour values matched.
+
 The follow-up verifies the actual flushed Restore revision and clean draft
 together before commit. A failed receipt validation now aborts the entire
 transaction. It encodes the restored payload once for both the new identity

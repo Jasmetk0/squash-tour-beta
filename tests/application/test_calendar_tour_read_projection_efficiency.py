@@ -104,7 +104,7 @@ def test_readiness_reuses_authenticated_lifecycle_within_same_snapshot(monkeypat
 
     position = NS(week=9, season_index=0, ordinal=9)
     clock = NS(weeks_per_year=52, season_count=2,
-               position_at_ordinal=lambda ordinal: NS(season_index=0, season_week=ordinal+1))
+               position_at_ordinal=lambda ordinal: NS(season_index=0, season_week=ordinal))
     checkpoint = NS(week=position, fingerprint="same-checkpoint")
     state = NS(run_id="run", branch_id="branch", editions=(),
                checkpoint_fingerprint="same-checkpoint")
@@ -124,7 +124,7 @@ def test_readiness_reuses_authenticated_lifecycle_within_same_snapshot(monkeypat
             # Current Run has native prospects; no staged ranking corrections.
             return "a-prospect" if self.queries == 1 else None
 
-    def load_lifecycle(*, session, run_id, branch_id, week):
+    def load_lifecycle(session, *, run_id, branch_id, week):
         assert (run_id, branch_id, week) == ("run", "branch", position)
         calls["load"] += 1
         return already_read

@@ -141,3 +141,35 @@ def test_workflow_is_manual_w9_only():
     assert "pull_request:" not in script and "push:" not in script
     assert "--stop-after-week 9" in script and "--saved-v2" in script
     assert "--allow-five-season-run" not in script
+
+
+def test_restart_fixture_includes_committed_wal_and_expected_view(tmp_path):
+    import hashlib
+
+    database = tmp_path / "run.sqlite"
+    with sqlite3.connect(database) as writer:
+        writer.execute("PRAGMA journal_mode=WAL")
+        writer.execute("PRAGMA wal_autocheckpoint=0")
+        writer.execute("CREATE TABLE evidence (value TEXT)")
+        writer.execute("INSERT INTO evidence VALUES ('committed')")
+        writer.commit()
+        writer.execute("INSERT INTO evidence VALUES ('uncommitted')")
+        expected = {"saved_head_revision_id": "saved-1", "state": {"week": 10}}
+        fixture = load.preserve_restart_fixture(database, expected)
+        with sqlite3.connect(fixture) as restored:
+            assert restored.execute("SELECT value FROM evidence").fetchall() == [("committed",)]
+            assert restored.execute("PRAGMA integrity_check").fetchone() == ("ok",)
+        metadata = json.loads(fixture.with_suffix(".json").read_text())
+        assert metadata["expected_inspection"] == expected
+        assert metadata["sha256"] == hashlib.sha256(fixture.read_bytes()).hexdigest()
+        writer.rollback()
+        with pytest.raises(ValueError, match="already exists"):
+            load.preserve_restart_fixture(database, expected)
+        assert not fixture.with_suffix(".sqlite.partial").exists()
+
+
+def test_both_w9_workflows_upload_restart_fixture():
+    for name in ("giant-w9-once-pr1828.yml", "giant-w9-saved-v2.yml"):
+        script = Path(".github/workflows", name).read_text()
+        assert "giant-w9-evidence/before-restart.sqlite" in script
+        assert "giant-w9-evidence/before-restart.json" in script

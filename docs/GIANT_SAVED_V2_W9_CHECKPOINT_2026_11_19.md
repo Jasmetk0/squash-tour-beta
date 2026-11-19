@@ -1,5 +1,32 @@
 # Bounded 1,000-player W9 HTTP/SQLite benchmark with Saved v2
 
+## Restart reproduction checkpoint
+
+The first hosted W9 run (`44546773007`) completed week 9 and all 51 Save
+requests, then failed at the 120-second cold Tour GET. Its artifact retained
+metrics only, so it cannot provide the original database for an A/B replay.
+
+Before closing out the benchmark with its cold restart check, the runner now
+uses SQLite's online backup to retain all committed data, including WAL, in
+`before-restart.sqlite`. It also writes `before-restart.json` with the file's
+SHA-256, the selected Saved head and the complete expected Tour inspection.
+Both W9 workflows upload these files on success or failure. An existing fixture
+is rejected, and incomplete backup files are removed.
+
+After downloading the artifact, use the existing profiler on a disposable copy.
+Each measurement root must be new, and production changes must be committed.
+
+```bash
+PYTHONPATH=src:.:tests/api python scripts/profile_native_cold_saved_read.py \
+  --input /absolute/path/before-restart.sqlite --root /absolute/path/new-timing \
+  --mode timing --read-only
+```
+
+The HTTP timing mode retains its normal transport deadline. For a CPU diagnosis
+of a read exceeding that deadline, use `--mode profile --direct-profile
+--read-only` and another fresh root. That diagnostic calls the same production
+inspection service and does not establish an HTTP acceptance pass.
+
 **Source:** port of the real compatible runner from Draft PR #1820 onto current
 `buuk` (including merged production Saved v2 #1827). This is **test-only**:
 no production engine, sporting, persistence or migration files are modified.

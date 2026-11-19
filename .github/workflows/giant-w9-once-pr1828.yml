@@ -60,6 +60,8 @@ jobs:
           path: |
             giant-w9-evidence/summary.json
             giant-w9-evidence/timeline.jsonl
+            giant-w9-evidence/before-restart.sqlite
+            giant-w9-evidence/before-restart.json
             giant-w9-console.log
           if-no-files-found: warn
           retention-days: 21

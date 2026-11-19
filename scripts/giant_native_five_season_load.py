@@ -17,6 +17,7 @@ import sys
 import time
 import traceback
 from contextlib import contextmanager
+from contextlib import closing
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -205,6 +206,39 @@ def timed_http_saves(evidence):
 
     with patch.object(urlrequest, "urlopen", open_timed):
         yield
+
+
+def preserve_restart_fixture(database: Path, final: dict) -> Path:
+    """Keep a transactionally consistent replay input before the cold HTTP read."""
+    import hashlib
+
+    destination = database.parent / "before-restart.sqlite"
+    temporary = destination.with_suffix(".sqlite.partial")
+    if destination.exists() or temporary.exists():
+        raise ValueError("Restart fixture already exists")
+    try:
+        with (
+            closing(sqlite3.connect(database.resolve().as_uri() + "?mode=ro", uri=True)) as source,
+            closing(sqlite3.connect(temporary)) as target,
+        ):
+            source.backup(target)
+        digest = hashlib.sha256()
+        with temporary.open("rb") as stream:
+            for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                digest.update(chunk)
+        temporary.replace(destination)
+        metadata = {
+            "database": destination.name,
+            "sha256": digest.hexdigest(),
+            "saved_head_revision_id": final["saved_head_revision_id"],
+            "expected_inspection": final,
+        }
+        destination.with_suffix(".json").write_text(
+            json.dumps(metadata, ensure_ascii=False) + "\n", encoding="utf-8"
+        )
+    finally:
+        temporary.unlink(missing_ok=True)
+    return destination
 
 
 def verify_saved_v2_sqlite_history(database: Path, expected_head: str) -> int:
@@ -583,6 +617,10 @@ def run(args, evidence: Evidence):
             assert evidence.total["editions_completed"] == len(schedule)
             assert evidence.total["new_player_ids_seen"] >= args.born_per_season * args.seasons
             evidence.total["saved_revision_count"] = _saved_revision_count(args.database)
+    # Capture committed WAL contents before a slow or failing restart can lose
+    # the reproduction. A main-file copy alone is incomplete under WAL.
+    with evidence.timed("preserve-before-restart-fixture"):
+        preserve_restart_fixture(args.database, final)
     # Cold restart is mandatory for both the bounded checkpoint and full profile.
     with evidence.timed("final-cold-restart-and-signed-season-archive"):
         with ApiServer(database_url=f"sqlite:///{args.database}") as restarted:

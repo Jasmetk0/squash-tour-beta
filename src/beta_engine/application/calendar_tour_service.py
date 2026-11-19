@@ -635,6 +635,9 @@ class CalendarTourService:
             {p.player_id: p for p in lifecycle.players} if lifecycle else {}
         )
         sporting = {p.player_id: p for p in cp.players} if cp else {}
+        # Both response fields check this potentially large frozen checkpoint;
+        # compute the strict model equality once per authenticated read.
+        checkpoint_matches_saved = cp == saved
         names = {p.player_id: p.name for p in world.players}
         if identities.keys() - names.keys():
             from beta_engine.infrastructure.db.run_prospect_source_state import (
@@ -753,8 +756,8 @@ class CalendarTourService:
             ),
             "checkpoint_fingerprint": checkpoint_fingerprint,
             "tour_fingerprint": state.fingerprint if state else None,
-            "saved": bool(state and signed == state and cp == saved),
-            "sporting_saved": bool(cp and cp == saved),
+            "saved": bool(state and signed == state and checkpoint_matches_saved),
+            "sporting_saved": bool(cp and checkpoint_matches_saved),
             "post_birth_competition_supported": bool(
                 cp
                 and cp.schema_version

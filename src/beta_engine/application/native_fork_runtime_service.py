@@ -47,18 +47,16 @@ from beta_engine.infrastructure.db.native_fork_runtime_state import (
 
 def is_native_fork(repository, run_id, branch_id):
     with repository._session_factory() as session:
-        branch = session.get(RunBranchModel, branch_id)
-        row = (
-            session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
-            if branch
-            else None
-        )
-        return bool(
-            branch
-            and branch.run_id == run_id
-            and row
-            and row.payload_schema_version == SAVED_SCHEMA
-        )
+        # Routing only needs the schema. The chosen handler independently
+        # authenticates the actual Saved payload inside its own transaction.
+        return session.scalar(
+            select(BranchSavedRevisionModel.payload_schema_version)
+            .join(
+                RunBranchModel,
+                RunBranchModel.saved_head_revision_id == BranchSavedRevisionModel.revision_id,
+            )
+            .where(RunBranchModel.run_id == run_id, RunBranchModel.branch_id == branch_id)
+        ) == SAVED_SCHEMA
 
 
 @dataclass

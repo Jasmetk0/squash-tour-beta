@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import nullcontext
 from contextvars import ContextVar
 from dataclasses import dataclass, replace
 from threading import Lock
@@ -2952,7 +2953,7 @@ class SimulationPersistenceRepository:
         # ancestor's gates fingerprint again; memoize those pure fingerprints by
         # exact object identity for this one cold pass only (as the Tour reader
         # does). Nothing in the scope is a physical or source proof.
-        with global_replay_projection_scope():
+        with global_replay_projection_scope(_reuse_simulated_matches=True):
             self._prevalidate_oldest_first_in_scope(
                 session, head_model, unproven, sporting_component_proofs, replay_first)
 
@@ -2997,10 +2998,11 @@ class SimulationPersistenceRepository:
         visiting_branch_ids: frozenset[str] = frozenset(),
         payload_revision_ids: frozenset[str] | None = None,
         sporting_component_proofs: dict | None = None,
+        include_change_summaries: bool = False,
     ) -> list[BranchSavedRevisionRecord]:
         """Validate every ancestor; retain only requested payloads for internal reads.
 
-        Public history uses the default to materialize the complete lineage.
+        History summaries can retain the verified change summaries alone.
         """
 
         if branch.branch_id in visiting_branch_ids:
@@ -3046,6 +3048,10 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateConflictError(
                     "Saved Revision lineage crosses Run boundaries"
                 )
+            if include_change_summaries:
+                # The verifier matched the actual row, including these exact
+                # summary bytes, before returning a payload-free record.
+                current = replace(current, change_summary=_from_json(current_model.change_summary_json))
             lineage.append(current)
             if current.parent_revision_id is None:
                 current_model = None
@@ -4475,9 +4481,9 @@ class SimulationPersistenceRepository:
             ]
 
     def get_branch_saved_revision_history(
-        self, *, run_id: str, branch_id: str
+        self, *, run_id: str, branch_id: str, summary_only: bool = False
     ) -> BranchSavedRevisionHistoryRecord:
-        """Return the complete reachable lineage after validating every revision."""
+        """Validate the complete lineage and optionally return summary fields alone."""
 
         with self._session_factory() as session:
             session.execute(text("BEGIN"))
@@ -4493,6 +4499,8 @@ class SimulationPersistenceRepository:
                 newest_to_oldest = self._validated_branch_revision_lineage_in_session(
                     session=session,
                     branch=branch,
+                    payload_revision_ids=frozenset() if summary_only else None,
+                    include_change_summaries=summary_only,
                 )
             except BranchRevisionStateConflictError as exc:
                 raise SavedRevisionHistoryConflictError(str(exc)) from exc
@@ -4579,6 +4587,17 @@ class SimulationPersistenceRepository:
                 )
             else:
                 revision = replace(revision, payload={'run': _from_json(run_projection)})
+        return self._branch_revision_state_from_verified_head(
+            session=session, branch=branch, revision=revision
+        )
+
+    def _branch_revision_state_from_verified_head(
+        self,
+        *,
+        session: Session,
+        branch: RunBranchModel,
+        revision: BranchSavedRevisionRecord,
+    ) -> BranchRevisionStateRecord:
         draft_model = session.execute(
             select(BranchWorkingDraftModel).where(
                 BranchWorkingDraftModel.branch_id == branch.branch_id
@@ -4924,6 +4943,27 @@ class SimulationPersistenceRepository:
                 self._to_branch_saved_revision_checkpoint(model) for model in models
             ]
 
+    def _restore_source_revisions_in_session(
+        self, *, session: Session, branch: RunBranchModel, target_saved_revision_id: str
+    ) -> tuple[BranchRevisionStateRecord, BranchSavedRevisionRecord | None]:
+        # Authenticate the full reachable lineage in this transaction. Only the
+        # head and selected target need their complete payloads for Restore.
+        lineage = self._validated_branch_revision_lineage_in_session(
+            session=session,
+            branch=branch,
+            payload_revision_ids=frozenset(
+                {branch.saved_head_revision_id, target_saved_revision_id}
+            ),
+        )
+        state = self._branch_revision_state_from_verified_head(
+            session=session, branch=branch, revision=lineage[0]
+        )
+        target = next(
+            (revision for revision in lineage if revision.revision_id == target_saved_revision_id),
+            None,
+        )
+        return state, target
+
     def preview_branch_saved_revision_restore(
         self,
         *,
@@ -4956,23 +4996,13 @@ class SimulationPersistenceRepository:
                 )
 
             try:
-                state = self._validated_branch_revision_state_in_session(
-                    session=session, branch=branch
-                )
-                lineage = self._validated_branch_revision_lineage_in_session(
-                    session=session, branch=branch
+                state, target_revision = self._restore_source_revisions_in_session(
+                    session=session, branch=branch,
+                    target_saved_revision_id=target_saved_revision_id,
                 )
             except BranchRevisionStateConflictError as exc:
                 raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
-            target_revision = next(
-                (
-                    revision
-                    for revision in lineage
-                    if revision.revision_id == target_saved_revision_id
-                ),
-                None,
-            )
             if target_revision is None:
                 raise SavedRevisionRestoreNotFoundError(
                     f"Saved Revision {target_saved_revision_id!r} was not found "
@@ -5178,6 +5208,15 @@ class SimulationPersistenceRepository:
         previous_head_revision_id = ""
         previous_viewer_branch_id = ""
         restored_viewer_branch_id = ""
+        committed_ancestors = None
+        from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+            actual_dependency_signature,
+            native_read_proof_scope,
+            remember_committed_ancestor_proofs,
+            reuse_verified_append_ancestors,
+        )
+
         try:
             with self._session_factory.begin() as session:
                 # Hold the SQLite writer reservation from the first recovery read.
@@ -5203,20 +5242,18 @@ class SimulationPersistenceRepository:
                     )
 
                 try:
-                    # Both reads walk the same immutable revision lineage.
-                    # Share content-scoped source proofs only within this
-                    # transaction; every stored revision still authenticates
-                    # bytes, signature, identity and ancestry.
-                    source_proofs = {}
-                    state = self._validated_branch_revision_state_in_session(
-                        session=session, branch=branch,
-                        sporting_component_proofs=source_proofs,
-                    )
-                    lineage = self._validated_branch_revision_lineage_in_session(
-                        session=session, branch=branch,
-                        sporting_component_proofs=source_proofs,
-                    )
-                except BranchRevisionStateConflictError as exc:
+                    with native_read_proof_scope():
+                        state, target_revision = self._restore_source_revisions_in_session(
+                            session=session, branch=branch,
+                            target_saved_revision_id=target_saved_revision_id,
+                        )
+                        original_head = session.get(BranchSavedRevisionModel, state.saved_head_revision_id)
+                        before_graph = (
+                            actual_dependency_signature(session, original_head, repository=self)
+                            if original_head is not None and is_global_slot_row(original_head, repository=self)
+                            else None
+                        )
+                except ValueError as exc:
                     raise SavedRevisionRestoreConflictError(str(exc)) from exc
 
                 previous_head_revision_id = state.saved_head_revision_id
@@ -5237,14 +5274,6 @@ class SimulationPersistenceRepository:
                         "selected Saved Revision is already the current Branch head"
                     )
 
-                target_revision = next(
-                    (
-                        revision
-                        for revision in lineage
-                        if revision.revision_id == target_saved_revision_id
-                    ),
-                    None,
-                )
                 if target_revision is None:
                     raise SavedRevisionRestoreNotFoundError(
                         f"Saved Revision {target_saved_revision_id!r} was not found "
@@ -5626,6 +5655,7 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player sporting state: {exc}"
                         ) from exc
+                restored_tour_source = None
                 if (
                     CALENDAR_MATCH_COMPONENT_KEY in current_content
                     or CALENDAR_MATCH_COMPONENT_KEY in target_content
@@ -5641,7 +5671,7 @@ class SimulationPersistenceRepository:
                             decode_prevalidated_calendar_sources,
                         )
 
-                        source_pair = (
+                        source_pair = tuple(
                             decode_prevalidated_calendar_sources(
                                 saved_payload, run_id=run_id, branch_id=branch_id
                             )
@@ -5655,8 +5685,9 @@ class SimulationPersistenceRepository:
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id, branch_id=branch_id,
-                            _validated_saved_sources=tuple(source_pair),
+                            _validated_saved_sources=source_pair,
                         )
+                        restored_tour_source = source_pair[1][2]
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore calendar standalone match: {exc}"
@@ -5717,6 +5748,7 @@ class SimulationPersistenceRepository:
                         branch.forked_from_saved_revision_id
                     ),
                     viewer_branch_id=restored_viewer_branch_id,
+                    _stored_json_copy=True,
                 )
                 # A historical target can carry an older horizon. Restored content
                 # remains historical, while the *new* current head must use the
@@ -5792,14 +5824,13 @@ class SimulationPersistenceRepository:
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=native_birth_restore,
+                    # The target's actual Saved authorities already passed the
+                    # physical lineage gate. capture_tour still compares the
+                    # complete live prefix and checks the current origin rows.
+                    _authenticated_tour_prefix=restored_tour_source,
                 )
-                if native_birth_restore:
-                    # Capture every coupled live owner first, then authenticate
-                    # the COMPLETE post-restore aggregate before any revision or
-                    # pointer is published. No bare v11 capture is authority.
-                    load_saved_calendar_sources(
-                        payload, run_id=run_id, branch_id=branch_id
-                    )
+                # A deferred native capture is validated from the actual
+                # flushed row below, while the whole Restore can still roll back.
                 if SEASON_CLOSURE_COMPONENT_KEY in target_content:
                     try:
                         rebind_saved_revision_season_closure(
@@ -5820,7 +5851,9 @@ class SimulationPersistenceRepository:
                     restored_viewer_branch_id=restored_viewer_branch_id,
                 )
                 sequence = state.saved_revision.sequence + 1
-                revision_hash = saved_revision_content_hash(
+                payload_json = _to_json(payload)
+                summary_json = _to_json(summary)
+                revision_hash = _saved_revision_content_hash_from_new_canonical_parts(
                     revision_id=restore_saved_revision_id,
                     run_id=run_id,
                     branch_id=branch_id,
@@ -5828,8 +5861,8 @@ class SimulationPersistenceRepository:
                     parent_revision_id=previous_head_revision_id,
                     kind=BRANCH_RESTORE_SAVED_REVISION_KIND,
                     payload_schema_version=RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION,
-                    payload=payload,
-                    change_summary=summary,
+                    payload_json=payload_json,
+                    change_summary_json=summary_json,
                 )
                 checkpoint_hash = saved_revision_checkpoint_content_hash(
                     checkpoint_id=checkpoint_id,
@@ -5898,8 +5931,8 @@ class SimulationPersistenceRepository:
                         ),
                         content_hash_algorithm=CONTENT_HASH_ALGORITHM,
                         content_hash=revision_hash,
-                        payload_json=_to_json(payload),
-                        change_summary_json=_to_json(summary),
+                        payload_json=payload_json,
+                        change_summary_json=summary_json,
                     )
                 )
                 head_claimed = session.execute(
@@ -5956,18 +5989,51 @@ class SimulationPersistenceRepository:
                     )
                 )
                 session.flush()
+                # Validate the actual flushed head and draft together. A failure
+                # here rolls back the entire Restore, including its checkpoint.
+                # No separate head or draft read is needed to build the receipt.
+                session.expire_all()
+                try:
+                    with native_read_proof_scope():
+                        restored_head = session.get(BranchSavedRevisionModel, restore_saved_revision_id)
+                        reuse = nullcontext()
+                        after_graph = None
+                        if before_graph is not None and restored_head is not None:
+                            after_graph = actual_dependency_signature(session, restored_head, repository=self)
+                            reuse = reuse_verified_append_ancestors(
+                                self, before_graph, after_graph, run_id=run_id, branch_id=branch_id,
+                            )
+                        with reuse as verified_ancestors:
+                            working_draft, restored_state = self._viewer_branch_working_draft_in_session(
+                                session=session, run_id=run_id, branch_id=branch_id,
+                                include_revision_state=True,
+                            )
+                        if after_graph is not None and verified_ancestors:
+                            committed_ancestors = after_graph, verified_ancestors
+                except ValueError as exc:
+                    raise SavedRevisionRestoreConflictError(str(exc)) from exc
+                revision = restored_state.saved_revision
+                checkpoint_row = session.get(BranchSavedRevisionCheckpointModel, checkpoint_id)
+                audit_row = session.get(BranchRevisionAuditEventModel, audit_event_id)
+                if (
+                    revision.revision_id != restore_saved_revision_id
+                    or revision.content_hash != revision_hash
+                    or working_draft.status != CLEAN_WORKING_DRAFT_STATUS
+                    or working_draft.draft_version != expected_draft_version + 1
+                    or working_draft.current_viewer_branch_id != restored_viewer_branch_id
+                    or checkpoint_row is None
+                    or audit_row is None
+                ):
+                    raise SavedRevisionRestoreConflictError("Restore receipt could not be verified")
+                checkpoint = self._to_branch_saved_revision_checkpoint(checkpoint_row)
+                audit = self._to_branch_revision_audit_event(audit_row)
         except IntegrityError as exc:
             raise SavedRevisionRestoreIdentityConflictError(
                 "generated restore checkpoint, revision, or audit identity collided"
             ) from exc
 
-        checkpoint = self.get_branch_saved_revision_checkpoint(
-            checkpoint_id=checkpoint_id
-        )
-        revision = self.get_branch_saved_revision(revision_id=restore_saved_revision_id)
-        audit = self.get_branch_revision_audit_event(audit_event_id=audit_event_id)
-        if checkpoint is None or revision is None or audit is None:  # pragma: no cover
-            raise RuntimeError("Saved Revision restore result could not be reloaded")
+        if committed_ancestors is not None:
+            remember_committed_ancestor_proofs(self, *committed_ancestors)
         return BranchSavedRevisionRestoreResult(
             run_id=run_id,
             branch_id=branch_id,
@@ -5977,9 +6043,7 @@ class SimulationPersistenceRepository:
             viewer_branch_id=restored_viewer_branch_id,
             safety_checkpoint=checkpoint,
             saved_revision=revision,
-            working_draft=self.get_viewer_branch_working_draft(
-                run_id=run_id, branch_id=branch_id
-            ),
+            working_draft=working_draft,
             audit_event=audit,
         )
 
@@ -6948,11 +7012,13 @@ class SimulationPersistenceRepository:
                 run_id=run_id, branch_id=branch_id)
             # These exact models were strictly captured from actual live rows,
             # their complete payload passed math and physical origin gates, and
-            # the inserted row matched it before successful commit. Retain only
-            # an isolated DTO copy, keyed by the complete authenticated payload;
-            # subsequent independent readers still authenticate physical sources.
+            # the inserted row matched it before successful commit. Transfer
+            # these private models to the decode cache. The receipt holds the
+            # separate JSON payload and independent readers still verify and copy.
             from beta_engine.infrastructure.db.native_fork_source_projection import remember_committed_global_sources
-            remember_committed_global_sources(self, verified_native_save_receipt, captured_sources)
+            remember_committed_global_sources(
+                self, verified_native_save_receipt, captured_sources, _take_ownership=True,
+            )
             # Publish only immutable JSON values after the complete Save
             # transaction succeeds. No typed source/math proofs survive it.
             from beta_engine.infrastructure.db.calendar_tour import (

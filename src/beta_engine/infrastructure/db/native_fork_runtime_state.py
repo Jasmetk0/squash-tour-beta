@@ -28,6 +28,7 @@ KEY = "native_fork_runtime"
 SAVED_SCHEMA = "native_fork_saved_root.v2"
 DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
+_append_ancestor_proofs = ContextVar("append_ancestor_proofs", default=None)
 _MAX_DEPENDENCY_PROOFS = 256
 _MAX_DEPENDENCY_REFERENCE_HINTS = 4096
 _MAX_DEPENDENCY_REFERENCE_BYTES = 1024
@@ -77,6 +78,19 @@ def _invalidate_physical_read_cache(connection, cursor, statement, parameters, c
     memo[key] = memo.get(key, 0) + 1
 
 
+def _statement_may_change_snapshot(statement):
+    """Everything except a plain or function-nested SELECT counts as a change.
+
+    SQLite's trace reports statements run inside a user function (the Saved v2
+    reader's own node SELECTs) as ``-- <sql>``; a nested SELECT cannot change
+    this snapshot. Trigger bodies and any other statement still count.
+    """
+    text = statement.lstrip()
+    if text.startswith("-- "):
+        text = text[3:].lstrip()
+    return text[:6].upper() != "SELECT"
+
+
 def _physical_read_cache(session):
     """Reuse actual bytes only inside one unchanged SQLite read snapshot.
 
@@ -96,7 +110,7 @@ def _physical_read_cache(session):
         # direct driver savepoints/transactions cannot reuse an earlier snapshot.
         connection_info = sqlalchemy_connection.info
         def trace(statement):
-            if statement.lstrip()[:6].upper() != "SELECT":
+            if _statement_may_change_snapshot(statement):
                 # Connection-local, including calls from another Python context.
                 # Do not retain SQL text, parameters, rows or request objects.
                 connection_info["native_dependency_sqlite_generation"] = connection_info.get("native_dependency_sqlite_generation", 0) + 1
@@ -628,6 +642,9 @@ def actual_dependency_signature(session, revision, *, repository=None):
 def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):
     """A history walk must not evict the complete current-HEAD proof."""
     proof_key = _dependency_proof_key(signature)
+    scoped = _append_ancestor_proofs.get()
+    if scoped is not None and scoped[0] is repository and proof_key in scoped[1]:
+        return True
     with repository._revision_validation_lock:
         heads = getattr(repository, "_native_head_dependency_proofs", {})
         key = (run_id, branch_id)
@@ -685,6 +702,33 @@ def assert_global_save_append(before, after, *, run_id, branch_id, revision_id, 
             raise ValueError("Global Save changed an actual source HEAD")
     return tuple(row_id for row_id, (_digest, actual_owner) in new.items()
         if actual_owner and actual_owner[:2] == (branch_id, run_id))
+
+
+@contextmanager
+def reuse_verified_append_ancestors(repository, before, after, *, run_id, branch_id):
+    """Carry only already-proven ancestors across one exact uncommitted append."""
+    try:
+        owned = assert_global_save_append(
+            before, after, run_id=run_id, branch_id=branch_id,
+            revision_id=after[0], installed=True,
+        )
+    except ValueError:
+        yield ()  # A non-equivalent graph keeps the ordinary validation path.
+        return
+    ancestors = tuple(
+        revision_id
+        for revision_id in owned
+        if revision_id != after[0] and has_actual_dependency_proof(
+            repository, (revision_id, before[1], before[2]),
+            run_id=run_id, branch_id=branch_id,
+        )
+    )
+    keys = {_dependency_proof_key((revision_id, after[1], after[2])) for revision_id in ancestors}
+    token = _append_ancestor_proofs.set((repository, keys))
+    try:
+        yield ancestors
+    finally:
+        _append_ancestor_proofs.reset(token)
 
 
 def remember_committed_global_append(repository, signature, revision_ids, *, run_id, branch_id):

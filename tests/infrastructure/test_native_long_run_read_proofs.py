@@ -64,6 +64,45 @@ def plain(text_value):
     return hashlib.sha256(text_value.encode("utf-8")).digest()
 
 
+def test_restore_append_proofs_only_cover_verified_ancestors_in_scope():
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        has_actual_dependency_proof,
+        reuse_verified_append_ancestors,
+    )
+
+    owner = ("branch", "run", None, None, "active", False)
+    old_graph = (("first", "digest-1", owner), ("old", "digest-2", owner))
+    new_graph = old_graph + (("restored", "digest-3", owner),)
+    before = ("old", old_graph, (("branch", (*owner, "old")),))
+    after = ("restored", new_graph, (("branch", (*owner, "restored")),))
+    repository = SimpleNamespace(
+        _revision_validation_lock=threading.Lock(),
+        _native_dependency_proofs={_dependency_proof_key(before): True},
+    )
+
+    def covered(revision, graph=new_graph):
+        return has_actual_dependency_proof(
+            repository, (revision, graph, after[2]), run_id="run", branch_id="branch",
+        )
+
+    assert not covered("old")
+    with reuse_verified_append_ancestors(repository, before, after, run_id="run", branch_id="branch") as ancestors:
+        assert ancestors == ("old",)
+        assert covered("old")
+        assert not covered("first")  # Not verified in the original graph.
+        assert not covered("restored")  # The new revision must verify normally.
+        assert not covered("old", new_graph[1:])  # A different actual graph.
+    assert not covered("old")
+
+    changed_graph = (("first", "different-bytes", owner), *new_graph[1:])
+    with reuse_verified_append_ancestors(
+        repository, before, (after[0], changed_graph, after[2]), run_id="run", branch_id="branch",
+    ):
+        assert not covered("old", changed_graph)
+
+
 def without_scope(function, *args, **kwargs):
     """The original algorithm: no read scope, hence no snapshot memo at all."""
     token = _proofs.set(None)

@@ -47,11 +47,14 @@ def play_season_editions(server, ids):
 
 def run_to_season_end(server, width, visited=None):
     for week in range(5, width + 1):
-        execute(server, command(inspect(server), "transition", name=f"s-{inspect(server)['state']['week']['season_index']}-w{week}"))
+        view = inspect(server)
+        season = view["state"]["week"]["season_index"]
+        execute(server, command(view, "transition", name=f"s-{season}-w{week}"))
         save_tour(server)
         visit(server, visited)
-    name = f"season-end-{inspect(server)['state']['week']['season_index']}"
-    execute(server, command(inspect(server), "season-transition", name=name))
+    view = inspect(server)
+    season = view["state"]["week"]["season_index"]
+    execute(server, command(view, "season-transition", name=f"season-end-{season}"))
     save_tour(server)
     visit(server, visited)
 

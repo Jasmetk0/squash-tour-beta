@@ -268,6 +268,36 @@ def test_revision_validation_cache_keeps_no_payloads_and_returns_independent_rea
                for item in history.saved_revisions)
 
 
+@pytest.mark.pr_critical
+def test_history_page_reuses_verified_rows_and_keeps_exact_summaries(tmp_path, monkeypatch):
+    repository = _repository(f"sqlite:///{tmp_path / 'paged-history.db'}")
+    _create_run_and_fork(repository)
+    _save_twice_on_fork(repository)
+    service = RunSavedRevisionHistoryService(repository=repository)
+    full = service.list_history(run_id="run-one", branch_id="branch-two")
+
+    def reject_unneeded_decode(*args, **kwargs):
+        pytest.fail("history page decoded an already verified payload")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(
+            SimulationPersistenceRepository,
+            "_to_branch_saved_revision",
+            staticmethod(reject_unneeded_decode),
+        )
+        page = service.list_history(run_id="run-one", branch_id="branch-two", limit=2)
+        assert page.total_count == 3
+        assert page.next_before_sequence == 2
+        assert [item.change_summary for item in page.saved_revisions] == [
+            item.change_summary for item in full.saved_revisions[-2:]
+        ]
+    # The shared ancestor is older than the displayed page and still mandatory.
+    with repository._session_factory.begin() as session:
+        session.get(BranchSavedRevisionModel, "revision-one").change_summary_json = '{"bad":true}'
+    with pytest.raises(SavedRevisionHistoryConflictError):
+        service.list_history(run_id="run-one", branch_id="branch-two", limit=2)
+
+
 def _save_many(repository: SimulationPersistenceRepository, count: int) -> None:
     """Ordinary explicit Viewer-selection Saves on branch-two (real Saved rows)."""
     service = RunWorkingDraftService(

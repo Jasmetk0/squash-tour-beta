@@ -87,3 +87,40 @@ def test_saved_lifecycle_remap_rejects_wrong_source_scope():
             source_branch_id="other",
             target_branch_id="target",
         )
+
+
+def test_restore_retains_exact_lifecycle_prefix_and_rebuilds_the_tail(tmp_path):
+    from sqlalchemy import text
+
+    from beta_engine.infrastructure.db import DatabaseSettings, create_session_factory, create_sqlite_engine
+    from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
+    from beta_engine.infrastructure.db.player_lifecycle_state import (
+        capture_saved_lifecycle, get_lifecycle, put_lifecycle, restore_saved_lifecycle,
+    )
+
+    later, (first, second) = _source_payload()
+    earlier = {"content": {}}
+    engine = create_sqlite_engine(DatabaseSettings(url=f"sqlite:///{tmp_path / 'lifecycle.sqlite'}"))
+    PlayerLifecycleWeekStateModel.__table__.create(engine)
+    factory = create_session_factory(engine)
+    with factory.begin() as session:
+        put_lifecycle(session, first)
+        capture_saved_lifecycle(session, earlier, run_id="run", branch_id="source")
+        put_lifecycle(session, second)
+        session.execute(text("""
+            CREATE TRIGGER keep_first_week
+            BEFORE DELETE ON player_lifecycle_week_states
+            WHEN OLD.run_id = 'run' AND OLD.branch_id = 'source' AND OLD.week_ordinal = 0
+            BEGIN
+                SELECT RAISE(ABORT, 'unchanged lifecycle row was rewritten');
+            END
+        """))
+    with factory.begin() as session:
+        restore_saved_lifecycle(session, current_payload=later, target_payload=earlier,
+                                run_id="run", branch_id="source")
+        assert get_lifecycle(session, run_id="run", branch_id="source", week=first.week) == first
+        assert get_lifecycle(session, run_id="run", branch_id="source", week=second.week) is None
+        restore_saved_lifecycle(session, current_payload=earlier, target_payload=later,
+                                run_id="run", branch_id="source")
+        assert get_lifecycle(session, run_id="run", branch_id="source", week=second.week) == second
+    engine.dispose()

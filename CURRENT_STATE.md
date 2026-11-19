@@ -1,3 +1,71 @@
+# Saved v2 Restore performance checkpoint — 19 November 2026
+
+On hosted head `c9c7c21af`, Saved v2 W52 passed the complete two-season,
+Restore, follow-on Save and restart scenario. W61 and W80 completed both
+seasons and restarted, then reached the 120-second client deadline on the
+confirmed Restore (workflow `44475359182`). The retained W80 database showed
+that recapturing the restored Tour spent 40 seconds rereading its command
+origins. The Restore transaction already authenticated the selected target.
+Capture now uses that exact target as the Tour origin prefix while checking
+the live Run and Branch, receipt prefix, and actual canonical Draw and
+played-result origins. The new Saved revision still passes the same
+post-write verification before commit.
+
+On fresh copies of that 183-revision W80 database, the HTTP confirmation
+took 108.0 s before and 79.2 s after (27% faster). The capture phase took
+40.0 s and 8.9 s respectively. The candidate confirmed at the ordinary
+120-second POST deadline. The diagnostic gave the cold preview more time
+(198.9 s on the candidate). The old revision identities and hashes, the
+new revision hash, and both restored sporting and Tour values matched.
+80 focused tests and a dedicated Saved v2 HTTP regression passed locally.
+Full hosted acceptance remains required on the published tree.
+
+PR #1827 targets `buuk f82bd8198`. The hosted W52 and W61 cases on
+`4e6302193` completed both seasons and restarted, then exceeded the 120-second
+client limit on the confirmed Restore. The W52, W61 and W80 Saved v2 cases on
+`47397b218` all reproduced that same timeout after both seasons and restart.
+The standard matrix does not include this additional explicit Saved v2 Restore.
+
+The next hosted run on `0f46a76a` reproduced the confirmed Restore timeout
+at W52, W61 and W80 and retained all three pre-Restore SQLite fixtures
+(127, 145 and 183 revisions). The A/B writer diagnostic passed.
+
+Restore can now reuse an individually proved ancestor only when the actual
+dependency graph changes by the exact new append. The new row still gets the
+ordinary validator before commit. The temporary proofs are scoped to the
+operation and retained by the repository only after the commit succeeds.
+The verifier can take its matching command prefix from the independently
+authenticated target revision. It still checks current origins and reachability.
+The native snapshot is replayed once from the flushed row. With the initial
+ancestor-reuse change, the actual W52 fixture confirmed in 99.1 s locally
+under the unchanged 120 s timeout. All previous revision identities/hashes
+and the target sporting and Tour values matched.
+
+The follow-up verifies the actual flushed Restore revision and clean draft
+together before commit. A failed receipt validation now aborts the entire
+transaction. It encodes the restored payload once for both the new identity
+hash and storage. Restoring the live lifecycle only replaces the suffix after
+the byte-identical, freshly validated prefix. CI preserves a consistent copy of
+the synthetic pre-Restore database and the target ID on a failure after fixture
+creation, so the next Restore can be profiled without replaying both seasons.
+
+The earlier change validates the entire reachable lineage once while resolving
+the Restore inputs in each transaction and requests complete payloads only
+for the current head and selected target. Confirm still starts with
+`BEGIN IMMEDIATE` and independently checks the actual lineage, live state,
+expected draft version and viewer.
+
+One local HTTP/SQLite A/B pair used fresh copies of the same actual Saved v2
+two-season W6 database (37 revisions). Preview was 42.9 → 38.1 s and confirmed
+Restore was 68.3 → 55.3 s. Peak RSS was 2.63 → 1.88 GiB. The restored
+payloads hashed identically and the previous revision identities and hashes
+stayed equal. A targeted regression corrupts an unselected ancestor after a
+successful preview and requires confirmation to fail without publishing a
+checkpoint. These measurements cover Restore, and the final-head wide matrix
+remains required for W52/W61/W80 acceptance.
+
+---
+
 # Performance integration checkpoint — 17 November 2026 (unmerged candidate)
 
 Owner-merged baseline is still `buuk 320e4766ec8b` (#1802). Work's single

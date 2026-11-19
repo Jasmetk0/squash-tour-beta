@@ -5,6 +5,8 @@ from __future__ import annotations
 from sqlalchemy import CheckConstraint, Index, Integer, String, Text, UniqueConstraint, text
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
+from beta_engine.infrastructure.db.saved_v2_store import FORMAT as SAVED_V2_FORMAT
+from beta_engine.infrastructure.db.saved_v2_store import SavedPayloadText
 from beta_engine.infrastructure.db.checkpoint_boundaries import (
     BRANCH_CHECKPOINT_KIND_EVENT_COMPLETED,
     BRANCH_CHECKPOINT_KIND_INITIAL,
@@ -1228,11 +1230,46 @@ class BranchSavedRevisionModel(Base):
         String(16), nullable=False, default=CONTENT_HASH_ALGORITHM
     )
     content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
-    payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+    # DDL type is TEXT. SELECTs return the exact logical payload text; for Runs
+    # recorded as Saved v2 the stored value is a storage envelope that is
+    # materialized from authenticated nodes (see saved_v2_store.py).
+    payload_json: Mapped[str] = mapped_column(SavedPayloadText, nullable=False)
     change_summary_json: Mapped[str] = mapped_column(Text, nullable=False)
     created_at: Mapped[str] = mapped_column(
         String(32), nullable=False, server_default=text("CURRENT_TIMESTAMP")
     )
+
+
+class RunSavedStorageFormatModel(Base):
+    """Immutable, explicit Saved storage format of one Run, fixed at creation.
+
+    Absent row = the original inline ``run_saved_revision`` v1 storage. Existing
+    Runs are never given a row; there is no migration or re-signing.
+    """
+
+    __tablename__ = "run_saved_storage_formats"
+    __table_args__ = (
+        CheckConstraint(
+            f"storage_format = '{SAVED_V2_FORMAT}'",
+            name="ck_run_saved_storage_formats_format",
+        ),
+    )
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    storage_format: Mapped[str] = mapped_column(String(64), nullable=False)
+
+
+class SavedRevisionNodeModel(Base):
+    """Insert-only, Run-scoped content-addressed Saved v2 node (no cross-Run sharing)."""
+
+    __tablename__ = "saved_revision_nodes"
+    __table_args__ = (
+        CheckConstraint("length(digest) = 64", name="ck_saved_revision_nodes_digest"),
+    )
+
+    run_id: Mapped[str] = mapped_column(String(128), primary_key=True)
+    digest: Mapped[str] = mapped_column(String(64), primary_key=True)
+    body: Mapped[str] = mapped_column(Text, nullable=False)
 
 
 class RunPackageStateModel(Base):
@@ -1964,3 +2001,7 @@ class CalendarPlayerSportingCheckpointModel(Base):
     branch_id: Mapped[str] = mapped_column(String(128), primary_key=True)
     fingerprint: Mapped[str] = mapped_column(String(64), nullable=False)
     payload_json: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+# Saved v2 insert/immutability hooks need the mapped classes above.
+from beta_engine.infrastructure.db import saved_v2_hooks as _saved_v2_hooks  # noqa: E402,F401

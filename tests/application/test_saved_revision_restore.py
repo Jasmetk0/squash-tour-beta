@@ -4,7 +4,7 @@ from collections.abc import Callable, Iterator
 import json
 
 import pytest
-from sqlalchemy import event
+from sqlalchemy import event, text
 
 from beta_engine.application.run_branch_creation_service import (
     RunBranchCreationService,
@@ -343,6 +343,43 @@ def test_restore_is_scoped_and_rolls_back_a_late_write_failure(tmp_path) -> None
     assert (
         repository.get_branch_working_draft(branch_id="branch-one").draft_version == 2
     )
+
+
+@pytest.mark.pr_critical
+def test_restore_rolls_back_if_the_written_receipt_fails_integrity(tmp_path) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-receipt.db'}")
+    _run_with_saved_viewer_change(repository)
+    with repository._session_factory.begin() as session:
+        session.execute(text("""
+            CREATE TRIGGER corrupt_restore_receipt
+            AFTER INSERT ON branch_saved_revisions
+            WHEN NEW.revision_id = 'receipt-restore'
+            BEGIN
+                UPDATE branch_saved_revisions SET change_summary_json = '{}'
+                WHERE revision_id = NEW.revision_id;
+            END
+        """))
+    service = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory("receipt-checkpoint", "receipt-restore", "receipt-audit"),
+    )
+    with pytest.raises(SavedRevisionRestoreConflictError, match="integrity"):
+        service.restore_current_branch(
+            run_id="run-one",
+            branch_id="branch-one",
+            target_saved_revision_id="revision-one",
+            expected_head_saved_revision_id="revision-two",
+            expected_draft_version=2,
+            expected_current_viewer_branch_id="branch-two",
+            explicit_confirmation=True,
+        )
+    assert repository.get_branch_saved_revision(revision_id="receipt-restore") is None
+    assert repository.get_branch_saved_revision_checkpoint(checkpoint_id="receipt-checkpoint") is None
+    assert repository.get_branch_revision_audit_event(audit_event_id="receipt-audit") is None
+    state = repository.get_branch_revision_state(branch_id="branch-one")
+    assert state.saved_head_revision_id == "revision-two"
+    assert state.working_draft.draft_version == 2
+    assert repository.get_run_container(run_id="run-one").viewer_branch_id == "branch-two"
 
 
 def test_restore_fails_closed_for_state_not_captured_by_saved_revision(
@@ -715,6 +752,67 @@ def test_restore_preflight_returns_server_owned_expected_snapshot(tmp_path) -> N
     assert preview.draft_version == 2
     assert preview.current_viewer_branch_id == "branch-two"
     assert preview.target_viewer_branch_id == "branch-one"
+
+
+@pytest.mark.pr_critical
+def test_restore_checks_unselected_ancestor_after_preflight(tmp_path, monkeypatch) -> None:
+    repository = _repository(f"sqlite:///{tmp_path / 'restore-ancestors.db'}")
+    _run_with_saved_viewer_change(repository)
+    save_service = RunWorkingDraftService(
+        repository=repository,
+        id_factory=_id_factory("revision-three", "audit-two"),
+    )
+    draft = save_service.stage_viewer_branch(
+        run_id="run-one",
+        branch_id="branch-one",
+        viewer_branch_id="branch-one",
+        expected_draft_version=2,
+    )
+    save_service.save(
+        run_id="run-one", branch_id="branch-one", expected_draft_version=draft.draft_version
+    )
+    service = RunSavedRevisionRestoreService(
+        repository=repository,
+        id_factory=_id_factory(*(
+            f"{kind}-{attempt}"
+            for attempt in ("stale", "clean")
+            for kind in ("checkpoint", "restore", "audit")
+        )),
+    )
+    walks = []
+    validate_lineage = repository._validated_branch_revision_lineage_in_session
+
+    def track_walk(**kwargs):
+        walks.append(kwargs.get("payload_revision_ids"))
+        return validate_lineage(**kwargs)
+
+    monkeypatch.setattr(repository, "_validated_branch_revision_lineage_in_session", track_walk)
+    scope = dict(run_id="run-one", branch_id="branch-one", target_saved_revision_id="revision-one")
+    preview = service.preview_current_branch_restore(**scope)
+    assert preview.can_restore
+    restore_sources = frozenset({"revision-one", "revision-three"})
+    assert walks == [restore_sources]
+    confirmation = dict(
+        expected_head_saved_revision_id=preview.saved_head_revision_id,
+        expected_draft_version=preview.draft_version,
+        expected_current_viewer_branch_id=preview.current_viewer_branch_id,
+        explicit_confirmation=True,
+    )
+    with repository._session_factory.begin() as session:
+        unrelated = session.get(BranchSavedRevisionModel, "revision-two")
+        original_summary = unrelated.change_summary_json
+        unrelated.change_summary_json = '{"corrupt":true}'
+    with pytest.raises(SavedRevisionRestoreConflictError, match="integrity"):
+        service.restore_current_branch(**scope, **confirmation)
+    assert repository.get_branch_saved_revision_checkpoint(checkpoint_id="checkpoint-stale") is None
+
+    with repository._session_factory.begin() as session:
+        session.get(BranchSavedRevisionModel, "revision-two").change_summary_json = original_summary
+    walks.clear()
+    restored = service.restore_current_branch(**scope, **confirmation)
+    assert walks == [restore_sources, frozenset({restored.saved_revision.revision_id})]
+    assert restored.saved_revision.parent_revision_id == "revision-three"
+    assert restored.target_saved_revision_id == "revision-one"
 
 
 @pytest.mark.pr_critical

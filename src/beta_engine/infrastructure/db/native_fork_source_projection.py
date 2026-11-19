@@ -135,7 +135,7 @@ def _same_model_value(value, retained):
     return True
 
 
-def _retained_global_other(repository, cache, source, result):
+def _retained_global_other(repository, cache, source, result, *, _take_ownership=False):
     from pydantic import BaseModel
 
     evidence_key = None
@@ -152,13 +152,15 @@ def _retained_global_other(repository, cache, source, result):
         # component and scope. No source/math permission is retained here.
         if (isinstance(evidence, BaseModel) and type(result[0]) is type(evidence)
             and _same_model_value(result[0], evidence)):
-            tour, tour_hints = _copy_decoded_value(result[2])
+            tour, tour_hints = (result[2], {}) if _take_ownership else _copy_decoded_value(result[2])
             return (evidence, tour), {**hints, **tour_hints}, evidence_key
-    other, hints = _copy_decoded_value((result[0], result[2]))
+    other = (result[0], result[2])
+    other, hints = (other, {}) if _take_ownership else _copy_decoded_value(other)
     return other, hints, evidence_key
 
 
-def _decoded_global_source(repository, source, component, decode, *, _identity=None, retain_miss=True):
+def _decoded_global_source(repository, source, component, decode, *, _identity=None,
+                           retain_miss=True, _take_ownership=False):
     """Retain the full DTO contract through one shared checkpoint value.
 
     Both keys bind complete actual content and Run/Branch. The adapter is useful
@@ -186,7 +188,7 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
         else:
             value = None
     if value is not None:
-        return _copy_decoded_value(value, hints)[0]
+        return None if _take_ownership else _copy_decoded_value(value, hints)[0]
 
     result = decode(source)
     if not retain_miss:
@@ -198,7 +200,7 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
     if cp_size > MAX_GLOBAL_TOUR_BYTES:
         return result
     # Reuse the one private retained component, without copying it back out just
-    # to prime another entry. Never retain a caller's model by reference.
+    # to prime another entry. Ordinary readers receive their own private models.
     with repository._revision_validation_lock:
         known = cache.get(cp_key)
     checkpoint = result[1]
@@ -206,9 +208,11 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
         _checked_checkpoint(checkpoint, component, source.run_id, source.branch_id)
     cp_entry = known
     if cp_entry is None:
-        retained, hints = _copy_decoded_value(checkpoint)
+        retained, hints = (checkpoint, {}) if _take_ownership else _copy_decoded_value(checkpoint)
         cp_entry = (cp_size, retained, hints)
-    other, hints, evidence_key = _retained_global_other(repository, cache, source, result)
+    other, hints, evidence_key = _retained_global_other(
+        repository, cache, source, result, _take_ownership=_take_ownership,
+    )
     with repository._revision_validation_lock:
         # Concurrent equivalent readers may have installed the same value.
         # Whichever copy wins has identical complete content; no HEAD pointer
@@ -288,11 +292,13 @@ def decoded_global_tour_source(repository, source, decode, *, _retain_miss=True)
     return result
 
 
-def remember_committed_global_sources(repository, source, captured):
+def remember_committed_global_sources(repository, source, captured, *, _take_ownership=False):
     """Called ONLY after successful Save transaction exit and append proof.
 
     An oversize full payload still hands off a fitting checkpoint. No complete
     DTO is promised in that case, matching the original oversize fallback.
+    Only the Save coordinator may transfer private captured models that it
+    has never exposed and will not use again. Cache reads still copy them.
     """
     component = _global_component(source)
     if component is None:
@@ -304,7 +310,7 @@ def remember_committed_global_sources(repository, source, captured):
     size, _ = identity
     if size <= MAX_GLOBAL_TOUR_BYTES:
         _decoded_global_source(repository, source, component, lambda _source: captured,
-            _identity=identity)
+            _identity=identity, _take_ownership=_take_ownership)
     else:
         decoded_global_checkpoint_component(repository, component,
             run_id=source.run_id, branch_id=source.branch_id,

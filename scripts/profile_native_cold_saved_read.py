@@ -17,7 +17,10 @@ import sqlite3
 import subprocess
 import sys
 import time
+from itertools import count
 from pathlib import Path
+from urllib.parse import quote
+from uuid import NAMESPACE_URL, uuid5
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
@@ -28,7 +31,7 @@ from scripts.profile_native_save import (
     open_artifact,
     workspace_path,
 )
-from tests.api.test_calendar_tour_flow import command, inspect, tour_url
+from tests.api.test_calendar_tour_flow import command
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
 
@@ -36,6 +39,9 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--root', required=True, type=measurement_root)
     parser.add_argument('--input', type=workspace_path)
+    parser.add_argument('--run-id', default='run')
+    parser.add_argument('--branch-id', default='branch')
+    parser.add_argument('--action', choices=('transition', 'season-transition'), default='transition')
     parser.add_argument('--mode', choices=('timing', 'calls', 'profile'), default='timing')
     parser.add_argument('--read-only', action='store_true')
     parser.add_argument('--direct-profile', action='store_true',
@@ -65,24 +71,37 @@ def main(argv=None):
                          ('fastapi', 'pydantic', 'sqlalchemy', 'uvicorn')},
         'argv': argv if argv is not None else sys.argv[1:],
     }
+    from beta_engine.api import deps
+
+    # The application still allocates IDs normally through its factory. Give
+    # the disposable A/B runs the same IDs so complete DTOs can be compared.
+    ids = count()
+    original_uuid4 = deps.uuid4
+    deps.uuid4 = lambda: uuid5(
+        NAMESPACE_URL, f"saved-read-profile:{metadata['database_sha256_before_open']}:{next(ids)}",
+    )
     counts, profiles = observers(args.mode, args.root)
     phases = []
     failure = None
     try:
         with ApiServer(database_url=f'sqlite:///{database}') as server:
             repository = server.app.state.runtime.repository
+            url = (f'{server.base_url}/admin/runs/{quote(args.run_id, safe="")}'
+                   f'/branches/{quote(args.branch_id, safe="")}/calendar-tour')
             if args.direct_profile:
                 from beta_engine.application.calendar_tour_service import (
                     CalendarTourService,
                 )
                 def read():
-                    value = CalendarTourService(repository).inspect(run_id='run', branch_id='branch')
+                    value = CalendarTourService(repository).inspect(run_id=args.run_id, branch_id=args.branch_id)
                     # Compare the complete JSON DTO on both sides of restart,
                     # as the actual HTTP route does (tuples become JSON arrays).
                     return json.loads(json.dumps(value))
             else:
                 def read():
-                    return inspect(server)
+                    status, view = _request('GET', url)
+                    assert status == 200, view
+                    return view
 
             def phase(label, operation):
                 before = {key: dict(value) for key, value in counts.items()}
@@ -115,17 +134,18 @@ def main(argv=None):
                 with open_artifact(args.root, 'before.json') as stream:
                     json.dump(view, stream, sort_keys=True)
                 if not args.read_only:
-                    cmd = command(view, 'transition', name='cold-saved-performance-transition')
+                    assert view['saved']
+                    cmd = command(view, args.action, name='cold-saved-performance-transition')
 
                     def preview():
-                        status, response = _request('POST', tour_url(server) + '/preview', cmd)
+                        status, response = _request('POST', url + '/preview', cmd)
                         assert status == 200, response
                         return response
 
                     review = phase('continuation_preview', preview)
 
                     def execute():
-                        status, response = _request('POST', tour_url(server) + '/execute?include_inspection=true', {
+                        status, response = _request('POST', url + '/execute?include_inspection=true', {
                             'command': cmd, 'expected_preview_fingerprint': review['preview_fingerprint'],
                             'explicit_confirmation': True,
                         })
@@ -136,7 +156,7 @@ def main(argv=None):
                     view = phase('continuation_execute_and_inspection', execute)
 
                     def save():
-                        status, receipt = _request('POST', tour_url(server) + '/save', {
+                        status, receipt = _request('POST', url + '/save', {
                             'expected_draft_version': view['draft_version'],
                             'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
                         })
@@ -146,7 +166,7 @@ def main(argv=None):
                         return receipt
 
                     phase('save', save)
-                    view = phase('saved_get', lambda: inspect(server))
+                    view = phase('saved_get', read)
                     assert view['saved']
                 with open_artifact(args.root, 'expected.json') as stream:
                     json.dump(view, stream, sort_keys=True)
@@ -154,6 +174,7 @@ def main(argv=None):
         failure = {'type': type(exc).__name__, 'message': str(exc)}
         raise
     finally:
+        deps.uuid4 = original_uuid4
         with open_artifact(args.root, 'restart.json' if args.restart_child else 'timings.json') as stream:
             json.dump({'metadata': metadata, 'phases': phases, 'failure': failure}, stream, indent=2)
         for index, (name, profile) in enumerate(profiles):
@@ -166,6 +187,7 @@ def main(argv=None):
     if not args.restart_child:
         child = multiprocessing.get_context('spawn').Process(target=main, args=([
             f'--root={args.root}', f'--mode={args.mode}', '--restart-child',
+            f'--run-id={args.run_id}', f'--branch-id={args.branch_id}', f'--action={args.action}',
             *(['--read-only'] if args.read_only else []),
             *(['--direct-profile'] if args.direct_profile else []),
         ],))

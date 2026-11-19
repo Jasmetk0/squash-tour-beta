@@ -735,7 +735,8 @@ class CalendarTourService:
         from beta_engine.application.calendar_native_groups import inspect_groups
         if state:
             transition_blockers = self._transition_blockers(
-                state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
+                state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint,
+                _verified_lifecycle=lifecycle,
             )
             season_transition_blockers = self._season_blockers_from_week(
                 transition_blockers, ctx
@@ -1209,7 +1210,8 @@ class CalendarTourService:
 
     @staticmethod
     def _transition_blockers(
-        state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False
+        state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False,
+        _verified_lifecycle=None,
     ):
         clock, _rev, _world, health, cp, _saved, _evidence = ctx
         blockers = []
@@ -1274,11 +1276,18 @@ class CalendarTourService:
                             season_index=position.season_index,
                             week=position.season_week,
                         )
-                        life = get_lifecycle(
-                            session,
-                            run_id=state.run_id,
-                            branch_id=state.branch_id,
-                            week=cp.week,
+                        # The Tour inspection already read this exact current
+                        # lifecycle under the same SQLite snapshot. Do not
+                        # decode it again for the birth-readiness predicate.
+                        life = (
+                            _verified_lifecycle
+                            if _verified_lifecycle is not None
+                            else get_lifecycle(
+                                session,
+                                run_id=state.run_id,
+                                branch_id=state.branch_id,
+                                week=cp.week,
+                            )
                         )
                         build_calendar_prospect_birth_event(
                             predecessor=life,

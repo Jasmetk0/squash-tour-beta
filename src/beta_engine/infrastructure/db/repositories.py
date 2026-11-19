@@ -5655,6 +5655,7 @@ class SimulationPersistenceRepository:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore player sporting state: {exc}"
                         ) from exc
+                restored_tour_source = None
                 if (
                     CALENDAR_MATCH_COMPONENT_KEY in current_content
                     or CALENDAR_MATCH_COMPONENT_KEY in target_content
@@ -5670,7 +5671,7 @@ class SimulationPersistenceRepository:
                             decode_prevalidated_calendar_sources,
                         )
 
-                        source_pair = (
+                        source_pair = tuple(
                             decode_prevalidated_calendar_sources(
                                 saved_payload, run_id=run_id, branch_id=branch_id
                             )
@@ -5684,8 +5685,9 @@ class SimulationPersistenceRepository:
                             current_payload=state.saved_revision.payload,
                             target_payload=target_revision.payload,
                             run_id=run_id, branch_id=branch_id,
-                            _validated_saved_sources=tuple(source_pair),
+                            _validated_saved_sources=source_pair,
                         )
+                        restored_tour_source = source_pair[1][2]
                     except ValueError as exc:
                         raise SavedRevisionRestoreUnsupportedError(
                             f"Cannot restore calendar standalone match: {exc}"
@@ -5746,6 +5748,7 @@ class SimulationPersistenceRepository:
                         branch.forked_from_saved_revision_id
                     ),
                     viewer_branch_id=restored_viewer_branch_id,
+                    _stored_json_copy=True,
                 )
                 # A historical target can carry an older horizon. Restored content
                 # remains historical, while the *new* current head must use the
@@ -5821,6 +5824,10 @@ class SimulationPersistenceRepository:
                 capture_saved_calendar_match(
                     session, payload, run_id=run_id, branch_id=branch_id,
                     _defer_full_verification=native_birth_restore,
+                    # The target's actual Saved authorities already passed the
+                    # physical lineage gate. capture_tour still compares the
+                    # complete live prefix and checks the current origin rows.
+                    _authenticated_tour_prefix=restored_tour_source,
                 )
                 # A deferred native capture is validated from the actual
                 # flushed row below, while the whole Restore can still roll back.

@@ -106,6 +106,32 @@ def test_saved_v2_phase_reports_child_exit_without_a_message():
         _in_fresh_process(os._exit, 17)
 
 
+def test_saved_v2_restore_recaptures_tour_with_the_authenticated_target(tmp_path, monkeypatch):
+    from beta_engine.infrastructure.db import calendar_tour
+
+    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "saved_v2")
+    path = tmp_path / "restore-tour-prefix.sqlite"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repository = wide.ready(server, 6)
+        target_id = _lineage(path)[-2][0]
+        target = repository.get_branch_saved_revision(revision_id=target_id)
+        target_tour = target.payload["content"][calendar_tour.COMPONENT_KEY]
+        capture = calendar_tour.capture_tour
+        prefixes = []
+
+        def track_capture(*args, **kwargs):
+            prefixes.append(kwargs["_authenticated_prefix"])
+            return capture(*args, **kwargs)
+
+        monkeypatch.setattr(calendar_tour, "capture_tour", track_capture)
+        restored = restore(server, target_id)
+        assert restored["payload"]["content"][calendar_tour.COMPONENT_KEY] == target_tour
+        assert len(prefixes) == 1
+        assert prefixes[0] is not None
+        assert prefixes[0].schema_version == "calendar_tour_authority.v5"
+        assert prefixes[0].fingerprint == target_tour["fingerprint"]
+
+
 def _scenario(directory, width):
     # Unchanged acceptance scenario: all Saves, archive/comparison, extension, restart.
     wide.test_two_closed_seasons_archive_compare_extend_and_restart(Path(directory), width)

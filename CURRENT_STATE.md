@@ -1,5 +1,25 @@
 # Saved v2 Restore performance checkpoint — 19 November 2026
 
+On hosted head `c9c7c21af`, Saved v2 W52 passed the complete two-season,
+Restore, follow-on Save and restart scenario. W61 and W80 completed both
+seasons and restarted, then reached the 120-second client deadline on the
+confirmed Restore (workflow `44475359182`). The retained W80 database showed
+that recapturing the restored Tour spent 40 seconds rereading its command
+origins. The Restore transaction already authenticated the selected target.
+Capture now uses that exact target as the Tour origin prefix while checking
+the live Run and Branch, receipt prefix, and actual canonical Draw and
+played-result origins. The new Saved revision still passes the same
+post-write verification before commit.
+
+On fresh copies of that 183-revision W80 database, the HTTP confirmation
+took 108.0 s before and 79.2 s after (27% faster). The capture phase took
+40.0 s and 8.9 s respectively. The candidate confirmed at the ordinary
+120-second POST deadline. The diagnostic gave the cold preview more time
+(198.9 s on the candidate). The old revision identities and hashes, the
+new revision hash, and both restored sporting and Tour values matched.
+80 focused tests and a dedicated Saved v2 HTTP regression passed locally.
+Full hosted acceptance remains required on the published tree.
+
 PR #1827 targets `buuk f82bd8198`. The hosted W52 and W61 cases on
 `4e6302193` completed both seasons and restarted, then exceeded the 120-second
 client limit on the confirmed Restore. The W52, W61 and W80 Saved v2 cases on

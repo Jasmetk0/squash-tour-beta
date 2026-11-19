@@ -67,7 +67,11 @@ def lifecycle_schema_version(raw):
     try:
         return _LIFECYCLE_VERSION_PROJECTION.validate_json(raw).get("schema_version")
     except (TypeError, ValueError):
-        return json.loads(raw).get("schema_version")
+        # Preserve the old JSON-mode validator for a non-object root. A list
+        # (or null) was previously routed into the legacy model, which rejected
+        # it as a ValueError; do not turn that into AttributeError / HTTP 500.
+        value = json.loads(raw)
+        return value.get("schema_version") if isinstance(value, dict) else None
 
 
 def _parse_lifecycle_json(raw):

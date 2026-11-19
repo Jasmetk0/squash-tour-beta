@@ -93,3 +93,60 @@ def test_slot_index_legacy_events_fallback():
         NS(number=5, accepted=()),
     ))
     assert CalendarTourService._global_match_slot_index(checkpoint) == {"legacy": 4}
+
+
+@pytest.mark.parametrize("reuse", [False, True])
+def test_readiness_reuses_authenticated_lifecycle_within_same_snapshot(monkeypatch, reuse):
+    """Only the expensive lifecycle DB decode is skipped; birth replay still runs."""
+    from beta_engine.application import calendar_tour_service as module
+    from beta_engine.domain.players import calendar_prospect_birth
+    from beta_engine.infrastructure.db import run_prospect_source_state
+
+    position = NS(week=9, season_index=0, ordinal=9)
+    clock = NS(weeks_per_year=52, season_count=2,
+               position_at_ordinal=lambda ordinal: NS(season_index=0, season_week=ordinal+1))
+    checkpoint = NS(week=position, fingerprint="same-checkpoint")
+    state = NS(run_id="run", branch_id="branch", editions=(),
+               checkpoint_fingerprint="same-checkpoint")
+    payload = {"run": "run"}
+    owner = NS(saved_revision=NS(payload=payload))
+    world = NS(world_package_id="world")
+    ctx = (clock, owner, world, None, checkpoint, None, None)
+    already_read = object()
+    calls = {"load": 0, "birth": 0}
+
+    class Session:
+        def __init__(self):
+            self.queries = 0
+
+        def scalar(self, statement):
+            self.queries += 1
+            # Current Run has native prospects; no staged ranking corrections.
+            return "a-prospect" if self.queries == 1 else None
+
+    def load_lifecycle(*, session, run_id, branch_id, week):
+        assert (run_id, branch_id, week) == ("run", "branch", position)
+        calls["load"] += 1
+        return already_read
+
+    def birth_event(*, predecessor, target, source, world_package_id):
+        assert predecessor is already_read
+        assert target.ordinal == 10
+        assert world_package_id == "world"
+        calls["birth"] += 1
+
+    monkeypatch.setattr(module, "get_lifecycle", load_lifecycle)
+    monkeypatch.setattr(module, "RunWeekPosition", lambda **kw: NS(ordinal=kw["week"]))
+    monkeypatch.setattr(
+        run_prospect_source_state, "validate_live_run_prospect_source_against_saved",
+        lambda session, payload, *, run_id: NS(for_week=lambda week: ("births", week)),
+    )
+    monkeypatch.setattr(calendar_prospect_birth, "build_calendar_prospect_birth_event",
+                        birth_event)
+
+    blockers = CalendarTourService._transition_blockers(
+        state, ctx, Session(),
+        **({"_verified_lifecycle": already_read} if reuse else {}),
+    )
+    assert blockers == ["saved_health_baseline_missing"]
+    assert calls == {"load": 0 if reuse else 1, "birth": 1}

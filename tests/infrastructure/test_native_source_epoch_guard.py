@@ -105,6 +105,13 @@ def test_lifecycle_schema_projection_preserves_invalid_json_failure():
         lifecycle_schema_version,
     )
 
-    for raw in ("{missing", "null", "[]", "[1, 2]", '"not an object"'):
-        with pytest.raises((TypeError, ValueError, AttributeError)):
-            lifecycle_schema_version(raw)
+    from beta_engine.infrastructure.db.player_lifecycle_state import _parse_lifecycle_json
+
+    # Broken JSON still fails parsing. Valid JSON with a non-object root still
+    # routes to the legacy model, whose complete validation rejects it.
+    with pytest.raises(ValueError):
+        lifecycle_schema_version("{missing")
+    for raw in ("null", "[]", "[1, 2]", '"not an object"'):
+        assert lifecycle_schema_version(raw) is None
+        with pytest.raises(ValueError):
+            _parse_lifecycle_json(raw)

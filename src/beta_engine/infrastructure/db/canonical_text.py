@@ -272,14 +272,28 @@ class CanonicalTextProofs:
         self._lock = Lock()
         self._entries = []  # [(scope, ProvenCanonicalText)], most recent last
 
+    def lookup(self, text):
+        """Return an existing exact-text proof without validating a new text."""
+        if not isinstance(text, str):
+            return None
+        with self._lock:
+            return self._find(text, self._entries)
+
+    @staticmethod
+    def _find(text, entries):
+        for _, proof in reversed(entries):
+            if proof.text is text or (len(proof.text) == len(text) and proof.text == text):
+                return proof
+        return None
+
     def prove(self, text, *, scope):
         if not isinstance(text, str):
             return None
         with self._lock:
             entries = list(self._entries)
-        for _, proof in reversed(entries):
-            if proof.text is text or (len(proof.text) == len(text) and proof.text == text):
-                return proof
+        known = self._find(text, entries)
+        if known is not None:
+            return known
         reference = next((proof for s, proof in reversed(entries) if s == scope), None)
         proof = verify_canonical_text(text, reference)
         if proof is None:

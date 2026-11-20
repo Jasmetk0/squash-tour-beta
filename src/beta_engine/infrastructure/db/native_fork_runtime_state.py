@@ -426,7 +426,10 @@ def _proven_dependency_branches(row):
     raw = row[9]
     if type(raw) is not str or len(raw) < 64 * 1024:
         return None  # small rows: the original projection parse is cheap
-    proof = PROOFS.prove(raw, scope=row[1])
+    # The cold graph walk discovers parents newest-first, while full validation
+    # uses oldest-first. Routing alone only needs two fields, so avoid proving
+    # entire rows here and evicting those proofs before full validation can use them.
+    proof = PROOFS.lookup(raw)
     if proof is None or proof.layout.keys is None:
         return None
     content = proof.layout.keys.get("content")

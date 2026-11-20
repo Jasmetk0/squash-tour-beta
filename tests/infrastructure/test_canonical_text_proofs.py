@@ -164,15 +164,52 @@ def test_memory_bound_keeps_at_most_the_configured_references(monkeypatch):
     assert len(proofs._entries) == 2
 
 
-def test_single_oversized_proof_is_validated_without_retaining_its_text(monkeypatch):
+def test_oversized_proof_is_retained_only_among_the_newest_references(monkeypatch):
+    # A Saved lineage walk proves neighbouring revisions in turn; each needs its
+    # predecessor as reference even when one text alone exceeds the budget.
+    # Memory stays bounded by RETAINED_MINIMUM newest texts beyond the budget.
     monkeypatch.setattr(canonical_text, "MAX_REFERENCE_CHARACTERS", 32)
     proofs = CanonicalTextProofs()
     small = canonical_json({"a": 1})
     large = canonical_json({"a": "x" * 64})
     known = proofs.prove(small, scope="small")
-    assert proofs.prove(large, scope="large").text == large
-    assert proofs._entries == [("small", known)]
+    oversized = proofs.prove(large, scope="large")
+    assert oversized.text == large
+    assert proofs._entries == [("small", known), ("large", oversized)]
     assert proofs.prove(large.replace(":", ": ", 1), scope="large") is None
+    newer = [proofs.prove(canonical_json({"b": "y" * (64 + n)}), scope="large") for n in range(2)]
+    assert [proof for _, proof in proofs._entries] == newer
+    assert len(proofs._entries) == canonical_text.RETAINED_MINIMUM
+
+
+def test_operation_scope_reuses_one_proof_per_exact_string(monkeypatch):
+    calls = []
+    original = canonical_text.verify_canonical_text
+    monkeypatch.setattr(canonical_text, "verify_canonical_text",
+                        lambda text, reference=None: calls.append(text) or original(text, reference))
+    monkeypatch.setattr(canonical_text, "MAX_REFERENCES", 1)
+    monkeypatch.setattr(canonical_text, "RETAINED_MINIMUM", 1)
+    proofs = CanonicalTextProofs()
+    texts = [canonical_json(big_doc(n)) for n in range(1, 4)]
+    with canonical_text.operation_proof_scope():
+        first = [proofs.prove(text, scope="run") for text in texts]
+        # Evicted from the bounded process cache, still the same proof inside
+        # the operation for the SAME string object, without re-verification.
+        assert [proofs.prove(text, scope="run") for text in texts] == first
+        assert len(calls) == 3
+        # An equal but distinct string is not an identity hit: it is verified.
+        copy = "".join(list(texts[0]))
+        assert copy is not texts[0]
+        assert proofs.prove(copy, scope="run").text is copy
+        assert len(calls) == 4
+        tampered = texts[0].replace(":", ": ", 1)
+        assert proofs.prove(tampered, scope="run") is None
+        assert len(calls) == 5
+    # Outside the scope only the bounded process cache remains (its newest
+    # entry is the equal copy, an exact-character hit).
+    assert proofs.prove(texts[0], scope="run").text is copy
+    assert proofs.prove(texts[1], scope="run").text is texts[1]
+    assert len(calls) == 6
 
 
 def test_reference_text_budget_evicts_old_entries_across_scopes(monkeypatch):

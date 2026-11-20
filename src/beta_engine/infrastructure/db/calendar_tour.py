@@ -621,13 +621,23 @@ def _origin_projection(payload, *, with_health=False):
     }
 
 
+# One read walk's private origin projections. Every revision's origin check
+# revisits the played-head source of EVERY Edition plus its predecessors. With a
+# budget below that working set (W9: seven ~5 MB Tour projections against 32 MB),
+# LRU evicted each entry just before its next use and every check fully decoded
+# a 100 MB source payload again. Retained values are JSON text only.
+_MAX_WALK_ORIGIN_PROJECTION_BYTES = 256 * 1024 * 1024
+_MAX_WALK_ORIGIN_PROJECTIONS = 256
+
+
 def _retain_origin_projection(cache, key, projection):
     encoded = json.dumps(projection)
     size = len(encoded.encode('utf-8'))
-    if size <= 32 * 1024 * 1024:
+    if size <= _MAX_WALK_ORIGIN_PROJECTION_BYTES:
         cache.pop(key, None)
         cache[key] = (size, encoded)
-        while len(cache) > 128 or sum(v[0] for v in cache.values()) > 32 * 1024 * 1024:
+        while (len(cache) > _MAX_WALK_ORIGIN_PROJECTIONS
+               or sum(v[0] for v in cache.values()) > _MAX_WALK_ORIGIN_PROJECTION_BYTES):
             cache.pop(next(iter(cache)))
 
 

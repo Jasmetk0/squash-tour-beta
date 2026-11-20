@@ -720,6 +720,18 @@ def completed_tournaments(events, *, owner=None):
         if any(m is None for m in ordered):
             continue
         first = next(e for e in slots if any(s.edition_id == eid for s in e.scheduled))
+        # One completed knockout is a pure function of exactly these immutable
+        # inputs. Every successor checkpoint of a replay has a new slot tuple,
+        # so the whole-ledger memo above missed on each slot and re-derived and
+        # re-validated every earlier tournament (quadratic in the history).
+        # Reuse within this projection scope only, keyed by the identities of
+        # the same objects, which the entry keeps alive.
+        edition_memo = scope.setdefault("completed_knockouts", {}) if scope is not None else None
+        edition_key = (eid, id(a), tuple(id(m) for m in ordered), id(first), owner)
+        known = edition_memo.get(edition_key) if edition_memo is not None else None
+        if known is not None:
+            result.append(known[1])
+            continue
         source = next(
             s.source_saved_head for s in first.scheduled if s.edition_id == eid
         )
@@ -761,9 +773,14 @@ def completed_tournaments(events, *, owner=None):
         # ledger. Validate the derived bracket and its typed fields without a
         # JSON round trip that reparses every rally in every historical week.
         # The slot command verifier still independently replays MatchEngine.
-        result.append(model.model_validate({
+        validated = model.model_validate({
             key: getattr(event, key) for key in model.model_fields
-        }))
+        })
+        if edition_memo is not None:
+            edition_memo[edition_key] = ((a, ordered, first), validated)
+            while len(edition_memo) > 4096:
+                edition_memo.pop(next(iter(edition_memo)))
+        result.append(validated)
     result = tuple(result)
     if scope is not None:
         # Keep slot references so Python cannot recycle their identities while

@@ -2,6 +2,8 @@
 
 import hashlib
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 from beta_engine.domain.run_revisions import BRANCH_RESTORE_SAVED_REVISION_KIND
 from beta_engine.infrastructure.db.calendar_tour import (
@@ -11,6 +13,28 @@ from beta_engine.infrastructure.db.calendar_tour import (
 )
 from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+
+# The sporting event log of a global-slot Saved payload; it only grows.
+_EVENT_LOG_PATH = ('content', 'calendar_player_sporting_checkpoint', 'state', 'events')
+_cold_lineage_decodes = ContextVar('cold_lineage_shared_decodes', default=None)
+
+
+@contextmanager
+def cold_lineage_shared_decodes():
+    """Oldest-first cold validation: decode each revision reusing its predecessor's log.
+
+    Only the repository's cold prevalidation walk opens this scope. Within it,
+    a routing decode requested for a metadata-only validation (whose decoded
+    payload is discarded after its gates) may reuse unchanged event-log item
+    values decoded for the previous revision; see decode_sharing_items. Values
+    are retained for one step only and never leave the scope.
+    """
+    token = _cold_lineage_decodes.set({'previous': None}) if _cold_lineage_decodes.get() is None else None
+    try:
+        yield
+    finally:
+        if token is not None:
+            _cold_lineage_decodes.reset(token)
 
 
 def verify_saved_global_origins(
@@ -180,15 +204,36 @@ def verify_saved_global_origins(
                 remember_verified_origin_projection(physical, revision.payload, cache)
 
 
-def is_global_slot_row(row, *, repository=None, _decoded_out=None):
-    """Routing only; malformed data still receives the ordinary strict verifier."""
+def _shared_decode(row, shared):
+    """Exactly ``json.loads(row.payload_json)``, sharing unchanged log items (read-only)."""
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, decode_sharing_items
+
+    text = row.payload_json
+    proof = PROOFS.prove(text, scope=row.run_id) if type(text) is str and len(text) >= 1024 * 1024 else None
+    if proof is None:
+        shared['previous'] = None
+        return json.loads(text)
+    value = decode_sharing_items(proof, _EVENT_LOG_PATH, shared['previous'])
+    shared['previous'] = (proof, value)
+    return value
+
+
+def is_global_slot_row(row, *, repository=None, _decoded_out=None, _share_decode=False):
+    """Routing only; malformed data still receives the ordinary strict verifier.
+
+    ``_share_decode`` (only meaningful inside cold_lineage_shared_decodes) lets
+    the decode handed to ``_decoded_out`` share unchanged event-log items with
+    the previous revision's decode. The caller must use that payload read-only
+    and discard it after validation.
+    """
     signature = row_text_sha256(row, 'payload_json')
     if repository is not None:
         with repository._revision_validation_lock:
             hints = getattr(repository, '_global_kind_hints', {})
             if signature in hints:
                 return hints[signature]
-    value = json.loads(row.payload_json)
+    shared = _cold_lineage_decodes.get() if _decoded_out is not None and _share_decode else None
+    value = _shared_decode(row, shared) if shared is not None else json.loads(row.payload_json)
     if _decoded_out is not None:
         _decoded_out['value'] = (row.payload_json, value)
     for key in ("content", "calendar_tour_authority", "state"):

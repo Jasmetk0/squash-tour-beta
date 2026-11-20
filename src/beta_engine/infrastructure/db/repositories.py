@@ -2636,7 +2636,11 @@ class SimulationPersistenceRepository:
             # unexpected mixed-owner component; they never certify a source.
             decoded_value = ({'value': _decoded_payload} if _decoded_payload is not None
                 and _decoded_payload[0] == model.payload_json else {})
-            global_slots = is_global_slot_row(model, repository=self, _decoded_out=decoded_value)
+            global_slots = is_global_slot_row(model, repository=self, _decoded_out=decoded_value,
+                # The routing decode feeds only this validation's gates when no
+                # payload is returned and no native-root record is memoized.
+                _share_decode=not materialize_payload
+                    and model.payload_schema_version != NATIVE_FORK_PAYLOAD_SCHEMA)
             if model.payload_schema_version == "native_fork_saved_root.v2" or global_slots:
                 from beta_engine.infrastructure.db.native_fork_runtime_state import (
                     actual_dependency_signature,
@@ -2907,6 +2911,7 @@ class SimulationPersistenceRepository:
         if session.new or session.dirty or session.deleted:
             return  # never flush or reorder a writer's pending unit of work
         from beta_engine.infrastructure.db.calendar_global_slot_origins import is_global_slot_row
+        from beta_engine.infrastructure.db.native_fork_runtime_state import retain_saved_model
 
         head_signature = _saved_revision_validation_signature(head_model)
         with self._revision_validation_lock:
@@ -2923,7 +2928,7 @@ class SimulationPersistenceRepository:
                 if parent_id in seen:
                     return  # the ordinary walk reports the cycle
                 seen.add(parent_id)
-                model = session.get(BranchSavedRevisionModel, parent_id)
+                model = retain_saved_model(session, session.get(BranchSavedRevisionModel, parent_id))
                 if model is None or model.run_id != head_model.run_id:
                     return  # the ordinary walk reports the missing/foreign parent
                 signature = _saved_revision_validation_signature(model)
@@ -2975,7 +2980,14 @@ class SimulationPersistenceRepository:
                 sporting_component_proofs=sporting_component_proofs,
             )
             del model
-        # 2. The ordinary validator, oldest unproven ancestor first.
+        # 2. The ordinary validator, oldest unproven ancestor first. Each
+        #    metadata-only validation may decode its payload sharing the event
+        #    log items unchanged since its predecessor (read-only, this loop).
+        from beta_engine.infrastructure.db.calendar_global_slot_origins import cold_lineage_shared_decodes
+        with cold_lineage_shared_decodes():
+            self._prevalidate_unproven_oldest_first(session, unproven, sporting_component_proofs)
+
+    def _prevalidate_unproven_oldest_first(self, session, unproven, sporting_component_proofs):
         for revision_id in reversed(unproven):
             model = session.get(BranchSavedRevisionModel, revision_id)
             if model is None:
@@ -4393,8 +4405,13 @@ class SimulationPersistenceRepository:
                 from beta_engine.infrastructure.db.canonical_text import PROOFS as _canonical_text_proofs
                 # ``payload`` was decoded from exactly these stored characters
                 # just above; the proof lets component hashes use their spans.
+                # Without any replay evidence the check below returns False
+                # before reading a proof, so do not prove (and, for a cold HEAD,
+                # fully re-encode) the text only to discard the result.
+                replay_evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get(
+                    '_global_replayed_values')
                 payload_proof = (_canonical_text_proofs.prove(model.payload_json, scope=model.run_id)
-                    if isinstance(model.payload_json, str) else None)
+                    if replay_evidence and isinstance(model.payload_json, str) else None)
                 if not has_replayed_global_components(payload, sporting_component_proofs,
                                                       _payload_proof=payload_proof):
                     load_saved_calendar_match(

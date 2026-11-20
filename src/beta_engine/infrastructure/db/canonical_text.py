@@ -33,6 +33,8 @@ from __future__ import annotations
 
 import hashlib
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from json.decoder import scanstring
 from json.encoder import encode_basestring_ascii
 from threading import Lock
@@ -44,6 +46,8 @@ MAX_DEPTH = 8
 # Bounded process memory for reference texts kept alive between validations.
 MAX_REFERENCE_CHARACTERS = 96 * 1024 * 1024
 MAX_REFERENCES = 4
+# Always retain this many newest proofs, whatever their size (see prove()).
+RETAINED_MINIMUM = 2
 
 _decoder = json.JSONDecoder()
 
@@ -260,6 +264,26 @@ def verify_canonical_text(text, reference=None):
     return ProvenCanonicalText(_TOKEN, text, layout if layout is not None else Layout(0, end))
 
 
+# Proofs of THIS operation's texts, by the identity of the exact string object.
+# A lineage walk proves every Saved revision, while the process cache above
+# retains only the newest few. Entries of the operation's own scope keep each
+# proof (and thus its string) until the scope ends, so several gates of one read
+# reuse it instead of verifying the same characters again. A hit is the same
+# ``str`` object whose characters this module proved: never a hash/identifier.
+_operation_proofs = ContextVar("canonical_text_operation_proofs", default=None)
+
+
+@contextmanager
+def operation_proof_scope():
+    """Retain proofs of texts proven inside this (outermost) operation only."""
+    token = _operation_proofs.set({}) if _operation_proofs.get() is None else None
+    try:
+        yield
+    finally:
+        if token is not None:
+            _operation_proofs.reset(token)
+
+
 class CanonicalTextProofs:
     """Process cache of texts PROVEN canonical, held as the actual strings.
 
@@ -275,25 +299,38 @@ class CanonicalTextProofs:
     def prove(self, text, *, scope):
         if not isinstance(text, str):
             return None
+        operation = _operation_proofs.get()
+        if operation is not None:
+            known = operation.get(id(text))
+            if known is not None and known[1].text is text:
+                return known[1]
         with self._lock:
             entries = list(self._entries)
         for _, proof in reversed(entries):
             if proof.text is text or (len(proof.text) == len(text) and proof.text == text):
+                if operation is not None:
+                    operation[id(text)] = (scope, proof)
                 return proof
         reference = next((proof for s, proof in reversed(entries) if s == scope), None)
         proof = verify_canonical_text(text, reference)
         if proof is None:
             return None
-        # A single large Saved payload must not make the process cache exceed
-        # its entire text budget. The caller still receives the same proof for
-        # this operation; only retaining it between operations is unnecessary.
-        if len(text) > MAX_REFERENCE_CHARACTERS:
-            return proof
+        if operation is not None:
+            operation[id(text)] = (scope, proof)
         with self._lock:
             self._entries = [e for e in self._entries if e[1].text is not text]
             self._entries.append((scope, proof))
-            while self._entries and (len(self._entries) > MAX_REFERENCES or
-                sum(len(e[1].text) for e in self._entries) > MAX_REFERENCE_CHARACTERS):
+            # The most recent proofs stay usable as references even when one
+            # Saved payload alone exceeds the character budget. A lineage walk
+            # proves neighbouring revisions in turn; without the predecessor
+            # every large text had to be decoded and re-encoded completely
+            # (W9: ~35 s for one 122 M-character HEAD versus ~1 s with its
+            # parent). The bound is the budget or the RETAINED_MINIMUM newest
+            # texts, whichever is larger; a reference is only a comparison input.
+            while len(self._entries) > RETAINED_MINIMUM and (
+                len(self._entries) > MAX_REFERENCES
+                or sum(len(e[1].text) for e in self._entries) > MAX_REFERENCE_CHARACTERS
+            ):
                 self._entries.pop(0)
         return proof
 
@@ -350,3 +387,67 @@ def composite_canonical_hash(members):
             return None
         parts.append(json.dumps(key, ensure_ascii=False) + ":" + text)
     return hashlib.sha256(("{" + ",".join(parts) + "}").encode("utf-8")).hexdigest()
+
+
+def _layout_at(layout, path):
+    node = layout
+    for key in path:
+        if node is None or node.keys is None:
+            return None
+        node = node.keys.get(key)
+    return node
+
+
+def _value_at(value, path):
+    for key in path:
+        if type(value) is not dict:
+            return None
+        value = value.get(key)
+    return value
+
+
+def decode_sharing_items(proof, path, previous):
+    """``json.loads(proof.text)``, reusing items of one large array unchanged since ``previous``.
+
+    A Saved history stores each revision as a complete snapshot, while its large
+    event log only grows. Decoding every revision decodes the same items again
+    and again. Here ``proof`` proves ``proof.text`` canonical; the array at
+    ``path`` (object keys only) is therefore one complete JSON value whose items
+    are complete values at their recorded spans. ``previous`` is
+    ``(previous_proof, previous_value)`` where ``previous_value`` is the
+    unmodified ``json.loads`` result of ``previous_proof.text``. An item whose
+    exact characters equal the previous text's item at the same index decodes to
+    an equal value, so that value object is reused; every other character is
+    decoded by ``json.loads``. The result equals ``json.loads(proof.text)``.
+
+    The returned value SHARES the reused item objects with ``previous_value``:
+    the caller must treat both as read-only and must not expose either.
+    """
+    text = proof.text
+    node = _layout_at(proof.layout, path)
+    if previous is None or node is None or node.items is None or not node.items:
+        return json.loads(text)
+    previous_proof, previous_value = previous
+    old = _layout_at(previous_proof.layout, path)
+    old_items = _value_at(previous_value, path)
+    if (old is None or old.items is None or type(old_items) is not list
+            or len(old_items) != len(old.items)):
+        return json.loads(text)
+    old_text = previous_proof.text
+    items = []
+    for index, item in enumerate(node.items):
+        if index < len(old.items):
+            span = old.items[index]
+            if (span.end - span.start == item.end - item.start
+                    and text.startswith(old_text[span.start:span.end], item.start)):
+                items.append(old_items[index])
+                continue
+        items.append(json.loads(text[item.start:item.end]))
+    # The array is a complete value inside canonical text: replacing exactly its
+    # span by an empty array leaves valid JSON with every other value unchanged.
+    value = json.loads(text[:node.start] + "[]" + text[node.end:])
+    parent = _value_at(value, path[:-1])
+    if type(parent) is not dict or parent.get(path[-1]) != []:
+        return json.loads(text)
+    parent[path[-1]] = items
+    return value

@@ -47,8 +47,6 @@ MAX_DEPTH = 8
 # Bounded process memory for reference texts kept alive between validations.
 MAX_REFERENCE_CHARACTERS = 96 * 1024 * 1024
 MAX_REFERENCES = 4
-# Always retain this many newest proofs, whatever their size (see prove()).
-RETAINED_MINIMUM = 2
 
 _decoder = json.JSONDecoder()
 
@@ -348,23 +346,23 @@ class CanonicalTextProofs:
                 if operation is not None:
                     operation[id(text)] = (scope, proof)
                 return proof
-        reference = next((proof for s, proof in reversed(entries) if s == scope), None)
+        references = operation.setdefault("references", {}) if operation is not None else None
+        reference = references.get(scope) if references is not None else None
+        if reference is None:
+            reference = next((proof for s, proof in reversed(entries) if s == scope), None)
         proof = verify_canonical_text(text, reference)
         if proof is None:
             return None
         if operation is not None:
             operation[id(text)] = (scope, proof)
+            # Preserve a large predecessor for the duration of this walk only.
+            references[scope] = proof
+        if len(text) > MAX_REFERENCE_CHARACTERS:
+            return proof
         with self._lock:
             self._entries = [e for e in self._entries if e[1].text is not text]
             self._entries.append((scope, proof))
-            # The most recent proofs stay usable as references even when one
-            # Saved payload alone exceeds the character budget. A lineage walk
-            # proves neighbouring revisions in turn; without the predecessor
-            # every large text had to be decoded and re-encoded completely
-            # (W9: ~35 s for one 122 M-character HEAD versus ~1 s with its
-            # parent). The bound is the budget or the RETAINED_MINIMUM newest
-            # texts, whichever is larger; a reference is only a comparison input.
-            while len(self._entries) > RETAINED_MINIMUM and (
+            while self._entries and (
                 len(self._entries) > MAX_REFERENCES
                 or sum(len(e[1].text) for e in self._entries) > MAX_REFERENCE_CHARACTERS
             ):

@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 
 from pydantic_core import SchemaValidator, core_schema
-from sqlalchemy import event as sqlalchemy_event
+from sqlalchemy import event as sqlalchemy_event, inspect as sqlalchemy_inspect
 from sqlalchemy.engine import Engine
 
 from beta_engine.application.calendar_tour_service import CalendarTourCommit
@@ -172,12 +172,18 @@ def _remember_snapshot_loaded_row(target, context):
     cache = _physical_read_cache(session)
     if cache is None:
         return
-    key = (target.run_id, target.revision_id)
+    attributes = sqlalchemy_inspect(target).dict
+    field_names = tuple(field.key for field in _physical_revision_fields())
+    if any(name not in attributes for name in field_names):
+        return  # An ORM projection may defer some of the physical fields.
+    key = (attributes["run_id"], attributes["revision_id"])
     if key in cache["revisions"] or key in cache.get("unreferenced_revisions", {}):
         # The physical reader already holds these bytes; keeping this second
         # copy alive would only double the snapshot's memory.
         return
-    cache.setdefault("loaded_rows", {})[key] = target
+    # The object itself can later be changed without marking the session dirty
+    # (e.g. set_committed_value). Record what SQLite supplied at load time.
+    cache.setdefault("loaded_rows", {})[key] = tuple(attributes[name] for name in field_names)
     cache.setdefault("retained_models", {})[key] = target
 
 
@@ -601,13 +607,8 @@ def actual_dependency_signature(session, revision, *, repository=None):
         key = (revision.run_id, revision_id)
         if key in unreferenced:
             return unreferenced[key]
-        loaded = (read_cache.get("loaded_rows", {}).get(key) if read_cache is not None else None)
-        if loaded is not None and session.identity_map.get(
-                (BranchSavedRevisionModel, (revision_id,), None)) is loaded:
-            # Loaded from the database in this same unchanged snapshot (see
-            # _remember_snapshot_loaded_row): exactly the bytes a SELECT returns.
-            row = tuple(getattr(loaded, field.key) for field in fields)
-        else:
+        row = read_cache.get("loaded_rows", {}).get(key) if read_cache is not None else None
+        if row is None:
             actual = session.execute(
                 select(*fields).where(
                     BranchSavedRevisionModel.run_id == revision.run_id,

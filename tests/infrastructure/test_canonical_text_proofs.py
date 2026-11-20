@@ -164,22 +164,21 @@ def test_memory_bound_keeps_at_most_the_configured_references(monkeypatch):
     assert len(proofs._entries) == 2
 
 
-def test_oversized_proof_is_retained_only_among_the_newest_references(monkeypatch):
-    # A Saved lineage walk proves neighbouring revisions in turn; each needs its
-    # predecessor as reference even when one text alone exceeds the budget.
-    # Memory stays bounded by RETAINED_MINIMUM newest texts beyond the budget.
+def test_oversized_predecessor_is_reused_only_inside_the_operation(monkeypatch):
     monkeypatch.setattr(canonical_text, "MAX_REFERENCE_CHARACTERS", 32)
     proofs = CanonicalTextProofs()
     small = canonical_json({"a": 1})
     large = canonical_json({"a": "x" * 64})
     known = proofs.prove(small, scope="small")
-    oversized = proofs.prove(large, scope="large")
-    assert oversized.text == large
-    assert proofs._entries == [("small", known), ("large", oversized)]
-    assert proofs.prove(large.replace(":", ": ", 1), scope="large") is None
-    newer = [proofs.prove(canonical_json({"b": "y" * (64 + n)}), scope="large") for n in range(2)]
-    assert [proof for _, proof in proofs._entries] == newer
-    assert len(proofs._entries) == canonical_text.RETAINED_MINIMUM
+    newer = canonical_json({"a": "x" * 64, "b": 1})
+    with canonical_text.operation_proof_scope():
+        oversized = proofs.prove(large, scope="large")
+        assert proofs.prove(newer, scope="large").reference() is oversized
+        assert proofs.lookup(large) is oversized
+        assert proofs.prove(large.replace(":", ": ", 1), scope="large") is None
+    assert proofs.lookup(large) is None
+    assert proofs.lookup(newer) is None
+    assert proofs._entries == [("small", known)]
 
 
 def test_operation_scope_reuses_one_proof_per_exact_string(monkeypatch):
@@ -188,7 +187,6 @@ def test_operation_scope_reuses_one_proof_per_exact_string(monkeypatch):
     monkeypatch.setattr(canonical_text, "verify_canonical_text",
                         lambda text, reference=None: calls.append(text) or original(text, reference))
     monkeypatch.setattr(canonical_text, "MAX_REFERENCES", 1)
-    monkeypatch.setattr(canonical_text, "RETAINED_MINIMUM", 1)
     proofs = CanonicalTextProofs()
     texts = [canonical_json(big_doc(n)) for n in range(1, 4)]
     with canonical_text.operation_proof_scope():

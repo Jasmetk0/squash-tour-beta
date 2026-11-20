@@ -1,3 +1,19 @@
+# Cold Saved v2 Tour read at W9 — 20 November 2026
+
+PR #1834 independently verified the first Tour read after restarting with
+1,000 initial players and 53 Saved revisions from the retained W9 SQLite
+fixture. The reviewed engine tree completed two fresh reads in 99.1 and
+100.6 seconds at the ordinary 120-second HTTP deadline. Both complete
+responses matched the recorded state. Saved row reuse captures the values
+supplied by SQLite inside the current snapshot, and oversized canonical
+predecessor proofs are retained only for the current operation.
+
+The earlier same-host A/B in #1834 measured 236.0 and 241.5 seconds on
+the base. The W10 diagnostic on Claude's earlier head still exceeded
+120 seconds in four of seven explicit Saves. The next performance target
+is the repeated history materialization during Save. Full hosted acceptance
+and W9 timing on the hosted runner remain to be verified.
+
 # Saved v2 Restore performance checkpoint — 19 November 2026
 
 On hosted head `c9c7c21af`, Saved v2 W52 passed the complete two-season,

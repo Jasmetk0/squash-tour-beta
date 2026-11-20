@@ -137,7 +137,7 @@ def test_raw_math_proof_binds_actual_components_complete_histories_and_source_sc
         content[key] = {'states': states, 'fingerprint': canonical_hash(states)}
     identity = tuple(content[key]['fingerprint'] for key in (
         'calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
-    proofs = {'_prefixes': {'_global_replayed_values': {identity: _raw_global_inputs(payload)}}}
+    proofs = {'_prefixes': {'_global_replayed_values': {identity: (_raw_global_inputs(payload),)}}}
     assert has_replayed_global_components(payload, proofs)
     for target in ('world', 'calendar', 'calendar_origin', 'branch', 'history', 'checkpoint'):
         changed = deepcopy(payload)
@@ -185,7 +185,7 @@ def test_ordered_value_comparison_never_collapses_json_types_or_authorizes_math(
     identity = tuple(payload['content'][name]['fingerprint'] for name in (
         'calendar_player_sporting_checkpoint', 'calendar_tour_authority'))
     proofs = {'_prefixes': {
-        '_global_replayed_values': {identity: storage._raw_global_inputs(payload)},
+        '_global_replayed_values': {identity: (storage._raw_global_inputs(payload),)},
         '_global_checkpoint_json_values': {identity[0]: hashlib.sha256(to_json(cp, inf_nan_mode='constants')).digest()},
     }}
     original = storage.canonical_hash

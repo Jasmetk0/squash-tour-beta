@@ -421,3 +421,16 @@ def test_rows_loaded_in_the_same_snapshot_are_reused_but_older_loads_are_reread(
             session.rollback()
     finally:
         event.remove(engine, "before_cursor_execute", count)
+
+
+def test_in_memory_committed_value_does_not_replace_sqlite_snapshot(source):
+    from sqlalchemy.orm.attributes import set_committed_value
+
+    _, factory = source
+    with factory() as session, native_read_proof_scope():
+        session.execute(text("BEGIN"))
+        row = session.get(BranchSavedRevisionModel, "saved")
+        set_committed_value(row, "change_summary_json", '{"different":true}')
+        assert not session.dirty
+        with pytest.raises(ValueError, match="actual stored bytes"):
+            actual_dependency_signature(session, row)

@@ -3006,8 +3006,8 @@ class SimulationPersistenceRepository:
             )
             del model
         # 2. The ordinary validator, oldest unproven ancestor first. Each
-        #    metadata-only validation may decode its payload sharing the event
-        #    log items unchanged since its predecessor (read-only, this loop).
+        #    metadata-only validation may decode its payload sharing the values
+        #    unchanged since its predecessor (read-only, this loop only).
         from beta_engine.infrastructure.db.calendar_global_slot_origins import cold_lineage_shared_decodes
         with cold_lineage_shared_decodes():
             self._prevalidate_unproven_oldest_first(session, unproven, sporting_component_proofs)
@@ -4441,9 +4441,9 @@ class SimulationPersistenceRepository:
                 # just above; the proof lets component hashes use their spans.
                 # Without any replay evidence the check below returns False
                 # before reading a proof, so do not prove (and, for a cold HEAD,
-                # fully re-encode) the text only to discard the result.
-                # A complete replay uses an EXISTING proof of exactly these
-                # characters (never a new one) for its span hashes.
+                # fully re-encode) the text only to discard the result; the
+                # complete replay then uses only an EXISTING proof of exactly
+                # these characters for its span hashes.
                 replay_evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get(
                     '_global_replayed_values')
                 payload_proof = (_canonical_text_proofs.prove(model.payload_json, scope=model.run_id)

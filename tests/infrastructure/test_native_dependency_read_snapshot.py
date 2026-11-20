@@ -390,3 +390,34 @@ def test_oversized_dependency_reference_hint_is_not_retained():
     row = (None, None, 'branch', None, None, None, None, None, None, raw)
     assert _dependency_references(repo, row, 'fresh-digest') == (branch,)
     assert not getattr(repo, '_native_dependency_reference_hints', {})
+
+
+def test_rows_loaded_in_the_same_snapshot_are_reused_but_older_loads_are_reread(source):
+    engine, factory = source
+    payload_reads = []
+
+    def count(_connection, _cursor, statement, _parameters, _context, _many):
+        if (statement.lstrip().upper().startswith("SELECT") and "branch_saved_revisions" in statement
+                and "payload_json" in statement):
+            payload_reads.append(statement)
+
+    event.listen(engine, "before_cursor_execute", count)
+    try:
+        with factory() as session, native_read_proof_scope():
+            session.execute(text("BEGIN IMMEDIATE"))
+            row = session.get(BranchSavedRevisionModel, "saved")  # an actual read now
+            loads = len(payload_reads)
+            first = actual_dependency_signature(session, row)
+            # The dependency reader took exactly the bytes the ORM just read in
+            # this unchanged snapshot instead of materializing them again.
+            assert len(payload_reads) == loads
+            assert actual_dependency_signature(session, row) == first
+            # A write changes the snapshot: the earlier ORM load is no longer
+            # evidence of the current bytes, so they are selected and compared.
+            rewrite_source(session, "Changed after the ORM load")
+            with pytest.raises(ValueError, match="actual stored bytes"):
+                actual_dependency_signature(session, row)
+            assert len(payload_reads) > loads
+            session.rollback()
+    finally:
+        event.remove(engine, "before_cursor_execute", count)

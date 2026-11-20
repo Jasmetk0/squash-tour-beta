@@ -135,10 +135,10 @@ def retain_saved_model(session, model):
     SQLAlchemy's identity map is weak. A lineage walk dropped each row after use,
     so every later ``Session.get`` of the same revision selected, materialized
     and copied its complete payload text again (W9: ~8 full reads of each of 53
-    revisions, 23 GB of text in one cold Tour read). The retained object is the
-    row the session itself loaded in this snapshot; this neither validates it
-    nor replaces any physical gate (``assert_current_saved_row`` and the
-    dependency reader still compare it with freshly selected actual bytes). The
+    revisions, 23 GB of text in one cold Tour read). Retaining an object neither
+    validates it nor replaces any gate: the dependency reader reuses only a row
+    the ORM actually loaded from SQLite in this same unchanged snapshot (see
+    _remember_snapshot_loaded_row) and selects every other row afresh. The
     reference disappears with the snapshot cache on any change or scope exit.
     """
     if model is None:

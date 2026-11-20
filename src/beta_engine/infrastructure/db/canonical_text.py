@@ -391,31 +391,29 @@ def _non_ascii_free(text):
     return "\\u" not in text
 
 
-_ascii_lock = Lock()
-_ascii_slot = [None, None]  # [text, its ASCII bytes]: the most recent text only
-
-
 def proven_ascii_bytes(proof):
     """The UTF-8 (= ASCII) bytes of a proven canonical text, encoded once.
 
     A canonical encoding uses ASCII escapes only, so a proven text is ASCII and
     its character offsets are byte offsets. Several gates of one revision hash
-    the whole text and large spans of it; they share one encoding instead of
-    copying the same characters for every digest. Only the latest text's bytes
-    are retained. Returns None for any text that is not ASCII.
+    the whole text and large spans of it; inside one operation scope they share
+    one encoding of the most recent text instead of copying the same characters
+    for every digest. Nothing is retained outside an operation scope. Returns
+    None for any text that is not ASCII.
     """
     if type(proof) is not ProvenCanonicalText:
         raise TypeError("proven_ascii_bytes requires a ProvenCanonicalText")
     text = proof.text
-    with _ascii_lock:
-        if _ascii_slot[0] is text:
-            return _ascii_slot[1]
+    operation = _operation_proofs.get()
+    slot = operation.setdefault("ascii_bytes", [None, None]) if operation is not None else None
+    if slot is not None and slot[0] is text:
+        return slot[1]
     try:
         data = text.encode("ascii")
     except UnicodeEncodeError:
         return None
-    with _ascii_lock:
-        _ascii_slot[0], _ascii_slot[1] = text, data
+    if slot is not None:
+        slot[0], slot[1] = text, data
     return data
 
 

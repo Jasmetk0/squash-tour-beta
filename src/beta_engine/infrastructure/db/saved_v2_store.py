@@ -200,6 +200,20 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         if known_root[0] != expected_chars:
             raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
         return "".join(known_root[1])
+    nodes = authenticated_nodes(fetch, run_id=run_id, root=root, verified=verified)
+    return _materialize_nodes(nodes, root=root, expected_chars=expected_chars,
+                              on_value_node=on_value_node, derived=derived)
+
+
+def authenticated_nodes(fetch, *, run_id, root, verified=None):
+    """Fetch every node reachable from ``root`` and authenticate its ACTUAL body.
+
+    Each body returned by ``fetch`` (rows of this Run only) must hash to its own
+    digest; a missing, foreign or changed node raises. ``verified`` has the
+    meaning described in ``materialize``. Returns {digest: parsed node}; a node
+    whose subtree has a derived value of the same snapshot is not descended.
+    """
+    derived = getattr(verified, "derived", None)
     nodes, pending = {}, [root]
     while pending:
         batch, following = [], []
@@ -233,6 +247,10 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
         if len(nodes) > MAX_NODES:
             raise SavedV2IntegrityError("v2 node graph is too large")
         pending = following
+    return nodes
+
+
+def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
     # Sizes and piece counts bottom-up with cycle and depth detection (iterative
     # post-order). A node with a derived value of this snapshot is a closed leaf.
     sizes, counts, state = {}, {}, {}
@@ -890,6 +908,108 @@ def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None, state=
     if cache is not None:
         cache.remember_text(key, text)
     return text
+
+
+class TextDigestIndex:
+    """Bounded process memo: (Run, root, chars) -> SHA-256 of the materialized text.
+
+    Not an authority. An entry only records which digest the exact text had when
+    it was materialized from nodes that ALL hashed to their own digests. It is
+    used only after ``stored_text_sha256`` has fetched and re-hashed every node
+    reachable from that root from actual SQLite bytes in the CURRENT snapshot:
+    a node is content-addressed (its digest commits to its body and therefore to
+    its children), so those identical authenticated bodies determine the same
+    text. Any missing, foreign or changed node fails closed; a different root,
+    size or Run is a different key. Nothing else is retained.
+    """
+
+    def __init__(self, max_entries=8192):
+        self._lock = threading.Lock()
+        self._entries = OrderedDict()
+        self._max = max_entries
+
+    def get(self, run_id, root, chars):
+        with self._lock:
+            digest = self._entries.get((run_id, root, chars))
+            if digest is not None:
+                self._entries.move_to_end((run_id, root, chars))
+            return digest
+
+    def remember(self, run_id, root, chars, digest):
+        if type(digest) is not bytes or len(digest) != 32:
+            return
+        with self._lock:
+            self._entries.pop((run_id, root, chars), None)
+            self._entries[(run_id, root, chars)] = digest
+            while len(self._entries) > self._max:
+                self._entries.popitem(last=False)
+
+    def clear(self):
+        with self._lock:
+            self._entries.clear()
+
+
+TEXT_DIGESTS = TextDigestIndex()
+
+
+def stored_envelope(dbapi_connection, run_id, stored, *, state=None):
+    """(root, chars) of a v2 envelope row, None for a v1 row of a v1 Run.
+
+    The same routing and fail-closed rules as ``read_payload``: an inline row of
+    a v2 Run or an envelope in a v1 Run raises.
+    """
+    if type(run_id) is not str:
+        raise SavedV2IntegrityError("Saved row has no Run identity")
+    is_envelope = type(stored) is str and stored.startswith(ENVELOPE_PREFIX)
+    v2 = run_is_v2(dbapi_connection, run_id, snapshot_cache(dbapi_connection, state))
+    if not is_envelope:
+        if v2:
+            raise SavedV2IntegrityError("v2 Run contains an inline (downgraded) Saved payload")
+        return None
+    if not v2:
+        raise SavedV2IntegrityError("v1 Run contains a v2 Saved storage envelope")
+    return parse_envelope(stored, run_id=run_id)
+
+
+def stored_text_sha256(dbapi_connection, run_id, stored, *, state=None):
+    """SHA-256 of the exact logical text of one stored v2 row, or None.
+
+    Returns a digest only when this process already hashed the text of the same
+    (Run, root, size) AND every node reachable from that root is present in
+    this Run now, in this connection's current snapshot, with a body that hashes
+    to its digest (re-fetched; shared with the snapshot's verified node cache).
+    None means: materialize and hash the text the ordinary way.
+    """
+    envelope = stored_envelope(dbapi_connection, run_id, stored, state=state)
+    if envelope is None:
+        return None
+    root, chars = envelope
+    digest = TEXT_DIGESTS.get(run_id, root, chars)
+    if digest is None:
+        return None
+    cache = snapshot_cache(dbapi_connection, state)
+    try:
+        authenticated_nodes(connection_fetch(dbapi_connection), run_id=run_id, root=root,
+                            verified=_RunView(cache, run_id) if cache is not None else None)
+    except Exception:
+        bump_snapshot(state)
+        raise
+    return digest
+
+
+def remember_text_sha256(run_id, stored, text, digest):
+    """Record sha256(text) for a v2 envelope ``stored`` whose verified read gave ``text``.
+
+    The caller must have obtained ``text`` from the verified reader for exactly
+    this ``stored`` envelope inside one unchanged snapshot, and ``digest`` must be
+    the SHA-256 it computed of that text. A non-envelope or size mismatch is not
+    recorded.
+    """
+    if type(stored) is not str or not stored.startswith(ENVELOPE_PREFIX) or type(text) is not str:
+        return
+    root, chars = parse_envelope(stored, run_id=run_id)
+    if len(text) == chars:
+        TEXT_DIGESTS.remember(run_id, root, chars, digest)
 
 
 def _sql_saved_v2_payload(dbapi_connection, state):

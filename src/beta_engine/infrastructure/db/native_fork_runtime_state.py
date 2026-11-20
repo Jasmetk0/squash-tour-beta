@@ -551,6 +551,26 @@ def _dependency_references(repository, row, digest):
     return result
 
 
+def _actual_branch_owner(session, run_id, branch_id):
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db.models import RunBranchModel
+
+    fields = (
+        RunBranchModel.branch_id, RunBranchModel.run_id,
+        RunBranchModel.forked_from_branch_id, RunBranchModel.forked_from_saved_revision_id,
+        RunBranchModel.status, RunBranchModel.read_only, RunBranchModel.saved_head_revision_id,
+    )
+    row = session.execute(
+        select(*fields).where(RunBranchModel.run_id == run_id, RunBranchModel.branch_id == branch_id)
+    ).first()
+    actual = tuple(row) if row is not None else None
+    loaded = session.identity_map.get((RunBranchModel, (branch_id,), None))
+    if loaded is not None and actual != tuple(getattr(loaded, field.key) for field in fields):
+        raise ValueError("Native Branch owner differs from its actual stored bytes")
+    return actual
+
+
 def actual_dependency_signature(session, revision, *, repository=None):
     """Exact physical dependency graph, rebuilt before any cross-read proof reuse.
 
@@ -560,8 +580,6 @@ def actual_dependency_signature(session, revision, *, repository=None):
     Only successfully completed proofs enter the bounded repository cache.
     """
     from sqlalchemy import select
-
-    from beta_engine.infrastructure.db.models import RunBranchModel
 
     fields = _physical_revision_fields()
     memo = _proofs.get()
@@ -574,30 +592,7 @@ def actual_dependency_signature(session, revision, *, repository=None):
     def actual_owner(branch_id):
         key = (revision.run_id, branch_id)
         if key not in owners:
-            row = session.execute(
-                select(
-                    RunBranchModel.branch_id,
-                    RunBranchModel.run_id,
-                    RunBranchModel.forked_from_branch_id,
-                    RunBranchModel.forked_from_saved_revision_id,
-                    RunBranchModel.status,
-                    RunBranchModel.read_only,
-                    RunBranchModel.saved_head_revision_id,
-                ).where(
-                    RunBranchModel.run_id == revision.run_id,
-                    RunBranchModel.branch_id == branch_id,
-                )
-            ).first()
-            owners[key] = tuple(row) if row is not None else None
-            loaded = session.identity_map.get((RunBranchModel, (branch_id,), None))
-            if loaded is not None and (
-                row is None or tuple(getattr(loaded, name) for name in (
-                    "branch_id", "run_id", "forked_from_branch_id",
-                    "forked_from_saved_revision_id", "status", "read_only",
-                    "saved_head_revision_id",
-                )) != tuple(row)
-            ):
-                raise ValueError("Native Branch owner differs from its actual stored bytes")
+            owners[key] = _actual_branch_owner(session, revision.run_id, branch_id)
         return owners[key]
 
     unreferenced = read_cache.setdefault("unreferenced_revisions", {}) if read_cache is not None else {}
@@ -743,6 +738,48 @@ def actual_dependency_signature(session, revision, *, repository=None):
             encoded[id(sorted_graph)] = (sorted_graph, known_graph[2])
             encoded[id(sorted_heads)] = (sorted_heads, known_graph[3])
     return (revision.revision_id, known_graph[0], known_graph[1])
+
+
+def install_verified_global_save_head(session, branch, revision, staged, staged_proofs, *, repository):
+    """Install a staged HEAD and recheck its physical dependency graph.
+
+    The staged graph already contains the new row and its prior HEAD parent.
+    If actual SQLite reports a single statement and row change, and the row
+    changed is exactly this Branch pointer, its only new graph edge targets the
+    already verified new row. Any other statement, trigger, side effect, dirty
+    input or snapshot change retains the ordinary complete physical reread.
+    """
+    memo = _proofs.get()
+    snapshot_key = ("native_dependency_physical_rows", session)
+    before = None
+    verified_row = None
+    if snapshot_proofs(session) is staged_proofs:
+        before, rows = memo[snapshot_key]
+        key = (revision.run_id, revision.revision_id)
+        row = rows["revisions"].get(key)
+        verified_row = row[0] if row is not None else None
+        del rows
+
+    branch.saved_head_revision_id = revision.revision_id
+    session.flush()
+    if before is not None and verified_row is not None and _physical_read_cache(session) is not None:
+        after = memo[snapshot_key][0]
+        if after[:3] == before[:3] and after[3:] == tuple(value + 1 for value in before[3:]):
+            fields = _physical_revision_fields()
+            if tuple(getattr(revision, field.key) for field in fields) != verified_row:
+                raise ValueError("Native Saved row differs from its actual stored bytes")
+            heads = dict(staged[2])
+            previous = heads.get(branch.branch_id)
+            current = _actual_branch_owner(session, branch.run_id, branch.branch_id)
+            if (
+                previous
+                and current == (*previous[:-1], revision.revision_id)
+                and _physical_read_cache(session) is not None
+                and memo[snapshot_key][0] == after
+            ):
+                heads[branch.branch_id] = current
+                return (revision.revision_id, staged[1], tuple(sorted(heads.items())))
+    return actual_dependency_signature(session, revision, repository=repository)
 
 
 def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):

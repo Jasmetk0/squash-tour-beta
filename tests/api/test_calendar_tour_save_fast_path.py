@@ -104,9 +104,12 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
         execute(server, command(inspect(server), "transition", name="transition-for-save"))
         view = inspect(server)
         draft_checked = False
+        installing_head = False
         old_graph_reads = []
+        install_rebuilds = []
         original_draft = repo._viewer_branch_working_draft_in_session
         original_signature = proof.actual_dependency_signature
+        original_install = proof.install_verified_global_save_head
 
         def working_draft(**kwargs):
             nonlocal draft_checked
@@ -116,6 +119,8 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
             return result
 
         def dependency_signature(session, revision, **kwargs):
+            if installing_head:
+                install_rebuilds.append(revision.revision_id)
             if not draft_checked or revision.revision_id != view["saved_head_revision_id"]:
                 return original_signature(session, revision, **kwargs)
             connection = session.connection()
@@ -132,8 +137,17 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
                 event.remove(connection, "before_cursor_execute", count_reads)
                 old_graph_reads.append(reads)
 
+        def install_head(*args, **kwargs):
+            nonlocal installing_head
+            installing_head = True
+            try:
+                return original_install(*args, **kwargs)
+            finally:
+                installing_head = False
+
         monkeypatch.setattr(repo, "_viewer_branch_working_draft_in_session", working_draft)
         monkeypatch.setattr(proof, "actual_dependency_signature", dependency_signature)
+        monkeypatch.setattr(proof, "install_verified_global_save_head", install_head)
         body = {
             "expected_draft_version": view["draft_version"],
             "expected_calendar_tour_fingerprint": view["tour_fingerprint"],
@@ -153,6 +167,7 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
         finally:
             event.remove(repo._engine, "after_cursor_execute", damage_flushed_draft)
         assert code == 409, rejected
+        assert len(install_rebuilds) == 1
         after_rollback = inspect(server)
         assert after_rollback["saved_head_revision_id"] == view["saved_head_revision_id"]
         assert after_rollback["tour_fingerprint"] == view["tour_fingerprint"]
@@ -160,6 +175,7 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
         # The successful request must consistently report its own flushed draft.
         draft_checked = False
         old_graph_reads.clear()
+        install_rebuilds.clear()
         code, receipt = _request("POST", tour_url(server) + "/save", body)
         assert code == 201, receipt
         assert receipt["working_draft"]["base_saved_revision_id"] == receipt["saved_revision"]["revision_id"]
@@ -168,3 +184,4 @@ def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypat
         # The first old-HEAD graph check after draft validation reuses the
         # same actual rows. Later reads can still follow newly written state.
         assert old_graph_reads and old_graph_reads[0] == []
+        assert not install_rebuilds

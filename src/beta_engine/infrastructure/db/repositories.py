@@ -7047,6 +7047,8 @@ class SimulationPersistenceRepository:
                     if global_append_before is not None:
                         from beta_engine.infrastructure.db.native_fork_runtime_state import (
                             assert_global_save_append,
+                            install_verified_global_save_head,
+                            snapshot_proofs,
                         )
                         from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
                         from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
@@ -7054,6 +7056,7 @@ class SimulationPersistenceRepository:
 
                         with native_read_proof_scope():
                             staged = actual_dependency_signature(session, new_row, repository=self)
+                            staged_proofs = snapshot_proofs(session)
                             assert_global_save_append(global_append_before, staged,
                                 run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=False)
                             # The new components passed complete mathematical
@@ -7065,9 +7068,9 @@ class SimulationPersistenceRepository:
                                 _reuse_actual_payload=True)
                             verify_saved_terminal_results(self, session, verified_native_save_receipt)
                             verify_saved_native_closure(self, session, verified_native_save_receipt)
-                            branch.saved_head_revision_id = revision_id
-                            session.flush()
-                            installed = actual_dependency_signature(session, new_row, repository=self)
+                            installed = install_verified_global_save_head(
+                                session, branch, new_row, staged, staged_proofs, repository=self,
+                            )
                             if installed[1] != staged[1]:
                                 raise WorkingDraftConflictError("Installing the Saved HEAD changed verified revision data")
                             eligible = assert_global_save_append(global_append_before, installed,

@@ -1,3 +1,22 @@
+# W10 native Tour Save performance checkpoint — 20 November 2026
+
+The candidate on `perf/native-tour-save-history-reuse` uses the same locked
+read snapshot for the Working Draft and the old Saved dependency graph.
+The actual installed head is checked against the staged graph. The single
+verified SQLite pointer update can reuse that graph; any other statement,
+row change or snapshot boundary takes the normal full verification path.
+The transaction checks the flushed Working Draft and Viewer selection
+before committing its receipt.
+
+On separate copies of the same retained 1,000-player W9 database with the
+first W10 Edition plan staged through actual HTTP, the first explicit Save
+received HTTP 201 in 95.1 seconds with the 120-second client deadline. The
+earlier engine at `43a0802` committed the same revision but the HTTP client
+timed out. Both databases retained the exact 53 prior revisions. The new
+revision hash, all 8,347 Saved v2 node bodies, the draft, the audit records
+and the Branch and Run rows matched exactly, excluding row timestamps.
+The remaining six W10 Saves and hosted acceptance are still pending.
+
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 
 PR #1834 independently verified the first Tour read after restarting with

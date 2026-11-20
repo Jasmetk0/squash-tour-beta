@@ -125,6 +125,11 @@ def _physical_read_cache(session):
     key = ("native_dependency_physical_rows", session)
     previous = memo.get(key)
     if previous is None or previous[0] != snapshot:
+        if previous is not None:
+            # The old snapshot's rows, retained models and proofs of their
+            # strings must not outlive it (see canonical_text).
+            from beta_engine.infrastructure.db.canonical_text import clear_operation_proofs
+            clear_operation_proofs()
         previous = memo[key] = (snapshot, {"owners": {}, "revisions": {}, "proofs": {}})
     return previous[1]
 
@@ -165,9 +170,15 @@ def _remember_snapshot_loaded_row(target, context):
     if session is None:
         return
     cache = _physical_read_cache(session)
-    if cache is not None:
-        cache.setdefault("loaded_rows", {})[(target.run_id, target.revision_id)] = target
-        cache.setdefault("retained_models", {})[(target.run_id, target.revision_id)] = target
+    if cache is None:
+        return
+    key = (target.run_id, target.revision_id)
+    if key in cache["revisions"] or key in cache.get("unreferenced_revisions", {}):
+        # The physical reader already holds these bytes; keeping this second
+        # copy alive would only double the snapshot's memory.
+        return
+    cache.setdefault("loaded_rows", {})[key] = target
+    cache.setdefault("retained_models", {})[key] = target
 
 
 def snapshot_proofs(session):

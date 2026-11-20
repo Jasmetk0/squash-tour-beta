@@ -706,6 +706,11 @@ def _played_origin_authority(row, cache, edition_id):
             row_text_sha256(row, 'payload_json'), edition_id)
         known = memo.get(key)
         if known is not None:
+            # Keep the source projection as recently used as a direct read would,
+            # so the bounded cross-request retention keeps the same entries.
+            projection_key = key[:4] + (False,)
+            if projection_key in cache:
+                cache[projection_key] = cache.pop(projection_key)
             return json.loads(known[0]), known[1]
     origin_payload, _ = _origin_inputs(row, cache, _decode_tour=False)
     run_calendar = origin_payload["run"]["run_calendar"]

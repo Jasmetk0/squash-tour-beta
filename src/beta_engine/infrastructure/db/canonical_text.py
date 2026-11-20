@@ -293,6 +293,18 @@ def operation_proof_scope():
             _operation_proofs.reset(token)
 
 
+def clear_operation_proofs():
+    """Forget this operation's proofs (their strings belong to an older snapshot).
+
+    A new read snapshot reads new string objects, so identity-keyed proofs of
+    the previous snapshot's strings can never hit again; dropping them keeps one
+    operation from holding several complete copies of a long Saved history.
+    """
+    operation = _operation_proofs.get()
+    if operation is not None:
+        operation.clear()
+
+
 class CanonicalTextProofs:
     """Process cache of texts PROVEN canonical, held as the actual strings.
 

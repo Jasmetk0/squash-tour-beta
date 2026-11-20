@@ -5,6 +5,7 @@ world so every code change gets feedback without 25-minute historical replay.
 """
 
 import pytest
+from sqlalchemy import event
 
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from tests.api.test_calendar_tour_flow import (
@@ -76,3 +77,94 @@ def test_native_tour_save_validates_once_before_commit_and_rolls_back_on_error(
         assert stored is not None
         assert stored.content_hash == receipt["content_hash"]
         assert stored.payload["content"]["calendar_tour_authority"]["fingerprint"] == dirty["tour_fingerprint"]
+
+
+def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_runtime_state as proof
+
+    monkeypatch.setenv("BETA_ENGINE_NEW_RUN_SAVED_STORAGE", "saved_v2")
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tour-save-history.db'}") as server:
+        repo, _ = setup(server, RunCalendar(52, 35, 2030, 3))
+        view = inspect(server)
+        week = view["state"]["week"]
+        execute(server, command(view, "create-edition", name="global-edition", data={
+            "schema_version": "calendar_tournament_edition.v2",
+            "simulation_seed": 891,
+            "edition_id": "global-edition",
+            "name": "Global Edition",
+            "week": {**week, "week": 4},
+            "announcement_week": {**week, "week": 3},
+            "start_slot": 1,
+            "main_entrant_count": 4,
+            "ranked": True,
+            "validity_weeks": 52,
+            "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+        }))
+        save_tour(server)
+        execute(server, command(inspect(server), "transition", name="transition-for-save"))
+        view = inspect(server)
+        draft_checked = False
+        old_graph_reads = []
+        original_draft = repo._viewer_branch_working_draft_in_session
+        original_signature = proof.actual_dependency_signature
+
+        def working_draft(**kwargs):
+            nonlocal draft_checked
+            result = original_draft(**kwargs)
+            if kwargs.get("include_revision_state"):
+                draft_checked = True
+            return result
+
+        def dependency_signature(session, revision, **kwargs):
+            if not draft_checked or revision.revision_id != view["saved_head_revision_id"]:
+                return original_signature(session, revision, **kwargs)
+            connection = session.connection()
+            reads = []
+
+            def count_reads(_conn, _cursor, statement, _params, _context, _many):
+                if statement.lstrip().upper().startswith("SELECT"):
+                    reads.append(statement)
+
+            event.listen(connection, "before_cursor_execute", count_reads)
+            try:
+                return original_signature(session, revision, **kwargs)
+            finally:
+                event.remove(connection, "before_cursor_execute", count_reads)
+                old_graph_reads.append(reads)
+
+        monkeypatch.setattr(repo, "_viewer_branch_working_draft_in_session", working_draft)
+        monkeypatch.setattr(proof, "actual_dependency_signature", dependency_signature)
+        body = {
+            "expected_draft_version": view["draft_version"],
+            "expected_calendar_tour_fingerprint": view["tour_fingerprint"],
+        }
+
+        # A late database write can still damage the actual draft independently
+        # of the stored graph. The receipt gate must detect it before commit.
+        def damage_flushed_draft(connection, _cursor, statement, _params, _context, _many):
+            if statement.startswith("UPDATE run_branches SET saved_head_revision_id"):
+                connection.exec_driver_sql(
+                    "UPDATE branch_working_drafts SET change_count=1 WHERE branch_id='branch'"
+                )
+
+        event.listen(repo._engine, "after_cursor_execute", damage_flushed_draft)
+        try:
+            code, rejected = _request("POST", tour_url(server) + "/save", body)
+        finally:
+            event.remove(repo._engine, "after_cursor_execute", damage_flushed_draft)
+        assert code == 409, rejected
+        after_rollback = inspect(server)
+        assert after_rollback["saved_head_revision_id"] == view["saved_head_revision_id"]
+        assert after_rollback["tour_fingerprint"] == view["tour_fingerprint"]
+        assert not after_rollback["saved"]
+        # The successful request must consistently report its own flushed draft.
+        draft_checked = False
+        old_graph_reads.clear()
+        code, receipt = _request("POST", tour_url(server) + "/save", body)
+        assert code == 201, receipt
+        assert receipt["working_draft"]["base_saved_revision_id"] == receipt["saved_revision"]["revision_id"]
+        assert receipt["working_draft"]["draft_version"] == view["draft_version"] + 1
+        assert receipt["working_draft"]["status"] == "clean"
+        # The first old-HEAD graph check after draft validation reuses the
+        # same actual rows. Later reads can still follow newly written state.
+        assert old_graph_reads and old_graph_reads[0] == []

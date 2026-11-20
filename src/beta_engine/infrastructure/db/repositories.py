@@ -4710,6 +4710,7 @@ class SimulationPersistenceRepository:
         run_id: str,
         branch_id: str,
         include_revision_state: bool = False,
+        _verified_head: BranchSavedRevisionRecord | None = None,
     ) -> (
         ViewerBranchWorkingDraftRecord
         | tuple[ViewerBranchWorkingDraftRecord, BranchRevisionStateRecord]
@@ -4725,9 +4726,23 @@ class SimulationPersistenceRepository:
                 f"Branch {branch_id!r} was not found in Run {run_id!r}"
             )
         try:
-            state = self._validated_branch_revision_state_in_session(
-                session=session, branch=branch, _saved_run_only=not include_revision_state,
-            )
+            if _verified_head is None:
+                state = self._validated_branch_revision_state_in_session(
+                    session=session, branch=branch, _saved_run_only=not include_revision_state,
+                )
+            else:
+                # Only the Save transaction that verified and installed this
+                # exact physical row can supply the head. Validate the actual
+                # draft and its relation to that head with the usual checks.
+                if (
+                    _verified_head.run_id != run_id
+                    or _verified_head.branch_id != branch_id
+                    or _verified_head.revision_id != branch.saved_head_revision_id
+                ):
+                    raise WorkingDraftConflictError("Working Draft Saved HEAD changed")
+                state = self._branch_revision_state_from_verified_head(
+                    session=session, branch=branch, revision=_verified_head,
+                )
             saved_viewer_id = saved_viewer_branch_id(state.saved_revision.payload)
             if state.working_draft.status == CLEAN_WORKING_DRAFT_STATUS:
                 proposed_viewer_id = saved_viewer_id
@@ -6368,6 +6383,7 @@ class SimulationPersistenceRepository:
         previous_current_viewer_id = ""
         target_viewer_id = ""
         verified_native_save_receipt = None
+        verified_native_save_draft = None
         verified_native_save_signature = None
         global_append_before = None
         global_append_ancestors = ()
@@ -6376,18 +6392,31 @@ class SimulationPersistenceRepository:
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
-                draft, state = self._viewer_branch_working_draft_in_session(
-                    session=session, run_id=run_id, branch_id=branch_id,
-                    include_revision_state=True,
+                from beta_engine.infrastructure.db.native_fork_runtime_state import (
+                    actual_dependency_signature,
+                    actual_saved_revision_reference,
+                    has_actual_dependency_proof,
+                    native_read_proof_scope,
                 )
-                if (expected_calendar_tour_fingerprint is not None
-                    and 'native_branch_closures' not in state.saved_revision.payload.get('run', {})
-                    and state.saved_revision.payload.get('content', {}).get('calendar_tour_authority', {}).get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'):
-                    from beta_engine.infrastructure.db.native_fork_runtime_state import (
-                        actual_dependency_signature, has_actual_dependency_proof,
-                        actual_saved_revision_reference, native_read_proof_scope,
+
+                # The draft and the append's old graph are read from the same
+                # locked SQLite snapshot. Keep the already authenticated rows
+                # and their digests through that second check, then release
+                # the historical payloads before capturing and writing the new one.
+                is_tour_save = expected_calendar_tour_fingerprint is not None
+                read_scope = native_read_proof_scope() if is_tour_save else nullcontext()
+                with read_scope:
+                    draft, state = self._viewer_branch_working_draft_in_session(
+                        session=session, run_id=run_id, branch_id=branch_id,
+                        include_revision_state=True,
                     )
-                    with native_read_proof_scope():
+                    old_payload = state.saved_revision.payload
+                    if (
+                        is_tour_save
+                        and 'native_branch_closures' not in old_payload.get('run', {})
+                        and old_payload.get('content', {}).get('calendar_tour_authority', {})
+                        .get('state', {}).get('schema_version') == 'calendar_tour_authority.v5'
+                    ):
                         actual = actual_dependency_signature(session,
                             session.get(BranchSavedRevisionModel, state.saved_head_revision_id), repository=self)
                         if has_actual_dependency_proof(self, actual, run_id=run_id, branch_id=branch_id):
@@ -7017,8 +7046,7 @@ class SimulationPersistenceRepository:
                     )
                     if global_append_before is not None:
                         from beta_engine.infrastructure.db.native_fork_runtime_state import (
-                            actual_dependency_signature, assert_global_save_append,
-                            native_read_proof_scope,
+                            assert_global_save_append,
                         )
                         from beta_engine.infrastructure.db.calendar_global_slot_origins import verify_saved_global_origins
                         from beta_engine.infrastructure.db.calendar_terminal_results import verify_saved_terminal_results
@@ -7040,6 +7068,8 @@ class SimulationPersistenceRepository:
                             branch.saved_head_revision_id = revision_id
                             session.flush()
                             installed = actual_dependency_signature(session, new_row, repository=self)
+                            if installed[1] != staged[1]:
+                                raise WorkingDraftConflictError("Installing the Saved HEAD changed verified revision data")
                             eligible = assert_global_save_append(global_append_before, installed,
                                 run_id=run_id, branch_id=branch_id, revision_id=revision_id, installed=True)
                             ancestors = (*global_append_ancestors, revision_id)
@@ -7047,6 +7077,25 @@ class SimulationPersistenceRepository:
                                 raise WorkingDraftConflictError('Global Save lost authenticated own ancestry')
                             committed_global_append = installed, ancestors
                     verified_native_save_signature = _saved_revision_validation_signature(new_row)
+                    if committed_global_append is not None:
+                        # The flushed head and every dependency passed the
+                        # physical gates above. Read the flushed Working Draft
+                        # and Viewer selection in that same transaction so an
+                        # inconsistent receipt rolls the Save back. Capture
+                        # no intermediate ORM values left over from the write.
+                        session.expire_all()
+                        verified_native_save_draft = self._viewer_branch_working_draft_in_session(
+                            session=session, run_id=run_id, branch_id=branch_id,
+                            _verified_head=verified_native_save_receipt,
+                        )
+                        if (
+                            verified_native_save_draft.draft_id != draft.draft_id
+                            or verified_native_save_draft.draft_version != expected_draft_version + 1
+                            or verified_native_save_draft.status != CLEAN_WORKING_DRAFT_STATUS
+                            or verified_native_save_draft.current_viewer_branch_id != target_viewer_id
+                            or verified_native_save_draft.saved_viewer_branch_id != target_viewer_id
+                        ):
+                            raise WorkingDraftConflictError("Native Tour Save draft receipt could not be verified")
         except IntegrityError as exc:
             raise WorkingDraftIdentityConflictError(
                 "generated Saved Revision or audit event identity collided"
@@ -7054,9 +7103,8 @@ class SimulationPersistenceRepository:
 
         if verified_native_save_signature is not None:
             # This is AFTER successful transaction exit, never a rolled-back
-            # or merely staged row. The response's independent draft reload
-            # still rehashes actual stored bytes/metadata and checks ancestry
-            # and owner; it need not replay the just-verified sources again.
+            # or merely staged row. Later independent history and Viewer
+            # reads still verify actual stored bytes, ancestry, and owner.
             self._remember_validated_revision(
                 verified_native_save_signature, verified_native_save_receipt,
             )
@@ -7094,7 +7142,7 @@ class SimulationPersistenceRepository:
             previous_viewer_branch_id=previous_current_viewer_id,
             viewer_branch_id=target_viewer_id,
             saved_revision=revision,
-            working_draft=self.get_viewer_branch_working_draft(
+            working_draft=verified_native_save_draft or self.get_viewer_branch_working_draft(
                 run_id=run_id, branch_id=branch_id
             ),
             audit_event=audit,

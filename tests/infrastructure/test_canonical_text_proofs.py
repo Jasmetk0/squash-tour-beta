@@ -164,15 +164,50 @@ def test_memory_bound_keeps_at_most_the_configured_references(monkeypatch):
     assert len(proofs._entries) == 2
 
 
-def test_single_oversized_proof_is_validated_without_retaining_its_text(monkeypatch):
+def test_oversized_predecessor_is_reused_only_inside_the_operation(monkeypatch):
     monkeypatch.setattr(canonical_text, "MAX_REFERENCE_CHARACTERS", 32)
     proofs = CanonicalTextProofs()
     small = canonical_json({"a": 1})
     large = canonical_json({"a": "x" * 64})
     known = proofs.prove(small, scope="small")
-    assert proofs.prove(large, scope="large").text == large
+    newer = canonical_json({"a": "x" * 64, "b": 1})
+    with canonical_text.operation_proof_scope():
+        oversized = proofs.prove(large, scope="large")
+        assert proofs.prove(newer, scope="large").reference() is oversized
+        assert proofs.lookup(large) is oversized
+        assert proofs.prove(large.replace(":", ": ", 1), scope="large") is None
+    assert proofs.lookup(large) is None
+    assert proofs.lookup(newer) is None
     assert proofs._entries == [("small", known)]
-    assert proofs.prove(large.replace(":", ": ", 1), scope="large") is None
+
+
+def test_operation_scope_reuses_one_proof_per_exact_string(monkeypatch):
+    calls = []
+    original = canonical_text.verify_canonical_text
+    monkeypatch.setattr(canonical_text, "verify_canonical_text",
+                        lambda text, reference=None: calls.append(text) or original(text, reference))
+    monkeypatch.setattr(canonical_text, "MAX_REFERENCES", 1)
+    proofs = CanonicalTextProofs()
+    texts = [canonical_json(big_doc(n)) for n in range(1, 4)]
+    with canonical_text.operation_proof_scope():
+        first = [proofs.prove(text, scope="run") for text in texts]
+        # Evicted from the bounded process cache, still the same proof inside
+        # the operation for the SAME string object, without re-verification.
+        assert [proofs.prove(text, scope="run") for text in texts] == first
+        assert len(calls) == 3
+        # An equal but distinct string is not an identity hit: it is verified.
+        copy = "".join(list(texts[0]))
+        assert copy is not texts[0]
+        assert proofs.prove(copy, scope="run").text is copy
+        assert len(calls) == 4
+        tampered = texts[0].replace(":", ": ", 1)
+        assert proofs.prove(tampered, scope="run") is None
+        assert len(calls) == 5
+    # Outside the scope only the bounded process cache remains (its newest
+    # entry is the equal copy, an exact-character hit).
+    assert proofs.prove(texts[0], scope="run").text is copy
+    assert proofs.prove(texts[1], scope="run").text is texts[1]
+    assert len(calls) == 6
 
 
 def test_reference_text_budget_evicts_old_entries_across_scopes(monkeypatch):
@@ -268,3 +303,107 @@ def test_proven_dependency_branches_equal_the_original_parser(monkeypatch, basel
     except ValueError:
         result = "error"
     assert result == original
+
+
+def _history(n):
+    """A growing Saved-like snapshot: appended events, a changing small tail."""
+    rng = random.Random(n)
+    return {
+        "content": {
+            "checkpoint": {"fingerprint": str(n), "state": {
+                "events": [{"week": week, "players": [{"id": p, "form": (week * 31 + p) % 97 / 7}
+                                                      for p in range(700)]} for week in range(n)],
+                "root": {"pad": "r" * 20000}}},
+            "world": {"players": [{"id": p, "name": f"P{p}", "u": "é"} for p in range(300)]},
+            "tour": {"n": n, "receipts": [{"r": i, "noise": rng.random()} for i in range(n * 40)]},
+        },
+        "run": {"run_id": "run", "week": n},
+    }
+
+
+def test_sharing_decode_equals_json_loads_and_reuses_only_unchanged_values():
+    previous = None
+    for n in range(1, 7):
+        text = canonical_json(_history(n))
+        proof = verify_canonical_text(text, previous[0] if previous else None)
+        value = canonical_text.decode_sharing(proof, previous)
+        assert value == json.loads(text)
+        if previous is not None:
+            old_value = previous[1]
+            old_events = old_value["content"]["checkpoint"]["state"]["events"]
+            events = value["content"]["checkpoint"]["state"]["events"]
+            # Byte-identical history is reused, changed values are decoded anew.
+            assert all(events[i] is old_events[i] for i in range(len(old_events)))
+            assert value["content"]["world"] is old_value["content"]["world"]
+            assert value["run"] is not old_value["run"]
+        previous = (proof, value)
+
+
+def test_sharing_decode_requires_the_exact_reference_and_never_shares_otherwise():
+    first_text, second_text = canonical_json(_history(2)), canonical_json(_history(3))
+    first = verify_canonical_text(first_text)
+    first_value = json.loads(first_text)
+    unrelated = verify_canonical_text(second_text)  # proven without that reference
+    value = canonical_text.decode_sharing(unrelated, (first, first_value))
+    assert value == json.loads(second_text)
+    assert value["content"]["world"] is not first_value["content"]["world"]
+    other_reference = verify_canonical_text(first_text)  # equal text, different proof
+    second = verify_canonical_text(second_text, other_reference)
+    value = canonical_text.decode_sharing(second, (first, first_value))
+    assert value["content"]["world"] is not first_value["content"]["world"]
+    assert canonical_text.decode_sharing(second, None) == json.loads(second_text)
+    # A changed byte cannot be proven, so it can never reach a shared decode.
+    assert verify_canonical_text(second_text.replace('"week":2', '"week": 2', 1), first) is None
+
+
+def test_reference_marks_belong_to_the_new_proof_only():
+    first_text = canonical_json(_history(2))
+    first = verify_canonical_text(first_text)
+    second = verify_canonical_text(canonical_json(_history(3)), first)
+    world_path = ("content", "world")
+
+    def node(proof, path):
+        current = proof.layout
+        for key in path:
+            current = current.keys[key]
+        return current
+
+    assert node(second, world_path).same
+    assert not node(first, world_path).same
+    assert second.reference() is first
+
+
+def test_span_hash_uses_shared_ascii_bytes_with_the_same_result():
+    import hashlib
+
+    text = canonical_json({**_history(2), "escaped": {"value": "é" * 20000}})
+    proof = verify_canonical_text(text)
+    for path in (("content",), ("content", "checkpoint", "state"), ("run",), ("escaped",), ("missing",)):
+        expected = span(proof, path)
+        expected = (hashlib.sha256(expected.encode()).hexdigest()
+                    if expected is not None and "\\u" not in expected else None)
+        with canonical_text.operation_proof_scope():
+            assert canonical_text.span_canonical_hash(proof, path) == expected
+        assert canonical_text.span_canonical_hash(proof, path) == expected
+    with canonical_text.operation_proof_scope():
+        assert canonical_text.proven_ascii_bytes(proof) is canonical_text.proven_ascii_bytes(proof)
+    assert canonical_text.proven_ascii_bytes(proof) == text.encode("ascii")
+
+
+def test_composite_proven_hash_equals_canonical_hash_of_the_plain_structure():
+    from beta_engine.domain.run_packages import canonical_hash
+
+    value = {**_history(3), "escaped": {"value": "é" * 20000}}
+    text = canonical_json(value)
+    proof = verify_canonical_text(text)
+    decoded = json.loads(text)
+    spans = canonical_text.ProvenSpan
+    composite = {"run_id": "run", "nested": {
+        "content": spans(proof, ("content",), decoded["content"]),
+        "escaped": spans(proof, ("escaped",), decoded["escaped"]),  # \u: encoded normally
+        "missing": spans(proof, ("missing",), None)},
+        "run": spans(proof, ("run",), decoded["run"]), "list": [2, {"b": 1, "a": "é"}]}
+    plain = {"run_id": "run", "nested": {"content": decoded["content"], "escaped": decoded["escaped"],
+        "missing": None}, "run": decoded["run"], "list": [2, {"b": 1, "a": "é"}]}
+    assert canonical_text.composite_proven_hash(composite) == canonical_hash(plain)
+    assert canonical_text.composite_proven_hash(plain) == canonical_hash(plain)

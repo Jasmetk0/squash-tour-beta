@@ -6,7 +6,7 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 
 from pydantic_core import SchemaValidator, core_schema
-from sqlalchemy import event as sqlalchemy_event
+from sqlalchemy import event as sqlalchemy_event, inspect as sqlalchemy_inspect
 from sqlalchemy.engine import Engine
 
 from beta_engine.application.calendar_tour_service import CalendarTourCommit
@@ -125,8 +125,66 @@ def _physical_read_cache(session):
     key = ("native_dependency_physical_rows", session)
     previous = memo.get(key)
     if previous is None or previous[0] != snapshot:
+        if previous is not None:
+            # The old snapshot's rows, retained models and proofs of their
+            # strings must not outlive it (see canonical_text).
+            from beta_engine.infrastructure.db.canonical_text import clear_operation_proofs
+            clear_operation_proofs()
         previous = memo[key] = (snapshot, {"owners": {}, "revisions": {}, "proofs": {}})
     return previous[1]
+
+
+def retain_saved_model(session, model):
+    """Keep one loaded Saved ORM row alive for this unchanged read snapshot.
+
+    SQLAlchemy's identity map is weak. A lineage walk dropped each row after use,
+    so every later ``Session.get`` of the same revision selected, materialized
+    and copied its complete payload text again (W9: ~8 full reads of each of 53
+    revisions, 23 GB of text in one cold Tour read). Retaining an object neither
+    validates it nor replaces any gate: the dependency reader reuses only a row
+    the ORM actually loaded from SQLite in this same unchanged snapshot (see
+    _remember_snapshot_loaded_row) and selects every other row afresh. The
+    reference disappears with the snapshot cache on any change or scope exit.
+    """
+    if model is None:
+        return model
+    cache = _physical_read_cache(session)
+    if cache is not None:
+        cache.setdefault("retained_models", {})[(model.run_id, model.revision_id)] = model
+    return model
+
+
+@sqlalchemy_event.listens_for(BranchSavedRevisionModel, "load")
+def _remember_snapshot_loaded_row(target, context):
+    """An ORM load IS an actual read of these bytes in the current snapshot.
+
+    Record the freshly loaded row (not an identity-map hit, which fires no load
+    event) in this snapshot's physical read cache, so the dependency reader of
+    the SAME unchanged snapshot need not select and materialize the same bytes
+    again. The cache is discarded on any write, savepoint or new transaction,
+    and is disabled while the session has pending changes.
+    """
+    if _proofs.get() is None:
+        return
+    session = getattr(context, "session", None)
+    if session is None:
+        return
+    cache = _physical_read_cache(session)
+    if cache is None:
+        return
+    attributes = sqlalchemy_inspect(target).dict
+    field_names = tuple(field.key for field in _physical_revision_fields())
+    if any(name not in attributes for name in field_names):
+        return  # An ORM projection may defer some of the physical fields.
+    key = (attributes["run_id"], attributes["revision_id"])
+    if key in cache["revisions"] or key in cache.get("unreferenced_revisions", {}):
+        # The physical reader already holds these bytes; keeping this second
+        # copy alive would only double the snapshot's memory.
+        return
+    # The object itself can later be changed without marking the session dirty
+    # (e.g. set_committed_value). Record what SQLite supplied at load time.
+    cache.setdefault("loaded_rows", {})[key] = tuple(attributes[name] for name in field_names)
+    cache.setdefault("retained_models", {})[key] = target
 
 
 def snapshot_proofs(session):
@@ -188,9 +246,14 @@ def _physical_revision_fields():
 
 @contextmanager
 def native_read_proof_scope():
+    from beta_engine.infrastructure.db.canonical_text import operation_proof_scope
+
     token = _proofs.set({}) if _proofs.get() is None else None
     try:
-        yield _proofs.get()
+        # Canonical-text proofs of this operation's exact strings live exactly
+        # as long as this outermost read scope (see canonical_text.py).
+        with operation_proof_scope():
+            yield _proofs.get()
     finally:
         if token is not None:
             _proofs.reset(token)
@@ -537,9 +600,15 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 raise ValueError("Native Branch owner differs from its actual stored bytes")
         return owners[key]
 
-    def actual_revision(revision_id):
+    unreferenced = read_cache.setdefault("unreferenced_revisions", {}) if read_cache is not None else {}
+
+    def read_revision(revision_id):
+        """Actual row and signature; dependency references are added later."""
         key = (revision.run_id, revision_id)
-        if key not in revisions:
+        if key in unreferenced:
+            return unreferenced[key]
+        row = read_cache.get("loaded_rows", {}).get(key) if read_cache is not None else None
+        if row is None:
             actual = session.execute(
                 select(*fields).where(
                     BranchSavedRevisionModel.run_id == revision.run_id,
@@ -547,24 +616,61 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 )
             ).first()
             row = tuple(actual[:len(fields)]) if actual is not None else None
-            if row is None:
-                revisions[key] = (None, None, ())
-            else:
-                digest = hashlib.sha256()
-                for index, value in enumerate(row):
-                    if type(value) is str and index in _LARGE_TEXT_FIELDS:
-                        # Commit to the exact SHA-256 of these actual bytes. The
-                        # same read scope hashes each physical text only once.
-                        digest.update(b"h")
-                        digest.update(physical_text_sha256(read_cache, run_id=row[1],
-                            revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
-                        continue
-                    raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
-                    digest.update(b"s" if isinstance(value, str) else b"j")
-                    digest.update(len(raw).to_bytes(8, "big"))
-                    digest.update(raw)
-                signature = digest.hexdigest()
-                revisions[key] = (row, signature, _dependency_references(repository, row, signature))
+        if row is None:
+            unreferenced[key] = (None, None)
+        else:
+            loaded = session.identity_map.get(
+                (BranchSavedRevisionModel, (revision_id,), None))
+            if loaded is not None and loaded.run_id == row[1]:
+                # Share the identical text object with the loaded row so the
+                # snapshot holds one copy and identity-keyed proof/digest
+                # memos match. Only characters equal to the fresh SELECT are
+                # shared; a different ORM value keeps the actual bytes.
+                row = tuple(
+                    getattr(loaded, _LARGE_TEXT_FIELDS[index])
+                    if index in _LARGE_TEXT_FIELDS and type(value) is str
+                    and getattr(loaded, _LARGE_TEXT_FIELDS[index]) == value
+                    else value
+                    for index, value in enumerate(row)
+                )
+                retain_saved_model(session, loaded)
+            digest = hashlib.sha256()
+            for index, value in enumerate(row):
+                if type(value) is str and index in _LARGE_TEXT_FIELDS:
+                    # Commit to the exact SHA-256 of these actual bytes. The
+                    # same read scope hashes each physical text only once.
+                    digest.update(b"h")
+                    digest.update(physical_text_sha256(read_cache, run_id=row[1],
+                        revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
+                    continue
+                raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
+                digest.update(b"s" if isinstance(value, str) else b"j")
+                digest.update(len(raw).to_bytes(8, "big"))
+                digest.update(raw)
+            signature = digest.hexdigest()
+            unreferenced[key] = (row, signature)
+        return unreferenced[key]
+
+    def actual_revision(revision_id):
+        key = (revision.run_id, revision_id)
+        if key not in revisions:
+            # The walk discovers a Branch HEAD before its parents. Read the not
+            # yet referenced parent chain first and derive references oldest
+            # first, so each routing proof can compare with its predecessor's
+            # proven text instead of re-encoding a whole HEAD (W9: 5.8 s for one
+            # 122 M-character text). The same rows, signatures and references
+            # result; the main walk below still visits every node itself.
+            chain, current = [], revision_id
+            while current and (revision.run_id, current) not in revisions and current not in chain:
+                chain.append(current)
+                row = read_revision(current)[0]
+                current = row[4] if row is not None else None
+            for member in reversed(chain):
+                row, signature = read_revision(member)
+                revisions[(revision.run_id, member)] = (
+                    (None, None, ()) if row is None
+                    else (row, signature, _dependency_references(repository, row, signature)))
+                unreferenced.pop((revision.run_id, member), None)
         return revisions[key]
 
     # Within ONE unchanged SQLite read snapshot every row, owner and digest is

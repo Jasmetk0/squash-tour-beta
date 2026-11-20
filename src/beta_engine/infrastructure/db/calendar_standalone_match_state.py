@@ -435,6 +435,10 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     )
 
     content = payload.get("content", {})
+    # The lineage gate's existing proof of the exact text THIS payload object was
+    # decoded from (see repositories, _saved_head_payload_proof); spans only.
+    known_proof = (_global_value_proofs or {}).get('_saved_head_payload_proof')
+    payload_proof = known_proof[1] if known_proof is not None and known_proof[0] is payload else None
     cp_raw = content.get("calendar_player_sporting_checkpoint")
     checkpoint = None
     checkpoint_fingerprint = None
@@ -444,14 +448,18 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_checkpoint_value
         checkpoint = replayed_global_checkpoint_value(
             payload, _global_value_proofs, run_id=run_id, branch_id=branch_id,
+            _payload_proof=payload_proof,
         ) if _global_value_proofs is not None else None
         if (_repository is not None and isinstance(cp_raw.get('state'), dict)
             and cp_raw['state'].get('schema_version') == 'calendar_sporting_checkpoint.v13'):
+            from beta_engine.infrastructure.db.canonical_text import span
             from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
             replayed = checkpoint
             checkpoint = decoded_global_checkpoint_component(
                 _repository, cp_raw, run_id=run_id, branch_id=branch_id,
                 decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(json.dumps(component['state'])),
+                _component_text=(span(payload_proof, ("content", "calendar_player_sporting_checkpoint"))
+                    if payload_proof is not None else None),
             )
         elif checkpoint is None:
             checkpoint = parse_checkpoint_json(json.dumps(cp_raw["state"]))
@@ -469,6 +477,7 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         from beta_engine.infrastructure.db.calendar_native_competition import replayed_global_tour_value
         tour = replayed_global_tour_value(
             payload, _global_value_proofs, run_id=run_id, branch_id=branch_id,
+            _payload_proof=payload_proof,
         ) if _global_value_proofs is not None else None
         if tour is None:
             tour = parse_tour_json(json.dumps(tour_raw["state"]))
@@ -484,20 +493,36 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
     return evidence, checkpoint, tour
 
 
-def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None, _verified_global_prefix=None) -> CalendarMatchEvidence | None:
+def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sporting_component_proofs=None, _verified_global_prefix=None, _payload_proof=None) -> CalendarMatchEvidence | None:
     """Validate both the played MatchEngine evidence and the full Saved owner."""
     return load_saved_calendar_sources(payload,run_id=run_id,branch_id=branch_id,
         _sporting_component_proofs=_sporting_component_proofs,
-        _verified_global_prefix=_verified_global_prefix)[0]
+        _verified_global_prefix=_verified_global_prefix,
+        _payload_proof=_payload_proof)[0]
 
 
 def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                                 _sporting_component_proofs=None,
-                                _verified_saved_prefix=None, _verified_global_prefix=None):
-    """Return the coupled sources, sharing only exact transaction-local proofs."""
+                                _verified_saved_prefix=None, _verified_global_prefix=None,
+                                _payload_proof=None):
+    """Return the coupled sources, sharing only exact transaction-local proofs.
+
+    ``_payload_proof`` may only be the canonical-text proof of the exact stored
+    characters that ``payload`` was just decoded from (and is unmodified). It
+    lets the private cache keys and the checkpoint decoder use the proven
+    spans instead of re-encoding the multi-megabyte components; every value,
+    validator and replay below is unchanged.
+    """
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         saved_checkpoint,
     )
+    from beta_engine.infrastructure.db.canonical_text import ProvenSpan, composite_proven_hash
+
+    def leaf(path, value):
+        return ProvenSpan(_payload_proof, path, value) if _payload_proof is not None else value
+
+    def key_hash(value):
+        return composite_proven_hash(value) if _payload_proof is not None else canonical_hash(value)
     # Exact content-addressed proof reuse is private to a single validated
     # lineage walk. Never retain it across requests/transactions. Tour authority
     # remains independently validated for each revision even on a sporting hit.
@@ -508,12 +533,12 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         raw_checkpoint = content.get('calendar_player_sporting_checkpoint') or {}
         raw_checkpoint_state = raw_checkpoint.get('state') if isinstance(raw_checkpoint,dict) else None
         native_dependencies = (
-            {k:content.get(k) for k in ('calendar_tour_authority','player_lifecycle','player_health_state','run_prospect_source')}
+            {k:leaf(('content',k),content.get(k)) for k in ('calendar_tour_authority','player_lifecycle','player_health_state','run_prospect_source')}
             if isinstance(raw_checkpoint_state,dict) and raw_checkpoint_state.get('schema_version') in {'calendar_sporting_checkpoint.v11', 'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}
             else {}
         )
-        key = canonical_hash({'run_id':run_id,'branch_id':branch_id,'run':payload.get('run'),
-            'components':{k:content.get(k) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')},
+        key = key_hash({'run_id':run_id,'branch_id':branch_id,'run':leaf(('run',),payload.get('run')),
+            'components':{k:leaf(('content',k),content.get(k)) for k in ('initial_world','calendar_standalone_match','calendar_player_sporting_checkpoint')},
             'native_dependencies':native_dependencies})
         verified = _sporting_component_proofs.get(key)
     if verified is None:
@@ -521,9 +546,9 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         root_proofs = None
         if _sporting_component_proofs is not None:
             root_proofs = _sporting_component_proofs.setdefault('_opening_roots', {})
-            root_key = canonical_hash({'run_id':run_id,'branch_id':branch_id,
-                'run':payload.get('run'),
-                'match':payload.get('content',{}).get('calendar_standalone_match')})
+            root_key = key_hash({'run_id':run_id,'branch_id':branch_id,
+                'run':leaf(('run',),payload.get('run')),
+                'match':leaf(('content','calendar_standalone_match'),payload.get('content',{}).get('calendar_standalone_match'))})
         if root_proofs is not None and root_key in root_proofs:
             state = root_proofs[root_key]
         else:
@@ -532,7 +557,8 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                 root_proofs[root_key] = state
         checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
             _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None,
-            _verified_saved_prefix=_verified_saved_prefix, _verified_global_prefix=_verified_global_prefix)
+            _verified_saved_prefix=_verified_saved_prefix, _verified_global_prefix=_verified_global_prefix,
+            _payload_proof=_payload_proof)
         if key is not None:
             _sporting_component_proofs[key] = (state,checkpoint)
     else:
@@ -555,17 +581,17 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
     tour_key = None
     if tour_proofs is not None:
         content = payload.get("content", {})
-        tour_key = canonical_hash({
+        tour_key = key_hash({
             "run_id": run_id,
             "branch_id": branch_id,
-            "run": payload.get("run"),
-            "world": content.get("initial_world"),
-            "played_root": content.get("calendar_standalone_match"),
-            "sporting": content.get("calendar_player_sporting_checkpoint"),
-            "tour": content.get("calendar_tour_authority"),
-            "lifecycle": content.get("player_lifecycle"),
-            "health": content.get("player_health_state"),
-            "prospects": content.get("run_prospect_source"),
+            "run": leaf(("run",), payload.get("run")),
+            "world": leaf(("content", "initial_world"), content.get("initial_world")),
+            "played_root": leaf(("content", "calendar_standalone_match"), content.get("calendar_standalone_match")),
+            "sporting": leaf(("content", "calendar_player_sporting_checkpoint"), content.get("calendar_player_sporting_checkpoint")),
+            "tour": leaf(("content", "calendar_tour_authority"), content.get("calendar_tour_authority")),
+            "lifecycle": leaf(("content", "player_lifecycle"), content.get("player_lifecycle")),
+            "health": leaf(("content", "player_health_state"), content.get("player_health_state")),
+            "prospects": leaf(("content", "run_prospect_source"), content.get("run_prospect_source")),
         })
     if tour_proofs is not None and tour_key in tour_proofs:
         tour = tour_proofs[tour_key]

@@ -33,6 +33,9 @@ from __future__ import annotations
 
 import hashlib
 import json
+import weakref
+from contextlib import contextmanager
+from contextvars import ContextVar
 from json.decoder import scanstring
 from json.encoder import encode_basestring_ascii
 from threading import Lock
@@ -55,13 +58,16 @@ def _canonical(value) -> str:
 class Layout:
     """Spans of one proven-canonical text; children only for large containers."""
 
-    __slots__ = ("start", "end", "keys", "items")
+    __slots__ = ("start", "end", "keys", "items", "same")
 
-    def __init__(self, start, end, keys=None, items=None):
+    def __init__(self, start, end, keys=None, items=None, same=False):
         self.start = start
         self.end = end
         self.keys = keys    # dict: key -> Layout (objects)
         self.items = items  # list[Layout] (arrays)
+        # True only where THIS proof found the span byte-identical to the
+        # reference proof's value at the same path (see decode_sharing).
+        self.same = same
 
 
 class _NotCanonical(Exception):
@@ -104,7 +110,9 @@ def _value(text, pos, ref_text, ref, depth):
         end = pos + (ref.end - ref.start)
         # A reference value is a complete JSON value; the container grammar of
         # the caller checks the delimiter that must follow it.
-        return end, _relocated(ref, pos - ref.start)
+        relocated = _relocated(ref, pos - ref.start)
+        # Mark the match on a node of this proof (never on the reference's).
+        return end, Layout(relocated.start, relocated.end, relocated.keys, relocated.items, same=True)
     if pos >= len(text):
         raise _NotCanonical
     opener = text[pos]
@@ -231,13 +239,15 @@ class ProvenCanonicalText:
     or a foreign string as a reference.
     """
 
-    __slots__ = ("text", "layout")
+    __slots__ = ("text", "layout", "reference", "__weakref__")
 
-    def __init__(self, token, text, layout):
+    def __init__(self, token, text, layout, reference=None):
         if token is not _TOKEN:
             raise TypeError("ProvenCanonicalText is created only by verify_canonical_text")
         self.text = text
         self.layout = layout
+        # Weak: a proof never keeps its reference (and that text) alive.
+        self.reference = weakref.ref(reference) if reference is not None else None
 
 
 def verify_canonical_text(text, reference=None):
@@ -257,7 +267,40 @@ def verify_canonical_text(text, reference=None):
         return None
     if end != len(text):
         return None
-    return ProvenCanonicalText(_TOKEN, text, layout if layout is not None else Layout(0, end))
+    return ProvenCanonicalText(_TOKEN, text, layout if layout is not None else Layout(0, end),
+                               reference)
+
+
+# Proofs of THIS operation's texts, by the identity of the exact string object.
+# A lineage walk proves every Saved revision, while the process cache above
+# retains only the newest few. Entries of the operation's own scope keep each
+# proof (and thus its string) until the scope ends, so several gates of one read
+# reuse it instead of verifying the same characters again. A hit is the same
+# ``str`` object whose characters this module proved: never a hash/identifier.
+_operation_proofs = ContextVar("canonical_text_operation_proofs", default=None)
+
+
+@contextmanager
+def operation_proof_scope():
+    """Retain proofs of texts proven inside this (outermost) operation only."""
+    token = _operation_proofs.set({}) if _operation_proofs.get() is None else None
+    try:
+        yield
+    finally:
+        if token is not None:
+            _operation_proofs.reset(token)
+
+
+def clear_operation_proofs():
+    """Forget this operation's proofs (their strings belong to an older snapshot).
+
+    A new read snapshot reads new string objects, so identity-keyed proofs of
+    the previous snapshot's strings can never hit again; dropping them keeps one
+    operation from holding several complete copies of a long Saved history.
+    """
+    operation = _operation_proofs.get()
+    if operation is not None:
+        operation.clear()
 
 
 class CanonicalTextProofs:
@@ -272,28 +315,57 @@ class CanonicalTextProofs:
         self._lock = Lock()
         self._entries = []  # [(scope, ProvenCanonicalText)], most recent last
 
-    def prove(self, text, *, scope):
+    def lookup(self, text):
+        """An existing proof of exactly ``text``; never verifies a new text."""
         if not isinstance(text, str):
             return None
+        operation = _operation_proofs.get()
+        if operation is not None:
+            known = operation.get(id(text))
+            if known is not None and known[1].text is text:
+                return known[1]
         with self._lock:
             entries = list(self._entries)
         for _, proof in reversed(entries):
             if proof.text is text or (len(proof.text) == len(text) and proof.text == text):
                 return proof
-        reference = next((proof for s, proof in reversed(entries) if s == scope), None)
+        return None
+
+    def prove(self, text, *, scope):
+        if not isinstance(text, str):
+            return None
+        operation = _operation_proofs.get()
+        if operation is not None:
+            known = operation.get(id(text))
+            if known is not None and known[1].text is text:
+                return known[1]
+        with self._lock:
+            entries = list(self._entries)
+        for _, proof in reversed(entries):
+            if proof.text is text or (len(proof.text) == len(text) and proof.text == text):
+                if operation is not None:
+                    operation[id(text)] = (scope, proof)
+                return proof
+        references = operation.setdefault("references", {}) if operation is not None else None
+        reference = references.get(scope) if references is not None else None
+        if reference is None:
+            reference = next((proof for s, proof in reversed(entries) if s == scope), None)
         proof = verify_canonical_text(text, reference)
         if proof is None:
             return None
-        # A single large Saved payload must not make the process cache exceed
-        # its entire text budget. The caller still receives the same proof for
-        # this operation; only retaining it between operations is unnecessary.
+        if operation is not None:
+            operation[id(text)] = (scope, proof)
+            # Preserve a large predecessor for the duration of this walk only.
+            references[scope] = proof
         if len(text) > MAX_REFERENCE_CHARACTERS:
             return proof
         with self._lock:
             self._entries = [e for e in self._entries if e[1].text is not text]
             self._entries.append((scope, proof))
-            while self._entries and (len(self._entries) > MAX_REFERENCES or
-                sum(len(e[1].text) for e in self._entries) > MAX_REFERENCE_CHARACTERS):
+            while self._entries and (
+                len(self._entries) > MAX_REFERENCES
+                or sum(len(e[1].text) for e in self._entries) > MAX_REFERENCE_CHARACTERS
+            ):
                 self._entries.pop(0)
         return proof
 
@@ -329,12 +401,51 @@ def _non_ascii_free(text):
     return "\\u" not in text
 
 
+def proven_ascii_bytes(proof):
+    """The UTF-8 (= ASCII) bytes of a proven canonical text, encoded once.
+
+    A canonical encoding uses ASCII escapes only, so a proven text is ASCII and
+    its character offsets are byte offsets. Several gates of one revision hash
+    the whole text and large spans of it; inside one operation scope they share
+    one encoding of the most recent text instead of copying the same characters
+    for every digest. Nothing is retained outside an operation scope. Returns
+    None for any text that is not ASCII.
+    """
+    if type(proof) is not ProvenCanonicalText:
+        raise TypeError("proven_ascii_bytes requires a ProvenCanonicalText")
+    text = proof.text
+    operation = _operation_proofs.get()
+    slot = operation.setdefault("ascii_bytes", [None, None]) if operation is not None else None
+    if slot is not None and slot[0] is text:
+        return slot[1]
+    try:
+        data = text.encode("ascii")
+    except UnicodeEncodeError:
+        return None
+    if slot is not None:
+        slot[0], slot[1] = text, data
+    return data
+
+
 def span_canonical_hash(proof, path):
     """``canonical_hash(value_at(path))`` from the proven exact span, or None."""
-    text = span(proof, path)
-    if text is None or not _non_ascii_free(text):
+    if type(proof) is not ProvenCanonicalText:
+        raise TypeError("span requires a ProvenCanonicalText")
+    node = proof.layout
+    for key in path:
+        if node is None:
+            return None
+        if isinstance(key, int):
+            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
+        else:
+            node = node.keys.get(key) if node.keys is not None else None
+    if node is None or proof.text.find("\\u", node.start, node.end) != -1:
         return None
-    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    data = proven_ascii_bytes(proof)
+    if data is None:
+        text = proof.text[node.start:node.end]
+        return hashlib.sha256(text.encode("utf-8")).hexdigest()
+    return hashlib.sha256(memoryview(data)[node.start:node.end]).hexdigest()
 
 
 def composite_canonical_hash(members):
@@ -350,3 +461,109 @@ def composite_canonical_hash(members):
             return None
         parts.append(json.dumps(key, ensure_ascii=False) + ":" + text)
     return hashlib.sha256(("{" + ",".join(parts) + "}").encode("utf-8")).hexdigest()
+
+
+def _layout_at(layout, path):
+    node = layout
+    for key in path:
+        if node is None or node.keys is None:
+            return None
+        node = node.keys.get(key)
+    return node
+
+
+def _value_at(value, path):
+    for key in path:
+        if type(value) is not dict:
+            return None
+        value = value.get(key)
+    return value
+
+
+def decode_sharing(proof, previous):
+    """``json.loads(proof.text)``, reusing every value unchanged since ``previous``.
+
+    A Saved history stores each revision as a complete snapshot, although most
+    of it (above all the event log) is byte-identical to its predecessor.
+    ``previous`` is ``(previous_proof, previous_value)`` where
+    ``previous_value`` is the unmodified decode of ``previous_proof.text``. If
+    ``proof`` was proven with exactly ``previous_proof`` as its reference, each
+    node that the proof found byte-identical to the reference at the same path
+    decodes to an equal value, so that value object is reused. Every other value
+    is rebuilt from its proven child spans or decoded by ``json.loads``. The
+    result equals ``json.loads(proof.text)``.
+
+    The returned value SHARES the reused objects with ``previous_value``: the
+    caller must treat both as read-only and must not expose either.
+    """
+    if type(proof) is not ProvenCanonicalText:
+        raise TypeError("decode_sharing requires a ProvenCanonicalText")
+    if previous is None or proof.reference is None or proof.reference() is not previous[0]:
+        return json.loads(proof.text)
+    return _shared_value(proof.text, proof.layout, previous[0].layout, previous[1])
+
+
+_MISSING = object()
+
+
+def _shared_value(text, node, old_node, old_value):
+    if node.same and old_node is not None and old_value is not _MISSING:
+        return old_value
+    if old_node is not None:
+        if node.keys is not None and old_node.keys is not None and type(old_value) is dict:
+            return {key: _shared_value(text, child, old_node.keys.get(key), old_value.get(key, _MISSING))
+                    for key, child in node.keys.items()}
+        if (node.items is not None and old_node.items is not None and type(old_value) is list
+                and len(old_value) == len(old_node.items)):
+            old_items = old_node.items
+            return [_shared_value(text, child, old_items[index], old_value[index])
+                    if index < len(old_items) else json.loads(text[child.start:child.end])
+                    for index, child in enumerate(node.items)]
+    return json.loads(text[node.start:node.end])
+
+
+class ProvenSpan:
+    """A sub-value at ``path`` of a payload freshly decoded from ``proof.text``.
+
+    ``value`` must be that decoded, unmodified sub-value. It is encoded from its
+    proven exact span when the span exists and has no ``\\u`` escape (then the
+    ASCII canonical text equals the ``ensure_ascii=False`` encoding), otherwise
+    by the ordinary encoder.
+    """
+
+    __slots__ = ("proof", "path", "value")
+
+    def __init__(self, proof, path, value):
+        self.proof, self.path, self.value = proof, path, value
+
+
+def _hash_update_composite(digest, value):
+    if type(value) is ProvenSpan:
+        text = span(value.proof, value.path) if value.proof is not None else None
+        if text is None or not _non_ascii_free(text):
+            text = json.dumps(value.value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        digest.update(text.encode("utf-8"))
+    elif type(value) is dict:
+        digest.update(b"{")
+        for index, key in enumerate(sorted(value)):
+            if type(key) is not str:
+                raise TypeError("composite keys must be strings")
+            if index:
+                digest.update(b",")
+            digest.update(json.dumps(key, ensure_ascii=False).encode("utf-8") + b":")
+            _hash_update_composite(digest, value[key])
+        digest.update(b"}")
+    else:
+        digest.update(json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode("utf-8"))
+
+
+def composite_proven_hash(value):
+    """``canonical_hash`` of a small dict skeleton whose large leaves are ``ProvenSpan``.
+
+    Equal to ``canonical_hash`` of the same structure with every ``ProvenSpan``
+    replaced by its ``value``: dict skeletons are encoded exactly as
+    ``json.dumps(sort_keys=True, separators=(",", ":"), ensure_ascii=False)``.
+    """
+    digest = hashlib.sha256()
+    _hash_update_composite(digest, value)
+    return digest.hexdigest()

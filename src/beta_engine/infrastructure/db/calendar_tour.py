@@ -600,6 +600,8 @@ def retain_origin_projection_values(repository, proofs):
         if cache is None:
             cache = repository._origin_projection_values = {}
         for key, value in values.items():
+            if type(value[1]) is not str:
+                continue  # walk-private derived values are never retained
             cache.pop(key, None)
             cache[key] = value
         while len(cache) > 128 or sum(value[0] for value in cache.values()) > 32 * 1024 * 1024:
@@ -621,13 +623,23 @@ def _origin_projection(payload, *, with_health=False):
     }
 
 
+# One read walk's private origin projections. Every revision's origin check
+# revisits the played-head source of EVERY Edition plus its predecessors. With a
+# budget below that working set (W9: seven ~5 MB Tour projections against 32 MB),
+# LRU evicted each entry just before its next use and every check fully decoded
+# a 100 MB source payload again. Retained values are JSON text only.
+_MAX_WALK_ORIGIN_PROJECTION_BYTES = 256 * 1024 * 1024
+_MAX_WALK_ORIGIN_PROJECTIONS = 256
+
+
 def _retain_origin_projection(cache, key, projection):
     encoded = json.dumps(projection)
     size = len(encoded.encode('utf-8'))
-    if size <= 32 * 1024 * 1024:
+    if size <= _MAX_WALK_ORIGIN_PROJECTION_BYTES:
         cache.pop(key, None)
         cache[key] = (size, encoded)
-        while len(cache) > 128 or sum(v[0] for v in cache.values()) > 32 * 1024 * 1024:
+        while (len(cache) > _MAX_WALK_ORIGIN_PROJECTIONS
+               or sum(v[0] for v in cache.values()) > _MAX_WALK_ORIGIN_PROJECTION_BYTES):
             cache.pop(next(iter(cache)))
 
 
@@ -669,6 +681,48 @@ def _origin_inputs(row, cache, *, with_health=False, _decode_tour=True):
     projection = _origin_projection(payload, with_health=with_health)
     _retain_origin_projection(cache, key, projection)
     return projection, origin
+
+
+_PLAYED_ORIGIN_AUTHORITIES = ("played-origin-authorities",)
+
+
+def _played_origin_authority(row, cache, edition_id):
+    """Run clock and strict pre-play Edition authority of one actual played origin.
+
+    The complete source is independently authenticated; strictly decode the one
+    pre-play authority needed. Every Tour origin check of a lineage walk asks
+    again for each Edition's played origin. Within ONE walk's private origin
+    cache, the result for the same exact row bytes (signature-bound projection
+    key) and Edition is reused: the authority is a frozen model and the clock is
+    returned as a fresh decode, so no caller can alter another's value.
+    """
+    memo = None
+    key = None
+    if cache is not None:
+        holder = cache.pop(_PLAYED_ORIGIN_AUTHORITIES, None) or (0, {})
+        cache[_PLAYED_ORIGIN_AUTHORITIES] = holder  # most recently used; no bytes counted
+        memo = holder[1]
+        key = (row.run_id, row.branch_id, row.revision_id,
+            row_text_sha256(row, 'payload_json'), edition_id)
+        known = memo.get(key)
+        if known is not None:
+            # Keep the source projection as recently used as a direct read would,
+            # so the bounded cross-request retention keeps the same entries.
+            projection_key = key[:4] + (False,)
+            if projection_key in cache:
+                cache[projection_key] = cache.pop(projection_key)
+            return json.loads(known[0]), known[1]
+    origin_payload, _ = _origin_inputs(row, cache, _decode_tour=False)
+    run_calendar = origin_payload["run"]["run_calendar"]
+    body = origin_payload.get('content', {}).get(COMPONENT_KEY, {}).get('state', {})
+    edition = next((a for a in body.get('editions', [])
+        if a.get('edition', {}).get('edition_id') == edition_id), None)
+    frozen = CalendarEditionAuthority.model_validate_json(json.dumps(edition)) if edition else None
+    if memo is not None:
+        memo[key] = (json.dumps(run_calendar), frozen)
+        while len(memo) > 4096:
+            memo.pop(next(iter(memo)))
+    return run_calendar, frozen
 
 
 def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin_cache=None,
@@ -902,17 +956,11 @@ def verify_tour_origins(session, state, *, _reachable_revision_ids=None, _origin
             )
         ):
             raise ValueError("Edition played origin is missing or foreign")
-        origin_payload, _ = _origin_inputs(row, _origin_cache, _decode_tour=False)
+        run_calendar, frozen = _played_origin_authority(row, _origin_cache, authority.edition.edition_id)
         # The terminal record's clock must have existed at actual play. An
         # extension/rehashed event cannot retroactively create publication time.
-        if any(clock != origin_payload["run"]["run_calendar"] for clock in terminal_clocks.get(authority.edition.edition_id, ())):
+        if any(clock != run_calendar for clock in terminal_clocks.get(authority.edition.edition_id, ())):
             raise ValueError("Terminal result calendar did not exist in its actual played Saved origin")
-        body = origin_payload.get('content', {}).get(COMPONENT_KEY, {}).get('state', {})
-        edition = next((a for a in body.get('editions', [])
-            if a.get('edition', {}).get('edition_id') == authority.edition.edition_id), None)
-        # The complete source is independently authenticated; strictly decode
-        # the one pre-play authority needed here, retaining all original checks.
-        frozen = CalendarEditionAuthority.model_validate_json(json.dumps(edition)) if edition else None
         if (
             frozen is None
             or frozen.tournament_fingerprint is not None

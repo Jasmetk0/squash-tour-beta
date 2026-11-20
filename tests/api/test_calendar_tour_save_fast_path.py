@@ -79,6 +79,40 @@ def test_native_tour_save_validates_once_before_commit_and_rolls_back_on_error(
         assert stored.payload["content"]["calendar_tour_authority"]["fingerprint"] == dirty["tour_fingerprint"]
 
 
+def test_native_tour_save_rejects_flushed_bytes_that_differ_from_canonical_payload(
+    tmp_path, monkeypatch,
+):
+    monkeypatch.setenv("BETA_ENGINE_NEW_RUN_SAVED_STORAGE", "v1")
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'tour-bytes.db'}") as server:
+        repo, initial = setup(server, RunCalendar(52, 35, 2030, 3), initialize=False)
+        execute(server, command(inspect(server), "initialize", name="check-exact-save-bytes"))
+        dirty = inspect(server)
+        touched = []
+
+        def rewrite_equivalent_json(connection, _cursor, statement, _params, _context, _many):
+            if statement.startswith("INSERT INTO branch_saved_revisions "):
+                changed = connection.exec_driver_sql(
+                    "UPDATE branch_saved_revisions SET payload_json = ' ' || payload_json "
+                    "WHERE run_id = 'run' AND branch_id = 'branch' AND parent_revision_id = ?",
+                    (initial["revision_id"],),
+                )
+                touched.append(changed.rowcount)
+
+        event.listen(repo._engine, "after_cursor_execute", rewrite_equivalent_json)
+        try:
+            code, answer = _request("POST", tour_url(server) + "/save", {
+                "expected_draft_version": dirty["draft_version"],
+                "expected_calendar_tour_fingerprint": dirty["tour_fingerprint"],
+            })
+        finally:
+            event.remove(repo._engine, "after_cursor_execute", rewrite_equivalent_json)
+        assert touched == [1]
+        assert code == 409 and "inconsistent immutable revision bytes" in str(answer)
+        assert inspect(server)["saved_head_revision_id"] == initial["revision_id"]
+        assert not inspect(server)["saved"]
+        assert save_tour(server)["revision_id"] != initial["revision_id"]
+
+
 def test_native_tour_save_reuses_the_drafts_physical_history(tmp_path, monkeypatch):
     from beta_engine.infrastructure.db import native_fork_runtime_state as proof
 

@@ -15,7 +15,18 @@ earlier engine at `43a0802` committed the same revision but the HTTP client
 timed out. Both databases retained the exact 53 prior revisions. The new
 revision hash, all 8,347 Saved v2 node bodies, the draft, the audit records
 and the Branch and Run rows matched exactly, excluding row timestamps.
-The remaining six W10 Saves and hosted acceptance are still pending.
+After restarting from the confirmed first Save, the second W10 Save
+returned HTTP 201 in 110.1 seconds. The independently inspected Saved
+head was revision 55. The remaining five Saves and hosted acceptance are
+still pending.
+
+The follow-up compares the newly flushed payload and summary with the exact
+canonical bytes that determined the expected Saved hash. It still reloads
+and checks the actual receipt metadata and independently decoded components.
+This avoids re-encoding the receipt's full history and rejects even an
+equivalent but noncanonical SQLite rewrite before commit. Thirteen targeted
+API and proof tests passed after this change. The W10 timings above preceded
+this follow-up.
 
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 

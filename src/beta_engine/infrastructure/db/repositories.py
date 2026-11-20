@@ -6998,7 +6998,22 @@ class SimulationPersistenceRepository:
                     # the same expensive entire sporting/lifecycle replay
                     # immediately after commit. Normal independent history,
                     # Viewer and restore reads still perform full validation.
-                    new_row = session.get(BranchSavedRevisionModel, revision_id)
+                    new_row = session.get(
+                        BranchSavedRevisionModel, revision_id, populate_existing=True,
+                    )
+                    # The hash for this exact canonical encoding was computed
+                    # earlier in this transaction. Compare the actual flushed
+                    # bytes as well as the hash and every envelope field below.
+                    # This rejects even equivalent JSON with different bytes
+                    # without serializing the entire decoded history again.
+                    if (
+                        new_row is None
+                        or new_row.payload_json != canonical_payload_json
+                        or new_row.change_summary_json != canonical_change_summary_json
+                    ):
+                        raise WorkingDraftConflictError(
+                            "Native Tour Save receipt has inconsistent immutable revision bytes"
+                        )
                     verified_native_save_receipt = self._to_branch_saved_revision(
                         new_row, validate_components=False
                     )
@@ -7007,6 +7022,7 @@ class SimulationPersistenceRepository:
                     if (
                         verified_native_save_receipt.content_hash_algorithm
                         != CONTENT_HASH_ALGORITHM
+                        or verified_native_save_receipt.revision_id != revision_id
                         or verified_native_save_receipt.content_hash != content_hash
                         or verified_native_save_receipt.payload != payload
                         or verified_native_save_receipt.change_summary != summary
@@ -7014,10 +7030,6 @@ class SimulationPersistenceRepository:
                         or verified_native_save_receipt.parent_revision_id != state.saved_head_revision_id
                         or verified_native_save_receipt.kind != revision_kind
                         or verified_native_save_receipt.payload_schema_version != RUN_SAVED_REVISION_PAYLOAD_SCHEMA_VERSION
-                        or verified_native_save_receipt.content_hash
-                        != _saved_revision_record_content_hash(
-                            verified_native_save_receipt
-                        )
                         or (verified_native_save_receipt.run_id,
                             verified_native_save_receipt.branch_id)
                         != (run_id, branch_id)

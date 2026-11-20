@@ -230,3 +230,30 @@ def test_in_memory_text_cannot_match_an_authenticated_stored_digest(v2_history):
         with pytest.raises(ValueError, match="actual stored bytes"):
             actual_dependency_signature(session, child, repository=repository)
         session.rollback()
+
+
+def test_a_later_orm_load_of_the_same_snapshot_is_bound_to_the_authenticated_digest(v2_history):
+    from beta_engine.infrastructure.db.exact_text_digest import DIGESTS
+    from beta_engine.infrastructure.db.native_fork_runtime_state import (
+        _physical_read_cache,
+        assert_current_saved_row,
+    )
+
+    _engine, factory, repository = v2_history
+    _signature(v2_history)
+    with factory() as session, native_read_proof_scope():
+        session.execute(text("BEGIN"))
+        child = session.get(BranchSavedRevisionModel, "child")
+        actual_dependency_signature(session, child, repository=repository)
+        cache = _physical_read_cache(session)
+        assert type(cache["revisions"][("run", "saved")][0][9]) is StoredTextDigest
+        parent = session.get(BranchSavedRevisionModel, "saved")   # an actual load, now
+        bound = cache[DIGESTS][("run", "saved", "payload_json")]
+        assert bound[0] is parent.payload_json
+        assert bound[1] == hashlib.sha256(parent.payload_json.encode()).digest()
+        assert_current_saved_row(session, parent)
+        # A different in-memory string is hashed on its own and rejected.
+        set_committed_value(parent, "payload_json", parent.payload_json.replace("Task", "Fake"))
+        with pytest.raises(ValueError, match="actual stored bytes"):
+            assert_current_saved_row(session, parent)
+        session.rollback()

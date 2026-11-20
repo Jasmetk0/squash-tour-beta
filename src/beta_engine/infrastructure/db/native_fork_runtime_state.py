@@ -177,9 +177,27 @@ def _remember_snapshot_loaded_row(target, context):
     if any(name not in attributes for name in field_names):
         return  # An ORM projection may defer some of the physical fields.
     key = (attributes["run_id"], attributes["revision_id"])
-    if key in cache["revisions"] or key in cache.get("unreferenced_revisions", {}):
+    known = cache["revisions"].get(key) or cache.get("unreferenced_revisions", {}).get(key)
+    if known is not None:
         # The physical reader already holds these bytes; keeping this second
-        # copy alive would only double the snapshot's memory.
+        # copy alive would only double the snapshot's memory. When it holds
+        # only the authenticated digest of the stored text, this load read
+        # the same stored row through the verified reader in the SAME
+        # snapshot, so its text has that digest (exact_text_digest then
+        # recognizes this very string object; any other string is hashed).
+        row = known[0]
+        loaded = tuple(attributes[name] for name in field_names)
+        if (
+            row is not None
+            and type(row[9]) is StoredTextDigest
+            and loaded[:9] == tuple(row[:9])
+            and loaded[10] == row[10]
+            and type(loaded[9]) is str
+            and len(loaded[9]) == row[9].chars
+        ):
+            from beta_engine.infrastructure.db.exact_text_digest import DIGESTS
+
+            cache.setdefault(DIGESTS, {})[(key[0], key[1], "payload_json")] = (loaded[9], row[9].digest)
         return
     # The object itself can later be changed without marking the session dirty
     # (e.g. set_committed_value). Record what SQLite supplied at load time.

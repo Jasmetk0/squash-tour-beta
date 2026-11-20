@@ -12,32 +12,59 @@ _MAX_GLOBAL_PART_BYTES = 16 * 1024 * 1024
 _MAX_GLOBAL_PARTS = 128
 
 
-def _parsed_global_part(body, cache, parse):
-    """Value-keyed decoding only, confined to one caller's physical read walk."""
+def _parsed_global_part(body, cache, parse, proven=None):
+    """Value-keyed decoding only, confined to one caller's physical read walk.
+
+    ``proven`` (a canonical_text.ProvenSpan of exactly ``body``) supplies the
+    proven canonical text: its hash is the key and its characters are the
+    strict JSON input. That text decodes to the same value as ``json.dumps(body)``
+    (identical tokens and key order, compact separators), so ``parse`` sees the
+    same document.
+    """
     from beta_engine.domain.run_packages import canonical_hash
 
     if not isinstance(body, dict):
         raise TypeError('Global checkpoint part must be a versioned object')
-    key = canonical_hash(body)
+    text = None
+    if proven is not None:
+        from beta_engine.infrastructure.db.canonical_text import span, span_canonical_hash
+        key = span_canonical_hash(proven.proof, proven.path)
+        if key is not None:
+            text = span(proven.proof, proven.path)
+        else:
+            key = canonical_hash(body)
+    else:
+        key = canonical_hash(body)
     entry = cache.get(key)
-    if entry is not None and entry[1] == canonical_hash(entry[2].model_dump(mode='json')):
+    # A cached model is reused only if its complete canonical dump still hashes
+    # to exactly this input's hash: a mutated (or non-round-tripping) model is
+    # simply parsed again. Checking at use, not at insertion, spends nothing on
+    # the many parts (e.g. a whole cold HEAD) that are never requested twice.
+    if entry is not None and entry[1] == key and canonical_hash(entry[2].model_dump(mode='json')) == key:
         return entry[2]
-    encoded = json.dumps(body)
+    encoded = text if text is not None else json.dumps(body)
     value = parse(encoded)
-    size = len(encoded.encode("utf-8"))
+    size = len(encoded.encode("utf-8")) if text is None else len(encoded)
     if size <= _MAX_GLOBAL_PART_BYTES:
-        cache[key] = (size, canonical_hash(value.model_dump(mode='json')), value)
+        cache[key] = (size, key, value)
         while len(cache) > _MAX_GLOBAL_PARTS or sum(item[0] for item in cache.values()) > _MAX_GLOBAL_PART_BYTES:
             cache.pop(next(iter(cache)))
     return value
 
 
-def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
+def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
+    """Strict checkpoint model of ``raw``.
+
+    ``_proven`` may be a canonical_text.ProvenSpan whose ``value`` is the
+    unmodified decode of exactly ``raw`` (the proven span of a just decoded
+    Saved payload). It only replaces decoding ``raw`` again and re-encoding each
+    part; every part still runs its strict model validator.
+    """
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
         CalendarNativeSportingCheckpoint,
     )
 
-    body = json.loads(raw)
+    body = _proven.value if _proven is not None else json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
@@ -61,11 +88,16 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
             # Union validator; stored canonical histories take the fast path.
             return GlobalCompetitionCheckpoint.model_validate_json(raw)
 
-        def strict_part(part, parse):
+        from beta_engine.infrastructure.db.canonical_text import ProvenSpan
+
+        def proven_part(path, part):
+            return ProvenSpan(_proven.proof, _proven.path + path, part) if _proven is not None else None
+
+        def strict_part(part, parse, proven=None):
             if not isinstance(part, dict):
                 raise TypeError('Global checkpoint part must be a versioned object')
             if _parsed_global_parts is not None:
-                return _parsed_global_part(part, _parsed_global_parts, parse)
+                return _parsed_global_part(part, _parsed_global_parts, parse, proven)
             return parse(json.dumps(part))
 
         values = dict(body)
@@ -73,13 +105,13 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None):
         events = []
         if not isinstance(body.get('events', []), list):
             raise ValueError('Global checkpoint events must be an array')
-        for entry in body.get('events', ()):
+        for index, entry in enumerate(body.get('events', ())):
             if not isinstance(entry, dict):
                 raise TypeError('Global checkpoint event must be a versioned object')
             model = (GlobalSlot if entry.get('schema_version') in {'calendar_global_slot.v1', 'calendar_global_slot.v2', 'calendar_global_slot.v3', 'calendar_global_slot.v4'}
                 else CalendarNativeSportingWeek if entry.get('schema_version') == 'calendar_native_sporting_week.v1'
                 else CalendarFollowupKnockout)
-            events.append(strict_part(entry, model.model_validate_json))
+            events.append(strict_part(entry, model.model_validate_json, proven_part(('events', index), entry)))
         values['events'] = tuple(events)
         # Every nested value runs its ordinary strict JSON validator. Dispatch
         # by explicit schema avoids trial-decoding large histories through each
@@ -264,7 +296,7 @@ def verify_checkpoint(state, world, evidence, *, _prefix_proofs=None,
 
 def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=None,
                      _verified_saved_prefix=None, _verified_global_prefix=None,
-                     _predecoded_checkpoint=None):
+                     _predecoded_checkpoint=None, _payload_proof=None):
     from beta_engine.infrastructure.db.initial_world_state import (
         load_saved_initial_world,
     )
@@ -286,8 +318,18 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
                 raise ValueError('Predecoded global checkpoint differs from actual complete component')
             state = _predecoded_checkpoint
         else:
-            state = parse_checkpoint_json(json.dumps(component['state']),
-                _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None)
+            from beta_engine.infrastructure.db.canonical_text import ProvenSpan, span
+            # The proven span of the just decoded payload is exactly the
+            # canonical encoding of this state: no re-encode and re-decode.
+            proven = (ProvenSpan(_payload_proof, ('content', COMPONENT_KEY, 'state'), component['state'])
+                if _payload_proof is not None else None)
+            raw = span(_payload_proof, proven.path) if proven is not None else None
+            if raw is None:
+                proven = None
+                raw = json.dumps(component['state'])
+            state = parse_checkpoint_json(raw,
+                _parsed_global_parts=_prefix_proofs.setdefault('_global_decoded_parts', {}) if _prefix_proofs is not None else None,
+                _proven=proven)
         if (state.run_id, state.branch_id, state.fingerprint) != (run_id, branch_id, component['fingerprint']):
             raise ValueError('Saved calendar sporting checkpoint identity/hash mismatch')
     if state is not None and state.schema_version in {'calendar_sporting_checkpoint.v12', 'calendar_sporting_checkpoint.v13'}:

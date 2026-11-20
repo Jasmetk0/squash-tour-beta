@@ -317,12 +317,15 @@ def remember_committed_global_sources(repository, source, captured, *, _take_own
             decode=lambda _component: captured[1])
 
 
-def decoded_global_checkpoint_component(repository, component, *, run_id, branch_id, decode):
+def decoded_global_checkpoint_component(repository, component, *, run_id, branch_id, decode,
+                                       _component_text=None):
     """Strict v13 decode data bound to the complete actual component.
 
     Tour-only Saves need not decode an unchanged 1,000-player checkpoint again.
     This shares the existing 64 MiB budget and defensive copies. The caller's
     full physical Saved, ownership, dependency and math gates stay mandatory.
+    ``_component_text`` may only be the proven canonical span of exactly
+    ``component`` (canonical_json(component)); it replaces re-encoding it.
     """
     def checked(source):
         value = decode(source.payload['calendar_player_sporting_checkpoint'])
@@ -330,9 +333,11 @@ def decoded_global_checkpoint_component(repository, component, *, run_id, branch
 
     source = SimpleNamespace(run_id=run_id, branch_id=branch_id,
         payload={'calendar_player_sporting_checkpoint': component})
+    serialized = (('{"calendar_player_sporting_checkpoint":' + _component_text + '}')
+        if type(_component_text) is str else None)
     value = _decoded_value(repository, source, checked,
         cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
-        entry_limit=4)
+        entry_limit=4, _serialized=serialized)
     # checked() bound the strict decode to this entire component. Every hit
     # rehashes that full envelope and returns a defensive private copy.
     from beta_engine.domain.tournaments.calendar_global_slots import _prime_private_fingerprint
@@ -386,10 +391,14 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
     return (value, fingerprint) if _with_fingerprint else value
 
 
-def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit):
+def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None):
     if repository is None:
         return decode(source)
-    serialized = canonical_json(source.payload).encode("utf-8")
+    if _serialized is not None and _serialized.isascii() and len(_serialized) > byte_limit:
+        # Exactly canonical_json(source.payload) (ASCII: one byte per character),
+        # too large for the cache either way: no key is needed.
+        return decode(source)
+    serialized = (_serialized if _serialized is not None else canonical_json(source.payload)).encode("utf-8")
     size = len(serialized)
     if size > byte_limit:
         return decode(source)

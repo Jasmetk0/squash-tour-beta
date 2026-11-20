@@ -14,8 +14,6 @@ from beta_engine.infrastructure.db.calendar_tour import (
 from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
 
-# The sporting event log of a global-slot Saved payload; it only grows.
-_EVENT_LOG_PATH = ('content', 'calendar_player_sporting_checkpoint', 'state', 'events')
 _cold_lineage_decodes = ContextVar('cold_lineage_shared_decodes', default=None)
 
 
@@ -25,8 +23,8 @@ def cold_lineage_shared_decodes():
 
     Only the repository's cold prevalidation walk opens this scope. Within it,
     a routing decode requested for a metadata-only validation (whose decoded
-    payload is discarded after its gates) may reuse unchanged event-log item
-    values decoded for the previous revision; see decode_sharing_items. Values
+    payload is discarded after its gates) may reuse values unchanged since the
+    previous revision's decode; see canonical_text.decode_sharing. Values
     are retained for one step only and never leave the scope.
     """
     token = _cold_lineage_decodes.set({'previous': None}) if _cold_lineage_decodes.get() is None else None
@@ -205,15 +203,15 @@ def verify_saved_global_origins(
 
 
 def _shared_decode(row, shared):
-    """Exactly ``json.loads(row.payload_json)``, sharing unchanged log items (read-only)."""
-    from beta_engine.infrastructure.db.canonical_text import PROOFS, decode_sharing_items
+    """Exactly ``json.loads(row.payload_json)``, sharing unchanged values (read-only)."""
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, decode_sharing
 
     text = row.payload_json
     proof = PROOFS.prove(text, scope=row.run_id) if type(text) is str and len(text) >= 1024 * 1024 else None
     if proof is None:
         shared['previous'] = None
         return json.loads(text)
-    value = decode_sharing_items(proof, _EVENT_LOG_PATH, shared['previous'])
+    value = decode_sharing(proof, shared['previous'])
     shared['previous'] = (proof, value)
     return value
 
@@ -222,8 +220,8 @@ def is_global_slot_row(row, *, repository=None, _decoded_out=None, _share_decode
     """Routing only; malformed data still receives the ordinary strict verifier.
 
     ``_share_decode`` (only meaningful inside cold_lineage_shared_decodes) lets
-    the decode handed to ``_decoded_out`` share unchanged event-log items with
-    the previous revision's decode. The caller must use that payload read-only
+    the decode handed to ``_decoded_out`` share unchanged values with the
+    previous revision's decode. The caller must use that payload read-only
     and discard it after validation.
     """
     signature = row_text_sha256(row, 'payload_json')

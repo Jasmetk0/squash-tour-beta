@@ -149,6 +149,27 @@ def retain_saved_model(session, model):
     return model
 
 
+@sqlalchemy_event.listens_for(BranchSavedRevisionModel, "load")
+def _remember_snapshot_loaded_row(target, context):
+    """An ORM load IS an actual read of these bytes in the current snapshot.
+
+    Record the freshly loaded row (not an identity-map hit, which fires no load
+    event) in this snapshot's physical read cache, so the dependency reader of
+    the SAME unchanged snapshot need not select and materialize the same bytes
+    again. The cache is discarded on any write, savepoint or new transaction,
+    and is disabled while the session has pending changes.
+    """
+    if _proofs.get() is None:
+        return
+    session = getattr(context, "session", None)
+    if session is None:
+        return
+    cache = _physical_read_cache(session)
+    if cache is not None:
+        cache.setdefault("loaded_rows", {})[(target.run_id, target.revision_id)] = target
+        cache.setdefault("retained_models", {})[(target.run_id, target.revision_id)] = target
+
+
 def snapshot_proofs(session):
     """Completed operation proofs cannot outlive their actual read snapshot."""
     cache = _physical_read_cache(session)
@@ -569,13 +590,20 @@ def actual_dependency_signature(session, revision, *, repository=None):
         key = (revision.run_id, revision_id)
         if key in unreferenced:
             return unreferenced[key]
-        actual = session.execute(
-            select(*fields).where(
-                BranchSavedRevisionModel.run_id == revision.run_id,
-                BranchSavedRevisionModel.revision_id == revision_id,
-            )
-        ).first()
-        row = tuple(actual[:len(fields)]) if actual is not None else None
+        loaded = (read_cache.get("loaded_rows", {}).get(key) if read_cache is not None else None)
+        if loaded is not None and session.identity_map.get(
+                (BranchSavedRevisionModel, (revision_id,), None)) is loaded:
+            # Loaded from the database in this same unchanged snapshot (see
+            # _remember_snapshot_loaded_row): exactly the bytes a SELECT returns.
+            row = tuple(getattr(loaded, field.key) for field in fields)
+        else:
+            actual = session.execute(
+                select(*fields).where(
+                    BranchSavedRevisionModel.run_id == revision.run_id,
+                    BranchSavedRevisionModel.revision_id == revision_id,
+                )
+            ).first()
+            row = tuple(actual[:len(fields)]) if actual is not None else None
         if row is None:
             unreferenced[key] = (None, None)
         else:

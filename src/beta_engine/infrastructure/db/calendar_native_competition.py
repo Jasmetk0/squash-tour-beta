@@ -147,8 +147,12 @@ def replayed_global_tour_value(payload, proofs, *, run_id, branch_id, _payload_p
     return value
 
 
-def replayed_global_checkpoint_value(payload, proofs, *, run_id, branch_id):
-    """Private decoded value only; every physical and source gate stays required."""
+def replayed_global_checkpoint_value(payload, proofs, *, run_id, branch_id, _payload_proof=None):
+    """Private decoded value only; every physical and source gate stays required.
+
+    ``_payload_proof`` may only be the proof of the exact text ``payload`` was
+    just decoded from; it supplies the same hash from the proven span.
+    """
     from beta_engine.domain.tournaments.calendar_global_slots import GlobalCompetitionCheckpoint
 
     known = (proofs or {}).get('_prefixes', {}).get('_global_replayed_checkpoints', {})
@@ -158,7 +162,7 @@ def replayed_global_checkpoint_value(payload, proofs, *, run_id, branch_id):
     if (not isinstance(component, dict) or set(component) != {'state', 'fingerprint'}
         or not isinstance(component.get('state'), dict)):
         return None
-    actual = canonical_hash(component['state'])
+    actual = _proven_hash(_payload_proof, ('content', 'calendar_player_sporting_checkpoint', 'state'), component['state'])
     value = known.get(actual)
     if (not isinstance(value, GlobalCompetitionCheckpoint)
         or (value.run_id, value.branch_id) != (run_id, branch_id)

@@ -493,7 +493,7 @@ def _saved_revision_model_content_hash(
     see canonical_text.py), hashing them is hashing the defined input. Any other
     text takes the ordinary full re-encoding. No declared hash is trusted.
     """
-    from beta_engine.infrastructure.db.canonical_text import PROOFS
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, proven_ascii_bytes
 
     if (revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
             revision.parent_revision_id, revision.kind, revision.payload_schema_version) != (
@@ -511,11 +511,15 @@ def _saved_revision_model_content_hash(
         payload=None, change_summary=revision.change_summary,
     )
     digest = hashlib.sha256(b"{")
+    payload_bytes = proven_ascii_bytes(proof)  # shared with this text's span hashes
     for index, key in enumerate(sorted(envelope)):
         if index:
             digest.update(b",")
         digest.update(canonical_json(key).encode("utf-8") + b":")
-        digest.update((proof.text if key == "payload" else canonical_json(envelope[key])).encode("utf-8"))
+        if key == "payload":
+            digest.update(payload_bytes if payload_bytes is not None else proof.text.encode("utf-8"))
+        else:
+            digest.update(canonical_json(envelope[key]).encode("utf-8"))
     digest.update(b"}")
     return digest.hexdigest()
 
@@ -2942,16 +2946,32 @@ class SimulationPersistenceRepository:
                 boundary = model.kind == _HORIZON_EXTENSION_KIND
                 parent_id = model.parent_revision_id
                 del model
-            if len(unproven) < 2 or not is_global_slot_row(head_model, repository=self):
+            if len(unproven) < 2:
+                return  # nothing deep to unwind; keep the original order
+            # Every gate below proves each revision's exact stored text canonical.
+            # Prove them now, oldest first: each reuses its parent's proof as a
+            # reference, and HEAD's proof is available to its own replay. Later
+            # gates of this operation reuse these proofs for the same strings.
+            from beta_engine.infrastructure.db.canonical_text import PROOFS
+            for revision_id in (*reversed(unproven), head_model.revision_id):
+                model = session.get(BranchSavedRevisionModel, revision_id)
+                if model is not None and type(model.payload_json) is str:
+                    PROOFS.prove(model.payload_json, scope=model.run_id)
+                del model
+            head_decoded = {}
+            if not is_global_slot_row(head_model, repository=self, _decoded_out=head_decoded):
                 return  # nothing deep to unwind; keep the original order
             try:
                 self._prevalidate_oldest_first(
-                    session, head_model, unproven, sporting_component_proofs, replay_first)
+                    session, head_model, unproven, sporting_component_proofs, replay_first,
+                    # The routing decode of exactly these HEAD characters; the
+                    # replay below otherwise decodes the same text again.
+                    _head_decoded=[head_decoded.pop('value')] if 'value' in head_decoded else None)
             except (BranchRevisionStateConflictError, KeyError, TypeError, ValueError):
                 return  # the ordinary walk below raises the original error
 
     def _prevalidate_oldest_first(self, session, head_model, unproven, sporting_component_proofs,
-                                  replay_first=()):
+                                  replay_first=(), _head_decoded=None):
         from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
 
         # The replay evidence keeps frozen Tour/checkpoint values that every
@@ -2960,16 +2980,21 @@ class SimulationPersistenceRepository:
         # does). Nothing in the scope is a physical or source proof.
         with global_replay_projection_scope(_reuse_simulated_matches=True):
             self._prevalidate_oldest_first_in_scope(
-                session, head_model, unproven, sporting_component_proofs, replay_first)
+                session, head_model, unproven, sporting_component_proofs, replay_first,
+                _head_decoded=_head_decoded)
 
     def _prevalidate_oldest_first_in_scope(self, session, head_model, unproven,
-                                           sporting_component_proofs, replay_first):
+                                           sporting_component_proofs, replay_first,
+                                           _head_decoded=None):
         # 1. HEAD's complete component replay, then (newest first) that of the
         #    newest revision below each horizon extension. These only record
         #    evidence; every revision is still validated in full below.
+        # A one-shot holder: once taken, no caller frame keeps the decoded HEAD
+        # alive during the ancestor loop below.
         self._to_branch_saved_revision(
             head_model, validate_components=True, validate_native_root=False,
             sporting_component_proofs=sporting_component_proofs,
+            _decoded_payload=_head_decoded.pop() if _head_decoded else None,
         )
         for revision_id in replay_first:
             model = session.get(BranchSavedRevisionModel, revision_id)
@@ -3120,6 +3145,15 @@ class SimulationPersistenceRepository:
                 raise BranchRevisionStateConflictError(
                     "shared fork origin is not part of the source Branch history"
                 )
+        if lineage[0].payload and type(head_model.payload_json) is str:
+            # The returned HEAD payload is the fresh decode of exactly these
+            # stored characters. Hand its EXISTING canonical-text proof to this
+            # operation's readers, bound to that payload object's identity, so
+            # they hash proven spans instead of re-encoding large components.
+            from beta_engine.infrastructure.db.canonical_text import PROOFS
+            head_proof = PROOFS.lookup(head_model.payload_json)
+            if head_proof is not None:
+                sporting_component_proofs['_saved_head_payload_proof'] = (lineage[0].payload, head_proof)
         return lineage
 
     @staticmethod
@@ -4408,16 +4442,20 @@ class SimulationPersistenceRepository:
                 # Without any replay evidence the check below returns False
                 # before reading a proof, so do not prove (and, for a cold HEAD,
                 # fully re-encode) the text only to discard the result.
+                # A complete replay uses an EXISTING proof of exactly these
+                # characters (never a new one) for its span hashes.
                 replay_evidence = (sporting_component_proofs or {}).get('_prefixes', {}).get(
                     '_global_replayed_values')
                 payload_proof = (_canonical_text_proofs.prove(model.payload_json, scope=model.run_id)
-                    if replay_evidence and isinstance(model.payload_json, str) else None)
+                    if replay_evidence and isinstance(model.payload_json, str)
+                    else _canonical_text_proofs.lookup(model.payload_json))
                 if not has_replayed_global_components(payload, sporting_component_proofs,
                                                       _payload_proof=payload_proof):
                     load_saved_calendar_match(
                         payload, run_id=model.run_id, branch_id=model.branch_id,
                         _sporting_component_proofs=sporting_component_proofs,
                         _verified_global_prefix=verified_global_prefix,
+                        _payload_proof=payload_proof,
                     )
         except (TypeError, ValueError) as exc:
             raise BranchRevisionStateConflictError(

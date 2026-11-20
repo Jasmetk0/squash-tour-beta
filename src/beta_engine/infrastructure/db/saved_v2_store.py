@@ -34,6 +34,17 @@ differs from the envelope, and only then returns the text. Nothing is trusted
 from an earlier read, a declared digest or a persisted proof; corruption after
 any successful (warm) read fails the next read.
 
+Text digests (``stored_text_sha256``)
+-------------------------------------
+Physical-row signatures need only SHA-256 of a row's logical text. After a
+verified materialization was hashed, ``TEXT_DIGESTS`` remembers that digest for
+the exact (Run, root, size). A later snapshot may return it without
+materializing the text again, but only after re-fetching and re-hashing EVERY
+node reachable from that root in its own transaction, as the reader would; a
+missing, foreign or changed node fails closed, and any other envelope is a
+different key. Content addressing makes those identical bodies determine the
+same text.
+
 Writing (incremental)
 ---------------------
 The encoder splits the exact text at JSON container boundaries. Containers of at

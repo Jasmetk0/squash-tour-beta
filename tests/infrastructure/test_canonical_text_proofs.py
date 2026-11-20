@@ -254,6 +254,9 @@ def test_proven_dependency_branches_equal_the_original_parser(monkeypatch, basel
         text = text.replace(",", ", ", 1)
     row = [None] * 12
     row[0], row[1], row[2], row[9] = "rev", "run", "branch", text
+    assert native_fork_runtime_state._proven_dependency_branches(row) is None
+    assert canonical_text.PROOFS.lookup(text) is None
+    canonical_text.PROOFS.prove(text, scope="run")
     proven = native_fork_runtime_state._proven_dependency_branches(row)
     try:
         original = _original_dependency_branches(row)

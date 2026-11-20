@@ -17,8 +17,7 @@ revision hash, all 8,347 Saved v2 node bodies, the draft, the audit records
 and the Branch and Run rows matched exactly, excluding row timestamps.
 After restarting from the confirmed first Save, the second W10 Save
 returned HTTP 201 in 110.1 seconds. The independently inspected Saved
-head was revision 55. The remaining five Saves and hosted acceptance are
-still pending.
+head was revision 55.
 
 The follow-up compares the newly flushed payload and summary with the exact
 canonical bytes that determined the expected Saved hash. It still reloads
@@ -26,7 +25,21 @@ and checks the actual receipt metadata and independently decoded components.
 This avoids re-encoding the receipt's full history and rejects even an
 equivalent but noncanonical SQLite rewrite before commit. Thirteen targeted
 API and proof tests passed after this change. The W10 timings above preceded
-this follow-up.
+this follow-up. The two worktrees use the same retained 1,000-player input and
+the fixed acceptance request deadline.
+
+On the follow-up, ordinary execute confirmed submission, approval and draw
+in 111.4, 118.5 and 117.7 seconds after a diagnostic cold warm-up. A normal
+cold inspection at revision 55 hit the 120-second client deadline on one run.
+Save 3 also hit the standard deadline before the receipt arrived. SQLite
+committed revision 56. Its actual Saved v2 payload materialized successfully,
+the canonical revision hash and live Tour fingerprint matched, and all 55
+older revision rows were identical to the checkpoint. Four later Saves and
+end-to-end W10 acceptance remain unverified.
+
+The 56 revisions represent 3,393,339,406 logical payload characters backed by
+60,000,003 bytes of Saved v2 node bodies. Removing repeated materialization
+of those same actual physical dependencies is the next performance target.
 
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 

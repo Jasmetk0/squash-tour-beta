@@ -136,7 +136,7 @@ extended) and `native_post_intake_tour_browser_acceptance.py` with real Chromium
 The dedicated jobs pass their own process-level acceptance event so the ordinary
 changed-module PR filter cannot deselect an unchanged mandatory case. They do
 not replace the original full native Tour/season API, birth cases or browser
-matrix. Fast CI stays focused; no 50-season release suite is added to ordinary PRs.
+matrix. Fast CI stays focused; the multi-season release suite is separate from ordinary PRs.
 
 ## Pull-request development
 
@@ -212,7 +212,10 @@ The first pre-alpha release gate must at minimum include:
 - empty Run -> two manual players -> one standalone match;
 - save/reopen/replay integrity required by those flows;
 - the complete regression suite, not only PR-selected tests;
-- the preserved 50-season FAX reference acceptance and the Run-calendar/extension compatibility acceptance assigned by Master §§31.28 and 31.37. The reference 50 × 61 configuration is not a universal Run limit.
+- one actual automated reference FAX run completing the first 25 seasons (2000/01–2024/25, 61 weeks each) through Season 25 closure, as specified by Master §31.28;
+- the Run-calendar and extension compatibility acceptance in Master §31.37.
+
+The 50 × 61 FAX configuration is available for extended validation. Each Run has its own configured horizon.
 
 Future release-specific checks may be added without changing this basic policy.
 
@@ -241,7 +244,7 @@ Native Tour Ready/manual acceptance adds parallel Gold24/Q16 and Platinum32/Q24
 real HTTP/SQLite cases. They explicitly author a disposable Unranked single-week
 source/future announcement, retaining source geometry. Require normal publication,
 partial Next Match Save/restart, actual remaining slots, confirmation and transition.
-They do not replace original Ranked/source/50-season gates. Small source/version
+The Ranked and source gates and the 25-season pre-alpha release gate also apply. Small source/version
 contracts stay in Fast CI; the long new cases are smoke/full-suite tests in their
 dedicated matrix, avoiding duplicate execution in Fast CI. Existing relevant native
 Tour, Full Simulation and fork gates remain required.

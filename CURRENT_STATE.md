@@ -1,3 +1,11 @@
+# First pre-alpha long-run acceptance — 21 November 2026
+
+[DECIDED] Master v88 requires the first 25 complete reference FAX seasons
+(2000/01–2024/25) for first pre-alpha acceptance. The 50-season FAX
+configuration remains available for extended validation. This records the
+release criterion. A successful reference run through Season 25 closure
+still needs to be demonstrated.
+
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 
 PR #1834 independently verified the first Tour read after restarting with

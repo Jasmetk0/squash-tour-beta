@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Master v72 requires one automated release-gating run through an editable copy of the FAX test template across all 50 seasons 2000/01–2049/50. The World Tour is fully simulated, lower Tours may remain abstract, the starting world contains at least 1,000 non-retired players, and the reference calendar contains 80 World Tour Editions per season.
+Master v88 requires one automated release-gating run through an editable copy of the FAX test template that completes its first 25 seasons (2000/01–2024/25, 61 weeks each), including Season 25 closure. The readiness profile below validates the full 50-season reference configuration, which remains available for extended validation. The World Tour is fully simulated, lower Tours may remain abstract, the starting world contains at least 1,000 non-retired players, and the reference calendar contains 80 World Tour Editions per season.
 
 This slice makes the **input readiness** for that long acceptance machine-readable. It does not claim that the long test has already executed or passed.
 
@@ -18,9 +18,9 @@ The profile reads only Run-owned state:
 
 It does not read the live source Calendar registry to fill missing Run state.
 
-## Gate
+## Reference fixture readiness
 
-A Run/Branch is ready to start the long acceptance only when:
+The current input profile reports the reference Run/Branch as ready only when:
 
 - the Run is editable,
 - the Branch is active,
@@ -39,6 +39,6 @@ The profile is exposed below the canonical Authoritative Simulation boundary and
 
 ## Next
 
-Build the copied-FAX release fixture at the decided scale and add the long-running acceptance harness/report that executes all 50 seasons, persists/reopens required checkpoints, records history growth and fails on any manual-repair requirement.
+Build the copied-FAX release fixture at the decided scale and add the acceptance harness/report. The first pre-alpha run verifies the first 25 complete seasons. Extended validation can cover all 50. The harness persists and reopens required checkpoints, records history growth and fails on any manual-repair requirement.
 
 Current real preparation evidence and limitations: [copied-FAX preparation](PRE_ALPHA_FAX_REFERENCE_PREPARATION.md).

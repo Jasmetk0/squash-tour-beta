@@ -37,7 +37,7 @@ component readiness for a playable public ATP Run.
 3. Work reviews those final heads, then resumes ATP's native scheduled owner using
    the existing slot/point ledger: public Q → manual Save/restart → normal Week
    Transition → Main → terminal confirmation → next ranking in one real Run.
-4. Multiple simultaneous Editions, full reference season/Finals, 50-season,
+4. Multiple simultaneous Editions, full reference season/Finals, 25 complete FAX seasons,
    recovery/performance and the complete Master release scope remain mandatory.
 
 Use the existing [evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md) and
@@ -59,7 +59,7 @@ The bounded native consumer keeps results in the existing v13 shared slot ledger
    owner-level adoption. Do not infer readiness from an explicitly authored
    disposable fixture. Fork/revised Draw/multi-week consumers remain versioned work.
 3. Prove multiple Editions, original full season/Finals/transition, then existing
-   50-season/recovery/performance gates and complete Master release requirements.
+   25-season pre-alpha acceptance and the recovery, performance and remaining Master release gates.
 
 Use the single [integration evidence map](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
 ATP package PRs #1731 → #1741 → #1742 remain separate and untouched.
@@ -81,8 +81,8 @@ This still does not enable the native public Q/Main execution path.
    Consume real Q winners through the established node plan, not fake Main entries.
 3. Audit source-bound operational scheduling and existing Entry/complete award
    prerequisites. Prove one actual public Gold/Platinum Run flow, then multiple
-   Editions/full season/Finals/transition and the required 50-season recovery and
-   performance gates. Feeder readiness is not sporting authorization or release.
+   Editions/full season/Finals/transition and the 25-season pre-alpha acceptance,
+   including recovery and performance evidence. Feeder readiness is not sporting authorization or release.
 
 The complete Master scope remains. The single requirement/evidence map stays in
 [the integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md).
@@ -107,7 +107,7 @@ See the single [integration checkpoint](docs/PRE_ALPHA_INTEGRATION_2026_10_30.md
 3. Resolve only genuinely open Entry/award/source chronology prerequisites; then
    prove one actual Gold and one Platinum through Q/Main/points/explicit Save and
    reopen, followed by multiple Editions, a full reference season and the required
-   50-season/recovery/performance gates. Draw success is not sporting execution.
+   25-season pre-alpha acceptance and recovery and performance gates. Draw success is not sporting execution.
 
 The complete Master scope is retained. Earlier dated roadmap entries are history.
 
@@ -137,7 +137,7 @@ Its older dated rows are history; the complete Master still owns release scope.
    timing/ranking preparation is not itself automatic eligibility or live Q play.
 4. Prove an actual Gold and Platinum flow through Entry/Q/Main/points/manual
    Save/reopen, then multiple Editions/weeks, the complete reference season and
-   Finals/Season Transition, then the required 50 seasons with performance,
+   Finals/Season Transition, then 25 complete FAX seasons with performance,
    RSS and physical/history growth observations from those same actual Runs.
 5. Close all retained side requirements (historical initial cohort/intake, portable
    archives/recovery, minimum Reconstruction/three Labs, Records/notifications,
@@ -1303,7 +1303,7 @@ Checked buuk `f200d9898b41431439501a9b559529900135adf7` after #1532. All #1521�
 | 5 | Canonical calendar sporting/Health state and full attribute projection | Merged #1527 form/load, #1528 Saved Health, #1529 frozen 57-attribute match inputs and actual 57→engine projection. Merged #1530 persists full-population native 57-attribute ownership and terminal played state. Merged #1531 uses that Saved state for repeatable actual sequential exhibitions, per-match effects and separate immutable Save/replay/restore. Weekly transitions, cohort development and numeric Health effects remain incomplete |
 | 6 | Tour entry + configured Edition points + Official publication + Week/Season Transition | Incomplete; do not mistake hypothetical W2 point eligibility for an advanced simulation |
 | 7 | Durable Full Simulation, populated multi-season and extended Completed continuation | Incomplete; preserve frozen targets, terminal tasks, explicit recovery and W-aware annual units |
-| 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season + 50 seasons and W52/W80 acceptance |
+| 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season, 25 complete FAX seasons and W52/W80 acceptance |
 
 Current task should deliver usable authority integration, not more isolated
 provenance wrappers. Version migration must retain historical FAX bytes and

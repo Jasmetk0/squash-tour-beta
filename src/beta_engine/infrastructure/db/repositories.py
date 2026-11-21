@@ -3036,7 +3036,10 @@ class SimulationPersistenceRepository:
             self._prevalidate_unproven_oldest_first(session, unproven, sporting_component_proofs)
 
     def _prevalidate_unproven_oldest_first(self, session, unproven, sporting_component_proofs):
-        from beta_engine.infrastructure.db.native_fork_runtime_state import release_snapshot_saved_text
+        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+            bind_refreshed_text_digest,
+            release_snapshot_saved_text,
+        )
         for revision_id in reversed(unproven):
             model = session.get(BranchSavedRevisionModel, revision_id)
             if model is None:
@@ -3045,6 +3048,7 @@ class SimulationPersistenceRepository:
             # decode, prove and hash it, and the dependency reader then shares
             # this text (same SHA-256) instead of reading and parsing it again.
             model.payload_json
+            bind_refreshed_text_digest(session, model)
             self._validated_saved_revision_in_session(
                 session=session, model=model, materialize_payload=False,
                 sporting_component_proofs=sporting_component_proofs,

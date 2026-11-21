@@ -236,6 +236,7 @@ def release_snapshot_saved_text(session, run_id, revision_id, *, repository=None
     memo = cache.get(DIGESTS, {}).get((run_id, revision_id, "payload_json"))
     if memo is not None:
         collect(memo[0])
+    collect(cache.get("refreshed_texts", {}).get(key))
     if not texts:
         return 0
     connection, state = _connection_and_state(session)
@@ -298,6 +299,9 @@ def release_snapshot_saved_text(session, run_id, revision_id, *, repository=None
     if memo is not None and held(memo[0]):
         del cache[DIGESTS][(run_id, revision_id, "payload_json")]
         released += 1
+    if held(cache.get("refreshed_texts", {}).get(key)):
+        del cache["refreshed_texts"][key]
+        released += 1
     if retained is not None and held(sqlalchemy_inspect(retained).dict.get("payload_json")):
         state_of = sqlalchemy_inspect(retained)
         if state_of.session is session and state_of.persistent and not state_of.modified:
@@ -307,6 +311,67 @@ def release_snapshot_saved_text(session, run_id, revision_id, *, repository=None
         released += forget_operation_text(value)
     released += saved_v2_store.forget_snapshot_text(connection, run_id, stored, state=state)
     return released
+
+
+@sqlalchemy_event.listens_for(BranchSavedRevisionModel, "refresh")
+def _remember_snapshot_refreshed_text(target, context, attrs):
+    """A deferred/expired ``payload_json`` loaded now IS an actual read of it.
+
+    Records the exact string object SQLite supplied in this snapshot (like
+    ``_remember_snapshot_loaded_row`` for complete loads), so that
+    ``bind_refreshed_text_digest`` can bind its digest through the stored
+    envelope instead of hashing the characters again. Discarded with the
+    snapshot cache and by ``release_snapshot_saved_text``.
+    """
+    if _proofs.get() is None or (attrs is not None and "payload_json" not in attrs):
+        return
+    session = getattr(context, "session", None)
+    if session is None:
+        return
+    cache = _physical_read_cache(session)
+    if cache is None:
+        return
+    values = sqlalchemy_inspect(target).dict
+    if type(values.get("payload_json")) is str and "run_id" in values and "revision_id" in values:
+        cache.setdefault("refreshed_texts", {})[(values["run_id"], values["revision_id"])] = values["payload_json"]
+
+
+def bind_refreshed_text_digest(session, model):
+    """Digest memo for a just refreshed v2 text, bound via its stored envelope.
+
+    Only for the exact string object the refresh recorded (an in-memory
+    replacement is a different object and is hashed as before), and only when
+    this process already bound the envelope's digest and every reachable node
+    re-hashes now (``stored_text_sha256``). Returns True when bound.
+    """
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db.exact_text_digest import DIGESTS
+
+    cache = _physical_read_cache(session)
+    if cache is None:
+        return False
+    values = sqlalchemy_inspect(model).dict
+    key = (values.get("run_id"), values.get("revision_id"))
+    text = values.get("payload_json")
+    if type(text) is not str or cache.get("refreshed_texts", {}).get(key) is not text:
+        return False
+    known = cache.get(DIGESTS, {}).get((*key, "payload_json"))
+    if known is not None and known[0] is text:
+        return True
+    stored = session.execute(select(_raw_payload_column()).select_from(BranchSavedRevisionModel).where(
+        BranchSavedRevisionModel.run_id == key[0],
+        BranchSavedRevisionModel.revision_id == key[1],
+    )).scalar()
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    if type(stored) is not str or not stored.startswith(saved_v2_store.ENVELOPE_PREFIX):
+        return False
+    digest = _stored_v2_digest(session, key[0], stored)
+    if digest is None or digest.chars != len(text):
+        return False
+    cache.setdefault(DIGESTS, {})[(*key, "payload_json")] = (text, digest.digest)
+    return True
 
 
 @sqlalchemy_event.listens_for(BranchSavedRevisionModel, "load")

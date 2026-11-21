@@ -257,3 +257,55 @@ def test_a_later_orm_load_of_the_same_snapshot_is_bound_to_the_authenticated_dig
         with pytest.raises(ValueError, match="actual stored bytes"):
             assert_current_saved_row(session, parent)
         session.rollback()
+
+
+def test_a_deferred_ancestor_is_hashed_from_its_actual_row_without_materializing(v2_history):
+    from sqlalchemy.orm import defer
+
+    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256, unloaded_column
+    from beta_engine.infrastructure.db.native_fork_runtime_state import assert_current_saved_row
+
+    engine, factory, repository = v2_history
+    _signature(v2_history)
+    with factory() as session, native_read_proof_scope():
+        session.execute(text("BEGIN"))
+        child = session.get(BranchSavedRevisionModel, "child")
+        actual_dependency_signature(session, child, repository=repository)
+        parent = session.get(BranchSavedRevisionModel, "saved",
+                             options=[defer(BranchSavedRevisionModel.payload_json)])
+        assert unloaded_column(parent, "payload_json")
+        calls, stop = _count_materializations(engine)
+        try:
+            digest = row_text_sha256(parent, "payload_json")
+            assert_current_saved_row(session, parent)
+        finally:
+            stop()
+        assert calls == [] and unloaded_column(parent, "payload_json")
+        # Loading it on access gives exactly the text with that digest.
+        assert digest == hashlib.sha256(parent.payload_json.encode()).digest()
+        # An in-memory value that replaces the actual one is compared again.
+        set_committed_value(parent, "payload_json", parent.payload_json.replace("Task", "Fake"))
+        with pytest.raises(ValueError, match="actual stored bytes"):
+            assert_current_saved_row(session, parent)
+        session.rollback()
+
+
+def test_a_deferred_ancestor_never_reuses_a_digest_after_its_nodes_change(v2_history):
+    from sqlalchemy.orm import defer
+
+    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
+
+    engine, factory, _repository = v2_history
+    _signature(v2_history)
+    with engine.connect() as connection:
+        parent_root = st.parse_envelope(connection.exec_driver_sql(
+            "SELECT payload_json FROM branch_saved_revisions WHERE revision_id='saved'").scalar(), run_id="run")[0]
+    _tamper(engine, "UPDATE saved_revision_nodes SET body = body || ' ' WHERE run_id='run' AND digest = ?",
+            parent_root)
+    with factory() as session, native_read_proof_scope():
+        session.execute(text("BEGIN"))
+        parent = session.get(BranchSavedRevisionModel, "saved",
+                             options=[defer(BranchSavedRevisionModel.payload_json)])
+        with pytest.raises(ValueError):
+            row_text_sha256(parent, "payload_json")
+        session.rollback()

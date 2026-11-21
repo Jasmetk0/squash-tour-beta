@@ -6,6 +6,7 @@ import hashlib
 import json
 from typing import TYPE_CHECKING
 
+from pydantic_core import SchemaValidator, core_schema
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
@@ -41,14 +42,45 @@ if TYPE_CHECKING:
 
 PLAYER_LIFECYCLE_COMPONENT_KEY = "player_lifecycle"
 
+# Routing is NOT validation. We only need the schema_version field to choose
+# the existing strict Pydantic model_validate_json validator. The old
+# json.loads(raw) decoded every player, entry and birth receipt before
+# Pydantic parsed the complete raw string a second time.
+_LIFECYCLE_VERSION_PROJECTION = SchemaValidator(
+    core_schema.typed_dict_schema(
+        {"schema_version": core_schema.typed_dict_field(
+            core_schema.any_schema(), required=False,
+        )},
+        extra_behavior="ignore",
+    ),
+    config=core_schema.CoreConfig(cache_strings=False),
+)
+
+
+def lifecycle_schema_version(raw):
+    """Select the same JSON schema_version, without trusting any other fields.
+
+    No integrity shortcut: the chosen lifecycle model still validates the
+    entire original raw JSON and its precise version literal. Non-object
+    inputs use the original json.loads behavior, including their errors.
+    """
+    try:
+        return _LIFECYCLE_VERSION_PROJECTION.validate_json(raw).get("schema_version")
+    except (TypeError, ValueError):
+        # Preserve the old JSON-mode validator for a non-object root. A list
+        # (or null) was previously routed into the legacy model, which rejected
+        # it as a ValueError; do not turn that into AttributeError / HTTP 500.
+        value = json.loads(raw)
+        return value.get("schema_version") if isinstance(value, dict) else None
+
 
 def _parse_lifecycle_json(raw):
-    value = json.loads(raw)
-    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v2":
+    version = lifecycle_schema_version(raw)
+    if version == "player_lifecycle_calendar_state.v2":
         return CalendarPlayerLifecycleState.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v3":
+    if version == "player_lifecycle_calendar_state.v3":
         return CalendarTourLifecycleState.model_validate_json(raw)
-    if isinstance(value, dict) and value.get("schema_version") == "player_lifecycle_calendar_state.v4":
+    if version == "player_lifecycle_calendar_state.v4":
         from beta_engine.domain.players.calendar_prospect_birth import (
             CalendarTourLifecycleIntakeState,
         )

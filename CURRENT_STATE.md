@@ -10,6 +10,39 @@ versions. First performance measurements target a modest Windows PC. These
 are product criteria. ATP continuity and FAX Season 25 closure still require
 real acceptance evidence.
 
+# W10 on a GitHub runner, base vs #1836 vs #1838 — 21 November 2026
+
+Diagnostic run 44895352733 (branch `test/w10-actions-ab-20261121`, never
+merged) ran on one `ubuntu-latest` runner (4 vCPU Xeon 8370C, 16 GB). It used
+fresh copies of the W9 fixture from artifact 14581530042, production HTTP,
+SQLite and Saved v2, explicit Saves and the 120-second client deadline. All
+three trees completed W10 with no timeout. Using the same harness UUID
+sequence, base `cde9214`, #1836 `a8c7036` and #1838 `f99df70` produced
+byte-identical revision rows, nodes, audit events, Working Drafts and final
+Tour inspections. The 53 fixture revisions were unchanged.
+
+| runner, W10 | base | #1836 | #1838 (incl. #1837) |
+|---|---:|---:|---:|
+| Save 1–7 (s) | 59.1/59.5/90.4/63.5/65.4/66.7/71.0 | 42.5/40.9/71.1/43.9/44.9/44.8/48.5 | 37.2/35.0/65.1/39.3/40.8/39.8/46.0 |
+| slowest command (execute, s) | 102.0 | 76.8 | 54.6 |
+| cold start at 53 / 60 revisions (s) | 75.6 / 89.6 | 75.4 / 89.7 | 76.8 / 92.7 |
+| peak RSS / whole W10 | 8.22 GiB / 2,550 s | 6.63 GiB / 1,821 s | 5.39 GiB / 1,117 s |
+
+The candidate then continued through W11–W12 on the same runner, reaching 76
+revisions. Its Saves took 46.7–64.4 s, the two W12 Draw Saves 91.6 and 91.0 s,
+and its slowest execute 75.9 s. The cold read at 76 revisions took 136.8 s
+with a 9.75 GiB peak. Locally, base and candidate measured 139.0 and 141.9 s.
+The cold read therefore grows fastest: about 1.9 s per revision from 53 to 60
+and about 3 s per revision from 60 to 76. Its RAM grows by about 200 MiB per
+revision. It already exceeds 120 s at W12 on every tree.
+
+A tracemalloc snapshot at 60 revisions held 6.1 GiB. 3.7 GiB of that was
+historical payload text returned by SQLite, kept alive for the whole cold
+validation by the snapshot read cache and the operation's canonical-text
+proofs. The next change is to prove, validate and release historical texts
+one revision at a time on the cold path, then reduce the per-revision replay
+work. The five-season run was not started.
+
 # W10 passes at the original 120-second deadline — 20 November 2026
 
 Candidate engine `b1b0f1e` on `perf/native-tour-save-history-reuse`

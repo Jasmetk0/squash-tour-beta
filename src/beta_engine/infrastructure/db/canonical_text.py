@@ -239,7 +239,7 @@ class ProvenCanonicalText:
     or a foreign string as a reference.
     """
 
-    __slots__ = ("text", "layout", "reference", "__weakref__")
+    __slots__ = ("text", "layout", "reference", "span_hashes", "reference_span_hashes", "__weakref__")
 
     def __init__(self, token, text, layout, reference=None):
         if token is not _TOKEN:
@@ -248,6 +248,12 @@ class ProvenCanonicalText:
         self.layout = layout
         # Weak: a proof never keeps its reference (and that text) alive.
         self.reference = weakref.ref(reference) if reference is not None else None
+        # ``span_canonical_hash`` results of THIS text, by path. The reference's
+        # own table is kept (digests only, never its text): a span this proof
+        # found byte-identical to the reference at the same path has the same
+        # canonical hash, so it is not hashed again (see span_canonical_hash).
+        self.span_hashes = {}
+        self.reference_span_hashes = reference.span_hashes if reference is not None else None
 
 
 def verify_canonical_text(text, reference=None):
@@ -448,10 +454,23 @@ def proven_ascii_bytes(proof):
 
 
 def span_canonical_hash(proof, path):
-    """``canonical_hash(value_at(path))`` from the proven exact span, or None."""
+    """``canonical_hash(value_at(path))`` from the proven exact span, or None.
+
+    Each result is remembered on the proof, by path. When the proof found the
+    value at ``path`` (or a container enclosing it) byte-identical to its
+    reference proof's value at the same path (``Layout.same``, decided by
+    comparing the actual characters), the reference's remembered result for
+    that path is the result for these identical bytes and is reused. Nothing
+    is trusted from a stored or declared hash: every reused digest was computed
+    here from the actual characters of the reference text.
+    """
     if type(proof) is not ProvenCanonicalText:
         raise TypeError("span requires a ProvenCanonicalText")
+    memo = proof.span_hashes if type(path) is tuple else None
+    if memo is not None and path in memo:
+        return memo[path]
     node = proof.layout
+    same = node.same
     for key in path:
         if node is None:
             return None
@@ -459,7 +478,21 @@ def span_canonical_hash(proof, path):
             node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
         else:
             node = node.keys.get(key) if node.keys is not None else None
-    if node is None or proof.text.find("\\u", node.start, node.end) != -1:
+        same = same or (node is not None and node.same)
+    if node is None:
+        return None
+    inherited = proof.reference_span_hashes
+    if memo is not None and same and inherited is not None and path in inherited:
+        memo[path] = inherited[path]
+        return memo[path]
+    digest = _span_digest(proof, node)
+    if memo is not None:
+        memo[path] = digest
+    return digest
+
+
+def _span_digest(proof, node):
+    if proof.text.find("\\u", node.start, node.end) != -1:
         return None
     data = proven_ascii_bytes(proof)
     if data is None:

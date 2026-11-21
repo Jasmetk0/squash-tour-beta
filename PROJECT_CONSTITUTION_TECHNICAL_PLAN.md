@@ -758,7 +758,7 @@ Exact algorithms, sampling thresholds, UI, retention, conflict handling, fulfill
 - global search exists with keyboard shortcut,
 - current version is desktop-first rather than fully mobile-responsive.
 
-**[DECIDED FOR PRE-ALPHA v75]** Global sidebar: Home / Runs / Packages / Test Lab, with application settings below. Global Home includes those three functional entries, brief factual summaries and recent Runs; no Run opens automatically.
+**[DECIDED v75, RELEASE TIMING UPDATED IN MASTER v89 §31.41]** Target global sidebar: Home / Runs / Packages / Test Lab, with application settings below. Global Home includes those three functional entries, brief factual summaries and recent Runs; no Run opens automatically.
 
 **[DECIDED FOR PRE-ALPHA v75]** Run sidebar: Home / World / Players / Tour / Rankings & Analytics / Simulation / History & Branches, with separate Run Management below. Run Management combines Run settings, overrides, package application, transfers/backups, validation and storage. Detailed subpages remain open.
 
@@ -870,6 +870,6 @@ Master §§27.22 and 31.35 add approved pre-alpha target behavior; §35.37 and t
 - Age/long-term development use 1/W of a year per week. More weekly update calls do not grant more annual maturation/training growth by themselves. Individual paths and genuine workload/health differences remain meaningful; exact curves and detailed training/deload scheduling remain calibration/later work.
 - Ranking results default to one Run year (W weeks), with existing explicit overrides. Entry and penalty rules stated in weeks retain the same default number of weeks. Other special policies are not globally rescaled.
 - Calendar imports preview conflicts and dependencies; correct dates or skip affected items, with explicit consent and no silent modulo/clamp/rescale. Compatible independent selections remain importable. Existing Runs do not adopt new Earth defaults.
-- Runtime still contains 61/2000–2049 assumptions. Versioned compatibility, transition/target integration and real acceptance must precede claims of working 52-week simulation. The 50-season FAX release acceptance remains a reference test, not a universal Run limit.
+- Runtime still contains 61/2000–2049 assumptions. Versioned compatibility, transition/target integration and real acceptance must precede claims of working 52-week simulation. The first pre-alpha release requires 25 complete FAX seasons (§31.28) and two complete W52 ATP seasons after importing compatible packages in Admin (§31.41). The 50-season FAX default configuration remains available for extended validation, and each Run has its own horizon.
 
 The complete Master remains authoritative for details and preserved decisions outside this selected synchronization. Implementation evidence is in CURRENT_STATE and the v82 checkpoint; none of these product targets prove code completion.

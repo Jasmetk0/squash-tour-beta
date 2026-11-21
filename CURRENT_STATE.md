@@ -1,3 +1,15 @@
+# First playable pre-alpha scope — 21 November 2026
+
+[DECIDED] Master v89 §31.41 requires an Admin Run created from compatible ATP
+packages to complete two W52 seasons and open Season 3 after an explicit Save
+and restart between seasons. The 25-season FAX reference run (2000/01–2024/25)
+remains a release gate, and the 50-season configuration supports extended
+validation. Full, custom and compact branch exports stay in first pre-alpha.
+Selective Save and the listed advanced interfaces and analyses move to later
+versions. First performance measurements target a modest Windows PC. These
+are product criteria. ATP continuity and FAX Season 25 closure still require
+real acceptance evidence.
+
 # W10 passes at the original 120-second deadline — 20 November 2026
 
 Candidate engine `b1b0f1e` on `perf/native-tour-save-history-reuse`

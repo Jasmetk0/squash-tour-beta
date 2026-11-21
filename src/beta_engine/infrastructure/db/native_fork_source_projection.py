@@ -227,8 +227,10 @@ def _decoded_global_source(repository, source, component, decode, *, _identity=N
 def _copy_decoded_value(value, attribute_hints=None):
     from beta_engine.domain.players.sporting import _SPORTING_ATTRIBUTE_COPY_MEMO_KEY
 
+    from beta_engine.infrastructure.db.native_private_value_copy import private_copy
+
     memo = {_SPORTING_ATTRIBUTE_COPY_MEMO_KEY: dict(attribute_hints or {})}
-    result = deepcopy(value, memo)
+    result = private_copy(value, memo)
     return result, memo[_SPORTING_ATTRIBUTE_COPY_MEMO_KEY]
 
 

@@ -1,0 +1,79 @@
+name: Native W12 Signed Saved Private Copy A-B-B-A
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'src/beta_engine/infrastructure/db/native_private_value_copy.py'
+      - 'src/beta_engine/infrastructure/db/native_fork_source_projection.py'
+      - 'tests/infrastructure/test_native_private_value_copy.py'
+      - 'scripts/benchmark_native_w12_private_copy_ab.py'
+      - '.github/workflows/native-w12-private-copy-ab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: actual-w12-private-copy-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  tested-and-authenticated-real-w12:
+    name: Full 24-match real Signed W12 S2W1→W2 Save; original vs typed copy A-B-B-A
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install real Tour backend and pytest
+        run: python -m pip install -e . pytest
+      - name: Strict isolation, user mutation, subclass, cycle and existing cache regressions
+        run: |
+          PYTHONPATH="$PWD/src:$PWD" python -m pytest \
+            tests/infrastructure/test_native_private_value_copy.py \
+            tests/infrastructure/test_native_fork_source_projection.py \
+            -q --maxfail=1
+      - name: Download verified original 46-Saved played 256-player W12 physical SQLite
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/original-w12-signed
+      - name: Run A-B-B-A under new Python process and physical copy per trial
+        env:
+          PYTHONUNBUFFERED: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t files < <(find "$RUNNER_TEMP/original-w12-signed" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#files[@]}" -ne 1 ]; then
+            echo "::error::Expected one physically audited original Saved DB"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/private-copy-ab-metrics"
+          for case in A1 B1 B2 A2; do
+            cp "${files[0]}" "$RUNNER_TEMP/native-case.sqlite"
+            PYTHONPATH="$PWD/src:$PWD" python scripts/benchmark_native_w12_private_copy_ab.py \
+              --case "$case" \
+              --database "$RUNNER_TEMP/native-case.sqlite" \
+              --output "$RUNNER_TEMP/private-copy-ab-metrics/$case.json"
+            rm -f "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-case.sqlite-wal" "$RUNNER_TEMP/native-case.sqlite-shm"
+          done
+          PYTHONPATH="$PWD/src:$PWD" python scripts/benchmark_native_w12_private_copy_ab.py \
+            --summarize "$RUNNER_TEMP/private-copy-ab-metrics"
+      - name: Archive timings and physical integrity checks only (never original database)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-w12-actual-private-copy-ab-${{ github.run_id }}
+          path: ${{ runner.temp }}/private-copy-ab-metrics/
+          retention-days: 7
+          if-no-files-found: warn

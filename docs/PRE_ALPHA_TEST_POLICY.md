@@ -136,7 +136,7 @@ extended) and `native_post_intake_tour_browser_acceptance.py` with real Chromium
 The dedicated jobs pass their own process-level acceptance event so the ordinary
 changed-module PR filter cannot deselect an unchanged mandatory case. They do
 not replace the original full native Tour/season API, birth cases or browser
-matrix. Fast CI stays focused; no 50-season release suite is added to ordinary PRs.
+matrix. Fast CI stays focused; the multi-season release suite is separate from ordinary PRs.
 
 ## Pull-request development
 
@@ -206,15 +206,21 @@ paid around explicit release/checkpoint boundaries rather than on every small me
 
 ## Current pre-alpha release gate
 
-The first pre-alpha release gate must at minimum include:
+The first pre-alpha release gate follows Master §§31.3, 31.28, 31.37 and 31.41 and must include:
 
 - an editable copy of the versioned FAX reference template completing a full season through Season Transition into next Season Week 1; do not mutate protected built-in/Official sources;
+- an Admin Run created by selecting and importing compatible ATP packages, completing two real W52 seasons and opening Season 3 Week 1, with explicit Save, application shutdown, reopen and continuation after the first season transition. Verify calendar, tournaments, ranking, career continuity and both completed seasons;
 - empty Run -> two manual players -> one standalone match;
 - save/reopen/replay integrity required by those flows;
+- correct data selection and dependency handling for full, custom and compact branch exports and independent recovery from a full archive;
+- the modest Windows PC performance measurements specified in Master §31.41. Numerical thresholds follow the first repeatable measurement;
 - the complete regression suite, not only PR-selected tests;
-- the preserved 50-season FAX reference acceptance and the Run-calendar/extension compatibility acceptance assigned by Master §§31.28 and 31.37. The reference 50 × 61 configuration is not a universal Run limit.
+- one actual automated reference FAX run completing the first 25 seasons (2000/01–2024/25, 61 weeks each) through Season 25 closure, as specified by Master §31.28;
+- the Run-calendar and extension compatibility acceptance in Master §31.37.
 
-Future release-specific checks may be added without changing this basic policy.
+The 50 × 61 FAX configuration is available for extended validation. Each Run has its own configured horizon.
+
+Use a small 30-week real integration fixture for fast feedback on simulation, Save/restart and the transition into Season 2. Keep W52 and W61 real-package/reference coverage and W80 nonstandard calendar coverage. The 25-season FAX endurance case is release evidence.
 
 
 ## Hard rule for sharing PRs with the user
@@ -241,7 +247,7 @@ Native Tour Ready/manual acceptance adds parallel Gold24/Q16 and Platinum32/Q24
 real HTTP/SQLite cases. They explicitly author a disposable Unranked single-week
 source/future announcement, retaining source geometry. Require normal publication,
 partial Next Match Save/restart, actual remaining slots, confirmation and transition.
-They do not replace original Ranked/source/50-season gates. Small source/version
+The Ranked and source gates and the 25-season pre-alpha release gate also apply. Small source/version
 contracts stay in Fast CI; the long new cases are smoke/full-suite tests in their
 dedicated matrix, avoiding duplicate execution in Fast CI. Existing relevant native
 Tour, Full Simulation and fork gates remain required.

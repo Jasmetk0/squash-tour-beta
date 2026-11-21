@@ -2928,7 +2928,10 @@ class SimulationPersistenceRepository:
         replay_first, boundary = [], head_model.kind == _HORIZON_EXTENSION_KIND
         from sqlalchemy.orm import defer
 
-        from beta_engine.infrastructure.db.native_fork_runtime_state import release_snapshot_saved_text
+        from beta_engine.infrastructure.db.native_fork_runtime_state import (
+            may_hold_validation_proof,
+            release_snapshot_saved_text,
+        )
         with session.no_autoflush:
             parent_id = head_model.parent_revision_id
             while parent_id:
@@ -2944,9 +2947,11 @@ class SimulationPersistenceRepository:
                     options=[defer(BranchSavedRevisionModel.payload_json)]))
                 if model is None or model.run_id != head_model.run_id:
                     return  # the ordinary walk reports the missing/foreign parent
-                signature = _saved_revision_validation_signature(model)
-                with self._revision_validation_lock:
-                    known = signature in self._revision_validation_cache
+                known = False
+                if may_hold_validation_proof(session, model.run_id, parent_id):
+                    signature = _saved_revision_validation_signature(model)
+                    with self._revision_validation_lock:
+                        known = signature in self._revision_validation_cache
                 if known:
                     break
                 unproven.append(parent_id)

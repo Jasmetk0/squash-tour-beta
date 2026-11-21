@@ -154,6 +154,33 @@ def retain_saved_model(session, model):
     return model
 
 
+def may_hold_validation_proof(session, run_id, revision_id):
+    """False only for a Saved v2 row whose text digest this process never bound.
+
+    A validation proof is keyed by the SHA-256 of the row's exact text. When
+    this process has not bound that digest to the row's stored envelope
+    (``saved_v2_store.TEXT_DIGESTS``), checking the proof cache would first
+    materialize and hash the complete text only to find no proof (a cold
+    process). Treating the row as unproven is never weaker: it is validated
+    in full. v1 rows and unknown shapes return True (the ordinary check).
+    """
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    connection, state = _connection_and_state(session)
+    if not saved_v2_store.run_is_v2(connection, run_id, saved_v2_store.snapshot_cache(connection, state)):
+        return True
+    stored = session.execute(select(_raw_payload_column()).select_from(BranchSavedRevisionModel).where(
+        BranchSavedRevisionModel.run_id == run_id,
+        BranchSavedRevisionModel.revision_id == revision_id,
+    )).scalar()
+    if type(stored) is not str or not stored.startswith(saved_v2_store.ENVELOPE_PREFIX):
+        return True
+    root, chars = saved_v2_store.parse_envelope(stored, run_id=run_id)
+    return saved_v2_store.TEXT_DIGESTS.get(run_id, root, chars) is not None
+
+
 def release_snapshot_saved_text(session, run_id, revision_id):
     """Stop holding one fully validated Saved v2 row's text in this snapshot.
 
@@ -991,12 +1018,24 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 # shared; a different ORM value keeps the actual bytes.
                 from beta_engine.infrastructure.db.exact_text_digest import unloaded_column
 
+                def same_loaded_text(index, value):
+                    if index not in _LARGE_TEXT_FIELDS or unloaded_column(loaded, _LARGE_TEXT_FIELDS[index]):
+                        return False
+                    text = getattr(loaded, _LARGE_TEXT_FIELDS[index])
+                    if type(value) is str:
+                        return text == value
+                    # A row authenticated by its digest only (e.g. released by
+                    # a bounded cold walk) while the ORM row holds a text of
+                    # this snapshot: share it only when its OWN SHA-256 is the
+                    # authenticated digest, so the proven text (and its
+                    # canonical proof) serves the reference parse below.
+                    return (type(value) is StoredTextDigest and type(text) is str
+                            and len(text) == value.chars
+                            and physical_text_sha256(read_cache, run_id=row[1], revision_id=row[0],
+                                column=_LARGE_TEXT_FIELDS[index], text=text) == value.digest)
+
                 row = tuple(
-                    getattr(loaded, _LARGE_TEXT_FIELDS[index])
-                    if index in _LARGE_TEXT_FIELDS and type(value) is str
-                    and not unloaded_column(loaded, _LARGE_TEXT_FIELDS[index])
-                    and getattr(loaded, _LARGE_TEXT_FIELDS[index]) == value
-                    else value
+                    getattr(loaded, _LARGE_TEXT_FIELDS[index]) if same_loaded_text(index, value) else value
                     for index, value in enumerate(row)
                 )
                 retain_saved_model(session, loaded)

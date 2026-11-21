@@ -1,0 +1,44 @@
+name: Diagnostic Native Populated W12 Season
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'tests/api/test_native_256_player_eight_editions_season_diagnostic.py'
+      - '.github/workflows/diagnostic-native-populated-w12.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: diagnostic-populated-w12-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  full-populated-season:
+    name: 256 real players / 8 played Editions / 24 Matches / 12 weeks / cold SQLite
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install production backend and pytest
+        run: python -m pip install -e . pytest
+      - name: Execute actual native sporting season and collect performance evidence
+        run: |
+          GITHUB_EVENT_NAME=native_populated_w12_diagnostic \
+            python -m pytest tests/api/test_native_256_player_eight_editions_season_diagnostic.py \
+            -vv -s --basetemp "$RUNNER_TEMP/played-w12" --maxfail=1 --durations=10
+      - name: Retain disposable SQLite and pytest evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-populated-w12-${{ github.run_id }}
+          path: ${{ runner.temp }}/played-w12/
+          if-no-files-found: warn
+          retention-days: 5

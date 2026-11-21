@@ -588,6 +588,35 @@ class CalendarTourService:
             ),
         }
 
+    @staticmethod
+    def _season_blockers_from_week(week_blockers, ctx):
+        """Derive season readiness after the same snapshot's week-read checks.
+
+        The two public readiness fields differ only by their clock-prefix
+        checks. The remaining checks (including live prospect-source replay)
+        must run exactly once against this transaction's authenticated owner.
+        """
+        clock, _revision, _world, _health, checkpoint, _saved, _evidence = ctx
+        season_only = []
+        if checkpoint.week.week != clock.weeks_per_year:
+            season_only.append("season_transition_requires_last_week")
+        if checkpoint.week.season_index + 1 >= clock.season_count:
+            season_only.append("season_transition_horizon_exhausted")
+        return season_only + [
+            blocker for blocker in week_blockers
+            if blocker != "season_transition_required"
+        ]
+
+    @staticmethod
+    def _global_match_slot_index(checkpoint):
+        """First accepted slot for each match, preserving the existing lookup."""
+        positions = {}
+        for slot in getattr(checkpoint, "history_global_slots", getattr(checkpoint, "events", ())):
+            if hasattr(slot, "accepted"):
+                for accepted in slot.accepted:
+                    positions.setdefault(accepted.match_id, slot.number)
+        return positions
+
     def _inspection_from_context(self, session, run_id, branch_id, ctx, state, signed, fingerprints):
         _clock, rev, world, _health, cp, saved, _ = ctx
         checkpoint_fingerprint = (fingerprints[id(cp)][1] if id(cp) in fingerprints
@@ -606,6 +635,9 @@ class CalendarTourService:
             {p.player_id: p for p in lifecycle.players} if lifecycle else {}
         )
         sporting = {p.player_id: p for p in cp.players} if cp else {}
+        # Both response fields check this potentially large frozen checkpoint;
+        # compute the strict model equality once per authenticated read.
+        checkpoint_matches_saved = cp == saved
         names = {p.player_id: p.name for p in world.players}
         if identities.keys() - names.keys():
             from beta_engine.infrastructure.db.run_prospect_source_state import (
@@ -626,15 +658,22 @@ class CalendarTourService:
         evidence = {}
         contributions = {}
         if state and cp:
+            # The Saved Tour and checkpoint are already authenticated above.
+            # Build first-match lookups once instead of scanning every slot for
+            # every match and every tournament for every edition.
+            tournaments_by_id = {}
+            for tournament in cp.tournaments:
+                tournaments_by_id.setdefault(tournament.tournament_id, tournament)
+            global_match_slots = (
+                self._global_match_slot_index(cp)
+                if any(a.edition.schema_version in {
+                    "calendar_tournament_edition.v3", "calendar_tournament_edition.v4",
+                } for a in state.editions)
+                else {}
+            )
+            counted = None
             for a in state.editions:
-                event = next(
-                    (
-                        t
-                        for t in cp.tournaments
-                        if t.tournament_id == a.edition.edition_id
-                    ),
-                    None,
-                )
+                event = tournaments_by_id.get(a.edition.edition_id)
                 if event is None or not a.tournament_fingerprint:
                     continue
                 from beta_engine.domain.players.calendar_native_competition import (
@@ -655,7 +694,7 @@ class CalendarTourService:
                     "matches": [
                         {
                             "match_id": m.match_id,
-                            "slot": next((slot.number for slot in getattr(cp, "history_global_slots", getattr(cp, "events", ())) if hasattr(slot, "accepted") and any(x.match_id == m.match_id for x in slot.accepted)), None) if a.edition.schema_version in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} else native_match_slot(a, i)
+                            "slot": global_match_slots.get(m.match_id) if a.edition.schema_version in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} else native_match_slot(a, i)
                             if event.schema_version
                             in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
                             else a.edition.start_slot + 3 + i,
@@ -668,11 +707,12 @@ class CalendarTourService:
                     ],
                 }
                 if a.result_confirmed:
-                    counted = {
-                        r.source_fingerprint
-                        for row in state.rankings[-1].rows
-                        for r in row.counted_results
-                    }
+                    if counted is None:
+                        counted = {
+                            r.source_fingerprint
+                            for row in state.rankings[-1].rows
+                            for r in row.counted_results
+                        }
                     for r in edition_results(a, event):
                         age = state.week.ordinal - result_activation_ordinal(r, state.week.calendar)
                         status = (
@@ -693,6 +733,17 @@ class CalendarTourService:
             slot_inspection,
         )
         from beta_engine.application.calendar_native_groups import inspect_groups
+        if state:
+            transition_blockers = self._transition_blockers(
+                state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint,
+                _verified_lifecycle=lifecycle,
+            )
+            season_transition_blockers = self._season_blockers_from_week(
+                transition_blockers, ctx
+            )
+        else:
+            transition_blockers = ["tour_authority_missing"]
+            season_transition_blockers = ["tour_authority_missing"]
         return {
             "groups": inspect_groups(state, cp),
             "schema_version": "calendar_tour_inspection.v1",
@@ -706,8 +757,8 @@ class CalendarTourService:
             ),
             "checkpoint_fingerprint": checkpoint_fingerprint,
             "tour_fingerprint": state.fingerprint if state else None,
-            "saved": bool(state and signed == state and cp == saved),
-            "sporting_saved": bool(cp and cp == saved),
+            "saved": bool(state and signed == state and checkpoint_matches_saved),
+            "sporting_saved": bool(cp and checkpoint_matches_saved),
             "post_birth_competition_supported": bool(
                 cp
                 and cp.schema_version
@@ -748,20 +799,8 @@ class CalendarTourService:
             "edition_evidence": evidence,
             "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} for a in state.editions) else None,
             "contributions": contributions,
-            "transition_blockers": self._transition_blockers(
-                state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
-            )
-            if state
-            else ["tour_authority_missing"],
-            "season_transition_blockers": self._transition_blockers(
-                state,
-                ctx,
-                session,
-                _checkpoint_fingerprint=checkpoint_fingerprint,
-                season=True,
-            )
-            if state
-            else ["tour_authority_missing"],
+            "transition_blockers": transition_blockers,
+            "season_transition_blockers": season_transition_blockers,
         }
 
     @with_paused_cyclic_gc
@@ -1171,7 +1210,8 @@ class CalendarTourService:
 
     @staticmethod
     def _transition_blockers(
-        state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False
+        state, ctx, session=None, *, _checkpoint_fingerprint=None, season=False,
+        _verified_lifecycle=None,
     ):
         clock, _rev, _world, health, cp, _saved, _evidence = ctx
         blockers = []
@@ -1236,11 +1276,18 @@ class CalendarTourService:
                             season_index=position.season_index,
                             week=position.season_week,
                         )
-                        life = get_lifecycle(
-                            session,
-                            run_id=state.run_id,
-                            branch_id=state.branch_id,
-                            week=cp.week,
+                        # The Tour inspection already read this exact current
+                        # lifecycle under the same SQLite snapshot. Do not
+                        # decode it again for the birth-readiness predicate.
+                        life = (
+                            _verified_lifecycle
+                            if _verified_lifecycle is not None
+                            else get_lifecycle(
+                                session,
+                                run_id=state.run_id,
+                                branch_id=state.branch_id,
+                                week=cp.week,
+                            )
                         )
                         build_calendar_prospect_birth_event(
                             predecessor=life,

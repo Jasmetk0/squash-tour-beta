@@ -417,3 +417,50 @@ def test_native_snapshot_trace_ignores_only_nested_selects():
     connection.set_trace_callback(seen.append)
     connection.execute("SELECT nested()").fetchone()
     assert "-- SELECT 2" in seen
+
+
+def test_streamed_large_dag_keeps_exact_text_and_callback_path(monkeypatch):
+    """Force the bounded-memory path; actual node authentication is unchanged."""
+    monkeypatch.setattr(st, "MAX_INTERMEDIATE_FLAT_PIECES", 0)
+    shared = {"blob": "a" * 6000, "nested": [1, 2, 3]}
+    text = canonical({"items": [shared] * 300, "other": {"x": shared, "y": None}})
+    store = Store()
+    root, _, _ = store.write("run", text)
+    assert store.read("run", root, len(text)) == text
+    observed = []
+    assert st.materialize(
+        store.fetch, run_id="run", root=root, expected_chars=len(text),
+        on_value_node=lambda digest, value, start, end: observed.append(
+            (digest, value[start:end])
+        ),
+    ) == text
+    assert observed
+    assert all(isinstance(value, str) for _, value in observed)
+    with pytest.raises(st.SavedV2IntegrityError, match="size"):
+        store.read("run", root, len(text) - 1)
+
+
+def test_streaming_uses_only_same_snapshot_authenticated_derived_values(monkeypatch):
+    """Derived subtree reuse is tied to the exact same guarded snapshot."""
+    first = canonical(payload(events=1))
+    second = canonical(payload(events=2))
+    store = Store()
+    root1, _, _ = store.write("run", first)
+    root2, _, _ = store.write("run", second)
+    snapshot = st.SnapshotCache(0)
+    view = st._RunView(snapshot, "run")
+    # The ordinary path produces authenticated reusable derived tuples.
+    monkeypatch.setattr(st, "MAX_INTERMEDIATE_FLAT_PIECES", 1 << 30)
+    assert st.materialize(store.fetch, run_id="run", root=root1,
+                          expected_chars=len(first), verified=view) == first
+    assert snapshot.derived
+    # The streaming path must still reconstruct exactly with a partial
+    # already-authenticated subset of the second root's DAG.
+    monkeypatch.setattr(st, "MAX_INTERMEDIATE_FLAT_PIECES", 0)
+    assert st.materialize(store.fetch, run_id="run", root=root2,
+                          expected_chars=len(second), verified=view) == second
+    # A fresh read without any verified snapshot may not trust earlier bytes.
+    victim = next(k for k, body in store.rows.items() if k[1] != root2 and "p-00007" in body)
+    store.rows[victim] += " "
+    with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
+        store.read("run", root2, len(second))

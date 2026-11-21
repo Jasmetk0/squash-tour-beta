@@ -32,7 +32,7 @@ The candidate then continued through W11–W12 on the same runner, reaching 76
 revisions. Its Saves took 46.7–64.4 s, the two W12 Draw Saves 91.6 and 91.0 s,
 and its slowest execute 75.9 s. The cold read at 76 revisions took 136.8 s
 with a 9.75 GiB peak. Locally, base and candidate measured 139.0 and 141.9 s.
-The cold read therefore grows fastest: about 1.9 s per revision from 53 to 60
+The cold read therefore grows fastest: 2.0–2.3 s per revision from 53 to 60
 and about 3 s per revision from 60 to 76. Its RAM grows by about 200 MiB per
 revision. It already exceeds 120 s at W12 on every tree.
 

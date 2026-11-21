@@ -2,8 +2,10 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 88
-**Aktualizováno:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil 25 úplných referenčních FAX sezon jako povinnou dlouhodobou akceptaci první pre-alphy. Celý 50sezonní rozsah slouží k rozšířenému ověření. Podrobnosti v 31.3, 31.28 a 31.37.
+**Verze dokumentu:** 89
+**Aktualizováno:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil hratelný víceletý ATP Run, export dat v první pre-alphě, odklady pokročilých funkcí a měření na slabším Windows PC. Aktuální podmínky vydání shrnují 31.3 a 31.41.
+
+**Historická aktualizace v88:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil 25 úplných referenčních FAX sezon jako povinnou dlouhodobou akceptaci první pre-alphy. Celý 50sezonní rozsah slouží k rozšířenému ověření. Podrobnosti v 31.3, 31.28 a 31.37.
 
 **Historická aktualizace v87:** 12. 11. 2026 – konsolidace v87: samostatný Přechod mezi profesionály (`turn_pro`), vlastní nepřesné vnímání hráče a prakticky jistý, nevynucený vstup s evidencí vzácné výjimky. Potvrzení vlastníka v řídicím Work chatu 12. 11. 2026 (Europe/Prague); implementace a merge jsou oddělené.
 
@@ -4482,7 +4484,7 @@ Možné sekce z předchozího návrhu:
 
 **[ROZHODNUTO]** Run lze exportovat jako kompletní přenositelný balíček.
 
-**[ROZHODNUTO]** Export Runu nabízí tři rozsahy:
+**[ROZHODNUTO v89 – PRVNÍ PRE-ALPHA]** Export Runu nabízí všechny tři níže uvedené rozsahy. Termín pro pokročilý výběrový Save samostatně určuje 31.41.
 
 1. `Úplný archiv` – celý Run se všemi aktivními i archivovanými branchemi, historií, checkpointy, nastavením a daty,
 2. `Vlastní export` – výslovný výběr branchí, checkpointů, hloubky historie a dalších podporovaných datových částí,
@@ -5857,13 +5859,13 @@ Každý očíslovaný bod této kapitoly je od verze 48a stabilní **široký ok
 
 Tato kapitola je pracovní fronta otázek, které musí být pro první pre-alpha buď výslovně rozhodnuté, nebo opatřené vědomým minimálním defaultem či stubem podle priority. Původní seznam otázek sám rozhodnutí nevytvářel; následné výslovně potvrzené odpovědi jsou zapsány u jednotlivých PAQ a konsolidovány v 31.25.
 
-Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvládne dva povinné uživatelské akceptační průchody popsané v kapitole 31.3 prostřednictvím Adminu. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce. Viewer není akceptační branou první pre-alpha.
+Pre-alpha zde znamená první funkční end-to-end verzi s akceptačními průchody v Adminu a dlouhodobým automatizovaným ověřením podle 31.3 a 31.41. Nemusí mít finální vyvážení, úplný frontend, úplný obsah ani všechny vzdálené cílové funkce. Viewer není akceptační branou první pre-alpha.
 
-**[ROZHODNUTO PRO PRE-ALPHA]** Funkční minimum zahrnuje Runs a Packages, hráče/development/AI, čas a transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Plný Forecast/Future Locks/Markets, hluboký trénink, detailní Awards a pokročilé edge cases mohou být viditelně odložené nebo mimo build a dokončení pre-alpha neblokují. Rozsah Records/Rivalries nyní upřesňuje novější rozhodnutí v71 v 31.27; základní rekordy, historie jejich držitelů a podporované rivality již do pre-alpha patří.
+**[ROZHODNUTO PRO PRE-ALPHA]** Funkční minimum zahrnuje Runs a Packages, hráče/development/AI, čas a transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Plný Forecast/Future Locks/Markets, hluboký trénink, detailní Awards a pokročilé edge cases mohou být viditelně odložené nebo mimo build a dokončení pre-alpha neblokují. Rozsah uživatelských přehledů a odklad rivalit určuje v89 v 31.41.
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA v67]** Do FAX testovacího akceptačního průchodu patří individuální World Tour Finals podle kapitoly 26.1. Týmové soutěže jsou z první pre-alpha zcela vyjmuté; jejich existující implementace ani cílová pravidla se nemažou a týmové soutěže neblokují vydání této první verze. Admin musí zprostředkovat funkční ovládání a prohlížení rozhodnutého rozsahu, včetně skutečně zaznamenané historie zvoleného weeku. Funkční rozdělení Adminu je užitečné průběžně, rozsáhlý vizuální redesign a velký polish se odkládají až za funkční pokrytí.
 
-**[ROZHODNUTO – VÝVOJOVÁ PRIORITA v64, 8. 9. 2026]** Nejprve dokončit funkční pre-alpha podle obou akceptačních průchodů v 31.3; další jemné ladění, vyvažování a empirické zrealističťování odložit na následnou fázi. Dosavadní měřicí nástroje a výsledky zůstávají zachované, ale další autonomní práce nemá pokračovat sérií kalibračních auditů místo chybějících funkcí. Neodkládají se správnost pravidel, determinismus, bezpečný save/load, integrita historie ani nezbytné opravy. Existující verzované výchozí profily lze použít jako prozatímní základ; nejsou tím prohlášeny za empiricky realistické. Chybí-li skutečné produktové rozhodnutí nutné pro další řez, předložit jednu doporučenou variantu s vysvětlením a krátce ji s uživatelem uzavřít. Toto rozhodnutí mění pořadí práce, nikoliv rozsah pre-alpha či status všech otevřených kalibračních PAQ.
+**[ROZHODNUTO – VÝVOJOVÁ PRIORITA v64, 8. 9. 2026]** Nejprve dokončit funkční pre-alpha podle aktuálních akceptačních průchodů v 31.3 a 31.41; další jemné ladění, vyvažování a empirické zrealističťování odložit na následnou fázi. Dosavadní měřicí nástroje a výsledky zůstávají zachované, ale další autonomní práce nemá pokračovat sérií kalibračních auditů místo chybějících funkcí. Neodkládají se správnost pravidel, determinismus, bezpečný save/load, integrita historie ani nezbytné opravy. Existující verzované výchozí profily lze použít jako prozatímní základ; nejsou tím prohlášeny za empiricky realistické. Chybí-li skutečné produktové rozhodnutí nutné pro další řez, předložit jednu doporučenou variantu s vysvětlením a krátce ji s uživatelem uzavřít. Toto rozhodnutí mění pořadí práce, nikoliv rozsah pre-alpha či status všech otevřených kalibračních PAQ.
 
 ## 31.2 Pravidlo uzavření
 
@@ -5877,12 +5879,12 @@ Pre-alpha zde znamená první funkční end-to-end verzi, která opakovaně zvl�
 
 ## 31.3 Rozsah a definice hotové pre-alpha
 
-1. **PAQ-001 [RESOLVED v50; UPŘESNĚNO v72/v88][PA0][PRODUCT] – Hlavní end-to-end průchod?** Editovatelná kopie verzované FAX šablony v Adminu dokončí sezonu, save/load a Season Transition. Nejméně jeden automatizovaný akceptační průchod dokončí prvních 25 referenčních FAX sezon, viz 31.28. Chráněný Official Run se k testu neupravuje.
-2. **PAQ-002 [RESOLVED v50][PA0][PRODUCT] – Které moduly musí být skutečně funkční a které smějí být pouze viditelný stub?** Odpověď: funkční musí být Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases pre-alpha neblokují. **Upřesnění v71:** základní rekordy, historie jejich držitelů a rivalry do pre-alpha patří podle 31.27; odklad se týká detailních Awards a celého rozšířeného katalogu rekordů, nikoliv tohoto potvrzeného minima.
+1. **PAQ-001 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA0][PRODUCT] – Hlavní end-to-end průchod?** Editovatelná kopie verzované FAX šablony v Adminu dokončí sezonu, save/load a Season Transition. Samostatný Run z ATP balíčků dokončí dvě celé 52týdenní sezony a otevře třetí podle 31.41. Nejméně jeden automatizovaný akceptační průchod dokončí prvních 25 referenčních FAX sezon podle 31.28. Chráněný Official Run se k testu neupravuje.
+2. **PAQ-002 [RESOLVED v50][PA0][PRODUCT] – Které moduly musí být skutečně funkční a které smějí být pouze viditelný stub?** Odpověď: funkční musí být Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases pre-alpha neblokují. **Upřesnění v89:** základní historické přehledy, export dat a odklady vedlejších funkcí stanoví 31.41.
 3. **PAQ-003 [RESOLVED v50][PA0][PRODUCT] – Jaké operace musí umět částečně sestavený Run bez globálního Start gate?** Odpověď (v Adminu): druhý povinný akceptační průchod vytvoří prázdný Run, ručně přidá dva hráče a jeden zápas a bezpečně jej odsimuluje bez kalendáře; chybějící data smějí blokovat jen operaci, která je potřebuje.
-4. **PAQ-004 [RESOLVED v50; UPŘESNĚNO v72/v88][PA0][PRODUCT] – Pre-alpha dokončena?** Oba původní povinné průchody (FAX sezona/transition a prázdný Run) opakovaně projdou včetně save/load bez pádu, poškozené historie či ruční opravy databáze; navíc nejméně jednou automatizovaný průchod 25 úplnými FAX sezonami podle 31.28. Správné operation-scoped zablokování nevalidní operace není selhání testu. Výsledek gate musí být doložen skutečným během.
-5. **PAQ-005 [RESOLVED v50; UPŘESNĚNO v72/v88][PA1][PRODUCT] – Akceptační Runy?** FAX testovací kopie pro sezonu/transition a minimálně jeden průchod 25 úplnými FAX sezonami; samostatný prázdný Run pro dva hráče a jeden zápas. Official Run může existovat, jeho obsah se nyní nedopracovává.
-6. **PAQ-006 [ČÁSTEČNĚ ROZHODNUTO v70][PA1][TECH] – Referenční velikost a výkon?** Nejméně 1 000 ne-retired hráčů s 15. narozeninami před prvním Weekem 1 a referenčních 80 Editions nejvyšší World Tour za sezonu; nižší soutěže navíc souhrnně. Časové a paměťové limity se teprve změří na lokálním počítači.
+4. **PAQ-004 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA0][PRODUCT] – Pre-alpha dokončena?** Povinné uživatelské průchody (FAX sezona/transition, dvě ATP sezony a prázdný Run) opakovaně projdou včetně save/load bez pádu, poškozené historie či ruční opravy databáze. Součástí vydání je nejméně jeden automatizovaný průchod 25 úplnými FAX sezonami podle 31.28 a ověření exportu podle 31.41. Správné operation-scoped zablokování nevalidní operace není selhání testu. Výsledek gate musí být doložen skutečným během.
+5. **PAQ-005 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA1][PRODUCT] – Akceptační Runy?** Akceptace používá FAX testovací kopii pro sezonu/transition, průchod 25 úplnými FAX sezonami, ATP Run pro dvě sezony a samostatný prázdný Run pro dva hráče a jeden zápas. Official Run může existovat, jeho obsah se nyní nedopracovává.
+6. **PAQ-006 [ČÁSTEČNĚ ROZHODNUTO v70][PA1][TECH] – Referenční velikost a výkon?** Nejméně 1 000 ne-retired hráčů s 15. narozeninami před prvním Weekem 1 a referenčních 80 Editions nejvyšší World Tour za sezonu; nižší soutěže navíc souhrnně. Referenční prostředí a měření popisuje 31.41. Časové a paměťové prahy se určí po prvním srovnatelném měření.
 
 ## 31.4 Datový model, identity a historická pravda
 
@@ -6209,6 +6211,8 @@ Entry okna default Main 2 + Qualification 1 week s úpravou u Edition; Best N mi
 
 ## 31.27 Konsolidace produktového bloku po v70 (2. 10. 2026)
 
+Aktuální termíny pro první vydání upřesňuje rozhodnutí v89 v 31.41.
+
 **[ROZHODNUTO PRO PRE-ALPHA]** Potvrzené rozšíření první sady: Compare States mezi různými Runy; interaktivní mapa branchí podle 7.9; pokročilý Save vybraných celých logických balíčků; vlastní částečný export; pokračování simulace přes Windows tray; uživatelské watchlisty; samostatný Match Sharpness; rivality. Druhá sada byla potvrzena celá: osobní Admin poznámky; Saved Views; oblíbené a nedávné objekty; neblokující znovu otevřitelný post-simulační souhrn; kompaktní export jedné uložené branche; fyzická velikost Runu/branchí/datových oblastí; základní rekordy; historie jejich držitelů včetně vyrovnání/překonání; ruční dvojicové či skupinové rivality bez falešných H2H; několik alternativních simulací ze stejného uloženého bodu s porovnáním a výslovným zachováním vybrané branche.
 
 Potvrzení scope zachovává existující bezpečné kontrakty kapitol 7/8/17/21/23/24/25: žádné tiché přepisování, slučování divergentních historií, kopírování sportovní minulosti pod nové ID či změna RNG podle plánování. Kompaktní export není plný archiv a musí jasně ukázat svou hranici. U souhrnu, Saved Views, mapy a porovnání se detailní layout, filtry a úrovně doladí při testování. Není požadován celý vzdálený katalog rekordů či finální matematika rivalit; implementace zvolí měřitelný verzovaný provizorní základ.
@@ -6263,7 +6267,7 @@ Tato část konsoliduje celý navazující schválený blok. Novější scope m�
 
 ### Akceptace a statusová evidence
 
-21. **[ROZHODNUTO v88 – POVINNÝ TEST PRVNÍ PRE-ALPHY]** Nejméně jeden skutečný automatizovaný akceptační průchod editovatelnou kopií FAX testovací šablony dokončí prvních **25 úplných sezon 2000/01–2024/25**, každou o 61 týdnech. Dokončení zahrnuje uzavření 25. sezony. Celý referenční rozsah **50 sezon 2000/01–2049/50** zůstává předvolbou a rozšířeným ověřením dlouhých Runů. Doplňuje, nenahrazuje opakované průchody jedné sezony/Season Transitionu a prázdného Runu v 31.3. V FAX testu je World Tour plně simulovaná, nižší Tours abstraktní dle v70; nejméně 1 000 počátečních ne-retired hráčů a reference 80 World Tour Editions za sezonu trvají. Sledují se přechody, generace, životní cykly, save/load, integrita/velikost historie a dokončení bez ručních oprav. Jde o technickou a funkční akceptaci; detailní realistické četnosti a fairness se kalibrují i na kratších cílených scénářích. Tento požadavek není tvrzení, že test již proběhl, ani nová lhůta či výkonnostní SLA. Dlouhý test patří do release gate, nemusí běžet v každém docs/feature PR.
+21. **[ROZHODNUTO v88 – POVINNÝ TEST PRVNÍ PRE-ALPHY]** Nejméně jeden skutečný automatizovaný akceptační průchod editovatelnou kopií FAX testovací šablony dokončí prvních **25 úplných sezon 2000/01–2024/25**, každou o 61 týdnech. Dokončení zahrnuje uzavření 25. sezony. Celý referenční rozsah **50 sezon 2000/01–2049/50** zůstává předvolbou a rozšířeným ověřením dlouhých Runů. Doplňuje uživatelské průchody FAX, ATP a prázdného Runu uvedené v 31.3. V FAX testu je World Tour plně simulovaná, nižší Tours abstraktní dle v70; nejméně 1 000 počátečních ne-retired hráčů a reference 80 World Tour Editions za sezonu trvají. Sledují se přechody, generace, životní cykly, save/load, integrita/velikost historie a dokončení bez ručních oprav. Jde o technickou a funkční akceptaci; detailní realistické četnosti a fairness se kalibrují i na kratších cílených scénářích. Tento požadavek není tvrzení, že test již proběhl, ani nová lhůta či výkonnostní SLA. Dlouhý test patří do release gate, nemusí běžet v každém docs/feature PR.
 
 **Aktuální PAQ evidence v72:** 59 resolved, 94 neuzavřených/částečných či k testování a 4 explicitně vedené jako NOT REQUIRED FOR PRE-ALPHA, celkem 157 unikátních PAQ. Jediné nové úplné uzavření je PAQ-111; PAQ-091/099 se pouze doplňují. PAQ-080 si zachovává historický RESOLVED kontrakt, ale jeho podporu novější rozhodnutí výslovně vyřazuje z povinného prvního vydání. Počty historických vydání se nepřepisují; počet NOT REQUIRED není vyčerpávající katalog všech scope odkladů. Nová zdravotní/Player Lab rozhodnutí uzavírají principy, nikoli matematiku ostatních PAQ.
 
@@ -6380,11 +6384,41 @@ Toto rozhodnutí upřesňuje UX otevřené části PAQ-119, nikoliv celý katalo
 
 ## 31.40 Konsolidace rozhodnutí v85 (17. 10. 2026)
 
+Aktuální rozsah kariérních a sezonních přehledů pro první vydání určuje 31.41.
+
 **[ROZHODNUTO PRO PRE-ALPHA]** Osobní milníky, společná kariérní časová osa a souhrn po retirementu podle 21.5. U neúplné historie se uvádí skutečné pokrytí/první evidovaná událost. Běžné osobní notifikace se týkají sledovaných hráčů; sledování země vybírá společné úspěchy, automaticky domácí špičku a mimořádné individuální události ostatních. Související upozornění se seskupují, historické jednotlivé milníky se neztrácejí (25.6.1).
 
 **[ROZHODNUTO PRO PRE-ALPHA]** Sezonní souhrn podle 27.25 má stručný hlavní přehled včetně zjednodušeného porovnání zemí; podrobnosti a kompletní tabulky jsou v detailu. Podporuje porovnání s předchozí či jinou evidovanou sezonou a vzniká i při dlouhé simulaci bez vlastní automatické pauzy. Nezavádí jednotný koeficient úspěšnosti zemí, fiktivní historii nebo druhou autoritu pro stop rules.
 
 **[STATUS]** Přesné prahy, kriteriální formule, katalogy a layout se doladí při testování. Základní potvrzené chování se znovu nerozhoduje po jednotlivých filtrech. Zachovává se všech 157 PAQ identit a historické registry; tato dílčí konsolidace neprohlašuje kompletní vyřešení širokých technických/kalibračních položek. Implementace/audit jsou výhradně v 35.42 a navazující evidenci.
+
+## 31.41 Rozsah první hratelné pre-alphy — rozhodnutí v89 (21. 11. 2026)
+
+**[ROZHODNUTO PRO PRVNÍ PRE-ALPHA]** Tato část určuje požadavky na první vydání v dotčených oblastech. Aktualizuje termíny dříve potvrzených funkcí v 31.25–31.28 a 31.39–31.40. Odložené funkce zůstávají součástí cílového produktu a existující implementace se může zachovat.
+
+### Hratelné průchody
+
+- **ATP, Earth s 52 týdny.** V běžném průchodu v Adminu založit Run a při jeho vytváření vybrat a importovat kompatibilní ATP balíčky. V jednom Runu podle jejich skutečných dat odehrát dvě celé sezony, uzavřít oba ročníky a otevřít Week 1 třetí sezony. Po prvním přechodu provést explicitní Save, zavřít aplikaci, znovu ji spustit a pokračovat. Ověřit návaznost skutečného kalendáře, turnajů, rankingu a kariérní historie i zobrazení obou dokončených sezon. Příprava musí projít uživatelskou cestou s balíčky.
+- **FAX, referenčních 61 týdnů.** Kopie verzované FAX šablony v Adminu zvládne celou sezonu, Save/reopen a Season Transition. Dlouhodobý automatizovaný průchod zahrnuje 25 celých sezon v měřítku podle 31.28. Prodloužené ověření může využít celý 50sezonní referenční rozsah.
+- **Prázdný Run.** V Adminu přidat dva hráče, bezpečně odsimulovat samostatný zápas bez kalendáře a ověřit uložení. Trvá determinismus, izolace Runu a branche, obnova uložených stavů, neměnnost historie a skutečná účinnost manuálního Save podle kapitol 7, 8 a 31.
+
+### Rozsah rozhraní a práce s daty
+
+| První pre-alpha | Další verze |
+| --- | --- |
+| Seznam branchí, bezpečné přepnutí, vytvoření větve z uloženého bodu a ruční spuštění alternativní simulace v té větvi. | Interaktivní mapa branchí, Compare States mezi různými Runy a hromadné varianty alternativních budoucností s porovnáním. |
+| Běžný explicitní Save, obnova, import Packages a export Runu ve všech třech rozsazích 24.1: úplný archiv, vlastní výběr dat a kompaktní snapshot vybrané uložené branche. | Pokročilý výběrový Save jednotlivých logických částí Working Draftu. |
+| Viditelný postup delší simulace v otevřené aplikaci a možnost ji bezpečně zastavit. | Pokračování a ovládání simulace přes Windows tray. |
+| Běžné vyhledávání a filtry, základní profil hráče s výsledky a historií rankingu. | Pojmenované Saved Views, osobní Admin poznámky, pokročilá správa oblíbených, chytré watchlisty, sledování zemí a seskupované notifikace. |
+| Opakovatelné testovací scénáře nad stejnými autoritativními modely jako Run, spustitelné programově nebo z příkazové řádky. Samostatný zápas přímo v Adminu. | Plná uživatelská rozhraní Match, Tournament a Player Lab a uživatelský přenos scénářů mezi Labem a Runem. |
+| Základní rekordy ze skutečných výsledků, kariérní časová osa ze skutečných zápasů, titulů, rankingů a kariérních událostí, archiv sezon s výsledky, vítězi a konečným rankingem. Zobrazení přizná neúplné pokrytí historie. | Pokročilé rekordové přehledy a historie držitelů, rivality, detailní milníky, automatické souhrny po retirementu, srovnávání sezon a detailní statistiky nebo srovnání zemí. |
+
+**[ROZHODNUTO – EXPORT DAT]** Akceptace exportu ověří správný výběr uložených dat ve všech třech rozsazích, zachování povinných závislostí a nezávislou obnovu z úplného archivu. Pro vlastní export a kompaktní snapshot platí přesné hranice obsahu a validace z kap. 24. Export pracuje s uloženými daty, chrání zdrojový Run a dodržuje pravidla Working Draftu z 24.1.
+
+### Výkon a velikost testů
+
+- **[DOHODNUTO PRO MĚŘENÍ]** Navržená první lokální reference pro slabší stroj je Windows, čtyři CPU jádra, 8 GB RAM a SSD. Zapsat přesný hardware a konfiguraci, počet hráčů a turnajů, čas běžného týdne, Save a prvního otevření po restartu, špičku RAM a velikost uložených dat. Porovnat začátek a pozdější část dlouhého Runu při srovnatelné herní zátěži, aby bylo vidět, kolik práce přidává samotná historie. Z prvního opakovatelného měření se odvodí konkrétní prahy pro vydání. Naměřená čísla a prahy se vedou odděleně.
+- **[ROZHODNUTO – ÚČEL TESTŮ]** Menší platný 30týdenní scénář má rychle projít skutečnou simulaci, Save/restart a přechod do druhé sezony. W52 ověřuje skutečný ATP průchod, W61 referenční FAX a W80 nestandardní dlouhý kalendář. Dlouhodobý test 25 sezon FAX patří před vydání. Zůstává plná regrese, pokrytí kalendáře a prodloužení Runu podle 31.37 a ověření obnovy a historické integrity.
 
 # 32. Procentuální audit stavu specifikace
 

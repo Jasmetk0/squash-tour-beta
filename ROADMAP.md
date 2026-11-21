@@ -1,3 +1,13 @@
+# First pre-alpha release scope — 21 November 2026
+
+Master v89 §31.41 sets the current scope. Prioritize a playable Admin path
+from ATP package selection through two complete W52 seasons, including
+explicit Save, restart and opening Season 3. Preserve the FAX single-season
+Admin flow, 25-season endurance gate and standalone match. Verify portable
+full, custom and compact branch data exports, historical career and season
+views, and performance on a modest Windows PC. Selective Save and the advanced
+interfaces and analyses named in §31.41 are later milestones.
+
 # Claude follow-on packages — 12 November 2026
 
 Work's #1784/#1785 are owner-merged at `buuk 6e4066a8359307be4d89c0f9202260bcc69a4e92`.
@@ -1303,7 +1313,7 @@ Checked buuk `f200d9898b41431439501a9b559529900135adf7` after #1532. All #1521�
 | 5 | Canonical calendar sporting/Health state and full attribute projection | Merged #1527 form/load, #1528 Saved Health, #1529 frozen 57-attribute match inputs and actual 57→engine projection. Merged #1530 persists full-population native 57-attribute ownership and terminal played state. Merged #1531 uses that Saved state for repeatable actual sequential exhibitions, per-match effects and separate immutable Save/replay/restore. Weekly transitions, cohort development and numeric Health effects remain incomplete |
 | 6 | Tour entry + configured Edition points + Official publication + Week/Season Transition | Incomplete; do not mistake hypothetical W2 point eligibility for an advanced simulation |
 | 7 | Durable Full Simulation, populated multi-season and extended Completed continuation | Incomplete; preserve frozen targets, terminal tasks, explicit recovery and W-aware annual units |
-| 8 | Remaining full pre-alpha targets and release/realism gates | Historical-cohort generator, canonical attributes, AI, Labs, Records/milestones/summaries and complete Master scope; full regression, reference FAX season, 25 complete FAX seasons and W52/W80 acceptance |
+| 8 | Remaining first pre-alpha release gates | Current Master §31.41 scope, basic historical views, data export, performance measurement, full regression, playable ATP W52 across two seasons, FAX reference season and 25-season endurance, and W80 calendar compatibility |
 
 Current task should deliver usable authority integration, not more isolated
 provenance wrappers. Version migration must retain historical FAX bytes and

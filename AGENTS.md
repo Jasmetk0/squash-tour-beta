@@ -33,9 +33,9 @@ In the ordinary ChatGPT + Codex workflow, ChatGPT owns planning, Master continui
 and review coordination; Codex owns repository implementation, debugging, tests and
 PR preparation. The user owns product decisions and merge. Prepare one complete
 Codex task at a time; do not duplicate implementation in both environments.
-Pre-alpha scope comes from the entire Master, especially chapter 31, not merely
-the current integration path. Include decided rules and sufficiently specified
-strong directions; preserve PROVISIONAL/OPEN/DEFERRED labels. Resolve necessary
+Pre-alpha scope comes from the entire Master, with §31.41 governing the first
+release for the functions it reschedules. Include applicable decided rules and
+sufficiently specified strong directions. Preserve PROVISIONAL/OPEN/DEFERRED labels. Resolve necessary
 product gaps with the user and reconcile the complete pre-alpha Master before
 release. Follow docs/PRE_ALPHA_TEST_POLICY.md for focused PR checks and full
 internal-release gates; never present red/pending final-head checks as merge-ready.
@@ -61,7 +61,7 @@ transactional consistency from similar names. Keep all protections below.
 
 - **Master v83 targets (implementation still required):** initial population derives from the same historical 15-year-old cohort model as ongoing intake, with simplified development to Run start and pre-start retirement filtering, historical Country inputs, world-derived count and explicit preview/confirmation/Save. Prestart full/selected regeneration respects locks and normal dependency review. The reference FAX 1,000-player minimum remains. Initial custom-rule inheritance to future intake is explicitly deferred. Optional resumable preparation/readiness and selected Package export use existing operations; they do not duplicate Labs or grant sporting readiness. See Master 9.8/31.38.
 
-- **Master v82 target (not yet runtime evidence):** each Run has its own fixed positive weeks-per-year/season W, season-to-year offset, start year and season horizon. Earth defaults to 52, FAX to 61 with Season Week 1 at Year Week 37. All years/seasons within a Run have equal W; no leap/longer years in pre-alpha. Master v88 requires 25 complete reference FAX seasons for the first pre-alpha release. The 50-season FAX configuration remains available for extended validation. Existing legacy Runs retain their original semantics.
+- **Master v82 target (not yet runtime evidence):** each Run has its own fixed positive weeks-per-year/season W, season-to-year offset, start year and season horizon. Earth defaults to 52, FAX to 61 with Season Week 1 at Year Week 37. All years/seasons within a Run have equal W; no leap/longer years in pre-alpha. The first pre-alpha release requires 25 complete reference FAX seasons and two actual W52 ATP seasons from imported packages (Master §§31.28 and 31.41). The 50-season FAX configuration remains available for extended validation. Existing legacy Runs retain their original semantics.
 - Branches are equal alternative timelines inside a Run. Never introduce a privileged Main/Official branch concept.
 - Every Run has exactly one **Viewer Branch**. It only selects the timeline shown by Viewer; legacy `official_branch` technical names are migration debt, not product terminology.
 - Selecting a different Viewer Branch is an uncommitted Admin change in the active Branch's Working Draft. Viewer stays on the current saved selection until a confirmed Save atomically creates the new immutable Saved Revision and audit event, activates the selected Viewer Branch, and leaves a clean Working Draft based on the new revision.

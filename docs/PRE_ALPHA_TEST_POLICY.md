@@ -206,18 +206,21 @@ paid around explicit release/checkpoint boundaries rather than on every small me
 
 ## Current pre-alpha release gate
 
-The first pre-alpha release gate must at minimum include:
+The first pre-alpha release gate follows Master §§31.3, 31.28, 31.37 and 31.41 and must include:
 
 - an editable copy of the versioned FAX reference template completing a full season through Season Transition into next Season Week 1; do not mutate protected built-in/Official sources;
+- an Admin Run created by selecting and importing compatible ATP packages, completing two real W52 seasons and opening Season 3 Week 1, with explicit Save, application shutdown, reopen and continuation after the first season transition. Verify calendar, tournaments, ranking, career continuity and both completed seasons;
 - empty Run -> two manual players -> one standalone match;
 - save/reopen/replay integrity required by those flows;
+- correct data selection and dependency handling for full, custom and compact branch exports and independent recovery from a full archive;
+- the modest Windows PC performance measurements specified in Master §31.41. Numerical thresholds follow the first repeatable measurement;
 - the complete regression suite, not only PR-selected tests;
 - one actual automated reference FAX run completing the first 25 seasons (2000/01–2024/25, 61 weeks each) through Season 25 closure, as specified by Master §31.28;
 - the Run-calendar and extension compatibility acceptance in Master §31.37.
 
 The 50 × 61 FAX configuration is available for extended validation. Each Run has its own configured horizon.
 
-Future release-specific checks may be added without changing this basic policy.
+Use a small 30-week real integration fixture for fast feedback on simulation, Save/restart and the transition into Season 2. Keep W52 and W61 real-package/reference coverage and W80 nonstandard calendar coverage. The 25-season FAX endurance case is release evidence.
 
 
 ## Hard rule for sharing PRs with the user

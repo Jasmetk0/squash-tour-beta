@@ -1,10 +1,14 @@
-# First pre-alpha long-run acceptance — 21 November 2026
+# First playable pre-alpha scope — 21 November 2026
 
-[DECIDED] Master v88 requires the first 25 complete reference FAX seasons
-(2000/01–2024/25) for first pre-alpha acceptance. The 50-season FAX
-configuration remains available for extended validation. This records the
-release criterion. A successful reference run through Season 25 closure
-still needs to be demonstrated.
+[DECIDED] Master v89 §31.41 requires an Admin Run created from compatible ATP
+packages to complete two W52 seasons and open Season 3 after an explicit Save
+and restart between seasons. The 25-season FAX reference run (2000/01–2024/25)
+remains a release gate, and the 50-season configuration supports extended
+validation. Full, custom and compact branch exports stay in first pre-alpha.
+Selective Save and the listed advanced interfaces and analyses move to later
+versions. First performance measurements target a modest Windows PC. These
+are product criteria. ATP continuity and FAX Season 25 closure still require
+real acceptance evidence.
 
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 

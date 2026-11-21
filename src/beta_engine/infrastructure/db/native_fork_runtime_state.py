@@ -177,9 +177,27 @@ def _remember_snapshot_loaded_row(target, context):
     if any(name not in attributes for name in field_names):
         return  # An ORM projection may defer some of the physical fields.
     key = (attributes["run_id"], attributes["revision_id"])
-    if key in cache["revisions"] or key in cache.get("unreferenced_revisions", {}):
+    known = cache["revisions"].get(key) or cache.get("unreferenced_revisions", {}).get(key)
+    if known is not None:
         # The physical reader already holds these bytes; keeping this second
-        # copy alive would only double the snapshot's memory.
+        # copy alive would only double the snapshot's memory. When it holds
+        # only the authenticated digest of the stored text, this load read
+        # the same stored row through the verified reader in the SAME
+        # snapshot, so its text has that digest (exact_text_digest then
+        # recognizes this very string object; any other string is hashed).
+        row = known[0]
+        loaded = tuple(attributes[name] for name in field_names)
+        if (
+            row is not None
+            and type(row[9]) is StoredTextDigest
+            and loaded[:9] == tuple(row[:9])
+            and loaded[10] == row[10]
+            and type(loaded[9]) is str
+            and len(loaded[9]) == row[9].chars
+        ):
+            from beta_engine.infrastructure.db.exact_text_digest import DIGESTS
+
+            cache.setdefault(DIGESTS, {})[(key[0], key[1], "payload_json")] = (loaded[9], row[9].digest)
         return
     # The object itself can later be changed without marking the session dirty
     # (e.g. set_committed_value). Record what SQLite supplied at load time.
@@ -219,17 +237,152 @@ def assert_current_saved_row(session, revision):
     memo = _proofs.get()
     if memo is None or not memo.get("native_actual_reads"):
         return
+    cache = _physical_read_cache(session)
+    cached = cache["revisions"].get((revision.run_id, revision.revision_id)) if cache is not None else None
+    actual = cached[0] if cached is not None else read_physical_row(
+        session, revision.run_id, revision.revision_id, cache)
+    if actual is None or not row_matches_model(cache, actual, revision):
+        raise ValueError("Native Saved row differs from its actual stored bytes")
+
+
+class StoredTextDigest:
+    """An actual Saved v2 text authenticated by its digest, not materialized.
+
+    Stands in a physical row tuple for the exact ``payload_json`` text whose
+    SHA-256 ``saved_v2_store.stored_text_sha256`` just bound to this row's actual
+    envelope and the actual, re-hashed node bodies of the current snapshot. It is
+    never equal to any string: a consumer that needs the characters must
+    materialize them (see ``_materialized_row``); ``row_matches_model`` compares an
+    ORM text by its own SHA-256.
+    """
+
+    __slots__ = ("digest", "chars")
+
+    def __init__(self, digest, chars):
+        self.digest, self.chars = digest, chars
+
+    def __repr__(self):
+        return f"StoredTextDigest({self.digest.hex()[:12]}, chars={self.chars})"
+
+
+def _connection_and_state(session):
+    sqlalchemy_connection = session.connection()
+    state = sqlalchemy_connection.connection.info.get("saved_v2_connection_state")
+    return sqlalchemy_connection.connection.driver_connection, state
+
+
+def _raw_payload_column():
+    from sqlalchemy import Text, literal_column
+
+    # The STORED column value (a v2 envelope), not the verified materialization
+    # that SavedPayloadText.column_expression compiles for payload_json.
+    return literal_column("branch_saved_revisions.payload_json", Text())
+
+
+def _stored_v2_digest(session, row_run_id, stored):
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    connection, state = _connection_and_state(session)
+    digest = saved_v2_store.stored_text_sha256(connection, row_run_id, stored, state=state)
+    if digest is None:
+        return None
+    _root, chars = saved_v2_store.parse_envelope(stored, run_id=row_run_id)
+    return StoredTextDigest(digest, chars)
+
+
+def _remember_stored_text(read_cache, row, stored):
+    """After hashing a just materialized v2 text, memo its digest by envelope."""
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    if type(row[9]) is str and type(stored) is str and stored.startswith(saved_v2_store.ENVELOPE_PREFIX):
+        digest = physical_text_sha256(read_cache, run_id=row[1], revision_id=row[0],
+                                      column="payload_json", text=row[9])
+        saved_v2_store.remember_text_sha256(row[1], stored, row[9], digest)
+
+
+def read_physical_row(session, run_id, revision_id, read_cache):
+    """Actual physical fields of one Saved row in the current snapshot.
+
+    For a Saved v2 row whose text digest this process already knows, the stored
+    envelope is read and every node it reaches is re-fetched and re-hashed; the
+    text itself is NOT materialized again and ``payload_json`` is represented by
+    a ``StoredTextDigest``. Every other row (unknown digest, v1) returns its
+    exactly materialized text, as before.
+    """
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db import saved_v2_store
+
+    fields = _physical_revision_fields()
+    where = (BranchSavedRevisionModel.run_id == run_id,
+             BranchSavedRevisionModel.revision_id == revision_id)
+    connection, state = _connection_and_state(session)
+    if not saved_v2_store.run_is_v2(connection, run_id, saved_v2_store.snapshot_cache(connection, state)):
+        # v1: the stored value IS the text (the reader still rejects an envelope).
+        actual = session.execute(select(*fields).where(*where)).first()
+        return tuple(actual[:len(fields)]) if actual is not None else None
+    small = session.execute(select(*fields[:9], _raw_payload_column(), fields[10]).where(*where)).first()
+    if small is None:
+        return None
+    stored = small[9]
+    known = _stored_v2_digest(session, small[1], stored)
+    if known is not None:
+        return (*tuple(small[:9]), known, small[10])
+    actual = session.execute(select(*fields, _raw_payload_column()).where(*where)).first()
+    if actual is None:
+        return None
+    row = tuple(actual[:len(fields)])
+    if actual[len(fields)] == stored:
+        _remember_stored_text(read_cache, row, stored)
+    return row
+
+
+def _materialized_row(session, row, read_cache):
+    """The same physical row with its exact text, checked against its digest."""
+    if type(row[9]) is not StoredTextDigest:
+        return row
     from sqlalchemy import select
 
     fields = _physical_revision_fields()
-    cache = _physical_read_cache(session)
-    cached = cache["revisions"].get((revision.run_id, revision.revision_id)) if cache is not None else None
-    actual = cached[0] if cached is not None else session.execute(
-        select(*fields).where(BranchSavedRevisionModel.revision_id == revision.revision_id)
-    ).first()
-    expected = tuple(getattr(revision, field.key) for field in fields)
-    if actual is None or tuple(actual) != expected:
+    actual = session.execute(select(*fields).where(
+        BranchSavedRevisionModel.run_id == row[1],
+        BranchSavedRevisionModel.revision_id == row[0],
+    )).first()
+    text = actual[9] if actual is not None else None
+    if (
+        actual is None
+        or tuple(actual[:9]) != tuple(row[:9])
+        or actual[10] != row[10]
+        or type(text) is not str
+        or len(text) != row[9].chars
+        or physical_text_sha256(read_cache, run_id=row[1], revision_id=row[0],
+                                column="payload_json", text=text) != row[9].digest
+    ):
         raise ValueError("Native Saved row differs from its actual stored bytes")
+    return (*row[:9], text, row[10])
+
+
+def row_matches_model(read_cache, row, model):
+    """Exact equality of an actual physical row and an ORM row's fields.
+
+    A ``StoredTextDigest`` matches only an ORM text of the same length whose own
+    SHA-256 equals the authenticated stored digest.
+    """
+    expected = tuple(getattr(model, field.key) for field in _physical_revision_fields())
+    if len(row) != len(expected):
+        return False
+    for index, (actual, value) in enumerate(zip(row, expected)):
+        if type(actual) is StoredTextDigest:
+            if (
+                type(value) is not str
+                or len(value) != actual.chars
+                or physical_text_sha256(read_cache, run_id=row[1], revision_id=row[0],
+                                        column=_LARGE_TEXT_FIELDS[index], text=value) != actual.digest
+            ):
+                return False
+        elif actual != value:
+            return False
+    return True
 
 
 # Indexes into _physical_revision_fields(): payload_json and change_summary_json.
@@ -514,7 +667,40 @@ def _proven_dependency_branches(row):
     return branches
 
 
-def _dependency_references(repository, row, digest):
+def _seed_loaded_text_digest(session, read_cache, row):
+    """Digest of an ORM-materialized v2 text of THIS snapshot via its envelope.
+
+    Reads only the small stored envelope of the same row. When this process
+    already hashed the text of that exact envelope and every reachable node
+    re-hashes now, the ORM text (same snapshot, same immutable row) has that
+    digest; otherwise the caller hashes the characters and the digest is then
+    remembered for the envelope.
+    """
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db import saved_v2_store
+    from beta_engine.infrastructure.db.exact_text_digest import DIGESTS
+
+    known = read_cache.get(DIGESTS, {}).get((row[1], row[0], "payload_json"))
+    if known is not None and known[0] is row[9]:
+        return
+    connection, state = _connection_and_state(session)
+    if not saved_v2_store.run_is_v2(connection, row[1], saved_v2_store.snapshot_cache(connection, state)):
+        return  # a v1 row's text IS its stored value; nothing to bind
+    stored = session.execute(select(_raw_payload_column()).select_from(BranchSavedRevisionModel).where(
+        BranchSavedRevisionModel.run_id == row[1],
+        BranchSavedRevisionModel.revision_id == row[0],
+    )).scalar()
+    if type(stored) is not str or not stored.startswith(saved_v2_store.ENVELOPE_PREFIX):
+        return
+    digest = _stored_v2_digest(session, row[1], stored)
+    if digest is not None and digest.chars == len(row[9]):
+        read_cache.setdefault(DIGESTS, {})[(row[1], row[0], "payload_json")] = (row[9], digest.digest)
+    else:
+        _remember_stored_text(read_cache, row, stored)
+
+
+def _dependency_references(repository, row, digest, materialize=None):
     """Bounded parse hints, never a validation proof or a stored hash shortcut.
 
     The caller just reread and hashed every actual physical field. Owners, heads
@@ -527,6 +713,10 @@ def _dependency_references(repository, row, digest):
             hints = getattr(repository, "_native_dependency_reference_hints", {})
             if digest in hints:
                 return hints[digest]
+    if type(row[9]) is StoredTextDigest:
+        if materialize is None:
+            raise ValueError("Native Saved row text is not available for its references")
+        row = materialize()
     try:
         branches = _proven_dependency_branches(row)
         if branches is None:
@@ -551,6 +741,26 @@ def _dependency_references(repository, row, digest):
     return result
 
 
+def _actual_branch_owner(session, run_id, branch_id):
+    from sqlalchemy import select
+
+    from beta_engine.infrastructure.db.models import RunBranchModel
+
+    fields = (
+        RunBranchModel.branch_id, RunBranchModel.run_id,
+        RunBranchModel.forked_from_branch_id, RunBranchModel.forked_from_saved_revision_id,
+        RunBranchModel.status, RunBranchModel.read_only, RunBranchModel.saved_head_revision_id,
+    )
+    row = session.execute(
+        select(*fields).where(RunBranchModel.run_id == run_id, RunBranchModel.branch_id == branch_id)
+    ).first()
+    actual = tuple(row) if row is not None else None
+    loaded = session.identity_map.get((RunBranchModel, (branch_id,), None))
+    if loaded is not None and actual != tuple(getattr(loaded, field.key) for field in fields):
+        raise ValueError("Native Branch owner differs from its actual stored bytes")
+    return actual
+
+
 def actual_dependency_signature(session, revision, *, repository=None):
     """Exact physical dependency graph, rebuilt before any cross-read proof reuse.
 
@@ -560,8 +770,6 @@ def actual_dependency_signature(session, revision, *, repository=None):
     Only successfully completed proofs enter the bounded repository cache.
     """
     from sqlalchemy import select
-
-    from beta_engine.infrastructure.db.models import RunBranchModel
 
     fields = _physical_revision_fields()
     memo = _proofs.get()
@@ -574,30 +782,7 @@ def actual_dependency_signature(session, revision, *, repository=None):
     def actual_owner(branch_id):
         key = (revision.run_id, branch_id)
         if key not in owners:
-            row = session.execute(
-                select(
-                    RunBranchModel.branch_id,
-                    RunBranchModel.run_id,
-                    RunBranchModel.forked_from_branch_id,
-                    RunBranchModel.forked_from_saved_revision_id,
-                    RunBranchModel.status,
-                    RunBranchModel.read_only,
-                    RunBranchModel.saved_head_revision_id,
-                ).where(
-                    RunBranchModel.run_id == revision.run_id,
-                    RunBranchModel.branch_id == branch_id,
-                )
-            ).first()
-            owners[key] = tuple(row) if row is not None else None
-            loaded = session.identity_map.get((RunBranchModel, (branch_id,), None))
-            if loaded is not None and (
-                row is None or tuple(getattr(loaded, name) for name in (
-                    "branch_id", "run_id", "forked_from_branch_id",
-                    "forked_from_saved_revision_id", "status", "read_only",
-                    "saved_head_revision_id",
-                )) != tuple(row)
-            ):
-                raise ValueError("Native Branch owner differs from its actual stored bytes")
+            owners[key] = _actual_branch_owner(session, revision.run_id, branch_id)
         return owners[key]
 
     unreferenced = read_cache.setdefault("unreferenced_revisions", {}) if read_cache is not None else {}
@@ -608,14 +793,13 @@ def actual_dependency_signature(session, revision, *, repository=None):
         if key in unreferenced:
             return unreferenced[key]
         row = read_cache.get("loaded_rows", {}).get(key) if read_cache is not None else None
+        if row is not None and read_cache is not None and type(row[9]) is str:
+            # The ORM materialized this text in the same unchanged snapshot.
+            # Bind its digest through the actual envelope and re-hashed nodes
+            # when known instead of hashing every character again.
+            _seed_loaded_text_digest(session, read_cache, row)
         if row is None:
-            actual = session.execute(
-                select(*fields).where(
-                    BranchSavedRevisionModel.run_id == revision.run_id,
-                    BranchSavedRevisionModel.revision_id == revision_id,
-                )
-            ).first()
-            row = tuple(actual[:len(fields)]) if actual is not None else None
+            row = read_physical_row(session, revision.run_id, revision_id, read_cache)
         if row is None:
             unreferenced[key] = (None, None)
         else:
@@ -636,6 +820,12 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 retain_saved_model(session, loaded)
             digest = hashlib.sha256()
             for index, value in enumerate(row):
+                if type(value) is StoredTextDigest and index in _LARGE_TEXT_FIELDS:
+                    # The same SHA-256 of the same actual text, authenticated
+                    # through its envelope and re-hashed nodes (see above).
+                    digest.update(b"h")
+                    digest.update(value.digest)
+                    continue
                 if type(value) is str and index in _LARGE_TEXT_FIELDS:
                     # Commit to the exact SHA-256 of these actual bytes. The
                     # same read scope hashes each physical text only once.
@@ -669,7 +859,8 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 row, signature = read_revision(member)
                 revisions[(revision.run_id, member)] = (
                     (None, None, ()) if row is None
-                    else (row, signature, _dependency_references(repository, row, signature)))
+                    else (row, signature, _dependency_references(repository, row, signature,
+                        materialize=lambda row=row: _materialized_row(session, row, read_cache))))
                 unreferenced.pop((revision.run_id, member), None)
         return revisions[key]
 
@@ -696,8 +887,7 @@ def actual_dependency_signature(session, revision, *, repository=None):
         visited.add(revision_id)
         row, digest, branch_ids = actual_revision(revision_id)
         if revision_id == revision.revision_id and hasattr(revision, "payload_json"):
-            expected = tuple(getattr(revision, field.key) for field in fields)
-            if row != expected:
+            if row is None or not row_matches_model(read_cache, row, revision):
                 raise ValueError(
                     "Native Saved row differs from its actual stored bytes"
                 )
@@ -743,6 +933,47 @@ def actual_dependency_signature(session, revision, *, repository=None):
             encoded[id(sorted_graph)] = (sorted_graph, known_graph[2])
             encoded[id(sorted_heads)] = (sorted_heads, known_graph[3])
     return (revision.revision_id, known_graph[0], known_graph[1])
+
+
+def install_verified_global_save_head(session, branch, revision, staged, staged_proofs, *, repository):
+    """Install a staged HEAD and recheck its physical dependency graph.
+
+    The staged graph already contains the new row and its prior HEAD parent.
+    If actual SQLite reports a single statement and row change, and the row
+    changed is exactly this Branch pointer, its only new graph edge targets the
+    already verified new row. Any other statement, trigger, side effect, dirty
+    input or snapshot change retains the ordinary complete physical reread.
+    """
+    memo = _proofs.get()
+    snapshot_key = ("native_dependency_physical_rows", session)
+    before = None
+    verified_row = None
+    if snapshot_proofs(session) is staged_proofs:
+        before, rows = memo[snapshot_key]
+        key = (revision.run_id, revision.revision_id)
+        row = rows["revisions"].get(key)
+        verified_row = row[0] if row is not None else None
+        del rows
+
+    branch.saved_head_revision_id = revision.revision_id
+    session.flush()
+    if before is not None and verified_row is not None and _physical_read_cache(session) is not None:
+        after = memo[snapshot_key][0]
+        if after[:3] == before[:3] and after[3:] == tuple(value + 1 for value in before[3:]):
+            if not row_matches_model(_physical_read_cache(session), verified_row, revision):
+                raise ValueError("Native Saved row differs from its actual stored bytes")
+            heads = dict(staged[2])
+            previous = heads.get(branch.branch_id)
+            current = _actual_branch_owner(session, branch.run_id, branch.branch_id)
+            if (
+                previous
+                and current == (*previous[:-1], revision.revision_id)
+                and _physical_read_cache(session) is not None
+                and memo[snapshot_key][0] == after
+            ):
+                heads[branch.branch_id] = current
+                return (revision.revision_id, staged[1], tuple(sorted(heads.items())))
+    return actual_dependency_signature(session, revision, repository=repository)
 
 
 def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):

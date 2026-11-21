@@ -10,6 +10,152 @@ versions. First performance measurements target a modest Windows PC. These
 are product criteria. ATP continuity and FAX Season 25 closure still require
 real acceptance evidence.
 
+# W10 on a GitHub runner, base vs #1836 vs #1838 — 21 November 2026
+
+Diagnostic run 44895352733 (branch `test/w10-actions-ab-20261121`, never
+merged) ran on one `ubuntu-latest` runner (4 vCPU Xeon 8370C, 16 GB). It used
+fresh copies of the W9 fixture from artifact 14581530042, production HTTP,
+SQLite and Saved v2, explicit Saves and the 120-second client deadline. All
+three trees completed W10 with no timeout. Using the same harness UUID
+sequence, base `cde9214`, #1836 `a8c7036` and #1838 `f99df70` produced
+byte-identical revision rows, nodes, audit events, Working Drafts and final
+Tour inspections. The 53 fixture revisions were unchanged.
+
+| runner, W10 | base | #1836 | #1838 (incl. #1837) |
+|---|---:|---:|---:|
+| Save 1–7 (s) | 59.1/59.5/90.4/63.5/65.4/66.7/71.0 | 42.5/40.9/71.1/43.9/44.9/44.8/48.5 | 37.2/35.0/65.1/39.3/40.8/39.8/46.0 |
+| slowest command (execute, s) | 102.0 | 76.8 | 54.6 |
+| cold start at 53 / 60 revisions (s) | 75.6 / 89.6 | 75.4 / 89.7 | 76.8 / 92.7 |
+| peak RSS / whole W10 | 8.22 GiB / 2,550 s | 6.63 GiB / 1,821 s | 5.39 GiB / 1,117 s |
+
+The candidate then continued through W11–W12 on the same runner, reaching 76
+revisions. Its Saves took 46.7–64.4 s, the two W12 Draw Saves 91.6 and 91.0 s,
+and its slowest execute 75.9 s. The cold read at 76 revisions took 136.8 s
+with a 9.75 GiB peak. Locally, base and candidate measured 139.0 and 141.9 s.
+The cold read therefore grows fastest: 2.0–2.3 s per revision from 53 to 60
+and about 3 s per revision from 60 to 76. Its RAM grows by about 200 MiB per
+revision. It already exceeds 120 s at W12 on every tree.
+
+A tracemalloc snapshot at 60 revisions held 6.1 GiB. 3.7 GiB of that was
+historical payload text returned by SQLite, kept alive for the whole cold
+validation by the snapshot read cache and the operation's canonical-text
+proofs. The next change is to prove, validate and release historical texts
+one revision at a time on the cold path, then reduce the per-revision replay
+work. The five-season run was not started.
+
+# W10 passes at the original 120-second deadline — 20 November 2026
+
+Candidate engine `b1b0f1e` on `perf/native-tour-save-history-reuse`
+(the later head adds only documentation). It completed the actual W10
+of the retained 1,000-player W9 fixture through production HTTP and
+SQLite with Saved v2. All seven explicit Saves returned HTTP 201 within
+the unchanged 120-second client deadline. The input was artifact
+`pr1828-one-shot-w9-44612526515` (`before-restart.sqlite`, SHA-256
+`3fbaa488…`). W10 is the giant runner's sequence: two week-12 plans,
+submit/approve/draw, two global slots, confirm and transition.
+
+**Profile.** Every new SQLite snapshot re-read and re-hashed every Saved
+text in `actual_dependency_signature`. This applies to each request and
+to each write inside a Save. The 56 revisions of the Save 3 checkpoint
+hold 3.39 billion logical characters. At the end of W10, 60 revisions hold
+3.91 billion characters backed by 66 MB of node bodies. On the base (py-spy, whole
+W10), the signature walk was 29.9% of Save samples and 25–26% of inspect
+and execute samples. SHA-256 of those texts alone was 12.7% of Save.
+
+**Change.** A Saved v2 text is determined by its envelope and its
+content-addressed nodes. After a verified materialization has been
+hashed, the digest is remembered by (Run, root, size). A later snapshot
+may reuse it only after re-fetching and re-hashing every reachable node
+from SQLite in that transaction. Such a row carries `StoredTextDigest`
+instead of its text. An ORM text matches it only by its own SHA-256, or
+when it was loaded from the same stored row in the same unchanged
+snapshot. Reference parsing still materializes a fresh text. Changed,
+missing or foreign nodes fail closed. Another envelope or changed parent
+relation produces another signature.
+
+| W10 (this 4-vCPU container, Python 3.11.18) | base `cde9214` | candidate `b1b0f1e` |
+|---|---:|---:|
+| Save 1 / 2 / 3 / 4 (s) | 68.2 / 68.5 / 108.8 / 74.0 | 46.7 / 47.7 / 78.1 / 51.8 |
+| Save 5 / 6 / 7 (s) | 75.6 / 76.2 / 84.4 | 50.5 / 50.4 / 54.9 |
+| slowest command: transition execute (s) | 112.5 | 85.4 |
+| slowest slot execute / preview (s) | 104.5 / 42.3 | 81.3 / 28.7 |
+| warm / first cold inspect (s) | 60.3 / 83.7 | 47.7 / 85.7 |
+| peak RSS / whole W10 | 8.30 GiB / 2,924 s | 6.70 GiB / 2,082 s |
+
+The base run used a diagnostic client deadline so that it would complete
+as the comparison reference; none of its requests exceeded 120 s on this
+host. Both A/B runs used fresh copies of the same fixture. A harness-only
+patch gave both runs the same persistence UUID sequence. The results were
+byte-identical: all 60 revision rows, including content hashes and
+envelopes, the 9,186-node table, 59 audit events, the Working Draft, the
+Branch rows and the final Tour inspection. The 53 fixture revisions were
+unchanged, including `created_at`. All new content hashes were recomputed
+from the verified payload. With ordinary random UUIDs, the earlier
+candidate `a8da06a` also passed all seven Saves at 120 s.
+
+Random UUID runs diverge after the week transition. The development roll
+uses `checkpoint.fingerprint`, which transitively covers random revision
+IDs. Two runs of the same engine therefore differ. This is recorded for
+Radim and was not changed here.
+
+The cold Tour read of the final 60-revision database still takes
+101.5 s on the base and 99.6 s on the candidate. It returned exact
+responses but has no prior digest to reuse. This host is faster than
+the earlier one: the base Save 3 passed here, but timed out there. Hosted
+or slower-runner W10 acceptance is therefore not shown. The remaining
+largest Save costs are encoding and hashing the new 122–137 M-character
+payload and decoding the live checkpoint. The next performance targets
+are the cold lineage read and the warm ORM lineage, which still
+materializes every revision once per request.
+
+Tests: 11 new digest-reuse tests (10 component SQLite tests plus one
+production HTTP/SQLite Save that returns 409 after one historical node is
+damaged) and 186 existing targeted Saved v2, read-snapshot, proof, canonical-text,
+Save fast-path and Saved v2 HTTP tests passed locally. Full CI was not run.
+
+# W10 native Tour Save performance checkpoint — 20 November 2026
+
+The candidate on `perf/native-tour-save-history-reuse` uses the same locked
+read snapshot for the Working Draft and the old Saved dependency graph.
+The actual installed head is checked against the staged graph. The single
+verified SQLite pointer update can reuse that graph; any other statement,
+row change or snapshot boundary takes the normal full verification path.
+The transaction checks the flushed Working Draft and Viewer selection
+before committing its receipt.
+
+On separate copies of the same retained 1,000-player W9 database with the
+first W10 Edition plan staged through actual HTTP, the first explicit Save
+received HTTP 201 in 95.1 seconds with the 120-second client deadline. The
+earlier engine at `43a0802` committed the same revision but the HTTP client
+timed out. Both databases retained the exact 53 prior revisions. The new
+revision hash, all 8,347 Saved v2 node bodies, the draft, the audit records
+and the Branch and Run rows matched exactly, excluding row timestamps.
+After restarting from the confirmed first Save, the second W10 Save
+returned HTTP 201 in 110.1 seconds. The independently inspected Saved
+head was revision 55.
+
+The follow-up compares the newly flushed payload and summary with the exact
+canonical bytes that determined the expected Saved hash. It still reloads
+and checks the actual receipt metadata and independently decoded components.
+This avoids re-encoding the receipt's full history and rejects even an
+equivalent but noncanonical SQLite rewrite before commit. Thirteen targeted
+API and proof tests passed after this change. The W10 timings above preceded
+this follow-up. The two worktrees use the same retained 1,000-player input and
+the fixed acceptance request deadline.
+
+On the follow-up, ordinary execute confirmed submission, approval and draw
+in 111.4, 118.5 and 117.7 seconds after a diagnostic cold warm-up. A normal
+cold inspection at revision 55 hit the 120-second client deadline on one run.
+Save 3 also hit the standard deadline before the receipt arrived. SQLite
+committed revision 56. Its actual Saved v2 payload materialized successfully,
+the canonical revision hash and live Tour fingerprint matched, and all 55
+older revision rows were identical to the checkpoint. Four later Saves and
+end-to-end W10 acceptance remain unverified.
+
+The 56 revisions represent 3,393,339,406 logical payload characters backed by
+60,000,003 bytes of Saved v2 node bodies. Removing repeated materialization
+of those same actual physical dependencies is the next performance target.
+
 # Cold Saved v2 Tour read at W9 — 20 November 2026
 
 PR #1834 independently verified the first Tour read after restarting with

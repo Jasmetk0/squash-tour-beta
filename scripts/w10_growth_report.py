@@ -38,9 +38,14 @@ def main(argv):
     for label, run in runs:
         rows = [json.loads(line) for line in (run / "requests.jsonl").read_text().splitlines()]
         classes = defaultdict(list)
+        current = None
         for r in rows:
+            # Older outputs carry the count only on start/save_confirmed records.
+            if r["kind"] in ("start", "save_confirmed") and r.get("revisions") is not None:
+                current = r["revisions"]
             if r["kind"] != "client" or r.get("status") not in (200, 201):
                 continue
+            r.setdefault("revisions", current)
             endpoint = r["path"].rsplit("/", 1)[-1]
             kind = ("cold_inspect" if r["phase"] == "cold-inspect" else
                     {"calendar-tour": "warm_inspect", "preview": "preview", "execute": "execute",

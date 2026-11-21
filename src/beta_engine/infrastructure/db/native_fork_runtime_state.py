@@ -362,16 +362,69 @@ def _materialized_row(session, row, read_cache):
     return (*row[:9], text, row[10])
 
 
+def _has_physical_fields(revision):
+    """Whether ``revision`` carries the physical fields, without loading any."""
+    if sqlalchemy_inspect(revision, raiseerr=False) is not None:
+        return True  # a mapped Saved row; an unloaded column is compared as actual
+    return hasattr(revision, "payload_json")
+
+
+def stored_column_sha256(model, column):
+    """SHA-256 of one actual stored column of ``model``'s row in the current snapshot.
+
+    For an ORM row that has not loaded ``column``: the physical reader of the
+    current native read scope supplies the digest (an authenticated Saved v2
+    ``StoredTextDigest`` or the hash of the actual text). None outside such a
+    scope or for a row that is not persistent in a session.
+    """
+    state = sqlalchemy_inspect(model, raiseerr=False)
+    session = getattr(state, "session", None)
+    if session is None or _proofs.get() is None or column not in _LARGE_TEXT_FIELDS.values():
+        return None
+    cache = _physical_read_cache(session)
+    if cache is None:
+        return None
+    identity = state.identity
+    if not identity or identity[0] != model.__dict__.get("revision_id") or "run_id" not in model.__dict__:
+        return None
+    key = (model.__dict__["run_id"], identity[0])
+    known = cache["revisions"].get(key) or cache.get("unreferenced_revisions", {}).get(key)
+    if known is not None:
+        row = known[0]
+    else:
+        rows = cache.setdefault("physical_rows", {})
+        if key not in rows:
+            rows[key] = read_physical_row(session, key[0], key[1], cache)
+        row = rows[key]
+    if row is None or row[1] != key[0] or row[0] != key[1]:
+        return None
+    index = next(i for i, name in _LARGE_TEXT_FIELDS.items() if name == column)
+    value = row[index]
+    if type(value) is StoredTextDigest:
+        return value.digest
+    if type(value) is str:
+        return physical_text_sha256(cache, run_id=row[1], revision_id=row[0], column=column, text=value)
+    return None
+
+
 def row_matches_model(read_cache, row, model):
     """Exact equality of an actual physical row and an ORM row's fields.
 
     A ``StoredTextDigest`` matches only an ORM text of the same length whose own
     SHA-256 equals the authenticated stored digest.
     """
-    expected = tuple(getattr(model, field.key) for field in _physical_revision_fields())
-    if len(row) != len(expected):
+    from beta_engine.infrastructure.db.exact_text_digest import unloaded_column
+
+    fields = _physical_revision_fields()
+    if len(row) != len(fields):
         return False
-    for index, (actual, value) in enumerate(zip(row, expected)):
+    for index, field in enumerate(fields):
+        actual = row[index]
+        if index in _LARGE_TEXT_FIELDS and unloaded_column(model, field.key):
+            # Not loaded into this ORM row: any access reads the actual stored
+            # value, so no in-memory copy can differ from it.
+            continue
+        value = getattr(model, field.key)
         if type(actual) is StoredTextDigest:
             if (
                 type(value) is not str
@@ -798,6 +851,8 @@ def actual_dependency_signature(session, revision, *, repository=None):
             # Bind its digest through the actual envelope and re-hashed nodes
             # when known instead of hashing every character again.
             _seed_loaded_text_digest(session, read_cache, row)
+        if row is None and read_cache is not None and key in read_cache.get("physical_rows", {}):
+            row = read_cache["physical_rows"][key]
         if row is None:
             row = read_physical_row(session, revision.run_id, revision_id, read_cache)
         if row is None:
@@ -810,9 +865,12 @@ def actual_dependency_signature(session, revision, *, repository=None):
                 # snapshot holds one copy and identity-keyed proof/digest
                 # memos match. Only characters equal to the fresh SELECT are
                 # shared; a different ORM value keeps the actual bytes.
+                from beta_engine.infrastructure.db.exact_text_digest import unloaded_column
+
                 row = tuple(
                     getattr(loaded, _LARGE_TEXT_FIELDS[index])
                     if index in _LARGE_TEXT_FIELDS and type(value) is str
+                    and not unloaded_column(loaded, _LARGE_TEXT_FIELDS[index])
                     and getattr(loaded, _LARGE_TEXT_FIELDS[index]) == value
                     else value
                     for index, value in enumerate(row)
@@ -886,7 +944,7 @@ def actual_dependency_signature(session, revision, *, repository=None):
             continue
         visited.add(revision_id)
         row, digest, branch_ids = actual_revision(revision_id)
-        if revision_id == revision.revision_id and hasattr(revision, "payload_json"):
+        if revision_id == revision.revision_id and _has_physical_fields(revision):
             if row is None or not row_matches_model(read_cache, row, revision):
                 raise ValueError(
                     "Native Saved row differs from its actual stored bytes"

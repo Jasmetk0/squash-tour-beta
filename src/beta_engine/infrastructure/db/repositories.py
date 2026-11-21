@@ -3093,8 +3093,16 @@ class SimulationPersistenceRepository:
             if current.parent_revision_id is None:
                 current_model = None
             else:
+                # An ancestor's payload is usually needed only as the SHA-256 of
+                # its actual stored text, which the physical dependency reader
+                # authenticates (Saved v2: envelope and re-hashed nodes). Do not
+                # materialize every historical text into the ORM row; any reader
+                # that needs the characters loads them from SQLite on access.
+                from sqlalchemy.orm import defer
+
                 current_model = session.get(
-                    BranchSavedRevisionModel, current.parent_revision_id
+                    BranchSavedRevisionModel, current.parent_revision_id,
+                    options=[defer(BranchSavedRevisionModel.payload_json)],
                 )
                 if current_model is None:
                     raise BranchRevisionStateConflictError(

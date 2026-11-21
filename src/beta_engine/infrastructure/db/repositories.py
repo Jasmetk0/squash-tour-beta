@@ -2977,7 +2977,7 @@ class SimulationPersistenceRepository:
                 if model is not None and type(model.payload_json) is str:
                     PROOFS.prove(model.payload_json, scope=model.run_id)
                     if revision_id != head_model.revision_id:
-                        release_snapshot_saved_text(session, model.run_id, revision_id)
+                        release_snapshot_saved_text(session, model.run_id, revision_id, repository=self)
                 del model
             head_decoded = {}
             if not is_global_slot_row(head_model, repository=self, _decoded_out=head_decoded):
@@ -3041,6 +3041,10 @@ class SimulationPersistenceRepository:
             model = session.get(BranchSavedRevisionModel, revision_id)
             if model is None:
                 return
+            # Read this revision's actual text once, up front: its own gates
+            # decode, prove and hash it, and the dependency reader then shares
+            # this text (same SHA-256) instead of reading and parsing it again.
+            model.payload_json
             self._validated_saved_revision_in_session(
                 session=session, model=model, materialize_payload=False,
                 sporting_component_proofs=sporting_component_proofs,
@@ -3049,7 +3053,7 @@ class SimulationPersistenceRepository:
             # revision's proof as its reference (kept by the proof scope) and
             # the one-step shared decode. Stop holding its text in the snapshot,
             # and its parent's again (an unchanged-prefix replay re-reads it).
-            release_snapshot_saved_text(session, model.run_id, revision_id)
+            release_snapshot_saved_text(session, model.run_id, revision_id, repository=self)
             if model.parent_revision_id:
                 release_snapshot_saved_text(session, model.run_id, model.parent_revision_id)
             del model

@@ -110,8 +110,8 @@ def test_cold_v2_read_holds_one_historical_text_at_a_time_and_is_unchanged(
     released, alive = [], []
     original = runtime_state.release_snapshot_saved_text
 
-    def observed(session, run_id, revision_id):
-        count = original(session, run_id, revision_id)
+    def observed(session, run_id, revision_id, **kwargs):
+        count = original(session, run_id, revision_id, **kwargs)
         released.append((revision_id, count))
         # Historical texts other than the most recent two (the proof scope's
         # newest reference and the one-step shared decode) and HEAD.
@@ -124,7 +124,7 @@ def test_cold_v2_read_holds_one_historical_text_at_a_time_and_is_unchanged(
         return count
 
     with monkeypatch.context() as patch:
-        patch.setattr(runtime_state, "release_snapshot_saved_text", lambda *args: 0)
+        patch.setattr(runtime_state, "release_snapshot_saved_text", lambda *args, **kwargs: 0)
         _path, unbounded = cold(tmp_path, prepared_slots_v2, "unbounded.db")
         expected = dump(read(unbounded))
     walked = []

@@ -181,7 +181,7 @@ def may_hold_validation_proof(session, run_id, revision_id):
     return saved_v2_store.TEXT_DIGESTS.get(run_id, root, chars) is not None
 
 
-def release_snapshot_saved_text(session, run_id, revision_id):
+def release_snapshot_saved_text(session, run_id, revision_id, *, repository=None):
     """Stop holding one fully validated Saved v2 row's text in this snapshot.
 
     A cold lineage validation reads every historical ``payload_json``. The
@@ -257,6 +257,25 @@ def release_snapshot_saved_text(session, run_id, revision_id):
                                   column="payload_json", text=text)
     saved_v2_store.remember_text_sha256(run_id, stored, text, digest)
     stand_in = StoredTextDigest(digest, chars)
+    if repository is not None:
+        # While the (just proven) text is still here, derive this row's bounded
+        # dependency hint exactly as the dependency reader would. Otherwise the
+        # first graph walk that reaches the row (e.g. from the Branch HEAD)
+        # must read and parse the complete text again. The hint is keyed by
+        # the signature of every actual physical field, so any other bytes
+        # miss it; the reader also caches the authenticated row itself.
+        physical = cache.setdefault("physical_rows", {})
+        row = physical.get(key)
+        if row is None or type(row[9]) is not StoredTextDigest or row[9].digest != digest:
+            row = read_physical_row(session, run_id, revision_id, cache)
+        if (row is not None and type(row[9]) is StoredTextDigest and row[9].digest == digest
+                and (row[0], row[1]) == (revision_id, run_id)):
+            physical[key] = row
+            try:
+                _dependency_references(repository, (*row[:9], text, *row[10:]),
+                                       _physical_row_signature(cache, row))
+            except (TypeError, ValueError):
+                pass  # only a hint: the dependency reader re-reads and decides
 
     def held(value):
         return type(value) is str and any(value is known for known in texts)
@@ -900,6 +919,35 @@ def _seed_loaded_text_digest(session, read_cache, row):
         _remember_stored_text(read_cache, row, stored)
 
 
+def _physical_row_signature(read_cache, row):
+    """SHA-256 over every actual physical field of one Saved row.
+
+    A large text commits to the SHA-256 of its exact characters, whether it is
+    held as the text or as the ``StoredTextDigest`` authenticated for it, so
+    both forms of the same row give the same signature.
+    """
+    digest = hashlib.sha256()
+    for index, value in enumerate(row):
+        if type(value) is StoredTextDigest and index in _LARGE_TEXT_FIELDS:
+            # The same SHA-256 of the same actual text, authenticated
+            # through its envelope and re-hashed nodes (see above).
+            digest.update(b"h")
+            digest.update(value.digest)
+            continue
+        if type(value) is str and index in _LARGE_TEXT_FIELDS:
+            # Commit to the exact SHA-256 of these actual bytes. The
+            # same read scope hashes each physical text only once.
+            digest.update(b"h")
+            digest.update(physical_text_sha256(read_cache, run_id=row[1],
+                revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
+            continue
+        raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
+        digest.update(b"s" if isinstance(value, str) else b"j")
+        digest.update(len(raw).to_bytes(8, "big"))
+        digest.update(raw)
+    return digest.hexdigest()
+
+
 def _dependency_references(repository, row, digest, materialize=None):
     """Bounded parse hints, never a validation proof or a stored hash shortcut.
 
@@ -1039,27 +1087,7 @@ def actual_dependency_signature(session, revision, *, repository=None):
                     for index, value in enumerate(row)
                 )
                 retain_saved_model(session, loaded)
-            digest = hashlib.sha256()
-            for index, value in enumerate(row):
-                if type(value) is StoredTextDigest and index in _LARGE_TEXT_FIELDS:
-                    # The same SHA-256 of the same actual text, authenticated
-                    # through its envelope and re-hashed nodes (see above).
-                    digest.update(b"h")
-                    digest.update(value.digest)
-                    continue
-                if type(value) is str and index in _LARGE_TEXT_FIELDS:
-                    # Commit to the exact SHA-256 of these actual bytes. The
-                    # same read scope hashes each physical text only once.
-                    digest.update(b"h")
-                    digest.update(physical_text_sha256(read_cache, run_id=row[1],
-                        revision_id=row[0], column=_LARGE_TEXT_FIELDS[index], text=value))
-                    continue
-                raw = canonical_json(value).encode("utf-8") if not isinstance(value, str) else value.encode("utf-8")
-                digest.update(b"s" if isinstance(value, str) else b"j")
-                digest.update(len(raw).to_bytes(8, "big"))
-                digest.update(raw)
-            signature = digest.hexdigest()
-            unreferenced[key] = (row, signature)
+            unreferenced[key] = (row, _physical_row_signature(read_cache, row))
         return unreferenced[key]
 
     def actual_revision(revision_id):

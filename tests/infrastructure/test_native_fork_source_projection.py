@@ -128,7 +128,7 @@ def test_global_checkpoint_decode_binds_complete_values_and_isolates_nested_copi
     assert read().body == body
 
 
-def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(monkeypatch):
+def test_global_checkpoint_decode_shares_existing_budget_and_keeps_oversize_separately(monkeypatch):
     from beta_engine.infrastructure.db import native_fork_source_projection as cache
     from beta_engine.domain.run_packages import canonical_hash
 
@@ -150,7 +150,90 @@ def test_global_checkpoint_decode_shares_existing_budget_and_bypasses_oversize(m
     component = {'state': body, 'fingerprint': canonical_hash(body)}
     cache.decoded_global_checkpoint_component(repo, component,
         run_id='run', branch_id='branch', decode=decode)
+    # The shared budget is untouched; the one oversize value is resident apart.
     assert retained == before
+    assert repo._global_resident_checkpoint[0][:2] == ('run', 'branch')
+
+
+def _oversize(monkeypatch, body):
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    monkeypatch.setattr(cache, 'MAX_GLOBAL_TOUR_BYTES', 64)
+    return {'state': body, 'fingerprint': canonical_hash(body)}
+
+
+class _Checkpoint:
+    schema_version = 'calendar_sporting_checkpoint.v13'
+
+    def __init__(self, state, run_id='run', branch_id='branch'):
+        from copy import deepcopy
+
+        self.state, self.run_id, self.branch_id = deepcopy(state), run_id, branch_id
+
+    @property
+    def fingerprint(self):
+        from beta_engine.domain.run_packages import canonical_hash
+
+        return canonical_hash(self.state)
+
+
+def test_oversize_live_checkpoint_is_resident_once_with_private_copies(monkeypatch):
+    from copy import deepcopy
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    component = _oversize(monkeypatch, {'players': [{'id': i, 'attributes': [i, i + 1]} for i in range(20)]})
+
+    def decode(raw):
+        calls.append(1)
+        return _Checkpoint(raw['state'])
+
+    def read(current=component, **scope):
+        return cache.decoded_global_checkpoint_component(repo, current,
+            **({'run_id': 'run', 'branch_id': 'branch'} | scope), decode=decode)
+
+    first = read()
+    first.state['players'][0]['attributes'].append('caller mutation')
+    second = read(deepcopy(component))       # equal complete bytes, another object
+    assert calls == [1] and second.state == component['state'] and second is not first
+    assert not hasattr(repo, '_global_tour_projection_cache')
+    # Another scope is another key; its strict decode still checks the scope.
+    with pytest.raises(ValueError, match='scope/hash'):
+        read(branch_id='foreign')
+    assert len(calls) == 2 and read().state == component['state'] and len(calls) == 2
+    # Changed data under the old declared hash never reuses the resident value.
+    changed = deepcopy(component)
+    changed['state']['players'][1]['attributes'][0] = 999
+    with pytest.raises(ValueError, match='scope/hash'):
+        read(changed)
+    assert read().state == component['state'] and len(calls) == 3
+    # A newer component replaces it: only ONE oversize value is ever resident.
+    newer = _oversize(monkeypatch, {**changed['state'], 'week': 2})
+    assert read(newer).state == newer['state'] and len(calls) == 4
+    assert read(newer).state == newer['state'] and len(calls) == 4
+    assert read().state == component['state'] and len(calls) == 5
+
+
+def test_committed_oversize_handoff_transfers_ownership_and_copies_afterwards(monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo = repository()
+    component = _oversize(monkeypatch, {'players': [{'id': i} for i in range(30)]})
+    captured = _Checkpoint(component['state'])
+    cache.decoded_global_checkpoint_component(repo, component, run_id='run', branch_id='branch',
+        decode=lambda _raw: captured, _take_ownership=True)
+    assert repo._global_resident_checkpoint[1] is captured     # no extra copy in the Save
+
+    def unexpected(_raw):
+        raise AssertionError('handoff did not seed the next read')
+
+    first = cache.decoded_global_checkpoint_component(repo, component, run_id='run',
+        branch_id='branch', decode=unexpected)
+    assert first is not captured and first.state == component['state']
+    first.state['players'].clear()
+    assert cache.decoded_global_checkpoint_component(repo, component, run_id='run',
+        branch_id='branch', decode=unexpected).state == component['state']
 
 
 @pytest.mark.parametrize("owned_capture", [False, True])

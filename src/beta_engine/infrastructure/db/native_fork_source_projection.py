@@ -314,18 +314,24 @@ def remember_committed_global_sources(repository, source, captured, *, _take_own
     else:
         decoded_global_checkpoint_component(repository, component,
             run_id=source.run_id, branch_id=source.branch_id,
-            decode=lambda _component: captured[1])
+            decode=lambda _component: captured[1], _take_ownership=_take_ownership)
 
 
 def decoded_global_checkpoint_component(repository, component, *, run_id, branch_id, decode,
-                                       _component_text=None):
+                                       _component_text=None, _take_ownership=False):
     """Strict v13 decode data bound to the complete actual component.
 
     Tour-only Saves need not decode an unchanged 1,000-player checkpoint again.
-    This shares the existing 64 MiB budget and defensive copies. The caller's
-    full physical Saved, ownership, dependency and math gates stay mandatory.
+    This shares the existing 64 MiB budget and defensive copies. A component
+    above that budget (a long 1,000-player season: >100 MiB at W10) keeps only
+    the most recent value in one separate resident slot, see
+    ``_resident_decoded_checkpoint``. The caller's full physical Saved,
+    ownership, dependency and math gates stay mandatory.
     ``_component_text`` may only be the proven canonical span of exactly
     ``component`` (canonical_json(component)); it replaces re-encoding it.
+    ``_take_ownership`` (Save coordinator only, see
+    remember_committed_global_sources) lets the resident slot keep the decoded
+    model itself instead of a copy; its return value must then not be used.
     """
     def checked(source):
         value = decode(source.payload['calendar_player_sporting_checkpoint'])
@@ -337,7 +343,8 @@ def decoded_global_checkpoint_component(repository, component, *, run_id, branch
         if type(_component_text) is str else None)
     value = _decoded_value(repository, source, checked,
         cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
-        entry_limit=4, _serialized=serialized)
+        entry_limit=4, _serialized=serialized, _oversize_resident=True,
+        _take_ownership=_take_ownership)
     # checked() bound the strict decode to this entire component. Every hit
     # rehashes that full envelope and returns a defensive private copy.
     from beta_engine.domain.tournaments.calendar_global_slots import _prime_private_fingerprint
@@ -391,16 +398,43 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
     return (value, fingerprint) if _with_fingerprint else value
 
 
-def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None):
+def _resident_decoded_checkpoint(repository, source, decode, serialized, *, _take_ownership=False):
+    """The single most recent oversize checkpoint decode, outside the shared budget.
+
+    Same contract as the shared cache: decode data only, keyed by Run, Branch
+    and SHA-256 of the complete canonical component bytes; ``decode`` (the
+    strict checked decode) produced the retained value; every hit returns a
+    private deep copy. Exactly one value is resident: a new component replaces
+    it, so the memory held is that of one live checkpoint (the state every
+    request decodes anyway), not a growing history of them.
+    """
+    key = (source.run_id, source.branch_id, len(serialized), hashlib.sha256(serialized).digest())
+    with repository._revision_validation_lock:
+        entry = getattr(repository, '_global_resident_checkpoint', None)
+    if entry is not None and entry[0] == key:
+        return _copy_decoded_value(entry[1], entry[2])[0]
+    result = decode(source)
+    retained, attribute_hints = (result, {}) if _take_ownership else _copy_decoded_value(result)
+    with repository._revision_validation_lock:
+        repository._global_resident_checkpoint = (key, retained, attribute_hints)
+    return result
+
+
+def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None,
+                   _oversize_resident=False, _take_ownership=False):
     if repository is None:
         return decode(source)
-    if _serialized is not None and _serialized.isascii() and len(_serialized) > byte_limit:
+    if (not _oversize_resident and _serialized is not None and _serialized.isascii()
+            and len(_serialized) > byte_limit):
         # Exactly canonical_json(source.payload) (ASCII: one byte per character),
         # too large for the cache either way: no key is needed.
         return decode(source)
     serialized = (_serialized if _serialized is not None else canonical_json(source.payload)).encode("utf-8")
     size = len(serialized)
     if size > byte_limit:
+        if _oversize_resident:
+            return _resident_decoded_checkpoint(repository, source, decode, serialized,
+                                                _take_ownership=_take_ownership)
         return decode(source)
     key = (source.run_id, source.branch_id, hashlib.sha256(serialized).digest())
     with repository._revision_validation_lock:

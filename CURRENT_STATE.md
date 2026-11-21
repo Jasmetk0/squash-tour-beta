@@ -27,12 +27,24 @@ On the final W10 database, warm inspect fell from 27.9 to 16.7–17.7 s and
 preview from 25.5 to 15.2–16.6 s. The W10 database was byte-identical to the
 base run with the same harness UUID sequence. This covers all revision rows,
 nodes, audit events, the Working Draft and the final inspection. The 53
-fixture revisions remained unchanged. The resident copy costs about 0.5 GiB
-at W10 and grows with the checkpoint (about 13 MiB of JSON per week here).
-The cold read is unchanged at about 100 s.
+fixture revisions remained unchanged. The cold read is unchanged at about 100 s.
 
-Tests: 30 decode-cache component tests, including 2 new resident-slot tests
-and the adjusted oversize test. 4 HTTP/SQLite Global checkpoint handoff
+The resident slot has a fixed budget. JSON size and decoded memory are
+distinct quantities. On the real fixture, a retained private copy took
+3.33–3.47 bytes per canonical JSON byte: 29.9 MiB of JSON took 99.5 MiB,
+104.5 MiB took 362.1 MiB and 117.4 MiB took 405.7 MiB. These figures come
+from tracemalloc after the decoded original was released. A decode peaked
+transiently at about 8.7 times the JSON size, both with and without the
+cache. The ratio rounded up to 4 and a 1 GiB memory budget give a gate of
+at most 256 MiB of exact key JSON. A larger component is decoded normally
+and is not retained, and the slot keeps its previous value. The checkpoint
+grew by about 13 MiB of JSON per week here, so the gate is reached around
+week 21 of this load.
+
+Tests: 35 decode-cache component tests, including 7 new resident-slot tests:
+both sides of the budget, replacement, over-budget reads leaving the slot
+unchanged, Run/Branch isolation and the derived budget constants. The adjusted
+oversize test also passed. 4 HTTP/SQLite Global checkpoint handoff
 tests, plus the Save fast-path, Saved v2 HTTP and digest-reuse tests,
 passed locally.
 

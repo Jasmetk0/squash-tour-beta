@@ -20,6 +20,20 @@ MAX_SOURCE_BYTES = 4 * 1024 * 1024
 MAX_SOURCES = 2
 MAX_GLOBAL_TOUR_BYTES = 64 * 1024 * 1024
 MAX_LIVE_COMPONENT_BYTES = 64 * 1024 * 1024
+# The ONE resident oversize Global checkpoint (see _resident_decoded_checkpoint)
+# has a fixed budget on the memory of its retained decoded value. That memory
+# is not the JSON size: on the real 1,000-player Saved v2 W9/W10 fixture a
+# retained private copy measured 3.33-3.47 bytes per canonical JSON byte
+# (29.9 MiB JSON -> 99.5 MiB, 104.5 -> 362.1, 117.4 -> 405.7 MiB; tracemalloc
+# after releasing the decoded original). The gate is on the exact JSON size of
+# the key, with that ratio rounded up to 4: at most 256 MiB of JSON, i.e. at
+# most about 1 GiB retained. A larger component is decoded normally and not
+# retained (the transient decode itself peaks near 8.7x the JSON either way).
+RESIDENT_CHECKPOINT_DECODED_BUDGET_BYTES = 1024 * 1024 * 1024
+RESIDENT_CHECKPOINT_DECODED_BYTES_PER_JSON_BYTE = 4
+MAX_RESIDENT_CHECKPOINT_JSON_BYTES = (
+    RESIDENT_CHECKPOINT_DECODED_BUDGET_BYTES // RESIDENT_CHECKPOINT_DECODED_BYTES_PER_JSON_BYTE
+)
 _MODEL_SCALAR_TYPES = (type(None), str, int, bool, float, bytes)
 
 
@@ -406,8 +420,12 @@ def _resident_decoded_checkpoint(repository, source, decode, serialized, *, _tak
     strict checked decode) produced the retained value; every hit returns a
     private deep copy. Exactly one value is resident: a new component replaces
     it, so the memory held is that of one live checkpoint (the state every
-    request decodes anyway), not a growing history of them.
+    request decodes anyway), not a growing history of them. A component above
+    MAX_RESIDENT_CHECKPOINT_JSON_BYTES is decoded normally and not retained;
+    the slot keeps whatever it held.
     """
+    if len(serialized) > MAX_RESIDENT_CHECKPOINT_JSON_BYTES:
+        return decode(source)
     key = (source.run_id, source.branch_id, len(serialized), hashlib.sha256(serialized).digest())
     with repository._revision_validation_lock:
         entry = getattr(repository, '_global_resident_checkpoint', None)

@@ -418,3 +418,82 @@ def test_model_hash_reuse_requires_type_exact_values_and_handles_unknown_types()
     assert not _same_model_value(float('nan'), float('nan'))
     assert _same_model_value(float('inf'), float('inf'))
     assert not _same_model_value({'value': object()}, {'value': object()})
+
+
+def test_resident_budget_is_derived_from_measured_decoded_memory_not_json_size():
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    assert cache.RESIDENT_CHECKPOINT_DECODED_BYTES_PER_JSON_BYTE > 3.47  # measured W9/W10 maximum
+    assert (cache.MAX_RESIDENT_CHECKPOINT_JSON_BYTES * cache.RESIDENT_CHECKPOINT_DECODED_BYTES_PER_JSON_BYTE
+            <= cache.RESIDENT_CHECKPOINT_DECODED_BUDGET_BYTES)
+    assert cache.MAX_RESIDENT_CHECKPOINT_JSON_BYTES > cache.MAX_GLOBAL_TOUR_BYTES
+
+
+@pytest.mark.parametrize("margin, retained", [(0, True), (-1, False)])
+def test_resident_checkpoint_json_budget_on_both_sides_of_the_limit(monkeypatch, margin, retained):
+    from beta_engine.domain.run_revisions import canonical_json
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    component = _oversize(monkeypatch, {'players': [{'id': i} for i in range(40)]})
+    size = len(canonical_json({'calendar_player_sporting_checkpoint': component}).encode('utf-8'))
+    monkeypatch.setattr(cache, 'MAX_RESIDENT_CHECKPOINT_JSON_BYTES', size + margin)
+
+    def decode(raw):
+        calls.append(1)
+        return _Checkpoint(raw['state'])
+
+    for _ in range(3):
+        value = cache.decoded_global_checkpoint_component(repo, component, run_id='run',
+            branch_id='branch', decode=decode)
+        assert value.state == component['state']
+    # At the limit the value is retained once; above it every read decodes
+    # normally and nothing is stored in either cache.
+    assert len(calls) == (1 if retained else 3)
+    assert hasattr(repo, '_global_resident_checkpoint') is retained
+    assert not hasattr(repo, '_global_tour_projection_cache')
+
+
+def test_over_budget_component_leaves_the_resident_value_and_reuse_untouched(monkeypatch):
+    from beta_engine.domain.run_revisions import canonical_json
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    small = _oversize(monkeypatch, {'players': [{'id': i} for i in range(10)]})
+    large = _oversize(monkeypatch, {'players': [{'id': i, 'pad': 'x' * 50} for i in range(10)]})
+    limit = len(canonical_json({'calendar_player_sporting_checkpoint': small}).encode('utf-8'))
+    monkeypatch.setattr(cache, 'MAX_RESIDENT_CHECKPOINT_JSON_BYTES', limit)
+
+    def read(component):
+        return cache.decoded_global_checkpoint_component(repo, component, run_id='run',
+            branch_id='branch', decode=lambda raw: calls.append(raw) or _Checkpoint(raw['state']))
+
+    read(small)
+    before = repo._global_resident_checkpoint
+    assert read(large).state == large['state'] and read(large).state == large['state']
+    assert repo._global_resident_checkpoint is before
+    assert read(small).state == small['state'] and len(calls) == 3
+
+
+def test_resident_checkpoint_is_isolated_between_runs_and_branches(monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+
+    repo, calls = repository(), []
+    component = _oversize(monkeypatch, {'players': [{'id': i} for i in range(20)]})
+
+    def read(run_id, branch_id):
+        return cache.decoded_global_checkpoint_component(repo, component, run_id=run_id,
+            branch_id=branch_id,
+            decode=lambda raw: calls.append((run_id, branch_id)) or _Checkpoint(raw['state'], run_id, branch_id))
+
+    scopes = [('run', 'branch'), ('run', 'other-branch'), ('other-run', 'branch')]
+    for scope in scopes:
+        value = read(*scope)
+        assert (value.run_id, value.branch_id) == scope
+        assert repo._global_resident_checkpoint[0][:2] == scope
+    # Identical bytes under another Run or Branch never reused the value: each
+    # scope decoded on its own, and the newest scope replaced the single slot.
+    assert calls == scopes
+    value = read('run', 'branch')
+    assert (value.run_id, value.branch_id) == ('run', 'branch') and len(calls) == 4
+    assert read('run', 'branch').branch_id == 'branch' and len(calls) == 4

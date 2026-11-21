@@ -1,3 +1,41 @@
+# Resident live checkpoint decode for long seasons — 21 November 2026
+
+Candidate `83bf8c9` on `perf/resident-live-checkpoint-decode` builds on the
+unmerged #1836 head. At W10 of the 1,000-player Saved v2 season, the Global
+sporting checkpoint component is 104–117 MiB. That exceeds the shared 64 MiB
+decode budget, so nothing was retained. Every warm inspect, preview and
+execute encoded the whole component to compute its key. It then strictly
+re-decoded and re-fingerprinted it, which was 40% of a warm inspect.
+
+Exactly one most recent oversize checkpoint is now kept in a separate
+resident slot. It uses the same exact-content key (Run, Branch and SHA-256
+of the complete canonical component) and still returns private copies.
+A different component replaces it, so it never retains a history of
+checkpoints. The Save coordinator hands off its captured model through the
+existing ownership rule without another copy. The shared budget and every
+physical, ownership, dependency and replay gate are unchanged.
+
+| same container, same W9 fixture, 120 s deadline | #1836 `b1b0f1e` | this `83bf8c9` |
+|---|---:|---:|
+| Save 1–7 (s) | 46.7 / 47.7 / 78.1 / 51.8 / 50.5 / 50.4 / 54.9 | 46.3 / 43.9 / 75.7 / 49.0 / 52.1 / 49.0 / 55.9 |
+| execute max / total (s) | 85.4 / 617 | 72.0 / 451 |
+| inspect GET total (s) | 854 | 619 |
+| preview max / total (s) | 28.7 / 216 | 20.4 / 134 |
+| whole W10 / peak RSS | 2,082 s / 6.70 GiB | 1,584 s / 7.22 GiB |
+
+On the final W10 database, warm inspect fell from 27.9 to 16.7–17.7 s and
+preview from 25.5 to 15.2–16.6 s. The W10 database was byte-identical to the
+base run with the same harness UUID sequence. This covers all revision rows,
+nodes, audit events, the Working Draft and the final inspection. The 53
+fixture revisions remained unchanged. The resident copy costs about 0.5 GiB
+at W10 and grows with the checkpoint (about 13 MiB of JSON per week here).
+The cold read is unchanged at about 100 s.
+
+Tests: 30 decode-cache component tests, including 2 new resident-slot tests
+and the adjusted oversize test. 4 HTTP/SQLite Global checkpoint handoff
+tests, plus the Save fast-path, Saved v2 HTTP and digest-reuse tests,
+passed locally.
+
 # W10 passes at the original 120-second deadline — 20 November 2026
 
 Candidate engine `b1b0f1e` on `perf/native-tour-save-history-reuse`

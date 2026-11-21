@@ -1,3 +1,45 @@
+# Deferred historical payloads in the Saved lineage walk — 21 November 2026
+
+Candidate `95839f6` on `perf/deferred-lineage-payload` builds on #1837 and
+#1836, which are both unmerged. After #1837, ORM loading in the lineage
+walk was 35–45% of every warm request. Each ancestor was loaded with its
+complete Saved v2 text, although a proven ancestor needs only the digest
+of its actual stored text.
+
+Ancestors are now loaded with `payload_json` deferred. Their digest comes
+from the physical reader of the same snapshot: the authenticated envelope
+and re-hashed nodes from #1836, or the hash of the actual text. Any reader
+that needs the characters loads them from SQLite on access. An unloaded
+column has no in-memory copy that could differ. A replaced in-memory value
+is still compared and rejected. Changed nodes fail closed.
+
+| same container, same W9 fixture, 120 s deadline | #1837 `83bf8c9` | this `95839f6` |
+|---|---:|---:|
+| Save 1–7 (s) | 46.3 / 43.9 / 75.7 / 49.0 / 52.1 / 49.0 / 55.9 | 40.3 / 35.7 / 64.7 / 38.6 / 40.7 / 40.7 / 45.2 |
+| execute max / total (s) | 72.0 / 451 | 57.5 / 308 |
+| inspect GET total (s) | 619 | 417 |
+| preview max / total (s) | 20.4 / 134 | 12.7 / 73 |
+| whole W10 / peak RSS | 1,584 s / 7.22 GiB | 1,112 s / 5.49 GiB |
+
+On the final W10 database, warm inspect fell from 16.5–17.7 to 8.7–9.7 s
+and preview from 15.2–16.6 to 7.4–8.1 s. Cold read took 93.6 s, measured
+concurrently with tests; it was about 100 s before. With the same harness
+UUID sequence, W10 is byte-identical to the base `cde9214`. This covers all
+60 revisions, 9,186 nodes, audit events, the Working Draft and the final
+inspection. The 53 fixture revisions are unchanged. Part of this W10 ran
+concurrently with niced test runs.
+
+Over the three stacked changes, the base `cde9214` W10 fell from 2,924 s to
+1,112 s on this host. The slowest Save fell from 108.8 to 64.7 s, the slowest
+command from 112.5 to 57.5 s, and peak RSS from 8.30 to 5.49 GiB.
+
+Tests: 3 new tests. A real HTTP/SQLite warm Tour read no longer materializes
+every historical payload; it failed on the previous head with 10 reads for 9
+revisions. A deferred ancestor's digest equals its lazily loaded text. A
+replaced in-memory text is rejected. A changed node fails. 230 targeted
+Saved v2/proof/decode/Save tests and 11 Saved history, native fork, branch
+review and archive API tests passed locally. Full CI was not run.
+
 # Resident live checkpoint decode for long seasons — 21 November 2026
 
 Candidate `83bf8c9` on `perf/resident-live-checkpoint-decode` builds on the

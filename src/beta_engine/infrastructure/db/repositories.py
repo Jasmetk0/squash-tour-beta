@@ -2926,13 +2926,22 @@ class SimulationPersistenceRepository:
         # horizon extension changes it, so the newest revision BELOW each
         # extension needs its own replay too (as the HEAD-first order did).
         replay_first, boundary = [], head_model.kind == _HORIZON_EXTENSION_KIND
+        from sqlalchemy.orm import defer
+
+        from beta_engine.infrastructure.db.native_fork_runtime_state import release_snapshot_saved_text
         with session.no_autoflush:
             parent_id = head_model.parent_revision_id
             while parent_id:
                 if parent_id in seen:
                     return  # the ordinary walk reports the cycle
                 seen.add(parent_id)
-                model = retain_saved_model(session, session.get(BranchSavedRevisionModel, parent_id))
+                # The walk needs metadata and the digest of the stored text only.
+                # The physical reader binds that digest (Saved v2: the envelope
+                # and re-hashed nodes, or the hash of the text it materialized);
+                # the ORM row never holds the characters here.
+                model = retain_saved_model(session, session.get(
+                    BranchSavedRevisionModel, parent_id,
+                    options=[defer(BranchSavedRevisionModel.payload_json)]))
                 if model is None or model.run_id != head_model.run_id:
                     return  # the ordinary walk reports the missing/foreign parent
                 signature = _saved_revision_validation_signature(model)
@@ -2941,6 +2950,9 @@ class SimulationPersistenceRepository:
                 if known:
                     break
                 unproven.append(parent_id)
+                # Bounded memory: the text is validated (and re-read from this
+                # snapshot) below, one revision at a time.
+                release_snapshot_saved_text(session, model.run_id, parent_id)
                 if boundary:
                     replay_first.append(parent_id)
                 boundary = model.kind == _HORIZON_EXTENSION_KIND
@@ -2950,13 +2962,17 @@ class SimulationPersistenceRepository:
                 return  # nothing deep to unwind; keep the original order
             # Every gate below proves each revision's exact stored text canonical.
             # Prove them now, oldest first: each reuses its parent's proof as a
-            # reference, and HEAD's proof is available to its own replay. Later
-            # gates of this operation reuse these proofs for the same strings.
+            # reference (W9 HEAD: 0.9 s instead of 31 s alone), and HEAD's proof
+            # is available to its own replay. Only the scope's newest reference
+            # proof keeps a text alive; every ancestor's text is released after
+            # its proof and verified again from this snapshot when validated.
             from beta_engine.infrastructure.db.canonical_text import PROOFS
             for revision_id in (*reversed(unproven), head_model.revision_id):
                 model = session.get(BranchSavedRevisionModel, revision_id)
                 if model is not None and type(model.payload_json) is str:
                     PROOFS.prove(model.payload_json, scope=model.run_id)
+                    if revision_id != head_model.revision_id:
+                        release_snapshot_saved_text(session, model.run_id, revision_id)
                 del model
             head_decoded = {}
             if not is_global_slot_row(head_model, repository=self, _decoded_out=head_decoded):
@@ -2996,6 +3012,7 @@ class SimulationPersistenceRepository:
             sporting_component_proofs=sporting_component_proofs,
             _decoded_payload=_head_decoded.pop() if _head_decoded else None,
         )
+        from beta_engine.infrastructure.db.native_fork_runtime_state import release_snapshot_saved_text
         for revision_id in replay_first:
             model = session.get(BranchSavedRevisionModel, revision_id)
             if model is None:
@@ -3004,6 +3021,7 @@ class SimulationPersistenceRepository:
                 model, validate_components=True, validate_native_root=False,
                 sporting_component_proofs=sporting_component_proofs,
             )
+            release_snapshot_saved_text(session, model.run_id, revision_id)
             del model
         # 2. The ordinary validator, oldest unproven ancestor first. Each
         #    metadata-only validation may decode its payload sharing the values
@@ -3013,6 +3031,7 @@ class SimulationPersistenceRepository:
             self._prevalidate_unproven_oldest_first(session, unproven, sporting_component_proofs)
 
     def _prevalidate_unproven_oldest_first(self, session, unproven, sporting_component_proofs):
+        from beta_engine.infrastructure.db.native_fork_runtime_state import release_snapshot_saved_text
         for revision_id in reversed(unproven):
             model = session.get(BranchSavedRevisionModel, revision_id)
             if model is None:
@@ -3021,6 +3040,14 @@ class SimulationPersistenceRepository:
                 session=session, model=model, materialize_payload=False,
                 sporting_component_proofs=sporting_component_proofs,
             )
+            # Its metadata proof is complete; the next step needs only this
+            # revision's proof as its reference (kept by the proof scope) and
+            # the one-step shared decode. Stop holding its text in the snapshot,
+            # and its parent's again (an unchanged-prefix replay re-reads it).
+            release_snapshot_saved_text(session, model.run_id, revision_id)
+            if model.parent_revision_id:
+                release_snapshot_saved_text(session, model.run_id, model.parent_revision_id)
+            del model
 
     def _validated_branch_revision_lineage_in_session(self, **kwargs):
         from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope

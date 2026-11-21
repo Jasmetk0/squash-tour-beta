@@ -303,6 +303,26 @@ def clear_operation_proofs():
         operation.clear()
 
 
+def forget_operation_text(text):
+    """Drop this operation's identity-keyed proofs of exactly ``text``.
+
+    A bounded cold lineage walk releases each historical text after its own
+    validation. The proof memo must not keep it alive. The scope's newest
+    reference proof is kept: it holds only the most recent text and lets the
+    next revision compare byte-identical segments instead of re-encoding them.
+    Returns the number of dropped entries. A later proof of the same characters
+    simply verifies them again.
+    """
+    operation = _operation_proofs.get()
+    if operation is None:
+        return 0
+    known = operation.get(id(text))
+    if known is None or type(known) is not tuple or known[1].text is not text:
+        return 0
+    del operation[id(text)]
+    return 1
+
+
 class CanonicalTextProofs:
     """Process cache of texts PROVEN canonical, held as the actual strings.
 

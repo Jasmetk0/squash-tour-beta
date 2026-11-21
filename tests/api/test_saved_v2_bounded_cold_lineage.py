@@ -225,8 +225,9 @@ def test_cold_v2_restore_save_and_fork_keep_history_and_bounded_reads(tmp_path, 
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         cold_view = inspect(server)
         assert cold_view["saved"]
-        # Restore an older Saved Revision, continue on it and Save explicitly.
-        target = rows[len(rows) - 4][0]
+        # Restore an older Saved Revision (both results confirmed, before the
+        # last two Week Transitions), continue on it and Save explicitly.
+        target = rows[-3][0]
         restored = restore(server, target)
         execute(server, command(inspect(server), "transition", name="bounded-after-restore"))
         saved = save_tour(server)

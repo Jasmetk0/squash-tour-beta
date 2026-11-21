@@ -36,6 +36,11 @@ def prepared_slots_v2(tmp_path_factory):
     from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour
     from tests.api.test_saved_revision_history_api import ApiServer
 
+    supplied = os.environ.get("GLOBAL_SLOT_PREPARED_V2_DATABASE")
+    if supplied:
+        path = Path(supplied)
+        assert path.is_file()
+        return path
     path = tmp_path_factory.mktemp("real-global-slot-source-v2") / "prepared-v2.db"
     previous = os.environ.get(ENVIRONMENT_VARIABLE)
     os.environ[ENVIRONMENT_VARIABLE] = "saved_v2"

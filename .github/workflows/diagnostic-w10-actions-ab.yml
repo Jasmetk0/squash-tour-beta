@@ -1,0 +1,129 @@
+name: Diagnostic W10 1000-player Saved v2 A/B on one runner
+
+# Diagnostic evidence for #1836 -> #1837 -> #1838 only; this branch is never
+# merged. Runs only on a push to its own branch or by explicit dispatch.
+on:
+  push:
+    branches: [test/w10-actions-ab-20261121]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: diagnostic-w10-actions-ab
+  cancel-in-progress: false
+
+env:
+  BASE_SHA: cde92147be39ad6978437125bcd3a7ad76a6a15b       # perf branch before this work
+  PR1836_SHA: a8c7036c0d531cbeeecbe9b14b5a77c923ce4f49      # #1836 head
+  CANDIDATE_SHA: f99df7045ea712b743583a3c66202722d702c524   # #1838 head incl. #1837 budget
+  W9_RUN_ID: '44612526515'
+  W9_ARTIFACT: pr1828-one-shot-w9-44612526515                # artifact 14581530042
+
+jobs:
+  w10-ab:
+    name: W10 base vs #1836 vs #1838 / same runner / 120 s / then W11-W12 growth
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.11'
+      - name: Install locked backend dependencies
+        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
+      - name: Engine trees and runner
+        shell: bash
+        run: |
+          set -euo pipefail
+          for tree in base:$BASE_SHA pr1836:$PR1836_SHA candidate:$CANDIDATE_SHA; do
+            git worktree add --detach "$RUNNER_TEMP/${tree%%:*}" "${tree#*:}"
+          done
+          mkdir -p evidence
+          { nproc; free -m; lscpu | grep -E 'Model name|^CPU\(s\)'; python --version; } | tee evidence/runner.txt
+      - name: Download the retained W9 fixture (artifact 14581530042)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          gh run download "$W9_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$W9_ARTIFACT" -D w9
+          sha256sum w9/giant-w9-evidence/before-restart.sqlite | tee evidence/fixture.sha256
+      - name: W10 base / #1836 / candidate (fresh fixture copies, 120 s deadline)
+        env:
+          PYTHONUNBUFFERED: '1'
+          GITHUB_EVENT_NAME: giant_native_load
+        shell: bash
+        run: |
+          set -uo pipefail
+          F=w9/giant-w9-evidence
+          for tree in base pr1836 candidate; do
+            python scripts/w10_continuation_benchmark.py --checkout "$RUNNER_TEMP/$tree" \
+              --fixture $F/before-restart.sqlite --meta $F/before-restart.json \
+              --out "$RUNNER_TEMP/runs/$tree" --weeks 10 --deterministic-ids \
+              > "evidence/$tree-w10.log" 2>&1 || echo "$tree W10 did not complete" | tee -a evidence/notes.txt
+            mkdir -p "evidence/$tree"
+            cp "$RUNNER_TEMP/runs/$tree"/{requests.jsonl,summary.json,history.json} "evidence/$tree/" 2>/dev/null || true
+            cp "$RUNNER_TEMP/runs/$tree/final-inspection.json" "evidence/$tree/" 2>/dev/null || true
+            tail -1 "$RUNNER_TEMP/runs/$tree/requests.jsonl" || true
+          done
+      - name: Compare histories and results
+        shell: bash
+        run: |
+          set -uo pipefail
+          F=w9/giant-w9-evidence/before-restart.sqlite
+          for tree in pr1836 candidate; do
+            python scripts/w10_compare_runs.py $F "$RUNNER_TEMP/runs/base" "$RUNNER_TEMP/runs/$tree" \
+              "evidence/compare-base-$tree.json" || echo "base vs $tree not identical" | tee -a evidence/notes.txt
+          done
+      - name: Cold reads of the same final W10 database by each tree
+        shell: bash
+        run: |
+          set -uo pipefail
+          DB="$RUNNER_TEMP/runs/candidate/run.sqlite"
+          META="$RUNNER_TEMP/runs/candidate/final-meta.json"
+          for tree in base pr1836 candidate; do
+            COLD_TOUR_READ_CHECKOUT="$RUNNER_TEMP/$tree" python scripts/measure_cold_tour_read.py \
+              "$DB" "$META" "evidence/cold-w10-$tree.json" || echo "$tree cold read failed" | tee -a evidence/notes.txt
+          done
+      - name: Candidate growth W11-W12 (continues from its W10 database)
+        env:
+          PYTHONUNBUFFERED: '1'
+          GITHUB_EVENT_NAME: giant_native_load
+        shell: bash
+        run: |
+          set -uo pipefail
+          F=w9/giant-w9-evidence
+          python scripts/w10_continuation_benchmark.py --checkout "$RUNNER_TEMP/candidate" \
+            --fixture $F/before-restart.sqlite --meta $F/before-restart.json \
+            --start-db "$RUNNER_TEMP/runs/candidate/run.sqlite" --out "$RUNNER_TEMP/runs/candidate-w11-12" \
+            --weeks 11 --weeks 12 --deterministic-ids --id-offset 1000000 \
+            > evidence/candidate-w11-12.log 2>&1 || echo "candidate W11-W12 did not complete" | tee -a evidence/notes.txt
+          mkdir -p evidence/candidate-w11-12
+          cp "$RUNNER_TEMP/runs/candidate-w11-12"/{requests.jsonl,summary.json,history.json} evidence/candidate-w11-12/ 2>/dev/null || true
+          if [ -f "$RUNNER_TEMP/runs/candidate-w11-12/final-meta.json" ]; then
+            COLD_TOUR_READ_CHECKOUT="$RUNNER_TEMP/candidate" python scripts/measure_cold_tour_read.py \
+              "$RUNNER_TEMP/runs/candidate-w11-12/run.sqlite" "$RUNNER_TEMP/runs/candidate-w11-12/final-meta.json" \
+              evidence/cold-w12-candidate.json || echo "W12 cold read failed" | tee -a evidence/notes.txt
+          fi
+      - name: Growth report
+        if: always()
+        shell: bash
+        run: |
+          python scripts/w10_growth_report.py base="$RUNNER_TEMP/runs/base" pr1836="$RUNNER_TEMP/runs/pr1836" \
+            candidate="$RUNNER_TEMP/runs/candidate" candidate_w11_12="$RUNNER_TEMP/runs/candidate-w11-12" \
+            --cold $(for f in evidence/cold-*.json; do [ -f "$f" ] && printf '%s=%s ' "$(basename "$f" .json)" "$f"; done) \
+            | tee evidence/growth.json || true
+          cat evidence/notes.txt 2>/dev/null || true
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: w10-actions-ab-${{ github.run_id }}
+          path: evidence/
+          retention-days: 21

@@ -53,8 +53,14 @@ export function verifiedSavedMatchResult(
       raw.product_run_id !== runId || raw.viewer_branch_id !== branchId ||
       raw.event_id !== entry.event.event_id ||
       !whole(raw.completed_season_index) ||
-      !whole(raw.completed_week, 1, 61) ||
-      raw.completed_week !== entry.event.season_week ||
+      // Results can be published after a multi-week event finishes; the
+      // scheduled occurrence week is not necessarily its completion week.
+      !whole(entry.event.start_season_week, 1, 61) ||
+      !whole(entry.event.end_season_week, entry.event.start_season_week, 61) ||
+      !whole(entry.event.season_week,
+        entry.event.start_season_week, entry.event.end_season_week) ||
+      !whole(raw.completed_week,
+        entry.event.start_season_week, entry.event.end_season_week) ||
       raw.champion_player_id !== entry.publication.champion_player_id ||
       raw.finalist_player_id !== entry.publication.finalist_player_id ||
       !Array.isArray(raw.players) || !Array.isArray(raw.matches) ||

@@ -1,19 +1,41 @@
 import { Link } from 'react-router-dom'
 
+import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import type { RunPlayerListItem, ViewerPlayer } from '../../../api/types'
 import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList, ViewerSampleList, ViewerSectionCard } from '../../../components/viewer/ViewerLandingComponents'
 import { viewerPlannedEventPath, viewerPlayersPath, viewerTopH2HPath, viewerTopSearchPath, viewerTournamentDetailPath, viewerWeekDetailPath } from '../../../viewer/viewerRoutes'
 import { renderLinkedCountry, renderLinkedPlayer, renderPlayerSampleMetadata } from '../people'
 import { comparisonStatFields, formatComparisonDifference, type ViewerSearchTournamentResult, type ViewerSelectedComparisonPlayers } from './viewerComparisonDisplay'
 
+
+// Translate interface labels only. Stored names, IDs and quality values stay intact.
+const czechComparisonLabels: Record<string, string> = {
+  'Links': 'Odkazy', 'Read-only navigation': 'Čtecí navigace',
+  'Open active run players': 'Otevřít hráče aktivního Runu',
+  'Open Viewer search': 'Otevřít vyhledávání Vieweru',
+  'Selected player': 'Vybraný hráč', 'Player': 'Hráč', 'Player ID': 'ID hráče',
+  'Country': 'Země', 'Age': 'Věk', 'Power Rating': 'Herní síla',
+  'Technique': 'Technika', 'Movement': 'Pohyb', 'Physical': 'Fyzická složka',
+  'Mental': 'Mentální složka', 'Quality band': 'Pásmo kvality',
+  'Player data is not available for this run yet.': 'Pro tento Run zatím nejsou dostupná data hráče.',
+  'Comparison Summary': 'Souhrn porovnání', 'Numeric field differences': 'Rozdíly číselných atributů',
+  'Power Rating difference': 'Rozdíl herní síly', 'Technique difference': 'Rozdíl techniky',
+  'Movement difference': 'Rozdíl pohybu', 'Physical difference': 'Rozdíl fyzické složky',
+  'Mental difference': 'Rozdíl mentální složky', 'Age difference': 'Rozdíl věku',
+  'This preview is not connected for this data shape yet.': 'Pro tento formát dat zatím není náhled dostupný.'
+}
+function comparisonLabel(label: string, language: Language): string {
+  return language === 'cs' ? czechComparisonLabels[label] ?? label : label
+}
+
 export function buildPlayerSearchLink(player: RunPlayerListItem): string {
   return `${viewerTopSearchPath()}?q=${encodeURIComponent(player.player_id || player.name || '')}`
 }
 
-export function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[]): { label: string; to: string }[] {
+export function buildSelectedPlayerSearchLinks(players: RunPlayerListItem[], language: Language = 'en'): { label: string; to: string }[] {
   return players
     .filter((player) => player.player_id || player.name)
-    .map((player) => ({ label: `Search ${player.name || player.player_id}`, to: buildPlayerSearchLink(player) }))
+    .map((player) => ({ label: `${language === 'cs' ? 'Vyhledat' : 'Search'} ${player.name || player.player_id}`, to: buildPlayerSearchLink(player) }))
 }
 
 export function buildSelectedH2HPath(selection: Pick<ViewerSelectedComparisonPlayers, 'playerA' | 'playerB'>): string {
@@ -21,13 +43,15 @@ export function buildSelectedH2HPath(selection: Pick<ViewerSelectedComparisonPla
 }
 
 export function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRunId: string; players: RunPlayerListItem[] }): JSX.Element {
+  const { language } = useLanguage()
+  const label = (text: string) => comparisonLabel(text, language)
   return (
-    <ViewerSectionCard title="Links" kicker="Read-only navigation">
+    <ViewerSectionCard title={label('Links')} kicker={label('Read-only navigation')}>
       <ViewerActiveRunLinks
         links={[
-          { label: 'Open active run players', to: viewerPlayersPath(activeRunId) },
-          { label: 'Open Viewer search', to: viewerTopSearchPath() },
-          ...buildSelectedPlayerSearchLinks(players)
+          { label: label('Open active run players'), to: viewerPlayersPath(activeRunId) },
+          { label: label('Open Viewer search'), to: viewerTopSearchPath() },
+          ...buildSelectedPlayerSearchLinks(players, language)
         ]}
       />
     </ViewerSectionCard>
@@ -35,44 +59,48 @@ export function ViewerPlayerComparisonLinks({ activeRunId, players }: { activeRu
 }
 
 export function ViewerComparisonPlayerCard({ activeRunId, title, player }: { activeRunId: string; title: string; player: RunPlayerListItem | null }): JSX.Element {
+  const { language } = useLanguage()
+  const label = (text: string) => comparisonLabel(text, language)
   return (
-    <ViewerSectionCard title={title} kicker="Selected player">
+    <ViewerSectionCard title={title} kicker={label('Selected player')}>
       {player ? (
         <ViewerMetadataList
-          ariaLabel={`${title} comparison fields`}
+          ariaLabel={language === 'cs' ? `${title} – porovnávané atributy` : `${title} comparison fields`}
           items={[
-            { label: 'Player', value: renderLinkedPlayer(activeRunId, player.player_id, player.name || player.player_id || '—') },
-            { label: 'Player ID', value: renderLinkedPlayer(activeRunId, player.player_id, player.player_id || '—') },
-            { label: 'Country', value: renderLinkedCountry(activeRunId, player.country_code) },
-            { label: 'Age', value: player.age ?? '—' },
-            { label: 'Power Rating', value: player.overall ?? '—' },
-            { label: 'Technique', value: player.technique ?? '—' },
-            { label: 'Movement', value: player.movement ?? '—' },
-            { label: 'Physical', value: player.physical ?? '—' },
-            { label: 'Mental', value: player.mental ?? '—' },
-            { label: 'Quality band', value: player.quality_band ?? '—' }
+            { label: label('Player'), value: renderLinkedPlayer(activeRunId, player.player_id, player.name || player.player_id || '—') },
+            { label: label('Player ID'), value: renderLinkedPlayer(activeRunId, player.player_id, player.player_id || '—') },
+            { label: label('Country'), value: renderLinkedCountry(activeRunId, player.country_code) },
+            { label: label('Age'), value: player.age ?? '—' },
+            { label: label('Power Rating'), value: player.overall ?? '—' },
+            { label: label('Technique'), value: player.technique ?? '—' },
+            { label: label('Movement'), value: player.movement ?? '—' },
+            { label: label('Physical'), value: player.physical ?? '—' },
+            { label: label('Mental'), value: player.mental ?? '—' },
+            { label: label('Quality band'), value: player.quality_band ?? '—' }
           ]}
         />
       ) : (
-        <ViewerEmptyState>Player data is not available for this run yet.</ViewerEmptyState>
+        <ViewerEmptyState>{label('Player data is not available for this run yet.')}</ViewerEmptyState>
       )}
     </ViewerSectionCard>
   )
 }
 
 export function ViewerComparisonSummary({ playerA, playerB, title = 'Comparison Summary' }: { playerA: RunPlayerListItem | null; playerB: RunPlayerListItem | null; title?: string }): JSX.Element {
+  const { language } = useLanguage()
+  const label = (text: string) => comparisonLabel(text, language)
   return (
-    <ViewerSectionCard title={title} kicker="Numeric field differences">
+    <ViewerSectionCard title={label(title)} kicker={label('Numeric field differences')}>
       {playerA && playerB ? (
         <ViewerMetadataList
-          ariaLabel={`${title} differences`}
+          ariaLabel={language === 'cs' ? `${label(title)} – rozdíly` : `${title} differences`}
           items={comparisonStatFields.map((field) => ({
-            label: field.label,
+            label: label(field.label),
             value: formatComparisonDifference(playerA, playerB, field.key)
           }))}
         />
       ) : (
-        <ViewerEmptyState>This preview is not connected for this data shape yet.</ViewerEmptyState>
+        <ViewerEmptyState>{label('This preview is not connected for this data shape yet.')}</ViewerEmptyState>
       )}
     </ViewerSectionCard>
   )

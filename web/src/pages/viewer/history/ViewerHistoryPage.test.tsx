@@ -117,7 +117,7 @@ describe('ViewerHistoryPage source-safe canonical publication hub (mocked GET on
     expect(screen.getByRole('link', { name: /History Open/ })).toHaveAttribute('href', '/viewer/runs/history%20run/calendar/EVT-1')
     expect(screen.queryByRole('link', { name: /Future Open/ })).not.toBeInTheDocument()
     expect(screen.getByRole('link', { name: /2032\/33 · W49/ })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings/2000')
-    expect(screen.getByRole('link', { name: '2032/33' })).toHaveAttribute('href', '/viewer/runs/history%20run/race')
+    expect(screen.getByRole('link', { name: '2032/33' })).toHaveAttribute('href', '/viewer/runs/history%20run/race?raceSeason=32')
     expect(screen.getByRole('link', { name: 'Historie vybraného Runu' })).toHaveAttribute('href', '/viewer/runs/history%20run/history')
     expect(screen.getByRole('link', { name: 'Historie rankingů' })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings')
     expectNoForbiddenViewerActions()
@@ -223,4 +223,53 @@ describe('ViewerHistoryPage source-safe canonical publication hub (mocked GET on
     expect(screen.queryByText(branch)).not.toBeInTheDocument()
     expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2)
   })
+  it('rejects a malformed Finals Race counted result even when top-level counts match', async () => {
+    writeViewerActiveProductRunId(run)
+    api.getViewerFinalsRace.mockResolvedValue({
+      ...race(), publications: [{
+        ...race().publications[0],
+        rows: [{
+          rank: 1, player_id: 'P1', race_points: 999, tournaments_counted: 1,
+          counted_results: [], finals_selected: null, finals_seed: null, qualification_source: null
+        }]
+      }]
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Zdroje historie si neodpovídají')
+    expect(screen.queryByRole('link', { name: /2032\/33/ })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('rejects an invalid ranking fingerprint despite matching public source identities', async () => {
+    writeViewerActiveProductRunId(run)
+    const original = rankings()
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...original,
+      publications: [
+        { ...original.publications[0], snapshot_fingerprint: 'malformed' },
+        original.publications[1]
+      ]
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Zdroje historie si neodpovídají')
+    expect(screen.queryByRole('link', { name: /History Open/ })).not.toBeInTheDocument()
+  })
+
+  it('hides all published links during a slow refresh of the selected Saved Branch', async () => {
+    writeViewerActiveProductRunId(run)
+    const { client } = mount()
+    await screen.findByRole('link', { name: /History Open/ })
+    let finish!: (value: ReturnType<typeof tournaments>) => void
+    api.getViewerTournamentHistory.mockImplementationOnce(() =>
+      new Promise(resolve => { finish = resolve })
+    )
+    const refreshing = client.invalidateQueries({ queryKey: ['viewer-top-history-tournaments', run, branch] })
+    await waitFor(() => expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2))
+    expect(screen.getByRole('status')).toHaveTextContent('Načítám uložené publikace')
+    expect(screen.queryByRole('link', { name: /History Open/ })).not.toBeInTheDocument()
+    await act(async () => { finish(tournaments()); await refreshing })
+    expect(await screen.findByRole('link', { name: /History Open/ })).toBeInTheDocument()
+  })
+
+
 })

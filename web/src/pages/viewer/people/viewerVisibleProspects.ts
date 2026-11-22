@@ -14,8 +14,8 @@ const publicProspectFields = [
 ]
 
 function exactObject(value: unknown, keys: readonly string[]): value is Record<string, unknown> {
-  return Boolean(value) && typeof value === 'object' && !Array.isArray(value) &&
-    Object.keys(value).length === keys.length &&
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false
+  return Object.keys(value).length === keys.length &&
     Object.keys(value).every(key => keys.includes(key))
 }
 

@@ -26,7 +26,7 @@ function Navigation(): JSX.Element {
   </>
 }
 const base = '/viewer/tour'
-const prefix = 'signedRun=run+alpha&signedBranch=branch-tour'
+const prefix = 'signedRun=run+alpha&signedBranch=branch-tour&signedHead=rev-20'
 function mount(search = '', client = createTestQueryClient()) {
   const view = renderWithViewerProviders(
     <LanguageProvider>
@@ -62,6 +62,7 @@ describe('Viewer signed-season source-scoped URL reports (mocked GET only)', () 
     expect(await screen.findByText('Season summary: 2001/02')).toBeInTheDocument()
     expect(params().get('signedRun')).toBe('run alpha')
     expect(params().get('signedBranch')).toBe('branch-tour')
+    expect(params().get('signedHead')).toBe('rev-20')
     expect(params().get('signedSeason')).toBe('1')
     expect(params().has('compareSeason')).toBe(false)
     expect(params().getAll('keep')).toEqual(['one', 'two'])
@@ -88,6 +89,7 @@ describe('Viewer signed-season source-scoped URL reports (mocked GET only)', () 
     '?' + prefix + '&signedSeason=1&compareSeason=1',
     '?' + prefix + '&signedSeason=1&compareSeason=-1',
     '?' + prefix + '&signedSeason=99',
+    '?' + prefix.replace('rev-20', 'foreign-head') + '&signedSeason=1',
     '?' + prefix.replace('branch-tour', 'foreign') + '&signedSeason=1',
     '?signedSeason=1&compareSeason=0',
     '?' + prefix + '&signedSeason=1&signedSeason=0',
@@ -123,6 +125,7 @@ describe('Viewer signed-season source-scoped URL reports (mocked GET only)', () 
     fireEvent.click(screen.getByRole('button', { name: 'Show report' }))
     expect(await screen.findByText('Season summary: 2001/02')).toBeInTheDocument()
     expect(params().get('signedBranch')).toBe('branch-tour')
+    expect(params().get('signedHead')).toBe('rev-20')
     expect(params().get('keep')).toBe('untouched')
   })
 

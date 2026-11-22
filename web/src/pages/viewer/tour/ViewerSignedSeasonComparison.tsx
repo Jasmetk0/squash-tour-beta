@@ -90,6 +90,7 @@ function SignedSeasonsBody({ runId, branchId, t }: {
   const selectionSynced = requestedLink.kind === 'selection' &&
     chosen === requestedLink.selected && comparison === requestedLink.comparison
   const requestedAvailable = requestedLink.kind === 'selection' &&
+    requestedLink.savedHead === available?.savedHead &&
     indices.includes(requestedLink.selected) &&
     (requestedLink.comparison === null || indices.includes(requestedLink.comparison))
   const actualRequest = selectionSynced && requestedAvailable &&
@@ -117,9 +118,9 @@ function SignedSeasonsBody({ runId, branchId, t }: {
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
-    if (chosen === null || !indices.includes(chosen) ||
+    if (!available || chosen === null || !indices.includes(chosen) ||
       (comparison !== null && (!indices.includes(comparison) || comparison === chosen))) return
-    setParams(previous => writeSignedSeasonDeepLink(previous, runId, branchId, chosen, comparison))
+    setParams(previous => writeSignedSeasonDeepLink(previous, runId, branchId, available.savedHead, chosen, comparison))
   }
 
   if (list.isPending || list.isFetching) return <p role="status" className="status">{t('loading')}</p>

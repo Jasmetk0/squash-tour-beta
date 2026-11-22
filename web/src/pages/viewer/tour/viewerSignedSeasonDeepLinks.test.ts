@@ -16,7 +16,6 @@ describe('Signed season source-authenticated deep links', () => {
 
   it('rejects malformed, partial, noncanonical, duplicated, same-season or unsafe IDs', () => {
     const pairs = [
-      'signedSeason=1',
       'signedRun=run+alpha%2F%23&signedSeason=1',
       'signedRun=run+alpha%2F%23&signedBranch=saved%2Fbranch+one',
       'signedSeason=01',

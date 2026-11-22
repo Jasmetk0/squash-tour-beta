@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom'
 
 import { getViewerRunCalendar, getViewerTournamentHistory } from '../../../api/client'
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
-import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
@@ -25,6 +24,10 @@ const copy = {
   description: [
     'Veřejný archiv pouze z ověřeného uloženého kalendáře a historie výsledků.',
     'Public archive derived only from the verified Saved calendar and published results.',
+  ],
+  sourceNote: [
+    'Zobrazuje uložené publikace aktuální Viewer Branch; nejde o rekonstrukci libovolného zvoleného týdne.',
+    'Shows publications from the current Saved Viewer Branch, not a reconstruction of any arbitrarily selected week.',
   ],
   chooseRun: ['Nejprve vyber Product Run.', 'Select a Product Run first.'],
   runs: ['Seznam Runů', 'Run browser'],
@@ -266,7 +269,12 @@ export function ViewerTourArchivePage({ kind }: { kind: ArchiveKind }): JSX.Elem
   })
 
   return (
-    <ViewerShellPage title={title} description={t('description')}>
+    <section className="panel viewer-shell-page">
+      <div className="page-intro">
+        <h2>{title}</h2>
+        <p className="subtitle">{t('description')}</p>
+      </div>
+      <p className="subtitle">{t('sourceNote')}</p>
       {!runId ? (
         <ViewerEmptyState>{t('chooseRun')} <Link to={viewerRunsPath()}>{t('runs')}</Link></ViewerEmptyState>
       ) : context.isPending || context.isFetching ? (
@@ -297,6 +305,6 @@ export function ViewerTourArchivePage({ kind }: { kind: ArchiveKind }): JSX.Elem
           </div>
         )
       })()}
-    </ViewerShellPage>
+    </section>
   )
 }

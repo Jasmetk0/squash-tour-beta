@@ -200,7 +200,7 @@ export function ViewerPublishedTitleLeadersPage(): JSX.Element {
   const branchId = tournamentViewerBranch(context.data, runId)
   const validContext = Boolean(runId && branchId && !context.isPending && !context.isFetching && !context.isError)
   const query = useQuery({
-    queryKey: ['viewer-published-title-leaders', runId, branchId],
+    queryKey: ['viewer-saved-tournament-stats', runId, branchId],
     queryFn: async () => {
       const [calendar, history] = await Promise.all([
         getViewerRunCalendar(runId), getViewerTournamentHistory(runId),

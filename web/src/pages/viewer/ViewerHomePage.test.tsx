@@ -203,6 +203,8 @@ describe('ViewerHomePage canonical sources', () => {
     renderHome()
 
     expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    // The sources are deliberately queried *after* official context verification.
+    await screen.findByRole('link', { name: 'Diamond Open' })
     expect(api.getViewerOfficialRunContext).toHaveBeenCalledWith('run alpha')
     expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run alpha')
     expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('run alpha')
@@ -313,7 +315,9 @@ describe('ViewerHomePage canonical sources', () => {
   })
   it('does not call publication readers before verifying the selected Run context', async () => {
     setViewerActiveRunId('run alpha')
-    api.getViewerOfficialRunContext.mockResolvedValueOnce({
+    // The Run selector also reads the context; every consumer must see the
+    // same foreign evidence, not only the first mock call.
+    api.getViewerOfficialRunContext.mockResolvedValue({
       product_run_id: 'foreign-run', official_branch_id: 'branch-viewer'
     })
     renderHome()

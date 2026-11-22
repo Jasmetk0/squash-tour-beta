@@ -31,8 +31,8 @@ describe('source-locked Official Ranking detail links', () => {
     }
   })
 
-  it('rejects duplicate keys, noncanonical/out-of-range pages, and oversized player queries', () => {
-    const base = writeRankingDetailDeepLink(new URLSearchParams(), ...scope, 'Alice', 1)
+  it('rejects duplicate keys, noncanonical or unsafe pages, and oversized player queries', () => {
+    const base = writeRankingDetailDeepLink(new URLSearchParams(), ...scope, 'Alice', 2)
     for (const extra of [
       ['rankDetailRun', scope[0]],
       ['rankDetailBranch', scope[1]],

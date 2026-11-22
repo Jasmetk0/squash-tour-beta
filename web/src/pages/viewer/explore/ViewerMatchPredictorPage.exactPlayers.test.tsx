@@ -14,6 +14,9 @@ vi.mock('../../../api/client', () => api)
 vi.mock('../../../viewer/useActiveViewerRunId', () => ({
   useActiveViewerRunId: () => source.runId,
 }))
+vi.mock('../../../viewer/ViewerContext', () => ({
+  useViewerContext: () => ({ selectedSeason: 0, selectedWeek: 1 }),
+}))
 vi.mock('../../../i18n/LanguageContext', () => ({
   useLanguage: () => ({ language: source.language }),
 }))

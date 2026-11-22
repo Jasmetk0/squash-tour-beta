@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
@@ -10,6 +10,7 @@ import {
 } from '../../../api/client'
 import { ViewerActiveRunLinks, ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
+import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { viewerRunsPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
@@ -18,14 +19,42 @@ import { renderSearchTournamentMetadata } from './viewerComparisonRender'
 
 export function ViewerSearchPage(): JSX.Element {
   const productRunId = useActiveViewerProductRunId()
-  const [searchParams] = useSearchParams()
+  const [searchParams, setSearchParams] = useSearchParams()
+  const { language } = useLanguage()
+  const isCzech = language === 'cs'
   const urlQuery = normalizeViewerSearchQuery(searchParams)
   const [query, setQuery] = useState(urlQuery)
   const hasSearchQuery = urlQuery.length > 0
 
   useEffect(() => {
     setQuery(urlQuery)
-  }, [urlQuery])
+  }, [urlQuery, productRunId])
+
+  function submitSearch(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const next = new URLSearchParams(searchParams)
+    const submittedQuery = query.trim()
+    next.delete('query')
+    next.delete('search')
+    if (submittedQuery) next.set('q', submittedQuery)
+    else next.delete('q')
+    setQuery(submittedQuery)
+    if (next.toString() !== searchParams.toString()) setSearchParams(next)
+  }
+
+  const searchForm = (
+    <form onSubmit={submitSearch} role="search" aria-label={isCzech ? 'Vyhledávání ve Vieweru' : 'Viewer search'}>
+      <label className="field-label" htmlFor="viewer-search-shell-input">{isCzech ? 'Hledat' : 'Search'}</label>
+      <input
+        id="viewer-search-shell-input"
+        type="search"
+        placeholder={isCzech ? 'Hráči, země, turnaje…' : 'Players, countries, tournaments…'}
+        value={query}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <button type="submit">{isCzech ? 'Vyhledat' : 'Search'}</button>
+    </form>
+  )
 
   const playersQuery = useQuery({
     queryKey: ['viewer-search-canonical-players', productRunId],
@@ -88,15 +117,10 @@ export function ViewerSearchPage(): JSX.Element {
         <article className="viewer-active-run-card" aria-label="Search">
           <span className="eyebrow">Viewer search</span>
           <h3>Search{urlQuery ? `: ${urlQuery}` : ''}</h3>
-          <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
-          <input
-            id="viewer-search-shell-input"
-            aria-label="Read-only Viewer search shell"
-            placeholder="Search players, countries, tournaments…"
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-          />
-          <ViewerEmptyState>No Product Run search context is available yet.</ViewerEmptyState>
+          {searchForm}
+          <ViewerEmptyState>{!productRunId
+            ? (isCzech ? 'Nejprve vyber Run pro vyhledávání.' : 'Select a Run to search.')
+            : (isCzech ? 'Zadej a odešli hledaný text.' : 'Enter and submit a search term.')}</ViewerEmptyState>
         </article>
       </ViewerShellPage>
     )
@@ -141,14 +165,7 @@ export function ViewerSearchPage(): JSX.Element {
           <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
           <div><dt>Query</dt><dd>{urlQuery}</dd></div>
         </dl>
-        <label className="field-label" htmlFor="viewer-search-shell-input">Search</label>
-        <input
-          id="viewer-search-shell-input"
-          aria-label="Read-only Viewer search shell"
-          placeholder="Search players, countries, tournaments…"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        {searchForm}
         {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>No matching Viewer results found.</ViewerEmptyState> : null}
 
         <section aria-label="Players">

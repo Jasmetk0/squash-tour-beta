@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ViewerTourArchivePage } from './ViewerTourArchivePage'
 
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
@@ -16,11 +17,18 @@ import {
 } from './viewerDeferredConfigs'
 import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries'
 
-export function ViewerTourDeferredPage({
-  kind,
-}: {
+export function ViewerTourDeferredPage({ kind }: {
   kind: ViewerTourDeferredKind
 }): JSX.Element {
+  return kind === 'categories' || kind === 'champions'
+    ? <ViewerTourArchivePage kind={kind} />
+    : <ViewerTourMatchesPlaceholder />
+}
+
+// Match Center intentionally remains deferred: no public list/replay read model
+// currently guarantees an authoritative match list for this saved source.
+function ViewerTourMatchesPlaceholder(): JSX.Element {
+  const kind = 'matches' as const
   const productRunId = useActiveViewerProductRunId()
   const config = viewerTourDeferredConfigs[kind]
   const {

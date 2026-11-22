@@ -17,7 +17,6 @@ import {
   viewerRunsPath,
   viewerSeasonCalendarPath,
   viewerTournamentsPath,
-  viewerWeekDetailPath,
 } from '../../../viewer/viewerRoutes'
 
 const copy = {
@@ -146,9 +145,8 @@ export function ViewerSeasonHubPage(): JSX.Element {
               {catalog.eventCount === 0 ? <ViewerEmptyState>{t('noEvents')}</ViewerEmptyState> : null}
               <p className="status">{t('sourceScope')}</p>
               {firstUnpublished ? <p className="status">
-                <Link to={viewerWeekDetailPath(runId, firstUnpublished.event.season_week)}>
-                  W{firstUnpublished.event.season_week}
-                </Link> · {firstUnpublished.event.category} · {firstUnpublished.event.tour_level ?? '—'}
+                {String(firstUnpublished.event.season)} · W{firstUnpublished.event.season_week}
+                {' · '}{firstUnpublished.event.category} · {firstUnpublished.event.tour_level ?? '—'}
               </p> : null}
               <p className="viewer-active-run-actions">
                 <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>{t('tournaments')}</Link>{' '}

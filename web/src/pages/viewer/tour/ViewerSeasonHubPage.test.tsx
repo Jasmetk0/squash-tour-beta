@@ -106,6 +106,8 @@ describe('Season Hub joins exact public Saved sources (mocked GET)', () => {
     expect(screen.getByText('Source Open')).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVENT%2F1')
     expect(screen.getByText('S28 · cutoff S28 W5')).toBeInTheDocument()
     expect(screen.getByText('viewer-branch')).toBeInTheDocument()
+    expect(screen.getByText(/2028\/2029 · W8/)).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'W8' })).not.toBeInTheDocument()
     expect(screen.getByText(/nemusí být příští skutečně hraný turnaj/)).toBeInTheDocument()
     for (const fn of Object.values(api)) expect(fn).toHaveBeenCalledTimes(1)
     expectNoForbiddenViewerActions()

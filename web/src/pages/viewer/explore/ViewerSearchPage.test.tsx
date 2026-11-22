@@ -149,4 +149,42 @@ describe('Viewer Search submission (mocked GET API)', () => {
     expect(screen.queryByText('Old Run Bob', { selector: 'li' })).not.toBeInTheDocument()
     expect(mocks.getViewerPlayers).toHaveBeenCalledWith('run-b')
   })
+  it('shows Czech search results and updates language without refetching or rewriting the URL', async () => {
+    mocks.language = 'cs'
+    const view = mount('/viewer/search?q=Alice&keep=yes')
+    expect(await screen.findByText('Alice', { selector: 'li' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Vyhledávání: Alice' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Hráči' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Země' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Turnaje' })).toBeInTheDocument()
+    expect(screen.getByText('Dotaz')).toBeInTheDocument()
+    expect(screen.getByText('Žádné odpovídající země.')).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít přehled Runů' })).toBeInTheDocument()
+    expect(screen.getByLabelText('URL').textContent).toBe('/viewer/search?q=Alice&keep=yes')
+    const calls = mocks.getViewerPlayers.mock.calls.length
+
+    mocks.language = 'en'
+    view.refresh()
+    expect(screen.getByRole('heading', { name: 'Search: Alice' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Players' })).toBeInTheDocument()
+    expect(screen.getByText('No matching countries.')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL').textContent).toBe('/viewer/search?q=Alice&keep=yes')
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(calls)
+  })
+
+  it('localizes a true zero-result search and failed canonical GET without hiding the source error', async () => {
+    mocks.language = 'cs'
+    const view = mount('/viewer/search?q=Nobody&other=kept')
+    expect(await screen.findByText('Nebyly nalezeny žádné odpovídající výsledky.')).toBeInTheDocument()
+    expect(screen.getByText('Žádní odpovídající hráči.')).toBeInTheDocument()
+    expect(screen.getByText('Žádné odpovídající turnaje.')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL').textContent).toBe('/viewer/search?q=Nobody&other=kept')
+    view.unmount()
+
+    mocks.getViewerCountries.mockReset().mockRejectedValue(new Error('read unavailable'))
+    mount('/viewer/search?q=Alice&other=kept')
+    expect(await screen.findByText('Některá uložená data pro vyhledávání jsou dočasně nedostupná.')).toBeInTheDocument()
+    expect(screen.queryByText('Nebyly nalezeny žádné odpovídající výsledky.')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('URL').textContent).toBe('/viewer/search?q=Alice&other=kept')
+  })
 })

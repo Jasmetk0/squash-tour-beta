@@ -17,11 +17,34 @@ import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../peop
 import { normalizeViewerSearchQuery, searchTextMatches, type ViewerSearchTournamentResult } from './viewerComparisonDisplay'
 import { renderSearchTournamentMetadata } from './viewerComparisonRender'
 
+// Labels belong to Search; the existing public data and match/event metadata are unchanged.
+const searchCopy = {
+  title: ['Vyhledávání', 'Search'],
+  emptyDescription: ['Vyhledávání ve Vieweru pouze pro čtení, založené na datech vybraného Product Runu.', 'Read-only Viewer Search using canonical Product Run data only.'],
+  resultsDescription: ['Vyhledávání v uložených datech hráčů, zemí a turnajů vybraného Product Runu.', 'Read-only Viewer Search using canonical Saved-Revision player, country, and tournament data.'],
+  emptyEyebrow: ['Vyhledávání ve Vieweru', 'Viewer search'],
+  selectedRun: ['Vybraný Product Run', 'Selected Product Run'],
+  loading: ['Načítám výsledky vyhledávání z uložených dat…', 'Loading canonical search results…'],
+  sourceError: ['Některá uložená data pro vyhledávání jsou dočasně nedostupná.', 'Some canonical searchable metadata is temporarily unavailable.'],
+  query: ['Dotaz', 'Query'],
+  noResults: ['Nebyly nalezeny žádné odpovídající výsledky.', 'No matching Viewer results found.'],
+  players: ['Hráči', 'Players'],
+  noPlayers: ['Žádní odpovídající hráči.', 'No matching players.'],
+  countries: ['Země', 'Countries'],
+  noCountries: ['Žádné odpovídající země.', 'No matching countries.'],
+  tournaments: ['Turnaje', 'Tournaments'],
+  noTournaments: ['Žádné odpovídající turnaje.', 'No matching tournaments.'],
+  links: ['Odkazy', 'Links'],
+  browseRuns: ['Otevřít přehled Runů', 'Open run browser'],
+  routeNotice: ['Odkazy na výsledky používají kanonické cesty Product Runu.', 'Result links use canonical Product Run routes.'],
+} as const
+
 export function ViewerSearchPage(): JSX.Element {
   const productRunId = useActiveViewerProductRunId()
   const [searchParams, setSearchParams] = useSearchParams()
   const { language } = useLanguage()
   const isCzech = language === 'cs'
+  const t = (key: keyof typeof searchCopy): string => searchCopy[key][isCzech ? 0 : 1]
   const urlQuery = normalizeViewerSearchQuery(searchParams)
   const [query, setQuery] = useState(urlQuery)
   const hasSearchQuery = urlQuery.length > 0
@@ -113,10 +136,10 @@ export function ViewerSearchPage(): JSX.Element {
 
   if (!productRunId || !hasSearchQuery) {
     return (
-      <ViewerShellPage title="Search" description="Read-only Viewer Search using canonical Product Run data only.">
-        <article className="viewer-active-run-card" aria-label="Search">
-          <span className="eyebrow">Viewer search</span>
-          <h3>Search{urlQuery ? `: ${urlQuery}` : ''}</h3>
+      <ViewerShellPage title={t('title')} description={t('emptyDescription')}>
+        <article className="viewer-active-run-card" aria-label={t('title')}>
+          <span className="eyebrow">{t('emptyEyebrow')}</span>
+          <h3>{t('title')}{urlQuery ? `: ${urlQuery}` : ''}</h3>
           {searchForm}
           <ViewerEmptyState>{!productRunId
             ? (isCzech ? 'Nejprve vyber Run pro vyhledávání.' : 'Select a Run to search.')
@@ -155,56 +178,56 @@ export function ViewerSearchPage(): JSX.Element {
   const hasResults = players.length > 0 || countries.length > 0 || tournaments.length > 0
 
   return (
-    <ViewerShellPage title="Search" description="Read-only Viewer Search using canonical Saved-Revision player, country, and tournament data.">
-      <article className="viewer-active-run-card" aria-label="Search">
-        <span className="eyebrow">Selected Product Run</span>
-        <h3>Search: {urlQuery}</h3>
-        {isLoading ? <p className="status">Loading canonical search results…</p> : null}
-        {hasError ? <ViewerEmptyState>Some canonical searchable metadata is temporarily unavailable.</ViewerEmptyState> : null}
+    <ViewerShellPage title={t('title')} description={t('resultsDescription')}>
+      <article className="viewer-active-run-card" aria-label={t('title')}>
+        <span className="eyebrow">{t('selectedRun')}</span>
+        <h3>{t('title')}: {urlQuery}</h3>
+        {isLoading ? <p className="status">{t('loading')}</p> : null}
+        {hasError ? <ViewerEmptyState>{t('sourceError')}</ViewerEmptyState> : null}
         <dl className="metadata-list">
           <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
-          <div><dt>Query</dt><dd>{urlQuery}</dd></div>
+          <div><dt>{t('query')}</dt><dd>{urlQuery}</dd></div>
         </dl>
         {searchForm}
-        {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>No matching Viewer results found.</ViewerEmptyState> : null}
+        {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>{t('noResults')}</ViewerEmptyState> : null}
 
-        <section aria-label="Players">
-          <h4>Players</h4>
+        <section aria-label={t('players')}>
+          <h4>{t('players')}</h4>
           {players.length ? (
             <ul className="viewer-home-list">
               {players.map((player) => (
                 <li key={player.player_id}>{renderPlayerSampleMetadata(player, productRunId)}</li>
               ))}
             </ul>
-          ) : <p className="status">No matching players.</p>}
+          ) : <p className="status">{t('noPlayers')}</p>}
         </section>
 
-        <section aria-label="Countries">
-          <h4>Countries</h4>
+        <section aria-label={t('countries')}>
+          <h4>{t('countries')}</h4>
           {countries.length ? (
             <ul className="viewer-home-list">
               {countries.map((country) => (
                 <li key={country.country_code}>{renderCountrySampleMetadata(country, productRunId)}</li>
               ))}
             </ul>
-          ) : <p className="status">No matching countries.</p>}
+          ) : <p className="status">{t('noCountries')}</p>}
         </section>
 
-        <section aria-label="Tournaments">
-          <h4>Tournaments</h4>
+        <section aria-label={t('tournaments')}>
+          <h4>{t('tournaments')}</h4>
           {tournaments.length ? (
             <ul className="viewer-home-list">
               {tournaments.map((event) => (
                 <li key={event.eventId}>{renderSearchTournamentMetadata(productRunId, event)}</li>
               ))}
             </ul>
-          ) : <p className="status">No matching tournaments.</p>}
+          ) : <p className="status">{t('noTournaments')}</p>}
         </section>
 
-        <section aria-label="Links">
-          <h4>Links</h4>
-          <ViewerActiveRunLinks links={[{ label: 'Open run browser', to: viewerRunsPath() }]} />
-          <p className="status">Result links use canonical Product Run routes.</p>
+        <section aria-label={t('links')}>
+          <h4>{t('links')}</h4>
+          <ViewerActiveRunLinks links={[{ label: t('browseRuns'), to: viewerRunsPath() }]} />
+          <p className="status">{t('routeNotice')}</p>
         </section>
       </article>
     </ViewerShellPage>

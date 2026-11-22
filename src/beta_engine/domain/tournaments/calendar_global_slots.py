@@ -156,7 +156,8 @@ def _incremental_checkpoint_fingerprint(value, scope):
     key = (id(value.competition_root), value.run_id, value.branch_id, value.schema_version)
     entry = cache.get(key)
     collect = scope.get('collect_checkpoint_value_hashes', False)
-    if entry is None or entry[0] is not value.competition_root or (collect and entry[4] is None):
+    body = None
+    if entry is None or entry['root'] is not value.competition_root:
         body = value.model_dump(mode='json', exclude={'events'})
         if set(body) != {'schema_version', 'run_id', 'branch_id', 'competition_root'}:
             return None
@@ -164,26 +165,43 @@ def _incremental_checkpoint_fingerprint(value, scope):
         after = [encode(k) + b':' + encode(body[k]) for k in sorted(body) if k > 'events']
         prefix = b'{' + b','.join(before) + (b',' if before else b'') + b'"events":['
         suffix = b']' + (b',' if after else b'') + b','.join(after) + b'}'
-        auxiliary = None
-        auxiliary_suffix = None
-        if collect:
-            try:
-                ordered = json.loads(encode(body))
-                def core(data):
-                    return to_json(data, inf_nan_mode='constants')
-                before_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k < 'events']
-                after_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k > 'events']
-                auxiliary = [hashlib.sha256(b'{' + b','.join(before_core) + (b',' if before_core else b'') + b'"events":[')]
-                auxiliary_suffix = b']' + (b',' if after_core else b'') + b','.join(after_core) + b'}'
-            except (TypeError, ValueError):
-                # Older compatible Pydantic installations can retain the full
-                # canonical-value path without this optional comparison hash.
-                scope['collect_checkpoint_value_hashes'] = False
-        entry = (value.competition_root, [], [hashlib.sha256(prefix)], suffix, auxiliary, auxiliary_suffix)
+        # The entry holds its root object, so no other root can reuse its id.
+        entry = {'root': value.competition_root, 'prefix': hashlib.sha256(prefix), 'suffix': suffix,
+                 'auxiliary': None, 'auxiliary_suffix': None, 'chains': {}}
         cache[key] = entry
         while len(cache) > 4:
             cache.pop(next(iter(cache)))
-    _, events, hashes, suffix, auxiliary, auxiliary_suffix = entry
+    if collect and entry['auxiliary'] is None:
+        try:
+            if body is None:
+                body = value.model_dump(mode='json', exclude={'events'})
+            ordered = json.loads(encode(body))
+            def core(data):
+                return to_json(data, inf_nan_mode='constants')
+            before_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k < 'events']
+            after_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k > 'events']
+            entry['auxiliary'] = hashlib.sha256(b'{' + b','.join(before_core) + (b',' if before_core else b'') + b'"events":[')
+            entry['auxiliary_suffix'] = b']' + (b',' if after_core else b'') + b','.join(after_core) + b'}'
+        except (TypeError, ValueError):
+            # Older compatible Pydantic installations can retain the full
+            # canonical-value path without this optional comparison hash.
+            collect = scope['collect_checkpoint_value_hashes'] = False
+    # One prefix-hash chain per event history over this root, selected by the
+    # identity of its first event (a decoded Saved checkpoint and the replay
+    # rebuilt from its root are different histories; neither truncates the
+    # other). Every event is still compared by identity below. A chain started
+    # before value-hash collection was requested keeps hashing without it; the
+    # comparison hash is optional and is recorded only for chains that have it.
+    chains = entry['chains']
+    first = value.events[0] if value.events else None
+    chain = chains.get(id(first))
+    if chain is None or chain['first'] is not first:
+        chain = {'first': first, 'events': [], 'hashes': [entry['prefix']],
+                 'auxiliary': [entry['auxiliary']] if collect and entry['auxiliary'] is not None else None}
+        chains[id(first)] = chain
+        while len(chains) > 4:
+            chains.pop(next(iter(chains)))
+    events, hashes, auxiliary = chain['events'], chain['hashes'], chain['auxiliary']
     shared = 0
     while shared < min(len(events), len(value.events)) and events[shared] is value.events[shared]:
         shared += 1
@@ -201,17 +219,16 @@ def _incremental_checkpoint_fingerprint(value, scope):
                 state_core.update((b',' if events else b'') + to_json(json.loads(encoded), inf_nan_mode='constants'))
                 auxiliary.append(state_core)
             except (TypeError, ValueError):
-                auxiliary = None
+                auxiliary = chain['auxiliary'] = None
                 scope['collect_checkpoint_value_hashes'] = False
-                cache[key] = (entry[0], events, hashes, suffix, None, None)
         events.append(event)
         hashes.append(state)
     result = hashes[-1].copy()
-    result.update(suffix)
+    result.update(entry['suffix'])
     fingerprint = result.hexdigest()
-    if auxiliary is not None:
+    if auxiliary is not None and len(auxiliary) == len(hashes):
         equivalent_value = auxiliary[-1].copy()
-        equivalent_value.update(auxiliary_suffix)
+        equivalent_value.update(entry['auxiliary_suffix'])
         values = scope.setdefault('checkpoint_value_hashes', {})
         values[fingerprint] = equivalent_value.digest()
         while len(values) > 128:

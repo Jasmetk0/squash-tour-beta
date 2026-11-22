@@ -410,6 +410,32 @@ def test_incremental_checkpoint_hash_is_the_original_full_canonical_hash(tmp_pat
                     to_json(ordered, inf_nan_mode='constants')).digest()
     for value, fingerprint in zip(states, expected, strict=True):
         assert value.fingerprint == fingerprint
+    # Several event histories over the SAME root object (a decoded checkpoint
+    # and a replay rebuilt from its root) keep separate prefix chains,
+    # alternately extended and resumed, before and after value-hash
+    # collection starts; each still hashes to the full canonical hash.
+    copies = [actual.model_copy(update={'events': tuple(event.model_copy() for event in actual.events)})
+              for _ in range(3)]
+    assert all(copy.competition_root is actual.competition_root for copy in copies)
+    histories = [[value.model_copy(update={'events': value.events[:count]}) for count in range(len(value.events) + 1)]
+                 for value in (actual, *copies)]
+    with global_replay_projection_scope():
+        projection = _replay_projections.get()
+        counts = list(range(len(actual.events) + 1))
+        for index, count in enumerate(counts + list(reversed(counts))):
+            if index == len(counts):
+                projection['collect_checkpoint_value_hashes'] = True
+            for history in histories:
+                assert history[count].fingerprint == canonical_hash(history[count].model_dump(mode='json'))
+        fresh = actual.model_copy(update={'events': tuple(event.model_copy() for event in actual.events)})
+        assert fresh.fingerprint == expected[len(actual.events)]
+        ordered = json.loads(json.dumps(fresh.model_dump(mode='json'), sort_keys=True, ensure_ascii=False))
+        assert projection['checkpoint_value_hashes'][expected[len(actual.events)]] == hashlib.sha256(
+            to_json(ordered, inf_nan_mode='constants')).digest()
+        # A different root object never resumes another root's chains.
+        other_root = parse_checkpoint_json(raw).model_copy(update={'events': actual.events})
+        assert other_root.competition_root is not actual.competition_root
+        assert other_root.fingerprint == expected[len(actual.events)]
 
 
 def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_path, prepared_slots):

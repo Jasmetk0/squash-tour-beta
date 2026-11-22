@@ -95,7 +95,7 @@ export function ViewerCountriesPage(): JSX.Element {
       </ViewerShellPage>
     )
   }
-  const verified = !countriesQuery.isError && validCountrySnapshot(countriesQuery.data, productRunId, branchId)
+  const verified = !countriesQuery.isError && validCountrySnapshot(countriesQuery.data, productRunId, branchId ?? '')
     ? countriesQuery.data : null
   if (!verified) {
     return (

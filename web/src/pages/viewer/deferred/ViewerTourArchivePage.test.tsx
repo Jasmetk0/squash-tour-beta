@@ -243,7 +243,7 @@ describe('Verified saved Viewer Tour Categories and Past Champions (mocked publi
     mount('champions')
     await screen.findByRole('table', { name: 'Historie publikovaných vítězů' })
     await user.click(screen.getByRole('button', { name: 'Switch language' }))
-    expect(screen.getByRole('heading', { name: 'Past Champions' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: 'Past Champions' })).toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Published past champions' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'winner event 2' })).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)

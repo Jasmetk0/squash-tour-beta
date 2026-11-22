@@ -148,6 +148,12 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
+    // The nested submit handler does not inherit JSX's early-return narrowing.
+    // Never submit any filter until the authoritative baseline is verified.
+    if (!baseline) {
+      setFilterError(true)
+      return
+    }
     const start = Number(startDraft)
     const country = countryDraft.trim().toUpperCase()
     if (!seasonOptions.includes(target) || !fromOptions.includes(start) ||

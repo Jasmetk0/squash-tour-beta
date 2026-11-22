@@ -1,5 +1,6 @@
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerPublishedTitleLeadersPage } from './ViewerPublishedTitleLeadersPage'
+import { ViewerPublishedTournamentStatsPage } from './ViewerPublishedTournamentStatsPage'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadataRender'
@@ -14,9 +15,9 @@ import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries
 export function ViewerStatsDeferredPage({ kind }: {
   kind: ViewerStatsDeferredKind
 }): JSX.Element {
-  return kind === 'title-leaders'
-    ? <ViewerPublishedTitleLeadersPage />
-    : <ViewerOtherStatsDeferredPage kind={kind} />
+  if (kind === 'title-leaders') return <ViewerPublishedTitleLeadersPage />
+  if (kind === 'tournament-stats') return <ViewerPublishedTournamentStatsPage />
+  return <ViewerOtherStatsDeferredPage kind={kind} />
 }
 
 // Other deferred stats remain conservative until authoritative public models

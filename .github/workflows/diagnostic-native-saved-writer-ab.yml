@@ -2,7 +2,7 @@ name: Native Saved Writer One-Encoding A-B
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'src/beta_engine/domain/run_revisions.py'
       - 'src/beta_engine/infrastructure/db/repositories.py'
@@ -12,7 +12,6 @@ on:
 
 permissions:
   contents: read
-  actions: read
 
 concurrency:
   group: native-one-encoding-write-${{ github.event.pull_request.number || github.run_id }}
@@ -20,9 +19,11 @@ concurrency:
 
 jobs:
   authentic-manual-save-ab:
+    if: ${{ github.event_name == 'workflow_dispatch' || !github.event.pull_request.draft }}
     name: Original vs candidate; actual 46-revision W12 Saved POST and 47th immutable revision
     runs-on: ubuntu-latest
-    timeout-minutes: 45
+    # The fixture now has to play the original W12 season before the four Saves.
+    timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
       - name: Checkout exact original buuk
@@ -37,13 +38,20 @@ jobs:
           ref: b95553844d9a9d525729efa9d6c21238bdf0fb1e
           path: probe
           persist-credentials: false
+      - name: Checkout the original physical W12 fixture generator
+        uses: actions/checkout@v4
+        with:
+          ref: 8ae82c117733ae7cecd2ca1b3246e898c1f088d5
+          path: fixture-source
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
           cache: pip
           cache-dependency-path: pyproject.toml
       - name: Install backend + regression test dependencies
-        run: python -m pip install -e . pytest
+        run: |
+          python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
       - name: Verify exact hash equivalence and real SQLite tampering rejection
         run: |
           # This diagnostic explicitly selects its test file even when unchanged.
@@ -51,14 +59,15 @@ jobs:
           PYTHONPATH="$PWD/src:$PWD" python -m pytest \
             tests/api/test_native_saved_new_json_hash.py \
             -q -s --maxfail=1 --durations=10
-      - name: Download genuine completed W12 physical SQLite
-        uses: actions/download-artifact@v4
-        with:
-          name: native-populated-w12-43919075227
-          run-id: 43919075227
-          repository: Jasmetk0/squash-tour-beta
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          path: ${{ runner.temp }}/baseline-native-w12
+      - name: Play the original W12 season to regenerate the physical SQLite fixture
+        working-directory: fixture-source
+        env:
+          GITHUB_EVENT_NAME: native_populated_w12_diagnostic
+          PYTHONPATH: src:.
+        run: |
+          set -euo pipefail
+          python -m pytest tests/api/test_native_256_player_eight_editions_season_diagnostic.py \
+            -vv -s --basetemp "$RUNNER_TEMP/baseline-native-w12" --maxfail=1 --durations=10
       - name: A-B-B-A actual manual Save, full post-write physical history validation
         env:
           PYTHONUNBUFFERED: '1'
@@ -69,11 +78,12 @@ jobs:
             echo "::error::Original real 256-player W12 database was not uniquely found"
             exit 1
           fi
-          sha="$(sha256sum "${sources[0]}" | cut -d' ' -f1)"
-          if [ "$sha" != "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7" ]; then
-            echo "::error::Incorrect physical Saved source SQLite"
+          if [[ -s "${sources[0]}-wal" ]]; then
+            echo "::error::The rebuilt W12 fixture has uncheckpointed data"
             exit 1
           fi
+          source_sha="$(sha256sum "${sources[0]}" | cut -d' ' -f1)"
+          echo "W12 fixture SHA-256: $source_sha"
           cp probe/scripts/profile_native_w12_saved_growth_write.py original/scripts/
           cp probe/scripts/profile_native_w12_saved_growth_write.py scripts/
           mkdir -p "$RUNNER_TEMP/native-write-ab"
@@ -82,26 +92,42 @@ jobs:
             cp "${sources[0]}" "$RUNNER_TEMP/native-case.sqlite"
             (
               cd "$directory"
-              PYTHONPATH="$PWD/src:$PWD" python scripts/profile_native_w12_saved_growth_write.py \
-                --mode write --database "$RUNNER_TEMP/native-case.sqlite" \
-                --out "$RUNNER_TEMP/native-write-ab/$case"
+              PYTHONPATH="$PWD/src:$PWD" python - "$source_sha" \
+                "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-write-ab/$case" <<'PY'
+          import importlib.util
+          import sys
+          from pathlib import Path
+
+          spec = importlib.util.spec_from_file_location(
+              "native_w12_writer_probe",
+              Path("scripts/profile_native_w12_saved_growth_write.py").resolve(),
+          )
+          probe = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(probe)
+          # The probe still checks the source bytes before opening each copy.
+          # A fresh replay has new revision IDs and therefore a new physical SHA.
+          probe.SOURCE_DIGEST = sys.argv[1]
+          probe.write_profile(Path(sys.argv[2]), Path(sys.argv[3]))
+          PY
             )
             rm -f "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-case.sqlite-wal" "$RUNNER_TEMP/native-case.sqlite-shm"
           done
-          python - <<'PY'
-          import json, os, statistics
+          python - "$source_sha" <<'PY'
+          import json, os, statistics, sys
           from pathlib import Path
           root=Path(os.environ["RUNNER_TEMP"])/"native-write-ab"
           samples={case:json.loads((root/case/"write.json").read_text())
                    for case in ("A1","B1","B2","A2")}
           assert all(x["run_preserved"] and x["after_sqlite"]["revision_count"] == 47
-                     and x["original_real_matches"] == 24 for x in samples.values())
+                     and x["original_tournaments"] == 8 and x["original_real_matches"] == 24
+                     and x["source_sha256"] == sys.argv[1] for x in samples.values())
           durations={case:round(x["timing"]["manual_save"]["wall_s"],3)
                      for case,x in samples.items()}
           a=statistics.median([durations["A1"],durations["A2"]])
           b=statistics.median([durations["B1"],durations["B2"]])
           details={
-            "source_run":43919075227,
+            "fixture_generator_commit":"8ae82c117733ae7cecd2ca1b3246e898c1f088d5",
+            "fixture_sha256":sys.argv[1],
             "original_baseline_commit":"320e4766ec8ba78e3de20153b8aaada90585b0cf",
             "candidate_head":os.environ.get("GITHUB_SHA"),
             "case_order":["A1","B1","B2","A2"],

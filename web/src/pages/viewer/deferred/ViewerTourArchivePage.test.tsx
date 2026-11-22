@@ -6,6 +6,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LanguageProvider, useLanguage } from '../../../i18n/LanguageContext'
 import { createTestQueryClient, expectNoForbiddenViewerActions } from '../../../test/viewerTestUtils'
+import { ViewerContextProvider } from '../../../viewer/ViewerContext'
 import { ViewerTourDeferredPage } from './ViewerTourDeferredPage'
 
 const api = vi.hoisted(() => ({
@@ -90,8 +91,10 @@ function mount(kind: 'categories' | 'champions') {
       <QueryClientProvider client={client}>
         <MemoryRouter>
           <LanguageProvider>
-            <SwitchLanguage />
-            <ViewerTourDeferredPage kind={kind} />
+            <ViewerContextProvider>
+              <SwitchLanguage />
+              <ViewerTourDeferredPage kind={kind} />
+            </ViewerContextProvider>
           </LanguageProvider>
         </MemoryRouter>
       </QueryClientProvider>

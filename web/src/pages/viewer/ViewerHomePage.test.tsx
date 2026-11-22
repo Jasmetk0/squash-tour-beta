@@ -321,8 +321,9 @@ describe('ViewerHomePage canonical sources', () => {
       product_run_id: 'foreign-run', official_branch_id: 'branch-viewer'
     })
     renderHome()
-    expect(await screen.findByText(/Saved Viewer Branch or public histories do not agree/))
-      .toBeInTheDocument()
+    // The shared Run selector also fetches the foreign context. Wait for
+    // its actual response before asserting that no publication GET escaped.
+    await screen.findByText(/foreign-run \(foreign-run\)/)
     expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
     expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
     expect(api.getViewerFinalsRace).not.toHaveBeenCalled()

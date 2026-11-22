@@ -90,7 +90,7 @@ export function verifiedHomeSources(
   return {
     tournaments: history,
     publishedTournaments,
-    latestPublishedTournament: publishedTournaments.at(-1) ?? null,
+    latestPublishedTournament: publishedTournaments.length ? publishedTournaments[publishedTournaments.length - 1] : null,
     rankingPublicationCount: rankings.publication_count,
     latestRankingPublication: ranked[0] ?? null,
     racePublicationCount: race.publications.length,

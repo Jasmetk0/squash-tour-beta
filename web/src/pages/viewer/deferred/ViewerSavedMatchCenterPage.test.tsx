@@ -262,7 +262,8 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(within(table).getByText('3-2')).toBeInTheDocument()
     await user.type(screen.getByLabelText('Hledat ID zápasu, hráče nebo skóre'), 'nobody')
     expect(screen.getByText('Vyhledávání neodpovídá žádný zápas.')).toBeInTheDocument()
-    await user.click(screen.getAllByRole('button', { name: 'Vymazat filtry' }).at(-1)!)
+    const clearButtons = screen.getAllByRole('button', { name: 'Vymazat filtry' })
+    await user.click(clearButtons[clearButtons.length - 1])
     // The filtered-out table was unmounted, so inspect the freshly mounted table.
     expect(within(screen.getByRole('table', {
       name: 'Publikované zápasy vybraného turnaje',

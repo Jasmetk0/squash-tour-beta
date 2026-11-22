@@ -194,6 +194,72 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
       .toEqual(['EVENT/1', 'EVENT/2'])
   })
 
+  it('shows both players’ selected-source outcomes against all opponents without changing H2H totals', async () => {
+    const user = userEvent.setup()
+    mount()
+    await selectPlayers(user)
+    const statsTable = await screen.findByRole('table', {
+      name: 'Výsledky hráčů podle vybraného turnaje',
+    })
+    expect(within(statsTable).getAllByRole('row')).toHaveLength(3)
+    const cardA = screen.getByRole('heading', { level: 5, name: 'A' }).parentElement!
+    const cardB = screen.getByRole('heading', { level: 5, name: 'B' }).parentElement!
+    expect(within(cardA).getByText('Výhry se soupeřem').parentElement)
+      .toHaveTextContent('2')
+    expect(within(cardA).getByText('Různých uvedených soupeřů').parentElement)
+      .toHaveTextContent('2')
+    expect(within(cardB).getByText('Prohry se soupeřem').parentElement)
+      .toHaveTextContent('1')
+    expect(within(cardB).getByText('Výhry se soupeřem').parentElement)
+      .toHaveTextContent('0')
+    expect(screen.getByText(/Vzájemné výsledkové záznamy: 1/)).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows per-event coverage for both players over two selected publications', async () => {
+    const user = userEvent.setup()
+    mount()
+    await selectPlayers(user, true)
+    const table = await screen.findByRole('table', {
+      name: 'Výsledky hráčů podle vybraného turnaje',
+    })
+    expect(within(table).getAllByRole('row')).toHaveLength(5)
+    expect(within(table).getAllByRole('link', { name: 'Source Open' })).toHaveLength(2)
+    expect(within(table).getAllByRole('link', { name: 'Second Open' })).toHaveLength(2)
+    const cardA = screen.getByRole('heading', { level: 5, name: 'A' }).parentElement!
+    const cardB = screen.getByRole('heading', { level: 5, name: 'B' }).parentElement!
+    expect(within(cardA).getByText('Výhry se soupeřem').parentElement)
+      .toHaveTextContent('2')
+    expect(within(cardA).getByText('Prohry se soupeřem').parentElement)
+      .toHaveTextContent('1')
+    expect(within(cardB).getByText('Výhry se soupeřem').parentElement)
+      .toHaveTextContent('2')
+    expect(within(cardB).getByText('Prohry se soupeřem').parentElement)
+      .toHaveTextContent('1')
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(2)
+  })
+
+  it('shows missing public player-list identity separately from a zero selected H2H', async () => {
+    const user = userEvent.setup()
+    mount()
+    await screen.findByRole('group', { name: 'Vybrat zdroje pro H2H' })
+    await user.type(screen.getByLabelText('ID hráče A'), 'UNKNOWN-ID')
+    await user.type(screen.getByLabelText('ID hráče B'), 'A')
+    await user.click(screen.getByRole('checkbox', { name: 'Zahrnout turnaj: Source Open' }))
+    await user.click(screen.getByRole('button', { name: 'Spočítat H2H z vybraných publikací' }))
+    const table = await screen.findByRole('table', {
+      name: 'Výsledky hráčů podle vybraného turnaje',
+    })
+    expect(within(table).getAllByRole('row')).toHaveLength(3)
+    const absent = screen.getByRole('heading', { level: 5, name: 'UNKNOWN-ID' }).parentElement!
+    expect(within(absent).getByText('Hráč se nevyskytuje v soupiskách zvolených publikací.'))
+      .toBeInTheDocument()
+    expect(within(absent).getByText('Záznam v soupiskách turnajů').parentElement)
+      .toHaveTextContent('0/1')
+    expect(screen.getByText(/To není důkaz nulové bilance za kariéru/))
+      .toBeInTheDocument()
+  })
+
   it('returns explicitly scoped zero without falsely claiming career-wide zero H2H', async () => {
     const user = userEvent.setup()
     mount()
@@ -237,6 +303,9 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('neveřejné údaje')
     expect(screen.queryByText(/Vzájemné výsledkové záznamy:/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', {
+      name: 'Výsledky hráčů podle vybraného turnaje',
+    })).not.toBeInTheDocument()
     await user.click(within(alert).getByRole('button', { name: 'Načíst znovu (GET)' }))
     expect(await screen.findByRole('table', { name: 'Konkrétní vzájemné zápasy' }))
       .toBeInTheDocument()
@@ -267,6 +336,9 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('není dostupný')
     expect(screen.queryByText(/Vzájemné výsledkové záznamy:/)).not.toBeInTheDocument()
+    expect(screen.queryByRole('table', {
+      name: 'Výsledky hráčů podle vybraného turnaje',
+    })).not.toBeInTheDocument()
     await user.click(within(alert).getByRole('button', { name: 'Načíst znovu (GET)' }))
     expect(await screen.findByRole('table', { name: 'Konkrétní vzájemné zápasy' }))
       .toBeInTheDocument()
@@ -334,6 +406,8 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
       .toBeInTheDocument()
     expect(screen.getByRole('table', { name: 'Exact H2H outcome records' }))
       .toHaveTextContent('3-2')
+    expect(screen.getByRole('table', { name: 'Player outcome records by selected event' }))
+      .toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'A' }))
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/players/A/career')
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)

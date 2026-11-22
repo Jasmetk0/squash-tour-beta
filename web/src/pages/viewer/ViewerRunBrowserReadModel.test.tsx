@@ -142,7 +142,9 @@ describe('ViewerRunBrowserPage Product Run read model', () => {
     expect(await screen.findByLabelText('Run run active')).toHaveTextContent('Active Viewer run')
     expect(screen.getByLabelText('Run run inactive')).toHaveTextContent('Available Viewer run')
     expect(localStorage.getItem(VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY)).toBe('run active')
-    expect(setItemSpy).not.toHaveBeenCalled()
+    // LanguageProvider persists the user's language preference on mount.
+    // Browsing may do that, but must never write any Run/Branch selection.
+    expect(setItemSpy.mock.calls.every(([key]) => key === 'squash-engine-language-v1')).toBe(true)
     expect(removeItemSpy).not.toHaveBeenCalled()
   })
 

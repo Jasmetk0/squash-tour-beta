@@ -156,9 +156,12 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
       return
     }
     setFilterError(false)
+    // Capture the verified immutable source values before entering the
+    // deferred URL updater; TS cannot preserve closure-local narrowing.
+    const savedHead = baseline.saved_head_revision_id
+    const tourFingerprint = baseline.source_tour_fingerprint
     setParams(previous => writeSignedRecordsDeepLink(
-      previous, runId, branchId, baseline.saved_head_revision_id,
-      baseline.source_tour_fingerprint,
+      previous, runId, branchId, savedHead, tourFingerprint,
       { asOfSeason: target, fromSeason: start, countryCode: country || null }
     ))
   }

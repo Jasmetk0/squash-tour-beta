@@ -78,6 +78,22 @@ jobs:
             echo "::error::Original real 256-player W12 database was not uniquely found"
             exit 1
           fi
+          # The generator uses WAL. Fold committed pages into the closed test
+          # database before making standalone, byte-identical copies for A/B.
+          python - "${sources[0]}" <<'PY'
+          import sqlite3
+          import sys
+          from contextlib import closing
+          from pathlib import Path
+
+          source = Path(sys.argv[1]).resolve()
+          with closing(sqlite3.connect(f"{source.as_uri()}?mode=rw", uri=True, timeout=30)) as db:
+              busy, log_pages, checkpointed_pages = db.execute(
+                  "PRAGMA wal_checkpoint(TRUNCATE)"
+              ).fetchone()
+          if busy or log_pages != checkpointed_pages:
+              raise SystemExit("W12 fixture WAL checkpoint did not complete")
+          PY
           if [[ -s "${sources[0]}-wal" ]]; then
             echo "::error::The rebuilt W12 fixture has uncheckpointed data"
             exit 1

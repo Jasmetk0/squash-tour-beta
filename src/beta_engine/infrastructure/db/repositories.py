@@ -6606,8 +6606,33 @@ class SimulationPersistenceRepository:
                         "Working Draft contains no effective Viewer Branch change"
                     )
 
+                from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
+                    COMPONENT_KEY as CALENDAR_SPORTING_COMPONENT_KEY,
+                    read_checkpoint_for_save,
+                )
+
+                base_payload = state.saved_revision.payload
+                base_content = base_payload["content"]
+                previous_checkpoint = base_content.get(CALENDAR_SPORTING_COMPONENT_KEY)
+                signed_parent_checkpoint = None
+                if (
+                    isinstance(previous_checkpoint, dict)
+                    and isinstance(previous_checkpoint.get("state"), dict)
+                    and previous_checkpoint["state"].get("schema_version") == "calendar_sporting_checkpoint.v13"
+                ):
+                    # The transaction already authenticated this parent. Do
+                    # not deep-copy its largest component only to replace it
+                    # or independently confirm the same immutable value below.
+                    signed_parent_checkpoint = previous_checkpoint
+                    base_payload = {
+                        **base_payload,
+                        "content": {
+                            key: value for key, value in base_content.items()
+                            if key != CALENDAR_SPORTING_COMPONENT_KEY
+                        },
+                    }
                 payload = viewer_branch_saved_revision_payload(
-                    base_payload=state.saved_revision.payload,
+                    base_payload=base_payload,
                     _stored_json_copy=True,
                     run_id=run_id,
                     display_name=run.display_name or run_id,
@@ -6671,9 +6696,6 @@ class SimulationPersistenceRepository:
                 capture_saved_simulation_slots(
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
-                from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
-                    read_checkpoint_for_save,
-                )
                 checkpoint_read = read_checkpoint_for_save(
                     session, run_id=run_id, branch_id=branch_id, repository=self,
                 )
@@ -6709,6 +6731,7 @@ class SimulationPersistenceRepository:
                     _repository=self,
                     _captured_checkpoint=checkpoint_read,
                     _origin_cache=origin_value_projections.get('_global_origin_inputs'),
+                    _signed_parent_checkpoint=signed_parent_checkpoint,
                 )
                 if verify_coupled_calendar:
                     # A native Tour Save captures every actual live row first.

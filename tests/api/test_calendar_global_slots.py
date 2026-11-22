@@ -80,10 +80,53 @@ def copy_database(source, target):
         source_db.backup(target_db)
 
 
+def test_save_reuses_only_an_unchanged_authenticated_sporting_component(
+    tmp_path, prepared_slots, monkeypatch,
+):
+    from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+
+    path = tmp_path / "reuse-sporting-component.db"
+    copy_database(prepared_slots, path)
+    capture = sporting.capture_checkpoint
+    reused = []
+
+    def check_capture(session, payload, evidence, **kwargs):
+        parent = kwargs["_signed_parent_component"]
+        assert parent is not None and sporting.COMPONENT_KEY not in payload["content"]
+        result = capture(session, payload, evidence, **kwargs)
+        captured = payload["content"][sporting.COMPONENT_KEY]
+        assert captured["fingerprint"] == result.fingerprint
+        reused.append(captured is parent)
+        return result
+
+    monkeypatch.setattr(sporting, "capture_checkpoint", check_capture)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        view = inspect(server)
+        week = view["state"]["week"]
+        execute(server, command(view, "create-edition", name="later-edition", data={
+            "schema_version": "calendar_tournament_edition.v2",
+            "simulation_seed": 194,
+            "edition_id": "later-edition",
+            "name": "Later edition",
+            "week": {**week, "week": 6},
+            "announcement_week": {**week, "week": 5},
+            "start_slot": 1,
+            "main_entrant_count": 4,
+            "ranked": True,
+            "validity_weeks": week["calendar"]["weeks_per_year"],
+            "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
+        }))
+        save_tour(server)
+        execute(server, command(inspect(server), "next-match", name="changed-checkpoint"))
+        save_tour(server)
+
+    assert reused == [True, False]
+
+
 def test_global_save_verifies_actual_append_before_install_and_rejects_changed_ancestor(
     tmp_path, prepared_slots, monkeypatch
 ):
-    from sqlalchemy import update, select
+    from sqlalchemy import delete, select, update
     from sqlalchemy.orm import object_session
     from beta_engine.domain.run_revisions import saved_revision_content_hash
     from beta_engine.infrastructure.db import calendar_global_slot_origins
@@ -197,6 +240,23 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
                 'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
             })[0] == 409
         assert capture_checked and inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
+
+        def missing_live_checkpoint(session, payload, **kwargs):
+            session.execute(delete(CalendarPlayerSportingCheckpointModel).where(
+                CalendarPlayerSportingCheckpointModel.run_id == 'run',
+                CalendarPlayerSportingCheckpointModel.branch_id == 'branch',
+            ))
+            return capture(session, payload, **kwargs)
+
+        with monkeypatch.context() as patch:
+            patch.setattr(repository_module, 'capture_saved_calendar_match', missing_live_checkpoint)
+            code, rejected = _request('POST', tour_url(server) + '/save', {
+                'expected_draft_version': view['draft_version'],
+                'expected_calendar_tour_fingerprint': view['tour_fingerprint'],
+            })
+            assert code == 409 and 'checkpoint is missing' in str(rejected)
+        assert inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
+
         original_decode = repo._to_branch_saved_revision
         injected = []
         before_failed_save_origins = dict(repo._origin_projection_values)

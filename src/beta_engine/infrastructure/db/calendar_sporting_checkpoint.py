@@ -450,7 +450,7 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
 
 def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
                        _defer_full_verification: bool = False, _repository=None,
-                       _previous_read=None):
+                       _previous_read=None, _signed_parent_component=None):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
     state = _checkpoint_for_capture(session, run_id=run_id, branch_id=branch_id,
         repository=_repository, previous_read=_previous_read)
@@ -460,10 +460,28 @@ def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
     # before any Saved Revision is inserted or the Branch pointer moves.
     if not _defer_full_verification:
         verify_checkpoint(state, world, evidence)
-    if state is not None:
-        from beta_engine.domain.run_packages import canonical_hash
-        body = state.model_dump(mode='json')
-        payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
+    if state is None:
+        if _signed_parent_component is not None:
+            raise ValueError('Live global sporting checkpoint is missing during Save')
+        return None
+    if (
+        _previous_read is not None
+        and state is _previous_read.state
+        and state.schema_version == 'calendar_sporting_checkpoint.v13'
+        and _signed_parent_component is not None
+        and _previous_read.fingerprint == _signed_parent_component['fingerprint']
+    ):
+        # The complete canonical model hash matched the actual live row when
+        # first read; capture then confirmed its exact bytes again. The same
+        # hash in the independently authenticated parent binds that component
+        # to the same canonical model. Keep the payload value and let Save's
+        # ordinary successor and physical checks validate the inserted bytes.
+        payload['content'][COMPONENT_KEY] = _signed_parent_component
+        return state
+    from beta_engine.domain.run_packages import canonical_hash
+
+    body = state.model_dump(mode='json')
+    payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
     return state
 
 

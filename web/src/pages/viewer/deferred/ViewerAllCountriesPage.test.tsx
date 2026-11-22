@@ -123,7 +123,7 @@ describe('All Countries from the verified public Saved Viewer Branch (mocked GET
     expect(within(egy).getAllByRole('cell')[4]).toHaveTextContent('—')
     expect(within(egy).queryByRole('link', { name: '—' })).not.toBeInTheDocument()
     expect(screen.getByText('branch-a')).toBeInTheDocument()
-    expect(screen.getByText(/nejde o historickému rekordu/)).toBeInTheDocument()
+    expect(screen.getByText(/nikoli historickému rekordu/)).toBeInTheDocument()
     expect(api.getViewerCountries).toHaveBeenCalledTimes(1)
     expectNoForbiddenViewerActions()
   })

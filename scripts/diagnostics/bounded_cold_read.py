@@ -43,8 +43,13 @@ def peak_mib():
 
         counters = Counters()
         counters.cb = ctypes.sizeof(Counters)
-        process = ctypes.windll.kernel32.GetCurrentProcess()
-        ctypes.windll.psapi.GetProcessMemoryInfo(process, ctypes.byref(counters), counters.cb)
+        kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
+        kernel32.GetCurrentProcess.restype = wintypes.HANDLE  # pseudo handle -1, not a 32-bit int
+        query = kernel32.K32GetProcessMemoryInfo
+        query.argtypes = [wintypes.HANDLE, ctypes.POINTER(Counters), wintypes.DWORD]
+        query.restype = wintypes.BOOL
+        if not query(kernel32.GetCurrentProcess(), ctypes.byref(counters), counters.cb):
+            raise OSError(ctypes.get_last_error(), "K32GetProcessMemoryInfo failed")
         return counters.PeakWorkingSetSize / 2**20
     import resource
 

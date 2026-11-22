@@ -1,0 +1,99 @@
+name: Diagnostic cold reads buuk / bounded candidate / engine follow-up (same DBs)
+
+# Diagnostic evidence for the engine follow-up Draft PR only; added and removed again by separate diagnostic commits, never on buuk.
+# Cold first reads of the SAME W9/W10/W12 databases (W9 artifact 14581530042,
+# W10/W12 built in run 44946599925), two alternating rounds per tree.
+on:
+  push:
+    branches: [claude/inspiring-dirac-d2aqk6-engine]
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: diagnostic-engine-cold-reads
+  cancel-in-progress: false
+
+env:
+  BUUK_SHA: 71f03fb9242427d3dbc46d9106d58d21442df98c        # buuk after #1836
+  CANDIDATE_SHA: 17708dff9498fd93d3ab2547b68dda3eae548360   # bounded cold lineage (this PR)
+  W9_RUN_ID: '44612526515'
+  W9_ARTIFACT: pr1828-one-shot-w9-44612526515
+  DB_RUN_ID: '44946599925'
+  DB_ARTIFACT: bounded-cold-databases-44946599925
+
+jobs:
+  cold-reads:
+    if: contains(github.event.head_commit.message, '[engine-cold-ab]')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    name: "Cold first reads W9/W10/W12 (${{ matrix.os }}): buuk / candidate / engine follow-up"
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: ${{ matrix.os == 'windows-latest' && '3.12' || '3.11' }}
+          architecture: x64
+      - name: Install locked dependencies
+        shell: bash
+        run: |
+          if [ "$RUNNER_OS" = Windows ]; then
+            python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/windows-preview-win-amd64.lock.txt
+          else
+            python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
+          fi
+      - name: Trees, fixtures and runner
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          git diff --quiet HEAD^ HEAD -- src tests
+          ENGINE_SHA=$(git rev-parse HEAD^)
+          for tree in buuk:$BUUK_SHA candidate:$CANDIDATE_SHA engine:$ENGINE_SHA; do
+            git worktree add --detach "$RUNNER_TEMP/${tree%%:*}" "${tree#*:}"
+          done
+          gh run download "$W9_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$W9_ARTIFACT" -D w9
+          gh run download "$DB_RUN_ID" --repo "$GITHUB_REPOSITORY" -n "$DB_ARTIFACT" -D dbs
+          mkdir -p evidence
+          { echo "workflow head $(git rev-parse HEAD)"; for t in buuk candidate engine; do echo "$t $(git -C "$RUNNER_TEMP/$t" rev-parse HEAD)"; done
+            python --version; find dbs -type f
+            if [ "$RUNNER_OS" = Windows ]; then systeminfo | grep -E "OS Name|Total Physical Memory|Processor" || true
+            else nproc; free -m; lscpu | grep -E 'Model name|^CPU\(s\)'; fi; } | tee evidence/runner.txt
+      - name: Cold first read per point, tree and round (no client deadline)
+        shell: bash
+        env:
+          PYTHONUNBUFFERED: '1'
+          GITHUB_EVENT_NAME: giant_native_load
+        run: |
+          set -uo pipefail
+          W10=$(dirname "$(find dbs -path '*candidate-w10*' -name run.sqlite | head -1)")
+          W12=$(dirname "$(find dbs -path '*candidate-w11-12*' -name run.sqlite | head -1)")
+          for point in w9 w10 w12; do
+            case $point in
+              w9) DB=w9/giant-w9-evidence/before-restart.sqlite; META=w9/giant-w9-evidence/before-restart.json ;;
+              w10) DB=$W10/run.sqlite; META=$W10/final-meta.json ;;
+              w12) DB=$W12/run.sqlite; META=$W12/final-meta.json ;;
+            esac
+            for round in 1 2; do
+              for tree in buuk candidate engine; do
+                python scripts/diagnostics/bounded_cold_read.py "$RUNNER_TEMP/$tree" "$DB" "$META" \
+                  "evidence/cold-$point-$tree-$round.json" || echo "$tree cold $point round $round failed" | tee -a evidence/notes.txt
+              done
+            done
+          done
+          cat evidence/notes.txt 2>/dev/null || true
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: engine-cold-reads-${{ matrix.os }}-${{ github.run_id }}
+          path: evidence/
+          retention-days: 21

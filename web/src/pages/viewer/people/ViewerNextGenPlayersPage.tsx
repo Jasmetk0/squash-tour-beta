@@ -44,7 +44,7 @@ const copy = {
   pagination: ['Stránkování talentů', 'Prospect pagination'],
   scope: [
     'Viditelnost od narození není vstup na Tour. Tento seznam nevypovídá o skrytém potenciálu ani budoucí kariéře hráče.',
-    'Birth-week visibility is not Tour entry. This list does not disclose hidden potential or predict a player's future career.',
+    'Birth-week visibility is not Tour entry. This list does not disclose hidden potential or predict future careers.',
   ],
 } as const
 

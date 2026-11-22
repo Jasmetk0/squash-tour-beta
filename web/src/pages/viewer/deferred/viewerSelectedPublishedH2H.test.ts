@@ -82,6 +82,76 @@ describe('bounded source-complete public Saved H2H derivation', () => {
     expect(zero).toMatchObject({ eventCount: 1, winsA: 0, winsB: 0, encounters: [] })
   })
 
+  it('derives source-scoped per-player outcomes against all named opponents without inflating H2H', () => {
+    const report = selectedPublishedH2H([fixture(1), fixture(2)], runId, branchId, 'A', 'B')
+    expect(report?.playerAStats).toMatchObject({
+      playerId: 'A', listedInEvents: 2,
+      winsAgainstNamedOpponents: 4, lossesAgainstNamedOpponents: 0,
+      noOpponentOutcomes: 0, uniqueNamedOpponents: 2,
+    })
+    expect(report?.playerBStats).toMatchObject({
+      playerId: 'B', listedInEvents: 2,
+      winsAgainstNamedOpponents: 0, lossesAgainstNamedOpponents: 2,
+      uniqueNamedOpponents: 1,
+    })
+    expect(report?.winsA).toBe(2)
+    expect(report?.playerAStats.byDraw).toEqual([
+      { draw: 'qualification', wins: 0, losses: 0 },
+      { draw: 'group', wins: 0, losses: 0 },
+      { draw: 'main', wins: 4, losses: 0 },
+      { draw: 'knockout', wins: 0, losses: 0 },
+    ])
+    expect(report?.playerBStats.byEvent.map(row =>
+      [row.eventId, row.listedAsParticipant, row.wins, row.losses]))
+      .toEqual([['event/1', true, 0, 1], ['event/2', true, 0, 1]])
+  })
+
+  it('keeps outcome counts independent per player when winners change across published sources', () => {
+    const reversed = fixture(2, {
+      champion_player_id: 'B', finalist_player_id: 'A',
+      matches: [
+        { match_id: 'final/2', draw_type: 'main', round_number: 2,
+          bracket_position: 1, winner_player_id: 'B', loser_player_id: 'A', scoreline: '3-1' },
+      ],
+    })
+    reversed.entry.publication.champion_player_id = 'B'
+    reversed.entry.publication.finalist_player_id = 'A'
+    const report = selectedPublishedH2H([fixture(1), reversed], runId, branchId, 'A', 'B')
+    expect(report).toMatchObject({
+      winsA: 1, winsB: 1,
+      playerAStats: { winsAgainstNamedOpponents: 2, lossesAgainstNamedOpponents: 1 },
+      playerBStats: { winsAgainstNamedOpponents: 1, lossesAgainstNamedOpponents: 1 },
+    })
+  })
+
+  it('does not count a source BYE as a win over an opponent', () => {
+    const x = fixture(1, {
+      matches: [
+        { match_id: 'bye', draw_type: 'qualification', round_number: 1,
+          bracket_position: 1, winner_player_id: 'A', loser_player_id: null, scoreline: 'BYE' },
+      ],
+    })
+    const report = selectedPublishedH2H([x], runId, branchId, 'A', 'B')
+    expect(report).toMatchObject({
+      winsA: 0, winsB: 0, publicationMatchCount: 1,
+      playerAStats: {
+        winsAgainstNamedOpponents: 0, lossesAgainstNamedOpponents: 0,
+        noOpponentOutcomes: 1, uniqueNamedOpponents: 0,
+      },
+    })
+    expect(report?.playerAStats.byEvent[0].noOpponentOutcomes).toBe(1)
+  })
+
+  it('distinguishes a stable player ID absent from selected player lists from a demonstrated 0-0', () => {
+    const report = selectedPublishedH2H([fixture(1)], runId, branchId, 'NOT-IN-SOURCE', 'A')
+    expect(report).toMatchObject({
+      winsA: 0, winsB: 0,
+      playerAStats: { listedInEvents: 0, winsAgainstNamedOpponents: 0, lossesAgainstNamedOpponents: 0 },
+      playerBStats: { listedInEvents: 1, winsAgainstNamedOpponents: 2 },
+    })
+    expect(report?.playerAStats.byEvent[0].listedAsParticipant).toBe(false)
+  })
+
   it('does not count outcome records lacking a losing player as H2H', () => {
     const x = fixture(1, {
       matches: [

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { FormEvent, MouseEvent } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 
@@ -18,6 +18,24 @@ function isViewerRouteGroupActive(currentPathname: string, dropdown: ViewerDropd
 function ViewerTopbarSearch(): JSX.Element {
   const navigate = useNavigate()
   const [query, setQuery] = useState('')
+  const searchInputRef = useRef<HTMLInputElement>(null)
+
+  // This component exists only in Viewer mode. Ctrl+K activates this exact
+  // navbar search, without adding another search page or affecting Admin.
+  useEffect(() => {
+    function activateSearch(event: KeyboardEvent): void {
+      if (
+        event.key.toLowerCase() !== 'k' ||
+        !event.ctrlKey || event.shiftKey || event.altKey || event.metaKey ||
+        event.isComposing
+      ) return
+      if (!searchInputRef.current) return
+      event.preventDefault()
+      searchInputRef.current.focus()
+    }
+    document.addEventListener('keydown', activateSearch)
+    return () => document.removeEventListener('keydown', activateSearch)
+  }, [])
 
   function handleSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -28,6 +46,8 @@ function ViewerTopbarSearch(): JSX.Element {
   return (
     <form className="viewer-topbar-search" role="search" aria-label="Viewer search" onSubmit={handleSubmit}>
       <input
+        ref={searchInputRef}
+        aria-keyshortcuts="Control+K"
         aria-label="Search players, countries, tournaments"
         placeholder="Search players, countries, tournaments…"
         value={query}

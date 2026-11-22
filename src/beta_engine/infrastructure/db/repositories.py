@@ -6769,10 +6769,15 @@ class SimulationPersistenceRepository:
                                 source.payload, run_id=run_id, branch_id=branch_id,
                             ),
                         )
+                        live_checkpoint = captured_sources[1]
                         load_saved_calendar_sources(
                             payload, run_id=run_id, branch_id=branch_id,
                             _verified_saved_prefix=signed_prefix,
                             _verified_global_prefix=(signed_prefix, _saved_tour, state.saved_revision.payload),
+                            _predecoded_checkpoint=(
+                                live_checkpoint if getattr(live_checkpoint, 'schema_version', None)
+                                == 'calendar_sporting_checkpoint.v13' else None
+                            ),
                         )
                 summary = viewer_branch_saved_revision_change_summary(
                     previous_viewer_branch_id=saved_viewer_id,

@@ -84,11 +84,14 @@ def test_save_reuses_only_an_unchanged_authenticated_sporting_component(
     tmp_path, prepared_slots, monkeypatch,
 ):
     from beta_engine.infrastructure.db import calendar_sporting_checkpoint as sporting
+    from beta_engine.infrastructure.db import repositories
 
     path = tmp_path / "reuse-sporting-component.db"
     copy_database(prepared_slots, path)
     capture = sporting.capture_checkpoint
+    verify = repositories.load_saved_calendar_sources
     reused = []
+    replayed = []
 
     def check_capture(session, payload, evidence, **kwargs):
         parent = kwargs["_signed_parent_component"]
@@ -99,7 +102,36 @@ def test_save_reuses_only_an_unchanged_authenticated_sporting_component(
         reused.append(captured is parent)
         return result
 
+    def check_replay(payload, **kwargs):
+        checkpoint = kwargs["_predecoded_checkpoint"]
+        assert checkpoint is not None
+        if not replayed:
+            content = dict(payload["content"])
+            component = content[sporting.COMPONENT_KEY]
+            content[sporting.COMPONENT_KEY] = {
+                **component,
+                "state": {**component["state"], "run_id": "different-run"},
+            }
+            with pytest.raises(ValueError, match="differs from actual complete component"):
+                verify({**payload, "content": content}, **kwargs)
+        result = verify(payload, **kwargs)
+        replayed.append(result[1] is checkpoint)
+        return result
+
+    def save_with_full_replay(server):
+        view = inspect(server)
+        repository = server.app.state.runtime.repository
+        with repository._revision_validation_lock:
+            repository._global_working_proofs.clear()
+        status, receipt = _request("POST", tour_url(server) + "/save", {
+            "expected_draft_version": view["draft_version"],
+            "expected_calendar_tour_fingerprint": view["tour_fingerprint"],
+        })
+        assert status == 201, receipt
+        assert inspect(server)["saved_head_revision_id"] == receipt["saved_revision"]["revision_id"]
+
     monkeypatch.setattr(sporting, "capture_checkpoint", check_capture)
+    monkeypatch.setattr(repositories, "load_saved_calendar_sources", check_replay)
     with ApiServer(database_url=f"sqlite:///{path}") as server:
         view = inspect(server)
         week = view["state"]["week"]
@@ -116,11 +148,12 @@ def test_save_reuses_only_an_unchanged_authenticated_sporting_component(
             "validity_weeks": week["calendar"]["weeks_per_year"],
             "point_table": {"champion": 100, "finalist": 60, "semifinal": 30},
         }))
-        save_tour(server)
+        save_with_full_replay(server)
         execute(server, command(inspect(server), "next-match", name="changed-checkpoint"))
-        save_tour(server)
+        save_with_full_replay(server)
 
     assert reused == [True, False]
+    assert replayed == [True, True]
 
 
 def test_global_save_verifies_actual_append_before_install_and_rejects_changed_ancestor(

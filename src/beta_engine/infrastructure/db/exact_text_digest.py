@@ -37,12 +37,34 @@ def physical_text_sha256(cache, *, run_id, revision_id, column, text):
     return digest
 
 
+def unloaded_column(row, column):
+    """True when an ORM row has not loaded ``column`` (e.g. a deferred payload).
+
+    Reading such an attribute would load it from SQLite; its value IS the
+    actual stored value, not an in-memory copy that could differ from it.
+    """
+    from sqlalchemy import inspect
+
+    state = inspect(row, raiseerr=False)
+    return state is not None and column in state.unloaded
+
+
 def row_text_sha256(row, column):
     """``sha256`` of one Saved Revision column of an ORM row, without rehashing.
 
     Looks up the current native read scope's physical row cache for the same
     session without touching the session (no autobegin, flush or query).
+    A column the ORM row has not loaded is the actual stored text itself: its
+    digest is taken from the physical reader of the current snapshot (which
+    may authenticate a Saved v2 text by envelope and re-hashed nodes) instead
+    of materializing the text into the row.
     """
+    if unloaded_column(row, column):
+        from beta_engine.infrastructure.db.native_fork_runtime_state import stored_column_sha256
+
+        digest = stored_column_sha256(row, column)
+        if digest is not None:
+            return digest
     text = getattr(row, column)
     known = entry = None
     if type(text) is str:

@@ -238,7 +238,7 @@ export function ViewerPublishedTournamentStatsPage(): JSX.Element {
   const query = useQuery({
     // One shared key across the two compatible Saved statistics destinations:
     // React Query can reuse the same verified public bytes without new GETs.
-    queryKey: ['viewer-published-title-leaders', runId, branchId],
+    queryKey: ['viewer-saved-tournament-stats', runId, branchId],
     queryFn: async () => {
       const [calendar, history] = await Promise.all([
         getViewerRunCalendar(runId), getViewerTournamentHistory(runId),

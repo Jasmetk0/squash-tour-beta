@@ -124,6 +124,26 @@ describe('bounded source-complete public Saved H2H derivation', () => {
       .not.toBeNull()
   })
 
+  it('accepts a genuine multi-week tournament completion inside the Saved calendar span but not outside', () => {
+    const inside = fixture(5, { completed_week: 7 })
+    inside.entry.event.end_season_week = 7
+    inside.entry.event.duration_in_season_weeks = 3
+    const report = selectedPublishedH2H([inside], runId, branchId, 'A', 'B')
+    expect(report).toMatchObject({
+      eventCount: 1, publicationMatchCount: 2, winsA: 1, winsB: 0,
+    })
+
+    const outside = fixture(5, { completed_week: 8 })
+    outside.entry.event.end_season_week = 7
+    outside.entry.event.duration_in_season_weeks = 3
+    expect(selectedPublishedH2H([outside], runId, branchId, 'A', 'B')).toBeNull()
+
+    const beforeStart = fixture(5, { completed_week: 4 })
+    beforeStart.entry.event.end_season_week = 7
+    beforeStart.entry.event.duration_in_season_weeks = 3
+    expect(selectedPublishedH2H([beforeStart], runId, branchId, 'A', 'B')).toBeNull()
+  })
+
   it('fails closed on empty, identical or case-different player IDs rather than guessing identity', () => {
     for (const [a, b] of [['', 'B'], ['A', 'A'], [' A ', 'A'], ['A', '']]) {
       expect(selectedPublishedH2H([fixture()], runId, branchId, a, b)).toBeNull()

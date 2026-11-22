@@ -6,6 +6,7 @@ import {
   clearViewerStorage, expectNoForbiddenViewerActions,
   renderWithViewerProviders, setViewerActiveProductRunId,
 } from '../../../test/viewerTestUtils'
+import { ViewerContextProvider } from '../../../viewer/ViewerContext'
 import { ViewerNextGenPlayersPage } from './ViewerNextGenPlayersPage'
 
 const api = vi.hoisted(() => ({ getViewerVisibleProspects: vi.fn() }))
@@ -156,7 +157,7 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     const view = renderWithViewerProviders(<ViewerNextGenPlayersPage />)
     await waitFor(() => expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1))
     chosen.branch = 'branch-b'
-    view.rerender(<ViewerNextGenPlayersPage />)
+    view.rerender(<ViewerContextProvider><ViewerNextGenPlayersPage /></ViewerContextProvider>)
     expect(await screen.findByText('New Branch player')).toBeInTheDocument()
     await act(async () => { resolveOld(page(0, ['Old Branch player'], 1, 'viewer-branch')) })
     expect(screen.getByText('branch-b')).toBeInTheDocument()
@@ -170,7 +171,7 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Mladé talenty / Next Gen' })).toBeInTheDocument()
     chosen.language = 'en'
-    view.rerender(<ViewerNextGenPlayersPage />)
+    view.rerender(<ViewerContextProvider><ViewerNextGenPlayersPage /></ViewerContextProvider>)
     expect(screen.getByRole('heading', { name: 'Prospects / Next Gen' })).toBeInTheDocument()
     expect(screen.getByText(/1–1 of 1/)).toBeInTheDocument()
     expect(screen.getByText('Jan Novak')).toBeInTheDocument()

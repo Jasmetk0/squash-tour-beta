@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { ViewerHostingNationsPage } from './ViewerHostingNationsPage'
+import { ViewerAllCountriesPage } from './ViewerAllCountriesPage'
 
 import {
   getRunStatusSummary,
@@ -25,12 +26,12 @@ import {
 export function ViewerCountriesDeferredPage({ kind }: {
   kind: ViewerCountriesDeferredKind
 }): JSX.Element {
-  return kind === 'hosting'
-    ? <ViewerHostingNationsPage />
-    : <ViewerOtherCountriesDeferredPage kind={kind} />
+  if (kind === 'hosting') return <ViewerHostingNationsPage />
+  if (kind === 'all') return <ViewerAllCountriesPage />
+  return <ViewerOtherCountriesDeferredPage kind={kind} />
 }
 
-// Other destinations stay deferred until their own public Saved read model
+// Ranking, talent pipeline and records stay deferred until their own public Saved read model
 // exists. Do not change the legacy Run-metadata fallback for unrelated routes.
 function ViewerOtherCountriesDeferredPage({ kind }: {
   kind: ViewerCountriesDeferredKind

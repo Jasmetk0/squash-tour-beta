@@ -221,10 +221,16 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
   })
 
   it('rejects a foreign tournament Branch and withholds *all* totals until successful GET retry', async () => {
-    api.getViewerTournamentResult.mockReset()
-      .mockResolvedValueOnce(result('EVENT/1'))
-      .mockResolvedValueOnce(result('EVENT/2', { viewer_branch_id: 'foreign' }))
-      .mockResolvedValue(result('EVENT/2'))
+    let rejectSecondOnce = true
+    api.getViewerTournamentResult.mockReset().mockImplementation(
+      (_run: string, eventId: string) => {
+        if (eventId === 'EVENT/2' && rejectSecondOnce) {
+          rejectSecondOnce = false
+          return Promise.resolve(result(eventId, { viewer_branch_id: 'foreign' }))
+        }
+        return Promise.resolve(result(eventId))
+      },
+    )
     const user = userEvent.setup()
     mount()
     await selectPlayers(user, true)

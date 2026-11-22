@@ -168,8 +168,8 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
             ))
             entry.payload_json, entry.fingerprint = original_entry
         assert inspect(server)['tour_fingerprint'] == view['tour_fingerprint']
-        # Reusing the private checkpoint captured earlier in THIS Save still
-        # rehashes the actual row. A changed/rehashed row must decode afresh.
+        # Reusing the checkpoint from this Save must check actual row bytes,
+        # even when an ORM object still holds the previously validated values.
         from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
         from beta_engine.domain.run_packages import canonical_hash
 
@@ -181,8 +181,12 @@ def test_global_save_verifies_actual_append_before_install_and_rejects_changed_a
             row = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch'))
             body = json.loads(row.payload_json)
             body['unexpected_capture_field'] = True
-            row.payload_json, row.fingerprint = json.dumps(body), canonical_hash(body)
-            session.flush()
+            session.execute(update(CalendarPlayerSportingCheckpointModel).where(
+                CalendarPlayerSportingCheckpointModel.run_id == 'run',
+                CalendarPlayerSportingCheckpointModel.branch_id == 'branch',
+            ).values(payload_json=json.dumps(body), fingerprint=canonical_hash(body))
+                .execution_options(synchronize_session=False))
+            assert 'unexpected_capture_field' not in row.payload_json
             capture_checked.append(True)
             return capture(session, payload, **kwargs)
 

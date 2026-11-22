@@ -6672,16 +6672,16 @@ class SimulationPersistenceRepository:
                     session, payload, run_id=run_id, branch_id=branch_id
                 )
                 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
-                    load_checkpoint,
+                    read_checkpoint_for_save,
                 )
-                live_calendar_owner = load_checkpoint(
-                    session, run_id=run_id, branch_id=branch_id, _repository=self,
+                checkpoint_read = read_checkpoint_for_save(
+                    session, run_id=run_id, branch_id=branch_id, repository=self,
                 )
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
                     or (
-                        live_calendar_owner is not None
-                        and live_calendar_owner.schema_version
+                        checkpoint_read is not None
+                        and checkpoint_read.state.schema_version
                         in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"}
                     )
                 )
@@ -6707,7 +6707,7 @@ class SimulationPersistenceRepository:
                     _defer_full_verification=verify_coupled_calendar,
                     _authenticated_tour_prefix=authenticated_tour,
                     _repository=self,
-                    _captured_checkpoint=live_calendar_owner,
+                    _captured_checkpoint=checkpoint_read,
                     _origin_cache=origin_value_projections.get('_global_origin_inputs'),
                 )
                 if verify_coupled_calendar:

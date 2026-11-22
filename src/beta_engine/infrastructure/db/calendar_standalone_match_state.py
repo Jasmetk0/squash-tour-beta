@@ -353,7 +353,7 @@ def capture_saved_calendar_match(session: Session, payload: dict, *, run_id: str
     checkpoint = capture_checkpoint(session, payload, states[0] if len(states) == 1 else None,
                        run_id=run_id, branch_id=branch_id,
                        _defer_full_verification=_defer_full_verification, _repository=_repository,
-                       _verified_source=_captured_checkpoint)
+                       _previous_read=_captured_checkpoint)
     from beta_engine.infrastructure.db.calendar_tour import capture_tour
     tour = capture_tour(session, payload, run_id=run_id, branch_id=branch_id,
                  _defer_full_verification=_defer_full_verification,

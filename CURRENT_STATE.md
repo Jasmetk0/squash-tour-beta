@@ -46,10 +46,27 @@ revision, against about 190 MiB on buuk. The two bounded passes cost time:
 each text is loaded, chain-proven and hashed once more. W12 takes 125.1 s
 instead of 113.9 s, so the 120-second goal is not met on this runner. #1838
 alone changes neither time nor peak. Its Save and execute gains hold in the
-candidate. Separate `windows-latest` reads (Windows Server 2025, 16 GB,
-Python 3.12) took 63.0/72.4/108.0 s on buuk and 69.0/79.5/121.3 s on the
-candidate at W9/W10/W12. That job's memory reader was broken and reported 0.
-This is not the reference 8 GB PC.
+candidate. In the separate `windows-latest` job (Windows Server 2025,
+16 GB, Python 3.12), buuk took 63.0/72.4/108.0 s at W9/W10/W12 and the
+candidate 69.0/79.5/121.3 s. That job's memory reader was broken and
+reported 0.
+
+Run 44970217972 repeated only the cold reads of the same three databases,
+two alternating rounds per tree. It also read the follow-up
+`claude/inspiring-dirac-d2aqk6-engine` `8c92a96` (span-hash reuse) and
+measured Windows memory with the fixed peak working set reader.
+
+| W12 cold first read, run 44970217972 | buuk | candidate | + span-hash reuse |
+|---|---:|---:|---:|
+| ubuntu-latest, Xeon 6975P (s) | 100.0 / 100.9 | 113.0 / 112.6 | 110.0 / 109.7 |
+| ubuntu-latest peak RSS | 9.53 GiB | 4.27 GiB | 4.33 GiB |
+| windows-latest (s) | 89.3 / 82.4 | 93.5 / 90.9 | 88.9 / 87.3 |
+| windows-latest peak working set | 9.48 GiB | 4.15 GiB | 4.15 GiB |
+
+Runner hardware alone moved buuk's W12 read from 113.9 s to 100.0–100.9 s.
+The candidate stays about 1.1 times buuk on Linux. Whether it is under 120 s
+therefore depends on the runner, and its margin is small. None of these
+runners is the reference 8 GB PC.
 
 Profiling shows that about 38 s of the W12 read is one complete HEAD
 replay: 49 MatchEngine matches, checkpoint and Tour fingerprints and 11 week

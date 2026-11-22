@@ -309,8 +309,9 @@ def main() -> None:
             cases.append("tournament_stats_real_saved")
 
             page.goto(frontend + "/viewer/stats/title-leaders")
-            expect(page.get_by_role("table", name="Published title leaderboard")).to_be_visible(timeout=30000)
-            expect(page.get_by_role("link", name="A")).to_be_visible()
+            leaders = page.get_by_role("table", name="Published title leaderboard")
+            expect(leaders).to_be_visible(timeout=30000)
+            expect(leaders.get_by_role("link", name="A", exact=True)).to_be_visible()
             screenshot(page, "title-leaders-real-en.png")
             cases.append("title_leaders_real_saved")
 

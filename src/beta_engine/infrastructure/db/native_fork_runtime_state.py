@@ -30,6 +30,8 @@ DRAFT_SCHEMA = "native_fork_runtime_draft.v1"
 _proofs = ContextVar("native_read_proofs", default=None)
 _append_ancestor_proofs = ContextVar("append_ancestor_proofs", default=None)
 _MAX_DEPENDENCY_PROOFS = 256
+_MAX_SNAPSHOT_DEPENDENCY_GRAPHS = 32
+_DEPENDENCY_PROOF_DOMAIN = b"native-dependency-graph-v2\0"
 _MAX_DEPENDENCY_REFERENCE_HINTS = 4096
 _MAX_DEPENDENCY_REFERENCE_BYTES = 1024
 _MAX_PARSED_RUNTIMES = 8
@@ -1185,7 +1187,18 @@ def actual_dependency_signature(session, revision, *, repository=None):
     # A snapshot change (any own write, savepoint rollback or new transaction)
     # discards this memo together with every cached row.
     closures = read_cache.setdefault("dependency_closures", {}) if read_cache is not None else {}
+    start = (revision.run_id, revision.revision_id)
+    if start in closures:
+        # A cached closure is only available in this unchanged SQL snapshot.
+        # Still compare the caller's ORM row against that snapshot's actual row.
+        row, _, _ = actual_revision(revision.revision_id)
+        if _has_physical_fields(revision) and (row is None or not row_matches_model(read_cache, row, revision)):
+            raise ValueError("Native Saved row differs from its actual stored bytes")
+        graph, heads = closures[start]
+        return revision.revision_id, graph, heads
+
     pending, visited, graph, source_heads = [revision.revision_id], set(), [], {}
+    returns_to_start = []
     while pending:
         revision_id = pending.pop()
         if revision_id in visited:
@@ -1223,29 +1236,35 @@ def actual_dependency_signature(session, revision, *, repository=None):
             source_heads[branch_id] = source
             if source and source[-1]:
                 pending.append(source[-1])
+                if source[-1] == revision.revision_id:
+                    # This node is reachable from the start and its actual
+                    # source edge returns there. Their closures are identical.
+                    returns_to_start.append((revision.run_id, revision_id))
     if read_cache is None:
         return (
             revision.revision_id,
             tuple(sorted(graph)),
             tuple(sorted(source_heads.items())),
         )
-    closures[(revision.run_id, revision.revision_id)] = (tuple(graph), dict(source_heads))
     # Identical node sets OF THE SAME RUN in one snapshot have identical sorted
-    # graph values (rows and owners are looked up by Run); share them and their
-    # canonical JSON instead of re-sorting/re-encoding. Another Run's equal
-    # revision-ID set is a different physical graph.
+    # graph values and source heads. Store only a reference per root, never an
+    # additional copy of all the references in the closure.
     shared = read_cache.setdefault("dependency_graphs", {})
     node_set = (revision.run_id, frozenset(visited))
     known_graph = shared.get(node_set)
     if known_graph is None:
-        sorted_graph = tuple(sorted(graph))
-        sorted_heads = tuple(sorted(source_heads.items()))
-        known_graph = shared[node_set] = (
-            sorted_graph, sorted_heads, canonical_json(sorted_graph), canonical_json(sorted_heads))
-        if memo is not None:
-            encoded = memo.setdefault("dependency_graph_json", {})
-            encoded[id(sorted_graph)] = (sorted_graph, known_graph[2])
-            encoded[id(sorted_heads)] = (sorted_heads, known_graph[3])
+        if len(shared) >= _MAX_SNAPSHOT_DEPENDENCY_GRAPHS:
+            shared.clear()
+            closures.clear()
+        known_graph = shared[node_set] = tuple(sorted(graph)), tuple(sorted(source_heads.items()))
+        digests = memo.setdefault("dependency_graph_digests", {})
+        for entries in known_graph:
+            digests[id(entries)] = (entries, hashlib.sha256(canonical_json(entries).encode("utf-8")).digest())
+        while len(digests) > 2 * _MAX_SNAPSHOT_DEPENDENCY_GRAPHS:
+            digests.pop(next(iter(digests)))
+    closures[start] = known_graph
+    for member in returns_to_start:
+        closures[member] = known_graph
     return (revision.revision_id, known_graph[0], known_graph[1])
 
 
@@ -1307,20 +1326,23 @@ def has_actual_dependency_proof(repository, signature, *, run_id, branch_id):
 
 
 def _dependency_proof_key(signature):
-    # Keep only a compact cryptographic digest of the COMPLETE actual graph,
-    # never mutable payloads. Longer histories can retain their proven prefixes
-    # without an unbounded collection of overlapping graph tuples.
+    # This key is process-private. Every physical row and source owner remains
+    # represented. Hash the complete sorted graph and owner list once rather
+    # than serializing the same graph for every different root in that graph.
+    revision_id, graph, heads = signature
     memo = _proofs.get()
-    encoded = memo.get("dependency_graph_json") if memo is not None else None
-    if encoded and type(signature) is tuple and len(signature) == 3 and type(signature[0]) is str:
-        graph = encoded.get(id(signature[1]))
-        heads = encoded.get(id(signature[2]))
-        if graph is not None and heads is not None and graph[0] is signature[1] and heads[0] is signature[2]:
-            # Exactly canonical_json(signature): a JSON array's encoding is its
-            # elements' encodings joined by "," (same separators/sort_keys).
-            text = "[" + canonical_json(signature[0]) + "," + graph[1] + "," + heads[1] + "]"
-            return hashlib.sha256(text.encode("utf-8")).hexdigest()
-    return hashlib.sha256(canonical_json(signature).encode("utf-8")).hexdigest()
+    digests = memo.get("dependency_graph_digests", {}) if memo is not None else {}
+
+    def digest(entries):
+        known = digests.get(id(entries))
+        if known is not None and known[0] is entries:
+            return known[1]
+        return hashlib.sha256(canonical_json(entries).encode("utf-8")).digest()
+
+    return hashlib.sha256(
+        _DEPENDENCY_PROOF_DOMAIN + canonical_json(revision_id).encode("utf-8")
+        + digest(graph) + digest(heads)
+    ).hexdigest()
 
 
 def assert_global_save_append(before, after, *, run_id, branch_id, revision_id, installed):

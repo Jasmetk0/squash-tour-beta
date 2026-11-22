@@ -32,7 +32,6 @@ import multiprocessing
 import os
 import platform
 import re
-import resource
 import sqlite3
 import subprocess
 import sys
@@ -41,7 +40,8 @@ from pathlib import Path
 from types import SimpleNamespace
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path[:0] = [str(ROOT / "src"), str(ROOT), str(ROOT / "tests" / "api")]
+sys.path[:0] = [str(ROOT / "src"), str(ROOT), str(ROOT / "tests" / "api"), str(ROOT / "scripts")]
+from process_measurement import machine, memory_kib, peak_rss_kib  # noqa: E402  (Windows, Linux, macOS)
 WORK = ROOT / "work"
 _CASE = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,79}")
 
@@ -55,12 +55,8 @@ def case_root(value):
 
 
 def proc_status():
-    values = {}
-    for line in Path("/proc/self/status").read_text().splitlines():
-        key, _, rest = line.partition(":")
-        if key in ("VmRSS", "VmHWM"):
-            values[key] = int(rest.split()[0])
-    return values
+    """Current/peak memory of this process in KiB (``VmRSS``/``VmHWM`` keys on every OS)."""
+    return memory_kib()
 
 
 def file_sizes(db):
@@ -87,14 +83,19 @@ def logical_summary(db):
             "nodes": nodes[0], "node_body_bytes": nodes[1], "page_size": page, "page_count": pages}
 
 
-def environment(storage):
+def environment(storage, hardware_note=None):
     def git(*args):
-        return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+        try:
+            return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
+        except (OSError, subprocess.CalledProcessError):
+            return None  # e.g. a source archive without git; the tree hash is then unknown
+    dirty = git("status", "--porcelain", "--", "src")
     return {"git_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD:src"),
-            "source_dirty": bool(git("status", "--porcelain", "--", "src")),
+            "source_dirty": None if dirty is None else bool(dirty),
             "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
             "python": sys.version.split()[0], "platform": platform.platform(),
-            "cpu_count": os.cpu_count(), "storage": storage}
+            "cpu_count": os.cpu_count(), "storage": storage,
+            "machine": machine(), "hardware_note": hardware_note}
 
 
 def case(args):
@@ -155,9 +156,9 @@ def case(args):
         expected = flow.inspect(server)
     log.close()
     (root / "expected.json").write_text(json.dumps(expected, sort_keys=True))
-    summary = {"environment": environment(args.storage), "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
+    summary = {"environment": environment(args.storage, args.hardware_note), "args": {k: str(v) if isinstance(v, Path) else v for k, v in vars(args).items()},
                "build_wall_s": round(time.perf_counter() - started, 3),
-               "build_peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+               "build_peak_rss_kib": peak_rss_kib(),
                "files": file_sizes(db), "logical": logical_summary(db)}
     child = multiprocessing.get_context("spawn").Process(target=restart, args=(str(root), args.storage))
     child.start()
@@ -187,7 +188,7 @@ def restart(root, storage):
             assert code == 200, view
             assert json.loads(json.dumps(view, sort_keys=True)) == expected, "restart inspection differs"
     result["equal_to_pre_restart"] = True
-    result["peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    result["peak_rss_kib"] = peak_rss_kib()
     (root / "restart.json").write_text(json.dumps(result, indent=2))
 
 
@@ -229,6 +230,8 @@ def main(argv=None):
     c.add_argument("--width", type=int, default=12)
     c.add_argument("--weeks", type=int, default=0, help="Week Transitions after the Editions (0 = to season end)")
     c.add_argument("--root", type=case_root, required=True)
+    c.add_argument("--hardware-note", default=None,
+                   help="What the script cannot detect, e.g. 'SSD, power plan Balanced, on AC power'")
     m = sub.add_parser("compare")
     m.add_argument("roots", nargs="+", type=case_root)
     args = parser.parse_args(argv)

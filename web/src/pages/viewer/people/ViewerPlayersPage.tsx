@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerPlayers } from '../../../api/client'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
@@ -50,6 +50,8 @@ const labels = {
   sortOvr: ['Veřejné OVR sestupně', 'Public OVR descending'],
   sortAge: ['Věk sestupně', 'Age descending'],
   clear: ['Vymazat filtry', 'Clear filters'],
+  unknownFilter: ['Neznámá hodnota', 'Unknown value'],
+  invalidFilters: ['Odkaz obsahuje neplatný nebo nedostupný filtr. Uprav jej nebo vymaž filtry.', 'The link contains an invalid or unavailable filter. Correct or clear the filters.'],
   table: ['Uložený seznam hráčů', 'Saved player directory'],
   player: ['Hráč', 'Player'],
   id: ['ID hráče', 'Player ID'],
@@ -82,11 +84,33 @@ const defaultFilters: PlayerDirectoryFilters = {
   search: '', status: 'all', origin: 'all', country: 'all', sort: 'name'
 }
 
-function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branchId: string; t: Copy }): JSX.Element {
-  const [filters, setFilters] = useState<PlayerDirectoryFilters>(defaultFilters)
+const PLAYER_URL_KEYS: Record<keyof PlayerDirectoryFilters, string> = {
+  search: 'vpQ', status: 'vpStatus', origin: 'vpOrigin',
+  country: 'vpCountry', sort: 'vpSort'
+}
+const PLAYER_URL_VALUES = Object.values(PLAYER_URL_KEYS)
+
+function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
+}): JSX.Element {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeParams = ignoreUrlFilters ? new URLSearchParams() : searchParams
+  const filters: PlayerDirectoryFilters = {
+    search: activeParams.get(PLAYER_URL_KEYS.search) ?? '',
+    status: (activeParams.get(PLAYER_URL_KEYS.status) ?? 'all') as PlayerStatusFilter,
+    origin: (activeParams.get(PLAYER_URL_KEYS.origin) ?? 'all') as PlayerOriginFilter,
+    country: activeParams.get(PLAYER_URL_KEYS.country) ?? 'all',
+    sort: (activeParams.get(PLAYER_URL_KEYS.sort) ?? 'name') as PlayerDirectorySort
+  }
   const [page, setPage] = useState(1)
   const [jump, setJump] = useState('')
   const [badJump, setBadJump] = useState(false)
+
+  useEffect(() => {
+    setPage(1)
+    setJump('')
+    setBadJump(false)
+  }, [filters.search, filters.status, filters.origin, filters.country, filters.sort])
   const query = useQuery({
     queryKey: ['viewer-players-hub-canonical', runId, branchId],
     queryFn: () => getViewerPlayers(runId),
@@ -96,8 +120,26 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
   function movePage(to: number): void {
     setPage(to); setJump(''); setBadJump(false)
   }
-  function changeFilter<K extends keyof PlayerDirectoryFilters>(key: K, value: PlayerDirectoryFilters[K]): void {
-    setFilters(current => ({ ...current, [key]: value }))
+  function changeFilter<K extends keyof PlayerDirectoryFilters>(
+    key: K, value: PlayerDirectoryFilters[K]
+  ): void {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      // A stale URL selected under a different Run must not survive a source switch.
+      if (ignoreUrlFilters) PLAYER_URL_VALUES.forEach(name => next.delete(name))
+      if (value === defaultFilters[key]) next.delete(PLAYER_URL_KEYS[key])
+      else next.set(PLAYER_URL_KEYS[key], value)
+      return next
+    }, { replace: key === 'search' })
+    movePage(1)
+  }
+
+  function clearFilters(): void {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      PLAYER_URL_VALUES.forEach(key => next.delete(key))
+      return next
+    })
     movePage(1)
   }
   if (query.isPending || query.isFetching) return <p role="status" className="status">{t.loading}</p>
@@ -109,7 +151,13 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
     <button type="button" onClick={() => void query.refetch()}>{t.retry}</button></div>
 
   const countries = playerDirectoryCountries(source)
-  const found = filteredPlayerDirectory(source, filters)
+  const invalidStatus = !['all', 'active', 'retired'].includes(filters.status)
+  const invalidOrigin = !['all', 'initial_world', 'run_prospect'].includes(filters.origin)
+  const invalidCountry = filters.country !== 'all' && !countries.includes(filters.country)
+  const invalidSort = !['name', 'public_ovr', 'age'].includes(filters.sort)
+  const invalidFilters = invalidStatus || invalidOrigin || invalidCountry || invalidSort
+  // Reject unsupported or stale historical selectors; never pretend the link meant All.
+  const found = invalidFilters ? [] : filteredPlayerDirectory(source, filters)
   const pages = Math.ceil(found.length / PLAYER_DIRECTORY_PAGE_SIZE)
   const currentPage = pages ? Math.min(page, pages) : 0
   const start = currentPage ? (currentPage - 1) * PLAYER_DIRECTORY_PAGE_SIZE : 0
@@ -133,6 +181,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
       </dl>
       {source.player_count === 0 ? <p className="empty-state">{t.noPlayers}</p> : (
         <>
+          {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
           <div>
             <label htmlFor="player-directory-search">{t.search}</label>
             <input id="player-directory-search" type="search" value={filters.search}
@@ -142,6 +191,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
             <label htmlFor="player-directory-status">{t.status}</label>
             <select id="player-directory-status" value={filters.status}
               onChange={event => changeFilter('status', event.target.value as PlayerStatusFilter)}>
+              {invalidStatus ? <option value={filters.status}>{t.unknownFilter}: {filters.status}</option> : null}
               <option value="all">{t.all}</option>
               <option value="active">{t.active}</option>
               <option value="retired">{t.retired}</option>
@@ -151,6 +201,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
             <label htmlFor="player-directory-origin">{t.origin}</label>
             <select id="player-directory-origin" value={filters.origin}
               onChange={event => changeFilter('origin', event.target.value as PlayerOriginFilter)}>
+              {invalidOrigin ? <option value={filters.origin}>{t.unknownFilter}: {filters.origin}</option> : null}
               <option value="all">{t.all}</option>
               <option value="initial_world">{t.initial}</option>
               <option value="run_prospect">{t.prospect}</option>
@@ -160,6 +211,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
             <label htmlFor="player-directory-country">{t.country}</label>
             <select id="player-directory-country" value={filters.country}
               onChange={event => changeFilter('country', event.target.value)}>
+              {invalidCountry ? <option value={filters.country}>{t.unknownFilter}: {filters.country}</option> : null}
               <option value="all">{t.countriesAll}</option>
               {countries.map(country => <option key={country} value={country}>{country}</option>)}
             </select>
@@ -168,11 +220,12 @@ function PlayerDirectoryForBranch({ runId, branchId, t }: { runId: string; branc
             <label htmlFor="player-directory-sort">{t.sort}</label>
             <select id="player-directory-sort" value={filters.sort}
               onChange={event => changeFilter('sort', event.target.value as PlayerDirectorySort)}>
+              {invalidSort ? <option value={filters.sort}>{t.unknownFilter}: {filters.sort}</option> : null}
               <option value="name">{t.sortName}</option>
               <option value="public_ovr">{t.sortOvr}</option>
               <option value="age">{t.sortAge}</option>
             </select>
-            <button type="button" onClick={() => { setFilters(defaultFilters); movePage(1) }}>{t.clear}</button>
+            <button type="button" onClick={clearFilters}>{t.clear}</button>
           </div>
           {found.length === 0 ? <p className="empty-state">{t.noMatch}</p> :
             <div className="table-wrap">
@@ -228,6 +281,21 @@ export function ViewerPlayersPage(): JSX.Element {
   const t = copyFor(language)
   const context = useViewerOfficialRunContext(runId)
   const branchId = playerViewerBranch(context.data, runId)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const currentSource = branchId && !context.isPending && !context.isFetching && !context.isError
+    ? JSON.stringify([runId, branchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(currentSource && previousSource.current && currentSource !== previousSource.current)
+
+  useEffect(() => {
+    if (!currentSource) return
+    if (sourceChanged) {
+      const next = new URLSearchParams(searchParams)
+      PLAYER_URL_VALUES.forEach(key => next.delete(key))
+      if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }
+    previousSource.current = currentSource
+  }, [currentSource, sourceChanged, searchParams, setSearchParams])
 
   return (
     <section className="panel viewer-shell-page">
@@ -241,7 +309,7 @@ export function ViewerPlayersPage(): JSX.Element {
           !branchId ? <div role="alert"><p className="error">{t.invalidContext}</p>
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
           <PlayerDirectoryForBranch key={JSON.stringify([runId, branchId])}
-            runId={runId} branchId={branchId} t={t} />
+            runId={runId} branchId={branchId} t={t} ignoreUrlFilters={sourceChanged} />
         }
       </article>
     </section>

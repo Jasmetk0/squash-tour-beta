@@ -84,7 +84,7 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
   // their Saved HEAD. A bookmark may only request a subset of that exact source.
   const baseline = baselineQuery.isSuccess && !baselineQuery.isFetching
     ? verifiedViewerSignedTourRecords(baselineQuery.data, runId, branchId, initial) : null
-  const link = readSignedRecordsDeepLink(
+  const deepLink = readSignedRecordsDeepLink(
     params, runId, branchId, baseline?.saved_head_revision_id ?? null,
     baseline?.source_tour_fingerprint ?? null
   )
@@ -93,26 +93,26 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
   const target = seasonDraft === 'latest'
     ? baseline?.as_of_season_index ?? -1 : Number(seasonDraft)
   const fromOptions = seasonOptions.filter(s => s <= target)
-  const selected = link.kind === 'selection'
-    && seasonOptions.includes(link.filters.asOfSeason ?? -1)
-    && seasonOptions.includes(link.filters.fromSeason)
-    && link.filters.fromSeason <= (link.filters.asOfSeason ?? -1)
-    ? link.filters : null
+  const selected = deepLink.kind === 'selection'
+    && seasonOptions.includes(deepLink.filters.asOfSeason ?? -1)
+    && seasonOptions.includes(deepLink.filters.fromSeason)
+    && deepLink.filters.fromSeason <= (deepLink.filters.asOfSeason ?? -1)
+    ? deepLink.filters : null
   // URL changes (Back/Forward) synchronise the form. Until the form matches,
   // never claim that the stale fetched report represents the edited selection.
   useEffect(() => {
-    setSeasonDraft(link.kind === 'selection' ? String(link.filters.asOfSeason) : 'latest')
-    setStartDraft(link.kind === 'selection' ? String(link.filters.fromSeason) : '0')
-    setCountryDraft(link.kind === 'selection' ? link.filters.countryCode ?? '' : '')
+    setSeasonDraft(deepLink.kind === 'selection' ? String(deepLink.filters.asOfSeason) : 'latest')
+    setStartDraft(deepLink.kind === 'selection' ? String(deepLink.filters.fromSeason) : '0')
+    setCountryDraft(deepLink.kind === 'selection' ? deepLink.filters.countryCode ?? '' : '')
     setFilterError(false)
   }, [params.toString(), runId, branchId,
     baseline?.saved_head_revision_id, baseline?.source_tour_fingerprint])
-  const draftMatches = link.kind === 'selection'
-    ? seasonDraft === String(link.filters.asOfSeason) &&
-      startDraft === String(link.filters.fromSeason) &&
-      countryDraft === (link.filters.countryCode ?? '')
+  const draftMatches = deepLink.kind === 'selection'
+    ? seasonDraft === String(deepLink.filters.asOfSeason) &&
+      startDraft === String(deepLink.filters.fromSeason) &&
+      countryDraft === (deepLink.filters.countryCode ?? '')
     : seasonDraft === 'latest' && startDraft === '0' && countryDraft === ''
-  const invalidLink = link.kind === 'invalid' || (link.kind === 'selection' && !selected)
+  const invalidLink = deepLink.kind === 'invalid' || (deepLink.kind === 'selection' && !selected)
   const activeFilters: ViewerSignedRecordsFilters | null = !invalidLink ? selected : null
   const selectedQuery = useQuery({
     queryKey: ['viewer-signed-tour-records', runId, branchId, 'selection',

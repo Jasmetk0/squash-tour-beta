@@ -17,7 +17,10 @@ from itertools import count
 from pathlib import Path
 from urllib.parse import quote, urlsplit
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
+REPO_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO_ROOT))
+# Existing API test fixtures deliberately use flat "from test_*" imports.
+sys.path.insert(0, str(REPO_ROOT / "tests" / "api"))
 API_PORT, WEB_PORT = 8037, 5173
 
 

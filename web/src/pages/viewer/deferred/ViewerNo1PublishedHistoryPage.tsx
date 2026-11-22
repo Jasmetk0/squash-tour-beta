@@ -106,8 +106,9 @@ function PublishedLeader({ metadata, runId, branchId, t }: {
     retry: false, refetchOnWindowFocus: false,
   })
   if (metadata.row_count === 0) return <span>{t('emptyRanking')}</span>
-  const proven = detail.data && !detail.isFetching &&
-    verifiedNo1Publication(detail.data, metadata, runId, branchId)
+  const proven = detail.data && !detail.isFetching
+    ? verifiedNo1Publication(detail.data, metadata, runId, branchId)
+    : null
   const first = proven?.rows[0]
 
   return <>

@@ -262,7 +262,7 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(within(table).getByText('3-2')).toBeInTheDocument()
     await user.type(screen.getByLabelText('Hledat ID zápasu, hráče nebo skóre'), 'nobody')
     expect(screen.getByText('Vyhledávání neodpovídá žádný zápas.')).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Vymazat filtry' }).last())
+    await user.click(screen.getAllByRole('button', { name: 'Vymazat filtry' }).at(-1)!)
     expect(within(table).getAllByRole('row')).toHaveLength(3)
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
   })

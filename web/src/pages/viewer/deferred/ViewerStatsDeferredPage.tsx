@@ -1,6 +1,7 @@
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerPublishedTitleLeadersPage } from './ViewerPublishedTitleLeadersPage'
 import { ViewerPublishedTournamentStatsPage } from './ViewerPublishedTournamentStatsPage'
+import { ViewerSavedCountryStatsPage } from './ViewerSavedCountryStatsPage'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadataRender'
@@ -17,6 +18,7 @@ export function ViewerStatsDeferredPage({ kind }: {
 }): JSX.Element {
   if (kind === 'title-leaders') return <ViewerPublishedTitleLeadersPage />
   if (kind === 'tournament-stats') return <ViewerPublishedTournamentStatsPage />
+  if (kind === 'country-stats') return <ViewerSavedCountryStatsPage />
   return <ViewerOtherStatsDeferredPage kind={kind} />
 }
 

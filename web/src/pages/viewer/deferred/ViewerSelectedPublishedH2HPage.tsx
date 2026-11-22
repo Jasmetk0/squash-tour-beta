@@ -63,6 +63,21 @@ const copy = {
   records: ['Celkem záznamů zápasů ve zdrojích', 'All match records in selected sources'],
   encounters: ['Vzájemné výsledkové záznamy', 'H2H result records'],
   wins: ['Vítězství v záznamech', 'Wins in records'],
+  playerStats: ['Zápasové statistiky hráčů z vybraných publikací', 'Player outcomes in selected publications'],
+  playerStatsScope: [
+    'Jen publikované výsledkové záznamy vybraných turnajů. Výhry a prohry vyžadují uvedeného soupeře; skreč či kontumace však mohou být stále výsledkem. Záznam bez soupeře se eviduje zvlášť. Nulová účast znamená pouze nepřítomnost v těchto zdrojích.',
+    'Only published outcomes in selected tournaments. Wins and losses require a named opponent, but can still be retirements or walkovers. Outcomes without a named opponent are reported separately. Zero appearances means absence from these selected sources only.',
+  ],
+  selectedEntries: ['Záznam v soupiskách turnajů', 'Listed in selected tournament results'],
+  recordedWins: ['Výhry se soupeřem', 'Wins with named opponent'],
+  recordedLosses: ['Prohry se soupeřem', 'Losses with named opponent'],
+  unopposed: ['Výsledky bez uvedeného soupeře', 'Outcomes without named opponent'],
+  opponents: ['Různých uvedených soupeřů', 'Distinct named opponents'],
+  sourceAbsent: ['Hráč se nevyskytuje v soupiskách zvolených publikací.', 'Player does not appear in the selected source player lists.'],
+  playerEventTable: ['Výsledky hráčů podle vybraného turnaje', 'Player outcome records by selected event'],
+  listed: ['Na soupisce zdroje', 'Listed in source'],
+  yes: ['Ano', 'Yes'],
+  no: ['Ne', 'No'],
   zero: ['Ve vybraných publikacích nebyl nalezen žádný vzájemný výsledek. To není důkaz nulové bilance za kariéru.', 'No H2H outcomes were found in the selected publications. This does not prove a zero career record.'],
   table: ['Konkrétní vzájemné zápasy', 'Exact H2H outcome records'],
   event: ['Turnaj', 'Tournament'],
@@ -118,6 +133,44 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
     </dl>
     <p><Link to={viewerPlayerProfilePath(runId, report.playerA)}>{report.playerA}</Link>
       {' · '}<Link to={viewerPlayerProfilePath(runId, report.playerB)}>{report.playerB}</Link></p>
+    <section aria-label={t('playerStats')}>
+      <h4>{t('playerStats')}</h4>
+      <p className="subtitle">{t('playerStatsScope')}</p>
+      {([report.playerAStats, report.playerBStats]).map(stats =>
+        <div key={stats.playerId} className="viewer-active-run-card">
+          <h5>{stats.playerId}</h5>
+          <dl className="metadata-list viewer-metadata-list">
+            <div><dt>{t('selectedEntries')}</dt><dd>{stats.listedInEvents}/{report.eventCount}</dd></div>
+            <div><dt>{t('recordedWins')}</dt><dd>{stats.winsAgainstNamedOpponents}</dd></div>
+            <div><dt>{t('recordedLosses')}</dt><dd>{stats.lossesAgainstNamedOpponents}</dd></div>
+            <div><dt>{t('unopposed')}</dt><dd>{stats.noOpponentOutcomes}</dd></div>
+            <div><dt>{t('opponents')}</dt><dd>{stats.uniqueNamedOpponents}</dd></div>
+          </dl>
+          {stats.listedInEvents === 0 ? <p className="empty-state">{t('sourceAbsent')}</p> : null}
+        </div>)}
+      <div className="table-wrap">
+        <table aria-label={t('playerEventTable')}>
+          <thead><tr>
+            <th scope="col">{t('playerA')} / {t('playerB')}</th>
+            <th scope="col">{t('event')}</th>
+            <th scope="col">{t('week')}</th>
+            <th scope="col">{t('listed')}</th>
+            <th scope="col">{t('recordedWins')}</th>
+            <th scope="col">{t('recordedLosses')}</th>
+            <th scope="col">{t('unopposed')}</th>
+          </tr></thead>
+          <tbody>{([report.playerAStats, report.playerBStats]).flatMap(stats =>
+            stats.byEvent.map(row => <tr key={stats.playerId + ':' + row.eventId}>
+              <td>{stats.playerId}</td>
+              <td><Link to={viewerTournamentDetailPath(runId, row.eventId)}>
+                {row.eventName || row.eventId}</Link> ({row.season})</td>
+              <td>W{row.week}</td>
+              <td>{row.listedAsParticipant ? t('yes') : t('no')}</td>
+              <td>{row.wins}</td><td>{row.losses}</td><td>{row.noOpponentOutcomes}</td>
+            </tr>))}</tbody>
+        </table>
+      </div>
+    </section>
     {report.encounters.length === 0
       ? <p className="empty-state">{t('zero')}</p> :
       <div className="table-wrap">

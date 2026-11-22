@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LanguageProvider } from '../../i18n/LanguageContext'
 
 import { VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY } from '../../viewer/activeProductRun'
 import {
@@ -24,7 +25,7 @@ const api = vi.hoisted(() => ({
 vi.mock('../../api/client', () => api)
 
 function renderRunBrowser(): void {
-  renderWithViewerProviders(<ViewerRunBrowserPage />)
+  renderWithViewerProviders(<LanguageProvider><ViewerRunBrowserPage /></LanguageProvider>)
 }
 
 function runFixture(overrides: Record<string, unknown> = {}) {
@@ -52,6 +53,7 @@ function runFixture(overrides: Record<string, unknown> = {}) {
 describe('ViewerRunBrowserPage Product Run read model', () => {
   beforeEach(() => {
     clearViewerStorage()
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.clearAllMocks()
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
   })

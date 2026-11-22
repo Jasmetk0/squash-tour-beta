@@ -101,3 +101,23 @@ python scripts/measure_cold_tour_read.py before-restart.sqlite before-restart.js
 
 Run cases one at a time on an otherwise idle machine, and repeat each at
 least twice.
+
+**Comparing machines.** The same parameters produce different Saved content
+under different Python versions and operating systems. On 22 November 2026
+the case `--players 8 --width 12 --weeks 1` gave:
+
+| environment | identity digest | nodes |
+|---|---|---:|
+| Linux, Python 3.11.18 | `5a1d113d…` | 1,407 |
+| Linux, Python 3.12.3 | `a0c91271…` | 1,375 |
+| Windows Server 2025, Python 3.12.10 | `f3487037…` | 1,397 |
+
+Each environment repeats its own result exactly. On Linux this held in two
+runs per version, with `PYTHONHASHSEED` 1 and 2 on 3.12.
+
+A Run built under Python 3.11 opened under 3.12 with an identical inspection,
+and the reverse also held.
+
+Master keeps exact Match Engine determinism open (version 26 note).
+Measurements from different machines therefore compare workloads of the same
+shape, not identical simulations.

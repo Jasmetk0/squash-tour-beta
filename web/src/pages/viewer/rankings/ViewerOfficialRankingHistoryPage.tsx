@@ -1,6 +1,6 @@
-import { useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { listViewerOfficialRankingHistory } from '../../../api/client'
 import type { ViewerOfficialRankingHistoryItem } from '../../../api/types'
@@ -56,7 +56,9 @@ const translations = {
   page: ["Stránka", "Page"],
   jumpLabel: ["Přejít na stránku", "Jump to page"],
   jump: ["Přejít", "Go"],
-  invalidJump: ["Zadej celé číslo existující stránky.", "Enter an existing page number as a positive integer."]
+  invalidJump: ["Zadej celé číslo existující stránky.", "Enter an existing page number as a positive integer."],
+  unknownFilter: ["Neznámá hodnota filtru", "Unknown filter value"],
+  invalidFilters: ["Odkaz obsahuje neplatný nebo nedostupný filtr. Oprav ho nebo vymaž filtry.", "The URL contains an invalid or unavailable filter. Correct it or clear the filters."]
 } as const
 type Text = Record<keyof typeof translations, string>
 function copyForLanguage(language: Language): Text {
@@ -66,20 +68,65 @@ function copyForLanguage(language: Language): Text {
   ) as Text
 }
 
-function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
+// Ranking history owns only these keys; unrelated query parameters are preserved.
+const RANKING_FILTER_KEYS = ['rhSeason', 'rhBestN', 'rhSearch', 'rhOrder'] as const
+type RankingFilterKey = typeof RANKING_FILTER_KEYS[number]
+
+function rankingFilterInteger(raw: string, allowZero: boolean): number | null {
+  if (!/^(0|[1-9][0-9]*)$/.test(raw)) return null
+  const value = Number(raw)
+  return Number.isSafeInteger(value) && (allowZero || value > 0) ? value : null
+}
+
+function RankingHistoryForSource({ productRunId, viewerBranchId, text: t, ignoreUrlFilters }: {
   productRunId: string
   viewerBranchId: string
   text: Text
+  ignoreUrlFilters: boolean
 }): JSX.Element {
-  // This child is keyed by BOTH source identities. Its pagination/filter state
-  // unmounts synchronously on source change, before any cached data can render.
-  const [season, setSeason] = useState('')
-  const [bestN, setBestN] = useState('')
-  const [search, setSearch] = useState('')
-  const [order, setOrder] = useState<RankingHistoryOrder>('newest')
+  // Keyed by both identities; local pagination never crosses a Run/Branch.
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeParams = ignoreUrlFilters ? new URLSearchParams() : searchParams
+  const season = activeParams.get('rhSeason') ?? ''
+  const bestN = activeParams.get('rhBestN') ?? ''
+  const search = activeParams.get('rhSearch') ?? ''
+  const rawOrder = activeParams.get('rhOrder') ?? ''
+  const order: RankingHistoryOrder = rawOrder === 'oldest' ? 'oldest' : 'newest'
+  const orderInvalid = rawOrder !== '' && rawOrder !== 'newest' && rawOrder !== 'oldest'
   const [page, setPage] = useState(1)
   const [jump, setJump] = useState('')
   const [jumpError, setJumpError] = useState(false)
+
+  // Browser Back/Forward and direct URL changes reset only local pagination.
+  useEffect(() => {
+    setPage(1)
+    setJump('')
+    setJumpError(false)
+  }, [season, bestN, search, rawOrder])
+
+  function changeUrlFilter(key: RankingFilterKey, value: string, replace = false): void {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) RANKING_FILTER_KEYS.forEach((name) => next.delete(name))
+      if (value !== '' && !(key === 'rhOrder' && value === 'newest')) next.set(key, value)
+      else next.delete(key)
+      return next
+    }, { replace })
+    setPage(1)
+    setJump('')
+    setJumpError(false)
+  }
+
+  function clearUrlFilters(): void {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      RANKING_FILTER_KEYS.forEach((name) => next.delete(name))
+      return next
+    })
+    setPage(1)
+    setJump('')
+    setJumpError(false)
+  }
 
   const query = useQuery({
     queryKey: ['viewer-official-ranking-history', productRunId, viewerBranchId],
@@ -94,21 +141,18 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
   const publications = history?.publications ?? []
   const seasons = useMemo(() => [...new Set(publications.map((item) => item.season_index))].sort((a, b) => a - b), [publications])
   const bestValues = useMemo(() => [...new Set(publications.map((item) => item.best_n))].sort((a, b) => a - b), [publications])
+  const seasonInvalid = season !== '' && (rankingFilterInteger(season, true) === null || !seasons.includes(Number(season)))
+  const bestInvalid = bestN !== '' && (rankingFilterInteger(bestN, false) === null || !bestValues.includes(Number(bestN)))
+  const filtersInvalid = seasonInvalid || bestInvalid || orderInvalid
   const filtered = useMemo(
-    () => filterRankingHistory(publications, { season, bestN, search, order }),
-    [publications, season, bestN, search, order]
+    () => filtersInvalid ? [] : filterRankingHistory(publications, { season, bestN, search, order }),
+    [publications, season, bestN, search, order, filtersInvalid]
   )
   const pages = rankingHistoryPageCount(filtered.length)
   const currentPage = pages > 0 ? Math.min(page, pages) : 0
   const from = currentPage ? (currentPage - 1) * RANKING_HISTORY_PAGE_SIZE : 0
   const shown: ViewerOfficialRankingHistoryItem[] = filtered.slice(from, from + RANKING_HISTORY_PAGE_SIZE)
 
-  function changedFilters(change: () => void): void {
-    change()
-    setPage(1)
-    setJump('')
-    setJumpError(false)
-  }
   function changePage(next: number): void {
     setPage(next)
     setJump('')
@@ -139,25 +183,29 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t }: {
       <p>{t.published} {history.publication_count}</p>
       <div className="viewer-filters">
         <label htmlFor="ranking-history-season">{t.season}</label>
-        <select id="ranking-history-season" value={season} onChange={(event) => changedFilters(() => setSeason(event.target.value))}>
+        <select id="ranking-history-season" value={season} onChange={(event) => changeUrlFilter('rhSeason', event.target.value)}>
           <option value="">{t.allSeasons}</option>
+          {seasonInvalid ? <option value={season}>{t.unknownFilter}: {season}</option> : null}
           {seasons.map((index) => <option key={index} value={String(index)}>{legacyRankingSeasonLabel(index)}</option>)}
         </select>
         <label htmlFor="ranking-history-best">{t.bestN}</label>
-        <select id="ranking-history-best" value={bestN} onChange={(event) => changedFilters(() => setBestN(event.target.value))}>
+        <select id="ranking-history-best" value={bestN} onChange={(event) => changeUrlFilter('rhBestN', event.target.value)}>
           <option value="">{t.allBestN}</option>
+          {bestInvalid ? <option value={bestN}>{t.unknownFilter}: {bestN}</option> : null}
           {bestValues.map((value) => <option key={value} value={String(value)}>{value}</option>)}
         </select>
         <label htmlFor="ranking-history-search">{t.search}</label>
-        <input id="ranking-history-search" type="search" value={search} onChange={(event) => changedFilters(() => setSearch(event.target.value))} />
+        <input id="ranking-history-search" type="search" value={search} onChange={(event) => changeUrlFilter('rhSearch', event.target.value, true)} />
         <p>{t.searchHint}</p>
         <label htmlFor="ranking-history-order">{t.sort}</label>
-        <select id="ranking-history-order" value={order} onChange={(event) => changedFilters(() => setOrder(event.target.value as RankingHistoryOrder))}>
+        <select id="ranking-history-order" value={rawOrder || 'newest'} onChange={(event) => changeUrlFilter('rhOrder', event.target.value)}>
+          {orderInvalid ? <option value={rawOrder}>{t.unknownFilter}: {rawOrder}</option> : null}
           <option value="newest">{t.newest}</option>
           <option value="oldest">{t.oldest}</option>
         </select>
-        <button type="button" onClick={() => changedFilters(() => { setSeason(''); setBestN(''); setSearch(''); setOrder('newest') })}>{t.clear}</button>
+        <button type="button" onClick={clearUrlFilters}>{t.clear}</button>
       </div>
+      {filtersInvalid ? <p role="alert">{t.invalidFilters}</p> : null}
       {filtered.length === 0 ? <EmptyState message={t.none} /> : (
         <table aria-label={t.table}>
           <thead><tr><th scope="col">{t.season}</th><th scope="col">{t.week}</th><th scope="col">{t.ordinal}</th><th scope="col">{t.policy}</th><th scope="col">{t.players}</th><th scope="col">Best N</th><th scope="col">{t.publication}</th></tr></thead>
@@ -200,12 +248,28 @@ export function ViewerOfficialRankingHistoryPage(): JSX.Element {
   const { language } = useLanguage()
   const t = copyForLanguage(language)
   const { productRunId, officialBranchId, officialContext, isLoading, isStale } = useViewerProductRunRouteContext()
+  const [searchParams, setSearchParams] = useSearchParams()
   const validRoute = Boolean(
     productRunId?.trim() && officialBranchId?.trim() &&
     officialContext?.product_run_id === productRunId &&
     officialContext?.official_branch_id === officialBranchId &&
     !isLoading && !isStale
   )
+  const sourceKey = validRoute ? JSON.stringify([productRunId, officialBranchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+
+  // A filter link is valid on first mount, but must not carry state across an
+  // in-app Run or Viewer Branch switch. Clearing is URL-only and never a GET/write.
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged) {
+      const next = new URLSearchParams(searchParams)
+      RANKING_FILTER_KEYS.forEach((name) => next.delete(name))
+      if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }
+    previousSource.current = sourceKey
+  }, [sourceKey, sourceChanged, searchParams, setSearchParams])
 
   return (
     <section className="panel">
@@ -217,6 +281,7 @@ export function ViewerOfficialRankingHistoryPage(): JSX.Element {
             productRunId={productRunId}
             viewerBranchId={officialBranchId}
             text={t}
+            ignoreUrlFilters={sourceChanged}
           />
         ) : <p className="status" role="status">{t.context}</p>}
       </SectionCard>

@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
+import { ViewerSelectedPublishedH2HPage } from './ViewerSelectedPublishedH2HPage'
 
 import { getViewerPlayers } from '../../../api/client'
 import {
@@ -29,9 +30,16 @@ import {
 } from './ViewerDeferredSourceMetadataRender'
 import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries'
 
-export function ViewerH2HSubroutePage({
-  kind,
-}: {
+export function ViewerH2HSubroutePage({ kind }: {
+  kind: ViewerH2HSubrouteKind
+}): JSX.Element {
+  if (kind === 'rivalries') return <ViewerSelectedPublishedH2HPage />
+  return <DeferredH2HSourceMetadata kind={kind} />
+}
+
+// The two global all-time H2H leaderboards remain deferred without a
+// dedicated complete match-history read model; never invent a worldwide total.
+function DeferredH2HSourceMetadata({ kind }: {
   kind: ViewerH2HSubrouteKind
 }): JSX.Element {
   const productRunId = useActiveViewerProductRunId()

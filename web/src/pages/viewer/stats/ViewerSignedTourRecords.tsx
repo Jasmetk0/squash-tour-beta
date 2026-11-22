@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerOfficialRunContext } from '../../../api/client'
 import { getViewerSignedTourRecords, type ViewerSignedRecordsFilters } from '../../../api/viewerSignedTourRecords'
@@ -8,6 +8,7 @@ import type { TourCareerRecords } from '../../../api/calendarTour'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import { viewerCountryProfilePath, viewerPlayerProfilePath } from '../../../viewer/viewerRoutes'
 import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecordsModel'
+import { clearSignedRecordsDeepLink, readSignedRecordsDeepLink, writeSignedRecordsDeepLink } from './viewerSignedRecordsDeepLinks'
 
 const words = {
   title: ['Historické rekordy dokončených sezon', 'Records from completed seasons'],
@@ -50,7 +51,9 @@ const words = {
   established: ['Nový rekord', 'Established'],
   improved: ['Zlepšení rekordu', 'Improved'],
   tied: ['Vyrovnání / spoludržitelé', 'Tied / co-holders'],
-  scopeNote: ['Tato evidence pokrývá tituly, finále a přidělené body v nativní Tour; není úplným katalogem všech rekordů.', 'This covers native Tour titles, finals and awarded points; it is not the complete record catalog.']
+  scopeNote: ['Tato evidence pokrývá tituly, finále a přidělené body v nativní Tour; není úplným katalogem všech rekordů.', 'This covers native Tour titles, finals and awarded points; it is not the complete record catalog.'],
+  invalidLink: ['Odkaz na rekordy neodpovídá zvolenému Runu, uložené revizi nebo dokončeným sezonám. Historické záznamy se nezobrazují.', 'The records link does not match this Run, Saved revision or completed seasons. No historical records are displayed.'],
+  edited: ['Výběr filtrů byl změněn. Pro načtení záznamů potvrď nové období.', 'Filters were edited. Submit the new period to load records.']
 } as const
 
 function copy(language: Language) {
@@ -64,11 +67,11 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
   runId: string; branchId: string; language: Language
 }): JSX.Element {
   const t = copy(language)
+  const [params, setParams] = useSearchParams()
   const [seasonDraft, setSeasonDraft] = useState('latest')
   const [startDraft, setStartDraft] = useState('0')
   const [countryDraft, setCountryDraft] = useState('')
   const [filterError, setFilterError] = useState(false)
-  const [applied, setApplied] = useState<ViewerSignedRecordsFilters | null>(null)
 
   const baselineQuery = useQuery({
     queryKey: ['viewer-signed-tour-records', runId, branchId, 'baseline'],
@@ -77,12 +80,46 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true
   })
+  // The baseline is the sole source of truth for the completed seasons and
+  // their Saved HEAD. A bookmark may only request a subset of that exact source.
+  const baseline = baselineQuery.isSuccess && !baselineQuery.isFetching
+    ? verifiedViewerSignedTourRecords(baselineQuery.data, runId, branchId, initial) : null
+  const link = readSignedRecordsDeepLink(
+    params, runId, branchId, baseline?.saved_head_revision_id ?? null,
+    baseline?.source_tour_fingerprint ?? null
+  )
+  const seasonOptions = baseline?.completed_seasons ?? []
+  const labels = new Map(baseline?.source_seasons.map(s => [s.season_index, s.season_label]) ?? [])
+  const target = seasonDraft === 'latest'
+    ? baseline?.as_of_season_index ?? -1 : Number(seasonDraft)
+  const fromOptions = seasonOptions.filter(s => s <= target)
+  const selected = link.kind === 'selection'
+    && seasonOptions.includes(link.filters.asOfSeason ?? -1)
+    && seasonOptions.includes(link.filters.fromSeason)
+    && link.filters.fromSeason <= (link.filters.asOfSeason ?? -1)
+    ? link.filters : null
+  // URL changes (Back/Forward) synchronise the form. Until the form matches,
+  // never claim that the stale fetched report represents the edited selection.
+  useEffect(() => {
+    setSeasonDraft(link.kind === 'selection' ? String(link.filters.asOfSeason) : 'latest')
+    setStartDraft(link.kind === 'selection' ? String(link.filters.fromSeason) : '0')
+    setCountryDraft(link.kind === 'selection' ? link.filters.countryCode ?? '' : '')
+    setFilterError(false)
+  }, [params.toString(), runId, branchId,
+    baseline?.saved_head_revision_id, baseline?.source_tour_fingerprint])
+  const draftMatches = link.kind === 'selection'
+    ? seasonDraft === String(link.filters.asOfSeason) &&
+      startDraft === String(link.filters.fromSeason) &&
+      countryDraft === (link.filters.countryCode ?? '')
+    : seasonDraft === 'latest' && startDraft === '0' && countryDraft === ''
+  const invalidLink = link.kind === 'invalid' || (link.kind === 'selection' && !selected)
+  const activeFilters: ViewerSignedRecordsFilters | null = !invalidLink ? selected : null
   const selectedQuery = useQuery({
     queryKey: ['viewer-signed-tour-records', runId, branchId, 'selection',
-      baselineQuery.data?.saved_head_revision_id, baselineQuery.data?.source_tour_fingerprint,
-      applied?.asOfSeason, applied?.fromSeason, applied?.countryCode],
-    queryFn: ({ signal }) => getViewerSignedTourRecords(runId, applied ?? initial, signal),
-    enabled: applied !== null,
+      baseline?.saved_head_revision_id, baseline?.source_tour_fingerprint,
+      activeFilters?.asOfSeason, activeFilters?.fromSeason, activeFilters?.countryCode],
+    queryFn: ({ signal }) => getViewerSignedTourRecords(runId, activeFilters!, signal),
+    enabled: Boolean(baseline && activeFilters),
     retry: false,
     refetchOnMount: 'always',
     refetchOnWindowFocus: true
@@ -93,22 +130,17 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
     <p className="error">{t('unavailable')}</p>
     <button type="button" onClick={() => void baselineQuery.refetch()}>{t('retry')}</button>
   </div>
-
-  const baseline = verifiedViewerSignedTourRecords(baselineQuery.data, runId, branchId, initial)
   if (!baseline) return <div role="alert">
     <p className="error">{t('invalid')}</p>
     <button type="button" onClick={() => void baselineQuery.refetch()}>{t('retry')}</button>
   </div>
 
-  const seasonOptions = baseline.completed_seasons
-  const labels = new Map(baseline.source_seasons.map(s => [s.season_index, s.season_label]))
-  const target = seasonDraft === 'latest' ? baseline.as_of_season_index : Number(seasonDraft)
-  const fromOptions = seasonOptions.filter(s => s <= target)
-  const reportQuery = applied ? selectedQuery : baselineQuery
-  const filters = applied ?? initial
-  const candidate = reportQuery.isSuccess
-    ? verifiedViewerSignedTourRecords(reportQuery.data, runId, branchId, filters)
-    : null
+  const reportQuery = selected ? selectedQuery : baselineQuery
+  const filters = selected ?? initial
+  const candidate = !invalidLink && draftMatches &&
+    reportQuery.isSuccess && !reportQuery.isFetching
+      ? verifiedViewerSignedTourRecords(reportQuery.data, runId, branchId, filters)
+      : null
   // A filtered read and its season inventory must name the same Saved source.
   // Same Branch alone does not fence a newer Save or a late cached response.
   const report = candidate?.saved_head_revision_id === baseline.saved_head_revision_id
@@ -124,14 +156,18 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
       return
     }
     setFilterError(false)
-    setApplied({ asOfSeason: target, fromSeason: start, countryCode: country || null })
+    setParams(previous => writeSignedRecordsDeepLink(
+      previous, runId, branchId, baseline.saved_head_revision_id,
+      baseline.source_tour_fingerprint,
+      { asOfSeason: target, fromSeason: start, countryCode: country || null }
+    ))
   }
 
   function reset(): void {
     setSeasonDraft('latest')
     setStartDraft('0')
     setCountryDraft('')
-    setApplied(null)
+    setParams(previous => clearSignedRecordsDeepLink(previous))
     setFilterError(false)
   }
 
@@ -178,7 +214,9 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
       {filterError ? <p className="error" role="alert">{t('badFilter')}</p> : null}
     </form>
 
-    {reportQuery.isPending || reportQuery.isFetching ? <p className="status" role="status">{t('loading')}</p> :
+    {invalidLink ? <p role="alert" className="error">{t('invalidLink')}</p> :
+      !draftMatches ? <p className="status" role="status">{t('edited')}</p> :
+      reportQuery.isPending || reportQuery.isFetching ? <p className="status" role="status">{t('loading')}</p> :
       reportQuery.isError ? <div role="alert"><p className="error">{t('unavailable')}</p>
         <button type="button" onClick={() => { void baselineQuery.refetch(); void reportQuery.refetch() }}>{t('retry')}</button></div> :
       !report ? <div role="alert"><p className="error">{t('invalid')}</p>

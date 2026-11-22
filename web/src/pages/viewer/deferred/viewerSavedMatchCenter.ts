@@ -32,7 +32,7 @@ const record = (n: unknown): n is Record<string, unknown> =>
   Boolean(n) && typeof n === 'object' && !Array.isArray(n)
 const exactFields = (n: Record<string, unknown>, allowed: Set<string>): boolean =>
   Object.keys(n).every(key => allowed.has(key)) &&
-  [...allowed].every(key => Object.hasOwn(n, key))
+  [...allowed].every(key => Object.prototype.hasOwnProperty.call(n, key))
 
 /**
  * Public provenance gate: the tournament must be *published* in the separately

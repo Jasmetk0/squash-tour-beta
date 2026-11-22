@@ -122,6 +122,8 @@ def _replay_fingerprint(value, *, sporting=False):
     fingerprint = _incremental_checkpoint_fingerprint(value, scope) if scope is not None and not sporting else None
     if fingerprint is None and scope is not None and not sporting:
         fingerprint = _incremental_tour_fingerprint(value, scope)
+    if fingerprint is None and scope is not None:
+        fingerprint = _incremental_result_fingerprint(value, scope, sporting)
     if fingerprint is None:
         body = value.model_dump(mode="json")
         if sporting:
@@ -300,6 +302,59 @@ def _incremental_tour_fingerprint(value, scope):
         members[name] = b'[' + b','.join(parts) + b']'
     while len(memo) > MAX_TOUR_ELEMENT_ENCODINGS:
         memo.pop(next(iter(memo)))
+    text = b'{' + b','.join(encode(key) + b':' + members[key] for key in sorted(members)) + b'}'
+    return hashlib.sha256(text).hexdigest()
+
+
+MAX_RESULT_MATCH_ENCODINGS = 4096
+
+
+def _incremental_result_fingerprint(value, scope, sporting):
+    """The SAME canonical hash of a tournament result, reusing match encodings.
+
+    The completed-tournament readers rebuild equal ``GlobalTournamentResult``
+    models for the same Edition several times in one replay; each shares the
+    very same immutable match objects. The canonical JSON is the sorted-key
+    object of the model's own ``model_dump(mode="json")`` (its historical-shape
+    serializer runs as usual), whose ``matches`` member is the array of each
+    match's own ``model_dump(mode="json")`` (exact declared element type).
+    Only those per-match encodings are reused, keyed by object identity within
+    this private replay scope; everything else is dumped and encoded freshly.
+    Any other type, field serializer or element type takes the full hash.
+    """
+    model = type(value)
+    if (model is not GlobalTournamentResult
+        or model.model_computed_fields
+        or model.__pydantic_decorators__.field_serializers):
+        return None
+    field = model.model_fields.get('matches')
+    if field is None or field.exclude is not None or field.exclude_if is not None:
+        return None
+    element_type = _tour_element_type(field)
+    matches = value.matches
+    if element_type is None or type(matches) is not tuple or any(type(item) is not element_type for item in matches):
+        return None
+
+    def encode(body):
+        return json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+
+    body = value.model_dump(mode='json', exclude={'matches'})
+    if sporting:
+        body.pop('prepared_awards', None)
+    if 'matches' in body or not set(body) <= set(model.model_fields):
+        return None
+    memo = scope.setdefault('result_match_json', {})
+    parts = []
+    for item in matches:
+        known = memo.get(id(item))
+        if known is None or known[0] is not item:
+            known = (item, encode(item.model_dump(mode='json')))
+            memo[id(item)] = known
+        parts.append(known[1])
+    while len(memo) > MAX_RESULT_MATCH_ENCODINGS:
+        memo.pop(next(iter(memo)))
+    members = {key: encode(item) for key, item in body.items()}
+    members['matches'] = b'[' + b','.join(parts) + b']'
     text = b'{' + b','.join(encode(key) + b':' + members[key] for key in sorted(members)) + b'}'
     return hashlib.sha256(text).hexdigest()
 

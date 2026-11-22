@@ -438,6 +438,49 @@ def test_incremental_checkpoint_hash_is_the_original_full_canonical_hash(tmp_pat
         assert other_root.fingerprint == expected[len(actual.events)]
 
 
+def test_tournament_result_hash_reuses_only_identical_match_encodings(tmp_path, prepared_slots_v2):
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.domain.tournaments.calendar_global_slots import (
+        GlobalTournamentResult, completed_tournaments, global_replay_projection_scope, _replay_projections,
+    )
+    from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
+    from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+    path = tmp_path / 'result-match-encodings.db'
+    copy_database(prepared_slots_v2, path)
+    with ApiServer(database_url=f'sqlite:///{path}') as server:
+        with server.app.state.runtime.repository._session_factory() as session:
+            raw = session.get(CalendarPlayerSportingCheckpointModel, ('run', 'branch')).payload_json
+    actual = parse_checkpoint_json(raw)
+    results = completed_tournaments(actual.events)
+    assert results and all(type(result) is GlobalTournamentResult for result in results)
+
+    def expected(value, sporting):
+        body = value.model_dump(mode='json')
+        if sporting:
+            body.pop('prepared_awards', None)
+        return canonical_hash(body)
+
+    # Rebuilt equal results share the very same match objects; a changed
+    # result (other matches, other awards) is a different value.
+    variants = []
+    for result in results:
+        rebuilt = GlobalTournamentResult.model_validate({key: getattr(result, key) for key in GlobalTournamentResult.model_fields})
+        assert rebuilt.matches[0] is result.matches[0]
+        variants += [result, rebuilt,
+                     result.model_copy(update={'matches': tuple(m.model_copy() for m in result.matches)}),
+                     result.model_copy(update={'prepared_awards': ()}),
+                     result.model_copy(update={'matches': result.matches[::-1]})]
+    wanted = [(value, sporting, expected(value, sporting)) for value in variants for sporting in (False, True)]
+    with global_replay_projection_scope():
+        for _ in range(2):
+            for value, sporting, fingerprint in wanted:
+                assert (value.sporting_fingerprint if sporting else value.fingerprint) == fingerprint
+        assert _replay_projections.get()['result_match_json']
+    for value, sporting, fingerprint in wanted:
+        assert (value.sporting_fingerprint if sporting else value.fingerprint) == fingerprint
+
+
 def test_replayed_tour_value_is_private_and_bound_to_complete_actual_state(tmp_path, prepared_slots):
     from sqlalchemy import text
     from beta_engine.domain.run_packages import canonical_hash

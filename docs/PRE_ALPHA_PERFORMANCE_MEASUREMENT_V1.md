@@ -118,6 +118,12 @@ runs per version, with `PYTHONHASHSEED` 1 and 2 on 3.12.
 A Run built under Python 3.11 opened under 3.12 with an identical inspection,
 and the reverse also held.
 
-Master keeps exact Match Engine determinism open (version 26 note).
-Measurements from different machines therefore compare workloads of the same
-shape, not identical simulations.
+Master §17.4 and PAQ-127 specify the pre-alpha determinism contract.
+They leave exact reproduction between platforms and hardware outside the
+automatic guarantee. These measurements use workloads of the same shape.
+Use a shared Saved fixture and check output equality when comparing the
+same stored state between environments.
+
+The cause and any broader cross-environment requirement remain open.
+Radim and Work will agree any change to the product contract before it is
+recorded as a decision.

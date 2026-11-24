@@ -32,6 +32,7 @@ function validTournaments(value: unknown, runId: string, branchId: string): valu
   for (const event of data.tournaments) {
     if (!event || !isId(event.event_id) || ids.has(event.event_id) ||
         !isId(event.season) || !whole(event.season_week, 1, 61) ||
+        typeof event.event_name !== 'string' ||
         typeof event.result_published !== 'boolean' ||
         (event.champion_player_id !== null && !isId(event.champion_player_id)) ||
         (event.finalist_player_id !== null && !isId(event.finalist_player_id)) ||

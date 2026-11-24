@@ -272,4 +272,21 @@ describe('ViewerHistoryPage source-safe canonical publication hub (mocked GET on
   })
 
 
+
+  it('rejects a malformed latest event label before it can crash the history link', async () => {
+    writeViewerActiveProductRunId(run)
+    const good = tournaments()
+    api.getViewerTournamentHistory.mockResolvedValueOnce({
+      ...good, tournaments: [good.tournaments[0], {
+        ...good.tournaments[1], event_name: { invalid: 'not a public event name' },
+      }],
+    }).mockResolvedValueOnce(good)
+    const user = userEvent.setup()
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Zdroje historie si neodpovídají')
+    expect(screen.queryByRole('link', { name: /History Open/ })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Načíst znovu (pouze GET)' }))
+    expect(await screen.findByRole('link', { name: /History Open/ })).toBeInTheDocument()
+  })
+
 })

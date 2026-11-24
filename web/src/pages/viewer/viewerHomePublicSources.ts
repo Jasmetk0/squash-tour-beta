@@ -34,7 +34,7 @@ export function verifiedHomeTournamentHistory(
         typeof event.event_name !== 'string' || !id(event.template_id) ||
         typeof event.category !== 'string' ||
         (event.tour_level !== null && typeof event.tour_level !== 'string') ||
-        typeof event.host_country !== 'string' || event.host_country.length !== 3 ||
+        !id(event.host_country) || event.host_country.length !== 3 ||
         (event.host_city !== null && typeof event.host_city !== 'string') ||
         !id(event.region) ||
         !whole(event.main_draw_size) || !whole(event.qualification_draw_size) ||

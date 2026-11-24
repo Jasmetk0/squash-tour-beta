@@ -100,6 +100,27 @@ describe('Viewer saved calendar URL browsing (mocked GET, not real HTTP/SQLite)'
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
   })
 
+  it('restores a later week of a multi-week event and shows its actual span without another GET', async () => {
+    const source = calendar()
+    const extended = { ...events[2], start_season_week: 3, end_season_week: 5, duration_in_season_weeks: 3 }
+    api.getViewerRunCalendar.mockResolvedValueOnce({
+      ...source, seasons: [source.seasons[0], { ...source.seasons[1], events: [events[1], extended] }],
+    })
+    const user = userEvent.setup()
+    mount('/viewer/tour/calendar?vcSeason=2031%2F32&vcWeek=4&keep=yes')
+    const table = await screen.findByRole('table', { name: 'Uložené turnaje kalendáře' })
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('link', { name: 'Open 3' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/event%203')
+    expect(within(table).getByText('W3–W5')).toBeInTheDocument()
+    expect(screen.getByLabelText('Týden')).toHaveValue('4')
+    await user.selectOptions(screen.getByLabelText('Týden'), '5')
+    expect(within(table).getByText('W3–W5')).toBeInTheDocument()
+    expect(params().get('vcWeek')).toBe('5')
+    expect(params().get('keep')).toBe('yes')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+    expectNoForbiddenViewerActions()
+  })
+
   it('supports history navigation and clears stale weeks atomically when season changes', async () => {
     const user = userEvent.setup()
     mount()

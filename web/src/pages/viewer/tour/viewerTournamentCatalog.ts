@@ -11,6 +11,25 @@ const seasonKey = (value: unknown): string | null =>
   (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
     ? String(value) : null
 
+// The public history DTO forbids extra fields at both levels. Validate the
+// wire shape before joining it to the separately fetched calendar.
+const historyFields = [
+  'schema_version', 'product_run_id', 'viewer_branch_id', 'tournament_count',
+  'published_result_count', 'tournaments',
+] as const
+const historyItemFields = [
+  'event_id', 'season', 'season_week', 'event_name', 'template_id', 'category',
+  'tour_level', 'host_country', 'host_city', 'region', 'main_draw_size',
+  'qualification_draw_size', 'seeds_count', 'qualifier_spots', 'wild_cards',
+  'byes', 'ranking_status', 'result_published', 'champion_player_id', 'finalist_player_id',
+] as const
+
+function exactFields(value: unknown, fields: readonly string[]): boolean {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field)))
+}
+
 export type SavedTournamentEntry = {
   event: ViewerCalendarEvent
   publication: ViewerTournamentHistoryItem
@@ -35,7 +54,7 @@ export function verifiedTournamentCatalog(
 ): SavedTournamentCatalog | null {
   if (!nonempty(runId) || !nonempty(branchId) ||
       !calendar || typeof calendar !== 'object' ||
-      !history || typeof history !== 'object') return null
+      !exactFields(history, historyFields)) return null
   const c = calendar as Partial<ViewerRunCalendar>
   const h = history as Partial<ViewerTournamentHistory>
   if (c.schema_version !== 'viewer_run_calendar.v1' ||
@@ -67,9 +86,9 @@ export function verifiedTournamentCatalog(
           !nonempty(event.template_id) ||
           typeof event.event_name !== 'string' ||
           typeof event.category !== 'string' ||
-          typeof event.host_country !== 'string' || event.host_country.length !== 3 ||
+          !nonempty(event.host_country) || event.host_country.length !== 3 ||
           (event.host_city !== null && typeof event.host_city !== 'string') ||
-          typeof event.region !== 'string' ||
+          !nonempty(event.region) ||
           (event.tour_level !== null && event.tour_level !== 'WORLD_TOUR' && event.tour_level !== 'ELITE_TOUR') ||
           !whole(event.main_draw_size, 0, 128) || !whole(event.qualification_draw_size) ||
           !whole(event.seeds_count) || !whole(event.qualifier_spots) ||
@@ -85,8 +104,9 @@ export function verifiedTournamentCatalog(
   const entries: SavedTournamentEntry[] = []
   let publishedCount = 0
   for (const item of h.tournaments) {
-    if (!item || !nonempty(item.event_id) || matched.has(item.event_id) ||
+    if (!exactFields(item, historyItemFields) || !item || !nonempty(item.event_id) || matched.has(item.event_id) ||
         !nonempty(item.season) || !whole(item.season_week, 1, 61) ||
+        typeof item.ranking_status !== 'string' ||
         typeof item.result_published !== 'boolean' ||
         (item.champion_player_id !== null && !nonempty(item.champion_player_id)) ||
         (item.finalist_player_id !== null && !nonempty(item.finalist_player_id)) ||

@@ -12,6 +12,10 @@ import { ViewerActiveRunLinks, ViewerEmptyState } from '../../../components/view
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
+import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
+import type { ViewerCountries, ViewerPlayers } from '../../../api/types'
+import { playerViewerBranch, verifiedViewerPlayers } from '../people/viewerPlayerDirectory'
+import { verifiedTournamentCatalog } from '../tour/viewerTournamentCatalog'
 import { viewerRunsPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
 import { normalizeViewerSearchQuery, searchTextMatches, type ViewerSearchTournamentResult } from './viewerComparisonDisplay'
@@ -39,6 +43,47 @@ const searchCopy = {
   routeNotice: ['Odkazy na výsledky používají kanonické cesty Product Runu.', 'Result links use canonical Product Run routes.'],
 } as const
 
+// Countries are a projection of the same public roster. Validate the exact
+// source and public-only shape before rendering metadata (including fallback fields).
+function verifiedSearchCountries(raw: unknown, roster: ViewerPlayers): ViewerCountries | null {
+  if (!raw || typeof raw !== 'object') return null
+  const value = raw as Partial<ViewerCountries>
+  if (value.schema_version !== 'viewer_countries.v1' ||
+      value.product_run_id !== roster.product_run_id || value.viewer_branch_id !== roster.viewer_branch_id ||
+      value.season_index !== roster.season_index || value.week !== roster.week ||
+      !Array.isArray(value.countries) || value.country_count !== value.countries.length) return null
+  const groups = new Map<string, { players: number; active: number }>()
+  const players = new Map(roster.players.map(player => [player.player_id, player]))
+  for (const player of roster.players) {
+    const row = groups.get(player.country_code) ?? { players: 0, active: 0 }
+    row.players++
+    if (player.status === 'active') row.active++
+    groups.set(player.country_code, row)
+  }
+  const fields = new Set(['country_code', 'player_count', 'active_player_count', 'retired_player_count',
+    'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr'])
+  const seen = new Set<string>()
+  for (const country of value.countries) {
+    if (!country || typeof country !== 'object' || Object.keys(country).length !== fields.size ||
+        Object.keys(country).some(key => !fields.has(key)) ||
+        typeof country.country_code !== 'string' || !/^[A-Z]{3}$/.test(country.country_code) ||
+        seen.has(country.country_code)) return null
+    const group = groups.get(country.country_code)
+    if (!group || country.player_count !== group.players || country.active_player_count !== group.active ||
+        country.retired_player_count !== group.players - group.active) return null
+    const top = country.top_player_id === null ? null : players.get(country.top_player_id)
+    if (country.top_player_id === null) {
+      if (country.top_player_name !== null || country.top_player_current_ovr !== null ||
+          country.average_current_ovr !== null) return null
+    } else if (!top || top.country_code !== country.country_code || top.name !== country.top_player_name ||
+        top.current_ovr === null || top.current_ovr !== country.top_player_current_ovr ||
+        typeof country.average_current_ovr !== 'number' || !Number.isFinite(country.average_current_ovr) ||
+        country.average_current_ovr < 0 || country.average_current_ovr > top.current_ovr) return null
+    seen.add(country.country_code)
+  }
+  return seen.size === groups.size ? value as ViewerCountries : null
+}
+
 export function ViewerSearchPage(): JSX.Element {
   const productRunId = useActiveViewerProductRunId()
   const [searchParams, setSearchParams] = useSearchParams()
@@ -48,6 +93,9 @@ export function ViewerSearchPage(): JSX.Element {
   const urlQuery = normalizeViewerSearchQuery(searchParams)
   const [query, setQuery] = useState(urlQuery)
   const hasSearchQuery = urlQuery.length > 0
+  const context = useViewerOfficialRunContext(hasSearchQuery ? productRunId : null)
+  const branchId = playerViewerBranch(context.data, productRunId ?? '')
+  const ready = Boolean(productRunId && hasSearchQuery && branchId && !context.isPending && !context.isFetching && !context.isError)
 
   useEffect(() => {
     setQuery(urlQuery)
@@ -80,49 +128,49 @@ export function ViewerSearchPage(): JSX.Element {
   )
 
   const playersQuery = useQuery({
-    queryKey: ['viewer-search-canonical-players', productRunId],
+    queryKey: ['viewer-search-canonical-players', productRunId, branchId],
     queryFn: () => getViewerPlayers(productRunId ?? ''),
-    enabled: Boolean(productRunId && hasSearchQuery),
+    enabled: ready,
     retry: false
   })
   const countriesQuery = useQuery({
-    queryKey: ['viewer-search-canonical-countries', productRunId],
+    queryKey: ['viewer-search-canonical-countries', productRunId, branchId],
     queryFn: () => getViewerCountries(productRunId ?? ''),
-    enabled: Boolean(productRunId && hasSearchQuery),
+    enabled: ready,
     retry: false
   })
   const calendarQuery = useQuery({
-    queryKey: ['viewer-search-canonical-calendar', productRunId],
+    queryKey: ['viewer-search-canonical-calendar', productRunId, branchId],
     queryFn: () => getViewerRunCalendar(productRunId ?? ''),
-    enabled: Boolean(productRunId && hasSearchQuery),
+    enabled: ready,
     retry: false
   })
   const historyQuery = useQuery({
-    queryKey: ['viewer-search-canonical-tournament-history', productRunId],
+    queryKey: ['viewer-search-canonical-tournament-history', productRunId, branchId],
     queryFn: () => getViewerTournamentHistory(productRunId ?? ''),
-    enabled: Boolean(productRunId && hasSearchQuery),
+    enabled: ready,
     retry: false
   })
 
+  const isLoading = context.isPending || context.isFetching ||
+    (ready && [playersQuery, countriesQuery, calendarQuery, historyQuery].some(query => query.isPending || query.isFetching))
+  const sourceError = context.isError || !branchId ||
+    [playersQuery, countriesQuery, calendarQuery, historyQuery].some(query => query.isError)
+  const roster = ready && !isLoading && !sourceError
+    ? verifiedViewerPlayers(playersQuery.data, productRunId ?? '', branchId ?? '') : null
+  const countrySource = roster ? verifiedSearchCountries(countriesQuery.data, roster) : null
+  const catalog = ready && !isLoading && !sourceError
+    ? verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, productRunId ?? '', branchId ?? '') : null
+  const verified = Boolean(roster && countrySource && catalog)
+  const hasError = !isLoading && !verified
   const tournaments = useMemo<ViewerSearchTournamentResult[]>(() => {
-    const resultIds = new Set(
-      (historyQuery.data?.tournaments ?? [])
-        .filter((event) => event.result_published)
-        .map((event) => event.event_id)
-    )
-    return (calendarQuery.data?.seasons ?? [])
-      .flatMap((season) => season.events)
-      .filter((event) =>
-        searchTextMatches(urlQuery, [
-          event.event_id,
-          event.event_name,
-          event.tour_level,
-          event.category,
-          event.template_id,
-          event.season_week,
-        ])
-      )
-      .map((event) => ({
+    if (!verified || !catalog) return []
+    return catalog.entries
+      .filter(({ event }) => searchTextMatches(urlQuery, [
+        event.event_id, event.event_name, event.tour_level,
+        event.category, event.template_id, event.season_week,
+      ]))
+      .map(({ event, publication }) => ({
         eventId: event.event_id,
         season: Number.parseInt(String(event.season).split('/')[0] ?? '', 10) || null,
         week: event.season_week,
@@ -130,9 +178,9 @@ export function ViewerSearchPage(): JSX.Element {
         category: event.category,
         templateId: event.template_id,
         hasPlannedEvent: true,
-        hasPersistedEvent: resultIds.has(event.event_id),
+        hasPersistedEvent: publication.result_published,
       }))
-  }, [calendarQuery.data?.seasons, historyQuery.data?.tournaments, urlQuery])
+  }, [catalog, verified, urlQuery])
 
   if (!productRunId || !hasSearchQuery) {
     return (
@@ -149,7 +197,7 @@ export function ViewerSearchPage(): JSX.Element {
     )
   }
 
-  const players = (playersQuery.data?.players ?? []).filter((player) =>
+  const players = (verified ? roster?.players ?? [] : []).filter((player) =>
     searchTextMatches(urlQuery, [
       player.player_id,
       player.name,
@@ -158,23 +206,13 @@ export function ViewerSearchPage(): JSX.Element {
       player.identity_source,
     ])
   )
-  const countries = (countriesQuery.data?.countries ?? []).filter((country) =>
+  const countries = (verified ? countrySource?.countries ?? [] : []).filter((country) =>
     searchTextMatches(urlQuery, [
       country.country_code,
       country.top_player_name,
       country.top_player_id,
     ])
   )
-  const isLoading =
-    playersQuery.isLoading ||
-    countriesQuery.isLoading ||
-    calendarQuery.isLoading ||
-    historyQuery.isLoading
-  const hasError =
-    playersQuery.isError ||
-    countriesQuery.isError ||
-    calendarQuery.isError ||
-    historyQuery.isError
   const hasResults = players.length > 0 || countries.length > 0 || tournaments.length > 0
 
   return (
@@ -191,6 +229,7 @@ export function ViewerSearchPage(): JSX.Element {
         {searchForm}
         {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>{t('noResults')}</ViewerEmptyState> : null}
 
+        {verified ? <>
         <section aria-label={t('players')}>
           <h4>{t('players')}</h4>
           {players.length ? (
@@ -224,6 +263,7 @@ export function ViewerSearchPage(): JSX.Element {
           ) : <p className="status">{t('noTournaments')}</p>}
         </section>
 
+        </> : null}
         <section aria-label={t('links')}>
           <h4>{t('links')}</h4>
           <ViewerActiveRunLinks links={[{ label: t('browseRuns'), to: viewerRunsPath() }]} />

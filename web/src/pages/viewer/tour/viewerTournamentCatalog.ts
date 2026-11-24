@@ -1,4 +1,5 @@
-import type { ViewerCalendarEvent, ViewerRunCalendar, ViewerTournamentHistory, ViewerTournamentHistoryItem } from '../../../api/types'
+import type { ViewerCalendarEvent, ViewerRunCalendar, ViewerTournamentHistoryItem } from '../../../api/types'
+import { compareTournamentHistoryEvents, compareTournamentSeasons, tournamentMatchesSearch, verifiedTournamentHistory } from './viewerTournamentHistoryBrowsing'
 
 // This is the existing viewer_run_calendar.v1 / viewer_tournament_history.v1
 // legacy W61 projection; calendar-native W52/W80 data needs a versioned adapter.
@@ -33,21 +34,15 @@ export function tournamentViewerBranch(context: unknown, runId: string): string 
 export function verifiedTournamentCatalog(
   calendar: unknown, history: unknown, runId: string, branchId: string
 ): SavedTournamentCatalog | null {
-  if (!nonempty(runId) || !nonempty(branchId) ||
-      !calendar || typeof calendar !== 'object' ||
-      !history || typeof history !== 'object') return null
+  if (!calendar || typeof calendar !== 'object') return null
+  const h = verifiedTournamentHistory(history, runId, branchId)
+  if (!h) return null
   const c = calendar as Partial<ViewerRunCalendar>
-  const h = history as Partial<ViewerTournamentHistory>
   if (c.schema_version !== 'viewer_run_calendar.v1' ||
-      h.schema_version !== 'viewer_tournament_history.v1' ||
-      c.product_run_id !== runId || h.product_run_id !== runId ||
-      c.viewer_branch_id !== branchId || h.viewer_branch_id !== branchId ||
-      !Array.isArray(c.seasons) || !Array.isArray(h.tournaments) ||
-      !whole(c.season_count) || c.season_count !== c.seasons.length ||
-      !whole(c.event_count) || !whole(h.tournament_count) ||
-      !whole(h.published_result_count) ||
-      c.event_count !== h.tournament_count ||
-      h.tournament_count !== h.tournaments.length) return null
+      c.product_run_id !== runId || c.viewer_branch_id !== branchId ||
+      !Array.isArray(c.seasons) || !whole(c.season_count) ||
+      c.season_count !== c.seasons.length || !whole(c.event_count) ||
+      c.event_count !== h.tournament_count) return null
 
   const byEvent = new Map<string, ViewerCalendarEvent>()
   const seasons: string[] = []
@@ -67,6 +62,13 @@ export function verifiedTournamentCatalog(
           !nonempty(event.template_id) ||
           typeof event.event_name !== 'string' ||
           typeof event.category !== 'string' ||
+          !nonempty(event.host_country) || event.host_country.length !== 3 ||
+          (event.host_city !== null && typeof event.host_city !== 'string') ||
+          !nonempty(event.region) ||
+          (event.tour_level !== null && event.tour_level !== 'WORLD_TOUR' && event.tour_level !== 'ELITE_TOUR') ||
+          !whole(event.main_draw_size, 0, 128) || !whole(event.qualification_draw_size) ||
+          !whole(event.seeds_count) || !whole(event.qualifier_spots) ||
+          !whole(event.wild_cards) || !whole(event.byes) ||
           typeof event.status !== 'string' ||
           !['planned', 'active', 'completed', 'cancelled', 'scheduled'].includes(event.status)) return null
       byEvent.set(event.event_id, event)
@@ -78,15 +80,7 @@ export function verifiedTournamentCatalog(
   const entries: SavedTournamentEntry[] = []
   let publishedCount = 0
   for (const item of h.tournaments) {
-    if (!item || !nonempty(item.event_id) || matched.has(item.event_id) ||
-        !nonempty(item.season) || !whole(item.season_week, 1, 61) ||
-        typeof item.result_published !== 'boolean' ||
-        (item.champion_player_id !== null && !nonempty(item.champion_player_id)) ||
-        (item.finalist_player_id !== null && !nonempty(item.finalist_player_id)) ||
-        (item.result_published &&
-          (!nonempty(item.champion_player_id) || !nonempty(item.finalist_player_id) ||
-            item.champion_player_id === item.finalist_player_id)) ||
-        (!item.result_published && (item.champion_player_id !== null || item.finalist_player_id !== null))) return null
+    if (matched.has(item.event_id)) return null
     const event = byEvent.get(item.event_id)
     if (!event || item.season !== String(event.season) ||
         item.season_week !== event.season_week ||
@@ -114,15 +108,8 @@ export function verifiedTournamentCatalog(
   return { seasons, entries, eventCount: c.event_count, publishedCount }
 }
 
-function compareSeason(a: string, b: string): number {
-  const aYear = Number.parseInt(a.split('/')[0], 10)
-  const bYear = Number.parseInt(b.split('/')[0], 10)
-  if (Number.isFinite(aYear) && Number.isFinite(bYear) && aYear !== bYear) return aYear - bYear
-  return a.localeCompare(b, undefined, { numeric: true })
-}
-
 export function catalogSeasonsNewestFirst(catalog: SavedTournamentCatalog): string[] {
-  return [...catalog.seasons].sort((a, b) => compareSeason(b, a))
+  return [...catalog.seasons].sort((a, b) => compareTournamentSeasons(b, a))
 }
 
 export type TournamentPublicationFilter = 'all' | 'published' | 'unpublished'
@@ -134,13 +121,8 @@ export function filteredSavedTournaments(
   return catalog.entries.filter(({ event, publication }) =>
     (season === 'all' || String(event.season) === season) &&
     (filter === 'all' || publication.result_published === (filter === 'published')) &&
-    (!needle || [event.event_name, event.event_id, event.host_country, event.host_city ?? '']
-      .some(value => value.toLocaleLowerCase().includes(needle)))
-  ).sort((a, b) =>
-    compareSeason(b.event.season.toString(), a.event.season.toString()) ||
-    a.event.season_week - b.event.season_week ||
-    a.event.event_id.localeCompare(b.event.event_id)
-  )
+    tournamentMatchesSearch(publication, needle)
+  ).sort((a, b) => compareTournamentHistoryEvents(a.publication, b.publication))
 }
 
 export const TOURNAMENT_PAGE_SIZE = 25

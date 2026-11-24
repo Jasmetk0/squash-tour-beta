@@ -149,4 +149,37 @@ describe('verified Saved Tournament Catalog (legacy V1)', () => {
       expect(parseTournamentPage(bad, 10)).toBeNull()
     }
   })
+
+  it('rejects history payloads with extra, missing or substituted public fields', () => {
+    const { calendar, history } = source([event('E1')], ['E1'])
+    const item = history.tournaments[0]
+    const { ranking_status: _status, ...missingStatus } = item
+    const { published_result_count: _count, ...missingCount } = history
+    for (const bad of [
+      { ...history, unexpected: 'not public' },
+      { ...missingCount, replacement: 1 },
+      { ...history, tournaments: [{ ...item, unexpected: 'not public' }] },
+      { ...history, tournaments: [missingStatus] },
+      { ...history, tournaments: [{ ...missingStatus, replacement: 'ranked' }] },
+      { ...history, tournaments: [{ ...item, ranking_status: null }] },
+    ]) {
+      expect(verifiedTournamentCatalog(calendar, bad, 'run a', 'branch a')).toBeNull()
+    }
+    expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')?.publishedCount).toBe(1)
+  })
+
+  it('rejects malformed metadata even when both public sources repeat the same malformed value', () => {
+    for (const patch of [
+      { host_country: null }, { host_country: '   ' }, { host_city: 123 }, { region: null }, { region: '' },
+      { tour_level: 'unknown' }, { main_draw_size: 129 }, { qualification_draw_size: -1 },
+      { seeds_count: -1 }, { qualifier_spots: 1.5 }, { wild_cards: -1 }, { byes: null },
+    ]) {
+      const invalid = { ...event('malformed'), ...patch } as unknown as ViewerCalendarEvent
+      const { calendar, history } = source([invalid])
+      expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')).toBeNull()
+    }
+    const nullable = source([{ ...event('valid'), host_city: null, tour_level: null }])
+    expect(verifiedTournamentCatalog(nullable.calendar, nullable.history, 'run a', 'branch a')).not.toBeNull()
+  })
+
 })

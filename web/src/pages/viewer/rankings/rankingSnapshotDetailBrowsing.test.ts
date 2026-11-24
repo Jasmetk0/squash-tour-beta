@@ -73,6 +73,15 @@ describe('legacy published ranking snapshot validation', () => {
     expect(validViewerRankingDetail(original, 'run-a', 'branch-a', 0)).toBe(false)
   })
 
+  it('rejects unknown projection fields and empty source identities', () => {
+    const original = ranking([row(1, 'one', 10)])
+    expect(validViewerRankingDetail(original, 'run-a', 'branch-a', 1)).toBe(true)
+    expect(validViewerRankingDetail({ ...original, internal_state: {} }, 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, rows: [{ ...original.rows[0], counted_results: [] }] }, 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, product_run_id: '' }, '', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, viewer_branch_id: '' }, 'run-a', '', 1)).toBe(false)
+  })
+
   it('searches only actual player IDs without changing authoritative rank/points', () => {
     const rows = [row(1, 'Alice-ID', 50), row(2, 'bob', 0), row(3, 'alice-other', 80)]
     const filtered = rankingRowsMatchingId(rows, ' ALICE ')

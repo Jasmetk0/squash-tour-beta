@@ -132,6 +132,34 @@ describe('All / Active / Retired Player pages from verified public Saved GET', (
     expectNoForbiddenViewerActions()
   })
 
+  it('distinguishes active and retired rows in the mixed roster, including English labels', async () => {
+    const user = userEvent.setup()
+    mount()
+    const table = await screen.findByRole('table')
+    expect(within(table).getByRole('columnheader', { name: 'Stav hráče' })).toBeInTheDocument()
+    expect(within(table).getByRole('row', { name: /Player 001/ })).toHaveTextContent('Aktivní')
+    expect(within(table).getByRole('row', { name: /Player 002/ })).toHaveTextContent('Po kariéře')
+    await user.click(screen.getByRole('button', { name: 'Switch language' }))
+    expect(within(table).getByRole('columnheader', { name: 'Player status' })).toBeInTheDocument()
+    expect(within(table).getByRole('row', { name: /Player 002/ })).toHaveTextContent('Retired')
+    expect(api.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
+  it('offers countries belonging to the selected status cohort only', async () => {
+    api.getViewerPlayers.mockReset().mockResolvedValue(payload([
+      player(1, 'active', 'CZE'), player(2, 'retired', 'NZL'),
+    ]))
+    const view = mount('active')
+    await screen.findByRole('table')
+    expect(within(screen.getByLabelText('Země')).getByRole('option', { name: 'CZE' })).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Země')).queryByRole('option', { name: 'NZL' })).not.toBeInTheDocument()
+    context.kind = 'retired'
+    await act(async () => { view.refresh() })
+    expect(within(screen.getByLabelText('Země')).getByRole('option', { name: 'NZL' })).toBeInTheDocument()
+    expect(within(screen.getByLabelText('Země')).queryByRole('option', { name: 'CZE' })).not.toBeInTheDocument()
+    expect(api.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
   it('shows only active players, including Run prospects without pretending they entered the Tour', async () => {
     mount('active')
     const table = await screen.findByRole('table', { name: 'Veřejný seznam aktivních hráčů' })

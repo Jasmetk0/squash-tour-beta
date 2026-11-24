@@ -104,6 +104,35 @@ describe('Viewer Current Week requires exact Saved Run/Branch evidence (mocked G
     expectNoForbiddenViewerActions()
   })
 
+  it('shows ongoing multi-week calendar events without including past or future events', async () => {
+    setViewerActiveProductRunId('run alpha')
+    const source = savedCalendar()
+    const event = source.seasons[0].events[0]
+    const events = [
+      { ...event, event_id: 'ongoing', event_name: 'Ongoing Open', season_week: 9,
+        start_season_week: 9, end_season_week: 11, duration_in_season_weeks: 3 },
+      { ...event, event_id: 'last-day', event_name: 'Final Week Open', season_week: 9,
+        start_season_week: 9, end_season_week: 10, duration_in_season_weeks: 2 },
+      { ...event, event_id: 'past', event_name: 'Past Open', season_week: 8,
+        start_season_week: 8, end_season_week: 9, duration_in_season_weeks: 2 },
+      { ...event, event_id: 'future', event_name: 'Future Open', season_week: 11,
+        start_season_week: 11, end_season_week: 11 },
+      event,
+    ]
+    api.getViewerRunCalendar.mockResolvedValueOnce({
+      ...source, event_count: events.length,
+      seasons: [{ ...source.seasons[0], events, event_count: events.length }],
+    })
+    mount()
+    expect(await screen.findByRole('link', { name: 'Ongoing Open' }))
+      .toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/ongoing')
+    expect(screen.getByRole('link', { name: 'Final Week Open' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Week Ten Open' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Past Open' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Future Open' })).not.toBeInTheDocument()
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+  })
+
   it('does not query an unverified or foreign saved Viewer Branch', async () => {
     setViewerActiveProductRunId('run alpha')
     active.run = 'foreign-run'

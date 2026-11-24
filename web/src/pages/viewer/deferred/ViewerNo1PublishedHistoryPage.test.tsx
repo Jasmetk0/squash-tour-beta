@@ -202,6 +202,27 @@ describe('On-demand No. 1 History from individually verified Saved ranking publi
     expect(api.getViewerOfficialRankingHistoryDetail).toHaveBeenCalledTimes(4)
   })
 
+  it('rejects increasing points despite matching metadata, but accepts a published tie', async () => {
+    const original = snapshot()
+    api.getViewerOfficialRankingHistoryDetail.mockReset()
+      .mockResolvedValueOnce({ ...original, rows: [
+        { ...original.rows[0], points: 500 }, { ...original.rows[1], points: 1000 },
+      ] })
+      .mockResolvedValueOnce({ ...original, rows: [
+        { ...original.rows[0], points: 1000 }, { ...original.rows[1], points: 1000 },
+      ] })
+    const user = userEvent.setup()
+    mount()
+    await screen.findByRole('table')
+    await user.click(inspectButtons()[0])
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Detail se neshoduje')
+    expect(screen.queryByRole('link', { name: 'leader-2' })).not.toBeInTheDocument()
+    await user.click(within(alert).getByRole('button', { name: 'Načíst znovu (GET)' }))
+    expect(await screen.findByRole('link', { name: 'leader-2' })).toBeInTheDocument()
+    expect(api.getViewerOfficialRankingHistoryDetail).toHaveBeenCalledTimes(2)
+  })
+
   it('fails closed on inconsistent history and permits a public GET retry before any detail', async () => {
     api.listViewerOfficialRankingHistory.mockReset()
       .mockResolvedValueOnce(history([publication(2), publication(2)]))

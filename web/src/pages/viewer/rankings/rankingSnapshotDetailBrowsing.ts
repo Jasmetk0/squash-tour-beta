@@ -7,6 +7,19 @@ const WEEKS_PER_SEASON = 61
 const SEASON_COUNT = 50
 const LAST_ORDINAL = WEEKS_PER_SEASON * SEASON_COUNT - 1
 
+// The v1 public projection contains only these metadata and row fields.
+const publicRankingFields = [
+  'schema_version', 'product_run_id', 'viewer_branch_id', 'season_index',
+  'week', 'week_ordinal', 'snapshot_fingerprint', 'policy_id', 'best_n', 'row_count', 'rows',
+] as const
+const publicRowFields = ['rank', 'player_id', 'points'] as const
+
+function exactFields(value: unknown, fields: readonly string[]): boolean {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field)))
+}
+
 function integerBetween(value: unknown, lower: number, upper: number): value is number {
   return typeof value === 'number' &&
     Number.isSafeInteger(value) && value >= lower && value <= upper
@@ -25,7 +38,8 @@ export function validViewerRankingDetail(
   viewerBranchId: string,
   ordinal: number
 ): data is ViewerOfficialRanking {
-  if (!data || typeof data !== 'object' || !integerBetween(ordinal, 0, LAST_ORDINAL)) return false
+  if (!exactFields(data, publicRankingFields) || !productRunId.trim() || !viewerBranchId.trim() ||
+    !integerBetween(ordinal, 0, LAST_ORDINAL)) return false
   const value = data as Partial<ViewerOfficialRanking>
   if (
     value.schema_version !== 'viewer_official_ranking.v1' ||
@@ -44,15 +58,18 @@ export function validViewerRankingDetail(
   ) return false
 
   const playerIds = new Set<string>()
+  let previousPoints = Number.POSITIVE_INFINITY
   for (let index = 0; index < value.rows.length; index += 1) {
     const row = value.rows[index] as Partial<ViewerOfficialRankingRow> | null
-    if (!row || typeof row !== 'object' ||
+    if (!row || !exactFields(row, publicRowFields) ||
       row.rank !== index + 1 ||
       typeof row.player_id !== 'string' || !row.player_id.trim() ||
       playerIds.has(row.player_id) ||
-      !integerBetween(row.points, 0, Number.MAX_SAFE_INTEGER)
+      !integerBetween(row.points, 0, Number.MAX_SAFE_INTEGER) ||
+      row.points > previousPoints
     ) return false
     playerIds.add(row.player_id)
+    previousPoints = row.points
   }
   return true
 }

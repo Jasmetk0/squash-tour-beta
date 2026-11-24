@@ -37,6 +37,7 @@ const copy = {
   list: ['Seznam viditelných talentů', 'Visible prospects'],
   empty: ['V tomto uloženém týdnu nejsou viditelní žádní hráči před vstupem na Tour.', 'No pre-Tour prospects are visible in this Saved week.'],
   emptyPage: ['Tato stránka už neobsahuje žádné hráče.', 'This page contains no remaining players.'],
+  firstPage: ['Přejít na první stránku', 'Go to first page'],
   age: ['věk', 'age'],
   since: ['viditelný od', 'visible since'],
   previous: ['Předchozí', 'Previous'],
@@ -88,7 +89,7 @@ function ProspectsForBranch({ runId, branchId, t }: {
   </div>
 
   const start = data.prospects.length ? data.offset + 1 : 0
-  const end = data.offset + data.prospects.length
+  const end = data.prospects.length ? data.offset + data.prospects.length : 0
   return <>
     <article className="viewer-active-run-card viewer-active-run-card--summary" aria-label={t.summary}>
       <h3>{t.summary}</h3>
@@ -101,7 +102,7 @@ function ProspectsForBranch({ runId, branchId, t }: {
       ]} />
     </article>
 
-    {data.total === 0 ? <ViewerEmptyState>{t.empty}</ViewerEmptyState> : (
+    {data.total === 0 && data.offset === 0 ? <ViewerEmptyState>{t.empty}</ViewerEmptyState> : (
       <div className="viewer-sample-list-block">
         <h3>{t.list}</h3>
         {data.prospects.length ? <ul className="viewer-home-list viewer-sample-list" aria-label={t.list}>
@@ -114,6 +115,9 @@ function ProspectsForBranch({ runId, branchId, t }: {
           </li>)}
         </ul> : <ViewerEmptyState>{t.emptyPage}</ViewerEmptyState>}
         <nav className="viewer-active-run-actions" aria-label={t.pagination}>
+          {data.offset > 0 && data.prospects.length === 0 ? <>
+            <button type="button" onClick={() => setOffset(0)}>{t.firstPage}</button>{' '}
+          </> : null}
           <button type="button" disabled={data.offset === 0} onClick={() =>
             setOffset(Math.max(0, data.offset - PAGE_SIZE))}>{t.previous}</button>{' '}
           <button type="button" disabled={data.offset + data.prospects.length >= data.total}

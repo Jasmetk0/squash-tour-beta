@@ -65,7 +65,10 @@ export function ViewerCurrentWeekPage(): JSX.Element {
     : null
   const eventsForWeek = calendar?.events.filter(event =>
     savedCalendarSeasonKey(event.season) === selectedSeason &&
-    event.season_week === context.selectedWeek
+    // Use the explicit Saved calendar span, including events that started earlier.
+    // Do not infer carry-over into another season or actual sporting execution.
+    event.start_season_week <= context.selectedWeek &&
+    context.selectedWeek <= event.end_season_week
   ) ?? []
 
   return (

@@ -145,6 +145,32 @@ describe('ViewerTopbar', () => {
     expect(screen.getByLabelText('Current location')).toHaveTextContent('/viewer')
   })
 
+  it('does not steal focus on an already handled, composing or repeating Ctrl+K event', async () => {
+    renderViewerTopbarAt('/viewer')
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const search = within(nav).getByRole('textbox', { name: 'Search players, countries, tournaments' })
+    const submit = within(nav).getByRole('button', { name: 'Open Viewer search' })
+    submit.focus()
+
+    const consumed = new KeyboardEvent('keydown', {
+      key: 'k', ctrlKey: true, bubbles: true, cancelable: true,
+    })
+    consumed.preventDefault()
+    fireEvent(document, consumed)
+    expect(submit).toHaveFocus()
+    expect(fireEvent.keyDown(document, {
+      key: 'k', ctrlKey: true, isComposing: true, cancelable: true,
+    })).toBe(true)
+    expect(submit).toHaveFocus()
+    expect(fireEvent.keyDown(document, {
+      key: 'k', ctrlKey: true, repeat: true, cancelable: true,
+    })).toBe(true)
+    expect(submit).toHaveFocus()
+    expect(search).not.toHaveFocus()
+    expect(fireEvent.keyDown(document, { key: 'k', ctrlKey: true, cancelable: true })).toBe(false)
+    expect(search).toHaveFocus()
+  })
+
   it('marks only the exact dropdown route active while keeping active state structural and neutral-style compatible', async () => {
     renderViewerTopbarAt('/viewer/tour/current-week')
 

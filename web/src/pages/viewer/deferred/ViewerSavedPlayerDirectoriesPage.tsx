@@ -12,7 +12,7 @@ import {
   viewerTopAllPlayersPath, viewerTopActivePlayersPath, viewerTopRetiredPlayersPath,
 } from '../../../viewer/viewerRoutes'
 import {
-  filteredPlayerDirectory, playerDirectoryCountries, playerViewerBranch,
+  filteredPlayerDirectory, playerViewerBranch,
   verifiedViewerPlayers, PLAYER_DIRECTORY_PAGE_SIZE,
   type PlayerDirectorySort, type PlayerOriginFilter, type PlayerStatusFilter,
 } from '../people/viewerPlayerDirectory'
@@ -69,6 +69,7 @@ const copy = {
   player: ['Hráč', 'Player'],
   playerId: ['ID hráče', 'Player ID'],
   playerAge: ['Věk', 'Age'],
+  playerStatus: ['Stav hráče', 'Player status'],
   playerOvr: ['Veřejné OVR', 'Public OVR'],
   noPlayers: ['V uloženém Runu nejsou žádní hráči v této kategorii.', 'No players in this category exist in this Saved Run.'],
   noMatch: ['Filtrům neodpovídá žádný hráč.', 'No players match these filters.'],
@@ -99,8 +100,10 @@ function VerifiedPlayerDirectory({ source, runId, kind, t }: {
   const [origin, setOrigin] = useState<PlayerOriginFilter>('all')
   const [sort, setSort] = useState<PlayerDirectorySort>('name')
   const [page, setPage] = useState(1)
-  const countries = useMemo(() => playerDirectoryCountries(source), [source])
   const status: PlayerStatusFilter = kind === 'all' ? 'all' : kind
+  const countries = useMemo(() => [...new Set(source.players
+    .filter(player => status === 'all' || player.status === status)
+    .map(player => player.country_code))].sort(), [source, status])
   const filtered = useMemo(() => filteredPlayerDirectory(source, {
     status, search, country, origin, sort,
   }), [source, status, search, country, origin, sort])
@@ -164,6 +167,7 @@ function VerifiedPlayerDirectory({ source, runId, kind, t }: {
               <th scope="col">{t('playerAge')}</th>
               <th scope="col">{t('playerOvr')}</th>
               <th scope="col">{t('origin')}</th>
+              <th scope="col">{t('playerStatus')}</th>
             </tr></thead>
             <tbody>{visible.map(player => <tr key={player.player_id}>
               <td><Link to={viewerPlayerProfilePath(runId, player.player_id)}>{player.name}</Link></td>
@@ -172,6 +176,7 @@ function VerifiedPlayerDirectory({ source, runId, kind, t }: {
               <td>{player.age}</td>
               <td>{player.current_ovr ?? '—'}</td>
               <td>{player.identity_source === 'initial_world' ? t('initial') : t('prospect')}</td>
+              <td>{player.status === 'active' ? t('active') : t('retired')}</td>
             </tr>)}</tbody>
           </table>
         </div>

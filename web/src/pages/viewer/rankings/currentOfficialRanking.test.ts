@@ -39,6 +39,20 @@ describe('current published Official Ranking source validation (legacy v1)', () 
     expect(legacyCurrentRankingSeason(3)).toBe('2003/04')
   })
 
+  it('rejects unknown public projection fields and missing canonical keys', () => {
+    const original = ranking([player(1, 'one', 10), player(2, 'two', 10)])
+    expect(validCurrentOfficialRanking(original, 'run-a', 'branch-a')).toBe(true)
+    const { policy_id: _policy, ...missingPolicy } = original
+    for (const invalid of [
+      { ...original, internal_state: {} },
+      { ...original, rows: [{ ...original.rows[0], counted_results: [] }, original.rows[1]] },
+      { ...missingPolicy, internal_policy: 'replacement' },
+      { ...original, rows: [{ rank: 1, player_id: 'one', private_points: 10 }, original.rows[1]] },
+    ]) {
+      expect(validCurrentOfficialRanking(invalid, 'run-a', 'branch-a')).toBe(false)
+    }
+  })
+
   it('rejects foreign and corrupt sources without fabricating results', () => {
     const ok = ranking([player(1, 'one', 70), player(2, 'two', 30)])
     expect(validCurrentOfficialRanking(ok, 'run-a', 'branch-a')).toBe(true)

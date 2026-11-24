@@ -68,6 +68,18 @@ describe('Viewer Home exact public Run/Branch sources', () => {
     ] }, run, branch)).toBeNull()
   })
 
+  it('rejects invalid country codes and blank regions in public tournament rows', () => {
+    const s = sources()
+    for (const patch of [{ host_country: 'CZ' }, { host_country: 'CZECH' },
+      { host_country: '   ' }, { region: '' }, { region: '  ' }]) {
+      expect(verifiedHomeTournamentHistory({
+        ...s.tournaments,
+        tournaments: [{ ...s.tournaments.tournaments[0], ...patch }, ...s.tournaments.tournaments.slice(1)],
+      }, run, branch)).toBeNull()
+    }
+    expect(verifiedHomeTournamentHistory(s.tournaments, run, branch)).not.toBeNull()
+  })
+
   it('rejects inconsistent ranking head and malformed Finals evidence', () => {
     const s = sources()
     expect(verifiedHomeSources(s.tournaments, { ...s.ranking, public_head_ordinal: 1931 }, s.race, run, branch)).toBeNull()

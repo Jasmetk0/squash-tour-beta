@@ -30,6 +30,11 @@ describe('legacy published ranking snapshot validation', () => {
     expect(validViewerRankingDetail(ranking([row(1, 'a', 0)]), 'run-a', 'branch-a', 1)).toBe(true)
   })
 
+  it('requires descending points but preserves equally ranked point totals', () => {
+    expect(validViewerRankingDetail(ranking([row(1, 'one', 10), row(2, 'two', 20)]), 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail(ranking([row(1, 'one', 20), row(2, 'two', 20)]), 'run-a', 'branch-a', 1)).toBe(true)
+  })
+
   it('does not reinterpret noncanonical ordinals or unsupported legacy range', () => {
     expect(parseLegacyRankingOrdinal('0')).toBe(0)
     expect(parseLegacyRankingOrdinal('3049')).toBe(3049)
@@ -66,6 +71,15 @@ describe('legacy published ranking snapshot validation', () => {
     expect(validViewerRankingDetail(original, 'wrong', 'branch-a', 1)).toBe(false)
     expect(validViewerRankingDetail(original, 'run-a', 'wrong', 1)).toBe(false)
     expect(validViewerRankingDetail(original, 'run-a', 'branch-a', 0)).toBe(false)
+  })
+
+  it('rejects unknown projection fields and empty source identities', () => {
+    const original = ranking([row(1, 'one', 10)])
+    expect(validViewerRankingDetail(original, 'run-a', 'branch-a', 1)).toBe(true)
+    expect(validViewerRankingDetail({ ...original, internal_state: {} }, 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, rows: [{ ...original.rows[0], counted_results: [] }] }, 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, product_run_id: '' }, '', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail({ ...original, viewer_branch_id: '' }, 'run-a', '', 1)).toBe(false)
   })
 
   it('searches only actual player IDs without changing authoritative rank/points', () => {

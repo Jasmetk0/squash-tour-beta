@@ -9,6 +9,7 @@ from typing import TYPE_CHECKING, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from beta_engine.domain.matches.content_hash import create_with_validated_hash, hash_check_deferred
 from beta_engine.domain.matches.rallies import RallyEvent
 from beta_engine.domain.matches.timeline import MatchTimelineLog
 
@@ -298,9 +299,10 @@ class StaminaTransition(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> Self:
-        draft = cls.model_construct(**values, transition_hash="0" * 64)
-        payload = cls._hash_payload(draft)
-        return cls(**values, transition_hash=cls._content_hash(payload))
+        return create_with_validated_hash(
+            cls, values, "transition_hash",
+            lambda transition: cls._content_hash(cls._hash_payload(transition)),
+        )
 
     @model_validator(mode="after")
     def validate_transition(self) -> StaminaTransition:
@@ -345,6 +347,8 @@ class StaminaTransition(BaseModel):
                 )
                 if after.current(dimension) != expected:
                     raise ValueError("stamina transition delta does not match state")
+        if hash_check_deferred(self):
+            return self  # create() stores the hash of exactly this validated value
         payload = self._hash_payload(self)
         if self.transition_hash != self._content_hash(payload):
             raise ValueError("stamina transition hash mismatch")

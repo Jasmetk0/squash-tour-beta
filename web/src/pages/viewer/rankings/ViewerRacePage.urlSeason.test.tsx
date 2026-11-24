@@ -79,7 +79,7 @@ function mount(url = '/viewer/runs/run%20alpha/race?keep=one&keep=two', mode: 't
     )
   }
   const view = render(<App />)
-  return { ...view, refresh: () => view.rerender(<App />) }
+  return { ...view, client, refresh: () => view.rerender(<App />) }
 }
 function params(): URLSearchParams {
   const url = screen.getByLabelText('Current URL').textContent ?? ''
@@ -134,6 +134,33 @@ describe('Viewer Race exact-season deep links (mocked GET, not HTTP/SQLite)', ()
     expect(screen.getByRole('heading', { name: 'Zvolená publikace: 2003/04' })).toBeInTheDocument()
     expect(params().get('keep')).toBe('yes')
     expect(api.getViewerFinalsRace).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['raceSeason=3&raceSeason=4', 'raceSeason=3&raceSeason=3'])(
+    'rejects ambiguous duplicated season parameters and permits explicit recovery: %s', async search => {
+      const user = userEvent.setup()
+      mount('/viewer/runs/run%20alpha/race?' + search + '&keep=yes')
+      expect(await screen.findByRole('alert')).toHaveTextContent('Požadovaná publikace Race neexistuje')
+      expect(screen.queryByRole('heading', { name: /Zvolená publikace/ })).not.toBeInTheDocument()
+      expect(screen.getByLabelText('Cílová sezona')).toHaveValue('')
+      await user.selectOptions(screen.getByLabelText('Cílová sezona'), '3')
+      expect(await screen.findByRole('heading', { name: 'Zvolená publikace: 2003/04' })).toBeInTheDocument()
+      expect(params().getAll('raceSeason')).toEqual(['3'])
+      expect(params().get('keep')).toBe('yes')
+    }
+  )
+
+  it('withholds the previously displayed standings during an in-flight refetch', async () => {
+    const view = mount('/viewer/runs/run%20alpha/race?raceSeason=3')
+    expect(await screen.findByRole('link', { name: 'player-3-0' })).toBeInTheDocument()
+    let release!: (value: ReturnType<typeof history>) => void
+    api.getViewerFinalsRace.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const refresh = view.client.invalidateQueries({ queryKey: ['viewer-canonical-finals-race', source.run, source.branch] })
+    await waitFor(() => expect(api.getViewerFinalsRace).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole('link', { name: 'player-3-0' })).not.toBeInTheDocument())
+    expect(screen.getByText('Načítám publikované Race…')).toBeInTheDocument()
+    await act(async () => { release(history()); await refresh })
+    expect(await screen.findByRole('link', { name: 'player-3-0' })).toBeInTheDocument()
   })
 
   it('distinguishes a real zero-row season 0 publication from an unavailable season', async () => {

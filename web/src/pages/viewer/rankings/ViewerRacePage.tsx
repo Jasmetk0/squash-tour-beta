@@ -186,7 +186,9 @@ function RaceForSource({ runId, branchId, t, ignoreUrlSeason }: {
   runId: string; branchId: string; t: Copy; ignoreUrlSeason: boolean
 }): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams()
-  const rawSeason = ignoreUrlSeason ? null : searchParams.get(RACE_SEASON_QUERY)
+  const seasonValues = ignoreUrlSeason ? [] : searchParams.getAll(RACE_SEASON_QUERY)
+  const rawSeason = seasonValues[0] ?? null
+  const ambiguousSeason = seasonValues.length > 1
   function chooseSeason(value: number): void {
     setSearchParams((previous) => {
       const next = new URLSearchParams(previous)
@@ -200,7 +202,7 @@ function RaceForSource({ runId, branchId, t, ignoreUrlSeason }: {
     retry: false,
     refetchOnWindowFocus: false
   })
-  if (query.isPending) return <p className="status" role="status">{t.loading}</p>
+  if (query.isPending || query.isFetching) return <p className="status" role="status">{t.loading}</p>
   if (query.isError || !validViewerRaceHistory(query.data, runId, branchId)) return (
     <div role="alert">
       <p className="error">{query.isError ? t.error + ' ' + formatApiError(query.error) : t.invalid}</p>
@@ -212,15 +214,17 @@ function RaceForSource({ runId, branchId, t, ignoreUrlSeason }: {
     ? <p className="empty-state">{t.empty}</p>
     : <p role="alert">{t.missingSeason}</p>
   const requested = rawSeason === null ? null : seasonFromUrl(rawSeason)
-  const chosen = rawSeason === null ? history[0]
+  const chosen = ambiguousSeason ? undefined : rawSeason === null ? history[0]
     : requested === null ? undefined : history.find(p => p.target_season_index === requested)
+  // A duplicate season parameter must not masquerade as a valid selection.
+  const selectValue = chosen ? String(chosen.target_season_index) : ambiguousSeason ? '' : rawSeason ?? ''
   return (
     <>
       <h3>{t.history}</h3>
       <label htmlFor="race-publication-season">{t.season}</label>
-      <select id="race-publication-season" value={chosen ? String(chosen.target_season_index) : rawSeason ?? ''}
+      <select id="race-publication-season" value={selectValue}
         onChange={e => chooseSeason(Number(e.target.value))}>
-        {!chosen ? <option value={rawSeason ?? ''}>{t.unknownSeason}: {rawSeason}</option> : null}
+        {!chosen ? <option value={selectValue} disabled>{t.unknownSeason}{ambiguousSeason ? '' : ': ' + (rawSeason ?? '')}</option> : null}
         {history.map(p => <option key={p.target_season_index} value={p.target_season_index}>
           {raceSeasonLabel(p.target_season_index)}
         </option>)}

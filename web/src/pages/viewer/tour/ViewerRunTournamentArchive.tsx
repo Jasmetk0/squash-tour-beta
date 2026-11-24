@@ -170,7 +170,7 @@ export function ViewerRunTournamentArchive({ detailPath }: {
                 <strong>{event.event_name || event.event_id}</strong>
                 <MetadataList items={[
                   { label: t.id, value: event.event_id }, { label: t.season, value: event.season },
-                  { label: t.week, value: <Link to={viewerWeekDetailPath(runId, event.season_week)}>{`W${event.season_week}`}</Link> },
+                  { label: t.week, value: <Link to={viewerWeekDetailPath(runId, event.season_week) + '?season=' + encodeURIComponent(event.season)}>{`W${event.season_week}`}</Link> },
                   { label: t.template, value: event.template_id }, { label: t.category, value: event.category || '—' },
                   { label: t.tour, value: event.tour_level?.replace(/_/g, ' ') ?? '—' },
                   { label: t.host, value: [event.host_city, event.host_country].filter(Boolean).join(', ') },

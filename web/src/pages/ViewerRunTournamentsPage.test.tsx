@@ -106,7 +106,7 @@ function mockCanonicalTournamentData(): void {
       {
         event_id: 'EVENT-OLD',
         season: '2000/2001',
-        season_week: 5,
+        season_week: 3,
         event_name: 'Old Open',
         template_id: 'WT-GOLD',
         category: 'GOLD',
@@ -286,7 +286,10 @@ describe('ViewerRunTournamentsPage', () => {
     const list = await screen.findByRole('list', { name: 'Canonical tournament history list' })
     expect(within(list).getByText('Old Open')).toBeInTheDocument()
     expect(within(list).getByText('Canonical Open')).toBeInTheDocument()
-    expect(within(list).getByRole('link', { name: 'W5' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/5')
+    expect(within(list).getAllByRole('link', { name: 'W3' }).map(link => link.getAttribute('href')).sort()).toEqual([
+      '/viewer/runs/viewer-run-1/weeks/3?season=2000%2F2001',
+      '/viewer/runs/viewer-run-1/weeks/3?season=2027%2F2028'
+    ])
     expectNoForbiddenViewerActions()
   })
   it('restores filters from URL, preserves unrelated parameters and does not re-fetch', async () => {
@@ -427,7 +430,7 @@ describe('ViewerRunTournamentDetailPage canonical authorities', () => {
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-1')
 
     expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3?season=2027%2F2028')
     expect(screen.getByText('PLATINUM')).toBeInTheDocument()
     expect(screen.getByText('WORLD TOUR')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()

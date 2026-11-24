@@ -43,10 +43,11 @@ function drawSlotLabel(slot: {
   return `#${slot.slot_index} · ${identity}${seed}${status}`
 }
 
-function displayWeekDetailLink(runId: string, week: number | null): ReactNode {
+function displayWeekDetailLink(runId: string, week: number | null, season: string | number | null): ReactNode {
   if (week == null) return '—'
+  if (season == null || !String(season).trim()) return `W${week}`
 
-  return <Link to={viewerWeekDetailPath(runId, week)}>{`W${week}`}</Link>
+  return <Link to={viewerWeekDetailPath(runId, week) + '?season=' + encodeURIComponent(String(season))}>{`W${week}`}</Link>
 }
 
 
@@ -171,10 +172,10 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
               <Link to={viewerPlannedEventPath(runId, eventId)}>Open calendar event</Link>
             </>
           ) : null}
-          {week != null ? (
+          {week != null && season != null && String(season).trim() ? (
             <>
               {' · '}
-              <Link to={viewerWeekDetailPath(runId, week)}>Open week detail</Link>
+              <Link to={viewerWeekDetailPath(runId, week) + '?season=' + encodeURIComponent(String(season))}>Open week detail</Link>
             </>
           ) : null}
           {' · '}
@@ -212,7 +213,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                     { label: 'Event ID', value: eventId },
                     { label: 'Event name', value: calendarEvent?.event_name ?? historyEvent?.event_name ?? eventId },
                     { label: 'Season', value: season ?? '—' },
-                    { label: 'Week', value: displayWeekDetailLink(runId, week) },
+                    { label: 'Week', value: displayWeekDetailLink(runId, week, season) },
                     { label: 'Tour', value: (calendarEvent?.tour_level ?? historyEvent?.tour_level)?.replace(/_/g, ' ') ?? '—' },
                     { label: 'Category', value: calendarEvent?.category ?? historyEvent?.category ?? '—' },
                     { label: 'Template', value: calendarEvent?.template_id ?? historyEvent?.template_id ?? '—' },

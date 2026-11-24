@@ -105,7 +105,7 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     expect(api.getEvent).not.toHaveBeenCalled()
     expect(api.getRun).not.toHaveBeenCalled()
     expect(screen.getByRole('link', { name: 'Open calendar event' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/EVENT%2F1')
-    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/weeks/5')
+    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/weeks/5?season=2028%2F2029')
     expect(await screen.findByRole('list', { name: 'Canonical Main draw slots' })).toHaveTextContent('P-001')
     expect(screen.getByRole('heading', { name: 'Canonical Entry Field' })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: 'Definitive Wild Cards' })).toBeInTheDocument()
@@ -142,7 +142,7 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     renderDetail()
     expect(await screen.findByText('Source Open')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open calendar event' })).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/weeks/5')
+    expect(screen.getByRole('link', { name: 'Open week detail' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/weeks/5?season=2028%2F2029')
   })
 
   it('does not partially match a different History event ID', async () => {

@@ -169,13 +169,13 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t, ignore
   }
 
   if (query.isPending || query.isFetching) return <p className="status" role="status">{t.loading}</p>
-  if (query.isError || (query.data && !valid)) return (
+  // A completed GET without a valid history is an invalid response, not loading.
+  if (query.isError || !history) return (
     <div role="alert">
       <p className="error">{query.isError ? t.failed + ' ' + formatApiError(query.error) : t.invalid}</p>
       <button type="button" onClick={() => void query.refetch()}>{t.retry}</button>
     </div>
   )
-  if (!history) return <p className="status" role="status">{t.loading}</p>
   if (history.publication_count === 0) return <><p>{t.published} 0</p><EmptyState message={t.empty} /><p role="status">{t.showing} 0–0 {t.of} 0</p></>
 
   return (

@@ -155,7 +155,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   const invalidOrigin = !['all', 'initial_world', 'run_prospect'].includes(filters.origin)
   const invalidCountry = filters.country !== 'all' && !countries.includes(filters.country)
   const invalidSort = !['name', 'public_ovr', 'age'].includes(filters.sort)
-  const invalidFilters = invalidStatus || invalidOrigin || invalidCountry || invalidSort
+  const invalidFilters = invalidStatus || invalidOrigin || invalidCountry || invalidSort || PLAYER_URL_VALUES.some(key => activeParams.getAll(key).length > 1)
   // Reject unsupported or stale historical selectors; never pretend the link meant All.
   const found = invalidFilters ? [] : filteredPlayerDirectory(source, filters)
   const pages = Math.ceil(found.length / PLAYER_DIRECTORY_PAGE_SIZE)

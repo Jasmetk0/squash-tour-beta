@@ -143,7 +143,7 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t, ignore
   const bestValues = useMemo(() => [...new Set(publications.map((item) => item.best_n))].sort((a, b) => a - b), [publications])
   const seasonInvalid = season !== '' && (rankingFilterInteger(season, true) === null || !seasons.includes(Number(season)))
   const bestInvalid = bestN !== '' && (rankingFilterInteger(bestN, false) === null || !bestValues.includes(Number(bestN)))
-  const filtersInvalid = seasonInvalid || bestInvalid || orderInvalid
+  const filtersInvalid = seasonInvalid || bestInvalid || orderInvalid || RANKING_FILTER_KEYS.some(key => activeParams.getAll(key).length > 1)
   const filtered = useMemo(
     () => filtersInvalid ? [] : filterRankingHistory(publications, { season, bestN, search, order }),
     [publications, season, bestN, search, order, filtersInvalid]
@@ -168,7 +168,7 @@ function RankingHistoryForSource({ productRunId, viewerBranchId, text: t, ignore
     }
   }
 
-  if (query.isPending) return <p className="status" role="status">{t.loading}</p>
+  if (query.isPending || query.isFetching) return <p className="status" role="status">{t.loading}</p>
   if (query.isError || (query.data && !valid)) return (
     <div role="alert">
       <p className="error">{query.isError ? t.failed + ' ' + formatApiError(query.error) : t.invalid}</p>

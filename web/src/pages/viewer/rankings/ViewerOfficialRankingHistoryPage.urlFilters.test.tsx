@@ -74,7 +74,7 @@ function mount(url = '/viewer/runs/run%20alpha/rankings/history?keep=one&keep=tw
     )
   }
   const view = render(<App />)
-  return { ...view, refresh: () => view.rerender(<App />) }
+  return { ...view, client, refresh: () => view.rerender(<App />) }
 }
 function query(): URLSearchParams {
   const output = screen.getByLabelText('Current URL').textContent ?? ''
@@ -185,4 +185,27 @@ describe('Viewer Official Ranking URL filters (mocked GET, not HTTP/SQLite)', ()
     expect(screen.getByLabelText('Řazení')).toHaveValue('oldest')
     expectNoForbiddenViewerActions()
   })
+
+  it('rejects duplicate owned filters without discarding unrelated URL parameters', async () => {
+    mount('/viewer/runs/run%20alpha/rankings/history?rhSeason=0&rhSeason=1&keep=one&keep=two')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(query().getAll('keep')).toEqual(['one', 'two'])
+    expect([...query().keys()]).toEqual(['keep', 'keep'])
+  })
+
+  it('hides the previously loaded publication list until a refetch completes', async () => {
+    const view = mount()
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    let release!: (value: ReturnType<typeof history>) => void
+    api.listViewerOfficialRankingHistory.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const refresh = view.client.invalidateQueries({ queryKey: ['viewer-official-ranking-history', 'run alpha', 'branch-a'] })
+    await waitFor(() => expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole('table')).not.toBeInTheDocument())
+    await act(async () => { release(history()); await refresh })
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+  })
+
 })

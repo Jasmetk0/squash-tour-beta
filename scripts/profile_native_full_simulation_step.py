@@ -80,7 +80,6 @@ from sqlalchemy.engine import Engine  # noqa: E402
 import beta_engine.application.calendar_global_slot_service as slots  # noqa: E402
 import beta_engine.application.native_fork_runtime_service as fork_service  # noqa: E402
 import beta_engine.application.native_full_simulation as native  # noqa: E402
-import beta_engine.application.run_calendar_read_authority as calendar_authority  # noqa: E402
 from beta_engine.application.calendar_tour_service import CalendarTourService  # noqa: E402
 from beta_engine.domain.calendar.run_calendar import RunCalendar  # noqa: E402
 from beta_engine.infrastructure.db.repositories import SimulationPersistenceRepository as SqlAlchemyRepository  # noqa: E402

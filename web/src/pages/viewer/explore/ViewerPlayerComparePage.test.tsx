@@ -1,4 +1,4 @@
-import {cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react'
+import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react'
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {MemoryRouter} from 'react-router-dom'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
@@ -198,5 +198,51 @@ describe('Comparison CS/EN copy (mocked language and GET boundaries)', () => {
     expect(screen.getByText('Čtecí porovnání atributů hráčů, nikoliv autoritativní historie vzájemných zápasů.')).toBeInTheDocument()
     expect(screen.getByText('Ukázkový výběr hráčů je dočasně nedostupný.')).toBeInTheDocument()
     expect(screen.getByText('Rozdíl herní síly')).toBeInTheDocument()
+  })
+})
+
+describe('Comparison audit: reject malformed discovery and stale exact evidence', () => {
+  it.each([
+    { run_id: 'foreign-run' },
+    { players: [null] },
+    { players: [makePlayer('same'), makePlayer('same')] },
+    { players: [{ ...makePlayer('bad'), overall: Number.NaN }] },
+    { offset: 50 },
+  ])('does not render a foreign or broken discovery sample (%j)', async override => {
+    mocks.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 2, limit: 50, offset: 0,
+      players: [makePlayer('foreign')], ...override,
+    })
+    mount('/viewer/compare')
+    expect(await screen.findByText('Player discovery sample is temporarily unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('Player foreign')).not.toBeInTheDocument()
+    expect(mocks.getRunPlayerDetail).not.toHaveBeenCalled()
+  })
+
+  it('does not render extra fields from a different payload schema', async () => {
+    mocks.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 1, limit: 50, offset: 0,
+      players: [{ ...makePlayer('safe'), current_ovr: 99999, identity_source: {} }],
+    })
+    mount('/viewer/compare')
+    expect(await screen.findByText('Player safe')).toBeInTheDocument()
+    expect(screen.queryByText('99999')).not.toBeInTheDocument()
+  })
+
+  it('hides both exact cards and differences during a refetch of either player', async () => {
+    const view = mount()
+    expect(await screen.findByText('Player player-900')).toBeInTheDocument()
+    let release!: (player: ReturnType<typeof makePlayer>) => void
+    mocks.getRunPlayerDetail.mockImplementationOnce(() =>
+      new Promise(resolve => { release = resolve }))
+    const refresh = view.queryClient.invalidateQueries({
+      queryKey: ['viewer-comparison-exact-player', 'run-a', 'player-900'],
+    })
+    await waitFor(() => expect(mocks.getRunPlayerDetail).toHaveBeenCalledTimes(3))
+    expect(screen.queryByText('Player player-1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Player player-900')).not.toBeInTheDocument()
+    expect(screen.queryByText('Power Rating difference')).not.toBeInTheDocument()
+    await act(async () => { release(makePlayer('player-900', 76)); await refresh })
+    expect(await screen.findByText('Player player-900')).toBeInTheDocument()
   })
 })

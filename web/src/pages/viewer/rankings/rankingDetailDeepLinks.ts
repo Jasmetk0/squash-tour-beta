@@ -7,6 +7,8 @@ const ownedKeys = [
   'rankDetailFingerprint', 'rankDetailPlayer', 'rankDetailPage',
 ] as const
 
+export const RANK_DETAIL_SEARCH_LIMIT = 256
+
 export type RankingDetailDeepLink =
   | { kind: 'valid'; player: string; page: number }
   | { kind: 'invalid' }
@@ -29,7 +31,7 @@ export function readRankingDetailDeepLink(
   const player = params.get('rankDetailPlayer') ?? ''
   const rawPage = params.get('rankDetailPage')
   const page = rawPage === null ? 1 : Number(rawPage)
-  if (player.length > 256 ||
+  if (player.length > RANK_DETAIL_SEARCH_LIMIT ||
     (rawPage !== null && !/^[1-9][0-9]*$/.test(rawPage)) ||
     !Number.isSafeInteger(page) || page < 1) return { kind: 'invalid' }
 

@@ -12,7 +12,7 @@ import {
   DETAIL_PAGE_SIZE, detailPages, legacySeasonLabel, parseDetailPage,
   parseLegacyRankingOrdinal, rankingRowsMatchingId, validViewerRankingDetail
 } from './rankingSnapshotDetailBrowsing'
-import { readRankingDetailDeepLink, writeRankingDetailDeepLink, clearRankingDetailDeepLink } from './rankingDetailDeepLinks'
+import { readRankingDetailDeepLink, writeRankingDetailDeepLink, clearRankingDetailDeepLink, RANK_DETAIL_SEARCH_LIMIT } from './rankingDetailDeepLinks'
 
 // Each paired message is local to this page; IDs, policy and fingerprints
 // always come unchanged from the historical publication.
@@ -142,7 +142,8 @@ function HistoricalRankingSource({
             id="official-detail-player-search"
             type="search"
             value={search}
-            onChange={event => changeView(event.target.value, 1, params.has('rankDetailPlayer'))}
+            maxLength={RANK_DETAIL_SEARCH_LIMIT}
+            onChange={event => changeView(event.target.value.slice(0, RANK_DETAIL_SEARCH_LIMIT), 1, params.has('rankDetailPlayer'))}
           />
           <p>{t.hint}</p>
           <button type="button" onClick={() => changeView('', 1)}>{t.clear}</button>

@@ -11,7 +11,8 @@ opened for writing. The script starts the production app on that copy, issues
 exactly one ``GET /admin/runs/run/branches/branch/calendar-tour`` without the
 120-second client deadline (so a slow read is measured instead of aborted) and
 compares the complete JSON response with ``expected_inspection``.
-It reports wall time, response size, exact equality and the process peak RSS.
+It reports wall time, response size, exact equality, the process peak memory
+(RSS on Linux/macOS, peak working set on Windows) and the machine it ran on.
 Set ``COLD_TOUR_READ_CHECKOUT`` to measure another checkout (for example the
 base commit) with this same script.
 """
@@ -21,7 +22,6 @@ from __future__ import annotations
 import hashlib
 import json
 import os
-import resource
 import shutil
 import subprocess
 import sys
@@ -33,6 +33,8 @@ from urllib import request
 ROOT = Path(os.environ.get("COLD_TOUR_READ_CHECKOUT") or Path(__file__).resolve().parents[1]).resolve()
 sys.path.insert(0, str(ROOT / "src"))
 sys.path.insert(0, str(ROOT))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+from process_measurement import machine, peak_rss_kib  # noqa: E402  (Windows, Linux, macOS)
 
 TOUR_PATH = "/admin/runs/run/branches/branch/calendar-tour"
 
@@ -40,7 +42,8 @@ TOUR_PATH = "/admin/runs/run/branches/branch/calendar-tour"
 def main(argv=None) -> int:
     fixture, metadata_path, output = map(Path, (argv or sys.argv[1:])[:3])
     metadata = json.loads(metadata_path.read_text(encoding="utf-8"))
-    with tempfile.TemporaryDirectory(prefix="cold-tour-read-") as directory:
+    # Windows can keep SQLite files briefly locked after the server stops.
+    with tempfile.TemporaryDirectory(prefix="cold-tour-read-", ignore_cleanup_errors=True) as directory:
         database = Path(directory) / "fixture.sqlite"
         shutil.copyfile(fixture, database)
         digest = hashlib.sha256(database.read_bytes()).hexdigest()
@@ -54,8 +57,11 @@ def main(argv=None) -> int:
                 status, raw = response.status, response.read()
             seconds = time.perf_counter() - started
     view = json.loads(raw)
-    head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
-                          capture_output=True, text=True).stdout.strip()
+    try:
+        head = subprocess.run(["git", "-C", str(ROOT), "rev-parse", "HEAD"],
+                              capture_output=True, text=True).stdout.strip() or None
+    except OSError:
+        head = None  # no git on this machine
     result = {
         "repository_head": head,
         "fixture_sha256": digest,
@@ -65,8 +71,10 @@ def main(argv=None) -> int:
         "response_bytes": len(raw),
         "exact_expected_inspection": view == metadata["expected_inspection"],
         "saved_head_revision_id": view.get("saved_head_revision_id"),
-        "peak_rss_mib": round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1),
+        "peak_rss_mib": round(peak_rss_kib() / 1024, 1),
+        "fixture_bytes": fixture.stat().st_size,
         "python": sys.version.split()[0],
+        "machine": machine(),
     }
     output.write_text(json.dumps(result, indent=1) + "\n", encoding="utf-8")
     print(json.dumps(result))

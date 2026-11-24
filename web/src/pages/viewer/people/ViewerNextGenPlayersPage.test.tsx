@@ -102,6 +102,34 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(screen.getByRole('button', { name: 'Předchozí' })).toBeEnabled()
   })
 
+  it.each([0, 2])('recovers an out-of-range page after the visible cohort shrinks to %i', async total => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    const first = Array.from({ length: 50 }, (_, i) => 'Old prospect ' + i)
+    const newNames = Array.from({ length: total }, (_, i) => 'New prospect ' + i)
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(0, first, 51))
+      .mockResolvedValueOnce(page(50, [], total))
+      .mockResolvedValueOnce(page(0, newNames, total))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Old prospect 0')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Další' }))
+    expect(await screen.findByText('Tato stránka už neobsahuje žádné hráče.')).toBeInTheDocument()
+    expect(screen.queryByText(/0–50 z/)).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Další' })).toBeDisabled()
+    await user.click(screen.getByRole('button', { name: 'Přejít na první stránku' }))
+    await waitFor(() => expect(api.getViewerVisibleProspects)
+      .toHaveBeenLastCalledWith('product run', { limit: 50, offset: 0 }))
+    if (total === 0) {
+      expect(await screen.findByText('V tomto uloženém týdnu nejsou viditelní žádní hráči před vstupem na Tour.')).toBeInTheDocument()
+    } else {
+      expect(await screen.findByText('New prospect 0')).toBeInTheDocument()
+      expect(screen.getByText('1–2 z 2')).toBeInTheDocument()
+    }
+    expect(screen.queryByText('Old prospect 0')).not.toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(3)
+  })
+
   it('does not fetch any prospect page when the official context belongs to another Run', async () => {
     const user = userEvent.setup()
     setViewerActiveProductRunId('product run')

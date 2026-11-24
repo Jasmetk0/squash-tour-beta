@@ -913,9 +913,12 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
     renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY?vcPlayerPage=2&keep=yes', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
     const table = await screen.findByRole('table')
     expect(within(table).getAllByRole('row')).toHaveLength(51)
-    expect(within(table).getByRole('link', { name: 'Player 50' })).toBeInTheDocument()
+    expect(within(table).getByRole('link', { name: 'Player 50 (P-050)' }))
+      .toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players/P-050/career')
     await userEvent.setup().click(screen.getByRole('button', { name: 'Last' }))
     expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getByRole('link', { name: 'Player 100 (P-100)' }))
+      .toHaveAttribute('href', '/viewer/runs/viewer-run-2c/players/P-100/career')
     expect(screen.getByLabelText('Current URL')).toHaveTextContent('vcPlayerPage=3&keep=yes')
   })
 

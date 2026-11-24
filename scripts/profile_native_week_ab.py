@@ -62,6 +62,13 @@ def write(path, value):
         stream.write("\n")
 
 
+def record_progress(path, row):
+    """Append completed phases so a killed worker still leaves evidence."""
+    with path.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(row, allow_nan=False) + "\n")
+        stream.flush()
+
+
 def git(*args, cwd=None):
     return subprocess.check_output(["git", *args], cwd=cwd, text=True).strip()
 
@@ -242,6 +249,9 @@ def worker(args):
     # Same ID factory as profile_native_cold_saved_read; never bypass a gate.
     deps.uuid4 = lambda: uuid5(NAMESPACE_URL, f"week-ab:{args.sha256}:{next(ids)}")
     rows = []
+    progress = args.out.with_suffix(".phases.jsonl")
+    with progress.open("x", encoding="utf-8"):
+        pass
     report = {"schema": SCHEMA, "status": "failed", "metadata": meta,
               "input_sha256": args.sha256, "scenario": args.scenario, "seed": SEED,
               "mode": args.mode, "plan": PLANS[args.scenario], "before": before,
@@ -271,6 +281,7 @@ def worker(args):
                                  "fetch_rows": fetched["rows"] - fetch_before["rows"],
                                  "fetch_text_blob_bytes": fetched["text_blob_bytes"] - fetch_before["text_blob_bytes"],
                                  **physical(db)})
+                    record_progress(progress, rows[-1])
 
             started, cpu = time.perf_counter(), time.process_time()
             view = call("initial_get", "GET")
@@ -401,8 +412,27 @@ def validate_report(item):
             require(re.fullmatch(r"[0-9a-f]{64}", ev[key]), "missing/invalid sporting evidence")
         require(type(ev["players"]) is int and type(ev["match_count"]) is int
                 and ev["players"] > 0 and ev["match_count"] >= 0, "invalid sporting counts")
-    require(item["history"] and item["history"][-1]["id"] == item["evidence"]["head"],
+    initial, final = item["initial_evidence"], item["evidence"]
+    start, end, players, matches = (
+        ([0, 4], [0, 5], 8, 3) if scenario == "w6" else ([1, 1], [1, 2], 256, 24)
+    )
+    require(initial["position"] == start and final["position"] == end
+            and initial["players"] == final["players"] == players
+            and final["match_count"] == matches,
+            "unexpected sporting position/counts")
+    require(initial["match_count"] == (0 if scenario == "w6" else 24),
+            "unexpected initial match count")
+    require(item["history"] and item["history"][-1]["id"] == final["head"],
             "missing/mismatched history")
+    lineage = item["history"]
+    require(len(lineage) >= len(PLANS[scenario]) + 1, "truncated history")
+    require(lineage[-len(PLANS[scenario])-1]["id"] == initial["head"],
+            "initial head missing at expected ancestry position")
+    require(len({row["id"] for row in lineage}) == len(lineage), "duplicate revision IDs")
+    for previous, current in zip(lineage, lineage[1:]):
+        require(current["parent"] == previous["id"], "broken revision ancestry")
+    require(item["peak_rss_kib"] >= max(row["peak_rss_kib"] for row in item["calls"]),
+            "total peak RSS below observed phase peak")
     for row in item["history"]:
         for key in ("payload_sha256", "summary_sha256", "content_hash"):
             require(re.fullmatch(r"[0-9a-f]{64}", row[key]), "invalid logical history digest")
@@ -449,6 +479,10 @@ def totals(report):
             "http_calls": len(report["calls"]),
             **{k: sum(row[k] for row in report["calls"])
                for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes")},
+            "max_sampled_db_bytes": max([report["before"]["db_bytes"], report["after"]["db_bytes"]]
+                                        + [row["db_bytes"] for row in report["calls"]]),
+            "max_sampled_wal_bytes": max([report["before"]["wal_bytes"], report["after"]["wal_bytes"]]
+                                         + [row["wal_bytes"] for row in report["calls"]]),
             **report["after"]}
 
 
@@ -559,7 +593,9 @@ def run_ab(args):
                         db = temp / f"{repetition}-{name}.db"
                         dest = case_dir / (name + ".json")
                         case = {"trial": repetition + 1, "case": name,
-                                "report": str(dest.relative_to(out)), "status": "started"}
+                                "report": str(dest.relative_to(out)),
+                                "phase_log": str(dest.with_suffix(".phases.jsonl").relative_to(out)),
+                                "status": "started"}
                         manifest["cases"].append(case)
                         try:
                             copy_fixture(source, db, args.sha256)
@@ -592,7 +628,9 @@ def run_ab(args):
             finally:
                 for tree in reversed(list(trees.values())):
                     git("worktree", "remove", "--force", str(tree))
-        require(file_sha(source) == args.sha256, "Original fixture changed")
+        require(file_sha(source) == args.sha256 and
+                not sidecar(source, "-wal").exists() and not sidecar(source, "-shm").exists(),
+                "Original fixture changed or acquired SQLite sidecars")
         summary = summarize_trials(trials)
         write(out / "comparison.json", summary)
         print(json.dumps(summary, indent=2))

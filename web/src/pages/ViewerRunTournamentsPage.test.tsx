@@ -1,12 +1,11 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { createTestQueryClient, makeViewerProductRunRouteTestValue, renderWithViewerProviders } from '../test/viewerTestUtils'
 import { LanguageProvider } from '../i18n/LanguageContext'
 import { ViewerProductRunRouteContextProvider } from '../viewer/ViewerProductRunRouteContext'
-import { useLocation } from 'react-router-dom'
 import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './ViewerRunTournamentsPage'
 
 const api = vi.hoisted(() => ({
@@ -31,7 +30,12 @@ vi.mock('../api/client', () => api)
 
 function TestLocation(): JSX.Element {
   const location = useLocation()
-  return <output aria-label="Current URL">{location.search}</output>
+  const navigate = useNavigate()
+  return <>
+    <output aria-label="Current URL">{location.search}</output>
+    <button type="button" onClick={() => navigate(-1)}>Browser Back</button>
+    <button type="button" onClick={() => navigate(1)}>Browser Forward</button>
+  </>
 }
 function renderViewerTournamentRoute(route: string, branch = 'branch-viewer') {
   const client = createTestQueryClient()
@@ -348,6 +352,36 @@ describe('ViewerRunTournamentsPage', () => {
     expect(within(list).getAllByRole('listitem')).toHaveLength(10)
     expect(screen.getByLabelText('Current URL')).toHaveTextContent('vtPage=3')
     expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores exact filter selection through Back and Forward', async () => {
+    const user = userEvent.setup()
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments?keep=yes')
+    expect(await screen.findByText('Old Open')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Filter season'), '2027/2028')
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Browser Back' }))
+    expect(await screen.findByText('Old Open')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('?keep=yes')
+    await user.click(screen.getByRole('button', { name: 'Browser Forward' }))
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Filter season')).toHaveValue('2027/2028')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides the old list during background refresh and rejects a foreign response', async () => {
+    const valid = await api.getViewerTournamentHistory()
+    api.getViewerTournamentHistory.mockClear()
+    const { client } = renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+    expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    let release!: (value: unknown) => void
+    api.getViewerTournamentHistory.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const refreshing = client.invalidateQueries({ queryKey: ['viewer-run-tournament-archive', 'viewer-run-1', 'branch-viewer'] })
+    await waitFor(() => expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument())
+    await act(async () => { release({ ...valid, product_run_id: 'foreign-run' }); await refreshing })
+    expect(await screen.findByRole('alert')).toHaveTextContent('belongs to another source')
+    expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument()
   })
 
   it('localizes controls but does not translate stored event names', async () => {

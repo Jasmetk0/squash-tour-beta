@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
@@ -116,6 +116,21 @@ describe('Ranking publication detail: shareable filtered pages (mock GET, not HT
     expect(screen.getByText('Showing 1–50 of 120')).toBeInTheDocument()
     expect(screen.getByRole('searchbox', { name: 'Search by player ID' })).toHaveValue('')
     expect(currentUrl()).not.toContain('rankDetailPlayer=')
+  })
+
+  it('bounds oversized input without generating an invalid URL or losing the search controls', async () => {
+    mount(base + '?keep=yes')
+    const search = await screen.findByRole('searchbox', { name: 'Search by player ID' })
+    expect(search).toHaveAttribute('maxlength', '256')
+    fireEvent.change(search, { target: { value: 'x'.repeat(257) } })
+    expect(screen.getByRole('searchbox', { name: 'Search by player ID' })).toHaveValue('x'.repeat(256))
+    expect(currentUrl()).toContain('rankDetailPlayer=' + 'x'.repeat(256))
+    expect(currentUrl()).toContain('keep=yes')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(screen.getByText('No players match the search.')).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Clear search' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(api.getViewerOfficialRankingHistoryDetail).toHaveBeenCalledTimes(1)
   })
 
   it('restores pages through Back/Forward without issuing another source GET', async () => {

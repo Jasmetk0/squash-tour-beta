@@ -17,6 +17,12 @@ export function playerViewerBranch(context: unknown, runId: string): string | nu
     ? record.official_branch_id : null
 }
 
+const publicPlayerFields = new Set([
+  'player_id', 'name', 'country_code', 'age', 'status', 'identity_source',
+  'tour_entry_season_index', 'tour_entry_week', 'current_ovr', 'potential_ovr',
+  'current_form', 'match_sharpness', 'long_term_fatigue',
+])
+
 export function verifiedViewerPlayers(payload: unknown, runId: string, branchId: string): ViewerPlayers | null {
   if (!nonEmpty(runId) || !nonEmpty(branchId) || !payload || typeof payload !== 'object') return null
   const data = payload as Partial<ViewerPlayers>
@@ -36,7 +42,9 @@ export function verifiedViewerPlayers(payload: unknown, runId: string, branchId:
   let active = 0
   let retired = 0
   for (const value of data.players) {
-    if (!value || typeof value !== 'object') return null
+    if (!value || typeof value !== 'object' || Array.isArray(value) ||
+        Object.keys(value).length !== publicPlayerFields.size ||
+        Object.keys(value).some(key => !publicPlayerFields.has(key))) return null
     const player = value as Partial<ViewerPlayer>
     if (
       !nonEmpty(player.player_id) || playerIds.has(player.player_id) ||

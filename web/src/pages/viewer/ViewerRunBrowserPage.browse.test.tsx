@@ -212,4 +212,20 @@ describe('Viewer Run Browser URL browsing (local filtering over mocked GET only)
     expect(api.listRunContainers).toHaveBeenCalledTimes(calls)
     expectNoForbiddenViewerActions()
   })
+
+  it.each([
+    'runQuery=Brno&runQuery=Prague',
+    'runQuery=&runQuery=Brno',
+    'runPage=1&runPage=2',
+    'runPage=1&runPage=1',
+  ])('refuses ambiguous Run filter or page selection and can recover explicitly: %s', async query => {
+    const user = userEvent.setup()
+    mount('/viewer/runs?' + query + '&keep=one&keep=two')
+    expect(await screen.findByRole('alert')).toHaveTextContent('ambiguous filters')
+    expect(screen.queryByRole('heading', { level: 4, name: 'a/id #1' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Clear filter' }))
+    expect(await screen.findByRole('heading', { level: 4, name: 'a/id #1' })).toBeInTheDocument()
+    expect(currentUrl()).toBe('/viewer/runs?keep=one&keep=two')
+  })
+
 })

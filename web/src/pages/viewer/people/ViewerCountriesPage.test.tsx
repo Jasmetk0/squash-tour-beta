@@ -5,7 +5,8 @@ import { clearViewerStorage, expectNoForbiddenViewerActions, renderWithViewerPro
 import { ViewerCountriesPage } from './ViewerCountriesPage'
 
 const api = vi.hoisted(() => ({
-  getViewerCountries: vi.fn()
+  getViewerCountries: vi.fn(),
+  getViewerOfficialRunContext: vi.fn()
 }))
 
 vi.mock('../../../api/client', () => api)
@@ -18,6 +19,9 @@ describe('ViewerCountriesPage canonical people', () => {
   beforeEach(() => {
     clearViewerStorage()
     vi.clearAllMocks()
+    api.getViewerOfficialRunContext.mockResolvedValue({
+      product_run_id: 'run alpha', official_branch_id: 'branch-a'
+    })
     api.getViewerCountries.mockResolvedValue({
       schema_version: 'viewer_countries.v1',
       product_run_id: 'run alpha',
@@ -44,6 +48,7 @@ describe('ViewerCountriesPage canonical people', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Countries' })).toBeInTheDocument()
     expect(screen.getByText('No Product Run is selected yet.')).toBeInTheDocument()
     expect(api.getViewerCountries).not.toHaveBeenCalled()
+    expect(api.getViewerOfficialRunContext).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
   })
 

@@ -258,7 +258,7 @@ describe('Country Stats from the verified Saved public countries snapshot (mocke
   it('paginates 31 saved countries and returns to page 1 after a filter', async () => {
     const many = Array.from({ length: 31 }, (_, i) => country(
       'C' + String.fromCharCode(65 + Math.floor(i / 26)) + String.fromCharCode(65 + i % 26),
-      i + 1, 0, 100 + i,
+      i + 1, 0, null,
     ))
     api.getViewerCountries.mockReset().mockResolvedValue(source(many))
     const user = userEvent.setup()
@@ -272,4 +272,20 @@ describe('Country Stats from the verified Saved public countries snapshot (mocke
     expect(screen.queryByRole('button', { name: 'Další' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it.each([
+    { average_current_ovr: 200, top_player_current_ovr: 150 },
+    { top_player_id: null, top_player_name: null },
+    { average_current_ovr: null },
+    { top_player_current_ovr: null },
+    { top_player_current_ovr: 199.5 },
+  ])('rejects contradictory public OVR summary: %j', async patch => {
+    const bad = source()
+    api.getViewerCountries.mockReset().mockResolvedValue({
+      ...bad, countries: [{ ...bad.countries[0], ...patch }, ...bad.countries.slice(1)],
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
 })

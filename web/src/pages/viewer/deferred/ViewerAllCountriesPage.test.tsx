@@ -206,7 +206,7 @@ describe('All Countries from the verified public Saved Viewer Branch (mocked GET
   it('paginates long country directories and resets to page one on search', async () => {
     const many = Array.from({ length: 30 }, (_, i) => {
       const code = 'C' + String.fromCharCode(65 + Math.floor(i / 26)) + String.fromCharCode(65 + i % 26)
-      return country(code, 1, 0, 100 + i)
+      return { ...country(code, 1, 0, 100 + i, 'p-' + code, 'Player ' + code), top_player_current_ovr: 100 + i }
     })
     api.getViewerCountries.mockReset().mockResolvedValue(payload(many))
     const user = userEvent.setup()
@@ -220,4 +220,20 @@ describe('All Countries from the verified public Saved Viewer Branch (mocked GET
     expect(screen.queryByRole('button', { name: 'Další' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it.each([
+    { average_current_ovr: 200, top_player_current_ovr: 150 },
+    { top_player_id: null, top_player_name: null },
+    { average_current_ovr: null },
+    { top_player_current_ovr: null },
+    { top_player_current_ovr: 199.5 },
+  ])('rejects contradictory public OVR summary: %j', async patch => {
+    const bad = payload()
+    api.getViewerCountries.mockReset().mockResolvedValue({
+      ...bad, countries: [{ ...bad.countries[0], ...patch }, ...bad.countries.slice(1)],
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
 })

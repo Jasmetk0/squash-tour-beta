@@ -145,4 +145,13 @@ describe('verified Viewer saved player population', () => {
       expect(parsePlayerDirectoryPage(bad, 3)).toBeNull()
     }
   })
+
+  it('rejects unexpected player fields, including legacy rendering fallbacks', () => {
+    const original = player('P1', 'retired', null)
+    for (const patch of [{ overall: 190 }, { quality_band: 'hidden' }, { private_seed: 123 }]) {
+      expect(check(players([{ ...original, ...patch }]))).toBeNull()
+    }
+    expect(check(players([original]))).not.toBeNull()
+  })
+
 })

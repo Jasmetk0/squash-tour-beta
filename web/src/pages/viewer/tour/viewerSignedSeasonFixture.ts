@@ -7,13 +7,13 @@ export function signedSeasonListFixture(): TourCareerRecords {
     source_tour_fingerprint: 'a'.repeat(64),
     from_season_index: 0, as_of_season_index: 1, country_code: null,
     leaderboard_limit: 20, completed_seasons: [0, 1],
-    completed_edition_count: 3, records: [],
+    completed_edition_count: 2, records: [],
     source_seasons: [
       { season_index: 0, season_label: '2000/01', boundary_command_id: 'end-0',
         completed_edition_count: 1, source_tour_fingerprint: 'a'.repeat(64),
         published_ranking_fingerprint: 'b'.repeat(64) },
       { season_index: 1, season_label: '2001/02', boundary_command_id: 'end-1',
-        completed_edition_count: 2, source_tour_fingerprint: 'a'.repeat(64),
+        completed_edition_count: 1, source_tour_fingerprint: 'a'.repeat(64),
         published_ranking_fingerprint: 'c'.repeat(64) }
     ]
   }
@@ -41,7 +41,7 @@ export function signedSeasonFixture(index: number): SignedSeasonSummary {
         titles: index === 0 ? 1 : 0, finals: 0,
         awarded_points: index === 0 ? 100 : 60, edition_appearances: 1 }
     ],
-    last_week_published_ranking: { week: 52, source_fingerprint: 'e'.repeat(64),
+    last_week_published_ranking: { week: 52, source_fingerprint: (index === 0 ? 'b' : 'c').repeat(64),
       top_players: [{ player_id: 'p1', rank: 1, points: 300 }] }
   }
 }

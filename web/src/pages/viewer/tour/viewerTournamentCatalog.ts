@@ -67,6 +67,13 @@ export function verifiedTournamentCatalog(
           !nonempty(event.template_id) ||
           typeof event.event_name !== 'string' ||
           typeof event.category !== 'string' ||
+          typeof event.host_country !== 'string' || event.host_country.length !== 3 ||
+          (event.host_city !== null && typeof event.host_city !== 'string') ||
+          typeof event.region !== 'string' ||
+          (event.tour_level !== null && event.tour_level !== 'WORLD_TOUR' && event.tour_level !== 'ELITE_TOUR') ||
+          !whole(event.main_draw_size, 0, 128) || !whole(event.qualification_draw_size) ||
+          !whole(event.seeds_count) || !whole(event.qualifier_spots) ||
+          !whole(event.wild_cards) || !whole(event.byes) ||
           typeof event.status !== 'string' ||
           !['planned', 'active', 'completed', 'cancelled', 'scheduled'].includes(event.status)) return null
       byEvent.set(event.event_id, event)

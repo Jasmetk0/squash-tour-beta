@@ -46,6 +46,11 @@ export function verifiedSavedCountries(
       (country.top_player_name !== null && !nonempty(country.top_player_name)) ||
       (country.top_player_id === null) !== (country.top_player_name === null) ||
       (country.player_count === 0 && country.top_player_id !== null) ||
+      (country.top_player_id === null) !== (country.top_player_current_ovr === null) ||
+      (country.top_player_id === null) !== (country.average_current_ovr === null) ||
+      (country.top_player_current_ovr !== null && !Number.isInteger(country.top_player_current_ovr)) ||
+      (typeof country.average_current_ovr === 'number' && typeof country.top_player_current_ovr === 'number' &&
+        country.average_current_ovr > country.top_player_current_ovr) ||
       // Reject leaked private fields rather than rendering an unproven schema.
       Object.keys(item).some(key => !PUBLIC_FIELDS.has(key))
     ) return null

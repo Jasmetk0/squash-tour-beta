@@ -133,4 +133,20 @@ describe('Viewer Country Hub fail-closed public Saved source (mocked GET)', () =
     expect(screen.queryByRole('link', { name: 'NZL' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it.each([
+    { average_current_ovr: 200, top_player_current_ovr: 150 },
+    { top_player_id: null, top_player_name: null },
+    { average_current_ovr: null },
+    { top_player_current_ovr: null },
+    { top_player_current_ovr: 199.5 },
+  ])('rejects contradictory public OVR summary: %j', async patch => {
+    const bad = payload()
+    api.getViewerCountries.mockReset().mockResolvedValue({
+      ...bad, countries: [{ ...bad.countries[0], ...patch }, ...bad.countries.slice(1)],
+    })
+    mount()
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+  })
+
 })

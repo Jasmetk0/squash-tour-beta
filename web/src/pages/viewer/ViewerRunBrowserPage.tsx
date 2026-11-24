@@ -38,6 +38,7 @@ const messages = {
   clear: ['Vymazat filtr', 'Clear filter'],
   noMatches: ['Žádný Run neodpovídá hledání.', 'No Runs match this search.'],
   invalidPage: ['Požadovaná stránka neexistuje. Vyber platnou stránku.', 'Requested page does not exist. Choose a valid page.'],
+  ambiguousLink: ['Odkaz obsahuje nejednoznačné filtry. Odešli hledání nebo vymaž filtr.', 'The link has ambiguous filters. Submit the search or clear the filter.'],
   firstPage: ['První stránka', 'First page'],
   pagination: ['Stránkování Runů', 'Run pagination'],
   previous: ['Předchozí', 'Previous'],
@@ -85,6 +86,8 @@ export function ViewerRunBrowserPage(): JSX.Element {
   const activeRunId = useActiveViewerProductRunId()
   const [params, setParams] = useSearchParams()
   const query = params.get(QUERY_KEY) ?? ''
+  const ambiguousQuery = params.getAll(QUERY_KEY).length > 1
+  const ambiguousPage = params.getAll(PAGE_KEY).length > 1
   const [draft, setDraft] = useState(query)
   useEffect(() => setDraft(query), [query])
   const runsQuery = useQuery({
@@ -96,7 +99,7 @@ export function ViewerRunBrowserPage(): JSX.Element {
   const runs = invalidCatalog ? [] : normalizeRunBrowserRuns(runsQuery.data?.run_containers)
   const filtered = filterViewerRuns(runs, query)
   const count = Math.ceil(filtered.length / RUN_BROWSER_PAGE_SIZE)
-  const page = parseViewerRunPage(params.get(PAGE_KEY), count)
+  const page = ambiguousQuery || ambiguousPage ? null : parseViewerRunPage(params.get(PAGE_KEY), count)
   const pageRuns = page === null ? [] : filtered.slice(
     (page - 1) * RUN_BROWSER_PAGE_SIZE, page * RUN_BROWSER_PAGE_SIZE,
   )
@@ -154,15 +157,16 @@ export function ViewerRunBrowserPage(): JSX.Element {
           </label>
           <div className="actions">
             <button type="submit">{t.search}</button>{' '}
-            <button type="button" onClick={clear} disabled={!draft && !query}>{t.clear}</button>
+            <button type="button" onClick={clear} disabled={!draft && !query && !ambiguousQuery && !ambiguousPage}>{t.clear}</button>
           </div>
         </form>
         {runsQuery.isPending || runsQuery.isFetching ? <p className="status" role="status">{t.loading}</p> : null}
         {runsQuery.isError ? <ViewerEmptyState>{t.unavailable}</ViewerEmptyState> : null}
         {invalidCatalog ? <p className="error" role="alert">{t.invalidCatalog}</p> : null}
-        {ready && runs.length === 0 ? <ViewerEmptyState>{t.none}</ViewerEmptyState> : null}
-        {ready && runs.length > 0 && filtered.length === 0 ? <ViewerEmptyState>{t.noMatches}</ViewerEmptyState> : null}
-        {ready && filtered.length > 0 && page === null ? (
+        {ready && !ambiguousQuery && !ambiguousPage && runs.length === 0 ? <ViewerEmptyState>{t.none}</ViewerEmptyState> : null}
+        {ready && !ambiguousQuery && !ambiguousPage && runs.length > 0 && filtered.length === 0 ? <ViewerEmptyState>{t.noMatches}</ViewerEmptyState> : null}
+        {ready && (ambiguousQuery || ambiguousPage) ? <p role="alert">{t.ambiguousLink}</p> : null}
+        {ready && !ambiguousQuery && !ambiguousPage && filtered.length > 0 && page === null ? (
           <div role="alert">
             <p>{t.invalidPage}</p>
             <button type="button" onClick={() => updateUrl(query, null)}>{t.firstPage}</button>

@@ -1,12 +1,13 @@
-import {cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react'
+import {act, cleanup, fireEvent, render, screen, waitFor} from '@testing-library/react'
 import {QueryClient, QueryClientProvider} from '@tanstack/react-query'
 import {MemoryRouter} from 'react-router-dom'
 import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest'
-import {ViewerPlayerComparisonPage} from './ViewerPlayerComparePage'
+import {ViewerH2HPage, ViewerPlayerComparisonPage} from './ViewerPlayerComparePage'
 
 const mocks = vi.hoisted(()=>({
   getRunPlayerDetail: vi.fn(),
   listRunPlayers: vi.fn(),
+  language: 'en',
   runId: 'run-a'
 }))
 vi.mock('../../../api/client',()=>({
@@ -20,7 +21,7 @@ vi.mock('../../../viewer/ViewerContext',()=>({
   useViewerContext:()=>({selectedSeason:0,selectedWeek:1})
 }))
 vi.mock('../../../i18n/LanguageContext',()=>({
-  useLanguage:()=>({language:'en'})
+  useLanguage:()=>({language:mocks.language})
 }))
 
 function makePlayer(id:string, overall=80) {
@@ -32,11 +33,11 @@ function makePlayer(id:string, overall=80) {
     origin_quality_band:'elite',origin_override_id:null,origin_season:2025
   }
 }
-function mount(path='/viewer/compare?playerA=player-1&playerB=player-900') {
+function mount(path='/viewer/compare?playerA=player-1&playerB=player-900', h2h=false) {
   const queryClient=new QueryClient({defaultOptions:{queries:{retry:false,gcTime:0}}})
   const app=(<QueryClientProvider client={queryClient}>
     <MemoryRouter initialEntries={[path]}>
-      <ViewerPlayerComparisonPage />
+      {h2h ? <ViewerH2HPage /> : <ViewerPlayerComparisonPage />}
     </MemoryRouter>
   </QueryClientProvider>)
   const view=render(app)
@@ -44,6 +45,7 @@ function mount(path='/viewer/compare?playerA=player-1&playerB=player-900') {
 }
 beforeEach(()=>{
   mocks.runId='run-a'
+  mocks.language='en'
   mocks.getRunPlayerDetail.mockReset()
   mocks.listRunPlayers.mockReset()
   mocks.listRunPlayers.mockResolvedValue({
@@ -140,5 +142,107 @@ describe('Viewer exact player comparison',()=>{
     expect(mocks.getRunPlayerDetail).toHaveBeenCalledTimes(2)
     expect(mocks.listRunPlayers).toHaveBeenCalledTimes(1)
     expect(screen.getByText(/not match history or predicted odds/)).toBeInTheDocument()
+  })
+})
+
+
+describe('Comparison CS/EN copy (mocked language and GET boundaries)', () => {
+  it('translates Czech page, exact cards and differences while retaining stored identity and zero values', async () => {
+    mocks.language = 'cs'
+    mocks.getRunPlayerDetail.mockImplementation(async (_run: string, id: string) => ({
+      ...makePlayer(id, 0), name: id === 'player-1' ? 'Original Name' : 'Druhé Jméno', age: 0
+    }))
+    mount()
+    expect(await screen.findByText('Original Name')).toBeInTheDocument()
+    expect(screen.getByRole('heading', {name: 'Porovnání hráčů'})).toBeInTheDocument()
+    expect(screen.getByRole('heading', {name: 'Hráč A'})).toBeInTheDocument()
+    expect(screen.getByText('Rozdíl herní síly')).toBeInTheDocument()
+    expect(screen.getAllByText('0').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('elite')).toHaveLength(2)
+    expect(screen.getByRole('link', {name: 'Vyhledat Original Name'})).toHaveAttribute('href', '/viewer/search?q=player-1')
+    expect(screen.getByRole('button', {name: 'Porovnat hráče'})).toBeInTheDocument()
+    expect(screen.queryByText('Power Rating difference')).not.toBeInTheDocument()
+  })
+
+  it('switches loaded comparison labels without reloading GET data or changing the selected IDs', async () => {
+    const view = mount()
+    await screen.findByText('Player player-900')
+    mocks.language = 'cs'
+    view.rerender(<QueryClientProvider client={view.queryClient}>
+      <MemoryRouter initialEntries={['/viewer/compare?playerA=player-1&playerB=player-900']}>
+        <ViewerPlayerComparisonPage />
+      </MemoryRouter>
+    </QueryClientProvider>)
+    expect(screen.getByRole('heading', {name: 'Porovnání hráčů'})).toBeInTheDocument()
+    expect(screen.getByLabelText('ID prvního hráče')).toHaveValue('player-1')
+    expect(screen.getByText('Rozdíl herní síly')).toBeInTheDocument()
+    expect(screen.getByText('+4')).toBeInTheDocument()
+    expect(mocks.getRunPlayerDetail).toHaveBeenCalledTimes(2)
+    expect(mocks.listRunPlayers).toHaveBeenCalledTimes(1)
+  })
+
+  it('localizes the no-Run state and issues no GET', () => {
+    mocks.language = 'cs'
+    mocks.runId = ''
+    mount()
+    expect(screen.getByText('Pro tento Run zatím nejsou dostupná data.')).toBeInTheDocument()
+    expect(mocks.getRunPlayerDetail).not.toHaveBeenCalled()
+    expect(mocks.listRunPlayers).not.toHaveBeenCalled()
+  })
+
+  it('localizes the H2H boundary and failed discovery without losing exact comparison', async () => {
+    mocks.language = 'cs'
+    mocks.listRunPlayers.mockRejectedValue(new Error('unavailable'))
+    mount('/viewer/h2h?playerA=player-1&playerB=player-900', true)
+    await screen.findByText('Player player-900')
+    expect(screen.getByText('Čtecí porovnání atributů hráčů, nikoliv autoritativní historie vzájemných zápasů.')).toBeInTheDocument()
+    expect(screen.getByText('Ukázkový výběr hráčů je dočasně nedostupný.')).toBeInTheDocument()
+    expect(screen.getByText('Rozdíl herní síly')).toBeInTheDocument()
+  })
+})
+
+describe('Comparison audit: reject malformed discovery and stale exact evidence', () => {
+  it.each([
+    { run_id: 'foreign-run' },
+    { players: [null] },
+    { players: [makePlayer('same'), makePlayer('same')] },
+    { players: [{ ...makePlayer('bad'), overall: Number.NaN }] },
+    { offset: 50 },
+  ])('does not render a foreign or broken discovery sample (%j)', async override => {
+    mocks.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 2, limit: 50, offset: 0,
+      players: [makePlayer('foreign')], ...override,
+    })
+    mount('/viewer/compare')
+    expect(await screen.findByText('Player discovery sample is temporarily unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('Player foreign')).not.toBeInTheDocument()
+    expect(mocks.getRunPlayerDetail).not.toHaveBeenCalled()
+  })
+
+  it('does not render extra fields from a different payload schema', async () => {
+    mocks.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 1, limit: 50, offset: 0,
+      players: [{ ...makePlayer('safe'), current_ovr: 99999, identity_source: {} }],
+    })
+    mount('/viewer/compare')
+    expect(await screen.findByText('Player safe')).toBeInTheDocument()
+    expect(screen.queryByText('99999')).not.toBeInTheDocument()
+  })
+
+  it('hides both exact cards and differences during a refetch of either player', async () => {
+    const view = mount()
+    expect(await screen.findByText('Player player-900')).toBeInTheDocument()
+    let release!: (player: ReturnType<typeof makePlayer>) => void
+    mocks.getRunPlayerDetail.mockImplementationOnce(() =>
+      new Promise(resolve => { release = resolve }))
+    const refresh = view.queryClient.invalidateQueries({
+      queryKey: ['viewer-comparison-exact-player', 'run-a', 'player-900'],
+    })
+    await waitFor(() => expect(mocks.getRunPlayerDetail).toHaveBeenCalledTimes(3))
+    expect(screen.queryByText('Player player-1')).not.toBeInTheDocument()
+    expect(screen.queryByText('Player player-900')).not.toBeInTheDocument()
+    expect(screen.queryByText('Power Rating difference')).not.toBeInTheDocument()
+    await act(async () => { release(makePlayer('player-900', 76)); await refresh })
+    expect(await screen.findByText('Player player-900')).toBeInTheDocument()
   })
 })

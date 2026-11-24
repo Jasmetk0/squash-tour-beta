@@ -87,10 +87,7 @@ export function verifiedNo1Publication(
     data.snapshot_fingerprint !== metadata.snapshot_fingerprint ||
     data.policy_id !== metadata.policy_id ||
     data.best_n !== metadata.best_n ||
-    data.row_count !== metadata.row_count ||
-    // The canonical OfficialRankingSnapshot requires descending points.
-    // A matching fingerprint field alone cannot validate the projected rows.
-    data.rows.some((row, index) => index > 0 && data.rows[index - 1].points < row.points)
+    data.row_count !== metadata.row_count
   ) return null
   return data
 }

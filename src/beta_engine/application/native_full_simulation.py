@@ -270,11 +270,15 @@ def _verified_saved_calendar(session, *, run_id, branch_id):
     if run is None or branch is None or (branch.saved_head_revision_id and head is None):
         return resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
     return _exact_fact(
-        ("saved_calendar", run_id, branch_id, _text_sha256(run.metadata_json), run.timeline_start_season,
-         run.timeline_end_season, branch.run_id, branch.saved_head_revision_id,
+        ("saved_calendar", run_id, branch_id, _run_clock_input(run),
+         branch.run_id, branch.saved_head_revision_id,
          _revision_signature(head) if head is not None else None),
         lambda: resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id),
     )
+
+
+def _run_clock_input(run):
+    return (_text_sha256(run.metadata_json), run.timeline_start_season, run.timeline_end_season)
 
 
 _CHECKPOINT_SCHEMAS = frozenset(f"calendar_sporting_checkpoint.v{i}" for i in range(1, 14))
@@ -317,6 +321,51 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         raise ValueError("Native task progress Branch is unavailable")
     head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
     if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
+        return _read_fork_task_progress(session, run_id, branch_id, parent, head)
+    # The original Branch needs only the verified clock, not the payload.
+    available_clock = _verified_saved_calendar(session, run_id=run_id, branch_id=branch_id)
+    checkpoint_row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
+    tour_row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
+    if checkpoint_row is None or tour_row is None:
+        raise ValueError("Native task progress lacks its sporting/Tour owner")
+    tour = json.loads(tour_row.payload_json)
+    if tour.get("schema_version") not in _TOUR_SCHEMAS:
+        raise ValueError("Native task progress sporting/Tour schema is unsupported")
+    # Strict decoding and canonical hashing are pure functions of these
+    # exact texts; compute them once per distinct text, not on every poll.
+    checkpoint_hash, actual_week, owner = _exact_fact(
+        ("checkpoint_progress", _text_sha256(checkpoint_row.payload_json)),
+        lambda: _checkpoint_progress_facts(checkpoint_row.payload_json),
+    )
+
+    def tour_hash():
+        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
+        parse_tour_json(tour_row.payload_json)
+        return canonical_hash(tour)
+
+    if (
+        checkpoint_hash != checkpoint_row.fingerprint
+        or _exact_fact(("tour_progress", _text_sha256(tour_row.payload_json)), tour_hash) != tour_row.fingerprint
+        or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint
+        or actual_week != json.dumps(tour["week"], sort_keys=True)
+    ):
+        raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
+    source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
+
+    return _native_progress_from_tour(
+        run_id, branch_id, parent, available_clock, tour, owner, source_fingerprint,
+    )
+
+
+def _read_fork_task_progress(session, run_id, branch_id, parent, head):
+    draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
+    if draft is None or draft.base_revision_id != head.revision_id:
+        raise ValueError("Native task progress Working Draft source is corrupt")
+    draft_text = None
+    if draft.status == "dirty" and draft.draft_schema_version == "native_fork_runtime_draft.v1":
+        draft_text = draft.changes_json
+
+    def project():
         # resolve_saved_run_calendar fully hash-authenticates the immutable Saved
         # envelope. Reuse its parsed JSON while remaining inside THIS same DB
         # transaction, rather than decoding the full history a second time.
@@ -328,11 +377,8 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         )
         saved = verified_payloads[0]["content"]["native_fork_runtime"]
         component = saved
-        draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
-        if draft is None or draft.base_revision_id != head.revision_id:
-            raise ValueError("Native task progress Working Draft source is corrupt")
-        if draft.status == "dirty" and draft.draft_schema_version == "native_fork_runtime_draft.v1":
-            changes = json.loads(draft.changes_json)
+        if draft_text is not None:
+            changes = json.loads(draft_text)
             if len(changes) != 1 or changes[0].get("kind") != "native_fork_runtime" or draft.change_count != 1:
                 raise ValueError("Native task progress Working Draft is malformed")
             component = changes[0]["component"]
@@ -347,36 +393,26 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         source_fingerprint = component["fingerprint"]
         owner = state.get("baseline", state)
         owner = (owner.get("run_id"), owner.get("branch_id"))
-    else:
-        # The original Branch needs only the verified clock, not the payload.
-        available_clock = _verified_saved_calendar(session, run_id=run_id, branch_id=branch_id)
-        checkpoint_row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
-        tour_row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
-        if checkpoint_row is None or tour_row is None:
-            raise ValueError("Native task progress lacks its sporting/Tour owner")
-        tour = json.loads(tour_row.payload_json)
-        if tour.get("schema_version") not in _TOUR_SCHEMAS:
-            raise ValueError("Native task progress sporting/Tour schema is unsupported")
-        # Strict decoding and canonical hashing are pure functions of these
-        # exact texts; compute them once per distinct text, not on every poll.
-        checkpoint_hash, actual_week, owner = _exact_fact(
-            ("checkpoint_progress", _text_sha256(checkpoint_row.payload_json)),
-            lambda: _checkpoint_progress_facts(checkpoint_row.payload_json),
+        return _native_progress_from_tour(
+            run_id, branch_id, parent, available_clock, tour, owner, source_fingerprint,
         )
 
-        def tour_hash():
-            from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
-            parse_tour_json(tour_row.payload_json)
-            return canonical_hash(tour)
+    run = session.get(RunContainerModel, run_id)
+    if run is None:
+        return project()  # Preserve the calendar authority's missing-Run error.
+    # Hash actual bytes from this transaction. A saved fingerprint, row id,
+    # or draft version alone cannot authorize reuse after a change/corruption.
+    # Keep only the scalar result, never the decoded history or its JSON text.
+    key = (
+        "fork_task_progress", run_id, branch_id, _run_clock_input(run), _revision_signature(head),
+        draft.status, draft.draft_schema_version, draft.change_count,
+        _text_sha256(draft_text) if draft_text is not None else None,
+        fingerprint([parent["children"], parent["resume_command"]["execution_calendar"]]),
+    )
+    return _exact_fact(key, project)
 
-        if (
-            checkpoint_hash != checkpoint_row.fingerprint
-            or _exact_fact(("tour_progress", _text_sha256(tour_row.payload_json)), tour_hash) != tour_row.fingerprint
-            or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint
-            or actual_week != json.dumps(tour["week"], sort_keys=True)
-        ):
-            raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
-        source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
+
+def _native_progress_from_tour(run_id, branch_id, parent, available_clock, tour, owner, source_fingerprint):
     if (*owner, tour.get("run_id"), tour.get("branch_id")) != (run_id, branch_id, run_id, branch_id):
         raise ValueError("Native task progress has a foreign owner")
     receipts = {r["command_id"]: r for r in tour["receipts"]}
@@ -887,13 +923,11 @@ class NativeFullSimulationDriver:
                 _write(row, payload)
                 session.commit()
         except (FullSimulationPauseRequested, FullSimulationStopped):
-            ACTIVE_FULL_SIMULATION_GUARD.reset(token)
-            token = None
-            heartbeat.release()
-            return self.simulate_full_simulation(command, execution_lease_token=execution_lease_token)
+            # Let the driver close this pinned connection before the original
+            # path acknowledges the control action in a new transaction.
+            return None
         finally:
-            if token is not None:
-                ACTIVE_FULL_SIMULATION_GUARD.reset(token)
+            ACTIVE_FULL_SIMULATION_GUARD.reset(token)
         _fault_injection_point("after_native_child_commit")
         return _progress(command, {"week": week}, "native_manual_save_required")
 

@@ -322,6 +322,7 @@ def test_pause_between_read_and_write_then_continue(tmp_path, native_source, mon
     path = tmp_path / "pause.db"
     _copy(source, path)
     calls = _watch_driver(monkeypatch)
+    calls.watch(NativeFullSimulationDriver, "_read_prepared_step")
     holder = {}
 
     def pause(_driver, _command, _token, _step):
@@ -337,12 +338,69 @@ def test_pause_between_read_and_write_then_continue(tmp_path, native_source, mon
         assert task["state"] == "paused", task
         assert _transitions(server) == 0
         assert calls["prepared_install"] == 0
+        assert calls["_read_prepared_step"] == 1
+        assert calls["full_path"] == 1
         task = resume(server, task, "continue-after-pause")
         assert task["checkpoint"] == "native_manual_save_required", task
         assert _transitions(server) == 1
     assert fired and calls["prepared_install"] == 1
     status, parent = _parent(path, command["command_id"])
     assert parent["control_state"] == "running" and len(parent["children"]) == 1
+
+
+def test_fork_progress_reuses_only_exact_authenticated_inputs(tmp_path, native_fork_source, monkeypatch):
+    source, command, branch = native_fork_source
+    path = tmp_path / "fork-progress.db"
+    _copy(source, path)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        server.native_task_branch = branch
+        task = start(server, command)
+        assert task["checkpoint"] == "native_manual_save_required", task
+        _, parent = _parent(path, command["command_id"])
+        factory = server.app.state.runtime.repository._session_factory
+
+        def read(payload=parent):
+            from sqlalchemy import text
+            with factory() as session:
+                session.execute(text("BEGIN"))
+                return native.read_native_task_progress(
+                    session, run_id=command["run_id"], branch_id=branch, parent=payload,
+                )
+
+        monkeypatch.setattr(native, "_exact_facts", native.OrderedDict())
+        calls = Calls(monkeypatch)
+        calls.watch(native, "resolve_saved_run_calendar")
+        first = read()
+        assert read() == first
+        assert calls["resolve_saved_run_calendar"] == 1
+
+        # Keep the version, head, identity and claimed hash. Only persisted
+        # content changes, so the previous successful result must miss.
+        with sqlite3.connect(path) as sql:
+            original, = sql.execute(
+                "SELECT changes_json FROM branch_working_drafts WHERE branch_id=?", (branch,),
+            ).fetchone()
+            damaged = json.loads(original)
+            damaged[0]["component"]["state"]["tour"]["receipts"][0]["result"]["changed"] = True
+            sql.execute(
+                "UPDATE branch_working_drafts SET changes_json=? WHERE branch_id=?",
+                (json.dumps(damaged), branch),
+            )
+        with pytest.raises(ValueError, match="runtime hash/schema is corrupt"):
+            read()
+        with sqlite3.connect(path) as sql:
+            sql.execute(
+                "UPDATE branch_working_drafts SET changes_json=? WHERE branch_id=?",
+                (original, branch),
+            )
+        bad_parent = json.loads(json.dumps(parent))
+        bad_parent["children"][0]["result_fingerprint"] = "0" * 64
+        with pytest.raises(ValueError, match="child differs"):
+            read(bad_parent)
+        assert read() == first
+        save_tour(server)
+        assert read() == first
+        assert calls["resolve_saved_run_calendar"] == 4
 
 
 def test_lease_expiry_between_read_and_write_writes_nothing(tmp_path, native_source, monkeypatch):

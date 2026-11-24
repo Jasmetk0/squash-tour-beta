@@ -1,3 +1,20 @@
+# Native fork Task Center progress — 24 November 2026 (unmerged candidate)
+
+Repeated Task Center reads of the same native fork state reuse only the
+checked week, match count and source fingerprint. The current transaction
+reads the Saved head and draft and authenticates the exact input texts before
+reuse. Task child receipts and the frozen calendar are also bound to the cache
+key. The first read of a new combination runs the original full projection.
+The memo keeps scalar results only. It has no authority to execute or Save.
+Pause/Stop during installation now release the pinned read/write connection
+before the original path handles the control command.
+
+On a read-only copy of the actual W52 scenario at W23 (29 revisions,
+21 task children), median repeated progress projection was 29.81 → 3.31 ms
+over two 20-read processes per tree, using Python 3.12.14 on the same host.
+Both projected values matched exactly. First-read latency and whole-season
+wall time are separate measurements, and there is no 1,000-player claim.
+
 # Native Full Simulation one-snapshot step — 24 November 2026 (unmerged candidate)
 
 Draft branch `claude/gifted-faraday-yv7dey` on `buuk 27ade97`. Each ordinary

@@ -44,15 +44,18 @@ export function validViewerRankingDetail(
   ) return false
 
   const playerIds = new Set<string>()
+  let previousPoints = Number.POSITIVE_INFINITY
   for (let index = 0; index < value.rows.length; index += 1) {
     const row = value.rows[index] as Partial<ViewerOfficialRankingRow> | null
     if (!row || typeof row !== 'object' ||
       row.rank !== index + 1 ||
       typeof row.player_id !== 'string' || !row.player_id.trim() ||
       playerIds.has(row.player_id) ||
-      !integerBetween(row.points, 0, Number.MAX_SAFE_INTEGER)
+      !integerBetween(row.points, 0, Number.MAX_SAFE_INTEGER) ||
+      row.points > previousPoints
     ) return false
     playerIds.add(row.player_id)
+    previousPoints = row.points
   }
   return true
 }

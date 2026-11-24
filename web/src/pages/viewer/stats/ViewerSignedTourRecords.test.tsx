@@ -105,4 +105,22 @@ describe('Viewer signed native Tour record browser (mocked GET contract)', () =>
     expect(await screen.findByText(/Records are unavailable/)).toBeInTheDocument()
     expect(screen.queryByText('No record holder yet.')).not.toBeInTheDocument()
   })
+
+  it('rejects an internally consistent but different closure inventory under the same Saved HEAD', async () => {
+    records.getViewerSignedTourRecords.mockImplementation(async (_run, filter) => {
+      const data = signedRecordFixture()
+      if (filter?.countryCode !== 'CZE') return data
+      data.country_code = 'CZE'
+      data.source_seasons[1].boundary_command_id = 'different-closure'
+      for (const record of data.records) record.holder_history[0].boundary_command_id = 'different-closure'
+      return data
+    })
+    renderRecords()
+    await screen.findByText('2000/01 – 2001/02')
+    fireEvent.change(screen.getByLabelText('ISO-3 country (optional)'), { target: { value: 'CZE' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Show selected records' }))
+    expect(await screen.findByText(/historical evidence failed validation/)).toBeInTheDocument()
+    expect(screen.queryByText('2000/01 – 2001/02')).not.toBeInTheDocument()
+  })
+
 })

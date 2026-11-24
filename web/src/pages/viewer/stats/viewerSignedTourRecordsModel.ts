@@ -13,6 +13,9 @@ const nonnegative = (value: unknown): value is number =>
 const positive = (value: unknown): value is number =>
   nonnegative(value) && value > 0
 
+const fingerprint = (value: unknown): value is string =>
+  typeof value === 'string' && /^[0-9a-f]{64}$/.test(value)
+
 function validRow(row: unknown, country: string | null): boolean {
   if (!row || typeof row !== 'object') return false
   const r = row as Record<string, unknown>
@@ -27,13 +30,15 @@ function validRecord(record: TourCareerRecords['records'][number], country: stri
       !nonnegative(record.value) || !Array.isArray(record.holders) ||
       !Array.isArray(record.leaderboard) || !Array.isArray(record.holder_history) ||
       !nonnegative(record.leaderboard_total) || record.leaderboard.length > limit ||
-      record.leaderboard_total < record.leaderboard.length) return false
+      record.leaderboard.length !== Math.min(limit, record.leaderboard_total) ||
+      record.leaderboard_total < record.holders.length ||
+      (record.value === 0) !== (record.leaderboard_total === 0)) return false
 
-  const ids = new Set<string>()
+  const holdersById = new Map<string, TourCareerRecords['records'][number]['holders'][number]>()
   for (const holder of record.holders) {
-    if (!validRow(holder, country) || ids.has(holder.entity_id) ||
+    if (!validRow(holder, country) || holdersById.has(holder.entity_id) ||
         !positive(record.value) || holder[record.metric] !== record.value) return false
-    ids.add(holder.entity_id)
+    holdersById.set(holder.entity_id, holder)
   }
   if ((record.value === 0) !== (record.holders.length === 0)) return false
 
@@ -47,16 +52,22 @@ function validRecord(record: TourCareerRecords['records'][number], country: stri
     const sameValue = row[record.metric] === previousValue
     if (sameValue && (row.rank !== previousRank || row.entity_id <= previousId)) return false
     if (!sameValue && row.rank !== index + 1) return false
+    const holder = holdersById.get(row.entity_id)
+    if ((row.rank === 1) !== Boolean(holder) ||
+        (holder && (row.label !== holder.label || row.country_code !== holder.country_code ||
+          RECORD_METRICS.some(metric => row[metric] !== holder[metric])))) return false
     rowIds.add(row.entity_id)
     previousValue = row[record.metric]
     previousRank = row.rank
     previousId = row.entity_id
   }
 
+  if (record.leaderboard.filter(row => row.rank === 1).length !== Math.min(limit, record.holders.length)) return false
+
   let previousHistoryValue = 0
   let previousSeason = -1
   for (const h of record.holder_history) {
-    if (!nonnegative(h.season_index) || h.season_index <= previousSeason ||
+    if (!h || typeof h !== 'object' || !nonnegative(h.season_index) || h.season_index <= previousSeason ||
         !positive(h.record_value) || h.record_value < previousHistoryValue ||
         !positiveId(h.season_label) || !positiveId(h.boundary_command_id) ||
         !Array.isArray(h.holder_ids) || !Array.isArray(h.holder_labels) ||
@@ -71,8 +82,12 @@ function validRecord(record: TourCareerRecords['records'][number], country: stri
     previousHistoryValue = h.record_value
     previousSeason = h.season_index
   }
-  if (record.holder_history.length > 0 &&
-      record.holder_history[record.holder_history.length - 1].record_value !== record.value) return false
+  const last = record.holder_history[record.holder_history.length - 1]
+  // The backend uses one identity map for the whole report, and records the
+  // complete co-holder set at each change, including holders outside top-N.
+  if (last && (last.record_value !== record.value ||
+      last.holder_ids.length !== holdersById.size ||
+      last.holder_ids.some((id, i) => holdersById.get(id)?.label !== last.holder_labels[i]))) return false
   if (record.value > 0 && record.holder_history.length === 0) return false
   if (record.leaderboard.length > 0 && record.leaderboard[0][record.metric] !== record.value) return false
   return true
@@ -93,7 +108,7 @@ export function verifiedViewerSignedTourRecords(
   if (v.schema_version !== 'calendar_tour_signed_records_response.v1' ||
       v.run_id !== runId || v.branch_id !== branchId ||
       !positiveId(v.saved_head_revision_id) ||
-      !/^[0-9a-f]{64}$/.test(v.source_tour_fingerprint) ||
+      !fingerprint(v.source_tour_fingerprint) ||
       !nonnegative(v.as_of_season_index) || !nonnegative(v.from_season_index) ||
       v.from_season_index !== filters.fromSeason ||
       (filters.asOfSeason !== null && v.as_of_season_index !== filters.asOfSeason) ||
@@ -110,8 +125,8 @@ export function verifiedViewerSignedTourRecords(
         season.season_index < v.from_season_index || season.season_index > v.as_of_season_index ||
         (index > 0 && season.season_index <= v.source_seasons[index - 1].season_index) ||
         !positiveId(season.season_label) || !positiveId(season.boundary_command_id) ||
-        !positiveId(season.source_tour_fingerprint) ||
-        !positiveId(season.published_ranking_fingerprint) ||
+        !fingerprint(season.source_tour_fingerprint) ||
+        !fingerprint(season.published_ranking_fingerprint) ||
         !nonnegative(season.completed_edition_count)) return null
     seenSeasons.add(season.season_index)
     total += season.completed_edition_count
@@ -120,17 +135,40 @@ export function verifiedViewerSignedTourRecords(
   if (v.source_seasons.length !== v.completed_seasons.length ||
       v.completed_seasons.some((index, i) => !nonnegative(index) ||
         index !== v.source_seasons[i].season_index) ||
-      !seenSeasons.has(v.as_of_season_index) ||
+      !seenSeasons.has(v.from_season_index) || !seenSeasons.has(v.as_of_season_index) ||
       v.completed_edition_count !== total) return null
 
+  const sourceByIndex = new Map(v.source_seasons.map(season => [season.season_index, season]))
   const recordIds = new Set<string>()
   for (const record of v.records) {
     if (!validRecord(record, v.country_code, v.leaderboard_limit) ||
         recordIds.has(record.record_id) ||
-        record.holder_history.some(h => !seenSeasons.has(h.season_index))) return null
+        record.holder_history.some(h => {
+          const source = sourceByIndex.get(h.season_index)
+          return !source || h.season_label !== source.season_label || h.boundary_command_id !== source.boundary_command_id
+        })) return null
     recordIds.add(record.record_id)
   }
   if (RECORD_SCOPES.some(scope => RECORD_METRICS.some(metric =>
     !recordIds.has('native_tour.' + scope + '.' + metric + '.v1')))) return null
   return v
+}
+
+
+/** The filtered response must contain exactly the selected slice of the
+ * authenticated baseline season inventory, including all provenance fields. */
+export function recordsMatchBaseline(report: TourCareerRecords, baseline: TourCareerRecords): boolean {
+  if (report.saved_head_revision_id !== baseline.saved_head_revision_id ||
+      report.source_tour_fingerprint !== baseline.source_tour_fingerprint) return false
+  const expected = baseline.source_seasons.filter(season =>
+    season.season_index >= report.from_season_index && season.season_index <= report.as_of_season_index)
+  return report.source_seasons.length === expected.length && report.source_seasons.every((season, i) => {
+    const source = expected[i]
+    return season.season_index === source.season_index &&
+      season.season_label === source.season_label &&
+      season.boundary_command_id === source.boundary_command_id &&
+      season.completed_edition_count === source.completed_edition_count &&
+      season.source_tour_fingerprint === source.source_tour_fingerprint &&
+      season.published_ranking_fingerprint === source.published_ranking_fingerprint
+  })
 }

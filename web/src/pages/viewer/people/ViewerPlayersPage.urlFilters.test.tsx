@@ -165,4 +165,15 @@ describe('Viewer player directory URL filters (mocked Saved GET, not real HTTP/S
     expect(screen.getByLabelText('Řazení')).toHaveValue('public_ovr')
     expectNoForbiddenViewerActions()
   })
+
+  it('rejects duplicate owned filters without discarding unrelated URL parameters', async () => {
+    mount('/viewer/players?vpStatus=active&vpStatus=retired&keep=one&keep=two')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(params().getAll('keep')).toEqual(['one', 'two'])
+    expect([...params().keys()]).toEqual(['keep', 'keep'])
+  })
+
 })

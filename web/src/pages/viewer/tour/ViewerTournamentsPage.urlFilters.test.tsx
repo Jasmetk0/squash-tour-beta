@@ -86,7 +86,7 @@ function mount(url = '/viewer/tour/tournaments?keep=one&keep=two') {
     )
   }
   const view = render(<App />)
-  return { ...view, refresh: () => view.rerender(<App />) }
+  return { ...view, client, refresh: () => view.rerender(<App />) }
 }
 function params(): URLSearchParams {
   const text = screen.getByLabelText('Current URL').textContent ?? ''
@@ -183,4 +183,27 @@ describe('Viewer saved tournament URL filters (mocked GET, not HTTP/SQLite)', ()
     expect(await screen.findByRole('table')).toHaveTextContent('Open 003')
     expect(screen.getByLabelText('Stav zveřejnění výsledku')).toHaveValue('unpublished')
   })
+
+  it('rejects duplicate owned filters without discarding unrelated URL parameters', async () => {
+    mount('/viewer/tour/tournaments?vtResult=published&vtResult=unpublished&keep=one&keep=two')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(params().getAll('keep')).toEqual(['one', 'two'])
+    expect([...params().keys()]).toEqual(['keep', 'keep'])
+  })
+
+  it('withholds the entire catalog while either saved source is refetching', async () => {
+    const view = mount()
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    let release!: (value: ReturnType<typeof fixtures>['history']) => void
+    api.getViewerTournamentHistory.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const refresh = view.client.invalidateQueries({ queryKey: ['viewer-tournaments-history', source.run, source.branch] })
+    await waitFor(() => expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByRole('table')).not.toBeInTheDocument())
+    await act(async () => { release(fixtures().history); await refresh })
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+  })
+
 })

@@ -157,7 +157,7 @@ function SavedCalendarForSource({ runId, branchId, t, ignoreUrlFilters }: {
     String(Number(week)) !== week || !weeks.includes(Number(week))
   )
   const invalidStatus = status !== 'all' && !statusNames.includes(status)
-  const invalidFilters = invalidSeason || invalidWeek || invalidStatus
+  const invalidFilters = invalidSeason || invalidWeek || invalidStatus || CALENDAR_URL_KEYS.some(key => activeParams.getAll(key).length > 1)
   const found = invalidFilters ? [] : filterSavedCalendarEvents(calendar, season, week, status, search)
   const pages = Math.ceil(found.length / SAVED_CALENDAR_PAGE_SIZE)
   const current = pages ? Math.min(page, pages) : 0

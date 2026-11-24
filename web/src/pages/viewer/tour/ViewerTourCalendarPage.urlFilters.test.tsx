@@ -163,4 +163,15 @@ describe('Viewer saved calendar URL browsing (mocked GET, not real HTTP/SQLite)'
     expect(await screen.findByRole('table')).toHaveTextContent('Open 3')
     expect(screen.getByLabelText('Hledat název, ID nebo místo')).toHaveValue('Praha')
   })
+
+  it('rejects duplicate owned filters without discarding unrelated URL parameters', async () => {
+    mount('/viewer/tour/calendar?vcWeek=2&vcWeek=3&keep=one&keep=two')
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(params().getAll('keep')).toEqual(['one', 'two'])
+    expect([...params().keys()]).toEqual(['keep', 'keep'])
+  })
+
 })

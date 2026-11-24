@@ -113,6 +113,11 @@ export function verifiedCountryStatsSource(
       (country.top_player_name !== null && !nonblank(country.top_player_name)) ||
       (country.top_player_id === null) !== (country.top_player_name === null) ||
       (country.player_count === 0 && country.top_player_id !== null) ||
+      (country.top_player_id === null) !== (country.top_player_current_ovr === null) ||
+      (country.top_player_id === null) !== (country.average_current_ovr === null) ||
+      (country.top_player_current_ovr !== null && !Number.isInteger(country.top_player_current_ovr)) ||
+      (typeof country.average_current_ovr === 'number' && typeof country.top_player_current_ovr === 'number' &&
+        country.average_current_ovr > country.top_player_current_ovr) ||
       Object.keys(item).some(key => !PUBLIC_COUNTRY_FIELDS.has(key))
     ) return null
     seen.add(country.country_code)

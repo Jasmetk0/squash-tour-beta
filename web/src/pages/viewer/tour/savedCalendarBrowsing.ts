@@ -62,7 +62,11 @@ export function verifiedSavedSeasonCalendar(
           !nonEmpty(event.template_id) ||
           typeof event.event_name !== 'string' ||
           typeof event.category !== 'string' ||
-          !nonEmpty(event.host_country) ||
+          !nonEmpty(event.host_country) || event.host_country.length !== 3 ||
+          typeof event.region !== 'string' ||
+          !whole(event.main_draw_size, 0, 128) || !whole(event.qualification_draw_size) ||
+          !whole(event.seeds_count) || !whole(event.qualifier_spots) ||
+          !whole(event.wild_cards) || !whole(event.byes) ||
           (event.host_city !== null && typeof event.host_city !== 'string') ||
           (event.tour_level !== null && event.tour_level !== 'WORLD_TOUR' &&
             event.tour_level !== 'ELITE_TOUR') ||
@@ -92,10 +96,13 @@ export function savedCalendarSeasonsNewestFirst(calendar: SavedSeasonCalendar): 
 export type SavedCalendarStatus = 'all' | 'planned' | 'scheduled' | 'active' | 'completed' | 'cancelled'
 
 export function savedCalendarWeeks(calendar: SavedSeasonCalendar, season: string): number[] {
-  const unique = new Set(
-    calendar.events.filter(event => season === 'all' || savedCalendarSeasonKey(event.season) === season)
-      .map(event => event.season_week)
-  )
+  const unique = new Set<number>()
+  for (const event of calendar.events) {
+    if (season !== 'all' && savedCalendarSeasonKey(event.season) !== season) continue
+    // Do not infer a next-season event from an end bound beyond W61.
+    for (let week = event.start_season_week; week <= Math.min(61, event.end_season_week); week++)
+      unique.add(week)
+  }
   return [...unique].sort((a, b) => a - b)
 }
 
@@ -107,7 +114,8 @@ export function filterSavedCalendarEvents(
   return calendar.events
     .filter(event =>
       (season === 'all' || savedCalendarSeasonKey(event.season) === season) &&
-      (week === 'all' || String(event.season_week) === week) &&
+      (week === 'all' || (/^[1-9][0-9]*$/.test(week) && Number(week) <= 61 &&
+        Number(week) >= event.start_season_week && Number(week) <= event.end_season_week)) &&
       (status === 'all' || event.status === status) &&
       (!text || [event.event_id, event.event_name, event.host_country, event.host_city ?? '']
         .some(field => field.toLocaleLowerCase().includes(text)))

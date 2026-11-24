@@ -14,10 +14,28 @@ const whole = (value: unknown): value is number =>
 const nullableId = (value: unknown): value is string | null =>
   value === null || id(value)
 
+// Both canonical ViewerTournamentHistory models forbid additional fields.
+const historyFields = [
+  'schema_version', 'product_run_id', 'viewer_branch_id', 'tournament_count',
+  'published_result_count', 'tournaments',
+] as const
+const eventFields = [
+  'event_id', 'season', 'season_week', 'event_name', 'template_id', 'category',
+  'tour_level', 'host_country', 'host_city', 'region', 'main_draw_size',
+  'qualification_draw_size', 'seeds_count', 'qualifier_spots', 'wild_cards',
+  'byes', 'ranking_status', 'result_published', 'champion_player_id', 'finalist_player_id',
+] as const
+
+function exactFields(value: unknown, fields: readonly string[]): boolean {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field)))
+}
+
 export function verifiedHomeTournamentHistory(
   source: unknown, runId: string, branchId: string,
 ): ViewerTournamentHistory | null {
-  if (!id(runId) || !id(branchId) || !source || typeof source !== 'object') return null
+  if (!id(runId) || !id(branchId) || !exactFields(source, historyFields)) return null
   const data = source as Partial<ViewerTournamentHistory>
   if (data.schema_version !== 'viewer_tournament_history.v1' ||
       data.product_run_id !== runId || data.viewer_branch_id !== branchId ||
@@ -28,7 +46,7 @@ export function verifiedHomeTournamentHistory(
   const seen = new Set<string>()
   let published = 0
   for (const event of data.tournaments) {
-    if (!event || !id(event.event_id) || seen.has(event.event_id) ||
+    if (!exactFields(event, eventFields) || !id(event.event_id) || seen.has(event.event_id) ||
         !id(event.season) || !whole(event.season_week) ||
         event.season_week < 1 || event.season_week > 61 ||
         typeof event.event_name !== 'string' || !id(event.template_id) ||

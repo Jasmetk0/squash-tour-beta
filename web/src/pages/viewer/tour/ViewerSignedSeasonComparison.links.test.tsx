@@ -155,4 +155,14 @@ describe('Viewer signed-season source-scoped URL reports (mocked GET only)', () 
     expect(params().get('signedSeason')).toBe('1')
     expect(params().get('compareSeason')).toBe('0')
   })
+
+  it('rejects a same-HEAD report that names a different closure than its verified season list', async () => {
+    const wrong = signedSeasonComparisonFixture()
+    wrong.selected.boundary_command_id = 'different-closure'
+    seasons.readViewerSignedSeason.mockResolvedValueOnce(wrong)
+    mount('?' + prefix + '&signedSeason=1')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Historical source failed')
+    expect(screen.queryByRole('article', { name: 'Season summary' })).not.toBeInTheDocument()
+  })
+
 })

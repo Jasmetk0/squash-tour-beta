@@ -8,7 +8,7 @@ import type { TourSeasonComparison } from '../../../api/calendarTour'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import { viewerPlayerProfilePath } from '../../../viewer/viewerRoutes'
 import {
-  verifiedSignedSeasonBranch, verifiedSignedSeasonComparison, verifiedSignedSeasonList
+  signedSeasonReportMatchesInventory, verifiedSignedSeasonBranch, verifiedSignedSeasonComparison, verifiedSignedSeasonList
 } from './viewerSignedSeasonReadModel'
 import { readSignedSeasonDeepLink, writeSignedSeasonDeepLink } from './viewerSignedSeasonDeepLinks'
 
@@ -84,7 +84,7 @@ function SignedSeasonsBody({ runId, branchId, t }: {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true
   })
-  const available = list.isSuccess ? verifiedSignedSeasonList(list.data, runId, branchId) : null
+  const available = list.isSuccess && !list.isFetching ? verifiedSignedSeasonList(list.data, runId, branchId) : null
   const indices = available?.seasons.map(s => s.index) ?? []
   const chosen = selected ?? indices[indices.length - 1] ?? null
   const selectionSynced = requestedLink.kind === 'selection' &&
@@ -111,10 +111,11 @@ function SignedSeasonsBody({ runId, branchId, t }: {
     refetchOnWindowFocus: true
   })
   // A list refetch is allowed to invalidate an old report at any time.
-  const report = available && actualRequest && reportQuery.isSuccess && !reportQuery.isFetching
+  const candidate = available && actualRequest && reportQuery.isSuccess && !reportQuery.isFetching
     ? verifiedSignedSeasonComparison(reportQuery.data, runId, branchId,
         available.savedHead, actualRequest.selected, actualRequest.comparison, indices)
     : null
+  const report = candidate && list.data && signedSeasonReportMatchesInventory(candidate, list.data) ? candidate : null
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()

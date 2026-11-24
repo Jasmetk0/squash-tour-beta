@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom'
 
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
+import { ViewerNo1PublishedHistoryPage } from './ViewerNo1PublishedHistoryPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { viewerPlannedEventPath } from '../../../viewer/viewerRoutes'
 import {
@@ -21,6 +22,12 @@ export function ViewerRankingDeferredPage({
 }: {
   kind: ViewerRankingDeferredKind
 }): JSX.Element {
+  if (kind === 'no1-history') return <ViewerNo1PublishedHistoryPage />
+  return <OtherRankingDeferredPage kind={kind} />
+}
+
+// Other rating systems have no verified public ranking read model yet.
+function OtherRankingDeferredPage({ kind }: { kind: ViewerRankingDeferredKind }): JSX.Element {
   const config = viewerRankingDeferredConfigs[kind]
   const productRunId = useActiveViewerProductRunId()
   const {

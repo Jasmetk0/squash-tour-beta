@@ -64,9 +64,12 @@ function CurrentRankingFromBranch({
     queryKey: ['viewer-current-official-ranking', runId, branchId],
     queryFn: () => getViewerOfficialRanking(runId),
     retry: false,
+    refetchOnMount: 'always',
     refetchOnWindowFocus: true
   })
-  if (rankingQuery.isPending) return <p className="status" role="status">{t.rankingLoading}</p>
+  // A verified branch can advance or be restored without changing its ID.
+  // Never label a cached publication current while revalidating that source.
+  if (rankingQuery.isPending || rankingQuery.isFetching) return <p className="status" role="status">{t.rankingLoading}</p>
   if (rankingQuery.isError) return (
     <div role="alert">
       <p className="error">{t.rankingError} {formatApiError(rankingQuery.error)}</p>

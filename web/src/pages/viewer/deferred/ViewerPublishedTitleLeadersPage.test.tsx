@@ -256,4 +256,30 @@ describe('Title leaders derived from the verified Saved public tournament histor
     expect(screen.queryByRole('button', { name: 'Další' })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
+
+  it('keeps the original title-leader position after search while season/category changes the ranking scope', async () => {
+    const events = [
+      event(1, '2030/31', 'GOLD', 'player-a'),
+      event(2, '2030/31', 'GOLD', 'player-a'),
+      event(3, '2031/32', 'GOLD', 'player-a'),
+      event(4, '2031/32', 'GOLD', 'player-b'),
+      event(5, '2031/32', 'GOLD', 'player-b'),
+      event(6, '2031/32', 'PLATINUM', 'player-c'),
+    ]
+    api.getViewerRunCalendar.mockResolvedValue(sources(events).calendar)
+    api.getViewerTournamentHistory.mockResolvedValue(sources(events).history)
+    const user = userEvent.setup()
+    mount()
+    const table = await screen.findByRole('table', { name: 'Pořadí publikovaných vítězů' })
+    const position = (name: string) => within(within(table).getByRole('row', { name: new RegExp(name) })).getAllByRole('cell')[0]
+    expect(position('player-b')).toHaveTextContent(/^2$/)
+    await user.type(screen.getByLabelText('Hledat ID vítěze'), 'player-b')
+    expect(position('player-b')).toHaveTextContent(/^2$/)
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    await user.selectOptions(screen.getByLabelText('Sezona'), '2031/32')
+    expect(position('player-b')).toHaveTextContent(/^1$/)
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
 })

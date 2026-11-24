@@ -53,6 +53,7 @@ type Translator = (key: CopyKey) => string
 
 export type PublishedTitleLeader = {
   playerId: string
+  position: number
   titleCount: number
   seasonCount: number
   latestEventId: string
@@ -80,12 +81,11 @@ export function publishedTitleLeaders(
     if (season !== 'all' && eventSeason !== season) continue
     if (category !== 'all' && event.category !== category) continue
     const playerId = publication.champion_player_id
-    if (needle && !playerId.toLocaleLowerCase().includes(needle)) continue
 
     const previous = map.get(playerId)
     if (!previous) {
       map.set(playerId, {
-        playerId, titleCount: 1, seasonCount: 1, seenSeasons: new Set([eventSeason]),
+        playerId, position: 0, titleCount: 1, seasonCount: 1, seenSeasons: new Set([eventSeason]),
         latestEventId: event.event_id, latestEventName: event.event_name || event.event_id,
         latestSeason: eventSeason, latestWeek: event.season_week,
       })
@@ -109,6 +109,9 @@ export function publishedTitleLeaders(
 
   return [...map.values()].map(({ seenSeasons: _seenSeasons, ...leader }) => leader)
     .sort((a, b) => b.titleCount - a.titleCount || a.playerId.localeCompare(b.playerId, 'cs'))
+    // Search hides rows, not their position in the season/category leaderboard.
+    .map((leader, index) => ({ ...leader, position: index + 1 }))
+    .filter(leader => !needle || leader.playerId.toLocaleLowerCase().includes(needle))
 }
 
 function Leaderboard({ catalog, runId, branchId, t }: {
@@ -166,9 +169,9 @@ function Leaderboard({ catalog, runId, branchId, t }: {
                 <th scope="col">{t('seasons')}</th>
                 <th scope="col">{t('latest')}</th>
               </tr></thead>
-              <tbody>{visible.map((leader, index) => (
+              <tbody>{visible.map(leader => (
                 <tr key={leader.playerId}>
-                  <td>{offset + index + 1}</td>
+                  <td>{leader.position}</td>
                   <td><Link to={viewerPlayerProfilePath(runId, leader.playerId)}>{leader.playerId}</Link></td>
                   <td>{leader.titleCount}</td>
                   <td>{leader.seasonCount}</td>

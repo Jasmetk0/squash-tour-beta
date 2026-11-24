@@ -108,7 +108,11 @@ export function verifiedSavedMatchResult(
         (item.loser_player_id !== null &&
           (!ids.has(item.loser_player_id as string) ||
            item.loser_player_id === item.winner_player_id)) ||
-        typeof item.scoreline !== 'string' || item.scoreline.length > 100
+        typeof item.scoreline !== 'string' || !item.scoreline.trim() || item.scoreline.length > 100 ||
+        // The canonical result assembler distinguishes automatic BYEs from
+        // walkovers and competitive results. A BYE has no named opponent;
+        // every other published outcome must have one.
+        (item.scoreline === 'BYE') !== (item.loser_player_id === null)
     ) return null
     matches.add(item.match_id as string)
   }

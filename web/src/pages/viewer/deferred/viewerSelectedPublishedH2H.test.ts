@@ -222,4 +222,31 @@ describe('bounded source-complete public Saved H2H derivation', () => {
     expect(selectedPublishedH2H([fixture()], runId, branchId, 'a', 'B'))
       .toMatchObject({ winsA: 0, winsB: 0 })
   })
+
+  it('rejects impossible BYE/opponent combinations, missing scores and opponentless walkovers', () => {
+    const good = fixture()
+    const match = good.data.matches[0]
+    for (const overrides of [
+      { scoreline: 'BYE' },
+      { loser_player_id: null, scoreline: 'W/O' },
+      { loser_player_id: null, scoreline: '3-0' },
+      { scoreline: '' },
+      { scoreline: '   ' },
+    ]) {
+      const wrong = fixture(2, { matches: [{ ...match, ...overrides }] })
+      expect(selectedPublishedH2H([good, wrong], runId, branchId, 'A', 'B')).toBeNull()
+    }
+  })
+
+  it('retains canonical named-opponent walkovers as published outcome records, not inferred on-court play', () => {
+    const data = fixture(1, {
+      matches: [{
+        match_id: 'withdrawal', draw_type: 'main', round_number: 1,
+        bracket_position: 1, winner_player_id: 'A', loser_player_id: 'B', scoreline: 'W/O',
+      }],
+    })
+    expect(selectedPublishedH2H([data], runId, branchId, 'A', 'B'))
+      .toMatchObject({ winsA: 1, winsB: 0, encounters: [{ scoreline: 'W/O' }] })
+  })
+
 })

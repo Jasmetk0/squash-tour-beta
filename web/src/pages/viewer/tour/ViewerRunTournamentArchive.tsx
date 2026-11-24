@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 import { getViewerTournamentHistory } from '../../../api/client'
@@ -36,6 +36,8 @@ const copy = {
   result: ['Publikace výsledku', 'Result publication'], champion: ['Vítěz', 'Champion'], finalist: ['Finalista', 'Finalist'],
   detail: ['Otevřít detail turnaje', 'Open tournament detail'],
   page: ['Stránka', 'Page'], previous: ['Předchozí', 'Previous'], next: ['Další', 'Next'],
+  first: ['První', 'First'], last: ['Poslední', 'Last'], jump: ['Přejít na stránku', 'Jump to page'],
+  go: ['Přejít', 'Go'], jumpError: ['Zadej platné existující číslo stránky.', 'Enter a valid existing page number.'],
   showing: ['Zobrazeno', 'Showing'], of: ['z', 'of'],
 } as const
 type Copy = Record<keyof typeof copy, string>
@@ -92,6 +94,8 @@ export function ViewerRunTournamentArchive({ detailPath }: {
   const { language } = useLanguage()
   const t = Object.fromEntries(Object.entries(copy).map(([key, pair]) => [key, pair[language === 'cs' ? 0 : 1]])) as Copy
   const [params, setParams] = useSearchParams()
+  const [jump, setJump] = useState('')
+  const [badJump, setBadJump] = useState(false)
   const validContext = Boolean(id(runId) && id(branchId) && officialContext?.product_run_id === runId &&
     officialContext?.official_branch_id === branchId && !isLoading && !isStale)
   const source = validContext ? JSON.stringify([runId, branchId]) : null
@@ -125,6 +129,8 @@ export function ViewerRunTournamentArchive({ detailPath }: {
     })
   }
   function go(page: number): void {
+    setJump('')
+    setBadJump(false)
     setParams(old => {
       const next = new URLSearchParams(old)
       if (page === 1) next.delete(keys.page)
@@ -160,6 +166,17 @@ export function ViewerRunTournamentArchive({ detailPath }: {
   const offset = invalid ? 0 : (page - 1) * PAGE_SIZE
   const rows = invalid ? [] : filtered.slice(offset, offset + PAGE_SIZE)
   const ready = validContext && !query.isFetching && !query.isPending && !query.isError && Boolean(history)
+  useEffect(() => {
+    setJump('')
+    setBadJump(false)
+  }, [source, season, search, result, rawPage, totalPages])
+  function submitJump(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const text = jump.trim()
+    const next = /^[1-9][0-9]*$/.test(text) ? Number(text) : NaN
+    if (!Number.isSafeInteger(next) || next > totalPages) setBadJump(true)
+    else go(next)
+  }
   return (
     <section className="panel">
       <RunScopedHeader title={t.title} runId={runId} subtitle={t.subtitle} />
@@ -208,9 +225,19 @@ export function ViewerRunTournamentArchive({ detailPath }: {
             </ul>}
           {!invalid ? <p role="status">{t.showing} {rows.length ? offset + 1 : 0}–{offset + rows.length} {t.of} {filtered.length}</p> : null}
           {!invalid && totalPages > 1 ? <nav aria-label={t.page}>
+            <button type="button" disabled={page === 1} onClick={() => go(1)}>{t.first}</button>
             <button type="button" disabled={page === 1} onClick={() => go(page - 1)}>{t.previous}</button>
             <span>{t.page} {page} / {totalPages}</span>
             <button type="button" disabled={page === totalPages} onClick={() => go(page + 1)}>{t.next}</button>
+            <button type="button" disabled={page === totalPages} onClick={() => go(totalPages)}>{t.last}</button>
+            <form onSubmit={submitJump}>
+              <label htmlFor="run-tournament-jump">{t.jump}</label>
+              <input id="run-tournament-jump" inputMode="numeric" value={jump}
+                onChange={e => { setJump(e.target.value); setBadJump(false) }}
+                aria-invalid={badJump} aria-describedby={badJump ? 'run-tournament-jump-error' : undefined} />
+              <button type="submit">{t.go}</button>
+              {badJump ? <span role="alert" id="run-tournament-jump-error">{t.jumpError}</span> : null}
+            </form>
           </nav> : null}
         </>}
       </SectionCard>

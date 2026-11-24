@@ -4,6 +4,20 @@ import type { ViewerOfficialRanking, ViewerOfficialRunContext } from '../../../a
 // read model. These 50 × 61 limits must NOT be used for calendar-native Runs.
 const LAST_LEGACY_ORDINAL = 50 * 61 - 1
 
+// Match the exact versioned public projection; reject extra internal fields
+// rather than accepting an accidentally expanded ranking payload.
+const rankingFields = [
+  'schema_version', 'product_run_id', 'viewer_branch_id', 'season_index',
+  'week', 'week_ordinal', 'snapshot_fingerprint', 'policy_id', 'best_n', 'row_count', 'rows',
+] as const
+const rowFields = ['rank', 'player_id', 'points'] as const
+
+function exactFields(value: unknown, fields: readonly string[]): boolean {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field)))
+}
+
 function whole(value: unknown, min: number, max: number): value is number {
   return typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max
 }
@@ -19,7 +33,7 @@ export function currentRankingViewerBranch(context: unknown, runId: string): str
 export function validCurrentOfficialRanking(
   data: unknown, runId: string, branchId: string
 ): data is ViewerOfficialRanking {
-  if (!data || typeof data !== 'object' || !runId.trim() || !branchId.trim()) return false
+  if (!exactFields(data, rankingFields) || !runId.trim() || !branchId.trim()) return false
   const value = data as Partial<ViewerOfficialRanking>
   if (
     value.schema_version !== 'viewer_official_ranking.v1' ||
@@ -38,7 +52,7 @@ export function validCurrentOfficialRanking(
   const ids = new Set<string>()
   let previousPoints = Number.POSITIVE_INFINITY
   for (const [index, item] of value.rows.entries()) {
-    if (!item || typeof item !== 'object') return false
+    if (!exactFields(item, rowFields)) return false
     const row = item as { rank?: unknown; player_id?: unknown; points?: unknown }
     if (row.rank !== index + 1 ||
       typeof row.player_id !== 'string' || !row.player_id.trim() ||

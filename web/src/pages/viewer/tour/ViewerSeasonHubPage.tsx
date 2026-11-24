@@ -16,6 +16,7 @@ import {
   viewerPlannedEventPath,
   viewerRunsPath,
   viewerSeasonCalendarPath,
+  viewerTournamentDetailPath,
   viewerTournamentsPath,
 } from '../../../viewer/viewerRoutes'
 
@@ -135,7 +136,7 @@ export function ViewerSeasonHubPage(): JSX.Element {
                       {firstUnpublished.event.event_name || firstUnpublished.event.event_id}
                     </Link> : '—'}</dd></div>
                 <div><dt>{t('latest')}</dt><dd>{latestPublished
-                  ? <Link to={viewerPlannedEventPath(runId, latestPublished.event.event_id)}>
+                  ? <Link to={viewerTournamentDetailPath(runId, latestPublished.event.event_id)}>
                       {latestPublished.event.event_name || latestPublished.event.event_id}
                     </Link> : '—'}</dd></div>
                 <div><dt>{t('finals')}</dt><dd>{latestFinals

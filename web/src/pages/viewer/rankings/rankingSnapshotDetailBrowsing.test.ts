@@ -30,6 +30,11 @@ describe('legacy published ranking snapshot validation', () => {
     expect(validViewerRankingDetail(ranking([row(1, 'a', 0)]), 'run-a', 'branch-a', 1)).toBe(true)
   })
 
+  it('requires descending points but preserves equally ranked point totals', () => {
+    expect(validViewerRankingDetail(ranking([row(1, 'one', 10), row(2, 'two', 20)]), 'run-a', 'branch-a', 1)).toBe(false)
+    expect(validViewerRankingDetail(ranking([row(1, 'one', 20), row(2, 'two', 20)]), 'run-a', 'branch-a', 1)).toBe(true)
+  })
+
   it('does not reinterpret noncanonical ordinals or unsupported legacy range', () => {
     expect(parseLegacyRankingOrdinal('0')).toBe(0)
     expect(parseLegacyRankingOrdinal('3049')).toBe(3049)

@@ -261,7 +261,7 @@ def authenticated_nodes(fetch, *, run_id, root, verified=None):
     return nodes
 
 
-def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
+def _measure_nodes(nodes, root, expected_chars, derived=None):
     # Sizes and piece counts bottom-up with cycle and depth detection (iterative
     # post-order). A node with a derived value of this snapshot is a closed leaf.
     sizes, counts, state = {}, {}, {}
@@ -301,6 +301,11 @@ def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
         order.append(digest)
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
+    return sizes, order
+
+
+def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
+    sizes, order = _measure_nodes(nodes, root, expected_chars, derived)
     if on_value_node is None:
         # Flatten bottom-up (children before parents in ``order``), reusing the
         # flattened tuples of this snapshot; join once at C speed.
@@ -439,17 +444,26 @@ class KnownValueIndex:
     def add(self, run_id, digest, text, start, end):
         if end - start < THRESHOLD:
             return
-        key = (run_id, digest)
-        with self._lock:
-            if key in self._entries:
-                self._entries.move_to_end(key)
-                return
+        if self._touch_value(run_id, digest):
+            return
         prefix = text[start:start + INDEX_PREFIX]
         tail = text[end - INDEX_TAIL:end]
         sha = hashlib.sha256(text[start:end].encode("utf-8")).digest()
+        self._remember_value(run_id, digest, prefix, end - start, tail, sha)
+
+    def _touch_value(self, run_id, digest):
+        key = (run_id, digest)
         with self._lock:
-            self._entries[key] = (prefix, end - start, tail, sha)
-            self._by_prefix.setdefault((run_id, prefix), {})[digest] = (end - start, tail, sha)
+            if key not in self._entries:
+                return False
+            self._entries.move_to_end(key)
+            return True
+
+    def _remember_value(self, run_id, digest, prefix, length, tail, sha):
+        key = (run_id, digest)
+        with self._lock:
+            self._entries[key] = (prefix, length, tail, sha)
+            self._by_prefix.setdefault((run_id, prefix), {})[digest] = (length, tail, sha)
             while len(self._entries) > self._max:
                 (old_run, old_digest), (old_prefix, *_rest) = self._entries.popitem(last=False)
                 bucket = self._by_prefix.get((old_run, old_prefix))
@@ -494,6 +508,53 @@ class KnownValueIndex:
 
 
 KNOWN = KnownValueIndex()
+
+
+def _iter_node_pieces(nodes, root):
+    stack = [(root, 0)]
+    while stack:
+        digest, position = stack.pop()
+        _, children, pieces = nodes[digest]
+        piece = pieces[position]
+        if piece:
+            yield piece
+        if position < len(children):
+            stack.append((digest, position + 1))
+            stack.append((children[position], 0))
+
+
+def warm_value_index(dbapi_connection, run_id, stored, *, index):
+    """Authenticate the actual parent and index exact values without joining its text.
+
+    This is a writer hint only. It cannot replace the new revision's exact
+    post-insert verification. Each value's size, prefix, suffix and UTF-8 hash
+    are computed from its ordered verified fragments.
+    """
+    envelope = stored_envelope(dbapi_connection, run_id, stored)
+    if envelope is None:
+        return
+    root, chars = envelope
+    nodes = authenticated_nodes(connection_fetch(dbapi_connection), run_id=run_id, root=root)
+    sizes, _ = _measure_nodes(nodes, root, chars)
+    seen, pending = set(), [root]
+    while pending:
+        digest = pending.pop()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        kind, children, _ = nodes[digest]
+        if kind == "v" and sizes[digest] >= THRESHOLD and not index._touch_value(run_id, digest):
+            prefix = tail = ""
+            sha = hashlib.sha256()
+            for piece in _iter_node_pieces(nodes, digest):
+                remaining = INDEX_PREFIX - len(prefix)
+                if remaining:
+                    prefix += piece[:remaining]
+                tail = (tail + piece[-INDEX_TAIL:])[-INDEX_TAIL:]
+                sha.update(piece.encode("utf-8"))
+            index._remember_value(run_id, digest, prefix, sizes[digest], tail, sha.digest())
+        pending.extend(reversed(children))
+    index.remember_root(run_id, root)
 
 
 # --------------------------------------------------------------------------- encoder

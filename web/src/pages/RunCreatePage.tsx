@@ -11,14 +11,19 @@ import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { writeLastRunId } from '../viewer/activeRun'
 import { rememberProductRun } from '../navigation/recentProductRuns'
+import { createdATPRunSetupLink } from './admin/atpRunSetup'
 
-/** The canonical Run creation flow: no preselected world, seed or legacy Simulation Run. */
 export function RunCreatePage(): JSX.Element {
   const { language } = useLanguage()
   const t = language === 'cs' ? {
-    title: 'Vytvořit Run', subtitle: 'Vytvoř samostatný svět. Nezávislé kopie balíčků přidáš později.',
+    title: 'Vytvořit Run', subtitle: 'Vytvoř samostatný svět pro simulaci.',
     section: 'Nový Run', name: 'Jedinečný název Runu', custom: 'Zvolit kalendář a rozsah',
     defaultNote: 'Nový Run začíná prázdný s vlastní Timeline 1, první Saved Revision a čistým Working Draftem. Výchozí FAX kalendář má 61 týdnů, začíná ve 37. týdnu roku 2000 a obsahuje 50 sezon.',
+    atp: 'Připravit Run z balíčků ATP',
+    atpNote: 'Po vytvoření zkontroluješ ATP Earth (země a svět) a potom historický ATP Tour (kategorie, série, kalendář a dostupné squashové profily). Každý import potvrdíš a uložíš ručně. Hratelné jsou zatím jen vybrané turnaje.',
+    atpCreate: 'Vytvořit Run a pokračovat k ATP balíčkům',
+    missingBranch: 'Server nepotvrdil počáteční Timeline pro import ATP.',
+    resumeATP: 'Pokračovat k ATP balíčkům',
     create: 'Vytvořit samostatný Run', creating: 'Vytvářím Run…', back: 'Zpět na Runy',
     failure: 'Vytvoření Runu nebylo potvrzeno. Před opakováním zkontroluj přehled Runů', identity: 'Server vrátil neočekávanou identitu nebo vlastnictví Runu. Před dalším pokusem zkontroluj přehled Runů.',
     mismatch: 'Uložený kalendář neodpovídá prověřenému zadání. Zkontroluj přehled Runů před dalším pokusem.',
@@ -31,9 +36,14 @@ export function RunCreatePage(): JSX.Element {
     noMatching: 'Aktuální seznam neobsahuje Run s tímto názvem. Pokud první požadavek ještě dobíhá, vyčkej na jeho dokončení; případné nové vytvoření musíš spustit sám.',
     inventoryFailure: 'Seznam Runů se nepodařilo ověřit. Nové vytvoření je nadále zablokované: '
   } : {
-    title: 'Create Run', subtitle: 'Start a separate world and add independent package copies later.',
+    title: 'Create Run', subtitle: 'Start an independent world for simulation.',
     section: 'New Run', name: 'Unique Run name', custom: 'Choose calendar and range',
     defaultNote: 'A new Run starts empty with its own Timeline 1, initial Saved Revision and clean Working Draft. The default FAX calendar has 61 weeks, starts in Year Week 37 of 2000 and contains 50 seasons.',
+    atp: 'Set up a Run from ATP packages',
+    atpNote: 'After creating the Run, review ATP Earth (countries and world) and the historical ATP Tour (categories, series, calendar and available squash profiles). Confirm and save each import explicitly. Only selected tournaments are currently playable.',
+    atpCreate: 'Create Run and continue to ATP packages',
+    missingBranch: 'The server did not verify the initial Timeline for ATP import.',
+    resumeATP: 'Continue to ATP packages',
     create: 'Create isolated Run', creating: 'Creating Run…', back: 'Back to Runs',
     failure: 'Run creation was not confirmed. Check the Run inventory before retrying', identity: 'The server returned an unexpected Run identity or ownership. Check the Run inventory before retrying.',
     mismatch: 'The saved calendar does not match the reviewed request. Check the Run inventory before trying again.',
@@ -51,6 +61,7 @@ export function RunCreatePage(): JSX.Element {
   const [name, setName] = useState('')
   const [pending, setPending] = useState(false)
   const [createdRunId, setCreatedRunId] = useState<string | null>(null)
+  const [atpSetupLink, setATPSetupLink] = useState<string | null>(null)
   const [unverifiedName, setUnverifiedName] = useState<string | null>(null)
   const [foundExistingRunId, setFoundExistingRunId] = useState<string | null>(null)
   const [checkingInventory, setCheckingInventory] = useState(false)
@@ -61,14 +72,17 @@ export function RunCreatePage(): JSX.Element {
   const retryBlockedName = useRef<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [custom, setCustom] = useState(false)
+  const [atp, setATP] = useState(false)
   const [review, setReview] = useState<ReviewedCreationCalendar | null>(null)
+  const reviewRequired = custom || atp
+  const formLocked = pending || checkingInventory || Boolean(unverifiedName || createdRunId || foundExistingRunId)
 
   async function submit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault()
     const displayName = name.trim()
     if (!displayName || createdRunId || foundExistingRunId || inventoryCheckInFlight.current
-      || retryBlockedName.current === displayName || submissionInFlight.current || (custom && !review)) return
-    const reviewed = custom ? review : null
+      || retryBlockedName.current === displayName || submissionInFlight.current || (reviewRequired && !review)) return
+    const reviewed = reviewRequired ? review : null
     submissionInFlight.current = true
     setPending(true)
     setError(null)
@@ -88,16 +102,20 @@ export function RunCreatePage(): JSX.Element {
       if (reviewed && !sameCreationCalendar(created.metadata_json?.run_calendar, expectedCreationCalendar(reviewed.input))) {
         throw new Error(t.mismatch)
       }
+      const destination = atp ? createdATPRunSetupLink(created) : null
+      if (atp && !destination) throw new Error(t.missingBranch)
+      setATPSetupLink(destination)
       // Only the server create response is authoritative. Browser hints/cache refresh
       // must not turn a successful create into an apparent failure and a duplicate retry.
       writeLastRunId(created.run_id)
       rememberProductRun(created.run_id)
       try {
         void queryClient.invalidateQueries({ queryKey: ['canonical-run-containers'] }).catch(() => undefined)
+        if (atp) void queryClient.invalidateQueries({ queryKey: ['run-containers'] }).catch(() => undefined)
       } catch {
         // The inventory can be refreshed separately; the created Run still exists.
       }
-      navigate(`/admin/runs/${encodeURIComponent(created.run_id)}`)
+      navigate(destination ?? `/admin/runs/${encodeURIComponent(created.run_id)}`)
     } catch (cause) {
       if (!confirmedRunId) {
         // A rejected POST may still have committed on the server. Do not allow
@@ -161,20 +179,23 @@ export function RunCreatePage(): JSX.Element {
       <form onSubmit={event => { void submit(event) }}>
         <label htmlFor="new-run-name">{t.name}</label>
         <input id="new-run-name" value={name} maxLength={256} required
-          disabled={pending || checkingInventory || Boolean(unverifiedName)
-            || Boolean(createdRunId) || Boolean(foundExistingRunId)}
+          disabled={formLocked}
           autoComplete="off" onChange={event => {
             setName(event.target.value)
             setError(null)
             setInventoryMessage(null)
           }} />
-        <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={pending || checkingInventory || Boolean(unverifiedName) || Boolean(createdRunId) || Boolean(foundExistingRunId)} onChange={event => {
+        <label className="checkbox-label"><input type="checkbox" checked={atp} disabled={formLocked} onChange={event => {
+          setATP(event.target.checked); setReview(null); setError(null)
+        }} />{t.atp}</label>
+        {atp ? <p className="status">{t.atpNote}</p> : <label className="checkbox-label"><input type="checkbox" checked={custom} disabled={formLocked} onChange={event => {
           setCustom(event.target.checked); setReview(null); setError(null)
-        }} />{t.custom}</label>
-        {custom ? <RunCalendarCreationForm disabled={pending || checkingInventory || Boolean(unverifiedName) || Boolean(createdRunId) || Boolean(foundExistingRunId)} onReview={setReview} />
+        }} />{t.custom}</label>}
+        {reviewRequired ? <RunCalendarCreationForm key={atp ? 'atp' : 'custom'} atp={atp} disabled={formLocked} onReview={setReview} />
           : <p className="status">{t.defaultNote}</p>}
         {error && <p role="alert" className="error">{error}</p>}
         {createdRunId && <p role="status"><Link to={`/admin/runs/${encodeURIComponent(createdRunId)}`}>{t.openCreated}</Link></p>}
+        {atpSetupLink && <p><Link to={atpSetupLink}>{t.resumeATP}</Link></p>}
         {unverifiedName && !foundExistingRunId && <button type="button"
           disabled={checkingInventory} onClick={() => { void verifyExistingName() }}>
           {checkingInventory ? t.verifyingExisting : t.verifyExisting}
@@ -182,7 +203,7 @@ export function RunCreatePage(): JSX.Element {
         {inventoryMessage && <p role="status">{inventoryMessage}</p>}
         {foundExistingRunId && <p><Link to={`/admin/runs/${encodeURIComponent(foundExistingRunId)}`}>{t.openExisting}</Link></p>}
         <button type="submit" disabled={pending || checkingInventory || Boolean(createdRunId)
-          || Boolean(foundExistingRunId) || Boolean(unverifiedName) || !name.trim() || (custom && !review)}>{pending ? t.creating : t.create}</button>
+          || Boolean(foundExistingRunId) || Boolean(unverifiedName) || !name.trim() || (reviewRequired && !review)}>{pending ? t.creating : atp ? t.atpCreate : t.create}</button>
         {' '}<Link to="/admin/runs">{t.back}</Link>
       </form>
     </SectionCard>

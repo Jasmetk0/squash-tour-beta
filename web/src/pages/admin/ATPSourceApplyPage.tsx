@@ -13,12 +13,15 @@ import type { RunBranch, RunContainer } from '../../api/types'
 import { useLanguage } from '../../i18n/LanguageContext'
 import { AdminTransitionBlocker } from '../../navigation/AdminTransitionBlocker'
 import { formatApiError } from '../../utils/apiErrors'
+import { hasATPRunSetupCalendar } from './atpRunSetup'
+import type { ATPRunSetupTarget } from './atpRunSetup'
 
 type ApplyCatalog = Pick<ATPReferenceCatalog, 'reference_span' | 'source_fingerprint'> & {
   children: Array<Omit<ATPReferenceChild, 'package_type'> & { package_type: string }>
 }
 
 type ApplyProps<Catalog extends ApplyCatalog> = {
+  target?: ATPRunSetupTarget | null
   queryPrefix: string
   setupId: string
   title: { cs: string; en: string }
@@ -47,14 +50,14 @@ const writableBranch = (branch:RunBranch,runId:string):boolean =>
  * transaction and explicit Working Draft Save can write anything.
  */
 export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
-  queryPrefix, setupId, title, subtitle, getCatalog, getPreview, confirmReference,
+  target, queryPrefix, setupId, title, subtitle, getCatalog, getPreview, confirmReference,
   isReviewed, renderSourceSummary, renderSourceDetails, renderSavedTargetDetails,
 }: ApplyProps<Catalog>): JSX.Element {
   const {language}=useLanguage(),cs=language==='cs'
   const dataRouter=useContext(UNSAFE_DataRouterContext)
   const qc=useQueryClient()
-  const [runId,setRunId]=useState('')
-  const [branchId,setBranchId]=useState('')
+  const [runId,setRunId]=useState(target?.runId??'')
+  const [branchId,setBranchId]=useState(target?.branchId??'')
   const [approved,setApproved]=useState(false)
   const [resolutions,setResolutions]=useState<Record<string,Resolution>>({})
   const [hasApplied,setHasApplied]=useState(false)
@@ -66,7 +69,8 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
   const runs=useQuery({
     queryKey:['run-containers'],queryFn:listRunContainers,retry:false
   })
-  const possibleRuns=(runs.data?.run_containers??[]).filter(writableRun)
+  const possibleRuns=(runs.data?.run_containers??[]).filter(item=>writableRun(item)&&
+    (!target||(item.run_id===target.runId&&hasATPRunSetupCalendar(item))))
   const run=possibleRuns.find(x=>x.run_id===runId)
   const branches=useQuery({
     queryKey:['run-branches',runId],queryFn:()=>listRunBranches(runId),
@@ -95,6 +99,7 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
     source.isSuccess && review.isSuccess && runs.isSuccess && branches.isSuccess &&
     source.data && preview && run && branch && draft.isSuccess && state.isSuccess &&
     isReviewed(source.data,preview,runId,branchId) &&
+    draft.data.run_id===runId && draft.data.branch_id===branchId &&
     preview.saved_head_revision_id===branch.saved_head_revision_id &&
     preview.saved_head_revision_id===draft.data.base_saved_revision_id &&
     preview.draft_version===draft.data.draft_version &&
@@ -267,8 +272,8 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
       <section className="package-apply-step">
         <h3>1. {cs?'Vybrat Run a Branch':'Choose Run and Branch'}</h3>
         {runs.isError&&<p role="alert" className="error">{formatApiError(runs.error)}</p>}
-        <label>Run<select aria-label="Target Run" value={runId}
-          disabled={confirm.isPending||save.isPending}
+        <label>Run<select aria-label="Target Run" value={run?runId:''}
+          disabled={Boolean(target)||confirm.isPending||save.isPending}
           onChange={e=>chooseRun(e.target.value)}>
           <option value="">{cs?'Vyber editovatelný Run':'Choose a writable Run'}</option>
           {possibleRuns.map(item=><option key={item.run_id} value={item.run_id}>
@@ -277,10 +282,12 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
         {runs.isSuccess&&possibleRuns.length===0&&<p>{cs
           ? 'Žádný editovatelný Run není dostupný.'
           : 'No writable Run is available.'}</p>}
-        <p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create a Run'}</Link></p>
+        {!target&&<p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create a Run'}</Link></p>}
+        {target&&((runs.isSuccess&&!runs.isFetching&&!run)||(branches.isSuccess&&!branches.isFetching&&!branch))&&
+          <p role="alert">{cs?'Cílový ATP Run s kalendářem Earth nebo jeho editovatelná Timeline nebyly ověřeny.':'The target ATP Run with an Earth calendar or its writable Timeline could not be verified.'}</p>}
         {run&&<>{branches.isError&&<p role="alert" className="error">{formatApiError(branches.error)}</p>}
-          <label>Branch<select aria-label="Target Branch" value={branchId}
-            disabled={confirm.isPending||save.isPending}
+          <label>Branch<select aria-label="Target Branch" value={branch?branchId:''}
+            disabled={Boolean(target)||confirm.isPending||save.isPending}
             onChange={e=>chooseBranch(e.target.value)}>
             <option value="">{cs?'Vyber editovatelnou Branch':'Choose a writable Branch'}</option>
             {possibleBranches.map(item=><option key={item.branch_id} value={item.branch_id}>
@@ -337,8 +344,8 @@ export function ATPSourceApplyPage<Catalog extends ApplyCatalog>({
             <input type="checkbox" checked={approved} disabled={blocked||confirm.isPending}
               onChange={e=>setApproved(e.target.checked)}/>
             {cs
-              ? 'Zkontroloval jsem změny a potvrzuji přidání obou historických referenčních balíčků.'
-              : 'I reviewed the changes and confirm both historical reference packages.'}
+              ? 'Zkontroloval jsem změny a potvrzuji přidání zobrazených balíčků.'
+              : 'I reviewed the changes and confirm the displayed packages.'}
           </label>
           <button type="button" disabled={!canConfirm||confirm.isPending}
             onClick={()=>{if(preview)confirm.mutate(preview)}}>

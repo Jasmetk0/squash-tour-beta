@@ -33,10 +33,10 @@ const api=vi.hoisted(()=>({
 }))
 vi.mock('../../api/client',()=>api)
 
-function mount():void {
+function mount(search = ''):void {
   render(<QueryClientProvider client={new QueryClient({
     defaultOptions:{queries:{retry:false}}
-  })}><MemoryRouter initialEntries={['/admin/packages/atp-tour-calendar-reference']}>
+  })}><MemoryRouter initialEntries={['/admin/packages/atp-tour-calendar-reference'+search]}>
     <LanguageProvider><Routes>
       <Route path="/admin/packages/atp-tour-calendar-reference" element={<ATPCalendarReferenceApplyPage/>}/>
     </Routes></LanguageProvider>
@@ -72,6 +72,13 @@ function preview(){
     conflicts:ctx.previewConflicts
   }
 }
+
+const atpTarget = '?run=run%2F1&branch=branch%2F1'
+const withRunClock = (weeks: number) => ({run_containers: [{
+  run_id: 'run/1', display_name: 'Custom Run', storage_kind: 'custom_local', read_only: false, status: 'working',
+  metadata_json: {run_calendar: {schema_version: 'run_calendar.v1', weeks_per_year: weeks,
+    season_start_year_week: 1, start_year: 2024, season_count: 3}},
+}]})
 
 function savedWeekPreview() {
   return {
@@ -190,6 +197,37 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     expect(validATPCalendarCatalog({...original,
       children:[...original.children.slice(0,2),
         {...original.children[2],entity_count:0}]})).toBe(false)
+  })
+
+  it('reviews a setup link for the exact writable W52 Run and Timeline without writes', async()=>{
+    api.listRunContainers.mockResolvedValueOnce(withRunClock(52))
+    mount(atpTarget)
+    await waitFor(()=>expect(api.previewATPCalendarReference).toHaveBeenCalledWith('run/1','branch/1'))
+    expect(await screen.findByRole('button',{name:'Potvrdit do Working Draftu'})).toBeDisabled()
+    expect(screen.getByRole('combobox',{name:'Target Run'})).toHaveValue('run/1')
+    expect(screen.getByRole('combobox',{name:'Target Branch'})).toHaveValue('branch/1')
+    expect(api.confirmATPCalendarReference).not.toHaveBeenCalled()
+    expect(api.saveRunPackageWorkingDraft).not.toHaveBeenCalled()
+  })
+
+  it('does not review a setup link for a foreign Timeline', async()=>{
+    api.listRunContainers.mockResolvedValueOnce(withRunClock(52))
+    api.listRunBranches.mockResolvedValueOnce({run_branches:[{
+      run_id:'another-run',branch_id:'branch/1',display_name:'Foreign',status:'active',
+      read_only:false,saved_head_revision_id:'r0',
+    }]})
+    mount(atpTarget)
+    expect(await screen.findByRole('alert')).toHaveTextContent('nebyly ověřeny')
+    expect(api.getBranchWorkingDraft).not.toHaveBeenCalled()
+    expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
+  })
+
+  it('rejects an ATP setup link to a W61 Run before reading its branches', async()=>{
+    api.listRunContainers.mockResolvedValueOnce(withRunClock(61))
+    mount(atpTarget)
+    expect(await screen.findByRole('alert')).toHaveTextContent('nebyly ověřeny')
+    expect(api.listRunBranches).not.toHaveBeenCalled()
+    expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
   })
 
   it('accepts version 2 only with its separate frozen sporting Category',()=>{

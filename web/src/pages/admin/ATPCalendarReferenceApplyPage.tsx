@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import {
   confirmATPCalendarReference, getATPCalendarReferenceCatalog, getATPCalendarReferenceYear,
   previewATPCalendarReference,
@@ -12,6 +13,7 @@ import { useLanguage } from '../../i18n/LanguageContext'
 import { formatApiError } from '../../utils/apiErrors'
 import { ATPSavedRunWeekDetails } from './ATPSavedRunWeekDetails'
 import { ATPSourceApplyPage } from './ATPSourceApplyPage'
+import { readATPRunSetupTarget } from './atpRunSetup'
 
 const ATP_REFERENCE_YEARS = Array.from({length:37},(_,i)=>1990+i)
 
@@ -102,7 +104,11 @@ function CalendarYearDetails({ catalog, sourceReady }: {
 }
 
 export function ATPCalendarReferenceApplyPage(): JSX.Element {
+  const [params] = useSearchParams()
+  const target = readATPRunSetupTarget(params)
   return <ATPSourceApplyPage
+    key={JSON.stringify(target)}
+    target={target}
     queryPrefix="atp-calendar-reference"
     setupId={ATP_CALENDAR_REFERENCE_SETUP_ID}
     title={{cs: 'ATP Tour 1990–2026 – referenční kalendář', en: 'ATP Tour 1990–2026 – reference Calendar'}}

@@ -1,3 +1,19 @@
+# Guided ATP W52 package setup candidate — 24 November 2026
+
+Admin Run creation offers the ATP Earth and historical ATP Tour package path
+with a fixed Earth clock of 52 weeks and Season Week 1 at Year Week 1. The
+editable initial range defaults to 2024–2026. Empty Run creation installs the
+initial Saved Revision. The setup then opens World Package review on that exact
+Run and Timeline, followed by the historical Tour Setup on the same Timeline
+once the World Package is saved. Each import requires review, confirmation and
+explicit Save. The full-source HTTP/SQLite smoke test verifies that both packages
+survive a restart and the 2024 and 2025 source dates project into W52 from the
+same immutable Saved head. Full ATP sporting adoption and the two-season
+release gate remain open. No new tournament formats or calendar mapping rules
+are introduced by the setup.
+
+---
+
 # First playable pre-alpha scope — 21 November 2026
 
 [DECIDED] Master v89 §31.41 requires an Admin Run created from compatible ATP

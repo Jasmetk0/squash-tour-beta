@@ -34,13 +34,14 @@ const copy = {
 const integer = (value: string): number | null => /^\d+$/.test(value) && Number.isSafeInteger(Number(value))
   && Number(value) <= 2147483647 ? Number(value) : null
 
-export function RunCalendarCreationForm({ disabled, onReview }: {
+export function RunCalendarCreationForm({ disabled, onReview, atp = false }: {
   disabled: boolean; onReview: (review: ReviewedCreationCalendar | null) => void
+  atp?: boolean
 }): JSX.Element {
   const { language } = useLanguage(); const t = copy[language]
-  const [weeks, setWeeks] = useState('61'); const [offset, setOffset] = useState('37')
-  const [year, setYear] = useState('2000'); const [count, setCount] = useState('50')
-  const [last, setLast] = useState('2049'); const [mode, setMode] = useState('count')
+  const [weeks, setWeeks] = useState(atp ? '52' : '61'); const [offset, setOffset] = useState(atp ? '1' : '37')
+  const [year, setYear] = useState(atp ? '2024' : '2000'); const [count, setCount] = useState(atp ? '3' : '50')
+  const [last, setLast] = useState(atp ? '2026' : '2049'); const [mode, setMode] = useState('count')
   const [preset, setPreset] = useState('fax'); const [pending, setPending] = useState(false)
   const [review, setReview] = useState<RunCalendarCreationPreview | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -74,15 +75,15 @@ export function RunCalendarCreationForm({ disabled, onReview }: {
   }
   return <fieldset className="run-calendar-creation" disabled={disabled}>
     <legend>{t.title}</legend>
-    <p className="status">{t.note}</p>
+    <p className="status">{atp ? (language === 'cs' ? 'Earth · 52 týdnů · sezona začíná v 1. týdnu roku' : 'Earth · 52 weeks · season starts in Year Week 1') : t.note}</p>
     <div className="form-grid">
-      <label>{t.preset}<select aria-label={t.preset} value={preset} onChange={e => {
+      {!atp && <><label>{t.preset}<select aria-label={t.preset} value={preset} onChange={e => {
         changed(); setPreset(e.target.value)
         if (e.target.value === 'fax') { setWeeks('61'); setOffset('37') }
         if (e.target.value === 'earth') { setWeeks('52'); setOffset('1') }
       }}><option value="fax">FAX · 61</option><option value="earth">Earth · 52</option><option value="custom">{t.custom}</option></select></label>
       <label>{t.weeks}<input type="number" min="1" step="1" value={weeks} onChange={e => {changed(); setWeeks(e.target.value); setPreset('custom')}} /></label>
-      <label>{t.offset}<input type="number" min="1" step="1" value={offset} onChange={e => {changed(); setOffset(e.target.value); setPreset('custom')}} /></label>
+      <label>{t.offset}<input type="number" min="1" step="1" value={offset} onChange={e => {changed(); setOffset(e.target.value); setPreset('custom')}} /></label></>}
       <label>{t.year}<input type="number" min="0" step="1" value={year} onChange={e => updateYear(e.target.value)} /></label>
       <label>{t.horizon}<select aria-label={t.horizon} value={mode} onChange={e => {changed(); setMode(e.target.value)}}><option value="count">{t.countMode}</option><option value="last">{t.lastMode}</option></select></label>
       {mode === 'count' ? <label>{t.count}<input type="number" min="1" step="1" value={count} onChange={e => {

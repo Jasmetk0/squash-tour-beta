@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useContext, useEffect, useMemo, useState } from 'react'
-import { Link, UNSAFE_DataRouterContext, useParams } from 'react-router-dom'
+import { Link, UNSAFE_DataRouterContext, useParams, useSearchParams } from 'react-router-dom'
 import {
   confirmWorldSelection, getBranchWorkingDraft, getRunPackageState, getWorldPackage,
   listRunBranches, listRunContainers, previewWorldSelection, saveRunPackageWorkingDraft
@@ -11,6 +11,11 @@ import type { WorldSelectionRequest, WorldSelectionPreview } from '../../api/wor
 import { useLanguage } from '../../i18n/LanguageContext'
 import { formatApiError } from '../../utils/apiErrors'
 import { AdminTransitionBlocker } from '../../navigation/AdminTransitionBlocker'
+import {
+  ATP_CALENDAR_APPLY_PATH, ATP_EARTH_WORLD_ID, atpRunSetupLink,
+  hasATPRunSetupCalendar, readATPRunSetupTarget,
+} from './atpRunSetup'
+import type { ATPRunSetupTarget } from './atpRunSetup'
 
 type PendingSave = { runId:string; branchId:string; draftVersion:number; fingerprint:string; previousHead:string }
 function runWritable(run:RunContainer):boolean {
@@ -23,9 +28,15 @@ function jsonValue(value:unknown):string { return value===undefined?'—':JSON.s
 
 export function WorldPackageApplyPage():JSX.Element {
   const {worldId=''}=useParams()
+  const [params]=useSearchParams()
+  const target=worldId===ATP_EARTH_WORLD_ID?readATPRunSetupTarget(params):null
+  return <WorldPackageApply key={JSON.stringify([worldId,target])} worldId={worldId} target={target}/>
+}
+
+function WorldPackageApply({worldId,target}:{worldId:string;target:ATPRunSetupTarget|null}):JSX.Element {
   const dataRouter=useContext(UNSAFE_DataRouterContext)
   const {language}=useLanguage(),cs=language==='cs',qc=useQueryClient()
-  const [runId,setRunId]=useState(''),[branchId,setBranchId]=useState('')
+  const [runId,setRunId]=useState(target?.runId??''),[branchId,setBranchId]=useState(target?.branchId??'')
   const [selected,setSelected]=useState<string[]>([])
   const [resolutions,setResolutions]=useState<WorldSelectionRequest['conflict_resolutions']>({})
   const [approved,setApproved]=useState(false)
@@ -35,9 +46,10 @@ export function WorldPackageApplyPage():JSX.Element {
 
   const source=useQuery({queryKey:['world-package',worldId],queryFn:()=>getWorldPackage(worldId),enabled:Boolean(worldId),retry:false})
   const runs=useQuery({queryKey:['run-containers'],queryFn:listRunContainers,retry:false})
-  const candidates=(runs.data?.run_containers??[]).filter(runWritable)
+  const candidates=(runs.data?.run_containers??[]).filter(item=>runWritable(item)&&
+    (!target||(item.run_id===target.runId&&hasATPRunSetupCalendar(item))))
   const run=candidates.find(item=>item.run_id===runId)
-  const branches=useQuery({queryKey:['run-branches',runId],queryFn:()=>listRunBranches(runId),enabled:Boolean(runId),retry:false})
+  const branches=useQuery({queryKey:['run-branches',runId],queryFn:()=>listRunBranches(runId),enabled:Boolean(run),retry:false})
   const choices=(branches.data?.run_branches??[]).filter(item=>branchWritable(item,runId))
   const branch=choices.find(item=>item.branch_id===branchId)
   const draft=useQuery({queryKey:['package-working-draft',runId,branchId],queryFn:()=>getBranchWorkingDraft(runId,branchId),enabled:Boolean(branch),retry:false})
@@ -55,8 +67,9 @@ export function WorldPackageApplyPage():JSX.Element {
   })
   const data=review.data
   const contextCorrect=Boolean(
-    data && branch && run && draft.isSuccess && state.isSuccess &&
+    data && branch && run && runs.isSuccess && branches.isSuccess && draft.isSuccess && state.isSuccess &&
     isExactWorldSelection(data,worldId,runId,branchId,selected,resolutions) &&
+    draft.data.run_id===runId && draft.data.branch_id===branchId &&
     data.saved_head_revision_id===branch.saved_head_revision_id &&
     data.draft_version===draft.data.draft_version &&
     data.saved_head_revision_id===draft.data.base_saved_revision_id &&
@@ -80,6 +93,14 @@ export function WorldPackageApplyPage():JSX.Element {
     draft.data?.draft_version===pendingSave.draftVersion && draft.data?.status==='dirty' &&
     state.data?.fingerprint===pendingSave.fingerprint && !draft.isFetching && !state.isFetching
   )
+  const versions=state.data?.state?.package_versions
+  const canContinueATP=Boolean(target && source.data?.world_id===worldId && run && branch &&
+    runs.isSuccess && branches.isSuccess && draft.isSuccess && state.isSuccess &&
+    !runs.isFetching && !branches.isFetching && !draft.isFetching && !state.isFetching && !pendingChanges &&
+    draft.data.run_id===runId && draft.data.branch_id===branchId && draft.data.status==='clean' &&
+    draft.data.base_saved_revision_id===branch.saved_head_revision_id &&
+    state.data.state?.run_id===runId && state.data.state.branch_id===branchId &&
+    Array.isArray(versions) && versions.some(version=>version?.package_id===worldId))
 
   useEffect(()=>{
     setSelected([]);setResolutions({});setApproved(false);setPendingSave(null);setNotice('');setHasApplied(false)
@@ -102,6 +123,7 @@ export function WorldPackageApplyPage():JSX.Element {
     },
     onSuccess:async({preview:p,result})=>{
       setHasApplied(true);setApproved(false)
+      if(result.draft_version===p.draft_version){setSelected([]);setResolutions({})}
       setPendingSave(result.draft_version>p.draft_version?{
         runId,branchId,draftVersion:result.draft_version,
         fingerprint:result.state_fingerprint!,previousHead:p.saved_head_revision_id
@@ -125,7 +147,7 @@ export function WorldPackageApplyPage():JSX.Element {
       return result
     },
     onSuccess:async()=>{
-      setPendingSave(null)
+      setPendingSave(null);setSelected([]);setResolutions({})
       setNotice(cs?'Uložena nová Saved Revision.':'New Saved Revision saved.')
       await Promise.all([
         qc.invalidateQueries({queryKey:['package-working-draft',runId,branchId]}),
@@ -193,14 +215,16 @@ export function WorldPackageApplyPage():JSX.Element {
     <section className="package-apply-step">
       <h3>1. {cs?'Cílový Run a Branch':'Target Run and Branch'}</h3>
       {runs.isError&&<p role="alert" className="error">{formatApiError(runs.error)}</p>}
-      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={runId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseRun(event.target.value))event.currentTarget.value=runId}}>
+      <label>{cs?'Run':'Run'}<select aria-label="Target Run" value={run?runId:''} disabled={Boolean(target)||confirm.isPending||save.isPending} onChange={event=>{if(!chooseRun(event.target.value))event.currentTarget.value=runId}}>
         <option value="">{cs?'Vyber uložený editovatelný Run':'Choose a writable saved Run'}</option>
         {candidates.map(candidate=><option key={candidate.run_id} value={candidate.run_id}>{candidate.display_name||candidate.run_id}</option>)}
       </select></label>
       {runs.isSuccess&&candidates.length===0&&<p className="status">{cs?'Žádný editovatelný Run není dostupný.':'No writable Run is available.'}</p>}
-      <p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create new Run'} →</Link> <span className="status">{cs?'(potom se vrať k tomuto balíčku)':'(then return to this package)'}</span></p>
+      {!target&&<p><Link to="/admin/runs/new">{cs?'Vytvořit nový Run':'Create new Run'} →</Link> <span className="status">{cs?'(potom se vrať k tomuto balíčku)':'(then return to this package)'}</span></p>}
+      {target&&((runs.isSuccess&&!runs.isFetching&&!run)||(branches.isSuccess&&!branches.isFetching&&!branch))&&
+        <p role="alert">{cs?'Cílový ATP Run s kalendářem Earth nebo jeho editovatelná Timeline nebyly ověřeny.':'The target ATP Run with an Earth calendar or its writable Timeline could not be verified.'}</p>}
       {runId&&<>{branches.isError&&<p role="alert" className="error">{formatApiError(branches.error)}</p>}
-        <label>Branch<select aria-label="Target Branch" value={branchId} disabled={confirm.isPending||save.isPending} onChange={event=>{if(!chooseBranch(event.target.value))event.currentTarget.value=branchId}}>
+        <label>Branch<select aria-label="Target Branch" value={branch?branchId:''} disabled={Boolean(target)||confirm.isPending||save.isPending} onChange={event=>{if(!chooseBranch(event.target.value))event.currentTarget.value=branchId}}>
           <option value="">{cs?'Vyber editovatelnou branch':'Choose a writable Branch'}</option>
           {choices.map(item=><option key={item.branch_id} value={item.branch_id}>{item.display_name}</option>)}
         </select></label></>}
@@ -244,6 +268,9 @@ export function WorldPackageApplyPage():JSX.Element {
         </details>)}
       </>}
     </section>}
+    {target&&canContinueATP&&<p><Link to={atpRunSetupLink(ATP_CALENDAR_APPLY_PATH,target)}>
+      {cs?'Pokračovat k historickému kalendáři ATP':'Continue to the historical ATP calendar'} →
+    </Link></p>}
     {branch&&data&&!hasApplied&&<section className="package-apply-step">
       <h3>3. {cs?'Změny před → po a potvrzení':'Before → after review and confirm'}</h3>
       <p className="status">{cs?'Zdrojová verze':'Source version'}: {data.source.source_version} · fingerprint: <code>{data.source.source_fingerprint}</code></p>

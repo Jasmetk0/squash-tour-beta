@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LanguageProvider } from '../../i18n/LanguageContext'
 
 import { VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY } from '../../viewer/activeProductRun'
 import {
@@ -24,7 +25,7 @@ const api = vi.hoisted(() => ({
 vi.mock('../../api/client', () => api)
 
 function renderRunBrowser(): void {
-  renderWithViewerProviders(<ViewerRunBrowserPage />)
+  renderWithViewerProviders(<LanguageProvider><ViewerRunBrowserPage /></LanguageProvider>)
 }
 
 function runFixture(overrides: Record<string, unknown> = {}) {
@@ -52,6 +53,7 @@ function runFixture(overrides: Record<string, unknown> = {}) {
 describe('ViewerRunBrowserPage Product Run read model', () => {
   beforeEach(() => {
     clearViewerStorage()
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.clearAllMocks()
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
   })
@@ -140,7 +142,9 @@ describe('ViewerRunBrowserPage Product Run read model', () => {
     expect(await screen.findByLabelText('Run run active')).toHaveTextContent('Active Viewer run')
     expect(screen.getByLabelText('Run run inactive')).toHaveTextContent('Available Viewer run')
     expect(localStorage.getItem(VIEWER_ACTIVE_PRODUCT_RUN_STORAGE_KEY)).toBe('run active')
-    expect(setItemSpy).not.toHaveBeenCalled()
+    // LanguageProvider persists the user's language preference on mount.
+    // Browsing may do that, but must never write any Run/Branch selection.
+    expect(setItemSpy.mock.calls.every(([key]) => key === 'squash-engine-language-v1')).toBe(true)
     expect(removeItemSpy).not.toHaveBeenCalled()
   })
 

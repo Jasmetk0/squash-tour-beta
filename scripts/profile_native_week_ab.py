@@ -1,4 +1,4 @@
-"""One real native Tour week, two immutable commits, four isolated processes.
+"""One real native Tour week, two immutable commits, isolated processes.
 
 Linux, Python 3.11+, installed project/test dependencies, clean committed Git
 trees. Run this driver from the diagnostic branch, not from either candidate.
@@ -22,18 +22,18 @@ import re
 import resource
 import shutil
 import sqlite3
+from statistics import median
 import subprocess
 import sys
 import tempfile
 import time
-from urllib.parse import quote
 from uuid import NAMESPACE_URL, uuid5
 from itertools import count
 
 SCRIPT = Path(__file__).resolve()
 METRICS = SCRIPT.with_name("profile_native_full_simulation_metrics.py")
 W12_SHA = "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7"
-SCHEMA = 1
+SCHEMA = 2
 PLANS = {
     "w6": [("play", "ab-cup"), ("confirm-result", "ab-cup"), ("transition", None)],
     "w12-1822": [("transition", None)],
@@ -78,9 +78,12 @@ def sidecar(path, suffix):
 
 
 def physical(path):
-    return {"db_bytes": path.stat().st_size,
-            "wal_bytes": sidecar(path, "-wal").stat().st_size
-            if sidecar(path, "-wal").exists() else 0}
+    # WAL can disappear between stat calls when SQLite checkpoints/closes it.
+    try:
+        wal = sidecar(path, "-wal").stat().st_size
+    except FileNotFoundError:
+        wal = 0
+    return {"db_bytes": path.stat().st_size, "wal_bytes": wal}
 
 
 def copy_fixture(source, target, expected):
@@ -88,7 +91,10 @@ def copy_fixture(source, target, expected):
     require(not sidecar(source, "-wal").exists() and not sidecar(source, "-shm").exists(),
             "Fixture must be a closed, checkpointed standalone SQLite backup")
     require(file_sha(source) == expected, "Input SHA-256 mismatch")
-    shutil.copyfile(source, target)
+    with source.open("rb") as src, target.open("xb") as dst:
+        shutil.copyfileobj(src, dst)
+    require(not sidecar(source, "-wal").exists() and not sidecar(source, "-shm").exists(),
+            "Fixture acquired SQLite sidecars while copying")
     require(file_sha(target) == expected and file_sha(source) == expected,
             "Fixture changed while copying")
 
@@ -162,6 +168,7 @@ def prepare(path):
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from tests.api.test_native_full_simulation_tasks import approve_draw
     flow, ApiServer, _ = target_imports()
+    producer = metadata()
     require(not path.exists(), "Never overwrite a fixture")
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
@@ -188,7 +195,7 @@ def prepare(path):
     require(not sidecar(path, "-wal").exists() and not sidecar(path, "-shm").exists(),
             "Fixture unexpectedly has sidecars")
     print(json.dumps({"fixture": str(path), "sha256": file_sha(path),
-                      "producer": metadata(), "position": [0, 4],
+                      "producer": producer, "position": [0, 4],
                       "players": 8, "seed": SEED, "physical": sql_stats(path)}, indent=2))
 
 
@@ -245,6 +252,7 @@ def worker(args):
             url = flow.tour_url(server)
 
             def call(label, method, suffix="", payload=None, status=200):
+                request_sha256 = digest(payload)
                 sql_before, fetch_before = sql.copy(), fetched.copy()
                 wall, cpu = time.perf_counter(), time.process_time()
                 code = None
@@ -254,6 +262,7 @@ def worker(args):
                     return value
                 finally:
                     rows.append({"label": label, "method": method, "status": code,
+                                 "request_sha256": request_sha256,
                                  "wall_s": time.perf_counter() - wall,
                                  "cpu_s": time.process_time() - cpu,
                                  "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
@@ -296,8 +305,10 @@ def worker(args):
                 view = call(action + ":saved_get", "GET")
                 require(view["saved"] and view["saved_head_revision_id"] ==
                         receipt["saved_revision"]["revision_id"], "Save head not visible")
-            report["wall_s"] = time.perf_counter() - started
-            report["cpu_s"] = time.process_time() - cpu
+            report["elapsed_wall_s"] = time.perf_counter() - started
+            report["wall_s"] = sum(row["wall_s"] for row in rows)
+            report["elapsed_cpu_s"] = time.process_time() - cpu
+            report["cpu_s"] = sum(row["cpu_s"] for row in rows)
             report["peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             report["after"] = sql_stats(db)
             require([x["label"] for x in rows] == expected_calls(args.scenario, args.mode),
@@ -354,13 +365,29 @@ def validate_report(item):
         status = 200 if get or label.endswith(":preview") else 201
         require(row["method"] == ("GET" if get else "POST") and row["status"] == status,
                 "unexpected request method/status")
+        require(re.fullmatch(r"[0-9a-f]{64}", row["request_sha256"]), "invalid request digest")
+        if get:
+            require(row["request_sha256"] == digest(None), "unexpected GET body")
         for key in ("wall_s", "cpu_s", "peak_rss_kib", "sql_calls", "sql_cursor_wall_s",
                     "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes"):
             require(type(row[key]) in (int, float) and math.isfinite(row[key]) and row[key] >= 0,
                     "invalid phase metric " + key)
-    for key in ("wall_s", "cpu_s", "peak_rss_kib", "check_wall_s"):
+    for key in ("wall_s", "cpu_s", "elapsed_wall_s", "elapsed_cpu_s",
+                "peak_rss_kib", "check_wall_s"):
         require(type(item[key]) in (int, float) and math.isfinite(item[key]) and item[key] >= 0,
                 "invalid total metric " + key)
+    by_label = {row["label"]: row for row in item["calls"]}
+    for label, row in by_label.items():
+        if label.endswith(":retry"):
+            require(row["request_sha256"] == by_label[label.replace(":retry", ":execute")]["request_sha256"],
+                    "retry request differs from original")
+    for key in ("wall_s", "cpu_s"):
+        require(math.isclose(item[key], sum(row[key] for row in item["calls"]), rel_tol=1e-9),
+                "total does not match phase metrics")
+        require(item["elapsed_" + key] >= item[key], "elapsed time below measured request total")
+    require(sum(row["sql_calls"] for row in item["calls"]) > 0 and
+            sum(row["fetch_text_blob_bytes"] for row in item["calls"]) > 0,
+            "missing observed SQL/fetch activity")
     for snapshot in (item["before"], item["after"]):
         for key in ("db_bytes", "wal_bytes", "revisions", "stored_payload_column_bytes"):
             require(type(snapshot[key]) is int and snapshot[key] >= 0, "invalid SQLite metric")
@@ -400,6 +427,15 @@ def comparable(a, b, *, cross_mode=False):
     for key in keys:
         if key not in a or key not in b or a[key] != b[key]:
             reasons.append("different/missing " + key)
+    # Compare actual HTTP bodies as well as labels. Preview fingerprints and
+    # expected Saved/draft IDs are deterministic for the supported A/B scenario.
+    # If a candidate legitimately changes a fingerprint protocol, reject rather
+    # than silently claiming that different requests are equivalent.
+    def requests(item):
+        return [(r["label"], r["request_sha256"]) for r in item["calls"]
+                if not (cross_mode and r["label"].endswith(":retry"))]
+    if requests(a) != requests(b):
+        reasons.append("different actual HTTP request bodies")
     for key in ("runner_sha256", "metrics_sha256", "python", "platform", "machine",
                 "cpu_count", "dependencies", "pythonhashseed", "new_run_storage"):
         if key not in a.get("metadata", {}) or key not in b.get("metadata", {}) or a["metadata"][key] != b["metadata"][key]:
@@ -408,7 +444,8 @@ def comparable(a, b, *, cross_mode=False):
 
 
 def totals(report):
-    return {**{k: report[k] for k in ("wall_s", "cpu_s", "peak_rss_kib", "check_wall_s")},
+    return {**{k: report[k] for k in ("wall_s", "cpu_s", "elapsed_wall_s", "elapsed_cpu_s",
+                                              "peak_rss_kib", "check_wall_s")},
             "http_calls": len(report["calls"]),
             **{k: sum(row[k] for row in report["calls"])
                for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes")},
@@ -440,44 +477,132 @@ def child_env():
     return env
 
 
+def trial_order(repetition):
+    # Each commit/mode gets the opposite early/late position in the next trial.
+    forward = [("A", "normal"), ("B", "normal"), ("B", "retry"), ("A", "retry")]
+    return forward if repetition % 2 == 0 else list(reversed(forward))
+
+
+def summarize_trials(trials):
+    """Aggregate only when every comparison and repeated result agrees."""
+    require(bool(trials), "No trials")
+    comparisons = []
+    for trial in trials:
+        pairs = {mode: compare(trial["A-" + mode], trial["B-" + mode])
+                 for mode in ("normal", "retry")}
+        for label in ("A", "B"):
+            pairs[label + "-retry-overhead"] = compare(
+                trial[label + "-normal"], trial[label + "-retry"], cross_mode=True)
+        comparisons.append(pairs)
+    repeat_checks = []
+    for i, trial in enumerate(trials[1:], start=2):
+        for name, original in trials[0].items():
+            current = trial[name]
+            result = compare(original, current)
+            if original["metadata"]["commit"] != current["metadata"]["commit"]:
+                result = {"verdict": "not_comparable", "reasons": ["commit changed across trials"]}
+            repeat_checks.append({"trial": i, "case": name, "result": result})
+    valid = (all(v["verdict"] == "equal" for trial in comparisons for v in trial.values())
+             and all(r["result"]["verdict"] == "equal" for r in repeat_checks))
+    result = {"verdict": "equal" if valid else "invalid_experiment",
+              "repetitions": len(trials), "trials": comparisons,
+              "repeat_checks": repeat_checks}
+    if not valid:
+        return result
+
+    def stats(values):
+        return {"median": median(values), "min": min(values), "max": max(values)}
+
+    result["aggregate"] = {}
+    for case in comparisons[0]:
+        rows = [trial[case] for trial in comparisons]
+        result["aggregate"][case] = {
+            group: {key: stats([row[group][key] for row in rows]) for key in rows[0][group]}
+            for group in ("a", "b", "delta_b_minus_a", "phase_delta_wall_s")
+        }
+        result["aggregate"][case]["deliberate_retry_wall_s"] = stats(
+            [row["deliberate_retry_wall_s"] for row in rows])
+    return result
+
+
 def run_ab(args):
     a, b = exact_commit(args.a), exact_commit(args.b)
+    require(1 <= args.repetitions <= 3, "Use 1-3 isolated repetitions")
+    require(1 <= args.worker_timeout <= 1800, "Worker timeout must be 1-1800 seconds")
     require(re.fullmatch(r"[0-9a-f]{64}", args.sha256) is not None, "Need exact fixture SHA-256")
     require(args.scenario != "w12-1822" or args.sha256 == W12_SHA, "Wrong W12 fixture")
     source, out = args.input.resolve(strict=True), args.out.resolve()
     require(not out.exists(), "Output directory must be fresh")
+    require(file_sha(source) == args.sha256, "Wrong fixture before experiment")
     out.mkdir(parents=True)
-    reports = {}
-    with tempfile.TemporaryDirectory(prefix="native-week-ab-") as temporary:
-        temp = Path(temporary)
-        # Alternating variant order reduces a single direction of order bias.
-        # Four distinct DBs and fresh interpreters, no candidate branch checkout.
-        for label, commit in (("A", a), ("B", b)):
-            tree = temp / label
-            git("worktree", "add", "--detach", str(tree), commit)
+    commits = {"A": a, "B": b}
+    manifest = {"schema": SCHEMA, "commits": commits, "scenario": args.scenario,
+                "input_sha256": args.sha256, "repetitions": args.repetitions,
+                "worker_timeout_s": args.worker_timeout, "cases": [],
+                "status": "failed"}
+    trials = []
+    try:
+        with tempfile.TemporaryDirectory(prefix="native-week-ab-") as temporary:
+            temp = Path(temporary)
+            trees = {}
             try:
-                modes = ("normal", "retry") if label == "A" else ("retry", "normal")
-                for mode in modes:
-                    name = f"{label}-{mode}"
-                    db = temp / (name + ".db")
-                    copy_fixture(source, db, args.sha256)
-                    dest = out / (name + ".json")
-                    subprocess.run([sys.executable, str(SCRIPT), "_worker", "--database", str(db),
-                                    "--commit", commit, "--scenario", args.scenario, "--mode", mode,
-                                    "--sha256", args.sha256, "--out", str(dest)],
-                                   cwd=tree, env=child_env(), check=True)
-                    reports[name] = json.loads(dest.read_text())
+                for label, commit in commits.items():
+                    tree = temp / label
+                    git("worktree", "add", "--detach", str(tree), commit)
+                    trees[label] = tree
+                for repetition in range(args.repetitions):
+                    reports = {}
+                    case_dir = out if args.repetitions == 1 else out / f"trial-{repetition + 1:02d}"
+                    case_dir.mkdir(exist_ok=args.repetitions == 1)
+                    for label, mode in trial_order(repetition):
+                        name = f"{label}-{mode}"
+                        db = temp / f"{repetition}-{name}.db"
+                        dest = case_dir / (name + ".json")
+                        case = {"trial": repetition + 1, "case": name,
+                                "report": str(dest.relative_to(out)), "status": "started"}
+                        manifest["cases"].append(case)
+                        try:
+                            copy_fixture(source, db, args.sha256)
+                            with (case_dir / (name + ".log")).open("x", encoding="utf-8") as log:
+                                proc = subprocess.run(
+                                    [sys.executable, str(SCRIPT), "_worker", "--database", str(db),
+                                     "--commit", commits[label], "--scenario", args.scenario,
+                                     "--mode", mode, "--sha256", args.sha256, "--out", str(dest)],
+                                    cwd=trees[label], env=child_env(), stdout=log,
+                                    stderr=subprocess.STDOUT, timeout=args.worker_timeout, check=False)
+                            case["returncode"] = proc.returncode
+                            require(proc.returncode == 0, f"{name}: worker failed ({proc.returncode})")
+                            reports[name] = json.loads(dest.read_text())
+                            validate_report(reports[name])
+                            require(reports[name]["metadata"]["commit"] == commits[label] and
+                                    reports[name]["mode"] == mode and
+                                    reports[name]["scenario"] == args.scenario and
+                                    reports[name]["input_sha256"] == args.sha256,
+                                    "Worker report does not match scheduled case")
+                            case["status"] = "ok"
+                        except BaseException as exc:
+                            case["status"] = "failed"
+                            case["error"] = type(exc).__name__ + ": " + str(exc)
+                            raise
+                        finally:
+                            # Fresh copy per case; retain only evidence/logs, not private DBs.
+                            for file in (db, sidecar(db, "-wal"), sidecar(db, "-shm")):
+                                file.unlink(missing_ok=True)
+                    trials.append(reports)
             finally:
-                git("worktree", "remove", "--force", str(tree))
-    require(file_sha(source) == args.sha256, "Original fixture changed")
-    summary = {mode: compare(reports["A-" + mode], reports["B-" + mode])
-               for mode in ("normal", "retry")}
-    for label in ("A", "B"):
-        summary[label + "-retry-overhead"] = compare(reports[label + "-normal"],
-                                                      reports[label + "-retry"], cross_mode=True)
-    write(out / "comparison.json", summary)
-    print(json.dumps(summary, indent=2))
-    return 0 if all(v["verdict"] == "equal" for v in summary.values()) else 2
+                for tree in reversed(list(trees.values())):
+                    git("worktree", "remove", "--force", str(tree))
+        require(file_sha(source) == args.sha256, "Original fixture changed")
+        summary = summarize_trials(trials)
+        write(out / "comparison.json", summary)
+        print(json.dumps(summary, indent=2))
+        manifest["status"] = summary["verdict"]
+        return 0 if summary["verdict"] == "equal" else 2
+    except BaseException as exc:
+        manifest["error"] = type(exc).__name__ + ": " + str(exc)
+        raise
+    finally:
+        write(out / "manifest.json", manifest)
 
 
 def main(argv=None):
@@ -491,6 +616,8 @@ def main(argv=None):
     ab.add_argument("--scenario", choices=PLANS, default="w6")
     ab.add_argument("--input", type=Path, required=True)
     ab.add_argument("--out", type=Path, required=True)
+    ab.add_argument("--repetitions", type=int, default=1, help="1-3 independent A/B trials")
+    ab.add_argument("--worker-timeout", type=int, default=600, help="Per-process seconds, 1-1800")
     comp = subs.add_parser("compare")
     comp.add_argument("a", type=Path)
     comp.add_argument("b", type=Path)

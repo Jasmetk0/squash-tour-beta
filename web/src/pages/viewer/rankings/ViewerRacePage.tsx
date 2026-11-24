@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerFinalsRace } from '../../../api/client'
 import type { ViewerFinalsRacePublication, ViewerFinalsRaceRow } from '../../../api/types'
@@ -69,7 +69,9 @@ const messages = {
   showing: ['Zobrazeno', 'Showing'],
   of: ['z', 'of'],
   participants: ['účastníků Finals', 'Finals participants'],
-  openRun: ['Otevřít Race v Runu', 'Open run-scoped Race']
+  openRun: ['Otevřít Race v Runu', 'Open run-scoped Race'],
+  missingSeason: ['Požadovaná publikace Race neexistuje v této uložené Viewer Branch. Vyber jinou sezonu.', 'The requested Race publication is not available in this saved Viewer Branch. Choose another season.'],
+  unknownSeason: ['Neplatná nebo nedostupná sezona', 'Invalid or unavailable season']
 } as const
 type Copy = Record<keyof typeof messages, string>
 function copyFor(language: Language): Copy {
@@ -170,15 +172,37 @@ function SelectedRacePublication({ publication, runId, t }: {
   )
 }
 
-function RaceForSource({ runId, branchId, t }: { runId: string; branchId: string; t: Copy }): JSX.Element {
-  const [season, setSeason] = useState<number | null>(null)
+const RACE_SEASON_QUERY = 'raceSeason'
+
+// The saved legacy Race reader indexes publications by the exact target season.
+// Malformed/non-canonical values must not select some other saved publication.
+function seasonFromUrl(value: string): number | null {
+  if (!/^(0|[1-9][0-9]*)$/.test(value)) return null
+  const result = Number(value)
+  return Number.isSafeInteger(result) ? result : null
+}
+
+function RaceForSource({ runId, branchId, t, ignoreUrlSeason }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlSeason: boolean
+}): JSX.Element {
+  const [searchParams, setSearchParams] = useSearchParams()
+  const seasonValues = ignoreUrlSeason ? [] : searchParams.getAll(RACE_SEASON_QUERY)
+  const rawSeason = seasonValues[0] ?? null
+  const ambiguousSeason = seasonValues.length > 1
+  function chooseSeason(value: number): void {
+    setSearchParams((previous) => {
+      const next = new URLSearchParams(previous)
+      next.set(RACE_SEASON_QUERY, String(value))
+      return next
+    })
+  }
   const query = useQuery({
     queryKey: ['viewer-canonical-finals-race', runId, branchId],
     queryFn: () => getViewerFinalsRace(runId),
     retry: false,
     refetchOnWindowFocus: false
   })
-  if (query.isPending) return <p className="status" role="status">{t.loading}</p>
+  if (query.isPending || query.isFetching) return <p className="status" role="status">{t.loading}</p>
   if (query.isError || !validViewerRaceHistory(query.data, runId, branchId)) return (
     <div role="alert">
       <p className="error">{query.isError ? t.error + ' ' + formatApiError(query.error) : t.invalid}</p>
@@ -186,14 +210,21 @@ function RaceForSource({ runId, branchId, t }: { runId: string; branchId: string
     </div>
   )
   const history = raceSeasonsNewestFirst(query.data)
-  if (!history.length) return <p className="empty-state">{t.empty}</p>
-  const chosen = history.find(p => p.target_season_index === season) ?? history[0]
+  if (!history.length) return rawSeason === null
+    ? <p className="empty-state">{t.empty}</p>
+    : <p role="alert">{t.missingSeason}</p>
+  const requested = rawSeason === null ? null : seasonFromUrl(rawSeason)
+  const chosen = ambiguousSeason ? undefined : rawSeason === null ? history[0]
+    : requested === null ? undefined : history.find(p => p.target_season_index === requested)
+  // A duplicate season parameter must not masquerade as a valid selection.
+  const selectValue = chosen ? String(chosen.target_season_index) : ambiguousSeason ? '' : rawSeason ?? ''
   return (
     <>
       <h3>{t.history}</h3>
       <label htmlFor="race-publication-season">{t.season}</label>
-      <select id="race-publication-season" value={chosen.target_season_index}
-        onChange={e => setSeason(Number(e.target.value))}>
+      <select id="race-publication-season" value={selectValue}
+        onChange={e => chooseSeason(Number(e.target.value))}>
+        {!chosen ? <option value={selectValue} disabled>{t.unknownSeason}{ambiguousSeason ? '' : ': ' + (rawSeason ?? '')}</option> : null}
         {history.map(p => <option key={p.target_season_index} value={p.target_season_index}>
           {raceSeasonLabel(p.target_season_index)}
         </option>)}
@@ -201,14 +232,15 @@ function RaceForSource({ runId, branchId, t }: { runId: string; branchId: string
       <ul aria-label={t.history} className="viewer-home-list">
         {history.map(p => (
           <li key={p.target_season_index}>
-            <button type="button" aria-current={p.target_season_index === chosen.target_season_index ? 'true' : undefined}
-              onClick={() => setSeason(p.target_season_index)}>{raceSeasonLabel(p.target_season_index)}</button>
+            <button type="button" aria-current={p.target_season_index === chosen?.target_season_index ? 'true' : undefined}
+              onClick={() => chooseSeason(p.target_season_index)}>{raceSeasonLabel(p.target_season_index)}</button>
             {' · '}{t.cutoff} W{p.cutoff_week} · {p.rows.length} {t.players.toLocaleLowerCase()} ·
             {' '}{p.selection_published ? p.rows.filter(row => row.finals_selected).length + ' ' + t.participants : t.selectionPending}
           </li>
         ))}
       </ul>
-      <SelectedRacePublication key={chosen.target_season_index} publication={chosen} runId={runId} t={t} />
+      {chosen ? <SelectedRacePublication key={chosen.target_season_index} publication={chosen} runId={runId} t={t} />
+        : <p role="alert">{t.missingSeason}</p>}
     </>
   )
 }
@@ -223,6 +255,25 @@ function RaceContent({ runId, branchId, validScope, pending, error, retryContext
 }): JSX.Element {
   const { language } = useLanguage()
   const t = copyFor(language)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sourceKey = validScope && branchId && !pending && !error ? JSON.stringify([runId, branchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+  const runLinkParams = new URLSearchParams(searchParams)
+  if (sourceChanged) runLinkParams.delete(RACE_SEASON_QUERY)
+
+  // Keep copied direct links on first mount; never carry a season picked in
+  // another Run/Branch into the newly selected source during in-app switching.
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged && searchParams.has(RACE_SEASON_QUERY)) {
+      const next = new URLSearchParams(searchParams)
+      next.delete(RACE_SEASON_QUERY)
+      setSearchParams(next, { replace: true })
+    }
+    previousSource.current = sourceKey
+  }, [sourceKey, sourceChanged, searchParams, setSearchParams])
+
   return (
     <section className="panel viewer-shell-page">
       <div className="page-intro">
@@ -234,8 +285,9 @@ function RaceContent({ runId, branchId, validScope, pending, error, retryContext
         error ? <div role="alert"><p className="error">{t.contextError} {formatApiError(error)}</p><button onClick={retryContext}>{t.retry}</button></div> :
         !validScope || !branchId ? <div role="alert"><p className="error">{t.contextInvalid}</p><button onClick={retryContext}>{t.retry}</button></div> :
         <>
-          {showRunLink ? <p><Link to={viewerRacePath(runId)}>{t.openRun}</Link></p> : null}
-          <RaceForSource key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId} t={t} />
+          {showRunLink ? <p><Link to={{ pathname: viewerRacePath(runId), search: runLinkParams.toString() }}>{t.openRun}</Link></p> : null}
+          <RaceForSource key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId} t={t}
+            ignoreUrlSeason={sourceChanged} />
         </>}
     </section>
   )

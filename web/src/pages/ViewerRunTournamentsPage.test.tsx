@@ -241,7 +241,7 @@ function mockCanonicalTournamentData(): void {
     completed_week: 3,
     champion_player_id: 'P-001',
     finalist_player_id: 'P-002',
-    qualification_winner_ids: ['P-003'],
+    qualification_winner_ids: [],
     players: [
       {
         player_id: 'P-001', draw_type: 'main', seed_number: 1, qualifier: false,
@@ -453,6 +453,66 @@ describe('ViewerRunTournamentDetailPage canonical authorities', () => {
     expect(within(technicalSection as HTMLElement).getByText(/Canonical Open/i)).toBeVisible()
 
     expectNoForbiddenViewerActions()
+  })
+
+  it.each([
+    { champion_player_id: 'P-002', finalist_player_id: 'P-001' },
+    { completed_season_index: 26 },
+    { completed_week: 2 }
+  ])('withholds a result inconsistent with the saved tournament: %j', async patch => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, ...patch })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result conflicts with the Saved tournament history or calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament player results' })).not.toBeInTheDocument()
+    expect(screen.getByText('Canonical Open')).toBeInTheDocument()
+  })
+
+  it.each([
+    { players: null },
+    { matches: [null] },
+    { qualification_winner_ids: ['ABSENT'] },
+    { completed_week: 62 }
+  ])('withholds malformed public result data without crashing: %j', async patch => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, ...patch })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result contains invalid public result data.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament match results' })).not.toBeInTheDocument()
+    expect(screen.getByText('Canonical Open')).toBeInTheDocument()
+  })
+
+  it('does not show a result ahead of its history publication', async () => {
+    const history = await api.getViewerTournamentHistory()
+    api.getViewerTournamentHistory.mockResolvedValue({ ...history, published_result_count: 0,
+      tournaments: history.tournaments.map((event: { event_id: string }) => ({
+        ...event, result_published: false, champion_player_id: null, finalist_player_id: null
+      })) })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result conflicts with the Saved tournament history or calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament player results' })).not.toBeInTheDocument()
+  })
+
+  it('distinguishes a missing published result from an unpublished event', async () => {
+    api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('Missing', 404))
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Saved history reports a published result, but its detail is unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('Canonical Tournament Result is not available for this tournament yet.')).not.toBeInTheDocument()
+  })
+
+  it('accepts a later completion and actual group/BYE result evidence', async () => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, completed_week: 4,
+      players: result.players.map((player: { player_id: string }, index: number) => ({
+        ...player, draw_type: 'group', group_index: 1, group_position: index + 1, reached_stage: 'group_position_' + (index + 1)
+      })),
+      matches: [{ ...result.matches[0], draw_type: 'group' }, {
+        ...result.matches[0], match_id: 'bye', loser_player_id: null, scoreline: 'BYE'
+      }]
+    })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('group position 1')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('BYE')
   })
 
   it('fails closed when event is absent from canonical calendar and history', async () => {

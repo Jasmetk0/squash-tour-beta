@@ -4,6 +4,7 @@ import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
 import { ViewerRunTournamentArchive } from './viewer/tour/ViewerRunTournamentArchive'
+import { validTournamentResultData } from './viewer/tour/viewerTournamentHistoryBrowsing'
 
 import { getViewerFinalsRace, getViewerRunCalendar, getViewerTournamentDraw, getViewerTournamentEntryField, getViewerTournamentHistory, getViewerTournamentResult, getViewerTournamentWildCards, listViewerOfficialRankingHistory } from '../api/client'
 import {
@@ -151,8 +152,19 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
   const seasonStart = seasonMatch ? Number(seasonMatch[1]) : null
   const seasonIndex = seasonStart !== null && seasonStart >= 2000 ? seasonStart - 2000 : null
   const canonicalEventAvailable = Boolean(calendarEvent || historyEvent)
-  const resultAvailable = canonicalEventAvailable && Boolean(resultQuery.data)
-  const publicationLabel = resultAvailable || historyEvent?.result_published === true ? 'Published' :
+  const candidateResult = resultQuery.data
+  const resultShapeInvalid = candidateResult !== undefined && !validTournamentResultData(candidateResult)
+  const resultConflict = Boolean(candidateResult && !resultShapeInvalid && canonicalEventAvailable && (
+    (historyEvent && (historyEvent.result_published !== true ||
+      candidateResult.champion_player_id !== historyEvent.champion_player_id ||
+      candidateResult.finalist_player_id !== historyEvent.finalist_player_id)) ||
+    (seasonIndex !== null && (candidateResult.completed_season_index < seasonIndex ||
+      (candidateResult.completed_season_index === seasonIndex && week !== null && candidateResult.completed_week < week)))
+  ))
+  const missingPublishedResult = historyEvent?.result_published === true && isApiNotFound(resultQuery.error)
+  const verifiedResult = canonicalEventAvailable && !resultShapeInvalid && !resultConflict ? candidateResult : undefined
+  const publicationLabel = resultQuery.mismatch || resultShapeInvalid || resultConflict || missingPublishedResult ? '—' :
+    verifiedResult || historyEvent?.result_published === true ? 'Published' :
     canonicalEventAvailable && (historyEvent?.result_published === false || isApiNotFound(resultQuery.error)) ? 'Not published' : '—'
 
   const rankingPublications = useMemo(
@@ -418,32 +430,35 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           <SectionCard title="Canonical Tournament Result">
             {resultQuery.mismatch ? <p role="alert">Tournament Result source does not match this tournament or Viewer Branch.</p> : null}
+            {resultShapeInvalid ? <p role="alert">Tournament Result contains invalid public result data.</p> : null}
+            {resultConflict ? <p role="alert">Tournament Result conflicts with the Saved tournament history or calendar.</p> : null}
+            {missingPublishedResult ? <p role="alert">Saved history reports a published result, but its detail is unavailable.</p> : null}
             {!canonicalEventAvailable && resultQuery.data ? <p className="status">Tournament Result withheld until the event context is verified.</p> : null}
             {resultQuery.isLoading ? <p className="status">Loading canonical Tournament Result…</p> : null}
             {resultQuery.error && !isApiNotFound(resultQuery.error) ? (
               <p className="error">Failed to load canonical Tournament Result: {formatApiError(resultQuery.error)}</p>
             ) : null}
-            {isApiNotFound(resultQuery.error) ? (
+            {isApiNotFound(resultQuery.error) && !missingPublishedResult ? (
               <EmptyState message="Canonical Tournament Result is not available for this tournament yet." />
             ) : null}
-            {canonicalEventAvailable && resultQuery.data ? (
+            {verifiedResult ? (
               <>
                 <MetadataList
                   items={[
-                    { label: 'Viewer Branch', value: resultQuery.data.viewer_branch_id },
-                    { label: 'Completed season', value: resultQuery.data.completed_season_index },
-                    { label: 'Completed week', value: resultQuery.data.completed_week },
-                    { label: 'Champion', value: resultQuery.data.champion_player_id },
-                    { label: 'Finalist', value: resultQuery.data.finalist_player_id },
-                    { label: 'Qualification winners', value: resultQuery.data.qualification_winner_ids.length ? resultQuery.data.qualification_winner_ids.join(', ') : 'None' },
-                    { label: 'Players', value: resultQuery.data.players.length },
-                    { label: 'Matches', value: resultQuery.data.matches.length }
+                    { label: 'Viewer Branch', value: verifiedResult.viewer_branch_id },
+                    { label: 'Completed season', value: verifiedResult.completed_season_index },
+                    { label: 'Completed week', value: verifiedResult.completed_week },
+                    { label: 'Champion', value: verifiedResult.champion_player_id },
+                    { label: 'Finalist', value: verifiedResult.finalist_player_id },
+                    { label: 'Qualification winners', value: verifiedResult.qualification_winner_ids.length ? verifiedResult.qualification_winner_ids.join(', ') : 'None' },
+                    { label: 'Players', value: verifiedResult.players.length },
+                    { label: 'Matches', value: verifiedResult.matches.length }
                   ]}
                 />
                 <div>
                   <strong>Player results</strong>
                   <ul className="item-list" aria-label="Canonical Tournament player results">
-                    {resultQuery.data.players.map((player) => (
+                    {verifiedResult.players.map((player) => (
                       <li key={player.player_id}>
                         {player.player_id} · {player.reached_stage.replace(/_/g, ' ')} · {player.wins}W–{player.losses}L
                         {player.seed_number == null ? '' : ` · seed ${player.seed_number}`}
@@ -456,7 +471,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                 <div>
                   <strong>Match results</strong>
                   <ul className="item-list" aria-label="Canonical Tournament match results">
-                    {resultQuery.data.matches.map((match) => (
+                    {verifiedResult.matches.map((match) => (
                       <li key={match.match_id}>
                         {match.match_id} · {match.draw_type} R{match.round_number} · {match.winner_player_id}
                         {match.loser_player_id ? ` def. ${match.loser_player_id}` : ''} · {match.scoreline}

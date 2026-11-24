@@ -225,7 +225,8 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
   const current = Math.min(page, pages || 1)
   const offset = (current - 1) * EVENTS_PAGE_SIZE
   const visible = filtered.slice(offset, offset + EVENTS_PAGE_SIZE)
-  const requestedEventId = urlParams.get('event')
+  const eventParams = urlParams.getAll('event')
+  const requestedEventId = eventParams.length === 1 ? eventParams[0] : null
   const selected = published.find(item => item.event.event_id === requestedEventId) ?? null
   function selectEvent(eventId: string | null): void {
     setUrlParams(previous => {
@@ -285,7 +286,7 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
             onClick={() => setPage(n => Math.min(pages, n + 1))}>{t('next')}</button>
         </nav> : null}
       </>}
-    {requestedEventId && !selected ? <div role="alert">
+    {eventParams.length > 0 && !selected ? <div role="alert">
       <p>{t('wrongEvent')}</p>
       <button type="button" onClick={() => selectEvent(null)}>{t('clearSelection')}</button>
     </div> : null}

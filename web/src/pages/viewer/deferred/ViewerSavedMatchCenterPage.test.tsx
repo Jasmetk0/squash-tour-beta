@@ -306,4 +306,32 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(screen.getByRole('link', { name: 'Tournament detail' })).toBeInTheDocument()
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
   })
+
+  it.each(['event=EVENT%2F1&event=EVENT%2F2', 'event=EVENT%2F1&event=EVENT%2F1', 'event='])(
+    'rejects ambiguous or empty event selection without a result GET: %s', async search => {
+      const user = userEvent.setup()
+      mount('/viewer/tour/matches?' + search + '&keep=one&keep=two')
+      const alert = await screen.findByRole('alert')
+      expect(alert).toHaveTextContent('nemá výsledek publikovaný')
+      expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+      expect(screen.queryByRole('table', { name: 'Publikované zápasy vybraného turnaje' })).not.toBeInTheDocument()
+      await user.click(within(alert).getByRole('button', { name: 'Skrýt zápasy' }))
+      const params = new URLSearchParams(screen.getByTestId('search-params').textContent ?? '')
+      expect(params.getAll('keep')).toEqual(['one', 'two'])
+      expect(params.has('event')).toBe(false)
+      await user.click(screen.getByRole('button', { name: 'Zobrazit zápasy' }))
+      expect(await screen.findByRole('table', { name: 'Publikované zápasy vybraného turnaje' })).toBeInTheDocument()
+      expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+    }
+  )
+
+  it('refuses a BYE with a named loser instead of displaying a false match', async () => {
+    api.getViewerTournamentResult.mockResolvedValue(result({
+      matches: [{ ...result().matches[0], scoreline: 'BYE' }],
+    }))
+    mount('/viewer/tour/matches?event=EVENT%2F1')
+    expect(await screen.findByRole('alert')).toHaveTextContent('nepovolené údaje')
+    expect(screen.queryByRole('table', { name: 'Publikované zápasy vybraného turnaje' })).not.toBeInTheDocument()
+  })
+
 })

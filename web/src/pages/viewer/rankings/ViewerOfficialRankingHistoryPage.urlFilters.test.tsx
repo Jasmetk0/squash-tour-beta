@@ -196,6 +196,21 @@ describe('Viewer Official Ranking URL filters (mocked GET, not HTTP/SQLite)', ()
     expect([...query().keys()]).toEqual(['keep', 'keep'])
   })
 
+  it.each([null, false, 0, ''])('reports an invalid completed history response instead of loading forever: %j', async invalid => {
+    api.listViewerOfficialRankingHistory.mockReset()
+      .mockResolvedValueOnce(invalid)
+      .mockResolvedValueOnce(history())
+    const user = userEvent.setup()
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('obsahuje neplatné či duplicitní publikace')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('Načítání historie Official Rankingů…')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Zkusit znovu' }))
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledTimes(2)
+    expectNoForbiddenViewerActions()
+  })
+
   it('hides the previously loaded publication list until a refetch completes', async () => {
     const view = mount()
     expect(await screen.findByRole('table')).toBeInTheDocument()

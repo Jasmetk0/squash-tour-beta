@@ -54,6 +54,20 @@ describe('verified public Next Gen projection', () => {
     expect(verifiedVisibleProspects({ ...good(), week: { season_index: 4, week: 62 } }, runId, branchId, 50, 0)).toBeNull()
   })
 
+  it('bounds both current and visibility clocks to the canonical legacy 50-season model', () => {
+    const valid = good()
+    valid.week = { season_index: 49, week: 61 }
+    valid.prospects[0].visible_since_week = { season_index: 49, week: 61 }
+    expect(verifiedVisibleProspects(valid, runId, branchId, 50, 0)).toEqual(valid)
+    const invalidClock = { ...valid, week: { season_index: 50, week: 1 } }
+    expect(verifiedVisibleProspects(invalidClock, runId, branchId, 50, 0)).toBeNull()
+    const invalidVisibility = { ...invalidClock, prospects: [{
+      ...valid.prospects[0], visible_since_week: { season_index: 50, week: 1 },
+    }] }
+    expect(verifiedVisibleProspects(invalidVisibility, runId, branchId, 50, 0)).toBeNull()
+    expect(verifiedVisibleProspects({ ...valid, week: { season_index: 49, week: 62 } }, runId, branchId, 50, 0)).toBeNull()
+  })
+
   it('rejects incorrect counts and truncated pages while accepting exact empty last page', () => {
     expect(verifiedVisibleProspects({ ...good(), total: 2 }, runId, branchId, 50, 0)).toBeNull()
     expect(verifiedVisibleProspects({ ...good(), limit: 100 }, runId, branchId, 50, 0)).toBeNull()

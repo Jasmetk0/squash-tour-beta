@@ -775,6 +775,7 @@ describe('ViewerRunCountriesPage', () => {
 
 describe('ViewerRunCountryDetailPage canonical current profile', () => {
   beforeEach(() => {
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.resetAllMocks()
     api.getViewerCountries.mockResolvedValue({
       schema_version: 'viewer_countries.v1',
@@ -788,7 +789,7 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
         player_count: 2,
         active_player_count: 1,
         retired_player_count: 1,
-        average_current_ovr: 178.4,
+        average_current_ovr: 191,
         top_player_id: 'EGY-0001',
         top_player_name: 'Ali A',
         top_player_current_ovr: 191
@@ -813,10 +814,10 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
           tour_entry_season_index: 0,
           tour_entry_week: 1,
           current_ovr: 191,
-          potential_ovr: 195,
-          current_form: 170,
-          match_sharpness: 92,
-          long_term_fatigue: 3,
+          potential_ovr: null,
+          current_form: null,
+          match_sharpness: null,
+          long_term_fatigue: null,
           identity_source: 'initial_world'
         },
         {
@@ -851,7 +852,8 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
     expect(await screen.findByText('branch-viewer')).toBeInTheDocument()
     expect(screen.getByText('S2 W7')).toBeInTheDocument()
     expect(screen.getAllByText('EGY').length).toBeGreaterThan(0)
-    expect(screen.getByText('178.40')).toBeInTheDocument()
+    expect(screen.getByText('191.00')).toBeInTheDocument()
+    expect(screen.queryByRole('columnheader', { name: 'Potential' })).not.toBeInTheDocument()
     expect(screen.getAllByRole('link', { name: /Ali A/ })[0]).toHaveAttribute(
       'href',
       '/viewer/runs/viewer-run-2c/players/EGY-0001/career'
@@ -868,6 +870,53 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
 
     expect(api.getRunNationDetail).not.toHaveBeenCalled()
     expectNoForbiddenViewerActions()
+  })
+
+  it.each([
+    { viewer_branch_id: 'foreign' }, { season_index: 3 }, { week: 8 }
+  ])('rejects mismatched public source clocks: %j', async patch => {
+    const countries = await api.getViewerCountries()
+    api.getViewerCountries.mockResolvedValue({ ...countries, ...patch })
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+    expect(await screen.findByRole('alert')).toHaveTextContent('sources do not match')
+    expect(screen.queryByRole('heading', { name: 'Overview' })).not.toBeInTheDocument()
+    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
+  })
+
+  it.each([
+    { player_count: 3, active_player_count: 2 }, { average_current_ovr: 190 },
+    { top_player_id: 'FOREIGN' }, { top_player_name: 'Wrong name' }, { top_player_current_ovr: 190 }
+  ])('rejects inconsistent country aggregates: %j', async patch => {
+    const countries = await api.getViewerCountries()
+    api.getViewerCountries.mockResolvedValue({ ...countries, countries: [{ ...countries.countries[0], ...patch }] })
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+    expect(await screen.findByRole('alert')).toHaveTextContent('sources do not match')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it('retries both sources and restores the profile after a consistent response', async () => {
+    const countries = await api.getViewerCountries()
+    api.getViewerCountries.mockResolvedValue({ ...countries, week: 8 })
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+    expect(await screen.findByRole('alert')).toHaveTextContent('sources do not match')
+    api.getViewerCountries.mockResolvedValue(countries)
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Retry read (GET)' }))
+    expect(await screen.findByRole('heading', { name: 'Overview' })).toBeInTheDocument()
+  })
+
+  it('bounds the country roster to 50 rows and preserves unrelated parameters', async () => {
+    const roster = await api.getViewerPlayers()
+    const countries = await api.getViewerCountries()
+    const players = Array.from({ length: 101 }, (_, i) => ({ ...roster.players[0], player_id: 'P-' + String(i).padStart(3, '0'), name: 'Player ' + i }))
+    api.getViewerPlayers.mockResolvedValue({ ...roster, players, player_count: 101, active_player_count: 101, retired_player_count: 0 })
+    api.getViewerCountries.mockResolvedValue({ ...countries, countries: [{ ...countries.countries[0], player_count: 101, active_player_count: 101, retired_player_count: 0, top_player_id: 'P-000', top_player_name: 'Player 0' }] })
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries/EGY?vcPlayerPage=2&keep=yes', <ViewerRunCountryDetailPage />, '/viewer/runs/:runId/countries/:countryCode')
+    const table = await screen.findByRole('table')
+    expect(within(table).getAllByRole('row')).toHaveLength(51)
+    expect(within(table).getByRole('link', { name: 'Player 50' })).toBeInTheDocument()
+    await userEvent.setup().click(screen.getByRole('button', { name: 'Last' }))
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('vcPlayerPage=3&keep=yes')
   })
 
   it('fails closed when the canonical country code is absent', async () => {

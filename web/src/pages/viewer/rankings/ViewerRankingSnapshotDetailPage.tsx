@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useParams } from 'react-router-dom'
+import { Link, useParams, useSearchParams } from 'react-router-dom'
 
 import { getViewerOfficialRankingHistoryDetail } from '../../../api/client'
 import { EmptyState, RunScopedHeader, SectionCard } from '../../../components/RunScopedUi'
@@ -12,6 +12,7 @@ import {
   DETAIL_PAGE_SIZE, detailPages, legacySeasonLabel, parseDetailPage,
   parseLegacyRankingOrdinal, rankingRowsMatchingId, validViewerRankingDetail
 } from './rankingSnapshotDetailBrowsing'
+import { readRankingDetailDeepLink, writeRankingDetailDeepLink, clearRankingDetailDeepLink, RANK_DETAIL_SEARCH_LIMIT } from './rankingDetailDeepLinks'
 
 // Each paired message is local to this page; IDs, policy and fingerprints
 // always come unchanged from the historical publication.
@@ -50,7 +51,9 @@ const messages = {
   last: ['Poslední stránka', 'Last page'],
   jumpLabel: ['Přejít na stránku', 'Jump to page'],
   go: ['Přejít', 'Go'],
-  badJump: ['Zadej celé číslo existující stránky.', 'Enter an existing page number as a positive integer.']
+  badJump: ['Zadej celé číslo existující stránky.', 'Enter an existing page number as a positive integer.'],
+  badLink: ['Odkaz na detail žebříčku neodpovídá této publikaci nebo má neplatný filtr. Není zobrazen žádný řádek.', 'This ranking detail link does not match the publication or has an invalid filter. No rows are displayed.'],
+  resetLink: ['Obnovit výchozí pohled', 'Reset to default view']
 } as const
 
 type Copy = Record<keyof typeof messages, string>
@@ -67,9 +70,9 @@ function HistoricalRankingSource({
   ordinal: number
   copy: Copy
 }): JSX.Element {
-  // The keyed source boundary resets local player search and page synchronously.
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  // Source identity is supplied by the parent key. Filter/page are URL-owned:
+  // Back/Forward and bookmarked links restore the same historical publication.
+  const [params, setParams] = useSearchParams()
   const [jump, setJump] = useState('')
   const [jumpInvalid, setJumpInvalid] = useState(false)
 
@@ -81,16 +84,27 @@ function HistoricalRankingSource({
   })
   const valid = query.data && validViewerRankingDetail(query.data, runId, branchId, ordinal)
   const detail = valid ? query.data : null
+  const link = readRankingDetailDeepLink(params, runId, branchId, ordinal, detail?.snapshot_fingerprint ?? null)
+  const search = link.kind === 'valid' ? link.player : ''
   const matching = rankingRowsMatchingId(detail?.rows ?? [], search)
   const pageCount = detailPages(matching.length)
-  const actualPage = pageCount > 0 ? Math.min(page, pageCount) : 0
-  const start = actualPage ? (actualPage - 1) * DETAIL_PAGE_SIZE : 0
-  const visible = matching.slice(start, start + DETAIL_PAGE_SIZE)
+  // A legitimate zero-match search has page 1, but does not display invented rows.
+  const actualPage = link.kind === 'valid' && (link.page === 1 || link.page <= pageCount)
+    ? link.page : null
+  const badLink = link.kind === 'invalid' || actualPage === null
+  const start = actualPage !== null ? (actualPage - 1) * DETAIL_PAGE_SIZE : 0
+  const visible = actualPage === null ? [] : matching.slice(start, start + DETAIL_PAGE_SIZE)
 
-  function changePage(next: number): void {
-    setPage(next)
+  function changeView(nextSearch: string, nextPage: number, replace = false): void {
+    if (!detail) return
+    setParams(previous => writeRankingDetailDeepLink(previous,
+      runId, branchId, ordinal, detail.snapshot_fingerprint, nextSearch, nextPage),
+    { replace })
     setJump('')
     setJumpInvalid(false)
+  }
+  function changePage(next: number): void {
+    changeView(search, next)
   }
   function submitPage(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
@@ -98,13 +112,19 @@ function HistoricalRankingSource({
     if (target === null) setJumpInvalid(true)
     else changePage(target)
   }
-  if (query.isPending) return <p className="status" role="status">{t.loading}</p>
+  if (query.isPending || query.isFetching) return <p className="status" role="status">{t.loading}</p>
   if (query.isError || !detail) return (
     <div role="alert">
       <p className="error">{query.isError ? t.failed + ' ' + formatApiError(query.error) : t.corrupt}</p>
       <button type="button" onClick={() => void query.refetch()}>{t.retry}</button>
     </div>
   )
+  if (badLink) return <div role="alert">
+    <p className="error">{t.badLink}</p>
+    <button type="button" onClick={() => setParams(previous => clearRankingDetailDeepLink(previous))}>
+      {t.resetLink}
+    </button>
+  </div>
 
   return (
     <SectionCard title={t.season + ' ' + legacySeasonLabel(detail.season_index) + ' · ' + t.week + ' ' + detail.week}>
@@ -122,13 +142,11 @@ function HistoricalRankingSource({
             id="official-detail-player-search"
             type="search"
             value={search}
-            onChange={event => {
-              setSearch(event.target.value)
-              changePage(1)
-            }}
+            maxLength={RANK_DETAIL_SEARCH_LIMIT}
+            onChange={event => changeView(event.target.value.slice(0, RANK_DETAIL_SEARCH_LIMIT), 1, params.has('rankDetailPlayer'))}
           />
           <p>{t.hint}</p>
-          <button type="button" onClick={() => { setSearch(''); changePage(1) }}>{t.clear}</button>
+          <button type="button" onClick={() => changeView('', 1)}>{t.clear}</button>
           {matching.length === 0 ? <EmptyState message={t.noMatches} /> : (
             <table aria-label={t.table}>
               <thead><tr><th scope="col">{t.rank}</th><th scope="col">{t.player}</th><th scope="col">{t.points}</th></tr></thead>

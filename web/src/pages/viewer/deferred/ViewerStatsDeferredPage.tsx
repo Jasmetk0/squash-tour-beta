@@ -1,4 +1,7 @@
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
+import { ViewerPublishedTitleLeadersPage } from './ViewerPublishedTitleLeadersPage'
+import { ViewerPublishedTournamentStatsPage } from './ViewerPublishedTournamentStatsPage'
+import { ViewerSavedCountryStatsPage } from './ViewerSavedCountryStatsPage'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { commonDeferredSourceMetadataItems } from './ViewerDeferredSourceMetadataRender'
@@ -10,9 +13,18 @@ import {
 } from './viewerDeferredConfigs'
 import { useViewerDeferredSourceQueries } from './useViewerDeferredSourceQueries'
 
-export function ViewerStatsDeferredPage({
-  kind,
-}: {
+export function ViewerStatsDeferredPage({ kind }: {
+  kind: ViewerStatsDeferredKind
+}): JSX.Element {
+  if (kind === 'title-leaders') return <ViewerPublishedTitleLeadersPage />
+  if (kind === 'tournament-stats') return <ViewerPublishedTournamentStatsPage />
+  if (kind === 'country-stats') return <ViewerSavedCountryStatsPage />
+  return <ViewerOtherStatsDeferredPage kind={kind} />
+}
+
+// Other deferred stats remain conservative until authoritative public models
+// support their metrics. No changes to the shared router or Admin.
+function ViewerOtherStatsDeferredPage({ kind }: {
   kind: ViewerStatsDeferredKind
 }): JSX.Element {
   const productRunId = useActiveViewerProductRunId()

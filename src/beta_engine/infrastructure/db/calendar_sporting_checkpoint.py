@@ -1,11 +1,23 @@
 """Atomic SQLite + Saved Revision ownership for native population sporting state."""
+from __future__ import annotations
+
+import hashlib
 import json
+from dataclasses import dataclass
+from typing import TYPE_CHECKING
+
+from sqlalchemy import select
+from sqlalchemy.orm import Session
 
 from beta_engine.domain.players.calendar_sporting_checkpoint import (
     CalendarSportingCheckpoint,
     build_calendar_sporting_checkpoint,
 )
 from beta_engine.infrastructure.db.models import CalendarPlayerSportingCheckpointModel
+
+if TYPE_CHECKING:
+    from beta_engine.domain.players.calendar_native_competition import CalendarNativeCompetitionCheckpoint
+    from beta_engine.domain.players.calendar_native_sporting_checkpoint import CalendarNativeSportingCheckpoint
 
 COMPONENT_KEY = 'calendar_player_sporting_checkpoint'
 _MAX_GLOBAL_PART_BYTES = 16 * 1024 * 1024
@@ -152,12 +164,65 @@ def load_checkpoint(session, *, run_id, branch_id, _verified_source=None, _repos
             # values; a known decode result is bound to every actual raw byte,
             # including Run/Branch/component scope. Never trust the hash column.
             return _verified_source
+    return _decode_checkpoint_row(row.payload_json, row.fingerprint,
+        run_id=run_id, branch_id=branch_id, repository=_repository)
+
+
+def _decode_checkpoint_row(raw, row_fingerprint, *, run_id, branch_id, repository):
     from beta_engine.infrastructure.db.native_fork_source_projection import decoded_live_calendar_component
-    state, fingerprint = decoded_live_calendar_component(_repository, run_id=run_id, branch_id=branch_id,
-        kind=COMPONENT_KEY, raw=row.payload_json, parse=parse_checkpoint_json, _with_fingerprint=True)
-    if (state.run_id, state.branch_id, fingerprint) != (run_id, branch_id, row.fingerprint):
+
+    state, fingerprint = decoded_live_calendar_component(repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=raw, parse=parse_checkpoint_json, _with_fingerprint=True)
+    if (state.run_id, state.branch_id, fingerprint) != (run_id, branch_id, row_fingerprint):
         raise ValueError('Calendar sporting checkpoint SQLite identity/hash mismatch')
     return state
+
+
+@dataclass(frozen=True, slots=True)
+class _SaveCheckpointRead:
+    transaction: object
+    state: CalendarSportingCheckpoint | CalendarNativeSportingCheckpoint | CalendarNativeCompetitionCheckpoint
+    fingerprint: str
+    payload_digest: bytes
+
+
+def _read_checkpoint_columns(session: Session, *, run_id, branch_id):
+    # Read the actual row even if the ORM identity map has an older value.
+    model = CalendarPlayerSportingCheckpointModel
+    return session.execute(
+        select(model.payload_json, model.fingerprint)
+        .where(model.run_id == run_id, model.branch_id == branch_id)
+    ).one_or_none()
+
+
+def read_checkpoint_for_save(session: Session, *, run_id, branch_id, repository):
+    """Capture one strictly validated read for use within this Save transaction."""
+    row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
+    if row is None:
+        return None
+    raw, fingerprint = row
+    state = _decode_checkpoint_row(raw, fingerprint,
+        run_id=run_id, branch_id=branch_id, repository=repository)
+    return _SaveCheckpointRead(session.get_transaction(), state, fingerprint,
+                               hashlib.sha256(raw.encode('utf-8')).digest())
+
+
+def _checkpoint_for_capture(session, *, run_id, branch_id, repository, previous_read):
+    if previous_read is None:
+        return load_checkpoint(session, run_id=run_id, branch_id=branch_id, _repository=repository)
+    row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
+    if row is None:
+        return None
+    raw, fingerprint = row
+    state = previous_read.state
+    # Bind the private decode to the complete current SQLite row. Even a
+    # rehashed or reordered row takes the normal strict decode on a byte change.
+    if (session.get_transaction() is previous_read.transaction
+        and (state.run_id, state.branch_id, fingerprint) == (run_id, branch_id, previous_read.fingerprint)
+        and hashlib.sha256(raw.encode('utf-8')).digest() == previous_read.payload_digest):
+        return state
+    return _decode_checkpoint_row(raw, fingerprint,
+        run_id=run_id, branch_id=branch_id, repository=repository)
 
 
 def put_checkpoint(session, state):
@@ -385,20 +450,38 @@ def saved_checkpoint(payload, evidence, *, run_id, branch_id, _prefix_proofs=Non
 
 def capture_checkpoint(session, payload, evidence, *, run_id, branch_id,
                        _defer_full_verification: bool = False, _repository=None,
-                       _verified_source=None):
+                       _previous_read=None, _signed_parent_component=None):
     from beta_engine.infrastructure.db.initial_world_state import get_initial_world
-    state = load_checkpoint(session, run_id=run_id, branch_id=branch_id,
-        _repository=_repository, _verified_source=_verified_source)
+    state = _checkpoint_for_capture(session, run_id=run_id, branch_id=branch_id,
+        repository=_repository, previous_read=_previous_read)
     world = get_initial_world(session, run_id=run_id, branch_id=branch_id) if state or evidence else None
     # Only the native Tour Save coordinator may defer this replay. It then
     # authenticates the complete freshly captured revision once, atomically,
     # before any Saved Revision is inserted or the Branch pointer moves.
     if not _defer_full_verification:
         verify_checkpoint(state, world, evidence)
-    if state is not None:
-        from beta_engine.domain.run_packages import canonical_hash
-        body = state.model_dump(mode='json')
-        payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
+    if state is None:
+        if _signed_parent_component is not None:
+            raise ValueError('Live global sporting checkpoint is missing during Save')
+        return None
+    if (
+        _previous_read is not None
+        and state is _previous_read.state
+        and state.schema_version == 'calendar_sporting_checkpoint.v13'
+        and _signed_parent_component is not None
+        and _previous_read.fingerprint == _signed_parent_component['fingerprint']
+    ):
+        # The complete canonical model hash matched the actual live row when
+        # first read; capture then confirmed its exact bytes again. The same
+        # hash in the independently authenticated parent binds that component
+        # to the same canonical model. Keep the payload value and let Save's
+        # ordinary successor and physical checks validate the inserted bytes.
+        payload['content'][COMPONENT_KEY] = _signed_parent_component
+        return state
+    from beta_engine.domain.run_packages import canonical_hash
+
+    body = state.model_dump(mode='json')
+    payload['content'][COMPONENT_KEY] = {'fingerprint': canonical_hash(body), 'state': body}
     return state
 
 

@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerRunCalendar, getViewerTournamentHistory } from '../../../api/client'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
@@ -42,6 +42,8 @@ const messages = {
   published: ['Výsledek publikován', 'Result published'],
   unpublished: ['Výsledek nepublikován', 'Result not published'],
   clear: ['Vymazat filtry', 'Clear filters'],
+  unknownFilter: ['Neznámá hodnota', 'Unknown value'],
+  invalidFilters: ['Odkaz obsahuje neplatnou nebo nedostupnou hodnotu filtru či stránky. Uprav výběr nebo vymaž filtry.', 'The URL contains an invalid or unavailable filter or page. Correct or clear the selection.'],
   table: ['Uložené turnaje', 'Saved tournaments'],
   season: ['Sezona', 'Season'],
   week: ['Týden', 'Week'],
@@ -82,15 +84,39 @@ function CalendarStatus({ status, t }: { status: string; t: Copy }): JSX.Element
   return <>{status in t ? t[status as keyof Copy] : status}</>
 }
 
-function TournamentCatalogForBranch({ runId, branchId, t }: {
-  runId: string; branchId: string; t: Copy
+const TOURNAMENT_URL_FILTERS = {
+  season: 'vtSeason', search: 'vtQ', result: 'vtResult'
+} as const
+const TOURNAMENT_FILTER_KEYS = Object.values(TOURNAMENT_URL_FILTERS)
+const TOURNAMENT_PAGE_KEY = 'vtPage'
+const TOURNAMENT_URL_KEYS = [...TOURNAMENT_FILTER_KEYS, TOURNAMENT_PAGE_KEY]
+
+function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
 }): JSX.Element {
-  const [season, setSeason] = useState('all')
-  const [search, setSearch] = useState('')
-  const [resultFilter, setResultFilter] = useState<TournamentPublicationFilter>('all')
-  const [page, setPage] = useState(1)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const active = ignoreUrlFilters ? new URLSearchParams() : searchParams
+  const season = active.get(TOURNAMENT_URL_FILTERS.season) ?? 'all'
+  const search = active.get(TOURNAMENT_URL_FILTERS.search) ?? ''
+  const resultFilter = (active.get(TOURNAMENT_URL_FILTERS.result) ?? 'all') as TournamentPublicationFilter
+  const rawPage = active.get(TOURNAMENT_PAGE_KEY) ?? '1'
   const [jump, setJump] = useState('')
   const [badJump, setBadJump] = useState(false)
+  useEffect(() => {
+    setJump('')
+    setBadJump(false)
+  }, [season, search, resultFilter, rawPage])
+
+  function updateFilter(name: string, value: string, fallback: string, replace = false): void {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      next.delete(TOURNAMENT_PAGE_KEY)
+      if (value === fallback) next.delete(name)
+      else next.set(name, value)
+      return next
+    }, { replace })
+  }
   const calendarQuery = useQuery({
     queryKey: ['viewer-tournaments-calendar', runId, branchId],
     queryFn: () => getViewerRunCalendar(runId),
@@ -105,28 +131,49 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
     void Promise.all([calendarQuery.refetch(), historyQuery.refetch()])
   }
   function changePage(value: number): void {
-    setPage(value); setJump(''); setBadJump(false)
+    setJump(''); setBadJump(false)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      if (value === 1) next.delete(TOURNAMENT_PAGE_KEY)
+      else next.set(TOURNAMENT_PAGE_KEY, String(value))
+      return next
+    })
   }
   function clear(): void {
-    setSeason('all'); setSearch(''); setResultFilter('all'); changePage(1)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      return next
+    })
   }
-  if (calendarQuery.isPending || historyQuery.isPending) {
+  const catalog = useMemo(() => verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, runId, branchId),
+    [calendarQuery.data, historyQuery.data, runId, branchId])
+  const seasons = useMemo(() => catalog ? catalogSeasonsNewestFirst(catalog) : [], [catalog])
+  const invalidSeason = season !== 'all' && !seasons.includes(season)
+  const invalidResult = !['all', 'published', 'unpublished'].includes(resultFilter)
+  const invalidSelection = invalidSeason || invalidResult || TOURNAMENT_FILTER_KEYS.some(key => active.getAll(key).length > 1)
+  const filtered = useMemo(() => catalog && !invalidSelection ? filteredSavedTournaments(catalog, season, search, resultFilter) : [],
+    [catalog, season, search, resultFilter, invalidSelection])
+  const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)
+  const requestedPage = /^[1-9][0-9]*$/.test(rawPage) ? parseTournamentPage(rawPage, Math.max(1, totalPages)) : null
+  const invalidFilters = invalidSelection || requestedPage === null || active.getAll(TOURNAMENT_PAGE_KEY).length > 1
+  const runLinkParams = new URLSearchParams(searchParams)
+  if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => runLinkParams.delete(key))
+  if (calendarQuery.isPending || calendarQuery.isFetching || historyQuery.isPending || historyQuery.isFetching) {
     return <p className="status" role="status">{t.loading}</p>
   }
   if (calendarQuery.isError || historyQuery.isError) return (
     <div role="alert"><p className="error">{t.unavailable}</p>
       <button type="button" onClick={retry}>{t.retry}</button></div>
   )
-  const catalog = verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, runId, branchId)
   if (!catalog) return <div role="alert"><p className="error">{t.mismatch}</p>
     <button type="button" onClick={retry}>{t.retry}</button></div>
 
-  const seasons = catalogSeasonsNewestFirst(catalog)
-  const filtered = filteredSavedTournaments(catalog, season, search, resultFilter)
-  const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)
-  const visiblePage = totalPages ? Math.min(page, totalPages) : 0
+  // Preserve exact page selection; an invalid link cannot imply another page.
+  const visiblePage = !invalidFilters && totalPages ? requestedPage ?? 0 : 0
   const offset = visiblePage ? (visiblePage - 1) * TOURNAMENT_PAGE_SIZE : 0
-  const rows = filtered.slice(offset, offset + TOURNAMENT_PAGE_SIZE)
+  const rows = invalidFilters ? [] : filtered.slice(offset, offset + TOURNAMENT_PAGE_SIZE)
   function submitJump(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const next = parseTournamentPage(jump, totalPages)
@@ -143,11 +190,14 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
         <div><dt>{t.events}</dt><dd>{catalog.eventCount}</dd></div>
         <div><dt>{t.publishedCount}</dt><dd>{catalog.publishedCount}</dd></div>
       </dl>
-      {catalog.eventCount === 0 ? <p className="empty-state">{t.none}</p> : (
+      {catalog.eventCount === 0 && !invalidFilters ? <p className="empty-state">{t.none}</p> : (
         <>
+          {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
           <div>
             <label htmlFor="tournament-season">{t.selectSeason}</label>
-            <select id="tournament-season" value={season} onChange={event => { setSeason(event.target.value); changePage(1) }}>
+            <select id="tournament-season" value={season} onChange={event =>
+              updateFilter(TOURNAMENT_URL_FILTERS.season, event.target.value, 'all')}>
+              {invalidSeason ? <option value={season}>{t.unknownFilter}: {season}</option> : null}
               <option value="all">{t.allSeasons}</option>
               {seasons.map(value => <option key={value} value={value}>{value}</option>)}
             </select>
@@ -155,19 +205,20 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
           <div>
             <label htmlFor="tournament-search">{t.search}</label>
             <input id="tournament-search" type="search" value={search}
-              onChange={event => { setSearch(event.target.value); changePage(1) }} />
+              onChange={event => updateFilter(TOURNAMENT_URL_FILTERS.search, event.target.value, '', true)} />
           </div>
           <div>
             <label htmlFor="tournament-result-filter">{t.statusFilter}</label>
             <select id="tournament-result-filter" value={resultFilter}
-              onChange={event => { setResultFilter(event.target.value as TournamentPublicationFilter); changePage(1) }}>
+              onChange={event => updateFilter(TOURNAMENT_URL_FILTERS.result, event.target.value, 'all')}>
+              {invalidResult ? <option value={resultFilter}>{t.unknownFilter}: {resultFilter}</option> : null}
               <option value="all">{t.all}</option>
               <option value="published">{t.published}</option>
               <option value="unpublished">{t.unpublished}</option>
             </select>
             <button type="button" onClick={clear}>{t.clear}</button>
           </div>
-          {filtered.length === 0 ? <p className="empty-state">{t.noMatch}</p> : (
+          {invalidFilters || filtered.length === 0 ? <p className="empty-state">{t.noMatch}</p> : (
             <div className="table-wrap">
               <table aria-label={t.table}>
                 <thead><tr>
@@ -194,8 +245,8 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
               </table>
             </div>
           )}
-          <p role="status">{t.shown} {filtered.length ? offset + 1 : 0}–{filtered.length ? offset + rows.length : 0} {t.of} {filtered.length}</p>
-          {totalPages > 1 ? <nav aria-label={t.page}>
+          {!invalidFilters ? <p role="status">{t.shown} {filtered.length ? offset + 1 : 0}–{filtered.length ? offset + rows.length : 0} {t.of} {filtered.length}</p> : null}
+          {!invalidFilters && totalPages > 1 ? <nav aria-label={t.page}>
             <button type="button" disabled={visiblePage === 1} onClick={() => changePage(1)}>{t.first}</button>
             <button type="button" disabled={visiblePage === 1} onClick={() => changePage(visiblePage - 1)}>{t.previous}</button>
             <span>{t.page} {visiblePage} / {totalPages}</span>
@@ -213,7 +264,7 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
         </>
       )}
       <nav aria-label={t.heading} className="viewer-active-run-actions">
-        <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>{t.runTournaments}</Link>{' '}
+        <Link className="viewer-active-run-link" to={{ pathname: viewerTournamentsPath(runId), search: runLinkParams.toString() }}>{t.runTournaments}</Link>{' '}
         <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>{t.runCalendar}</Link>{' '}
         <Link className="viewer-active-run-link" to={viewerRunsPath()}>{t.runBrowser}</Link>
       </nav>
@@ -227,6 +278,20 @@ export function ViewerTournamentsPage(): JSX.Element {
   const t = copyFor(language)
   const context = useViewerOfficialRunContext(runId)
   const branchId = tournamentViewerBranch(context.data, runId)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sourceKey = branchId && !context.isPending && !context.isFetching && !context.isError
+    ? JSON.stringify([runId, branchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged) {
+      const next = new URLSearchParams(searchParams)
+      TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }
+    previousSource.current = sourceKey
+  }, [sourceKey, sourceChanged, searchParams, setSearchParams])
   return (
     <section className="panel viewer-shell-page">
       <div className="page-intro"><h2>{t.title}</h2><p className="subtitle">{t.subtitle}</p></div>
@@ -238,7 +303,8 @@ export function ViewerTournamentsPage(): JSX.Element {
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
           !branchId ? <div role="alert"><p className="error">{t.badContext}</p>
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
-          <TournamentCatalogForBranch key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId} t={t} />}
+          <TournamentCatalogForBranch key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId}
+            t={t} ignoreUrlFilters={sourceChanged} />}
       </article>
     </section>
   )

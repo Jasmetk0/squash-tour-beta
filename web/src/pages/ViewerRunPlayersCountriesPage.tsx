@@ -1,7 +1,10 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useViewerProductRunRouteContext } from '../viewer/ViewerProductRunRouteContext'
+import { useLanguage } from '../i18n/LanguageContext'
+import { joinedCountryRoster } from './viewer/people/viewerCountryRosterJoin'
+import { verifiedViewerPlayers, filteredPlayerDirectory, parsePlayerDirectoryPage, PLAYER_DIRECTORY_PAGE_SIZE, type PlayerDirectoryFilters } from './viewer/people/viewerPlayerDirectory'
 
 import {
   getViewerCountries,
@@ -379,183 +382,228 @@ function displayDistribution(values: Array<{ band: string; count: number }> | nu
   return values.map((entry) => `${entry.band} ${entry.count}`).join(' · ')
 }
 
-export function ViewerRunPlayersPage(): JSX.Element {
-  const { productRunId: runId } = useViewerProductRunRouteContext()
-  const [searchParams] = useSearchParams()
-  const [search, setSearch] = useState('')
-  const [countryCode, setCountryCode] = useState(() => searchParams.get('country') ?? '')
-  const [sourceType, setSourceType] = useState('')
-  const [minAge, setMinAge] = useState('')
-  const [maxAge, setMaxAge] = useState('')
-
-  const playersQuery = useQuery({
-    queryKey: ['viewer-run-players-canonical', runId],
+// Both Run surfaces share the public roster verifier used by the global hub.
+function useRunPlayerRoster(requested: boolean) {
+  const { productRunId: runId, officialBranchId: branchId, officialContext, isLoading, isStale, refetch } = useViewerProductRunRouteContext()
+  const validContext = Boolean(runId && branchId && officialContext?.product_run_id === runId &&
+    officialContext?.official_branch_id === branchId && !isLoading && !isStale)
+  const query = useQuery({
+    queryKey: ['viewer-run-players-canonical', runId, branchId],
     queryFn: () => getViewerPlayers(runId),
-    enabled: Boolean(runId),
+    enabled: validContext && requested,
     retry: false
   })
+  const verified = useMemo(() => verifiedViewerPlayers(query.data, runId, branchId), [query.data, runId, branchId])
+  const ready = validContext && requested && !query.isFetching && !query.isPending && !query.isError
+  return { runId, branchId, validContext, isLoading, refetch, query, source: ready ? verified : null }
+}
 
-  const players = useMemo(() => {
-    const normalizedSearch = search.trim().toLowerCase()
-    const normalizedCountry = countryCode.trim().toUpperCase()
-    const min = minAge ? Number(minAge) : null
-    const max = maxAge ? Number(maxAge) : null
-    return (playersQuery.data?.players ?? [])
-      .filter((player) => !normalizedSearch || [player.player_id, player.name, player.country_code].some((value) => value.toLowerCase().includes(normalizedSearch)))
-      .filter((player) => !normalizedCountry || player.country_code === normalizedCountry)
-      .filter((player) => !sourceType || player.identity_source === sourceType)
-      .filter((player) => min === null || player.age >= min)
-      .filter((player) => max === null || player.age <= max)
-      .sort((a, b) => (b.current_ovr ?? -1) - (a.current_ovr ?? -1) || a.player_id.localeCompare(b.player_id))
-  }, [playersQuery.data?.players, search, countryCode, sourceType, minAge, maxAge])
-
-  return (
-    <section className="panel">
-      <PageIntro title="Players" subtitle="Canonical Saved-Revision player profiles for the selected Product Run." />
-      <CurrentContextStrip
-        items={[
-          { label: 'Product Run', value: runId || 'unknown' },
-          { label: 'Viewer Branch', value: playersQuery.data?.viewer_branch_id ?? '—' },
-          { label: 'Public week', value: playersQuery.data ? `S${playersQuery.data.season_index} W${playersQuery.data.week}` : '—' },
-          { label: 'Total player count', value: playersQuery.data?.player_count ?? '—' },
-          { label: 'Visible players', value: players.length }
-        ]}
-      />
-
-      <SectionCard title="Player filters">
-        <div className="form-grid">
-          <label>
-            Search
-            <input value={search} onChange={(event) => setSearch(event.target.value)} />
-          </label>
-          <label>
-            Country
-            <input value={countryCode} onChange={(event) => setCountryCode(event.target.value)} maxLength={3} />
-          </label>
-          <label>
-            Identity source
-            <select value={sourceType} onChange={(event) => setSourceType(event.target.value)}>
-              <option value="">all</option>
-              <option value="initial_world">initial world</option>
-              <option value="run_prospect">run prospect</option>
-            </select>
-          </label>
-          <label>
-            Age min
-            <input type="number" value={minAge} onChange={(event) => setMinAge(event.target.value)} min={15} max={120} />
-          </label>
-          <label>
-            Age max
-            <input type="number" value={maxAge} onChange={(event) => setMaxAge(event.target.value)} min={15} max={120} />
-          </label>
-        </div>
+const runPlayerKeys = ['vpQ', 'vpCountry', 'country', 'vpOrigin', 'vpStatus', 'vpSort', 'vpMinAge', 'vpMaxAge', 'vpPage']
+export function ViewerRunPlayersPage(): JSX.Element {
+  const { runId, branchId, validContext, isLoading, refetch, query, source } = useRunPlayerRoster(true)
+  const { language } = useLanguage()
+  const l = (en: string, cs: string) => language === 'cs' ? cs : en
+  const [params, setParams] = useSearchParams()
+  const identity = validContext ? JSON.stringify([runId, branchId]) : null
+  const previous = useRef<string | null>(null)
+  const changed = Boolean(identity && previous.current && identity !== previous.current)
+  const active = changed ? new URLSearchParams() : params
+  const [jump, setJump] = useState('')
+  const [badJump, setBadJump] = useState(false)
+  const search = active.get('vpQ') ?? ''
+  const country = active.get('vpCountry') ?? active.get('country') ?? 'all'
+  const origin = active.get('vpOrigin') ?? 'all'
+  const status = active.get('vpStatus') ?? 'all'
+  const sort = active.get('vpSort') ?? 'public_ovr'
+  const minAge = active.get('vpMinAge') ?? ''
+  const maxAge = active.get('vpMaxAge') ?? ''
+  const rawPage = active.get('vpPage') ?? '1'
+  useEffect(() => {
+    if (!identity) return
+    if (changed) {
+      const next = new URLSearchParams(params)
+      runPlayerKeys.forEach(key => next.delete(key))
+      if (next.toString() !== params.toString()) setParams(next, { replace: true })
+    }
+    previous.current = identity
+  }, [identity, changed, params, setParams])
+  useEffect(() => { setJump(''); setBadJump(false) }, [identity, search, country, origin, status, sort, minAge, maxAge, rawPage])
+  const validAge = (value: string) => value === '' || /^(0|[1-9][0-9]*)$/.test(value) && Number(value) <= 120
+  const invalidSelection = runPlayerKeys.some(key => active.getAll(key).length > 1) ||
+    (active.has('country') && active.has('vpCountry')) ||
+    (country !== 'all' && !/^[A-Z]{3}$/.test(country)) ||
+    !['all', 'initial_world', 'run_prospect'].includes(origin) ||
+    !['all', 'active', 'retired'].includes(status) || !['name', 'public_ovr', 'age'].includes(sort) ||
+    !validAge(minAge) || !validAge(maxAge) ||
+    (minAge !== '' && maxAge !== '' && Number(minAge) > Number(maxAge))
+  const filtered = useMemo(() => {
+    if (!source || invalidSelection) return []
+    return filteredPlayerDirectory(source, { search, country, origin, status, sort } as PlayerDirectoryFilters).filter(player =>
+      (minAge === '' || player.age >= Number(minAge)) && (maxAge === '' || player.age <= Number(maxAge)))
+  }, [source, invalidSelection, search, country, origin, status, sort, minAge, maxAge])
+  const pages = Math.max(1, Math.ceil(filtered.length / PLAYER_DIRECTORY_PAGE_SIZE))
+  const page = /^[1-9][0-9]*$/.test(rawPage) ? parsePlayerDirectoryPage(rawPage, pages) : null
+  const invalid = invalidSelection || page === null
+  const offset = invalid ? 0 : ((page ?? 1) - 1) * PLAYER_DIRECTORY_PAGE_SIZE
+  const rows = invalid ? [] : filtered.slice(offset, offset + PLAYER_DIRECTORY_PAGE_SIZE)
+  const countries = useMemo(() => source ? [...new Set(source.players.map(player => player.country_code))].sort() : [], [source])
+  function change(key: string, value: string, fallback: string, replace = false) {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (changed) runPlayerKeys.forEach(k => next.delete(k))
+      next.delete('vpPage')
+      if (key === 'vpCountry') next.delete('country')
+      if (value === fallback) next.delete(key)
+      else next.set(key, value)
+      return next
+    }, { replace })
+  }
+  function clear() {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      runPlayerKeys.forEach(key => next.delete(key))
+      return next
+    })
+  }
+  function go(n: number) {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (n === 1) next.delete('vpPage')
+      else next.set('vpPage', String(n))
+      return next
+    })
+  }
+  function submitJump(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    const n = parsePlayerDirectoryPage(jump, pages)
+    if (n === null) setBadJump(true)
+    else { setJump(''); setBadJump(false); go(n) }
+  }
+  return <section className="panel">
+    <PageIntro title={l('Players', 'Hráči')} subtitle={l('Canonical Saved-Revision player profiles for the selected Product Run.', 'Veřejné profily hráčů uložené revize vybraného Product Runu.')} />
+    <CurrentContextStrip items={[
+      { label: 'Product Run', value: runId || '—' }, { label: 'Viewer Branch', value: validContext ? branchId : '—' },
+      { label: l('Public week', 'Uložený týden'), value: source ? 'S' + source.season_index + ' W' + source.week : '—' },
+      { label: l('Total player count', 'Celkem hráčů'), value: source?.player_count ?? '—' },
+      { label: l('Visible players', 'Hráči odpovídající filtrům'), value: source && !invalid ? filtered.length : '—' },
+    ]} />
+    {isLoading ? <p role="status">{l('Loading canonical players…', 'Načítám uložené hráče…')}</p> :
+      !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+      query.isPending || query.isFetching ? <p role="status">{l('Loading canonical players…', 'Načítám uložené hráče…')}</p> :
+      query.isError ? <div role="alert"><p>{l('Failed to load canonical players:', 'Hráče nelze načíst:')} {String(query.error)}</p><button type="button" onClick={() => void query.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+      !source ? <div role="alert"><p>{l('Saved player list is invalid or belongs to another source.', 'Seznam hráčů je neplatný nebo patří jinému zdroji.')}</p><button type="button" onClick={() => void query.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> : <>
+      <SectionCard title={l('Player filters', 'Filtry hráčů')}><div className="form-grid">
+        <label>{l('Search', 'Hledat')}<input type="search" value={search} onChange={e => change('vpQ', e.target.value, '', true)} /></label>
+        <label>{l('Country', 'Země')}<select value={country} onChange={e => change('vpCountry', e.target.value, 'all')}>
+          {country !== 'all' && !countries.includes(country) ? <option value={country}>{country}</option> : null}
+          <option value="all">{l('all', 'vše')}</option>{countries.map(code => <option key={code} value={code}>{code}</option>)}
+        </select></label>
+        <label>{l('Identity source', 'Původ hráče')}<select value={origin} onChange={e => change('vpOrigin', e.target.value, 'all')}>
+          {!['all', 'initial_world', 'run_prospect'].includes(origin) ? <option value={origin}>{origin}</option> : null}
+          <option value="all">{l('all', 'vše')}</option><option value="initial_world">{l('initial world', 'počáteční svět')}</option><option value="run_prospect">{l('run prospect', 'nový talent Runu')}</option>
+        </select></label>
+        <label>{l('Status', 'Kariéra')}<select value={status} onChange={e => change('vpStatus', e.target.value, 'all')}>
+          {!['all', 'active', 'retired'].includes(status) ? <option value={status}>{status}</option> : null}
+          <option value="all">{l('all', 'vše')}</option><option value="active">{l('active', 'aktivní')}</option><option value="retired">{l('retired', 'po kariéře')}</option>
+        </select></label>
+        <label>{l('Sort', 'Řazení')}<select value={sort} onChange={e => change('vpSort', e.target.value, 'public_ovr')}>
+          {!['name', 'public_ovr', 'age'].includes(sort) ? <option value={sort}>{sort}</option> : null}
+          <option value="public_ovr">{l('Public OVR', 'Veřejné OVR')}</option><option value="name">{l('Name A–Z', 'Jméno A–Z')}</option><option value="age">{l('Age descending', 'Věk sestupně')}</option>
+        </select></label>
+        <label>{l('Age min', 'Věk od')}<input inputMode="numeric" value={minAge} onChange={e => change('vpMinAge', e.target.value, '', true)} /></label>
+        <label>{l('Age max', 'Věk do')}<input inputMode="numeric" value={maxAge} onChange={e => change('vpMaxAge', e.target.value, '', true)} /></label>
+        <button type="button" onClick={clear}>{l('Clear filters', 'Vymazat filtry')}</button>
+      </div></SectionCard>
+      <SectionCard title={l('Player profiles', 'Profily hráčů')}>
+        {invalid ? <p role="alert">{l('The URL contains invalid filters or page. Correct or clear the selection.', 'Odkaz obsahuje neplatné filtry nebo stránku. Uprav nebo vymaž výběr.')}</p> :
+          rows.length === 0 ? <p>{l('No canonical players match these filters.', 'Žádní hráči neodpovídají filtrům.')}</p> :
+          <div className="table-wrap"><table aria-label={l('Saved Run player directory', 'Uložený seznam hráčů Runu')}>
+            <thead><tr>{[l('Name', 'Jméno'), l('Country', 'Země'), l('Age', 'Věk'), l('Status', 'Kariéra'), l('Power Rating', 'Veřejné OVR'), l('Source', 'Původ'), l('Player Profile', 'Profil hráče')].map(label => <th scope="col" key={label}>{label}</th>)}</tr></thead>
+            <tbody>{rows.map(player => <tr key={player.player_id}>
+              <td>{player.name}</td><td>{countryCodeCell(player.country_code, runId)}</td><td>{player.age}</td>
+              <td>{player.status === 'active' ? l('active', 'aktivní') : l('retired', 'po kariéře')}</td>
+              <td>{displayMetric(player.current_ovr)}</td><td>{player.identity_source === 'initial_world' ? l('initial world', 'počáteční svět') : l('run prospect', 'nový talent Runu')}</td>
+              <td><Link to={{ pathname: viewerPlayerProfilePath(runId, player.player_id), search: active.toString() }}>{l('Open Player Profile', 'Otevřít profil hráče')}</Link></td>
+            </tr>)}</tbody>
+          </table></div>}
+        {!invalid ? <p role="status">{l('Showing', 'Zobrazeno')} {rows.length ? offset + 1 : 0}–{offset + rows.length} {l('of', 'z')} {filtered.length}</p> : null}
+        {!invalid && pages > 1 && page !== null ? <nav aria-label={l('Page', 'Stránka')}>
+          <button type="button" disabled={page === 1} onClick={() => go(1)}>{l('First', 'První')}</button>
+          <button type="button" disabled={page === 1} onClick={() => go(page - 1)}>{l('Previous', 'Předchozí')}</button>
+          <span>{l('Page', 'Stránka')} {page} / {pages}</span>
+          <button type="button" disabled={page === pages} onClick={() => go(page + 1)}>{l('Next', 'Další')}</button>
+          <button type="button" disabled={page === pages} onClick={() => go(pages)}>{l('Last', 'Poslední')}</button>
+          <form onSubmit={submitJump}>
+            <label>{l('Jump to page', 'Přejít na stránku')}<input inputMode="numeric" value={jump} aria-invalid={badJump} aria-describedby={badJump ? 'run-player-page-error' : undefined} onChange={e => { setJump(e.target.value); setBadJump(false) }} /></label>
+            <button type="submit">{l('Go', 'Přejít')}</button>
+            {badJump ? <span role="alert" id="run-player-page-error">{l('Enter a valid existing page number.', 'Zadej platné existující číslo stránky.')}</span> : null}
+          </form>
+        </nav> : null}
       </SectionCard>
-
-      <SectionCard title="Player profiles">
-        {playersQuery.isLoading ? <p className="status">Loading canonical players…</p> : null}
-        {playersQuery.error ? <p className="error">Failed to load canonical players: {String(playersQuery.error)}</p> : null}
-        {!playersQuery.isLoading && !playersQuery.error && playersQuery.data ? (
-          players.length > 0 ? (
-            <table>
-              <thead>
-                <tr>
-                  <th>Name</th>
-                  <th>Country</th>
-                  <th>Age</th>
-                  <th>Status</th>
-                  <th>Power Rating</th>
-                  <th>Source</th>
-                  <th>Player Profile</th>
-                </tr>
-              </thead>
-              <tbody>
-                {players.map((player) => (
-                  <tr key={player.player_id}>
-                    <td>{player.name}</td>
-                    <td>{countryCodeCell(player.country_code, runId)}</td>
-                    <td>{player.age}</td>
-                    <td>{player.status}</td>
-                    <td>{displayMetric(player.current_ovr)}</td>
-                    <td>{player.identity_source.replace(/_/g, ' ')}</td>
-                    <td>
-                      <Link to={viewerPlayerProfilePath(runId, player.player_id)}>Open Player Profile</Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          ) : (
-            <p className="status">No canonical players match these filters.</p>
-          )
-        ) : null}
-      </SectionCard>
-    </section>
-  )
+    </>}
+  </section>
 }
 
 export function ViewerRunPlayerCareerPage(): JSX.Element {
   const { playerId = '' } = useParams()
-  const { productRunId: runId } = useViewerProductRunRouteContext()
-
-  const playersQuery = useQuery({
-    queryKey: ['viewer-run-player-profile-canonical', runId],
-    queryFn: () => getViewerPlayers(runId),
-    enabled: Boolean(runId && playerId),
-    retry: false
-  })
-
-  const playerProfile = playersQuery.data?.players.find((player) => player.player_id === playerId) ?? null
+  const { runId, branchId, validContext, isLoading, refetch, query: playersQuery, source } = useRunPlayerRoster(Boolean(playerId))
+  const { language } = useLanguage()
+  const l = (en: string, cs: string) => language === 'cs' ? cs : en
+  const [params] = useSearchParams()
+  const playerProfile = source?.players.find(player => player.player_id === playerId) ?? null
 
   return (
     <section className="panel">
       <PageIntro
-        title="Player Profile"
-        subtitle="Canonical Saved-Revision current player profile. Historical career views remain deferred until a dedicated canonical history authority exists."
+        title={l('Player Profile', 'Profil hráče')}
+        subtitle={l('Canonical Saved-Revision current player profile. Historical career views remain deferred until a dedicated canonical history authority exists.', 'Aktuální veřejný profil z uložené revize. Úplná historie kariéry zatím nemá kanonický veřejný zdroj.')}
       />
       <CurrentContextStrip
         items={[
           { label: 'Product Run', value: runId || 'unknown' },
-          { label: 'Viewer Branch', value: playersQuery.data?.viewer_branch_id ?? '—' },
-          { label: 'Public week', value: playersQuery.data ? `S${playersQuery.data.season_index} W${playersQuery.data.week}` : '—' },
-          { label: 'Player ID', value: playerId || 'unknown' },
-          { label: 'Profile status', value: playerProfile ? 'canonical current profile' : 'unavailable' }
+          { label: 'Viewer Branch', value: validContext ? branchId : '—' },
+          { label: l('Public week', 'Uložený týden'), value: source ? `S${source.season_index} W${source.week}` : '—' },
+          { label: l('Player ID', 'ID hráče'), value: playerId || 'unknown' },
+          { label: l('Profile status', 'Stav profilu'), value: playerProfile ? l('canonical current profile', 'aktuální uložený profil') : l('unavailable', 'nedostupný') }
         ]}
       />
 
-      {playersQuery.isLoading ? <p className="status">Loading canonical player profile…</p> : null}
-      {playersQuery.error ? <p className="error">Failed to load canonical player profile: {String(playersQuery.error)}</p> : null}
-      {!playersQuery.isLoading && !playersQuery.error && !playerProfile ? (
-        <p className="status">No canonical player with this ID exists in the selected Saved Revision.</p>
-      ) : null}
+      {isLoading ? <p role="status">{l('Loading canonical player profile…', 'Načítám uložený profil…')}</p> :
+        !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !playerId ? <p role="alert">{l('No player ID was provided.', 'Chybí ID hráče.')}</p> :
+        playersQuery.isPending || playersQuery.isFetching ? <p role="status">{l('Loading canonical player profile…', 'Načítám uložený profil…')}</p> :
+        playersQuery.isError ? <div role="alert"><p>{l('Failed to load canonical player profile:', 'Profil hráče nelze načíst:')} {String(playersQuery.error)}</p><button type="button" onClick={() => void playersQuery.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !source ? <div role="alert"><p>{l('Saved player list is invalid or belongs to another source.', 'Seznam hráčů je neplatný nebo patří jinému zdroji.')}</p><button type="button" onClick={() => void playersQuery.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !playerProfile ? <p className="status">{l('No canonical player with this ID exists in the selected Saved Revision.', 'V uložené revizi není hráč s tímto ID.')}</p> : null}
 
       {playerProfile ? (
         <>
-          <SectionCard title="Identity">
+          <SectionCard title={l('Identity', 'Identita')}>
             <MetadataList
               items={[
-                { label: 'Name', value: playerProfile.name },
-                { label: 'Player ID', value: playerProfile.player_id },
-                { label: 'Country', value: countryCodeCell(playerProfile.country_code, runId) },
-                { label: 'Age', value: playerProfile.age },
-                { label: 'Status', value: playerProfile.status }
+                { label: l('Name', 'Jméno'), value: playerProfile.name },
+                { label: l('Player ID', 'ID hráče'), value: playerProfile.player_id },
+                { label: l('Country', 'Země'), value: countryCodeCell(playerProfile.country_code, runId) },
+                { label: l('Age', 'Věk'), value: playerProfile.age },
+                { label: l('Status', 'Kariéra'), value: playerProfile.status === 'active' ? l('active', 'aktivní') : l('retired', 'po kariéře') }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Current sporting state">
+          <SectionCard title={l('Current sporting state', 'Aktuální sportovní stav')}>
             <MetadataList
               items={[
-                { label: 'Power Rating', value: displayMetric(playerProfile.current_ovr) }
+                { label: l('Power Rating', 'Veřejné OVR'), value: displayMetric(playerProfile.current_ovr) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Tour / identity source">
+          <SectionCard title={l('Tour / identity source', 'Tour / původ hráče')}>
             <MetadataList
               items={[
-                { label: 'Identity source', value: playerProfile.identity_source.replace(/_/g, ' ') },
+                { label: l('Identity source', 'Původ hráče'), value: playerProfile.identity_source === 'initial_world' ? l('initial world', 'počáteční svět') : l('run prospect', 'nový talent Runu') },
                 {
-                  label: 'Tour entry',
+                  label: l('Tour entry', 'Vstup na Tour'),
                   value:
                     playerProfile.tour_entry_season_index !== null && playerProfile.tour_entry_week !== null
                       ? `S${playerProfile.tour_entry_season_index} W${playerProfile.tour_entry_week}`
@@ -565,24 +613,24 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
             />
           </SectionCard>
 
-          <SectionCard title="Links">
+          <SectionCard title={l('Links', 'Odkazy')}>
             <p>
-              <Link to={viewerPlayersPath(runId)}>Back to players</Link> ·{' '}
-              <Link to={viewerCountryProfilePath(runId, playerProfile.country_code)}>Country page</Link>
+              <Link to={{ pathname: viewerPlayersPath(runId), search: params.toString() }}>{l('Back to players', 'Zpět na hráče')}</Link> ·{' '}
+              <Link to={viewerCountryProfilePath(runId, playerProfile.country_code)}>{l('Country page', 'Profil země')}</Link>
             </p>
           </SectionCard>
         </>
       ) : null}
 
-      <SectionCard title="Season Timeline">
+      <SectionCard title={l('Season Timeline', 'Historie sezon')}>
         <p className="status">
-          Deferred: canonical per-player season history is not published yet. Current profile data above comes only from the selected Saved Revision.
+          {l('Deferred: canonical per-player season history is not published yet. Current profile data above comes only from the selected Saved Revision.', 'Individuální historie sezon zatím není veřejně dostupná. Profil pochází pouze z vybrané uložené revize.')}
         </p>
       </SectionCard>
 
-      <SectionCard title="Tournament History">
+      <SectionCard title={l('Tournament History', 'Historie turnajů')}>
         <p className="status">
-          Deferred: canonical per-player tournament/performance history is not published yet. No legacy SimulationRun history is shown here.
+          {l('Deferred: canonical per-player tournament/performance history is not published yet. No legacy SimulationRun history is shown here.', 'Individuální historie turnajů a výkonů zatím není veřejně dostupná. Historie starého SimulationRunu se zde nezobrazuje.')}
         </p>
       </SectionCard>
     </section>
@@ -685,110 +733,117 @@ export function ViewerRunCountriesPage(): JSX.Element {
 
 export function ViewerRunCountryDetailPage(): JSX.Element {
   const { countryCode = '' } = useParams()
-  const { productRunId: runId } = useViewerProductRunRouteContext()
-
-  const countriesQuery = useQuery({
-    queryKey: ['viewer-run-country-profile-canonical', runId],
-    queryFn: () => getViewerCountries(runId),
-    enabled: Boolean(runId && countryCode),
-    retry: false
-  })
-  const playersQuery = useQuery({
-    queryKey: ['viewer-run-country-profile-players-canonical', runId],
-    queryFn: () => getViewerPlayers(runId),
-    enabled: Boolean(runId && countryCode),
-    retry: false
-  })
-
   const normalizedCode = countryCode.toUpperCase()
-  const countryProfile =
-    countriesQuery.data?.countries.find((country) => country.country_code === normalizedCode) ?? null
-  const countryPlayers = (playersQuery.data?.players ?? [])
-    .filter((player) => player.country_code === normalizedCode)
-    .sort((a, b) => (b.current_ovr ?? -1) - (a.current_ovr ?? -1) || a.player_id.localeCompare(b.player_id))
-
-  const isLoading = countriesQuery.isLoading || playersQuery.isLoading
+  const validCode = /^[A-Z]{3}$/.test(normalizedCode)
+  const { runId, branchId, validContext, isLoading: contextLoading, refetch, query: playersQuery, source } = useRunPlayerRoster(validCode)
+  const { language } = useLanguage()
+  const l = (en: string, cs: string) => language === 'cs' ? cs : en
+  const [params, setParams] = useSearchParams()
+  const countriesQuery = useQuery({
+    queryKey: ['viewer-run-country-profile-canonical', runId, branchId],
+    queryFn: () => getViewerCountries(runId),
+    enabled: validContext && validCode,
+    retry: false
+  })
+  const isLoading = contextLoading || (validContext && validCode &&
+    (countriesQuery.isPending || countriesQuery.isFetching || playersQuery.isPending || playersQuery.isFetching))
   const hasError = countriesQuery.isError || playersQuery.isError
+  const joined = useMemo(() => source && !countriesQuery.isFetching && !countriesQuery.isError ?
+    joinedCountryRoster(countriesQuery.data, source) : null,
+    [source, countriesQuery.data, countriesQuery.isFetching, countriesQuery.isError])
+  const countryEntry = joined?.get(normalizedCode)
+  const countryProfile = countryEntry?.country ?? null
+  const countryPlayers = useMemo(() => [...(countryEntry?.players ?? [])].sort(
+    (a, b) => (b.current_ovr ?? -1) - (a.current_ovr ?? -1) || a.player_id.localeCompare(b.player_id)), [countryEntry])
+  const rawPage = params.get('vcPlayerPage') ?? '1'
+  const pages = Math.max(1, Math.ceil(countryPlayers.length / PLAYER_DIRECTORY_PAGE_SIZE))
+  const page = params.getAll('vcPlayerPage').length <= 1 && /^[1-9][0-9]*$/.test(rawPage) ?
+    parsePlayerDirectoryPage(rawPage, pages) : null
+  const offset = ((page ?? 1) - 1) * PLAYER_DIRECTORY_PAGE_SIZE
+  const visible = page === null ? [] : countryPlayers.slice(offset, offset + PLAYER_DIRECTORY_PAGE_SIZE)
+  function go(n: number) {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (n === 1) next.delete('vcPlayerPage')
+      else next.set('vcPlayerPage', String(n))
+      return next
+    })
+  }
+  function retry() {
+    void countriesQuery.refetch()
+    void playersQuery.refetch()
+  }
 
   return (
     <section className="panel">
       <PageIntro
-        title="Country Profile"
-        subtitle="Canonical Saved-Revision current country profile. Historical talent/source breakdowns remain deferred until a dedicated canonical history authority exists."
+        title={l('Country Profile', 'Profil země')}
+        subtitle={l('Canonical Saved-Revision current country profile. Historical talent/source breakdowns remain deferred until a dedicated canonical history authority exists.', 'Aktuální veřejný profil země z uložené revize. Historické údaje zatím nemají kanonický veřejný zdroj.')}
       />
       <CurrentContextStrip
         items={[
           { label: 'Product Run', value: runId || 'unknown' },
-          { label: 'Viewer Branch', value: countriesQuery.data?.viewer_branch_id ?? playersQuery.data?.viewer_branch_id ?? '—' },
+          { label: 'Viewer Branch', value: validContext ? branchId : '—' },
           {
-            label: 'Public week',
-            value: countriesQuery.data
-              ? `S${countriesQuery.data.season_index} W${countriesQuery.data.week}`
-              : playersQuery.data
-                ? `S${playersQuery.data.season_index} W${playersQuery.data.week}`
-                : '—'
+            label: l('Public week', 'Uložený týden'),
+            value: joined && source ? `S${source.season_index} W${source.week}` : '—'
           },
-          { label: 'Country code', value: normalizedCode || 'unknown' },
-          { label: 'Profile status', value: countryProfile ? 'canonical current profile' : 'unavailable' }
+          { label: l('Country code', 'Kód země'), value: normalizedCode || 'unknown' },
+          { label: l('Profile status', 'Stav profilu'), value: countryProfile ? l('canonical current profile', 'aktuální uložený profil') : l('unavailable', 'nedostupný') }
         ]}
       />
 
-      {isLoading ? <p className="status">Loading canonical country profile…</p> : null}
-      {hasError ? (
-        <p className="error">
-          Failed to load canonical country profile: {String(countriesQuery.error ?? playersQuery.error)}
-        </p>
-      ) : null}
-      {!isLoading && !hasError && !countryProfile ? (
-        <p className="status">No canonical country with this code exists in the selected Saved Revision.</p>
-      ) : null}
+      {isLoading ? <p role="status">{l('Loading canonical country profile…', 'Načítám uložený profil země…')}</p> :
+        !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !validCode ? <p role="alert">{l('Invalid country code.', 'Neplatný kód země.')}</p> :
+        hasError ? <div role="alert"><p>{l('Failed to load canonical country profile:', 'Profil země nelze načíst:')} {String(countriesQuery.error ?? playersQuery.error)}</p><button type="button" onClick={retry}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !joined ? <div role="alert"><p>{l('Saved country and player sources do not match.', 'Uložené zdroje zemí a hráčů se neshodují.')}</p><button type="button" onClick={retry}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        !countryProfile ? <p className="status">{l('No canonical country with this code exists in the selected Saved Revision.', 'V uložené revizi není země s tímto kódem.')}</p> : null}
 
       {countryProfile ? (
         <>
-          <SectionCard title="Overview">
+          <SectionCard title={l('Overview', 'Přehled')}>
             <MetadataList
               items={[
-                { label: 'Country code', value: countryProfile.country_code },
-                { label: 'Total players', value: countryProfile.player_count },
-                { label: 'Active players', value: countryProfile.active_player_count },
-                { label: 'Retired players', value: countryProfile.retired_player_count },
-                { label: 'Average Power Rating', value: displayFixed(countryProfile.average_current_ovr) }
+                { label: l('Country code', 'Kód země'), value: countryProfile.country_code },
+                { label: l('Total players', 'Celkem hráčů'), value: countryProfile.player_count },
+                { label: l('Active players', 'Aktivní hráči'), value: countryProfile.active_player_count },
+                { label: l('Retired players', 'Hráči po kariéře'), value: countryProfile.retired_player_count },
+                { label: l('Average Power Rating', 'Průměrné veřejné OVR'), value: displayFixed(countryProfile.average_current_ovr) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Top player">
+          <SectionCard title={l('Top player', 'Nejlepší hráč')}>
             <MetadataList
               items={[
                 {
-                  label: 'Player',
+                  label: l('Player', 'Hráč'),
                   value: playerProfileCell(runId, countryProfile.top_player_id, countryProfile.top_player_name)
                 },
-                { label: 'Power Rating', value: displayMetric(countryProfile.top_player_current_ovr) }
+                { label: l('Power Rating', 'Veřejné OVR'), value: displayMetric(countryProfile.top_player_current_ovr) }
               ]}
             />
           </SectionCard>
 
-          <SectionCard title="Current players">
-            {countryPlayers.length ? (
+          <SectionCard title={l('Current players', 'Aktuální hráči')}>
+            {page === null ? <div role="alert"><p>{l('Invalid player page.', 'Neplatná stránka hráčů.')}</p><button type="button" onClick={() => go(1)}>{l('First page', 'První stránka')}</button></div> : countryPlayers.length ? (
               <table>
                 <thead>
                   <tr>
-                    <th>Player</th>
-                    <th>Age</th>
-                    <th>Status</th>
-                    <th>Power Rating</th>
-                    <th>Potential</th>
+                    <th scope="col">{l('Player', 'Hráč')}</th>
+                    <th scope="col">{l('Age', 'Věk')}</th>
+                    <th scope="col">{l('Status', 'Kariéra')}</th>
+                    <th scope="col">{l('Power Rating', 'Veřejné OVR')}</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {countryPlayers.map((player) => (
+                  {visible.map((player) => (
                     <tr key={player.player_id}>
                       <td>{playerProfileCell(runId, player.player_id, player.name)}</td>
                       <td>{player.age}</td>
-                      <td>{player.status}</td>
+                      <td>{player.status === 'active' ? l('active', 'aktivní') : l('retired', 'po kariéře')}</td>
                       <td>{displayMetric(player.current_ovr)}</td>
-                      <td>{displayMetric(player.potential_ovr)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -796,20 +851,27 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
             ) : (
               <p className="status">No canonical players are published for this country in the selected Saved Revision.</p>
             )}
+            {page !== null && pages > 1 ? <nav aria-label={l('Player page', 'Stránka hráčů')}>
+              <button type="button" disabled={page === 1} onClick={() => go(1)}>{l('First', 'První')}</button>
+              <button type="button" disabled={page === 1} onClick={() => go(page - 1)}>{l('Previous', 'Předchozí')}</button>
+              <span>{l('Page', 'Stránka')} {page} / {pages}</span>
+              <button type="button" disabled={page === pages} onClick={() => go(page + 1)}>{l('Next', 'Další')}</button>
+              <button type="button" disabled={page === pages} onClick={() => go(pages)}>{l('Last', 'Poslední')}</button>
+            </nav> : null}
           </SectionCard>
 
-          <SectionCard title="Links">
+          <SectionCard title={l('Links', 'Odkazy')}>
             <p>
-              <Link to={viewerCountriesPath(runId)}>Back to countries</Link> ·{' '}
-              <Link to={`${viewerPlayersPath(runId)}?country=${encodeURIComponent(countryProfile.country_code)}`}>Player list</Link>
+              <Link to={viewerCountriesPath(runId)}>{l('Back to countries', 'Zpět na země')}</Link> ·{' '}
+              <Link to={`${viewerPlayersPath(runId)}?country=${encodeURIComponent(countryProfile.country_code)}`}>{l('Player list', 'Seznam hráčů')}</Link>
             </p>
           </SectionCard>
         </>
       ) : null}
 
-      <SectionCard title="Historical country analytics">
+      <SectionCard title={l('Historical country analytics', 'Historická analytika země')}>
         <p className="status">
-          Deferred: canonical historical source mix, talent-band evolution and historical country aggregates are not published yet.
+          {l('Deferred: canonical historical source mix, talent-band evolution and historical country aggregates are not published yet.', 'Historické složení zdrojů, vývoj talentů a historické souhrny zemí zatím nejsou veřejně dostupné.')}
         </p>
       </SectionCard>
     </section>

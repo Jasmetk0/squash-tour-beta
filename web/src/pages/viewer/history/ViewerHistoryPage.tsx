@@ -73,7 +73,12 @@ function HistoryForBranch({ runId, branchId, t }: { runId: string; branchId: str
   function retryReaders(): void {
     void Promise.all([tournamentsQuery.refetch(), rankingsQuery.refetch(), raceQuery.refetch()])
   }
-  if (tournamentsQuery.isPending || rankingsQuery.isPending || raceQuery.isPending) {
+  // Refetching an existing Branch can temporarily leave stale successful
+  // snapshots in React Query. Hide *all* historical rows until every GET
+  // completes again, rather than mixing an old published Race with new data.
+  if (tournamentsQuery.isPending || tournamentsQuery.isFetching ||
+      rankingsQuery.isPending || rankingsQuery.isFetching ||
+      raceQuery.isPending || raceQuery.isFetching) {
     return <p className="status" role="status">{t.loading}</p>
   }
   if (tournamentsQuery.isError || rankingsQuery.isError || raceQuery.isError) {
@@ -116,7 +121,9 @@ function HistoryForBranch({ runId, branchId, t }: { runId: string; branchId: str
             <div>
               <dt>{t.latestRace}</dt>
               <dd>{summary.latestRaceSeason !== null ?
-                <Link to={viewerRacePath(runId)}>{rankingSeasonLabel(summary.latestRaceSeason)}</Link> : t.none}</dd>
+                <Link to={viewerRacePath(runId) + '?raceSeason=' + summary.latestRaceSeason}>
+                  {rankingSeasonLabel(summary.latestRaceSeason)}
+                </Link> : t.none}</dd>
             </div>
           </dl>
         </section>

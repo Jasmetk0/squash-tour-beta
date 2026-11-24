@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerRunCalendar } from '../../../api/client'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
@@ -37,11 +37,14 @@ const labels = {
   season: ['Sezona', 'Season'],
   allSeasons: ['Všechny sezony', 'All seasons'],
   week: ['Týden', 'Week'],
+  span: ['Rozsah turnaje', 'Tournament weeks'],
   allWeeks: ['Všechny týdny', 'All weeks'],
   status: ['Stav v kalendáři', 'Calendar status'],
   allStatuses: ['Všechny stavy', 'All statuses'],
   search: ['Hledat název, ID nebo místo', 'Search name, ID or location'],
   clear: ['Vymazat filtry', 'Clear filters'],
+  unknownFilter: ['Neznámá hodnota', 'Unknown value'],
+  invalidFilters: ['Odkaz obsahuje neplatnou nebo nedostupnou sezonu, týden či stav. Oprav filtr nebo jej vymaž.', 'The link contains an invalid or unavailable season, week or status. Correct or clear the filter.'],
   list: ['Uložené turnaje kalendáře', 'Saved calendar tournaments'],
   event: ['Turnaj', 'Tournament'],
   location: ['Země / město', 'Country / city'],
@@ -78,16 +81,27 @@ const statusNames: Exclude<SavedCalendarStatus, 'all'>[] = [
   'planned', 'scheduled', 'active', 'completed', 'cancelled'
 ]
 
-function SavedCalendarForSource({ runId, branchId, t }: {
-  runId: string; branchId: string; t: Copy
+const CALENDAR_URL_FILTERS = {
+  season: 'vcSeason', week: 'vcWeek', status: 'vcStatus', search: 'vcQ'
+} as const
+const CALENDAR_URL_KEYS = Object.values(CALENDAR_URL_FILTERS)
+
+function SavedCalendarForSource({ runId, branchId, t, ignoreUrlFilters }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
 }): JSX.Element {
-  const [season, setSeason] = useState('all')
-  const [week, setWeek] = useState('all')
-  const [status, setStatus] = useState<SavedCalendarStatus>('all')
-  const [search, setSearch] = useState('')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const activeParams = ignoreUrlFilters ? new URLSearchParams() : searchParams
+  const season = activeParams.get(CALENDAR_URL_FILTERS.season) ?? 'all'
+  const week = activeParams.get(CALENDAR_URL_FILTERS.week) ?? 'all'
+  const status = (activeParams.get(CALENDAR_URL_FILTERS.status) ?? 'all') as SavedCalendarStatus
+  const search = activeParams.get(CALENDAR_URL_FILTERS.search) ?? ''
   const [page, setPage] = useState(1)
   const [jump, setJump] = useState('')
   const [invalidPage, setInvalidPage] = useState(false)
+
+  useEffect(() => {
+    setPage(1); setJump(''); setInvalidPage(false)
+  }, [season, week, status, search])
   const calendarQuery = useQuery({
     queryKey: ['viewer-tour-calendar-saved-revision', runId, branchId],
     queryFn: () => getViewerRunCalendar(runId),
@@ -100,8 +114,25 @@ function SavedCalendarForSource({ runId, branchId, t }: {
     setJump('')
     setInvalidPage(false)
   }
+  function setCalendarFilter(name: string, value: string, fallback = 'all', replace = false): void {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) CALENDAR_URL_KEYS.forEach(key => next.delete(key))
+      if (value === fallback) next.delete(name)
+      else next.set(name, value)
+      // A changed season invalidates a week picked from the previous season.
+      if (name === CALENDAR_URL_FILTERS.season) next.delete(CALENDAR_URL_FILTERS.week)
+      return next
+    }, { replace })
+    movePage(1)
+  }
   function reset(): void {
-    setSeason('all'); setWeek('all'); setStatus('all'); setSearch(''); movePage(1)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      CALENDAR_URL_KEYS.forEach(key => next.delete(key))
+      return next
+    })
+    movePage(1)
   }
 
   if (calendarQuery.isPending || calendarQuery.isFetching) {
@@ -121,7 +152,14 @@ function SavedCalendarForSource({ runId, branchId, t }: {
 
   const seasons = savedCalendarSeasonsNewestFirst(calendar)
   const weeks = savedCalendarWeeks(calendar, season)
-  const found = filterSavedCalendarEvents(calendar, season, week, status, search)
+  const invalidSeason = season !== 'all' && !seasons.includes(season)
+  const invalidWeek = week !== 'all' && (
+    !/^[1-9][0-9]*$/.test(week) || !Number.isSafeInteger(Number(week)) ||
+    String(Number(week)) !== week || !weeks.includes(Number(week))
+  )
+  const invalidStatus = status !== 'all' && !statusNames.includes(status)
+  const invalidFilters = invalidSeason || invalidWeek || invalidStatus || CALENDAR_URL_KEYS.some(key => activeParams.getAll(key).length > 1)
+  const found = invalidFilters ? [] : filterSavedCalendarEvents(calendar, season, week, status, search)
   const pages = Math.ceil(found.length / SAVED_CALENDAR_PAGE_SIZE)
   const current = pages ? Math.min(page, pages) : 0
   const offset = current ? (current - 1) * SAVED_CALENDAR_PAGE_SIZE : 0
@@ -143,38 +181,38 @@ function SavedCalendarForSource({ runId, branchId, t }: {
         <div><dt>{t.events}</dt><dd>{calendar.eventCount}</dd></div>
       </dl>
       {calendar.eventCount === 0 ? <p className="empty-state">{t.empty}</p> : <>
+        {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
         <div>
           <label htmlFor="saved-calendar-season">{t.season}</label>
-          <select id="saved-calendar-season" value={season} onChange={e => {
-            setSeason(e.target.value); setWeek('all'); movePage(1)
-          }}>
+          <select id="saved-calendar-season" value={season} onChange={e =>
+            setCalendarFilter(CALENDAR_URL_FILTERS.season, e.target.value)}>
+            {invalidSeason ? <option value={season}>{t.unknownFilter}: {season}</option> : null}
             <option value="all">{t.allSeasons}</option>
             {seasons.map(value => <option key={value} value={value}>{value}</option>)}
           </select>
         </div>
         <div>
           <label htmlFor="saved-calendar-week">{t.week}</label>
-          <select id="saved-calendar-week" value={week} onChange={e => {
-            setWeek(e.target.value); movePage(1)
-          }}>
+          <select id="saved-calendar-week" value={week} onChange={e =>
+            setCalendarFilter(CALENDAR_URL_FILTERS.week, e.target.value)}>
+            {invalidWeek ? <option value={week}>{t.unknownFilter}: {week}</option> : null}
             <option value="all">{t.allWeeks}</option>
             {weeks.map(value => <option key={value} value={String(value)}>W{value}</option>)}
           </select>
         </div>
         <div>
           <label htmlFor="saved-calendar-status">{t.status}</label>
-          <select id="saved-calendar-status" value={status} onChange={e => {
-            setStatus(e.target.value as SavedCalendarStatus); movePage(1)
-          }}>
+          <select id="saved-calendar-status" value={status} onChange={e =>
+            setCalendarFilter(CALENDAR_URL_FILTERS.status, e.target.value)}>
+            {invalidStatus ? <option value={status}>{t.unknownFilter}: {status}</option> : null}
             <option value="all">{t.allStatuses}</option>
             {statusNames.map(value => <option key={value} value={value}>{t[value]}</option>)}
           </select>
         </div>
         <div>
           <label htmlFor="saved-calendar-search">{t.search}</label>
-          <input id="saved-calendar-search" type="search" value={search} onChange={e => {
-            setSearch(e.target.value); movePage(1)
-          }} />
+          <input id="saved-calendar-search" type="search" value={search} onChange={e =>
+            setCalendarFilter(CALENDAR_URL_FILTERS.search, e.target.value, '', true)} />
           <button type="button" onClick={reset}>{t.clear}</button>
         </div>
 
@@ -182,7 +220,7 @@ function SavedCalendarForSource({ runId, branchId, t }: {
           <div className="table-wrap">
             <table aria-label={t.list}>
               <thead><tr>
-                <th scope="col">{t.season}</th><th scope="col">{t.week}</th>
+                <th scope="col">{t.season}</th><th scope="col">{t.span}</th>
                 <th scope="col">{t.event}</th><th scope="col">{t.location}</th>
                 <th scope="col">{t.category}</th><th scope="col">{t.tour}</th>
                 <th scope="col">{t.status}</th><th scope="col">{t.yearWeek}</th>
@@ -190,7 +228,7 @@ function SavedCalendarForSource({ runId, branchId, t }: {
               <tbody>{visible.map(event => (
                 <tr key={event.event_id}>
                   <td>{String(event.season)}</td>
-                  <td>W{event.season_week}</td>
+                  <td>W{event.start_season_week}{event.end_season_week !== event.start_season_week ? `–W${event.end_season_week}` : ''}</td>
                   <td><Link to={viewerPlannedEventPath(runId, event.event_id)}>
                     {event.event_name || event.event_id}
                   </Link></td>
@@ -235,6 +273,20 @@ export function ViewerTourCalendarPage(): JSX.Element {
   const t = copyFor(language)
   const context = useViewerOfficialRunContext(runId)
   const branchId = savedCalendarViewerBranch(context.data, runId)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sourceKey = branchId && !context.isPending && !context.isFetching && !context.isError
+    ? JSON.stringify([runId, branchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged) {
+      const next = new URLSearchParams(searchParams)
+      CALENDAR_URL_KEYS.forEach(key => next.delete(key))
+      if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }
+    previousSource.current = sourceKey
+  }, [sourceKey, sourceChanged, searchParams, setSearchParams])
 
   return (
     <ViewerShellPage title={t.title} description={t.description}>
@@ -249,7 +301,7 @@ export function ViewerTourCalendarPage(): JSX.Element {
           !branchId ? <div role="alert"><p className="error">{t.contextMismatch}</p>
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
           <SavedCalendarForSource key={JSON.stringify([runId, branchId])}
-            runId={runId} branchId={branchId} t={t} />
+            runId={runId} branchId={branchId} t={t} ignoreUrlFilters={sourceChanged} />
         }
       </article>
     </ViewerShellPage>

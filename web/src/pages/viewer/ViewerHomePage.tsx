@@ -12,6 +12,8 @@ import { ViewerRunSelector } from '../../components/ViewerRunSelector'
 import { useViewerContext } from '../../viewer/ViewerContext'
 import { useActiveViewerRunId } from '../../viewer/useActiveViewerRunId'
 import { useActiveViewerProductRunId } from '../../viewer/useActiveViewerProductRunId'
+import { currentRankingViewerBranch } from './rankings/currentOfficialRanking'
+import { verifiedHomeSources } from './viewerHomePublicSources'
 import {
   buildViewerHomeActiveRunLinks,
   buildViewerHomePrimaryHubLinks,
@@ -47,42 +49,55 @@ export function ViewerHomePage(): JSX.Element {
     queryKey: ['viewer-home-official-context', normalizedActiveProductRunId],
     queryFn: () => getViewerOfficialRunContext(normalizedActiveProductRunId),
     enabled: queryEnabled,
-    retry: false
+    retry: false,
+    refetchOnWindowFocus: true,
   })
+  const branchId = currentRankingViewerBranch(contextQuery.data, normalizedActiveProductRunId)
+  const sourceReady = Boolean(queryEnabled && branchId && !contextQuery.isPending &&
+    !contextQuery.isFetching && !contextQuery.isError)
+
+  // Bind all public GETs to the selected Run and authenticated Saved Branch.
+  // Never render a cached or delayed prior-Branch response during a switch.
   const tournamentsQuery = useQuery({
-    queryKey: ['viewer-home-tournament-history', normalizedActiveProductRunId],
+    queryKey: ['viewer-home-tournament-history', normalizedActiveProductRunId, branchId],
     queryFn: () => getViewerTournamentHistory(normalizedActiveProductRunId),
-    enabled: queryEnabled,
-    retry: false
+    enabled: sourceReady, retry: false, refetchOnWindowFocus: false,
   })
   const rankingsQuery = useQuery({
-    queryKey: ['viewer-home-ranking-history', normalizedActiveProductRunId],
+    queryKey: ['viewer-home-ranking-history', normalizedActiveProductRunId, branchId],
     queryFn: () => listViewerOfficialRankingHistory(normalizedActiveProductRunId),
-    enabled: queryEnabled,
-    retry: false
+    enabled: sourceReady, retry: false, refetchOnWindowFocus: false,
   })
   const raceQuery = useQuery({
-    queryKey: ['viewer-home-finals-race', normalizedActiveProductRunId],
+    queryKey: ['viewer-home-finals-race', normalizedActiveProductRunId, branchId],
     queryFn: () => getViewerFinalsRace(normalizedActiveProductRunId),
-    enabled: queryEnabled,
-    retry: false
+    enabled: sourceReady, retry: false, refetchOnWindowFocus: false,
   })
+  const sourceQueries = [tournamentsQuery, rankingsQuery, raceQuery]
+  const isActiveSummaryLoading = queryEnabled && (
+    contextQuery.isPending || contextQuery.isFetching ||
+    (sourceReady && sourceQueries.some(q => q.isPending || q.isFetching))
+  )
+  const isActiveSummaryUnavailable = queryEnabled && (
+    contextQuery.isError || (sourceReady && sourceQueries.some(q => q.isError))
+  )
+  const isActiveSummaryContextInvalid = queryEnabled && !isActiveSummaryLoading &&
+    !isActiveSummaryUnavailable && !branchId
+  const verified = sourceReady && !isActiveSummaryLoading && !isActiveSummaryUnavailable
+    ? verifiedHomeSources(
+      tournamentsQuery.data, rankingsQuery.data, raceQuery.data,
+      normalizedActiveProductRunId, branchId ?? '',
+    ) : null
+  const canRenderActiveRunData = Boolean(verified)
+  const isActiveSummaryInvalid = sourceReady && !isActiveSummaryLoading &&
+    !isActiveSummaryUnavailable && !verified
 
-  const activeQueries = [contextQuery, tournamentsQuery, rankingsQuery, raceQuery]
-  const isActiveSummaryLoading = queryEnabled && activeQueries.some((query) => query.isLoading)
-  const isActiveSummaryUnavailable = queryEnabled && activeQueries.some((query) => query.isError)
-  const canRenderActiveRunData = queryEnabled && !isActiveSummaryLoading && !isActiveSummaryUnavailable
-
-  const completedTournaments = (tournamentsQuery.data?.tournaments ?? []).filter((event) => event.result_published)
-  const latestCompletedTournament = completedTournaments.length > 0 ? completedTournaments[completedTournaments.length - 1] : null
-  const rankingPublications = rankingsQuery.data?.publications ?? []
-  const latestRankingPublication = rankingPublications.length > 0 ? rankingPublications[rankingPublications.length - 1] : null
-  const latestRacePublication =
-    raceQuery.data?.latest_target_season_index == null
-      ? null
-      : raceQuery.data.publications.find(
-          (publication) => publication.target_season_index === raceQuery.data?.latest_target_season_index
-        ) ?? null
+  // These legacy W61 projections are publications, not live predictions.
+  const completedTournaments = verified?.publishedTournaments ?? []
+  const latestCompletedTournament = verified?.latestPublishedTournament ?? null
+  const latestRankingPublication = verified?.latestRankingPublication ?? null
+  const latestRacePublication = verified?.latestRacePublication ?? null
+  const unavailablePreview = hasProductRunId && !canRenderActiveRunData
 
   const finalsStatus = latestRacePublication?.selection_published
     ? latestRacePublication.finals_event_id
@@ -120,6 +135,9 @@ export function ViewerHomePage(): JSX.Element {
               {isActiveSummaryUnavailable ? (
                 <ViewerEmptyState>Active run summary is temporarily unavailable. Try opening the run pages below for more detail.</ViewerEmptyState>
               ) : null}
+              {isActiveSummaryContextInvalid || isActiveSummaryInvalid ? (
+                <ViewerEmptyState>Saved Viewer Branch or public histories do not agree. The Home summary is withheld; open the detailed pages to check the source.</ViewerEmptyState>
+              ) : null}
               {canRenderActiveRunData ? (
                 <>
                   <p className="status">
@@ -130,11 +148,11 @@ export function ViewerHomePage(): JSX.Element {
                     ariaLabel="Active run summary fields"
                     items={[
                       { label: 'Product Run', value: contextQuery.data?.product_run_display_name ?? normalizedActiveProductRunId },
-                      { label: 'Viewer Branch', value: tournamentsQuery.data?.viewer_branch_id ?? rankingsQuery.data?.viewer_branch_id ?? raceQuery.data?.viewer_branch_id ?? 'Not available yet' },
+                      { label: 'Viewer Branch', value: branchId ?? 'Not available yet' },
                       { label: 'Current season', value: contextQuery.data?.current_season ?? 'Not available yet' },
                       { label: 'Current week', value: contextQuery.data?.current_week ?? 'Not available yet' },
-                      { label: 'Completed tournaments', value: tournamentsQuery.data?.published_result_count ?? 0 },
-                      { label: 'Ranking publications', value: rankingsQuery.data?.publication_count ?? 0 },
+                      { label: 'Completed tournaments', value: verified?.publishedTournaments.length ?? 0 },
+                      { label: 'Ranking publications', value: verified?.rankingPublicationCount ?? 0 },
                       { label: 'Finals', value: finalsStatus }
                     ]}
                   />
@@ -171,7 +189,7 @@ export function ViewerHomePage(): JSX.Element {
               </Link>
             </>
           ) : (
-            <ViewerEmptyState>No completed canonical Tournament Result is published for this run yet.</ViewerEmptyState>
+            <ViewerEmptyState>{unavailablePreview ? 'Tournament preview unavailable until the Saved sources are verified.' : 'No completed canonical Tournament Result is published for this run yet.'}</ViewerEmptyState>
           )}
         </ViewerSectionCard>
 
@@ -192,10 +210,10 @@ export function ViewerHomePage(): JSX.Element {
               Latest Official Ranking: Season {latestRankingPublication.season_index} W{latestRankingPublication.week}
               {' · '}ordinal {latestRankingPublication.week_ordinal}
               {' · '}{latestRankingPublication.row_count} players
-              {' · '}{rankingsQuery.data?.publication_count ?? 0} publications
+              {' · '}{verified?.rankingPublicationCount ?? 0} publications
             </p>
           ) : (
-            <ViewerEmptyState>No canonical Official Ranking publication is available for this run yet.</ViewerEmptyState>
+            <ViewerEmptyState>{unavailablePreview ? 'Ranking preview unavailable until the Saved sources are verified.' : 'No canonical Official Ranking publication is available for this run yet.'}</ViewerEmptyState>
           )}
           {hasProductRunId ? (
             <Link className="viewer-active-run-link" to={viewerRankingsPath(normalizedActiveProductRunId)}>
@@ -213,7 +231,7 @@ export function ViewerHomePage(): JSX.Element {
               {' · '}{latestRacePublication.selection_published ? 'selection published' : 'selection pending'}
             </p>
           ) : (
-            <ViewerEmptyState>No canonical World Tour Finals Race publication is available for this run yet.</ViewerEmptyState>
+            <ViewerEmptyState>{unavailablePreview ? 'Finals Race preview unavailable until the Saved sources are verified.' : 'No canonical World Tour Finals Race publication is available for this run yet.'}</ViewerEmptyState>
           )}
           {hasProductRunId ? (
             <>
@@ -257,10 +275,10 @@ export function ViewerHomePage(): JSX.Element {
         <ViewerSectionCard kicker="Canonical history" title="History">
           {canRenderActiveRunData ? (
             <p>
-              {completedTournaments.length} completed tournaments · {rankingsQuery.data?.publication_count ?? 0} ranking publications · {raceQuery.data?.publications.length ?? 0} Finals Race publications.
+              {completedTournaments.length} completed tournaments · {verified?.rankingPublicationCount ?? 0} ranking publications · {verified?.racePublicationCount ?? 0} Finals Race publications.
             </p>
           ) : (
-            <ViewerEmptyState>No canonical history summary is available for this run yet.</ViewerEmptyState>
+            <ViewerEmptyState>{unavailablePreview ? 'History preview unavailable until the Saved sources are verified.' : 'No canonical history summary is available for this run yet.'}</ViewerEmptyState>
           )}
           {hasProductRunId ? <Link className="viewer-active-run-link" to={viewerHistoryPath(normalizedActiveProductRunId)}>Open active run history</Link> : null}
         </ViewerSectionCard>

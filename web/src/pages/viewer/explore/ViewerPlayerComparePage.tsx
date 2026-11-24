@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import { getRunPlayerDetail, listRunPlayers } from '../../../api/client'
+import type { RunPlayerListItem } from '../../../api/types'
 import { ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSectionCard } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
@@ -17,6 +18,19 @@ type ViewerComparisonRouteKind = 'h2h' | 'compare'
 
 const messages = {
   en: {
+    title: 'Player Comparison',
+    description: 'Read-only player comparison using existing active-run player fields only.',
+    h2hDescription: 'Read-only player attribute comparison, not an authoritative historical H2H record.',
+    noRunDescription: 'Read-only player comparison using the active Viewer run.',
+    noRun: 'No data is available for this run yet.',
+    activeRun: 'Active Viewer run', runId: 'Active run ID',
+    sampleLoading: 'Loading active run player metadata…',
+    sampleError: 'Player discovery sample is temporarily unavailable.',
+    total: 'Total player count', sampleSize: 'Discovery sample size', loadingValue: 'Loading…',
+    emptySample: 'No discovery sample is available for this run yet.',
+    sampleLabel: 'Sample active run players for comparison links',
+    playerA: 'Player A', playerB: 'Player B',
+
     inputTitle: 'Choose two players by exact ID',
     inputHelp: 'Use the original player IDs from the active Run. This compares stored player attributes, not match history or predicted odds.',
     first: 'First player ID', second: 'Second player ID', compare: 'Compare players',
@@ -28,6 +42,19 @@ const messages = {
     scope: 'These are active-Run player fields, not a historical Saved Branch H2H result.'
   },
   cs: {
+    title: 'Porovnání hráčů',
+    description: 'Čtecí porovnání hráčů pouze podle existujících atributů aktivního Runu.',
+    h2hDescription: 'Čtecí porovnání atributů hráčů, nikoliv autoritativní historie vzájemných zápasů.',
+    noRunDescription: 'Čtecí porovnání hráčů z aktivního Viewer Runu.',
+    noRun: 'Pro tento Run zatím nejsou dostupná data.',
+    activeRun: 'Aktivní Viewer Run', runId: 'ID aktivního Runu',
+    sampleLoading: 'Načítám údaje hráčů aktivního Runu…',
+    sampleError: 'Ukázkový výběr hráčů je dočasně nedostupný.',
+    total: 'Celkový počet hráčů', sampleSize: 'Velikost ukázkového výběru', loadingValue: 'Načítání…',
+    emptySample: 'Pro tento Run zatím není dostupný ukázkový výběr hráčů.',
+    sampleLabel: 'Ukázkový výběr hráčů aktivního Runu pro odkazy porovnání',
+    playerA: 'Hráč A', playerB: 'Hráč B',
+
     inputTitle: 'Vybrat dva hráče podle přesného ID',
     inputHelp: 'Zadej původní ID hráčů z aktivního Runu. Porovnáváme uložené atributy, nikoliv historii vzájemných zápasů nebo kurzy.',
     first: 'ID prvního hráče', second: 'ID druhého hráče', compare: 'Porovnat hráče',
@@ -38,6 +65,34 @@ const messages = {
     pending: 'Pro nové porovnání potvrď změněná ID hráčů.',
     scope: 'Jde o atributy aktivního Runu, nikoliv o historické vzájemné zápasy ze Saved Branch.'
   }
+}
+
+// The discovery endpoint is independent of the exact player reads. Validate
+// the returned source and every row before passing it to the generic sample
+// renderer (which also accepts other, richer Viewer payloads).
+function verifiedDiscoverySample(value: unknown, runId: string): { total: number; players: RunPlayerListItem[] } | null {
+  if (!value || typeof value !== 'object') return null
+  const sample = value as Record<string, unknown>
+  const total = sample.total
+  if (sample.run_id !== runId || typeof total !== 'number' ||
+      !Number.isSafeInteger(total) || total < 0 || sample.limit !== 50 || sample.offset !== 0 ||
+      !Array.isArray(sample.players) || sample.players.length > 50 || sample.players.length > total) return null
+  const ids = new Set<string>()
+  const players: RunPlayerListItem[] = []
+  for (const row of sample.players) {
+    if (!row || typeof row !== 'object' || typeof row.player_id !== 'string' ||
+        !row.player_id.trim() || ids.has(row.player_id)) return null
+    const player = verifiedComparisonPlayerDetail(row, row.player_id)
+    if (!player) return null
+    ids.add(player.player_id)
+    // Only the legacy RunPlayerListItem fields consumed by the renderer.
+    // Do not propagate extra fields such as current_ovr or identity_source
+    // from a malformed response for a different read model.
+    players.push({
+      ...player, current_ovr: undefined, status: undefined, identity_source: undefined
+    } as RunPlayerListItem)
+  }
+  return { total, players }
 }
 
 function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerComparisonRouteKind }): JSX.Element {
@@ -74,14 +129,14 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
     enabled: Boolean(activeRunId), retry: false
   })
 
-  const playerA = enabled && selectionSynced && left.isSuccess
+  const playerA = enabled && selectionSynced && left.isSuccess && !left.isFetching
     ? verifiedComparisonPlayerDetail(left.data, params.playerAParam) : null
-  const playerB = enabled && selectionSynced && right.isSuccess
+  const playerB = enabled && selectionSynced && right.isSuccess && !right.isFetching
     ? verifiedComparisonPlayerDetail(right.data, params.playerBParam) : null
   const invalidEvidence = enabled && selectionSynced &&
-    ((left.isSuccess && !playerA) || (right.isSuccess && !playerB))
+    ((left.isSuccess && !left.isFetching && !playerA) || (right.isSuccess && !right.isFetching && !playerB))
   const detailError = enabled && selectionSynced && (left.isError || right.isError)
-  const detailLoading = enabled && selectionSynced && (left.isPending || right.isPending)
+  const detailLoading = enabled && selectionSynced && (left.isPending || right.isPending || left.isFetching || right.isFetching)
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -106,20 +161,25 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
   }
 
   if (!activeRunId) {
-    return <ViewerShellPage title="Player Comparison" description="Read-only player comparison using the active Viewer run.">
-      <ViewerEmptyState>No data is available for this run yet.</ViewerEmptyState>
+    return <ViewerShellPage title={l.title} description={l.noRunDescription}>
+      <ViewerEmptyState>{l.noRun}</ViewerEmptyState>
     </ViewerShellPage>
   }
-  const players = playersQuery.data?.players ?? []
+  const sample = playersQuery.isSuccess && !playersQuery.isFetching
+    ? verifiedDiscoverySample(playersQuery.data, activeRunId) : null
+  const players = sample?.players ?? []
+  const sampleLoading = playersQuery.isPending || playersQuery.isFetching
+  const sampleError = playersQuery.isError || (playersQuery.isSuccess && !sampleLoading && !sample)
+  const complete = Boolean(playerA && playerB && !detailLoading && !detailError && !invalidEvidence)
   return (
     <ViewerShellPage
-      title="Player Comparison"
+      title={l.title}
       description={routeKind === 'h2h'
-        ? 'Read-only player attribute comparison, not an authoritative historical H2H record.'
-        : 'Read-only player comparison using existing active-run player fields only.'}
+        ? l.h2hDescription
+        : l.description}
     >
       <ViewerLandingGrid>
-        <ViewerSectionCard title={l.inputTitle} kicker="Active Viewer run" variant="hero">
+        <ViewerSectionCard title={l.inputTitle} kicker={l.activeRun} variant="hero">
           <p className="status">{l.inputHelp}</p>
           <form onSubmit={submit} className="viewer-comparison-select">
             <label htmlFor="viewer-comparison-a">{l.first}</label>
@@ -136,15 +196,15 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
             </div>
           </form>
           <p className="status">{l.scope}</p>
-          {playersQuery.isLoading ? <p className="status">Loading active run player metadata…</p> : null}
-          {playersQuery.isError ? <ViewerEmptyState>Player discovery sample is temporarily unavailable.</ViewerEmptyState> : null}
+          {sampleLoading ? <p className="status">{l.sampleLoading}</p> : null}
+          {sampleError ? <ViewerEmptyState>{l.sampleError}</ViewerEmptyState> : null}
           <ViewerMetadataList items={[
-            {label: 'Active run ID', value: activeRunId},
-            {label: 'Total player count', value: playersQuery.isLoading ? 'Loading…' : playersQuery.data?.total ?? '—'},
-            {label: 'Discovery sample size', value: playersQuery.isLoading ? 'Loading…' : players.length}
+            {label: l.runId, value: activeRunId},
+            {label: l.total, value: sampleLoading ? l.loadingValue : sample?.total ?? '—'},
+            {label: l.sampleSize, value: sampleLoading ? l.loadingValue : sample ? players.length : '—'}
           ]} />
-          {!playersQuery.isLoading && !playersQuery.isError && players.length === 0
-            ? <ViewerEmptyState>No discovery sample is available for this run yet.</ViewerEmptyState> : null}
+          {sample && players.length === 0
+            ? <ViewerEmptyState>{l.emptySample}</ViewerEmptyState> : null}
           {!selectionSynced ? <p role="status">{l.pending}</p> : null}
           {params.hasPlayerParams && !requestedValid && selectionSynced
             ? <p role="alert">{l.same}</p> : null}
@@ -155,14 +215,14 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
           {!params.hasPlayerParams && selectionSynced ? (
             <>
               <ViewerEmptyState>{l.incomplete}</ViewerEmptyState>
-              <ViewerSamplePlayersList players={players} label="Sample active run players for comparison links" runId={activeRunId} />
+              {sample ? <ViewerSamplePlayersList players={players} label={l.sampleLabel} runId={activeRunId} /> : null}
             </>
           ) : null}
         </ViewerSectionCard>
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player A" player={playerA} />
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title="Player B" player={playerB} />
-        <ViewerComparisonSummary playerA={playerA} playerB={playerB} />
-        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={[playerA, playerB].filter((p): p is NonNullable<typeof p> => p !== null)} />
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerA} player={complete ? playerA : null} />
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerB} player={complete ? playerB : null} />
+        <ViewerComparisonSummary playerA={complete ? playerA : null} playerB={complete ? playerB : null} />
+        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={complete ? [playerA, playerB].filter((p): p is NonNullable<typeof p> => p !== null) : []} />
       </ViewerLandingGrid>
     </ViewerShellPage>
   )

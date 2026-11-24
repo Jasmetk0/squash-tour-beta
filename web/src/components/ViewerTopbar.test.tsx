@@ -1,5 +1,5 @@
 import { QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
@@ -108,6 +108,67 @@ describe('ViewerTopbar', () => {
     await user.click(within(nav).getByRole('button', { name: 'Open Viewer search' }))
 
     expect(screen.getByLabelText('Current location')).toHaveTextContent('/viewer/search?q=Ali%20Farag')
+  })
+
+  it('focuses the same Viewer navbar search on Ctrl+K, then submits through the existing search route', async () => {
+    const user = userEvent.setup()
+    renderViewerTopbarAt('/viewer/tour/current-week')
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const input = within(nav).getByRole('textbox', { name: 'Search players, countries, tournaments' })
+    expect(input).toHaveAttribute('aria-keyshortcuts', 'Control+K')
+    expect(input).not.toHaveFocus()
+
+    fireEvent.keyDown(document, { key: 'k', ctrlKey: true, cancelable: true })
+    expect(input).toHaveFocus()
+    expect(within(nav).getAllByRole('search')).toHaveLength(1)
+
+    await user.type(input, 'Ali Farag')
+    await user.keyboard('{Enter}')
+    expect(screen.getByLabelText('Current location')).toHaveTextContent('/viewer/search?q=Ali%20Farag')
+    expectNoForbiddenViewerActions(within(nav))
+  })
+
+  it('does not intercept plain K, Ctrl+Shift+K or Alt+Ctrl+K', async () => {
+    renderViewerTopbarAt('/viewer')
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const search = within(nav).getByRole('textbox', { name: 'Search players, countries, tournaments' })
+    const submit = within(nav).getByRole('button', { name: 'Open Viewer search' })
+    submit.focus()
+
+    fireEvent.keyDown(document, { key: 'k', cancelable: true })
+    expect(submit).toHaveFocus()
+    fireEvent.keyDown(document, { key: 'K', ctrlKey: true, shiftKey: true, cancelable: true })
+    expect(submit).toHaveFocus()
+    fireEvent.keyDown(document, { key: 'k', ctrlKey: true, altKey: true, cancelable: true })
+    expect(submit).toHaveFocus()
+    expect(search).not.toHaveFocus()
+    expect(screen.getByLabelText('Current location')).toHaveTextContent('/viewer')
+  })
+
+  it('does not steal focus on an already handled, composing or repeating Ctrl+K event', async () => {
+    renderViewerTopbarAt('/viewer')
+    const nav = await screen.findByTestId('viewer-primary-nav')
+    const search = within(nav).getByRole('textbox', { name: 'Search players, countries, tournaments' })
+    const submit = within(nav).getByRole('button', { name: 'Open Viewer search' })
+    submit.focus()
+
+    const consumed = new KeyboardEvent('keydown', {
+      key: 'k', ctrlKey: true, bubbles: true, cancelable: true,
+    })
+    consumed.preventDefault()
+    fireEvent(document, consumed)
+    expect(submit).toHaveFocus()
+    expect(fireEvent.keyDown(document, {
+      key: 'k', ctrlKey: true, isComposing: true, cancelable: true,
+    })).toBe(true)
+    expect(submit).toHaveFocus()
+    expect(fireEvent.keyDown(document, {
+      key: 'k', ctrlKey: true, repeat: true, cancelable: true,
+    })).toBe(true)
+    expect(submit).toHaveFocus()
+    expect(search).not.toHaveFocus()
+    expect(fireEvent.keyDown(document, { key: 'k', ctrlKey: true, cancelable: true })).toBe(false)
+    expect(search).toHaveFocus()
   })
 
   it('marks only the exact dropdown route active while keeping active state structural and neutral-style compatible', async () => {

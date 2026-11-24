@@ -77,7 +77,7 @@ describe('ViewerH2HSubroutePage canonical people boundary', () => {
   it('uses only Product Run canonical metadata including player samples', async () => {
     setViewerActiveProductRunId('product run')
 
-    renderWithViewerProviders(<ViewerH2HSubroutePage kind="rivalries" />)
+    renderWithViewerProviders(<ViewerH2HSubroutePage kind="most-played" />)
 
     expect(await screen.findByText('branch-h2h')).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledWith('product run')

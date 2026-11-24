@@ -1,9 +1,11 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { renderWithViewerProviders } from '../test/viewerTestUtils'
+import { createTestQueryClient, makeViewerProductRunRouteTestValue, renderWithViewerProviders } from '../test/viewerTestUtils'
+import { LanguageProvider } from '../i18n/LanguageContext'
+import { ViewerProductRunRouteContextProvider } from '../viewer/ViewerProductRunRouteContext'
 import { ViewerRunTournamentDetailPage, ViewerRunTournamentsPage } from './ViewerRunTournamentsPage'
 
 const api = vi.hoisted(() => ({
@@ -26,14 +28,35 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../api/client', () => api)
 
-function renderViewerTournamentRoute(route: string): void {
-  renderWithViewerProviders(
+function TestLocation(): JSX.Element {
+  const location = useLocation()
+  const navigate = useNavigate()
+  return <>
+    <output aria-label="Current URL">{location.search}</output>
+    <button type="button" onClick={() => navigate(-1)}>Browser Back</button>
+    <button type="button" onClick={() => navigate(1)}>Browser Forward</button>
+  </>
+}
+function renderViewerTournamentRoute(route: string, branch = 'branch-viewer') {
+  const client = createTestQueryClient()
+  const runId = decodeURIComponent(route.split('/')[3])
+  const context = makeViewerProductRunRouteTestValue(runId)
+  const value = {
+    ...context, officialBranchId: branch,
+    officialContext: { ...context.officialContext, product_run_id: runId, official_branch_id: branch }
+  }
+  const view = renderWithViewerProviders(
     <Routes>
-      <Route path="/viewer/runs/:runId/tournaments" element={<ViewerRunTournamentsPage />} />
-      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
+      <Route path="/viewer/runs/:runId/tournaments" element={
+        <LanguageProvider><ViewerProductRunRouteContextProvider value={value}>
+          <TestLocation /><ViewerRunTournamentsPage />
+        </ViewerProductRunRouteContextProvider></LanguageProvider>
+      } />
+      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerProductRunRouteContextProvider value={value}><ViewerRunTournamentDetailPage /></ViewerProductRunRouteContextProvider>} />
     </Routes>,
-    { route }
+    { route, queryClient: client }
   )
+  return { ...view, client }
 }
 
 function mockCanonicalTournamentData(): void {
@@ -84,7 +107,7 @@ function mockCanonicalTournamentData(): void {
       {
         event_id: 'EVENT-OLD',
         season: '2000/2001',
-        season_week: 5,
+        season_week: 3,
         event_name: 'Old Open',
         template_id: 'WT-GOLD',
         category: 'GOLD',
@@ -218,7 +241,7 @@ function mockCanonicalTournamentData(): void {
     completed_week: 3,
     champion_player_id: 'P-001',
     finalist_player_id: 'P-002',
-    qualification_winner_ids: ['P-003'],
+    qualification_winner_ids: [],
     players: [
       {
         player_id: 'P-001', draw_type: 'main', seed_number: 1, qualifier: false,
@@ -252,6 +275,7 @@ function expectNoForbiddenViewerActions(): void {
 
 describe('ViewerRunTournamentsPage', () => {
   beforeEach(() => {
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.resetAllMocks()
     mockCanonicalTournamentData()
   })
@@ -263,9 +287,132 @@ describe('ViewerRunTournamentsPage', () => {
     const list = await screen.findByRole('list', { name: 'Canonical tournament history list' })
     expect(within(list).getByText('Old Open')).toBeInTheDocument()
     expect(within(list).getByText('Canonical Open')).toBeInTheDocument()
-    expect(within(list).getByRole('link', { name: 'W5' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/5')
+    expect(within(list).getAllByRole('link', { name: 'W3' }).map(link => link.getAttribute('href')).sort()).toEqual([
+      '/viewer/runs/viewer-run-1/weeks/3?season=2000%2F2001',
+      '/viewer/runs/viewer-run-1/weeks/3?season=2027%2F2028'
+    ])
     expectNoForbiddenViewerActions()
   })
+  it('restores filters from URL, preserves unrelated parameters and does not re-fetch', async () => {
+    const user = userEvent.setup()
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments?vtSeason=2027%2F2028&vtResult=published&keep=yes')
+    expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Filter season' })).toHaveValue('2027/2028')
+    await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+    expect(await screen.findByText('Old Open')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('?keep=yes')
+    await user.type(screen.getByRole('searchbox'), 'Cairo')
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('vtQ=Cairo')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+    expectNoForbiddenViewerActions()
+  })
+
+  it.each(['vtSeason=missing', 'vtResult=other', 'vtQ=one&vtQ=two', 'vtPage=99', 'vtPage=01'])(
+    'does not fall back to another selection when the URL is invalid: %s', async query => {
+      const user = userEvent.setup()
+      renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments?' + query)
+      expect(await screen.findByRole('alert')).toHaveTextContent('invalid filters or page')
+      expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Clear filters' }))
+      expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    }
+  )
+
+  it('withholds a foreign Branch instead of displaying its tournament links', async () => {
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments', 'different-branch')
+    expect(await screen.findByRole('alert')).toHaveTextContent('belongs to another source')
+    expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument()
+  })
+
+  it('rejects malformed history counts and supports a GET-only retry', async () => {
+    const valid = await api.getViewerTournamentHistory()
+    api.getViewerTournamentHistory.mockClear()
+    api.getViewerTournamentHistory.mockResolvedValueOnce({ ...valid, published_result_count: 2 })
+    const user = userEvent.setup()
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+    expect(await screen.findByRole('alert')).toHaveTextContent('history is invalid')
+    expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry read (GET)' }))
+    expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2)
+  })
+
+  it('bounds the DOM to 25 rows and opens the exact requested second page', async () => {
+    const valid = await api.getViewerTournamentHistory()
+    const rows = Array.from({ length: 60 }, (_, i) => ({
+      ...valid.tournaments[0], event_id: 'EVENT-' + String(i).padStart(3, '0'), event_name: 'Open ' + i
+    }))
+    api.getViewerTournamentHistory.mockClear()
+    api.getViewerTournamentHistory.mockResolvedValue({ ...valid, tournament_count: rows.length, published_result_count: 0, tournaments: rows })
+    const user = userEvent.setup()
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments?vtPage=2')
+    const list = await screen.findByRole('list', { name: 'Canonical tournament history list' })
+    expect(within(list).getAllByRole('listitem')).toHaveLength(25)
+    expect(within(list).getByText('Open 25')).toBeInTheDocument()
+    expect(within(list).queryByText('Open 0')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Next' }))
+    expect(within(list).getAllByRole('listitem')).toHaveLength(10)
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('vtPage=3')
+    await user.click(screen.getByRole('button', { name: 'First' }))
+    expect(within(list).getByText('Open 0')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).not.toHaveTextContent('vtPage=')
+    const jump = screen.getByLabelText('Jump to page')
+    await user.type(jump, '4')
+    await user.click(screen.getByRole('button', { name: 'Go' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Enter a valid existing page number.')
+    expect(within(list).getByText('Open 0')).toBeInTheDocument()
+    await user.clear(jump)
+    await user.type(jump, '2')
+    await user.keyboard('{Enter}')
+    expect(within(list).getByText('Open 25')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('vtPage=2')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Last' }))
+    expect(within(list).getAllByRole('listitem')).toHaveLength(10)
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
+  it('restores exact filter selection through Back and Forward', async () => {
+    const user = userEvent.setup()
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments?keep=yes')
+    expect(await screen.findByText('Old Open')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Filter season'), '2027/2028')
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Browser Back' }))
+    expect(await screen.findByText('Old Open')).toBeInTheDocument()
+    expect(screen.getByLabelText('Current URL')).toHaveTextContent('?keep=yes')
+    await user.click(screen.getByRole('button', { name: 'Browser Forward' }))
+    expect(screen.queryByText('Old Open')).not.toBeInTheDocument()
+    expect(screen.getByLabelText('Filter season')).toHaveValue('2027/2028')
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
+  it('hides the old list during background refresh and rejects a foreign response', async () => {
+    const valid = await api.getViewerTournamentHistory()
+    api.getViewerTournamentHistory.mockClear()
+    const { client } = renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+    expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    let release!: (value: unknown) => void
+    api.getViewerTournamentHistory.mockImplementationOnce(() => new Promise(resolve => { release = resolve }))
+    const refreshing = client.invalidateQueries({ queryKey: ['viewer-run-tournament-archive', 'viewer-run-1', 'branch-viewer'] })
+    await waitFor(() => expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(2))
+    await waitFor(() => expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument())
+    await act(async () => { release({ ...valid, product_run_id: 'foreign-run' }); await refreshing })
+    expect(await screen.findByRole('alert')).toHaveTextContent('belongs to another source')
+    expect(screen.queryByText('Canonical Open')).not.toBeInTheDocument()
+  })
+
+  it('localizes controls but does not translate stored event names', async () => {
+    localStorage.setItem('squash-engine-language-v1', 'cs')
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments')
+    expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Turnaje' })).toBeInTheDocument()
+    expect(screen.getByLabelText('Filtrovat sezonu')).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Vymazat filtry' })).toBeInTheDocument()
+  })
+
 })
 
 describe('ViewerRunTournamentDetailPage canonical authorities', () => {
@@ -284,7 +431,7 @@ describe('ViewerRunTournamentDetailPage canonical authorities', () => {
     expect(api.getViewerFinalsRace).toHaveBeenCalledWith('viewer-run-1')
 
     expect(await screen.findByText('Canonical Open')).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3')
+    expect(screen.getByRole('link', { name: 'W3' })).toHaveAttribute('href', '/viewer/runs/viewer-run-1/weeks/3?season=2027%2F2028')
     expect(screen.getByText('PLATINUM')).toBeInTheDocument()
     expect(screen.getByText('WORLD TOUR')).toBeInTheDocument()
     expect(screen.getByText('WT-PLAT')).toBeInTheDocument()
@@ -306,6 +453,66 @@ describe('ViewerRunTournamentDetailPage canonical authorities', () => {
     expect(within(technicalSection as HTMLElement).getByText(/Canonical Open/i)).toBeVisible()
 
     expectNoForbiddenViewerActions()
+  })
+
+  it.each([
+    { champion_player_id: 'P-002', finalist_player_id: 'P-001' },
+    { completed_season_index: 26 },
+    { completed_week: 2 }
+  ])('withholds a result inconsistent with the saved tournament: %j', async patch => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, ...patch })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result conflicts with the Saved tournament history or calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament player results' })).not.toBeInTheDocument()
+    expect(screen.getByText('Canonical Open')).toBeInTheDocument()
+  })
+
+  it.each([
+    { players: null },
+    { matches: [null] },
+    { qualification_winner_ids: ['ABSENT'] },
+    { completed_week: 62 }
+  ])('withholds malformed public result data without crashing: %j', async patch => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, ...patch })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result contains invalid public result data.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament match results' })).not.toBeInTheDocument()
+    expect(screen.getByText('Canonical Open')).toBeInTheDocument()
+  })
+
+  it('does not show a result ahead of its history publication', async () => {
+    const history = await api.getViewerTournamentHistory()
+    api.getViewerTournamentHistory.mockResolvedValue({ ...history, published_result_count: 0,
+      tournaments: history.tournaments.map((event: { event_id: string }) => ({
+        ...event, result_published: false, champion_player_id: null, finalist_player_id: null
+      })) })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Tournament Result conflicts with the Saved tournament history or calendar.')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Tournament player results' })).not.toBeInTheDocument()
+  })
+
+  it('distinguishes a missing published result from an unpublished event', async () => {
+    api.getViewerTournamentResult.mockRejectedValue(new api.ApiError('Missing', 404))
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByText('Saved history reports a published result, but its detail is unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('Canonical Tournament Result is not available for this tournament yet.')).not.toBeInTheDocument()
+  })
+
+  it('accepts a later completion and actual group/BYE result evidence', async () => {
+    const result = await api.getViewerTournamentResult()
+    api.getViewerTournamentResult.mockResolvedValue({ ...result, completed_week: 4,
+      players: result.players.map((player: { player_id: string }, index: number) => ({
+        ...player, draw_type: 'group', group_index: 1, group_position: index + 1, reached_stage: 'group_position_' + (index + 1)
+      })),
+      matches: [{ ...result.matches[0], draw_type: 'group' }, {
+        ...result.matches[0], match_id: 'bye', loser_player_id: null, scoreline: 'BYE'
+      }]
+    })
+    renderViewerTournamentRoute('/viewer/runs/viewer-run-1/tournaments/EVENT-1')
+    expect(await screen.findByRole('list', { name: 'Canonical Tournament player results' })).toHaveTextContent('group position 1')
+    expect(screen.getByRole('list', { name: 'Canonical Tournament match results' })).toHaveTextContent('BYE')
   })
 
   it('fails closed when event is absent from canonical calendar and history', async () => {

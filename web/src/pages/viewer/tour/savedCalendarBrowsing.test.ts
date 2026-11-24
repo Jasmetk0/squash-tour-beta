@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ViewerCalendarEvent, ViewerRunCalendar } from '../../../api/types'
 import {
-  filterSavedCalendarEvents, parseSavedCalendarPage, savedCalendarSeasonsNewestFirst,
+  filterSavedCalendarEvents, parseSavedCalendarPage, savedCalendarEventCoversWeek, savedCalendarSeasonsNewestFirst,
   savedCalendarViewerBranch, savedCalendarWeeks, verifiedSavedSeasonCalendar
 } from './savedCalendarBrowsing'
 
@@ -99,6 +99,44 @@ describe('Saved Calendar V1 viewer source and filter contract', () => {
       .toEqual(['C'])
     expect(filterSavedCalendarEvents(result, '2005/06', '9', 'completed', '')).toEqual([])
     expect(source.seasons.map(x => String(x.season))).toEqual(['2004/05', '2005/06'])
+  })
+
+  it('uses a single bounded inclusive week predicate for both calendar surfaces', () => {
+    const multi = { ...event('multi', '2005/06', 60),
+      start_season_week: 60, end_season_week: 63, duration_in_season_weeks: 4 }
+    expect(savedCalendarEventCoversWeek(multi, 60)).toBe(true)
+    expect(savedCalendarEventCoversWeek(multi, 61)).toBe(true)
+    for (const invalid of [0, 59, 60.5, 62, 63, Infinity, NaN])
+      expect(savedCalendarEventCoversWeek(multi, invalid)).toBe(false)
+  })
+
+  it('includes every covered legacy week without inferring events in another season', () => {
+    const multi = { ...event('multi', '2005/06', 59),
+      start_season_week: 59, end_season_week: 63, duration_in_season_weeks: 5 }
+    const next = event('next', '2006/07', 1)
+    const source = verified(calendar([multi, next]))
+    expect(source).not.toBeNull()
+    if (!source) return
+    expect(savedCalendarWeeks(source, '2005/06')).toEqual([59, 60, 61])
+    expect(savedCalendarWeeks(source, '2006/07')).toEqual([1])
+    for (const week of ['59', '60', '61'])
+      expect(filterSavedCalendarEvents(source, '2005/06', week, 'all', '').map(x => x.event_id)).toEqual(['multi'])
+    for (const week of ['58', '62', '060', '1'])
+      expect(filterSavedCalendarEvents(source, '2005/06', week, 'all', '')).toEqual([])
+    expect(filterSavedCalendarEvents(source, 'all', '1', 'all', '').map(x => x.event_id)).toEqual(['next'])
+  })
+
+  it('rejects invalid draw counts and malformed country or region according to the public schema', () => {
+    const original = event('E1')
+    for (const patch of [
+      { host_country: 'CZ' }, { host_country: 'CZECH' }, { region: null },
+      { main_draw_size: 129 }, { main_draw_size: -1 }, { qualification_draw_size: -1 },
+      { seeds_count: -1 }, { qualifier_spots: 1.5 }, { wild_cards: -1 }, { byes: -1 },
+    ]) {
+      expect(verified(calendar([{ ...original, ...patch } as ViewerCalendarEvent]))).toBeNull()
+    }
+    expect(verified(calendar([{ ...original, region: '', main_draw_size: 128 }]))).not.toBeNull()
+    expect(verified(calendar([{ ...original, main_draw_size: 0 }]))).not.toBeNull()
   })
 
   it('only accepts safe bounded page jumps', () => {

@@ -149,4 +149,19 @@ describe('verified Saved Tournament Catalog (legacy V1)', () => {
       expect(parseTournamentPage(bad, 10)).toBeNull()
     }
   })
+
+  it('rejects malformed metadata even when both public sources repeat the same malformed value', () => {
+    for (const patch of [
+      { host_country: null }, { host_city: 123 }, { region: null },
+      { tour_level: 'unknown' }, { main_draw_size: 129 }, { qualification_draw_size: -1 },
+      { seeds_count: -1 }, { qualifier_spots: 1.5 }, { wild_cards: -1 }, { byes: null },
+    ]) {
+      const invalid = { ...event('malformed'), ...patch } as unknown as ViewerCalendarEvent
+      const { calendar, history } = source([invalid])
+      expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')).toBeNull()
+    }
+    const nullable = source([{ ...event('valid'), host_city: null, tour_level: null }])
+    expect(verifiedTournamentCatalog(nullable.calendar, nullable.history, 'run a', 'branch a')).not.toBeNull()
+  })
+
 })

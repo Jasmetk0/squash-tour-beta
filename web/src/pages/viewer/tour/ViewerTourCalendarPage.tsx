@@ -37,6 +37,7 @@ const labels = {
   season: ['Sezona', 'Season'],
   allSeasons: ['Všechny sezony', 'All seasons'],
   week: ['Týden', 'Week'],
+  span: ['Rozsah turnaje', 'Tournament weeks'],
   allWeeks: ['Všechny týdny', 'All weeks'],
   status: ['Stav v kalendáři', 'Calendar status'],
   allStatuses: ['Všechny stavy', 'All statuses'],
@@ -219,7 +220,7 @@ function SavedCalendarForSource({ runId, branchId, t, ignoreUrlFilters }: {
           <div className="table-wrap">
             <table aria-label={t.list}>
               <thead><tr>
-                <th scope="col">{t.season}</th><th scope="col">{t.week}</th>
+                <th scope="col">{t.season}</th><th scope="col">{t.span}</th>
                 <th scope="col">{t.event}</th><th scope="col">{t.location}</th>
                 <th scope="col">{t.category}</th><th scope="col">{t.tour}</th>
                 <th scope="col">{t.status}</th><th scope="col">{t.yearWeek}</th>
@@ -227,7 +228,7 @@ function SavedCalendarForSource({ runId, branchId, t, ignoreUrlFilters }: {
               <tbody>{visible.map(event => (
                 <tr key={event.event_id}>
                   <td>{String(event.season)}</td>
-                  <td>W{event.season_week}</td>
+                  <td>W{event.start_season_week}{event.end_season_week !== event.start_season_week ? `–W${event.end_season_week}` : ''}</td>
                   <td><Link to={viewerPlannedEventPath(runId, event.event_id)}>
                     {event.event_name || event.event_id}
                   </Link></td>

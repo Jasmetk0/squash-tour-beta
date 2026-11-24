@@ -921,6 +921,24 @@ def read_payload(dbapi_connection, run_id, stored, *, on_value_node=None, state=
     return text
 
 
+def forget_snapshot_text(dbapi_connection, run_id, stored, *, state=None):
+    """Drop the snapshot cache's materialized text of one stored v2 envelope.
+
+    The verified nodes stay cached, so a later read of the same row in the same
+    snapshot re-assembles the text without fetching or re-hashing them again.
+    Returns True when a text was dropped.
+    """
+    cache = snapshot_cache(dbapi_connection, state)
+    if cache is None or type(stored) is not str or not stored.startswith(ENVELOPE_PREFIX):
+        return False
+    root, chars = parse_envelope(stored, run_id=run_id)
+    text = cache.texts.pop((run_id, root, chars), None)
+    if text is None:
+        return False
+    cache.chars -= len(text)
+    return True
+
+
 class TextDigestIndex:
     """Bounded process memo: (Run, root, chars) -> SHA-256 of the materialized text.
 

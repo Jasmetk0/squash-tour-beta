@@ -81,3 +81,34 @@ def test_save_reuses_v2_digests_and_rejects_a_damaged_historical_node(tmp_path, 
         # Independent readers also fail closed on the damaged history.
         code, _ = _request("GET", tour_url(server))
         assert code != 200
+
+
+def test_warm_tour_reads_do_not_materialize_every_historical_payload(tmp_path, monkeypatch):
+    from sqlalchemy import event
+
+    monkeypatch.setenv("BETA_ENGINE_NEW_RUN_SAVED_STORAGE", "saved_v2")
+    st.TEXT_DIGESTS.clear()
+    database = tmp_path / "deferred-lineage.db"
+    with ApiServer(database_url=f"sqlite:///{database}") as server:
+        setup(server, RunCalendar(52, 35, 2030, 3))
+        for name in ("deferred-1", "deferred-2"):
+            execute(server, command(inspect(server), "transition", name=name))
+            save_tour(server)
+        first = inspect(server)
+        revisions = _stored(database, "SELECT COUNT(*) FROM branch_saved_revisions")[0][0]
+        engine = server.app.state.runtime.repository._engine
+        reads = []
+
+        def count(_connection, _cursor, statement, _params, _context, _many):
+            if "saved_v2_payload(" in statement and "branch_saved_revisions" in statement:
+                reads.append(statement)
+
+        event.listen(engine, "before_cursor_execute", count)
+        try:
+            assert inspect(server) == first
+        finally:
+            event.remove(engine, "before_cursor_execute", count)
+        # The ordinary lineage gate still authenticated every revision; it no
+        # longer loads every historical text into the ORM to do so.
+        assert revisions >= 6
+        assert len(reads) < revisions - 2, (len(reads), revisions)

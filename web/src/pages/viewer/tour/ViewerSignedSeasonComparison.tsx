@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerOfficialRunContext } from '../../../api/client'
 import { listViewerSignedSeasons, readViewerSignedSeason } from '../../../api/viewerSignedSeason'
@@ -10,6 +10,7 @@ import { viewerPlayerProfilePath } from '../../../viewer/viewerRoutes'
 import {
   verifiedSignedSeasonBranch, verifiedSignedSeasonComparison, verifiedSignedSeasonList
 } from './viewerSignedSeasonReadModel'
+import { readSignedSeasonDeepLink, writeSignedSeasonDeepLink } from './viewerSignedSeasonDeepLinks'
 
 const texts = {
   title: ['Uzavřené sezony – výsledky a srovnání', 'Signed seasons – results and comparison'],
@@ -50,7 +51,8 @@ const texts = {
   noRecords: ['Žádné potvrzené turnaje.', 'No confirmed editions.'],
   noCountries: ['Žádné země s turnajovou účastí.', 'No countries with tournament participation.'],
   noPlayers: ['Žádní hráči ve výsledcích.', 'No players with recorded results.'],
-  semantics: ['Udělené turnajové body a publikované rankingové body jsou rozdílné veličiny. Srovnání pochází z původních historických souhrnů.', 'Awarded tournament points differ from published ranking points. Comparisons use the original historical summaries.']
+  semantics: ['Udělené turnajové body a publikované rankingové body jsou rozdílné veličiny. Srovnání pochází z původních historických souhrnů.', 'Awarded tournament points differ from published ranking points. Comparisons use the original historical summaries.'],
+  invalidLink: ['Odkaz na uzavřenou sezonu je neplatný nebo patří jiné Viewer Branch. Zvol platnou sezonu a potvrď nový přehled.', 'The signed-season link is invalid or refers to another Viewer Branch. Choose an available season and submit a new report.']
 } as const
 type T = (key: keyof typeof texts) => string
 function translator(language: Language): T {
@@ -61,9 +63,20 @@ function translator(language: Language): T {
 function SignedSeasonsBody({ runId, branchId, t }: {
   runId: string; branchId: string; t: T
 }): JSX.Element {
-  const [selected, setSelected] = useState<number | null>(null)
-  const [comparison, setComparison] = useState<number | null>(null)
-  const [requested, setRequested] = useState<{ selected: number; comparison: number | null } | null>(null)
+  const [params, setParams] = useSearchParams()
+  const requestedLink = readSignedSeasonDeepLink(params, runId, branchId)
+  const [selected, setSelected] = useState<number | null>(
+    requestedLink.kind === 'selection' ? requestedLink.selected : null
+  )
+  const [comparison, setComparison] = useState<number | null>(
+    requestedLink.kind === 'selection' ? requestedLink.comparison : null
+  )
+  // Back/Forward or another in-app link must restore precisely the requested
+  // saved-season pair. Draft edits are never interpreted as a new GET request.
+  useEffect(() => {
+    setSelected(requestedLink.kind === 'selection' ? requestedLink.selected : null)
+    setComparison(requestedLink.kind === 'selection' ? requestedLink.comparison : null)
+  }, [params.toString(), runId, branchId])
   const list = useQuery({
     queryKey: ['viewer-signed-season-list', runId, branchId],
     queryFn: ({ signal }) => listViewerSignedSeasons(runId, signal),
@@ -74,10 +87,17 @@ function SignedSeasonsBody({ runId, branchId, t }: {
   const available = list.isSuccess ? verifiedSignedSeasonList(list.data, runId, branchId) : null
   const indices = available?.seasons.map(s => s.index) ?? []
   const chosen = selected ?? indices[indices.length - 1] ?? null
-  const actualRequest = requested &&
-    indices.includes(requested.selected) &&
-    (requested.comparison === null || indices.includes(requested.comparison)) ?
-      requested : null
+  const selectionSynced = requestedLink.kind === 'selection' &&
+    chosen === requestedLink.selected && comparison === requestedLink.comparison
+  const requestedAvailable = requestedLink.kind === 'selection' &&
+    requestedLink.savedHead === available?.savedHead &&
+    indices.includes(requestedLink.selected) &&
+    (requestedLink.comparison === null || indices.includes(requestedLink.comparison))
+  const actualRequest = selectionSynced && requestedAvailable &&
+    requestedLink.kind === 'selection'
+      ? { selected: requestedLink.selected, comparison: requestedLink.comparison } : null
+  const invalidDeepLink = requestedLink.kind === 'invalid' ||
+    (requestedLink.kind === 'selection' && !requestedAvailable)
 
   const reportQuery = useQuery({
     queryKey: ['viewer-signed-season-summary', runId, branchId, available?.savedHead,
@@ -91,16 +111,16 @@ function SignedSeasonsBody({ runId, branchId, t }: {
     refetchOnWindowFocus: true
   })
   // A list refetch is allowed to invalidate an old report at any time.
-  const report = available && actualRequest && reportQuery.isSuccess
+  const report = available && actualRequest && reportQuery.isSuccess && !reportQuery.isFetching
     ? verifiedSignedSeasonComparison(reportQuery.data, runId, branchId,
         available.savedHead, actualRequest.selected, actualRequest.comparison, indices)
     : null
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
-    if (chosen === null || !indices.includes(chosen) ||
+    if (!available || chosen === null || !indices.includes(chosen) ||
       (comparison !== null && (!indices.includes(comparison) || comparison === chosen))) return
-    setRequested({ selected: chosen, comparison })
+    setParams(previous => writeSignedSeasonDeepLink(previous, runId, branchId, available.savedHead, chosen, comparison))
   }
 
   if (list.isPending || list.isFetching) return <p role="status" className="status">{t('loading')}</p>
@@ -114,12 +134,12 @@ function SignedSeasonsBody({ runId, branchId, t }: {
   </div>
 
   return <>
+    {invalidDeepLink ? <p role="alert">{t('invalidLink')}</p> : null}
     <form onSubmit={submit} aria-label={t('title')}>
       <label htmlFor="signed-season-select">{t('selected')}</label>{' '}
       <select id="signed-season-select" value={chosen ?? ''} onChange={e => {
         setSelected(Number(e.target.value))
         if (comparison === Number(e.target.value)) setComparison(null)
-        setRequested(null)
       }}>
         {available.seasons.map(s =>
           <option key={s.index} value={s.index}>{s.label}</option>
@@ -128,7 +148,6 @@ function SignedSeasonsBody({ runId, branchId, t }: {
       <label htmlFor="signed-season-compare">{t('comparison')}</label>{' '}
       <select id="signed-season-compare" value={comparison ?? ''} onChange={e => {
         setComparison(e.target.value === '' ? null : Number(e.target.value))
-        setRequested(null)
       }}>
         <option value="">{t('none')}</option>
         {available.seasons.filter(s => s.index !== chosen).map(s =>
@@ -137,7 +156,7 @@ function SignedSeasonsBody({ runId, branchId, t }: {
       </select>{' '}
       <button type="submit">{t('show')}</button>
     </form>
-    {reportQuery.isPending && actualRequest ? <p role="status">{t('loading')}</p> :
+    {(reportQuery.isPending || reportQuery.isFetching) && actualRequest ? <p role="status">{t('loading')}</p> :
       reportQuery.isError && actualRequest ? <div role="alert">
         <p>{t('unavailable')}</p><button type="button" onClick={() => void reportQuery.refetch()}>{t('retry')}</button>
       </div> :

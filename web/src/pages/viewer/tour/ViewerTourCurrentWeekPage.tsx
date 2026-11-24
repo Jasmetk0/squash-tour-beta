@@ -4,62 +4,121 @@ import { Link } from 'react-router-dom'
 import { getViewerRunCalendar } from '../../../api/client'
 import { ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
+import { useLanguage } from '../../../i18n/LanguageContext'
 import { useViewerContext } from '../../../viewer/ViewerContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
+import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
 import { viewerPlannedEventPath, viewerRunsPath, viewerSeasonCalendarPath } from '../../../viewer/viewerRoutes'
+import {
+  savedCalendarSeasonKey, savedCalendarViewerBranch, verifiedSavedSeasonCalendar,
+} from './savedCalendarBrowsing'
+
+const copy = {
+  title: ['Vybraný týden', 'Current Week'],
+  description: [
+    'Události vybraného týdne z ověřeného uloženého kalendáře Viewer Branch; nejde o živé výsledky.',
+    'Selected-week events from the verified Saved Viewer Branch calendar; not live results.',
+  ],
+  selectRun: ['Nejprve vyber Product Run.', 'Select a Product Run first.'],
+  resolving: ['Ověřuji uloženou Viewer Branch…', 'Verifying the saved Viewer Branch…'],
+  contextError: ['Viewer Branch neodpovídá vybranému Runu nebo ji nelze ověřit.', 'Viewer Branch does not match the selected Run or cannot be verified.'],
+  retry: ['Načíst znovu (GET)', 'Retry read (GET)'],
+  loading: ['Načítám uložený kalendář…', 'Loading Saved calendar…'],
+  readError: ['Uložený kalendář není dostupný.', 'Saved calendar is unavailable.'],
+  invalid: ['Kalendář patří jinému Runu/Viewer Branch nebo má neplatná veřejná data. Události se nezobrazují.', 'Calendar belongs to another Run/Viewer Branch or contains invalid public data. No events are shown.'],
+  selected: ['Vybraný týden Vieweru', 'Selected Viewer week'],
+  season: ['Sezona', 'Season'],
+  run: ['Product Run', 'Product Run'],
+  branch: ['Viewer Branch', 'Viewer Branch'],
+  selectedSeason: ['Vybraná sezona', 'Selected season'],
+  selectedWeek: ['Vybraný týden', 'Selected week'],
+  empty: ['Pro tento vybraný týden nejsou v uloženém kalendáři žádné události.', 'No events are present in the Saved calendar for this selected week.'],
+  events: ['Ověřené události vybraného týdne', 'Verified selected-week events'],
+  schedule: ['Otevřít uložený kalendář Runu', 'Open Product Run schedule'],
+  runs: ['Otevřít přehled Runů', 'Open run browser'],
+} as const
 
 export function ViewerCurrentWeekPage(): JSX.Element {
   const context = useViewerContext()
-  const productRunId = useActiveViewerProductRunId()
+  const { language } = useLanguage()
+  const t = (key: keyof typeof copy): string => copy[key][language === 'cs' ? 0 : 1]
+  const runId = useActiveViewerProductRunId()?.trim() ?? ''
+  const sourceContext = useViewerOfficialRunContext(runId)
+  const branchId = savedCalendarViewerBranch(sourceContext.data, runId)
+  const contextReady = Boolean(runId && branchId &&
+    !sourceContext.isPending && !sourceContext.isFetching && !sourceContext.isError)
+
+  // The Run + Saved Viewer Branch are both part of the query identity.
+  // Never display a stale response while a new Branch is being resolved.
   const calendarQuery = useQuery({
-    queryKey: ['viewer-current-week-calendar', productRunId],
-    queryFn: () => getViewerRunCalendar(productRunId ?? ''),
-    enabled: Boolean(productRunId),
+    queryKey: ['viewer-current-week-calendar', runId, branchId],
+    queryFn: () => getViewerRunCalendar(runId),
+    enabled: contextReady,
     retry: false,
+    refetchOnWindowFocus: false,
   })
 
-  if (!productRunId) {
-    return (
-      <ViewerShellPage title="Current Week" description="Read-only canonical current-week schedule.">
-        <ViewerEmptyState>No Product Run is selected yet.</ViewerEmptyState>
-      </ViewerShellPage>
-    )
-  }
-
   const selectedSeason = String(context.selectedSeason)
-  const eventsForWeek = (calendarQuery.data?.seasons ?? [])
-    .filter((season) => String(season.season) === selectedSeason)
-    .flatMap((season) => season.events)
-    .filter((event) => event.season_week === context.selectedWeek)
+  const calendar = contextReady && !calendarQuery.isPending &&
+    !calendarQuery.isFetching && !calendarQuery.isError
+    ? verifiedSavedSeasonCalendar(calendarQuery.data, runId, branchId ?? '')
+    : null
+  const eventsForWeek = calendar?.events.filter(event =>
+    savedCalendarSeasonKey(event.season) === selectedSeason &&
+    event.season_week === context.selectedWeek
+  ) ?? []
 
   return (
-    <ViewerShellPage title="Current Week" description="Read-only selected-week schedule from canonical Saved Calendar authority.">
-      <article className="viewer-active-run-card" aria-label="Current Week canonical Product Run summary">
-        <span className="eyebrow">Selected Viewer week</span>
-        <h3>Season {context.selectedSeason} · W{context.selectedWeek}</h3>
-        <dl className="metadata-list">
-          <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
-          <div><dt>Viewer Branch</dt><dd>{calendarQuery.data?.viewer_branch_id ?? '—'}</dd></div>
-          <div><dt>Selected season</dt><dd>{context.selectedSeason}</dd></div>
-          <div><dt>Selected week</dt><dd>{context.selectedWeek}</dd></div>
-        </dl>
-        {calendarQuery.isLoading ? <p className="status">Loading canonical selected-week events…</p> : null}
-        {calendarQuery.isError ? <ViewerEmptyState>Canonical selected-week event metadata is temporarily unavailable.</ViewerEmptyState> : null}
-        {!calendarQuery.isLoading && !calendarQuery.isError && !eventsForWeek.length ? <ViewerEmptyState>No canonical events are scheduled for this selected week.</ViewerEmptyState> : null}
-        {eventsForWeek.length ? (
-          <ul className="viewer-home-list" aria-label="Selected week canonical events">
-            {eventsForWeek.map((event) => (
-              <li key={event.event_id}>
-                <Link to={viewerPlannedEventPath(productRunId, event.event_id)}>{event.event_name || event.event_id}</Link> · {event.category} · {event.tour_level ?? '—'} · {event.status}
-              </li>
-            ))}
-          </ul>
-        ) : null}
-        <p className="viewer-active-run-actions">
-          <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(productRunId)}>Open Product Run schedule</Link>{' '}
-          <Link className="viewer-active-run-link" to={viewerRunsPath()}>Open run browser</Link>
-        </p>
-      </article>
+    <ViewerShellPage title={t('title')} description={t('description')}>
+      {!runId ? <ViewerEmptyState>{t('selectRun')}</ViewerEmptyState> : (
+        <article className="viewer-active-run-card" aria-label={t('events')}>
+          <span className="eyebrow">{t('selected')}</span>
+          <h3>{t('season')} {selectedSeason} · W{context.selectedWeek}</h3>
+          <dl className="metadata-list">
+            <div><dt>{t('run')}</dt><dd>{runId}</dd></div>
+            <div><dt>{t('branch')}</dt><dd>{contextReady ? branchId : '—'}</dd></div>
+            <div><dt>{t('selectedSeason')}</dt><dd>{selectedSeason}</dd></div>
+            <div><dt>{t('selectedWeek')}</dt><dd>{context.selectedWeek}</dd></div>
+          </dl>
+
+          {sourceContext.isPending || sourceContext.isFetching ? (
+            <p className="status" role="status">{t('resolving')}</p>
+          ) : !contextReady ? (
+            <div role="alert">
+              <p>{t('contextError')}</p>
+              <button type="button" onClick={() => void sourceContext.refetch()}>{t('retry')}</button>
+            </div>
+          ) : calendarQuery.isPending || calendarQuery.isFetching ? (
+            <p className="status" role="status">{t('loading')}</p>
+          ) : calendarQuery.isError ? (
+            <div role="alert">
+              <p>{t('readError')}</p>
+              <button type="button" onClick={() => void calendarQuery.refetch()}>{t('retry')}</button>
+            </div>
+          ) : !calendar ? (
+            <div role="alert">
+              <p>{t('invalid')}</p>
+              <button type="button" onClick={() => void calendarQuery.refetch()}>{t('retry')}</button>
+            </div>
+          ) : eventsForWeek.length === 0 ? (
+            <ViewerEmptyState>{t('empty')}</ViewerEmptyState>
+          ) : (
+            <ul className="viewer-home-list" aria-label={t('events')}>
+              {eventsForWeek.map(event => (
+                <li key={event.event_id}>
+                  <Link to={viewerPlannedEventPath(runId, event.event_id)}>
+                    {event.event_name || event.event_id}
+                  </Link> · {event.category} · {event.tour_level ?? '—'} · {event.status}
+                </li>
+              ))}
+            </ul>
+          )}
+          <p className="viewer-active-run-actions">
+            <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>{t('schedule')}</Link>{' '}
+            <Link className="viewer-active-run-link" to={viewerRunsPath()}>{t('runs')}</Link>
+          </p>
+        </article>
+      )}
     </ViewerShellPage>
   )
 }

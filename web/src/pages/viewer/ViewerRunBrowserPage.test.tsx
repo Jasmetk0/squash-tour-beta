@@ -1,5 +1,6 @@
 import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { LanguageProvider } from '../../i18n/LanguageContext'
 
 import {
   clearViewerStorage,
@@ -23,7 +24,7 @@ const api = vi.hoisted(() => ({
 vi.mock('../../api/client', () => api)
 
 function renderRunBrowser(): void {
-  renderWithViewerProviders(<ViewerRunBrowserPage />)
+  renderWithViewerProviders(<LanguageProvider><ViewerRunBrowserPage /></LanguageProvider>)
 }
 
 function sampleRun(overrides: Record<string, unknown> = {}) {
@@ -51,6 +52,7 @@ function sampleRun(overrides: Record<string, unknown> = {}) {
 describe('ViewerRunBrowserPage', () => {
   beforeEach(() => {
     clearViewerStorage()
+    localStorage.setItem('squash-engine-language-v1', 'en')
     vi.clearAllMocks()
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
   })
@@ -62,7 +64,7 @@ describe('ViewerRunBrowserPage', () => {
 
   it('shows loading and empty states from the Product Run list API', async () => {
     api.listRunContainers.mockReturnValueOnce(new Promise(() => undefined))
-    const first = renderWithViewerProviders(<ViewerRunBrowserPage />)
+    const first = renderWithViewerProviders(<LanguageProvider><ViewerRunBrowserPage /></LanguageProvider>)
     expect(screen.getAllByText('Loading available runs…').length).toBeGreaterThan(0)
     first.unmount()
 

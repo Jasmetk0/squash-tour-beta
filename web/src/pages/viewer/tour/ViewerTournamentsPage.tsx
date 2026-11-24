@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import { getViewerRunCalendar, getViewerTournamentHistory } from '../../../api/client'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
@@ -42,6 +42,8 @@ const messages = {
   published: ['Výsledek publikován', 'Result published'],
   unpublished: ['Výsledek nepublikován', 'Result not published'],
   clear: ['Vymazat filtry', 'Clear filters'],
+  unknownFilter: ['Neznámá hodnota', 'Unknown value'],
+  invalidFilters: ['Odkaz obsahuje neplatnou nebo nedostupnou hodnotu filtru. Uprav ji nebo vymaž filtry.', 'The URL contains an invalid or unavailable filter. Correct or clear the filters.'],
   table: ['Uložené turnaje', 'Saved tournaments'],
   season: ['Sezona', 'Season'],
   week: ['Týden', 'Week'],
@@ -82,15 +84,38 @@ function CalendarStatus({ status, t }: { status: string; t: Copy }): JSX.Element
   return <>{status in t ? t[status as keyof Copy] : status}</>
 }
 
-function TournamentCatalogForBranch({ runId, branchId, t }: {
-  runId: string; branchId: string; t: Copy
+const TOURNAMENT_URL_FILTERS = {
+  season: 'vtSeason', search: 'vtQ', result: 'vtResult'
+} as const
+const TOURNAMENT_URL_KEYS = Object.values(TOURNAMENT_URL_FILTERS)
+
+function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
 }): JSX.Element {
-  const [season, setSeason] = useState('all')
-  const [search, setSearch] = useState('')
-  const [resultFilter, setResultFilter] = useState<TournamentPublicationFilter>('all')
+  const [searchParams, setSearchParams] = useSearchParams()
+  const active = ignoreUrlFilters ? new URLSearchParams() : searchParams
+  const season = active.get(TOURNAMENT_URL_FILTERS.season) ?? 'all'
+  const search = active.get(TOURNAMENT_URL_FILTERS.search) ?? ''
+  const resultFilter = (active.get(TOURNAMENT_URL_FILTERS.result) ?? 'all') as TournamentPublicationFilter
   const [page, setPage] = useState(1)
   const [jump, setJump] = useState('')
   const [badJump, setBadJump] = useState(false)
+  useEffect(() => {
+    setPage(1)
+    setJump('')
+    setBadJump(false)
+  }, [season, search, resultFilter])
+
+  function updateFilter(name: string, value: string, fallback: string, replace = false): void {
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      if (value === fallback) next.delete(name)
+      else next.set(name, value)
+      return next
+    }, { replace })
+    changePage(1)
+  }
   const calendarQuery = useQuery({
     queryKey: ['viewer-tournaments-calendar', runId, branchId],
     queryFn: () => getViewerRunCalendar(runId),
@@ -108,7 +133,12 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
     setPage(value); setJump(''); setBadJump(false)
   }
   function clear(): void {
-    setSeason('all'); setSearch(''); setResultFilter('all'); changePage(1)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      return next
+    })
+    changePage(1)
   }
   if (calendarQuery.isPending || historyQuery.isPending) {
     return <p className="status" role="status">{t.loading}</p>
@@ -122,7 +152,11 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
     <button type="button" onClick={retry}>{t.retry}</button></div>
 
   const seasons = catalogSeasonsNewestFirst(catalog)
-  const filtered = filteredSavedTournaments(catalog, season, search, resultFilter)
+  const invalidSeason = season !== 'all' && !seasons.includes(season)
+  const invalidResult = !['all', 'published', 'unpublished'].includes(resultFilter)
+  const invalidFilters = invalidSeason || invalidResult
+  // Never reinterpret a link requesting an unknown season/status as "all".
+  const filtered = invalidFilters ? [] : filteredSavedTournaments(catalog, season, search, resultFilter)
   const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)
   const visiblePage = totalPages ? Math.min(page, totalPages) : 0
   const offset = visiblePage ? (visiblePage - 1) * TOURNAMENT_PAGE_SIZE : 0
@@ -145,9 +179,12 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
       </dl>
       {catalog.eventCount === 0 ? <p className="empty-state">{t.none}</p> : (
         <>
+          {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
           <div>
             <label htmlFor="tournament-season">{t.selectSeason}</label>
-            <select id="tournament-season" value={season} onChange={event => { setSeason(event.target.value); changePage(1) }}>
+            <select id="tournament-season" value={season} onChange={event =>
+              updateFilter(TOURNAMENT_URL_FILTERS.season, event.target.value, 'all')}>
+              {invalidSeason ? <option value={season}>{t.unknownFilter}: {season}</option> : null}
               <option value="all">{t.allSeasons}</option>
               {seasons.map(value => <option key={value} value={value}>{value}</option>)}
             </select>
@@ -155,12 +192,13 @@ function TournamentCatalogForBranch({ runId, branchId, t }: {
           <div>
             <label htmlFor="tournament-search">{t.search}</label>
             <input id="tournament-search" type="search" value={search}
-              onChange={event => { setSearch(event.target.value); changePage(1) }} />
+              onChange={event => updateFilter(TOURNAMENT_URL_FILTERS.search, event.target.value, '', true)} />
           </div>
           <div>
             <label htmlFor="tournament-result-filter">{t.statusFilter}</label>
             <select id="tournament-result-filter" value={resultFilter}
-              onChange={event => { setResultFilter(event.target.value as TournamentPublicationFilter); changePage(1) }}>
+              onChange={event => updateFilter(TOURNAMENT_URL_FILTERS.result, event.target.value, 'all')}>
+              {invalidResult ? <option value={resultFilter}>{t.unknownFilter}: {resultFilter}</option> : null}
               <option value="all">{t.all}</option>
               <option value="published">{t.published}</option>
               <option value="unpublished">{t.unpublished}</option>
@@ -227,6 +265,20 @@ export function ViewerTournamentsPage(): JSX.Element {
   const t = copyFor(language)
   const context = useViewerOfficialRunContext(runId)
   const branchId = tournamentViewerBranch(context.data, runId)
+  const [searchParams, setSearchParams] = useSearchParams()
+  const sourceKey = branchId && !context.isPending && !context.isFetching && !context.isError
+    ? JSON.stringify([runId, branchId]) : null
+  const previousSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged) {
+      const next = new URLSearchParams(searchParams)
+      TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      if (next.toString() !== searchParams.toString()) setSearchParams(next, { replace: true })
+    }
+    previousSource.current = sourceKey
+  }, [sourceKey, sourceChanged, searchParams, setSearchParams])
   return (
     <section className="panel viewer-shell-page">
       <div className="page-intro"><h2>{t.title}</h2><p className="subtitle">{t.subtitle}</p></div>
@@ -238,7 +290,8 @@ export function ViewerTournamentsPage(): JSX.Element {
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
           !branchId ? <div role="alert"><p className="error">{t.badContext}</p>
             <button type="button" onClick={() => void context.refetch()}>{t.retry}</button></div> :
-          <TournamentCatalogForBranch key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId} t={t} />}
+          <TournamentCatalogForBranch key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId}
+            t={t} ignoreUrlFilters={sourceChanged} />}
       </article>
     </section>
   )

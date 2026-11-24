@@ -50,7 +50,7 @@ function resetApiMocks(): void {
       timeline_start_season: 2000,
       timeline_end_season: 2049,
       viewer_branch_id: 'viewer',
-      official_branch_id: 'official',
+      official_branch_id: 'branch-viewer',
       status: 'active',
       metadata_json: {},
       mapped_simulation_run_count: 1
@@ -62,7 +62,7 @@ function resetApiMocks(): void {
     product_run_status: 'active',
     product_run_storage_kind: 'custom_local',
     product_run_read_only: false,
-    official_branch_id: 'official',
+    official_branch_id: 'branch-viewer',
     official_branch_display_name: 'Official',
     official_branch_status: 'active',
     official_branch_read_only: false,
@@ -133,13 +133,13 @@ function resetApiMocks(): void {
     schema_version: 'viewer_official_ranking_history.v1',
     product_run_id: 'run alpha',
     viewer_branch_id: 'branch-viewer',
-    public_head_ordinal: 1931,
+    public_head_ordinal: 1930,
     publication_count: 1,
     publications: [{
       season_index: 31,
       week: 40,
-      week_ordinal: 1931,
-      snapshot_fingerprint: 'hidden-fingerprint',
+      week_ordinal: 1930,
+      snapshot_fingerprint: 'a'.repeat(64),
       policy_id: 'best-n-9',
       best_n: 9,
       row_count: 48
@@ -163,8 +163,8 @@ function resetApiMocks(): void {
       rows: [{
         rank: 1,
         player_id: 'P3',
-        race_points: 120,
-        tournaments_counted: 8,
+        race_points: 0,
+        tournaments_counted: 0,
         finals_selected: true,
         finals_seed: 1,
         qualification_source: 'race',
@@ -203,6 +203,8 @@ describe('ViewerHomePage canonical sources', () => {
     renderHome()
 
     expect(await screen.findByRole('heading', { name: 'Active Viewer run: run alpha' })).toBeInTheDocument()
+    // The sources are deliberately queried *after* official context verification.
+    await screen.findByRole('link', { name: 'Diamond Open' })
     expect(api.getViewerOfficialRunContext).toHaveBeenCalledWith('run alpha')
     expect(api.getViewerTournamentHistory).toHaveBeenCalledWith('run alpha')
     expect(api.listViewerOfficialRankingHistory).toHaveBeenCalledWith('run alpha')
@@ -210,7 +212,7 @@ describe('ViewerHomePage canonical sources', () => {
 
     expect(await screen.findByRole('link', { name: 'Diamond Open' })).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments/EVENT-40')
     expect(screen.queryByText('Future Open')).not.toBeInTheDocument()
-    expect(screen.getByText(/ordinal 1931/i)).toBeInTheDocument()
+    expect(screen.getByText(/ordinal 1930/i)).toBeInTheDocument()
     expect(screen.getByText(/Target season 31/i)).toBeInTheDocument()
     expect(screen.getByText(/1 completed tournaments · 1 ranking publications · 1 Finals Race publications/i)).toBeInTheDocument()
     expect(screen.queryByText(/hidden-fingerprint/i)).not.toBeInTheDocument()
@@ -233,7 +235,7 @@ describe('ViewerHomePage canonical sources', () => {
         timeline_start_season: 2000,
         timeline_end_season: 2049,
         viewer_branch_id: 'viewer',
-        official_branch_id: 'official',
+        official_branch_id: 'branch-viewer',
         status: 'active',
         metadata_json: {},
         mapped_simulation_run_count: 1
@@ -311,4 +313,80 @@ describe('ViewerHomePage canonical sources', () => {
     expect(hubs.getByRole('link', { name: 'Run Browser' })).toHaveAttribute('href', '/viewer/runs')
     expectNoForbiddenViewerActions()
   })
+  it('does not call publication readers before verifying the selected Run context', async () => {
+    setViewerActiveRunId('run alpha')
+    // The Run selector also reads the context; every consumer must see the
+    // same foreign evidence, not only the first mock call.
+    api.getViewerOfficialRunContext.mockResolvedValue({
+      product_run_id: 'foreign-run', official_branch_id: 'branch-viewer'
+    })
+    renderHome()
+    // The shared Run selector also fetches the foreign context. Wait for
+    // its actual response before asserting that no publication GET escaped.
+    await screen.findByText(/foreign-run \(foreign-run\)/)
+    expect(api.getViewerTournamentHistory).not.toHaveBeenCalled()
+    expect(api.listViewerOfficialRankingHistory).not.toHaveBeenCalled()
+    expect(api.getViewerFinalsRace).not.toHaveBeenCalled()
+    expect(screen.queryByRole('link', { name: 'Diamond Open' })).not.toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('withholds every Home summary if ranking belongs to a different Viewer Branch', async () => {
+    setViewerActiveRunId('run alpha')
+    const ranking = await api.listViewerOfficialRankingHistory('run alpha')
+    api.listViewerOfficialRankingHistory.mockResolvedValue({
+      ...ranking, viewer_branch_id: 'foreign-branch'
+    })
+    renderHome()
+    expect(await screen.findByText(/Saved Viewer Branch or public histories do not agree/))
+      .toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Diamond Open' })).not.toBeInTheDocument()
+    expect(screen.getByText(/Tournament preview unavailable until/)).toBeInTheDocument()
+    expect(screen.getByText(/Ranking preview unavailable until/)).toBeInTheDocument()
+    expectNoForbiddenViewerActions()
+  })
+
+  it('rejects forged tournament counts, ranking head and Finals publication index', async () => {
+    setViewerActiveRunId('run alpha')
+    const history = await api.getViewerTournamentHistory('run alpha')
+    const rankings = await api.listViewerOfficialRankingHistory('run alpha')
+    const race = await api.getViewerFinalsRace('run alpha')
+    api.getViewerTournamentHistory.mockResolvedValue({ ...history, published_result_count: 9 })
+    const first = renderWithViewerProviders(<ViewerHomePage />)
+    expect(await screen.findByText(/Saved Viewer Branch or public histories do not agree/))
+      .toBeInTheDocument()
+    first.unmount()
+
+    api.getViewerTournamentHistory.mockResolvedValue(history)
+    api.listViewerOfficialRankingHistory.mockResolvedValue({ ...rankings, public_head_ordinal: 1931 })
+    const second = renderWithViewerProviders(<ViewerHomePage />)
+    expect(await screen.findByText(/Saved Viewer Branch or public histories do not agree/))
+      .toBeInTheDocument()
+    second.unmount()
+
+    api.listViewerOfficialRankingHistory.mockResolvedValue(rankings)
+    api.getViewerFinalsRace.mockResolvedValue({ ...race, latest_target_season_index: 30 })
+    renderHome()
+    expect(await screen.findByText(/Saved Viewer Branch or public histories do not agree/))
+      .toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Diamond Open' })).not.toBeInTheDocument()
+  })
+
+  it('sorts published tournaments by season/week instead of trusting array order', async () => {
+    setViewerActiveRunId('run alpha')
+    const history = await api.getViewerTournamentHistory('run alpha')
+    const [published, unpublished] = history.tournaments
+    api.getViewerTournamentHistory.mockResolvedValue({
+      ...history,
+      tournaments: [
+        { ...published, event_id: 'EVENT-42', event_name: 'Latest Open', season_week: 42 },
+        unpublished, published
+      ],
+      tournament_count: 3, published_result_count: 2,
+    })
+    renderHome()
+    expect(await screen.findByRole('link', { name: 'Latest Open' }))
+      .toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments/EVENT-42')
+  })
+
 })

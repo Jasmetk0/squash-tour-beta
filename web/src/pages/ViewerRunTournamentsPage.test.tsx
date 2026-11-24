@@ -39,10 +39,11 @@ function TestLocation(): JSX.Element {
 }
 function renderViewerTournamentRoute(route: string, branch = 'branch-viewer') {
   const client = createTestQueryClient()
-  const context = makeViewerProductRunRouteTestValue('viewer-run-1')
+  const runId = decodeURIComponent(route.split('/')[3])
+  const context = makeViewerProductRunRouteTestValue(runId)
   const value = {
     ...context, officialBranchId: branch,
-    officialContext: { ...context.officialContext, product_run_id: 'viewer-run-1', official_branch_id: branch }
+    officialContext: { ...context.officialContext, product_run_id: runId, official_branch_id: branch }
   }
   const view = renderWithViewerProviders(
     <Routes>
@@ -51,7 +52,7 @@ function renderViewerTournamentRoute(route: string, branch = 'branch-viewer') {
           <TestLocation /><ViewerRunTournamentsPage />
         </ViewerProductRunRouteContextProvider></LanguageProvider>
       } />
-      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
+      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerProductRunRouteContextProvider value={value}><ViewerRunTournamentDetailPage /></ViewerProductRunRouteContextProvider>} />
     </Routes>,
     { route, queryClient: client }
   )

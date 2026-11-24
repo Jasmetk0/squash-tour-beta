@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { ViewerCalendarEvent, ViewerRunCalendar } from '../../../api/types'
 import {
-  filterSavedCalendarEvents, parseSavedCalendarPage, savedCalendarSeasonsNewestFirst,
+  filterSavedCalendarEvents, parseSavedCalendarPage, savedCalendarEventCoversWeek, savedCalendarSeasonsNewestFirst,
   savedCalendarViewerBranch, savedCalendarWeeks, verifiedSavedSeasonCalendar
 } from './savedCalendarBrowsing'
 
@@ -99,6 +99,15 @@ describe('Saved Calendar V1 viewer source and filter contract', () => {
       .toEqual(['C'])
     expect(filterSavedCalendarEvents(result, '2005/06', '9', 'completed', '')).toEqual([])
     expect(source.seasons.map(x => String(x.season))).toEqual(['2004/05', '2005/06'])
+  })
+
+  it('uses a single bounded inclusive week predicate for both calendar surfaces', () => {
+    const multi = { ...event('multi', '2005/06', 60),
+      start_season_week: 60, end_season_week: 63, duration_in_season_weeks: 4 }
+    expect(savedCalendarEventCoversWeek(multi, 60)).toBe(true)
+    expect(savedCalendarEventCoversWeek(multi, 61)).toBe(true)
+    for (const invalid of [0, 59, 60.5, 62, 63, Infinity, NaN])
+      expect(savedCalendarEventCoversWeek(multi, invalid)).toBe(false)
   })
 
   it('includes every covered legacy week without inferring events in another season', () => {

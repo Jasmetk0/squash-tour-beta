@@ -95,6 +95,12 @@ export function savedCalendarSeasonsNewestFirst(calendar: SavedSeasonCalendar): 
 
 export type SavedCalendarStatus = 'all' | 'planned' | 'scheduled' | 'active' | 'completed' | 'cancelled'
 
+// Shared by the legacy season calendar and Current Week view. An explicit
+// event span never creates a week outside this versioned W61 projection.
+export function savedCalendarEventCoversWeek(event: ViewerCalendarEvent, week: number): boolean {
+  return whole(week, 1, 61) && week >= event.start_season_week && week <= event.end_season_week
+}
+
 export function savedCalendarWeeks(calendar: SavedSeasonCalendar, season: string): number[] {
   const unique = new Set<number>()
   for (const event of calendar.events) {
@@ -114,8 +120,8 @@ export function filterSavedCalendarEvents(
   return calendar.events
     .filter(event =>
       (season === 'all' || savedCalendarSeasonKey(event.season) === season) &&
-      (week === 'all' || (/^[1-9][0-9]*$/.test(week) && Number(week) <= 61 &&
-        Number(week) >= event.start_season_week && Number(week) <= event.end_season_week)) &&
+      (week === 'all' || (/^[1-9][0-9]*$/.test(week) &&
+        savedCalendarEventCoversWeek(event, Number(week)))) &&
       (status === 'all' || event.status === status) &&
       (!text || [event.event_id, event.event_name, event.host_country, event.host_city ?? '']
         .some(field => field.toLocaleLowerCase().includes(text)))

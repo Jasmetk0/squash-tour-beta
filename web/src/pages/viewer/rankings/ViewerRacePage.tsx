@@ -259,6 +259,8 @@ function RaceContent({ runId, branchId, validScope, pending, error, retryContext
   const sourceKey = validScope && branchId && !pending && !error ? JSON.stringify([runId, branchId]) : null
   const previousSource = useRef<string | null>(null)
   const sourceChanged = Boolean(sourceKey && previousSource.current && sourceKey !== previousSource.current)
+  const runLinkParams = new URLSearchParams(searchParams)
+  if (sourceChanged) runLinkParams.delete(RACE_SEASON_QUERY)
 
   // Keep copied direct links on first mount; never carry a season picked in
   // another Run/Branch into the newly selected source during in-app switching.
@@ -283,7 +285,7 @@ function RaceContent({ runId, branchId, validScope, pending, error, retryContext
         error ? <div role="alert"><p className="error">{t.contextError} {formatApiError(error)}</p><button onClick={retryContext}>{t.retry}</button></div> :
         !validScope || !branchId ? <div role="alert"><p className="error">{t.contextInvalid}</p><button onClick={retryContext}>{t.retry}</button></div> :
         <>
-          {showRunLink ? <p><Link to={viewerRacePath(runId)}>{t.openRun}</Link></p> : null}
+          {showRunLink ? <p><Link to={{ pathname: viewerRacePath(runId), search: runLinkParams.toString() }}>{t.openRun}</Link></p> : null}
           <RaceForSource key={JSON.stringify([runId, branchId])} runId={runId} branchId={branchId} t={t}
             ignoreUrlSeason={sourceChanged} />
         </>}

@@ -108,6 +108,35 @@ describe('Viewer Race exact-season deep links (mocked GET, not HTTP/SQLite)', ()
     expect(api.getViewerFinalsRace).toHaveBeenCalledTimes(2)
   })
 
+  it('preserves the exact season and unrelated URL parameters when opening run-scoped Race', async () => {
+    const user = userEvent.setup()
+    mount('/viewer/race?raceSeason=3&keep=one&keep=two', 'top')
+    expect(await screen.findByRole('heading', { name: 'Zvolená publikace: 2003/04' })).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: 'Otevřít Race v Runu' })
+    expect(link).toHaveAttribute('href', '/viewer/runs/run%20alpha/race?raceSeason=3&keep=one&keep=two')
+    await user.selectOptions(screen.getByLabelText('Cílová sezona'), '4')
+    expect(link).toHaveAttribute('href', '/viewer/runs/run%20alpha/race?raceSeason=4&keep=one&keep=two')
+  })
+
+  it('clears only the old season from the run link when switching branches', async () => {
+    const view = mount('/viewer/race?raceSeason=3&keep=yes', 'top')
+    expect(await screen.findByRole('heading', { name: 'Zvolená publikace: 2003/04' })).toBeInTheDocument()
+    source.branch = 'viewer-b'
+    await act(async () => view.refresh())
+    expect(await screen.findByRole('heading', { name: 'Zvolená publikace: 2004/05' })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: 'Otevřít Race v Runu' }))
+      .toHaveAttribute('href', '/viewer/runs/run%20alpha/race?keep=yes')
+  })
+
+  it.each(['raceSeason=3abc', 'raceSeason=3&raceSeason=4'])(
+    'does not silently repair invalid season links when opening run-scoped Race: %s', async search => {
+      mount('/viewer/race?' + search, 'top')
+      expect(await screen.findByRole('alert')).toHaveTextContent('Požadovaná publikace Race neexistuje')
+      expect(screen.getByRole('link', { name: 'Otevřít Race v Runu' }))
+        .toHaveAttribute('href', '/viewer/runs/run%20alpha/race?' + search)
+    }
+  )
+
   it('navigates seasons through URL and restores Back/Forward without fetching a new snapshot', async () => {
     const user = userEvent.setup()
     mount('/viewer/runs/run%20alpha/race?keep=yes&raceSeason=3')

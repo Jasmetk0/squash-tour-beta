@@ -43,6 +43,11 @@ function validCountrySnapshot(value: unknown, runId: string, branchId: string): 
       (item.top_player_name !== null && (typeof item.top_player_name !== 'string' || !item.top_player_name.trim())) ||
       (item.top_player_id === null) !== (item.top_player_name === null) ||
       (item.player_count === 0 && item.top_player_id !== null) ||
+      (item.top_player_id === null) !== (item.top_player_current_ovr === null) ||
+      (item.top_player_id === null) !== (item.average_current_ovr === null) ||
+      (item.top_player_current_ovr !== null && !Number.isInteger(item.top_player_current_ovr)) ||
+      (typeof item.average_current_ovr === 'number' && typeof item.top_player_current_ovr === 'number' &&
+        item.average_current_ovr > item.top_player_current_ovr) ||
       // The published v1 country summary has no private simulation fields.
       Object.keys(item).some(key => ![
         'country_code', 'player_count', 'active_player_count', 'retired_player_count',

@@ -27,7 +27,7 @@ function ViewerTopbarSearch(): JSX.Element {
       if (
         event.key.toLowerCase() !== 'k' ||
         !event.ctrlKey || event.shiftKey || event.altKey || event.metaKey ||
-        event.isComposing
+        event.isComposing || event.defaultPrevented || event.repeat
       ) return
       if (!searchInputRef.current) return
       event.preventDefault()

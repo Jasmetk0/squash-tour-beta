@@ -203,3 +203,42 @@ describe('Viewer Match Predictor: verified exact IDs, no prediction model (mocke
     expect(screen.getByText('+4')).toBeInTheDocument()
   })
 })
+
+describe('Match Predictor audit: discovery rows are validated before rendering', () => {
+  it.each([
+    { players: [null] },
+    { players: [makePlayer('same'), makePlayer('same')] },
+    { players: [{ ...makePlayer('broken'), overall: Number.NaN }] },
+    { limit: 100 },
+    { offset: 50 },
+  ])('rejects malformed discovery payload (%j)', async override => {
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 2, limit: 50, offset: 0,
+      players: [makePlayer('foreign')], ...override,
+    })
+    mount('/viewer/predictions/match-predictor')
+    expect(await screen.findByText(/discovery sample is invalid or unavailable/)).toBeInTheDocument()
+    expect(screen.queryByText('Player foreign')).not.toBeInTheDocument()
+    expect(api.getRunPlayerDetail).not.toHaveBeenCalled()
+  })
+
+  it('does not pass foreign-schema fields to the shared discovery renderer', async () => {
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 1, limit: 50, offset: 0,
+      players: [{ ...makePlayer('safe'), current_ovr: 99999, identity_source: {} }],
+    })
+    mount('/viewer/predictions/match-predictor')
+    expect(await screen.findByText('Player safe')).toBeInTheDocument()
+    expect(screen.queryByText('99999')).not.toBeInTheDocument()
+  })
+
+  it('retains exact comparison even when an individual discovery row is corrupt', async () => {
+    api.listRunPlayers.mockResolvedValue({
+      run_id: 'run-a', total: 1, limit: 50, offset: 0, players: [null],
+    })
+    mount()
+    expect(await screen.findByText('Player player-900')).toBeInTheDocument()
+    expect(screen.getByText(/discovery sample is invalid or unavailable/)).toBeInTheDocument()
+    expect(screen.getByText('+4')).toBeInTheDocument()
+  })
+})

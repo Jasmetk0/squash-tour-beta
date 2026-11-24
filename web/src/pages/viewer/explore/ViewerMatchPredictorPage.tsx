@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import { getRunPlayerDetail, listRunPlayers } from '../../../api/client'
+import type { RunPlayerListItem } from '../../../api/types'
 import { ViewerActiveRunLinks, ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSectionCard } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
@@ -85,6 +86,30 @@ const copy = {
 
 const comparisonUrlKeys = ['playerA', 'playerB', 'player_a', 'player_b', 'a', 'b']
 
+// Validate discovery rows independently from the exact player lookup.
+function verifiedDiscoverySample(value: unknown, runId: string): { total: number; players: RunPlayerListItem[] } | null {
+  if (!value || typeof value !== 'object') return null
+  const sample = value as Record<string, unknown>
+  const total = sample.total
+  if (sample.run_id !== runId || typeof total !== 'number' ||
+      !Number.isSafeInteger(total) || total < 0 || sample.limit !== 50 || sample.offset !== 0 ||
+      !Array.isArray(sample.players) || sample.players.length > 50 || sample.players.length > total) return null
+  const ids = new Set<string>()
+  const players: RunPlayerListItem[] = []
+  for (const row of sample.players) {
+    if (!row || typeof row !== 'object' || typeof row.player_id !== 'string' ||
+        !row.player_id.trim() || ids.has(row.player_id)) return null
+    const player = verifiedComparisonPlayerDetail(row, row.player_id)
+    if (!player) return null
+    ids.add(player.player_id)
+    // Suppress fields that belong to the other, richer Viewer sample schema.
+    players.push({
+      ...player, current_ovr: undefined, status: undefined, identity_source: undefined
+    } as RunPlayerListItem)
+  }
+  return { total, players }
+}
+
 export function ViewerMatchPredictorPage(): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const { language } = useLanguage()
@@ -132,12 +157,10 @@ export function ViewerMatchPredictorPage(): JSX.Element {
 
   // The sample can be absent, malformed or from a different Run. In all cases
   // this is independent from exact verified player detail GETs above.
-  const validSample = sample.isSuccess && !sample.isFetching &&
-    sample.data?.run_id === activeRunId &&
-    Array.isArray(sample.data?.players) &&
-    Number.isSafeInteger(sample.data?.total) && sample.data.total >= 0 &&
-    sample.data.players.length <= 50 && sample.data.players.length <= sample.data.total
-  const players = validSample ? sample.data.players : []
+  const verifiedSample = activeRunId && sample.isSuccess && !sample.isFetching
+    ? verifiedDiscoverySample(sample.data, activeRunId) : null
+  const validSample = verifiedSample !== null
+  const players = verifiedSample?.players ?? []
 
   function changeIds(first: string, second: string): void {
     setSearchParams(previous => {
@@ -190,7 +213,7 @@ export function ViewerMatchPredictorPage(): JSX.Element {
           </form>
           <ViewerMetadataList ariaLabel="Match Predictor active run summary" items={[
             { label: t.id, value: activeRunId },
-            { label: t.total, value: sample.isPending || sample.isFetching ? '…' : validSample ? sample.data.total : '—' },
+            { label: t.total, value: sample.isPending || sample.isFetching ? '…' : verifiedSample ? verifiedSample.total : '—' },
             { label: t.sample, value: sample.isPending || sample.isFetching ? '…' : validSample ? players.length : '—' },
           ]} />
           {sample.isPending || sample.isFetching ? <p role="status">{t.loadingSample}</p> : null}

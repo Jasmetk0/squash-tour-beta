@@ -140,7 +140,7 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
     })
     changePage(1)
   }
-  if (calendarQuery.isPending || historyQuery.isPending) {
+  if (calendarQuery.isPending || calendarQuery.isFetching || historyQuery.isPending || historyQuery.isFetching) {
     return <p className="status" role="status">{t.loading}</p>
   }
   if (calendarQuery.isError || historyQuery.isError) return (
@@ -154,7 +154,7 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   const seasons = catalogSeasonsNewestFirst(catalog)
   const invalidSeason = season !== 'all' && !seasons.includes(season)
   const invalidResult = !['all', 'published', 'unpublished'].includes(resultFilter)
-  const invalidFilters = invalidSeason || invalidResult
+  const invalidFilters = invalidSeason || invalidResult || TOURNAMENT_URL_KEYS.some(key => active.getAll(key).length > 1)
   // Never reinterpret a link requesting an unknown season/status as "all".
   const filtered = invalidFilters ? [] : filteredSavedTournaments(catalog, season, search, resultFilter)
   const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)

@@ -13,6 +13,7 @@ import hashlib
 import importlib.metadata
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -161,6 +162,7 @@ def prepare(path):
     from tests.api.test_native_full_simulation_tasks import approve_draw
     flow, ApiServer, _ = target_imports()
     require(not path.exists(), "Never overwrite a fixture")
+    path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         local = Path(temp) / "prepare.db"
         with ApiServer(database_url=f"sqlite:///{local}") as server:
@@ -174,9 +176,9 @@ def prepare(path):
             v = flow.inspect(server)
             require(v["saved"] and position(v) == [0, 4] and len(v["players"]) == 8,
                     "Unexpected W6 fixture")
-            require(not v["edition_evidence"]["ab-cup"]["matches"]
-                    or not v["state"]["editions"][0]["result_confirmed"],
-                    "Fixture already completed")
+            require("ab-cup" not in v["edition_evidence"] and
+                    not v["state"]["editions"][0]["result_confirmed"],
+                    "Fixture already played or completed")
             with sqlite3.connect(local.as_uri() + "?mode=ro", uri=True) as source:
                 with sqlite3.connect(path) as target:
                     source.backup(target)
@@ -269,6 +271,8 @@ def worker(args):
             else:
                 require(initial_position == [1, 1] and initial_players == 256
                         and before["revisions"] == 46, "Unexpected archived W12 fixture")
+            initial_evidence = evidence(view)
+            report["initial_evidence"] = initial_evidence
             old_head = view["saved_head_revision_id"]
             for action, edition in PLANS[args.scenario]:
                 cmd = flow.command(view, action, name="ab-week:" + action, edition_id=edition)
@@ -306,10 +310,15 @@ def worker(args):
                 require(len(cup["matches"]) == 3 and len(cup["results"]) == 4 and
                         view["state"]["rankings"], "Missing real matches/results/ranking")
             else:
-                require(report["evidence"]["match_count"] == 24, "Archived evidence differs")
+                require(report["evidence"]["match_count"] == 24 and
+                        initial_evidence["edition_evidence_sha256"] == report["evidence"]["edition_evidence_sha256"],
+                        "Archived evidence differs")
             report["history"] = history(repo)
             require(report["history"][-1]["id"] == view["saved_head_revision_id"],
                     "Verified history head differs from inspection")
+            require(sum(row["sql_calls"] for row in rows) > 0 and
+                    sum(row["fetch_text_blob_bytes"] for row in rows) > 0,
+                    "Expected SQL/fetch instrumentation to observe real reads")
             report["check_wall_s"] = time.perf_counter() - check_started
             report["check_peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         # Run after server shutdown: ensure the physical file itself is sound.
@@ -325,24 +334,63 @@ def worker(args):
         write(args.out, report)
 
 
+def validate_report(item):
+    require(item["schema"] == SCHEMA and item["status"] == "ok", "failed/incomplete report")
+    scenario, mode = item["scenario"], item["mode"]
+    require(scenario in PLANS and mode in ("normal", "retry"), "unknown scenario/mode")
+    require(digest(item["plan"]) == digest(PLANS[scenario]), "unexpected action plan")
+    require(type(item["seed"]) is int and item["seed"] == SEED, "unexpected seed")
+    require(re.fullmatch(r"[0-9a-f]{64}", item["input_sha256"]), "invalid fixture hash")
+    require(scenario != "w12-1822" or item["input_sha256"] == W12_SHA, "wrong W12 fixture")
+    require([row["label"] for row in item["calls"]] == expected_calls(scenario, mode),
+            "unexpected operation sequence")
+    for row in item["calls"]:
+        label = row["label"]
+        get = label.endswith("get")
+        status = 200 if get or label.endswith(":preview") else 201
+        require(row["method"] == ("GET" if get else "POST") and row["status"] == status,
+                "unexpected request method/status")
+        for key in ("wall_s", "cpu_s", "peak_rss_kib", "sql_calls", "sql_cursor_wall_s",
+                    "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes"):
+            require(type(row[key]) in (int, float) and math.isfinite(row[key]) and row[key] >= 0,
+                    "invalid phase metric " + key)
+    for key in ("wall_s", "cpu_s", "peak_rss_kib", "check_wall_s"):
+        require(type(item[key]) in (int, float) and math.isfinite(item[key]) and item[key] >= 0,
+                "invalid total metric " + key)
+    for snapshot in (item["before"], item["after"]):
+        for key in ("db_bytes", "wal_bytes", "revisions", "stored_payload_column_bytes"):
+            require(type(snapshot[key]) is int and snapshot[key] >= 0, "invalid SQLite metric")
+    require(item["after"]["revisions"] == item["before"]["revisions"] + len(PLANS[scenario]),
+            "invalid revision growth")
+    require(re.fullmatch(r"[0-9a-f]{40}", item["metadata"]["commit"]), "invalid commit")
+    require(re.fullmatch(r"[0-9a-f]{40}", item["metadata"]["source_tree"]), "invalid tree")
+    for ev in (item["initial_evidence"], item["evidence"]):
+        for key in ("players_sha256", "editions_sha256", "matches_sha256",
+                    "edition_evidence_sha256", "rankings_sha256", "inspection_sha256"):
+            require(re.fullmatch(r"[0-9a-f]{64}", ev[key]), "missing/invalid sporting evidence")
+        require(type(ev["players"]) is int and type(ev["match_count"]) is int
+                and ev["players"] > 0 and ev["match_count"] >= 0, "invalid sporting counts")
+    require(item["history"] and item["history"][-1]["id"] == item["evidence"]["head"],
+            "missing/mismatched history")
+    for row in item["history"]:
+        for key in ("payload_sha256", "summary_sha256", "content_hash"):
+            require(re.fullmatch(r"[0-9a-f]{64}", row[key]), "invalid logical history digest")
+
+
 def comparable(a, b, *, cross_mode=False):
     """Fail closed; no performance delta for an invalid experiment."""
     reasons = []
     for label, item in (("A", a), ("B", b)):
-        if item.get("schema") != SCHEMA or item.get("status") != "ok":
-            reasons.append(label + ": incomplete/failed report")
         try:
-            if [row["label"] for row in item["calls"]] != expected_calls(item["scenario"], item["mode"]):
-                reasons.append(label + ": unexpected operation sequence")
-            if not item["history"] or not item["evidence"]:
-                reasons.append(label + ": missing evidence")
-            if not all(k in item["evidence"] for k in ("matches_sha256", "rankings_sha256", "inspection_sha256")):
-                reasons.append(label + ": incomplete sporting evidence")
-            if not re.fullmatch(r"[0-9a-f]{40}", item["metadata"]["commit"]):
-                reasons.append(label + ": invalid commit")
-        except (KeyError, TypeError, ValueError):
-            reasons.append(label + ": malformed report")
-    keys = ["input_sha256", "scenario", "seed", "plan", "before"]
+            validate_report(item)
+        except (KeyError, TypeError, ValueError, AttributeError, IndexError) as exc:
+            reasons.append(label + ": " + str(exc))
+    if reasons:
+        return reasons
+    if cross_mode and (a["metadata"]["commit"] != b["metadata"]["commit"] or
+                       (a["mode"], b["mode"]) != ("normal", "retry")):
+        reasons.append("retry overhead requires normal/retry on the same commit")
+    keys = ["input_sha256", "scenario", "seed", "plan", "before", "initial_evidence"]
     if not cross_mode:
         keys += ["mode"]
     for key in keys:
@@ -371,11 +419,14 @@ def compare(a, b, *, cross_mode=False):
         return {"verdict": "different_results", "evidence_equal": a["evidence"] == b["evidence"],
                 "history_equal": a["history"] == b["history"]}
     x, y = totals(a), totals(b)
+    by_label = {row["label"]: row for row in b["calls"]}
     return {"verdict": "equal", "a": x, "b": y,
             "delta_b_minus_a": {k: y[k] - x[k] for k in x},
-            "phase_delta_wall_s": {ra["label"]: rb["wall_s"] - ra["wall_s"]
-                                  for ra, rb in zip(a["calls"], b["calls"])}
-            if not cross_mode else None}
+            "phase_delta_wall_s": {
+                ra["label"]: by_label[ra["label"]]["wall_s"] - ra["wall_s"]
+                for ra in a["calls"] if ra["label"] in by_label},
+            "deliberate_retry_wall_s": sum(row["wall_s"] for row in b["calls"]
+                                           if row["label"].endswith(":retry"))}
 
 
 def child_env():

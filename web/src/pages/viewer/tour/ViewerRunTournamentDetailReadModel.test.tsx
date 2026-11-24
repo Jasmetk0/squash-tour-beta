@@ -2,9 +2,10 @@ import { Routes, Route } from 'react-router-dom'
 import { screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import { expectNoForbiddenViewerActions, renderWithViewerProviders } from '../../../test/viewerTestUtils'
+import { expectNoForbiddenViewerActions, makeViewerProductRunRouteTestValue, renderWithViewerProviders } from '../../../test/viewerTestUtils'
 import { calendarEvent, historyEvent, savedCalendar, savedHistory, savedRankings, savedRace, rankingPublication, racePublication } from '../../../test/viewerCalendarFixtures'
 import { ViewerRunTournamentDetailPage } from '../../ViewerRunTournamentsPage'
+import { ViewerProductRunRouteContextProvider } from '../../../viewer/ViewerProductRunRouteContext'
 
 const api = vi.hoisted(() => ({
   ApiError: class ApiError extends Error {
@@ -32,10 +33,13 @@ const api = vi.hoisted(() => ({
 
 vi.mock('../../../api/client', () => api)
 
-function renderDetail(route = '/viewer/runs/run%20alpha/tournaments/EVENT%2F1'): void {
-  renderWithViewerProviders(
+function renderDetail(route = '/viewer/runs/run%20alpha/tournaments/EVENT%2F1', branch = 'viewer-branch') {
+  const context = makeViewerProductRunRouteTestValue('run alpha')
+  const value = { ...context, officialBranchId: branch,
+    officialContext: { ...context.officialContext, product_run_id: 'run alpha', official_branch_id: branch } }
+  return renderWithViewerProviders(
     <Routes>
-      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerRunTournamentDetailPage />} />
+      <Route path="/viewer/runs/:runId/tournaments/:eventId" element={<ViewerProductRunRouteContextProvider value={value}><ViewerRunTournamentDetailPage /></ViewerProductRunRouteContextProvider>} />
     </Routes>,
     { route }
   )
@@ -178,6 +182,66 @@ describe('ViewerRunTournamentDetailPage read model', () => {
     expect(await screen.findByText('Failed to load canonical tournament metadata: network unavailable')).toBeInTheDocument()
     expect(screen.queryByRole('link', { name: 'Open week detail' })).not.toBeInTheDocument()
     expect(api.getEvent).not.toHaveBeenCalled()
+  })
+
+  it('withholds metadata and sporting links from a foreign Viewer Branch', async () => {
+    renderDetail(undefined, 'foreign-branch')
+    expect(await screen.findByText('Tournament metadata sources are inconsistent or belong to another Viewer context.')).toBeInTheDocument()
+    expect(screen.queryByText('Source Open')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open week detail' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Main draw slots' })).not.toBeInTheDocument()
+  })
+
+  it('rejects Draw responses for another event even when Run and Branch match', async () => {
+    const draw = await api.getViewerTournamentDraw()
+    api.getViewerTournamentDraw.mockResolvedValue({ ...draw, event_id: 'EVENT/OTHER' })
+    renderDetail()
+    expect(await screen.findByText('Canonical Draw source does not match this tournament or Viewer Branch.')).toBeInTheDocument()
+    expect(screen.getByText('Source Open')).toBeInTheDocument()
+    expect(screen.queryByRole('list', { name: 'Canonical Main draw slots' })).not.toBeInTheDocument()
+  })
+
+  it('rejects reused event IDs across seasons rather than picking the first match', async () => {
+    api.getViewerRunCalendar.mockResolvedValue(savedCalendar([
+      calendarEvent(), calendarEvent({ season: '2029/2030', event_name: 'Different edition' })
+    ]))
+    renderDetail()
+    expect(await screen.findByText('Tournament metadata sources are inconsistent or belong to another Viewer context.')).toBeInTheDocument()
+    expect(screen.queryByText('Source Open')).not.toBeInTheDocument()
+    expect(screen.queryByText('Different edition')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open week detail' })).not.toBeInTheDocument()
+  })
+
+  it('withholds mismatched Calendar and History weeks', async () => {
+    api.getViewerTournamentHistory.mockResolvedValue(savedHistory([historyEvent(calendarEvent({ season_week: 6 }))]))
+    renderDetail()
+    expect(await screen.findByText('Tournament metadata sources are inconsistent or belong to another Viewer context.')).toBeInTheDocument()
+    expect(screen.queryByText('Source Open')).not.toBeInTheDocument()
+  })
+
+  it('does not mix publications from a foreign Run', async () => {
+    api.listViewerOfficialRankingHistory.mockResolvedValue({ ...savedRankings([rankingPublication()]), product_run_id: 'foreign-run' })
+    renderDetail()
+    expect(await screen.findByText('Official Ranking history source does not match this Viewer Branch.')).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Ranking publication #1712' })).not.toBeInTheDocument()
+    expect(screen.getByText('Source Open')).toBeInTheDocument()
+  })
+
+  it('withholds a valid result envelope for a different event', async () => {
+    api.getViewerTournamentResult.mockResolvedValue({
+      schema_version: 'viewer_tournament_result.v1', product_run_id: 'run alpha', viewer_branch_id: 'viewer-branch',
+      event_id: 'OTHER', champion_player_id: 'FOREIGN'
+    })
+    renderDetail()
+    expect(await screen.findByText('Tournament Result source does not match this tournament or Viewer Branch.')).toBeInTheDocument()
+    expect(screen.queryByText('FOREIGN')).not.toBeInTheDocument()
+  })
+
+  it('does not fetch sporting data for an unverified context', () => {
+    renderDetail(undefined, '')
+    expect(screen.getByText('Viewer Branch context is not verified.')).toBeInTheDocument()
+    expect(api.getViewerRunCalendar).not.toHaveBeenCalled()
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
   })
 
   it('does not call APIs when the event parameter is missing', () => {

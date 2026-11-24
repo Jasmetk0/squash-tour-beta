@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import { Link, useParams } from 'react-router-dom'
@@ -55,90 +55,118 @@ export function ViewerRunTournamentsPage(): JSX.Element {
   return <ViewerRunTournamentArchive detailPath={viewerTournamentDetailPath} />
 }
 
+// Each public endpoint is independently fetched. A run-only cache key cannot
+// distinguish a changed saved Viewer Branch. Never render stale or foreign DTOs.
+function matchesTournamentSource(value: unknown, runId: string, branchId: string, schema: string, eventId?: string): boolean {
+  if (!value || typeof value !== 'object' || Array.isArray(value) || !branchId) return false
+  const source = value as Record<string, unknown>
+  return source.schema_version === schema && source.product_run_id === runId &&
+    source.viewer_branch_id === branchId && (eventId === undefined || source.event_id === eventId)
+}
+
+function scopedRead<T>(query: UseQueryResult<T, Error>, runId: string, branchId: string, schema: string, eventId?: string) {
+  const ready = !query.isFetching && !query.isPending && !query.isError
+  const mismatch = ready && query.data !== undefined && !matchesTournamentSource(query.data, runId, branchId, schema, eventId)
+  return { ...query, data: ready && !mismatch ? query.data : undefined, mismatch }
+}
+
 export function ViewerRunTournamentDetailPage(): JSX.Element {
   const { eventId = '' } = useParams()
-  const { productRunId: runId } = useViewerProductRunRouteContext()
-  const enabled = Boolean(runId && eventId)
+  const { productRunId: runId, officialBranchId: branchId, officialContext, isLoading, isStale } = useViewerProductRunRouteContext()
+  const validContext = Boolean(runId && branchId && officialContext.product_run_id === runId &&
+    officialContext.official_branch_id === branchId && !isLoading && !isStale)
+  const enabled = Boolean(validContext && eventId)
 
-  const calendarQuery = useQuery({
-    queryKey: ['viewer-tournament-detail-calendar', runId, eventId],
+  const calendarQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-detail-calendar', runId, branchId, eventId],
     queryFn: () => getViewerRunCalendar(runId),
     enabled,
     retry: false
-  })
-  const historyQuery = useQuery({
-    queryKey: ['viewer-tournament-detail-history', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_run_calendar.v1')
+  const historyQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-detail-history', runId, branchId, eventId],
     queryFn: () => getViewerTournamentHistory(runId),
     enabled,
     retry: false
-  })
-  const rankingHistoryQuery = useQuery({
-    queryKey: ['viewer-tournament-detail-ranking-history', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_tournament_history.v1')
+  const rankingHistoryQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-detail-ranking-history', runId, branchId, eventId],
     queryFn: () => listViewerOfficialRankingHistory(runId),
     enabled,
     retry: false
-  })
-  const finalsRaceQuery = useQuery({
-    queryKey: ['viewer-tournament-detail-finals-race', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_official_ranking_history.v1')
+  const finalsRaceQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-detail-finals-race', runId, branchId, eventId],
     queryFn: () => getViewerFinalsRace(runId),
     enabled,
     retry: false
-  })
-  const entryFieldQuery = useQuery({
-    queryKey: ['viewer-tournament-entry-field', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_finals_race_history.v1')
+  const entryFieldQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-entry-field', runId, branchId, eventId],
     queryFn: () => getViewerTournamentEntryField(runId, eventId),
     enabled,
     retry: false
-  })
-  const drawQuery = useQuery({
-    queryKey: ['viewer-tournament-draw', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_tournament_entry_field.v1', eventId)
+  const drawQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-draw', runId, branchId, eventId],
     queryFn: () => getViewerTournamentDraw(runId, eventId),
     enabled,
     retry: false
-  })
-  const wildCardsQuery = useQuery({
-    queryKey: ['viewer-tournament-wild-cards', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_tournament_draw.v1', eventId)
+  const wildCardsQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-wild-cards', runId, branchId, eventId],
     queryFn: () => getViewerTournamentWildCards(runId, eventId),
     enabled,
     retry: false
-  })
-  const resultQuery = useQuery({
-    queryKey: ['viewer-tournament-result', runId, eventId],
+  }), runId, enabled ? branchId : '', 'viewer_tournament_wild_cards.v1', eventId)
+  const resultQuery = scopedRead(useQuery({
+    queryKey: ['viewer-tournament-result', runId, branchId, eventId],
     queryFn: () => getViewerTournamentResult(runId, eventId),
     enabled,
     retry: false
-  })
+  }), runId, enabled ? branchId : '', 'viewer_tournament_result.v1', eventId)
 
-  const calendarEvent = useMemo(
-    () => (calendarQuery.data?.seasons ?? []).flatMap((season) => season.events).find((event) => event.event_id === eventId) ?? null,
+  const calendarMatches = useMemo(
+    () => (calendarQuery.data?.seasons ?? []).flatMap((season) => season.events).filter((event) => event.event_id === eventId),
     [calendarQuery.data?.seasons, eventId]
   )
-  const historyEvent = useMemo(
-    () => (historyQuery.data?.tournaments ?? []).find((event) => event.event_id === eventId) ?? null,
+  const historyMatches = useMemo(
+    () => (historyQuery.data?.tournaments ?? []).filter((event) => event.event_id === eventId),
     [historyQuery.data?.tournaments, eventId]
   )
-
+  const calendarCandidate = calendarMatches[0]
+  const historyCandidate = historyMatches[0]
+  const metadataConflict = calendarQuery.mismatch || historyQuery.mismatch ||
+    calendarMatches.length > 1 || historyMatches.length > 1 ||
+    Boolean(calendarCandidate && historyCandidate &&
+      (String(calendarCandidate.season) !== historyCandidate.season ||
+       calendarCandidate.season_week !== historyCandidate.season_week))
+  const metadataReady = enabled && !metadataConflict &&
+    !calendarQuery.isPending && !historyQuery.isPending && !calendarQuery.isFetching && !historyQuery.isFetching
+  const calendarEvent = metadataReady ? calendarCandidate ?? null : null
+  const historyEvent = metadataReady ? historyCandidate ?? null : null
   const week = calendarEvent?.season_week ?? historyEvent?.season_week ?? null
   const season = calendarEvent?.season ?? historyEvent?.season ?? null
-  const seasonStart = season == null ? null : Number.parseInt(String(season).split('/')[0] ?? '', 10)
-  const seasonIndex = Number.isFinite(seasonStart) ? Number(seasonStart) - 2000 : null
+  const seasonMatch = season == null ? null : /^(\d{4})(?:\/\d{2,4})?$/.exec(String(season))
+  const seasonStart = seasonMatch ? Number(seasonMatch[1]) : null
+  const seasonIndex = seasonStart !== null && seasonStart >= 2000 ? seasonStart - 2000 : null
   const canonicalEventAvailable = Boolean(calendarEvent || historyEvent)
+  const resultAvailable = canonicalEventAvailable && Boolean(resultQuery.data)
+  const publicationLabel = resultAvailable || historyEvent?.result_published === true ? 'Published' :
+    canonicalEventAvailable && (historyEvent?.result_published === false || isApiNotFound(resultQuery.error)) ? 'Not published' : '—'
 
   const rankingPublications = useMemo(
-    () =>
-      (rankingHistoryQuery.data?.publications ?? []).filter((publication) => {
-        if (week == null || publication.week !== week) return false
-        return seasonIndex == null || publication.season_index === seasonIndex
-      }),
+    () => seasonIndex === null ? [] :
+      (rankingHistoryQuery.data?.publications ?? []).filter(publication =>
+        publication.week === week && publication.season_index === seasonIndex),
     [rankingHistoryQuery.data?.publications, seasonIndex, week]
   )
   const finalsRacePublications = useMemo(
-    () =>
-      (finalsRaceQuery.data?.publications ?? []).filter((publication) => {
-        if (week == null || publication.cutoff_week !== week) return false
-        return seasonIndex == null || publication.cutoff_season_index === seasonIndex
-      }),
-    [finalsRaceQuery.data?.publications, seasonIndex, week]
+    () => seasonIndex === null ? [] :
+      (finalsRaceQuery.data?.publications ?? []).filter(publication =>
+        matchesTournamentSource(publication, runId, branchId, 'viewer_finals_race_publication.v1') &&
+        publication.cutoff_week === week && publication.cutoff_season_index === seasonIndex),
+    [finalsRaceQuery.data?.publications, runId, branchId, seasonIndex, week]
   )
 
   const canonicalError =
@@ -158,8 +186,8 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
         items={[
           { label: 'Product Run', value: runId || 'unknown' },
           { label: 'Event', value: eventId || 'unknown' },
-          { label: 'Viewer Branch', value: calendarQuery.data?.viewer_branch_id ?? historyQuery.data?.viewer_branch_id ?? '—' },
-          { label: 'Result availability', value: resultQuery.data || historyEvent?.result_published ? 'Published' : 'Not published' }
+          { label: 'Viewer Branch', value: validContext ? branchId : '—' },
+          { label: 'Result availability', value: publicationLabel }
         ]}
       />
 
@@ -192,11 +220,13 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
       {eventId ? (
         <>
           <SectionCard title="Tournament metadata">
-            {calendarQuery.isLoading || historyQuery.isLoading ? <p className="status">Loading canonical tournament metadata…</p> : null}
+            {!validContext ? <p role="alert">Viewer Branch context is not verified.</p> : null}
+            {metadataConflict ? <p role="alert">Tournament metadata sources are inconsistent or belong to another Viewer context.</p> : null}
+            {enabled && (calendarQuery.isFetching || historyQuery.isFetching) ? <p className="status">Loading canonical tournament metadata…</p> : null}
             {canonicalError && !isApiNotFound(canonicalError) ? (
               <p className="error">Failed to load canonical tournament metadata: {formatApiError(canonicalError)}</p>
             ) : null}
-            {!calendarQuery.isLoading && !historyQuery.isLoading && !canonicalError && !canonicalEventAvailable ? (
+            {metadataReady && !canonicalError && !canonicalEventAvailable ? (
               <EmptyState message={`Event ${eventId} is not present in the canonical Saved Calendar or Tournament History.`} />
             ) : null}
             {canonicalEventAvailable ? (
@@ -204,7 +234,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
                 <SummaryPills
                   items={[
                     { label: 'Calendar status', value: calendarEvent?.status ?? 'No Saved Calendar match' },
-                    { label: 'Result publication', value: resultQuery.data || historyEvent?.result_published ? 'Published' : 'Not published' },
+                    { label: 'Result publication', value: publicationLabel },
                     { label: 'Ranking status', value: historyEvent?.ranking_status ?? '—' }
                   ]}
                 />
@@ -247,6 +277,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {canonicalEventAvailable ? (
             <SectionCard title="Canonical Entry Field">
+              {entryFieldQuery.mismatch ? <p role="alert">Canonical Entry Field source does not match this tournament or Viewer Branch.</p> : null}
               {entryFieldQuery.isLoading ? <p className="status">Loading canonical Entry Field…</p> : null}
               {entryFieldQuery.error && !isApiNotFound(entryFieldQuery.error) ? (
                 <p className="error">Failed to load canonical Entry Field: {formatApiError(entryFieldQuery.error)}</p>
@@ -281,6 +312,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {canonicalEventAvailable ? (
             <SectionCard title="Definitive Wild Cards">
+              {wildCardsQuery.mismatch ? <p role="alert">Definitive Wild Cards source does not match this tournament or Viewer Branch.</p> : null}
               {wildCardsQuery.isLoading ? <p className="status">Loading definitive Wild Cards…</p> : null}
               {wildCardsQuery.error ? (
                 <p className="error">Failed to load definitive Wild Cards: {formatApiError(wildCardsQuery.error)}</p>
@@ -312,6 +344,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {canonicalEventAvailable ? (
             <SectionCard title="Canonical Draw">
+              {drawQuery.mismatch ? <p role="alert">Canonical Draw source does not match this tournament or Viewer Branch.</p> : null}
               {drawQuery.isLoading ? <p className="status">Loading canonical Draw…</p> : null}
               {drawQuery.error && !isApiNotFound(drawQuery.error) ? (
                 <p className="error">Failed to load canonical Draw: {formatApiError(drawQuery.error)}</p>
@@ -354,12 +387,14 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
 
           {canonicalEventAvailable ? (
             <SectionCard title="Canonical publication context">
+              {rankingHistoryQuery.mismatch ? <p role="alert">Official Ranking history source does not match this Viewer Branch.</p> : null}
+              {finalsRaceQuery.mismatch ? <p role="alert">Finals Race history source does not match this Viewer Branch.</p> : null}
               {rankingHistoryQuery.error ? <p className="error">Failed to load Official Ranking history: {formatApiError(rankingHistoryQuery.error)}</p> : null}
               {finalsRaceQuery.error ? <p className="error">Failed to load Finals Race history: {formatApiError(finalsRaceQuery.error)}</p> : null}
               <MetadataList
                 items={[
-                  { label: 'Official Ranking publications this event week', value: rankingPublications.length },
-                  { label: 'Finals Race publications at this cutoff week', value: finalsRacePublications.length },
+                  { label: 'Official Ranking publications this event week', value: rankingHistoryQuery.data && seasonIndex !== null ? rankingPublications.length : '—' },
+                  { label: 'Finals Race publications at this cutoff week', value: finalsRaceQuery.data && seasonIndex !== null ? finalsRacePublications.length : '—' },
                   {
                     label: 'Canonical links',
                     value: (
@@ -382,6 +417,8 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
           ) : null}
 
           <SectionCard title="Canonical Tournament Result">
+            {resultQuery.mismatch ? <p role="alert">Tournament Result source does not match this tournament or Viewer Branch.</p> : null}
+            {!canonicalEventAvailable && resultQuery.data ? <p className="status">Tournament Result withheld until the event context is verified.</p> : null}
             {resultQuery.isLoading ? <p className="status">Loading canonical Tournament Result…</p> : null}
             {resultQuery.error && !isApiNotFound(resultQuery.error) ? (
               <p className="error">Failed to load canonical Tournament Result: {formatApiError(resultQuery.error)}</p>
@@ -389,7 +426,7 @@ export function ViewerRunTournamentDetailPage(): JSX.Element {
             {isApiNotFound(resultQuery.error) ? (
               <EmptyState message="Canonical Tournament Result is not available for this tournament yet." />
             ) : null}
-            {resultQuery.data ? (
+            {canonicalEventAvailable && resultQuery.data ? (
               <>
                 <MetadataList
                   items={[

@@ -390,6 +390,58 @@ def test_span_hash_uses_shared_ascii_bytes_with_the_same_result():
     assert canonical_text.proven_ascii_bytes(proof) == text.encode("ascii")
 
 
+def test_span_hash_reuses_only_the_reference_digest_of_byte_identical_spans(monkeypatch):
+    import hashlib
+
+    from beta_engine.domain.run_packages import canonical_hash
+
+    paths = (("content", "world"), ("content", "checkpoint", "state"), ("content", "checkpoint", "state", "events", 0),
+             ("run",), ("missing",))
+    previous, computed = None, []
+    original = canonical_text._span_digest
+
+    def counting(proof, node):
+        computed.append((proof, node.start, node.end))
+        return original(proof, node)
+
+    monkeypatch.setattr(canonical_text, "_span_digest", counting)
+    for n in range(2, 6):
+        value = _history(n)
+        proof = verify_canonical_text(canonical_json(value), previous)
+        computed.clear()
+        for path in paths:
+            actual = canonical_text.span_canonical_hash(proof, path)
+            sub = value
+            for key in path:
+                sub = sub.get(key) if isinstance(sub, dict) else (
+                    sub[key] if isinstance(sub, list) and key < len(sub) else None)
+                if sub is None:
+                    break
+            expected = None if sub is None or "\\u" in canonical_json(sub) else canonical_hash(sub)
+            assert actual == expected, path
+        hashed = {proof.text[start:end] for _, start, end in computed}
+        # Unchanged values (the world, the first event) are hashed once, in the
+        # first proof only; the changed checkpoint and run are hashed anew.
+        if previous is not None:
+            assert canonical_json(value["content"]["world"]) not in hashed
+            assert canonical_json(value["content"]["checkpoint"]["state"]["events"][0]) not in hashed
+            assert canonical_json(value["content"]["checkpoint"]["state"]) in hashed
+            assert canonical_json(value["run"]) in hashed
+        previous = proof
+    # A proof made WITHOUT that reference never reuses its digests.
+    other = verify_canonical_text(canonical_json(_history(5)))
+    computed.clear()
+    events = ("content", "checkpoint", "state", "events", 0)
+    assert canonical_text.span_canonical_hash(other, events) == hashlib.sha256(
+        canonical_json(_history(5)["content"]["checkpoint"]["state"]["events"][0]).encode()).hexdigest()
+    assert computed
+    # A tampered reference table cannot reach a proof of different bytes:
+    # changed values are never `same`, so their path is always hashed.
+    changed = verify_canonical_text(canonical_json(_history(6)), previous)
+    previous.span_hashes[("run",)] = "0" * 64
+    assert canonical_text.span_canonical_hash(changed, ("run",)) == canonical_hash(_history(6)["run"])
+
+
 def test_composite_proven_hash_equals_canonical_hash_of_the_plain_structure():
     from beta_engine.domain.run_packages import canonical_hash
 

@@ -172,6 +172,49 @@ describe('Viewer top-level current Official Ranking (mocked GET API; not HTTP/SQ
     expect(screen.queryByText('viewer-a')).not.toBeInTheDocument()
   })
 
+  it('hides the previous publication during a refresh of the same Saved Branch', async () => {
+    writeViewerActiveProductRunId('run alpha')
+    const { client } = mount()
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    let deliver: ((value: ReturnType<typeof makeRanking>) => void) | undefined
+    api.getViewerOfficialRanking.mockImplementationOnce(() => new Promise(resolve => { deliver = resolve }))
+    act(() => {
+      void client.invalidateQueries({ queryKey: ['viewer-current-official-ranking', 'run alpha', 'viewer-a'] })
+    })
+    await waitFor(() => expect(deliver).toBeDefined())
+    expect(await screen.findByText('Načítání publikovaného rankingu…')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Otevřít tento publikovaný snapshot' })).not.toBeInTheDocument()
+    await act(async () => {
+      deliver?.({ ...makeRanking(), week: 15, week_ordinal: 197 })
+    })
+    expect(await screen.findByRole('link', { name: 'Otevřít tento publikovaný snapshot' }))
+      .toHaveAttribute('href', '/viewer/runs/run%20alpha/rankings/197')
+  })
+
+  it('does not redisplay cached current data when the same Branch context resolves again', async () => {
+    writeViewerActiveProductRunId('run alpha')
+    const { client } = mount()
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    let rejectRanking: ((error: Error) => void) | undefined
+    api.getViewerOfficialRanking.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectRanking = reject }))
+    // Make context refresh observable so the ranking child actually unmounts.
+    let deliverContext: ((value: ReturnType<typeof makeContext>) => void) | undefined
+    api.getViewerOfficialRunContext.mockImplementationOnce(() => new Promise(resolve => { deliverContext = resolve }))
+    act(() => {
+      void client.invalidateQueries({ queryKey: ['viewer-current-official-context', 'run alpha'] })
+    })
+    expect(await screen.findByText('Ověřuji aktuální Viewer Branch…')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await act(async () => { deliverContext?.(makeContext()) })
+    await waitFor(() => expect(rejectRanking).toBeDefined())
+    expect(await screen.findByText('Načítání publikovaného rankingu…')).toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    await act(async () => { rejectRanking?.(new Error('ranking refresh unavailable')) })
+    expect(await screen.findByRole('alert')).toHaveTextContent('ranking refresh unavailable')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
   it('retains the same source and GET count when switching CS/EN', async () => {
     writeViewerActiveProductRunId('run alpha')
     mount()

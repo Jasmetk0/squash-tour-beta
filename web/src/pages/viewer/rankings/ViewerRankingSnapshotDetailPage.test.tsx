@@ -89,8 +89,8 @@ describe('historical Official Ranking detail (mocked GET API, not HTTP/SQLite)',
 
   it('shows sourced policy, exact players/points and safe route links without inferred metrics', async () => {
     api.getViewerOfficialRankingHistoryDetail.mockResolvedValue(publication([
-      { rank: 1, player_id: 'player-001', points: 0 },
-      { rank: 2, player_id: 'player with space', points: 200 }
+      { rank: 1, player_id: 'player-001', points: 200 },
+      { rank: 2, player_id: 'player with space', points: 0 }
     ]))
     mount()
     const table = await screen.findByRole('table', { name: 'Historický Official Ranking – hráči' })

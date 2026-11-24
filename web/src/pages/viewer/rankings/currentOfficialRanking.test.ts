@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest'
+import { validViewerRankingDetail } from './rankingSnapshotDetailBrowsing'
 import {
   currentRankingViewerBranch, legacyCurrentRankingSeason, validCurrentOfficialRanking
 } from './currentOfficialRanking'
@@ -51,6 +52,20 @@ describe('current published Official Ranking source validation (legacy v1)', () 
     ]) {
       expect(validCurrentOfficialRanking(invalid, 'run-a', 'branch-a')).toBe(false)
     }
+  })
+
+  it('shares the exact publication checks with historical ranking reads', () => {
+    const original = ranking([player(1, 'one', 10), player(2, 'two', 10)])
+    for (const value of [
+      original, { ...original, rows: [player(1, 'one', 0), player(2, 'two', 10)] },
+      { ...original, internal_state: {} }, { ...original, week: 3 },
+      { ...original, rows: [{ ...original.rows[0], private_points: 10 }, original.rows[1]] },
+    ]) {
+      expect(validCurrentOfficialRanking(value, 'run-a', 'branch-a'))
+        .toBe(validViewerRankingDetail(value, 'run-a', 'branch-a', 1))
+    }
+    expect(validCurrentOfficialRanking(original, 'run-a', 'branch-a')).toBe(true)
+    expect(validViewerRankingDetail(original, 'run-a', 'branch-a', 2)).toBe(false)
   })
 
   it('rejects foreign and corrupt sources without fabricating results', () => {

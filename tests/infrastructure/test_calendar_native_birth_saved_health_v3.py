@@ -60,6 +60,38 @@ def test_real_saved_birth_health_and_signed_lifecycle_roundtrip(monkeypatch,widt
     assert json.dumps(payload,sort_keys=True) == encoded
 
 
+def test_saved_health_reuses_only_dependencies_loaded_for_the_exact_payload(monkeypatch):
+    from beta_engine.infrastructure.db import initial_world_state, player_lifecycle_state
+
+    payload, lifecycle, _ = _signed_fixture(monkeypatch)
+    initial = health_for(lifecycle[0])
+    states = (initial, advance_native_health_week(
+        previous_health=initial, previous_lifecycle=lifecycle[0], next_lifecycle=lifecycle[1],
+    ))
+    payload["content"]["player_health_state"] = _component(states)
+    world = initial_world_state.load_saved_initial_world(payload, run_id="r", branch_id="b")
+    life = player_lifecycle_state.load_saved_lifecycle(payload, run_id="r", branch_id="b")
+    inputs = (payload, "r", "b", world, life)
+
+    def duplicate_load(*args, **kwargs):
+        pytest.fail("already validated dependencies were loaded again")
+
+    with monkeypatch.context() as reuse:
+        reuse.setattr(initial_world_state, "load_saved_initial_world", duplicate_load)
+        reuse.setattr(player_lifecycle_state, "load_saved_lifecycle", duplicate_load)
+        assert load_saved_health(
+            payload, run_id="r", branch_id="b", _validated_calendar_inputs=inputs,
+        ) == states
+
+    without_lifecycle = {**payload, "content": {
+        **payload["content"], "player_lifecycle": None,
+    }}
+    with pytest.raises(ValueError, match="requires its population/lifecycle"):
+        load_saved_health(
+            without_lifecycle, run_id="r", branch_id="b", _validated_calendar_inputs=inputs,
+        )
+
+
 @pytest.mark.parametrize("attack,reason",[
     ("missing_health_birth","requires its Signed native Health transition"),
     ("forged_birth_event","Native birth source generation proof is invalid"),

@@ -388,6 +388,7 @@ def load_saved_health(
     *,
     run_id: str,
     branch_id: str,
+    _validated_calendar_inputs=None,
 ) -> (
     tuple[PlayerHealthWeekState | CalendarInitialHealthState | CalendarHealthState | CalendarNativeHealthTransitionState, ...]
     | None
@@ -426,8 +427,17 @@ def load_saved_health(
             load_saved_lifecycle,
         )
 
-        world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
-        life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
+        # The competition replay has already fully loaded the World and
+        # replayed lifecycle from this exact untouched payload and scope.
+        if (
+            _validated_calendar_inputs is not None
+            and _validated_calendar_inputs[0] is payload
+            and _validated_calendar_inputs[1:3] == (run_id, branch_id)
+        ):
+            _, _, _, world, life = _validated_calendar_inputs
+        else:
+            world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
+            life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
         if (
             world is None
             or world.schema_version != "initial_world_state.v2"
@@ -476,12 +486,14 @@ def load_saved_health(
         from beta_engine.domain.players.calendar_prospect_birth import (
             CalendarTourLifecycleIntakeState,
         )
+        health_births_by_ordinal = {
+            state.week.ordinal: state.birth_event for state in states
+            if isinstance(state, CalendarNativeHealthTransitionState)
+        }
         for life_state in life:
-            if isinstance(life_state, CalendarTourLifecycleIntakeState) and not any(
-                isinstance(h, CalendarNativeHealthTransitionState)
-                and h.week.ordinal == life_state.week.ordinal
-                and h.birth_event == life_state.birth_event
-                for h in states
+            if isinstance(life_state, CalendarTourLifecycleIntakeState) and (
+                life_state.week.ordinal not in health_births_by_ordinal
+                or health_births_by_ordinal[life_state.week.ordinal] != life_state.birth_event
             ):
                 raise ValueError("Saved v4 lifecycle requires its Signed native Health transition")
     return states

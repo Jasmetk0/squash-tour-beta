@@ -7,7 +7,7 @@ import pytest
 
 from scripts.profile_native_week_ab import (
     PLANS, SCHEMA, SEED, comparable, compare, copy_fixture, digest,
-    expected_calls, file_sha, summarize_trials, trial_order,
+    expected_calls, file_sha, summarize_trials, trial_order, record_progress,
 )
 
 
@@ -34,9 +34,13 @@ def report(mode="normal", commit="a" * 40):
                 wall_s=len(rows), cpu_s=sum(row["cpu_s"] for row in rows),
                 elapsed_wall_s=len(rows)+1, elapsed_cpu_s=len(rows),
                 peak_rss_kib=123, check_wall_s=2,
-                initial_evidence={**ev, "position": [0, 4], "match_count": 0},
-                evidence=ev, history=[dict(id="head", payload_sha256="a" * 64,
-                                          summary_sha256="b" * 64, content_hash="c" * 64)],
+                initial_evidence={**ev, "position": [0, 4], "match_count": 0, "head": "start"},
+                evidence=ev, history=[
+                    dict(id=ident, parent=parent, payload_sha256="a" * 64,
+                         summary_sha256="b" * 64, content_hash="c" * 64)
+                    for ident, parent in (("start", None), ("play", "start"),
+                                          ("confirm", "play"), ("head", "confirm"))
+                ],
                 metadata=dict(commit=commit, source_tree="c" * 40,
                               runner_sha256="r", metrics_sha256="m", python="3.11",
                               platform="Linux", machine="x86_64", cpu_count=4,
@@ -75,6 +79,14 @@ def test_equal_commits_comparison_and_retry_cost():
     lambda b: b.update(cpu_s=0),
     lambda b: b["calls"][0].update(request_sha256="0" * 64),
     lambda b: b["after"].update(revisions=14),
+    lambda b: b["history"].pop(1),
+    lambda b: b["history"][1].update(parent="unknown"),
+    lambda b: b["history"][1].update(id="start"),
+    lambda b: b["initial_evidence"].update(head="unknown"),
+    lambda b: b["evidence"].update(position=[0, 6]),
+    lambda b: b["evidence"].update(match_count=2),
+    lambda b: b["evidence"].update(players=7),
+    lambda b: b.update(peak_rss_kib=122),
 ])
 def test_incompatible_or_incomplete_report(change):
     a = report()
@@ -185,3 +197,22 @@ def test_fixture_copy_rejects_dangling_symlink(tmp_path):
     with pytest.raises(FileExistsError):
         copy_fixture(source, target, file_sha(source))
     assert not missing.exists()
+
+
+def test_phase_progress_survives_without_final_report(tmp_path):
+    path = tmp_path / "worker.phases.jsonl"
+    record_progress(path, {"label": "initial_get", "wall_s": 1})
+    record_progress(path, {"label": "play:preview", "wall_s": 2})
+    assert [json.loads(line)["label"] for line in path.read_text().splitlines()] == [
+        "initial_get", "play:preview"]
+    assert not (tmp_path / "worker.json").exists()
+
+
+def test_sampled_wal_peak_not_hidden_by_checkpoint():
+    a, b = report(), report()
+    b["calls"][3]["wal_bytes"] = 100000
+    result = compare(a, b)
+    assert result["verdict"] == "equal"
+    assert result["b"]["wal_bytes"] == 0
+    assert result["b"]["max_sampled_wal_bytes"] == 100000
+    assert result["delta_b_minus_a"]["max_sampled_wal_bytes"] == 99988

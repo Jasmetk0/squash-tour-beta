@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
 import { getRunPlayerDetail, listRunPlayers } from '../../../api/client'
+import type { RunPlayerListItem } from '../../../api/types'
 import { ViewerEmptyState, ViewerLandingGrid, ViewerMetadataList, ViewerSectionCard } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
@@ -66,6 +67,34 @@ const messages = {
   }
 }
 
+// The discovery endpoint is independent of the exact player reads. Validate
+// the returned source and every row before passing it to the generic sample
+// renderer (which also accepts other, richer Viewer payloads).
+function verifiedDiscoverySample(value: unknown, runId: string): { total: number; players: RunPlayerListItem[] } | null {
+  if (!value || typeof value !== 'object') return null
+  const sample = value as Record<string, unknown>
+  const total = sample.total
+  if (sample.run_id !== runId || typeof total !== 'number' ||
+      !Number.isSafeInteger(total) || total < 0 || sample.limit !== 50 || sample.offset !== 0 ||
+      !Array.isArray(sample.players) || sample.players.length > 50 || sample.players.length > total) return null
+  const ids = new Set<string>()
+  const players: RunPlayerListItem[] = []
+  for (const row of sample.players) {
+    if (!row || typeof row !== 'object' || typeof row.player_id !== 'string' ||
+        !row.player_id.trim() || ids.has(row.player_id)) return null
+    const player = verifiedComparisonPlayerDetail(row, row.player_id)
+    if (!player) return null
+    ids.add(player.player_id)
+    // Only the legacy RunPlayerListItem fields consumed by the renderer.
+    // Do not propagate extra fields such as current_ovr or identity_source
+    // from a malformed response for a different read model.
+    players.push({
+      ...player, current_ovr: undefined, status: undefined, identity_source: undefined
+    } as RunPlayerListItem)
+  }
+  return { total, players }
+}
+
 function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerComparisonRouteKind }): JSX.Element {
   const activeRunId = useActiveViewerRunId()
   const { language } = useLanguage()
@@ -100,14 +129,14 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
     enabled: Boolean(activeRunId), retry: false
   })
 
-  const playerA = enabled && selectionSynced && left.isSuccess
+  const playerA = enabled && selectionSynced && left.isSuccess && !left.isFetching
     ? verifiedComparisonPlayerDetail(left.data, params.playerAParam) : null
-  const playerB = enabled && selectionSynced && right.isSuccess
+  const playerB = enabled && selectionSynced && right.isSuccess && !right.isFetching
     ? verifiedComparisonPlayerDetail(right.data, params.playerBParam) : null
   const invalidEvidence = enabled && selectionSynced &&
-    ((left.isSuccess && !playerA) || (right.isSuccess && !playerB))
+    ((left.isSuccess && !left.isFetching && !playerA) || (right.isSuccess && !right.isFetching && !playerB))
   const detailError = enabled && selectionSynced && (left.isError || right.isError)
-  const detailLoading = enabled && selectionSynced && (left.isPending || right.isPending)
+  const detailLoading = enabled && selectionSynced && (left.isPending || right.isPending || left.isFetching || right.isFetching)
 
   const submit = (event: FormEvent) => {
     event.preventDefault()
@@ -136,7 +165,12 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
       <ViewerEmptyState>{l.noRun}</ViewerEmptyState>
     </ViewerShellPage>
   }
-  const players = playersQuery.data?.players ?? []
+  const sample = playersQuery.isSuccess && !playersQuery.isFetching
+    ? verifiedDiscoverySample(playersQuery.data, activeRunId) : null
+  const players = sample?.players ?? []
+  const sampleLoading = playersQuery.isPending || playersQuery.isFetching
+  const sampleError = playersQuery.isError || (playersQuery.isSuccess && !sampleLoading && !sample)
+  const complete = Boolean(playerA && playerB && !detailLoading && !detailError && !invalidEvidence)
   return (
     <ViewerShellPage
       title={l.title}
@@ -162,14 +196,14 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
             </div>
           </form>
           <p className="status">{l.scope}</p>
-          {playersQuery.isLoading ? <p className="status">{l.sampleLoading}</p> : null}
-          {playersQuery.isError ? <ViewerEmptyState>{l.sampleError}</ViewerEmptyState> : null}
+          {sampleLoading ? <p className="status">{l.sampleLoading}</p> : null}
+          {sampleError ? <ViewerEmptyState>{l.sampleError}</ViewerEmptyState> : null}
           <ViewerMetadataList items={[
             {label: l.runId, value: activeRunId},
-            {label: l.total, value: playersQuery.isLoading ? l.loadingValue : playersQuery.data?.total ?? '—'},
-            {label: l.sampleSize, value: playersQuery.isLoading ? l.loadingValue : players.length}
+            {label: l.total, value: sampleLoading ? l.loadingValue : sample?.total ?? '—'},
+            {label: l.sampleSize, value: sampleLoading ? l.loadingValue : sample ? players.length : '—'}
           ]} />
-          {!playersQuery.isLoading && !playersQuery.isError && players.length === 0
+          {sample && players.length === 0
             ? <ViewerEmptyState>{l.emptySample}</ViewerEmptyState> : null}
           {!selectionSynced ? <p role="status">{l.pending}</p> : null}
           {params.hasPlayerParams && !requestedValid && selectionSynced
@@ -181,14 +215,14 @@ function ViewerPlayerComparisonContent({ routeKind }: { routeKind: ViewerCompari
           {!params.hasPlayerParams && selectionSynced ? (
             <>
               <ViewerEmptyState>{l.incomplete}</ViewerEmptyState>
-              <ViewerSamplePlayersList players={players} label={l.sampleLabel} runId={activeRunId} />
+              {sample ? <ViewerSamplePlayersList players={players} label={l.sampleLabel} runId={activeRunId} /> : null}
             </>
           ) : null}
         </ViewerSectionCard>
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerA} player={playerA} />
-        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerB} player={playerB} />
-        <ViewerComparisonSummary playerA={playerA} playerB={playerB} />
-        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={[playerA, playerB].filter((p): p is NonNullable<typeof p> => p !== null)} />
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerA} player={complete ? playerA : null} />
+        <ViewerComparisonPlayerCard activeRunId={activeRunId} title={l.playerB} player={complete ? playerB : null} />
+        <ViewerComparisonSummary playerA={complete ? playerA : null} playerB={complete ? playerB : null} />
+        <ViewerPlayerComparisonLinks activeRunId={activeRunId} players={complete ? [playerA, playerB].filter((p): p is NonNullable<typeof p> => p !== null) : []} />
       </ViewerLandingGrid>
     </ViewerShellPage>
   )

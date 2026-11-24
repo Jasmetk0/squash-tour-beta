@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { verifiedSignedSeasonBranch, verifiedSignedSeasonComparison, verifiedSignedSeasonList } from './viewerSignedSeasonReadModel'
+import { signedSeasonReportMatchesInventory, verifiedSignedSeasonBranch, verifiedSignedSeasonComparison, verifiedSignedSeasonList } from './viewerSignedSeasonReadModel'
 import { signedSeasonListFixture, signedSeasonComparisonFixture } from './viewerSignedSeasonFixture'
 
 const list = (data: unknown) => verifiedSignedSeasonList(data, 'run alpha', 'branch-tour')
@@ -78,4 +78,29 @@ describe('public Viewer signed season source guards', () => {
     fake.selected.run_id = 'foreign'
     expect(compare(fake, 0)).toBeNull()
   })
+
+  it('rejects inconsistent list totals and invalid fingerprint evidence', () => {
+    const wrong = signedSeasonListFixture()
+    wrong.completed_edition_count++
+    expect(list(wrong)).toBeNull()
+    const source = signedSeasonListFixture()
+    source.source_seasons[0].source_tour_fingerprint = 'f'.repeat(64)
+    expect(list(source)).toBeNull()
+  })
+
+  it('checks both comparison closures against the exact source inventory', () => {
+    const inventory = signedSeasonListFixture()
+    expect(signedSeasonReportMatchesInventory(signedSeasonComparisonFixture(true), inventory)).toBe(true)
+    for (const patch of [
+      { season_label: 'unknown' }, { boundary_command_id: 'other' },
+      { source_tour_fingerprint: 'b'.repeat(64) }, { completed_edition_count: 99 },
+      { last_week_published_ranking: { ...signedSeasonComparisonFixture().selected.last_week_published_ranking,
+        source_fingerprint: 'f'.repeat(64) } },
+    ]) {
+      const report = signedSeasonComparisonFixture(true)
+      Object.assign(report.comparison!, patch)
+      expect(signedSeasonReportMatchesInventory(report, inventory)).toBe(false)
+    }
+  })
+
 })

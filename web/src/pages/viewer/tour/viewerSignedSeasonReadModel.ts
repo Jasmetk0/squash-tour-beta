@@ -1,6 +1,7 @@
 import type { SignedSeasonSummary, TourCareerRecords, TourSeasonComparison } from '../../../api/calendarTour'
 
 const positiveId = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0
+const fingerprint = (v: unknown): v is string => typeof v === 'string' && /^[0-9a-f]{64}$/.test(v)
 const whole = (v: unknown, min = 0): v is number =>
   typeof v === 'number' && Number.isSafeInteger(v) && v >= min
 
@@ -19,7 +20,7 @@ export function verifiedSignedSeasonList(
   const v = source as TourCareerRecords
   if (v.schema_version !== 'calendar_tour_signed_records_response.v1' ||
     v.run_id !== runId || v.branch_id !== branchId ||
-    !positiveId(v.saved_head_revision_id) || !positiveId(v.source_tour_fingerprint) ||
+    !positiveId(v.saved_head_revision_id) || !fingerprint(v.source_tour_fingerprint) ||
     !Array.isArray(v.completed_seasons) || !Array.isArray(v.source_seasons) ||
     v.completed_seasons.length === 0 ||
     v.source_seasons.length !== v.completed_seasons.length ||
@@ -29,18 +30,22 @@ export function verifiedSignedSeasonList(
 
   const seasons: { index: number; label: string }[] = []
   let last = -1
+  let completedEditions = 0
   for (let i = 0; i < v.completed_seasons.length; i++) {
     const index = v.completed_seasons[i], sourceSeason = v.source_seasons[i]
     if (!whole(index) || index <= last || !sourceSeason ||
       sourceSeason.season_index !== index ||
       !positiveId(sourceSeason.season_label) || !positiveId(sourceSeason.boundary_command_id) ||
-      !positiveId(sourceSeason.source_tour_fingerprint) ||
-      !positiveId(sourceSeason.published_ranking_fingerprint) ||
+      !fingerprint(sourceSeason.source_tour_fingerprint) ||
+      sourceSeason.source_tour_fingerprint !== v.source_tour_fingerprint ||
+      !fingerprint(sourceSeason.published_ranking_fingerprint) ||
       !whole(sourceSeason.completed_edition_count)) return null
+    completedEditions += sourceSeason.completed_edition_count
+    if (!Number.isSafeInteger(completedEditions)) return null
     seasons.push({ index, label: sourceSeason.season_label })
     last = index
   }
-  if (seasons[0].index !== 0) return null // public default from_season_index=0
+  if (seasons[0].index !== 0 || v.completed_edition_count !== completedEditions) return null // public default from_season_index=0
   return { savedHead: v.saved_head_revision_id, seasons }
 }
 
@@ -130,4 +135,23 @@ export function verifiedSignedSeasonComparison(
       row.awarded_points_delta !== (one?.awarded_points ?? 0) - (two?.awarded_points ?? 0)) return null
   }
   return v
+}
+
+
+/** Both endpoints project the same closed seasons from one authenticated Saved
+ * Revision. Compare actual closure evidence, not only its revision label. */
+export function signedSeasonReportMatchesInventory(
+  report: TourSeasonComparison, inventory: TourCareerRecords,
+): boolean {
+  if (report.saved_head_revision_id !== inventory.saved_head_revision_id) return false
+  return [report.selected, ...(report.comparison ? [report.comparison] : [])].every(summary => {
+    const season = inventory.source_seasons.find(item => item.season_index === summary.season_index)
+    return Boolean(season &&
+      summary.source_tour_fingerprint === inventory.source_tour_fingerprint &&
+      summary.source_tour_fingerprint === season.source_tour_fingerprint &&
+      summary.season_label === season.season_label &&
+      summary.boundary_command_id === season.boundary_command_id &&
+      summary.completed_edition_count === season.completed_edition_count &&
+      summary.last_week_published_ranking.source_fingerprint === season.published_ranking_fingerprint)
+  })
 }

@@ -307,26 +307,30 @@ class NativeForkRuntimeService:
     def preview(self, *, run_id, branch_id, command):
         with self.repository._session_factory() as session, native_read_proof_scope():
             session.execute(text("BEGIN"))
-            _, _, revision, draft, signed, current, _, sources = self._context(
-                session, run_id, branch_id
+            loaded = self._context(session, run_id, branch_id)
+            return self._prepare_loaded(loaded, command, branch_id=branch_id)[0]
+
+    @staticmethod
+    def _prepare_loaded(loaded, command, *, branch_id):
+        """Deterministically prepare ``command`` from one authenticated context."""
+        _, _, revision, draft, signed, current, _, sources = loaded
+        from beta_engine.application.native_full_simulation_closure import (
+            saved_native_closure,
+        )
+        if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
+            raise ValueError("This native Branch is completed; extend the Run before new Tour work")
+        if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
+            raise ValueError(
+                "Save the other Working Draft change before a Tour command"
             )
-            from beta_engine.application.native_full_simulation_closure import (
-                saved_native_closure,
-            )
-            if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
-                raise ValueError("This native Branch is completed; extend the Run before new Tour work")
-            if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
-                raise ValueError(
-                    "Save the other Working Draft change before a Tour command"
-                )
-            return prepare_command(
-                current,
-                command,
-                sources,
-                saved_head=revision.revision_id,
-                draft_version=draft.draft_version,
-                is_saved=current == signed,
-            )[0]
+        return prepare_command(
+            current,
+            command,
+            sources,
+            saved_head=revision.revision_id,
+            draft_version=draft.draft_version,
+            is_saved=current == signed,
+        )
 
     def execute(self, *, run_id, branch_id, request):
         with (
@@ -334,9 +338,8 @@ class NativeForkRuntimeService:
             native_read_proof_scope(),
         ):
             session.execute(text("BEGIN IMMEDIATE"))
-            _, _, revision, draft, signed, current, _, sources = self._context(
-                session, run_id, branch_id
-            )
+            loaded = self._context(session, run_id, branch_id)
+            _, _, _revision, draft, _signed, current, _, _sources = loaded
             for event in current.journal:
                 if event.request["command"]["command_id"] == request.command.command_id:
                     if event.request != request.model_dump(mode="json"):
@@ -344,46 +347,40 @@ class NativeForkRuntimeService:
                             "Command ID already has another request or confirmation"
                         )
                     return event.result
-            from beta_engine.application.native_full_simulation_closure import (
-                saved_native_closure,
-            )
-            if saved_native_closure(revision.payload, branch_id=branch_id, calendar=sources.execution_calendar):
-                raise ValueError("This native Branch is completed; extend the Run before new Tour work")
-            if draft.status == "dirty" and draft.draft_schema_version != DRAFT_SCHEMA:
-                raise ValueError(
-                    "Save the other Working Draft change before a Tour command"
-                )
-            preview, candidate, result = prepare_command(
-                current,
-                request.command,
-                sources,
-                saved_head=revision.revision_id,
-                draft_version=draft.draft_version,
-                is_saved=current == signed,
-            )
-            if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
-                raise ValueError(
-                    "Native fork confirmation is stale; inspect and review again"
-                )
-            successor = commit_prepared(
-                current, candidate, request, result, draft.draft_version
-            )
-            draft.draft_schema_version, draft.status, draft.change_count = (
-                DRAFT_SCHEMA,
-                "dirty",
-                1,
-            )
-            draft.changes_json = canonical_json(
-                [{"kind": KEY, "component": component(successor)}]
-            )
-            draft.draft_version += 1
-            session.flush()
-            from beta_engine.application.calendar_tour_service import (
-                _fault_injection_point,
-            )
+            prepared = self._prepare_loaded(loaded, request.command, branch_id=branch_id)
+            self._install_prepared(session, draft, current, request, prepared)
+            return prepared[2]
 
-            _fault_injection_point("after_tour_write")
-            return result
+    def _install_prepared(self, session, draft, current, request, prepared):
+        """Write one reviewed ``prepare_command`` result into the Working Draft.
+
+        ``prepared`` must come from ``current`` and this exact ``draft`` in the
+        caller's unchanged SQLite snapshot; the caller owns BEGIN IMMEDIATE.
+        """
+        preview, candidate, result = prepared
+        if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
+            raise ValueError(
+                "Native fork confirmation is stale; inspect and review again"
+            )
+        successor = commit_prepared(
+            current, candidate, request, result, draft.draft_version
+        )
+        draft.draft_schema_version, draft.status, draft.change_count = (
+            DRAFT_SCHEMA,
+            "dirty",
+            1,
+        )
+        draft.changes_json = canonical_json(
+            [{"kind": KEY, "component": component(successor)}]
+        )
+        draft.draft_version += 1
+        session.flush()
+        from beta_engine.application.calendar_tour_service import (
+            _fault_injection_point,
+        )
+
+        _fault_injection_point("after_tour_write")
+        return successor
 
     def _append(
         self,

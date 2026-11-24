@@ -52,12 +52,17 @@ function verifiedSearchCountries(raw: unknown, roster: ViewerPlayers): ViewerCou
       value.product_run_id !== roster.product_run_id || value.viewer_branch_id !== roster.viewer_branch_id ||
       value.season_index !== roster.season_index || value.week !== roster.week ||
       !Array.isArray(value.countries) || value.country_count !== value.countries.length) return null
-  const groups = new Map<string, { players: number; active: number }>()
+  const groups = new Map<string, { players: number; active: number; rated: number; sum: number; max: number }>()
   const players = new Map(roster.players.map(player => [player.player_id, player]))
   for (const player of roster.players) {
-    const row = groups.get(player.country_code) ?? { players: 0, active: 0 }
+    const row = groups.get(player.country_code) ?? { players: 0, active: 0, rated: 0, sum: 0, max: 0 }
     row.players++
     if (player.status === 'active') row.active++
+    if (player.current_ovr !== null) {
+      row.rated++
+      row.sum += player.current_ovr
+      row.max = Math.max(row.max, player.current_ovr)
+    }
     groups.set(player.country_code, row)
   }
   const fields = new Set(['country_code', 'player_count', 'active_player_count', 'retired_player_count',
@@ -73,12 +78,14 @@ function verifiedSearchCountries(raw: unknown, roster: ViewerPlayers): ViewerCou
         country.retired_player_count !== group.players - group.active) return null
     const top = country.top_player_id === null ? null : players.get(country.top_player_id)
     if (country.top_player_id === null) {
-      if (country.top_player_name !== null || country.top_player_current_ovr !== null ||
+      if (group.rated !== 0 || country.top_player_name !== null || country.top_player_current_ovr !== null ||
           country.average_current_ovr !== null) return null
     } else if (!top || top.country_code !== country.country_code || top.name !== country.top_player_name ||
         top.current_ovr === null || top.current_ovr !== country.top_player_current_ovr ||
         typeof country.average_current_ovr !== 'number' || !Number.isFinite(country.average_current_ovr) ||
-        country.average_current_ovr < 0 || country.average_current_ovr > top.current_ovr) return null
+        country.average_current_ovr < 0 || country.average_current_ovr > top.current_ovr ||
+        top.current_ovr !== group.max || group.rated === 0 ||
+        Math.abs(country.average_current_ovr - group.sum / group.rated) > 0.00500001) return null
     seen.add(country.country_code)
   }
   return seen.size === groups.size ? value as ViewerCountries : null
@@ -235,7 +242,11 @@ export function ViewerSearchPage(): JSX.Element {
           {players.length ? (
             <ul className="viewer-home-list">
               {players.map((player) => (
-                <li key={player.player_id}>{renderPlayerSampleMetadata(player, productRunId)}</li>
+                <li key={player.player_id}>{renderPlayerSampleMetadata({
+                  player_id: player.player_id, name: player.name, country_code: player.country_code,
+                  age: player.age, current_ovr: player.current_ovr, status: player.status,
+                  identity_source: player.identity_source,
+                }, productRunId)}</li>
               ))}
             </ul>
           ) : <p className="status">{t('noPlayers')}</p>}

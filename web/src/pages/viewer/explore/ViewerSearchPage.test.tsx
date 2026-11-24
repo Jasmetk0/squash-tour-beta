@@ -243,4 +243,22 @@ describe('Viewer Search submission (mocked GET API)', () => {
     expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
   })
 
+
+  it('rejects a country rating summary that contradicts the verified public roster', async () => {
+    const roster = players('run-a')
+    mocks.getViewerPlayers.mockResolvedValue({
+      ...roster, players: roster.players.map((player, i) => ({ ...player, current_ovr: i ? 100 : 150 })),
+    })
+    const valid = countries('run-a')
+    mocks.getViewerCountries.mockResolvedValue({
+      ...valid, countries: [{
+        ...valid.countries[0], top_player_id: 'alice', top_player_name: 'Alice',
+        top_player_current_ovr: 150, average_current_ovr: 130,
+      }],
+    })
+    mount('/viewer/search?q=Alice')
+    expect(await screen.findByText('Some canonical searchable metadata is temporarily unavailable.')).toBeInTheDocument()
+    expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
+  })
+
 })

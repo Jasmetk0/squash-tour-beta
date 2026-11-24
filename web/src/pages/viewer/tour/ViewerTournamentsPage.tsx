@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -43,7 +43,7 @@ const messages = {
   unpublished: ['Výsledek nepublikován', 'Result not published'],
   clear: ['Vymazat filtry', 'Clear filters'],
   unknownFilter: ['Neznámá hodnota', 'Unknown value'],
-  invalidFilters: ['Odkaz obsahuje neplatnou nebo nedostupnou hodnotu filtru. Uprav ji nebo vymaž filtry.', 'The URL contains an invalid or unavailable filter. Correct or clear the filters.'],
+  invalidFilters: ['Odkaz obsahuje neplatnou nebo nedostupnou hodnotu filtru či stránky. Uprav výběr nebo vymaž filtry.', 'The URL contains an invalid or unavailable filter or page. Correct or clear the selection.'],
   table: ['Uložené turnaje', 'Saved tournaments'],
   season: ['Sezona', 'Season'],
   week: ['Týden', 'Week'],
@@ -87,7 +87,9 @@ function CalendarStatus({ status, t }: { status: string; t: Copy }): JSX.Element
 const TOURNAMENT_URL_FILTERS = {
   season: 'vtSeason', search: 'vtQ', result: 'vtResult'
 } as const
-const TOURNAMENT_URL_KEYS = Object.values(TOURNAMENT_URL_FILTERS)
+const TOURNAMENT_FILTER_KEYS = Object.values(TOURNAMENT_URL_FILTERS)
+const TOURNAMENT_PAGE_KEY = 'vtPage'
+const TOURNAMENT_URL_KEYS = [...TOURNAMENT_FILTER_KEYS, TOURNAMENT_PAGE_KEY]
 
 function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
@@ -97,24 +99,23 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   const season = active.get(TOURNAMENT_URL_FILTERS.season) ?? 'all'
   const search = active.get(TOURNAMENT_URL_FILTERS.search) ?? ''
   const resultFilter = (active.get(TOURNAMENT_URL_FILTERS.result) ?? 'all') as TournamentPublicationFilter
-  const [page, setPage] = useState(1)
+  const rawPage = active.get(TOURNAMENT_PAGE_KEY) ?? '1'
   const [jump, setJump] = useState('')
   const [badJump, setBadJump] = useState(false)
   useEffect(() => {
-    setPage(1)
     setJump('')
     setBadJump(false)
-  }, [season, search, resultFilter])
+  }, [season, search, resultFilter, rawPage])
 
   function updateFilter(name: string, value: string, fallback: string, replace = false): void {
     setSearchParams(previous => {
       const next = new URLSearchParams(previous)
       if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      next.delete(TOURNAMENT_PAGE_KEY)
       if (value === fallback) next.delete(name)
       else next.set(name, value)
       return next
     }, { replace })
-    changePage(1)
   }
   const calendarQuery = useQuery({
     queryKey: ['viewer-tournaments-calendar', runId, branchId],
@@ -130,7 +131,14 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
     void Promise.all([calendarQuery.refetch(), historyQuery.refetch()])
   }
   function changePage(value: number): void {
-    setPage(value); setJump(''); setBadJump(false)
+    setJump(''); setBadJump(false)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
+      if (value === 1) next.delete(TOURNAMENT_PAGE_KEY)
+      else next.set(TOURNAMENT_PAGE_KEY, String(value))
+      return next
+    })
   }
   function clear(): void {
     setSearchParams(previous => {
@@ -138,8 +146,20 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
       TOURNAMENT_URL_KEYS.forEach(key => next.delete(key))
       return next
     })
-    changePage(1)
   }
+  const catalog = useMemo(() => verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, runId, branchId),
+    [calendarQuery.data, historyQuery.data, runId, branchId])
+  const seasons = useMemo(() => catalog ? catalogSeasonsNewestFirst(catalog) : [], [catalog])
+  const invalidSeason = season !== 'all' && !seasons.includes(season)
+  const invalidResult = !['all', 'published', 'unpublished'].includes(resultFilter)
+  const invalidSelection = invalidSeason || invalidResult || TOURNAMENT_FILTER_KEYS.some(key => active.getAll(key).length > 1)
+  const filtered = useMemo(() => catalog && !invalidSelection ? filteredSavedTournaments(catalog, season, search, resultFilter) : [],
+    [catalog, season, search, resultFilter, invalidSelection])
+  const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)
+  const requestedPage = /^[1-9][0-9]*$/.test(rawPage) ? parseTournamentPage(rawPage, Math.max(1, totalPages)) : null
+  const invalidFilters = invalidSelection || requestedPage === null || active.getAll(TOURNAMENT_PAGE_KEY).length > 1
+  const runLinkParams = new URLSearchParams(searchParams)
+  if (ignoreUrlFilters) TOURNAMENT_URL_KEYS.forEach(key => runLinkParams.delete(key))
   if (calendarQuery.isPending || calendarQuery.isFetching || historyQuery.isPending || historyQuery.isFetching) {
     return <p className="status" role="status">{t.loading}</p>
   }
@@ -147,20 +167,13 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
     <div role="alert"><p className="error">{t.unavailable}</p>
       <button type="button" onClick={retry}>{t.retry}</button></div>
   )
-  const catalog = verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, runId, branchId)
   if (!catalog) return <div role="alert"><p className="error">{t.mismatch}</p>
     <button type="button" onClick={retry}>{t.retry}</button></div>
 
-  const seasons = catalogSeasonsNewestFirst(catalog)
-  const invalidSeason = season !== 'all' && !seasons.includes(season)
-  const invalidResult = !['all', 'published', 'unpublished'].includes(resultFilter)
-  const invalidFilters = invalidSeason || invalidResult || TOURNAMENT_URL_KEYS.some(key => active.getAll(key).length > 1)
-  // Never reinterpret a link requesting an unknown season/status as "all".
-  const filtered = invalidFilters ? [] : filteredSavedTournaments(catalog, season, search, resultFilter)
-  const totalPages = Math.ceil(filtered.length / TOURNAMENT_PAGE_SIZE)
-  const visiblePage = totalPages ? Math.min(page, totalPages) : 0
+  // Preserve exact page selection; an invalid link cannot imply another page.
+  const visiblePage = !invalidFilters && totalPages ? requestedPage ?? 0 : 0
   const offset = visiblePage ? (visiblePage - 1) * TOURNAMENT_PAGE_SIZE : 0
-  const rows = filtered.slice(offset, offset + TOURNAMENT_PAGE_SIZE)
+  const rows = invalidFilters ? [] : filtered.slice(offset, offset + TOURNAMENT_PAGE_SIZE)
   function submitJump(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const next = parseTournamentPage(jump, totalPages)
@@ -177,7 +190,7 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
         <div><dt>{t.events}</dt><dd>{catalog.eventCount}</dd></div>
         <div><dt>{t.publishedCount}</dt><dd>{catalog.publishedCount}</dd></div>
       </dl>
-      {catalog.eventCount === 0 ? <p className="empty-state">{t.none}</p> : (
+      {catalog.eventCount === 0 && !invalidFilters ? <p className="empty-state">{t.none}</p> : (
         <>
           {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
           <div>
@@ -205,7 +218,7 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
             </select>
             <button type="button" onClick={clear}>{t.clear}</button>
           </div>
-          {filtered.length === 0 ? <p className="empty-state">{t.noMatch}</p> : (
+          {invalidFilters || filtered.length === 0 ? <p className="empty-state">{t.noMatch}</p> : (
             <div className="table-wrap">
               <table aria-label={t.table}>
                 <thead><tr>
@@ -232,8 +245,8 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
               </table>
             </div>
           )}
-          <p role="status">{t.shown} {filtered.length ? offset + 1 : 0}–{filtered.length ? offset + rows.length : 0} {t.of} {filtered.length}</p>
-          {totalPages > 1 ? <nav aria-label={t.page}>
+          {!invalidFilters ? <p role="status">{t.shown} {filtered.length ? offset + 1 : 0}–{filtered.length ? offset + rows.length : 0} {t.of} {filtered.length}</p> : null}
+          {!invalidFilters && totalPages > 1 ? <nav aria-label={t.page}>
             <button type="button" disabled={visiblePage === 1} onClick={() => changePage(1)}>{t.first}</button>
             <button type="button" disabled={visiblePage === 1} onClick={() => changePage(visiblePage - 1)}>{t.previous}</button>
             <span>{t.page} {visiblePage} / {totalPages}</span>
@@ -251,7 +264,7 @@ function TournamentCatalogForBranch({ runId, branchId, t, ignoreUrlFilters }: {
         </>
       )}
       <nav aria-label={t.heading} className="viewer-active-run-actions">
-        <Link className="viewer-active-run-link" to={viewerTournamentsPath(runId)}>{t.runTournaments}</Link>{' '}
+        <Link className="viewer-active-run-link" to={{ pathname: viewerTournamentsPath(runId), search: runLinkParams.toString() }}>{t.runTournaments}</Link>{' '}
         <Link className="viewer-active-run-link" to={viewerSeasonCalendarPath(runId)}>{t.runCalendar}</Link>{' '}
         <Link className="viewer-active-run-link" to={viewerRunsPath()}>{t.runBrowser}</Link>
       </nav>

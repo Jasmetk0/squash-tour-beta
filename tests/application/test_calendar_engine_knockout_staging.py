@@ -16,6 +16,7 @@ from beta_engine.application.calendar_official_ranking_preview import (
 from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.matches import MatchEngine
+from beta_engine.domain.matches.models import MatchTerminationReason
 from beta_engine.domain.rankings.calendar_official import (
     CalendarRankingPlayer, CalendarRankingWeek,
 )
@@ -217,7 +218,7 @@ def test_witness_rejects_changed_match_result_and_receipt_and_wrong_bracket():
         "winner_player_id":first.result.loser_player_id,
         "loser_player_id":first.result.winner_player_id,
     })
-    with pytest.raises(ValueError,match="winner disagrees"):
+    with pytest.raises(ValueError,match="completed match winner contradicts actual scored sets"):
         CalendarEngineMatchWitness.model_validate_json(
             first.model_copy(update={"result":bad_result}).model_dump_json()
         )
@@ -247,13 +248,14 @@ def test_missing_engine_log_retirement_and_extra_result_are_rejected():
                 }),
             }).model_dump_json()
         )
-    with pytest.raises(ValueError,match="rally-logged"):
+    retired_result = type(original.result).model_validate({
+        **original.result.model_dump(mode="python"),
+        "termination_reason": MatchTerminationReason.RETIREMENT,
+        "retired_player_id": original.result.loser_player_id,
+    })
+    with pytest.raises(ValueError, match="non-RET result"):
         CalendarEngineMatchWitness.model_validate_json(
-            original.model_copy(update={
-                "result": original.result.model_copy(update={
-                    "termination_reason":"RETIREMENT",
-                }),
-            }).model_dump_json()
+            original.model_copy(update={"result": retired_result}).model_dump_json()
         )
     with pytest.raises(ValueError,match="cover every bracket"):
         CalendarEngineKnockoutEvidence.model_validate_json(

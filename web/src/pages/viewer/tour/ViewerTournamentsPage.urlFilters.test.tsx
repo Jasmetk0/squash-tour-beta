@@ -1,11 +1,14 @@
 import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClientProvider } from '@tanstack/react-query'
-import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { LanguageProvider } from '../../../i18n/LanguageContext'
-import { createTestQueryClient, expectNoForbiddenViewerActions } from '../../../test/viewerTestUtils'
+import { createTestQueryClient, expectNoForbiddenViewerActions, makeViewerProductRunRouteTestValue } from '../../../test/viewerTestUtils'
+import { ViewerProductRunRouteContextProvider } from '../../../viewer/ViewerProductRunRouteContext'
+import { viewerTournamentDetailPath } from '../../../viewer/viewerRoutes'
+import { ViewerRunTournamentArchive } from './ViewerRunTournamentArchive'
 import { ViewerTournamentsPage } from './ViewerTournamentsPage'
 
 const api = vi.hoisted(() => ({
@@ -120,6 +123,72 @@ describe('Viewer saved tournament URL filters (mocked GET, not HTTP/SQLite)', ()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
     expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
   })
+
+  it('carries the exact public archive filters into the actual Run archive route', async () => {
+    const user = userEvent.setup()
+    const context = makeViewerProductRunRouteTestValue(source.run)
+    const value = { ...context, officialBranchId: source.branch,
+      officialContext: { ...context.officialContext, product_run_id: source.run, official_branch_id: source.branch } }
+    render(<QueryClientProvider client={createTestQueryClient()}>
+      <MemoryRouter initialEntries={['/viewer/tour/tournaments?vtSeason=2031%2F32&vtQ=template-2&vtResult=published&keep=yes']}>
+        <LanguageProvider><Navigation /><Routes>
+          <Route path="/viewer/tour/tournaments" element={<ViewerTournamentsPage />} />
+          <Route path="/viewer/runs/:runId/tournaments" element={<ViewerProductRunRouteContextProvider value={value}>
+            <ViewerRunTournamentArchive detailPath={viewerTournamentDetailPath} />
+          </ViewerProductRunRouteContextProvider>} />
+        </Routes></LanguageProvider>
+      </MemoryRouter>
+    </QueryClientProvider>)
+    expect(await screen.findByRole('link', { name: 'Open 002' })).toBeInTheDocument()
+    expect(screen.queryByRole('link', { name: 'Open 003' })).not.toBeInTheDocument()
+    const link = screen.getByRole('link', { name: 'Otevřít turnaje Runu' })
+    expect(link).toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments?vtSeason=2031%2F32&vtQ=template-2&vtResult=published&keep=yes')
+    await user.click(link)
+    expect(await screen.findByRole('heading', { name: 'Kanonická historie turnajů' })).toBeInTheDocument()
+    expect(await screen.findByText('Open 002')).toBeInTheDocument()
+    expect(screen.queryByText('Open 003')).not.toBeInTheDocument()
+    expect(params().get('vtQ')).toBe('template-2')
+    expect(params().get('keep')).toBe('yes')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+    expectNoForbiddenViewerActions()
+  })
+
+  it('restores a deep-linked page of a 60-event catalog without repeat GETs', async () => {
+    const raw = fixtures()
+    const rows = Array.from({ length: 60 }, (_, i) => event(i + 1, '2031/32'))
+    api.getViewerRunCalendar.mockResolvedValue({ ...raw.calendar, season_count: 1, event_count: rows.length,
+      seasons: [{ season: '2031/32', event_count: rows.length, events: rows }] })
+    api.getViewerTournamentHistory.mockResolvedValue({ ...raw.history, tournament_count: rows.length, published_result_count: 0,
+      tournaments: rows.map(e => ({ ...raw.history.tournaments[0], event_id: e.event_id, season: e.season,
+        season_week: e.season_week, template_id: e.template_id, event_name: e.event_name, host_city: e.host_city })) })
+    const user = userEvent.setup()
+    mount('/viewer/tour/tournaments?vtPage=2&keep=yes')
+    const table = await screen.findByRole('table')
+    expect(within(table).getAllByRole('row')).toHaveLength(26)
+    expect(within(table).getByRole('link', { name: 'Open 026' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Další' }))
+    expect(params().get('vtPage')).toBe('3')
+    expect(within(table).getAllByRole('row')).toHaveLength(11)
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(params().get('vtPage')).toBe('2')
+    expect(within(table).getByRole('link', { name: 'Open 026' })).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Filtrovat sezonu'), '2031/32')
+    expect(params().get('vtPage')).toBeNull()
+    expect(params().get('keep')).toBe('yes')
+    expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+    expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['vtPage=2', 'vtPage=01', 'vtPage=1&vtPage=1'])(
+    'withholds the catalog for invalid or ambiguous page links: %s', async page => {
+      mount('/viewer/tour/tournaments?' + page + '&keep=yes')
+      expect(await screen.findByRole('alert')).toHaveTextContent('neplatnou nebo nedostupnou hodnotu')
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+      expect(await screen.findByRole('table')).toBeInTheDocument()
+      expect(params().toString()).toBe('keep=yes')
+    }
+  )
 
   it('restores Back/Forward and removes only owned parameters on reset', async () => {
     const user = userEvent.setup()

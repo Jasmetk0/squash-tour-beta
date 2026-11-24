@@ -122,6 +122,8 @@ def _replay_fingerprint(value, *, sporting=False):
     fingerprint = _incremental_checkpoint_fingerprint(value, scope) if scope is not None and not sporting else None
     if fingerprint is None and scope is not None and not sporting:
         fingerprint = _incremental_tour_fingerprint(value, scope)
+    if fingerprint is None and scope is not None:
+        fingerprint = _incremental_result_fingerprint(value, scope, sporting)
     if fingerprint is None:
         body = value.model_dump(mode="json")
         if sporting:
@@ -156,7 +158,8 @@ def _incremental_checkpoint_fingerprint(value, scope):
     key = (id(value.competition_root), value.run_id, value.branch_id, value.schema_version)
     entry = cache.get(key)
     collect = scope.get('collect_checkpoint_value_hashes', False)
-    if entry is None or entry[0] is not value.competition_root or (collect and entry[4] is None):
+    body = None
+    if entry is None or entry['root'] is not value.competition_root:
         body = value.model_dump(mode='json', exclude={'events'})
         if set(body) != {'schema_version', 'run_id', 'branch_id', 'competition_root'}:
             return None
@@ -164,26 +167,43 @@ def _incremental_checkpoint_fingerprint(value, scope):
         after = [encode(k) + b':' + encode(body[k]) for k in sorted(body) if k > 'events']
         prefix = b'{' + b','.join(before) + (b',' if before else b'') + b'"events":['
         suffix = b']' + (b',' if after else b'') + b','.join(after) + b'}'
-        auxiliary = None
-        auxiliary_suffix = None
-        if collect:
-            try:
-                ordered = json.loads(encode(body))
-                def core(data):
-                    return to_json(data, inf_nan_mode='constants')
-                before_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k < 'events']
-                after_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k > 'events']
-                auxiliary = [hashlib.sha256(b'{' + b','.join(before_core) + (b',' if before_core else b'') + b'"events":[')]
-                auxiliary_suffix = b']' + (b',' if after_core else b'') + b','.join(after_core) + b'}'
-            except (TypeError, ValueError):
-                # Older compatible Pydantic installations can retain the full
-                # canonical-value path without this optional comparison hash.
-                scope['collect_checkpoint_value_hashes'] = False
-        entry = (value.competition_root, [], [hashlib.sha256(prefix)], suffix, auxiliary, auxiliary_suffix)
+        # The entry holds its root object, so no other root can reuse its id.
+        entry = {'root': value.competition_root, 'prefix': hashlib.sha256(prefix), 'suffix': suffix,
+                 'auxiliary': None, 'auxiliary_suffix': None, 'chains': {}}
         cache[key] = entry
         while len(cache) > 4:
             cache.pop(next(iter(cache)))
-    _, events, hashes, suffix, auxiliary, auxiliary_suffix = entry
+    if collect and entry['auxiliary'] is None:
+        try:
+            if body is None:
+                body = value.model_dump(mode='json', exclude={'events'})
+            ordered = json.loads(encode(body))
+            def core(data):
+                return to_json(data, inf_nan_mode='constants')
+            before_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k < 'events']
+            after_core = [core(k) + b':' + core(ordered[k]) for k in sorted(ordered) if k > 'events']
+            entry['auxiliary'] = hashlib.sha256(b'{' + b','.join(before_core) + (b',' if before_core else b'') + b'"events":[')
+            entry['auxiliary_suffix'] = b']' + (b',' if after_core else b'') + b','.join(after_core) + b'}'
+        except (TypeError, ValueError):
+            # Older compatible Pydantic installations can retain the full
+            # canonical-value path without this optional comparison hash.
+            collect = scope['collect_checkpoint_value_hashes'] = False
+    # One prefix-hash chain per event history over this root, selected by the
+    # identity of its first event (a decoded Saved checkpoint and the replay
+    # rebuilt from its root are different histories; neither truncates the
+    # other). Every event is still compared by identity below. A chain started
+    # before value-hash collection was requested keeps hashing without it; the
+    # comparison hash is optional and is recorded only for chains that have it.
+    chains = entry['chains']
+    first = value.events[0] if value.events else None
+    chain = chains.get(id(first))
+    if chain is None or chain['first'] is not first:
+        chain = {'first': first, 'events': [], 'hashes': [entry['prefix']],
+                 'auxiliary': [entry['auxiliary']] if collect and entry['auxiliary'] is not None else None}
+        chains[id(first)] = chain
+        while len(chains) > 4:
+            chains.pop(next(iter(chains)))
+    events, hashes, auxiliary = chain['events'], chain['hashes'], chain['auxiliary']
     shared = 0
     while shared < min(len(events), len(value.events)) and events[shared] is value.events[shared]:
         shared += 1
@@ -201,17 +221,16 @@ def _incremental_checkpoint_fingerprint(value, scope):
                 state_core.update((b',' if events else b'') + to_json(json.loads(encoded), inf_nan_mode='constants'))
                 auxiliary.append(state_core)
             except (TypeError, ValueError):
-                auxiliary = None
+                auxiliary = chain['auxiliary'] = None
                 scope['collect_checkpoint_value_hashes'] = False
-                cache[key] = (entry[0], events, hashes, suffix, None, None)
         events.append(event)
         hashes.append(state)
     result = hashes[-1].copy()
-    result.update(suffix)
+    result.update(entry['suffix'])
     fingerprint = result.hexdigest()
-    if auxiliary is not None:
+    if auxiliary is not None and len(auxiliary) == len(hashes):
         equivalent_value = auxiliary[-1].copy()
-        equivalent_value.update(auxiliary_suffix)
+        equivalent_value.update(entry['auxiliary_suffix'])
         values = scope.setdefault('checkpoint_value_hashes', {})
         values[fingerprint] = equivalent_value.digest()
         while len(values) > 128:
@@ -283,6 +302,59 @@ def _incremental_tour_fingerprint(value, scope):
         members[name] = b'[' + b','.join(parts) + b']'
     while len(memo) > MAX_TOUR_ELEMENT_ENCODINGS:
         memo.pop(next(iter(memo)))
+    text = b'{' + b','.join(encode(key) + b':' + members[key] for key in sorted(members)) + b'}'
+    return hashlib.sha256(text).hexdigest()
+
+
+MAX_RESULT_MATCH_ENCODINGS = 4096
+
+
+def _incremental_result_fingerprint(value, scope, sporting):
+    """The SAME canonical hash of a tournament result, reusing match encodings.
+
+    The completed-tournament readers rebuild equal ``GlobalTournamentResult``
+    models for the same Edition several times in one replay; each shares the
+    very same immutable match objects. The canonical JSON is the sorted-key
+    object of the model's own ``model_dump(mode="json")`` (its historical-shape
+    serializer runs as usual), whose ``matches`` member is the array of each
+    match's own ``model_dump(mode="json")`` (exact declared element type).
+    Only those per-match encodings are reused, keyed by object identity within
+    this private replay scope; everything else is dumped and encoded freshly.
+    Any other type, field serializer or element type takes the full hash.
+    """
+    model = type(value)
+    if (model is not GlobalTournamentResult
+        or model.model_computed_fields
+        or model.__pydantic_decorators__.field_serializers):
+        return None
+    field = model.model_fields.get('matches')
+    if field is None or field.exclude is not None or field.exclude_if is not None:
+        return None
+    element_type = _tour_element_type(field)
+    matches = value.matches
+    if element_type is None or type(matches) is not tuple or any(type(item) is not element_type for item in matches):
+        return None
+
+    def encode(body):
+        return json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+
+    body = value.model_dump(mode='json', exclude={'matches'})
+    if sporting:
+        body.pop('prepared_awards', None)
+    if 'matches' in body or not set(body) <= set(model.model_fields):
+        return None
+    memo = scope.setdefault('result_match_json', {})
+    parts = []
+    for item in matches:
+        known = memo.get(id(item))
+        if known is None or known[0] is not item:
+            known = (item, encode(item.model_dump(mode='json')))
+            memo[id(item)] = known
+        parts.append(known[1])
+    while len(memo) > MAX_RESULT_MATCH_ENCODINGS:
+        memo.pop(next(iter(memo)))
+    members = {key: encode(item) for key, item in body.items()}
+    members['matches'] = b'[' + b','.join(parts) + b']'
     text = b'{' + b','.join(encode(key) + b':' + members[key] for key in sorted(members)) + b'}'
     return hashlib.sha256(text).hexdigest()
 

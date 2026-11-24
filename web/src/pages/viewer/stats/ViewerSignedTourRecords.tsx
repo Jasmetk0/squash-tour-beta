@@ -7,7 +7,7 @@ import { getViewerSignedTourRecords, type ViewerSignedRecordsFilters } from '../
 import type { TourCareerRecords } from '../../../api/calendarTour'
 import { useLanguage, type Language } from '../../../i18n/LanguageContext'
 import { viewerCountryProfilePath, viewerPlayerProfilePath } from '../../../viewer/viewerRoutes'
-import { verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecordsModel'
+import { recordsMatchBaseline, verifiedViewerSignedTourRecords, viewerRecordsBranch } from './viewerSignedTourRecordsModel'
 import { clearSignedRecordsDeepLink, readSignedRecordsDeepLink, writeSignedRecordsDeepLink } from './viewerSignedRecordsDeepLinks'
 
 const words = {
@@ -143,8 +143,7 @@ function SignedRecordsForBranch({ runId, branchId, language }: {
       : null
   // A filtered read and its season inventory must name the same Saved source.
   // Same Branch alone does not fence a newer Save or a late cached response.
-  const report = candidate?.saved_head_revision_id === baseline.saved_head_revision_id
-    && candidate?.source_tour_fingerprint === baseline.source_tour_fingerprint ? candidate : null
+  const report = candidate && recordsMatchBaseline(candidate, baseline) ? candidate : null
 
   function submit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()

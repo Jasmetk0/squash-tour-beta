@@ -90,4 +90,63 @@ describe('Saved Viewer native Tour records source contracts', () => {
     expect(verifiedViewerSignedTourRecords(foreign, 'record run', 'viewer-a',
       { asOfSeason: 1, fromSeason: 0, countryCode: 'CZE' })).toBeNull()
   })
+
+  it('rejects contradictory holder identity, labels and top-ranked rows', () => {
+    const make = () => structuredClone(signedRecordFixture())
+    const wrongHolder = make()
+    wrongHolder.records[0].holder_history[0].holder_ids = ['other-player']
+    expect(valid(wrongHolder)).toBe(false)
+    const wrongLabel = make()
+    wrongLabel.records[0].holder_history[0].holder_labels = ['Other name']
+    expect(valid(wrongLabel)).toBe(false)
+    const wrongLeader = make()
+    wrongLeader.records[0].leaderboard[0].entity_id = 'other-player'
+    expect(valid(wrongLeader)).toBe(false)
+    const wrongMetrics = make()
+    wrongMetrics.records[0].leaderboard[0].finals = 99
+    expect(valid(wrongMetrics)).toBe(false)
+    const missingLeader = make()
+    missingLeader.records[0].leaderboard = []
+    expect(valid(missingLeader)).toBe(false)
+  })
+
+  it('retains all 21 legitimate tied holders with only 20 visible leaderboard rows', () => {
+    const data = signedRecordFixture()
+    const r = data.records[0]
+    const holders = Array.from({ length: 21 }, (_, i) => ({
+      ...r.holders[0], entity_id: 'p-' + String(i).padStart(2, '0'), label: 'Player ' + i,
+    }))
+    r.holders = holders
+    r.leaderboard = holders.slice(0, 20).map(holder => ({ ...holder, rank: 1 }))
+    r.leaderboard_total = holders.length
+    r.holder_history[0].holder_ids = holders.map(holder => holder.entity_id)
+    r.holder_history[0].holder_labels = holders.map(holder => holder.label)
+    expect(valid(data)).toBe(true)
+    r.holder_history[0].holder_ids.pop()
+    r.holder_history[0].holder_labels.pop()
+    expect(valid(data)).toBe(false)
+  })
+
+  it('requires exact season closure identity and properly formed fingerprints', () => {
+    const wrongLabel = signedRecordFixture()
+    wrongLabel.records[0].holder_history[0].season_label = 'different season'
+    expect(valid(wrongLabel)).toBe(false)
+    const wrongClosure = signedRecordFixture()
+    wrongClosure.records[0].holder_history[0].boundary_command_id = 'different closure'
+    expect(valid(wrongClosure)).toBe(false)
+    const wrongFingerprint = signedRecordFixture()
+    wrongFingerprint.source_seasons[0].published_ranking_fingerprint = 'not-a-fingerprint'
+    expect(valid(wrongFingerprint)).toBe(false)
+    const missingStart = signedRecordFixture()
+    missingStart.source_seasons.shift()
+    missingStart.completed_seasons.shift()
+    expect(valid(missingStart)).toBe(false)
+  })
+
+  it('returns invalid rather than crashing when a holder history entry is null', () => {
+    const data = signedRecordFixture()
+    const record = { ...data.records[0], holder_history: [null] }
+    expect(valid({ ...data, records: [record, ...data.records.slice(1)] })).toBe(false)
+  })
+
 })

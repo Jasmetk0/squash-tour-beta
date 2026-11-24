@@ -34,7 +34,8 @@ function nullableName(value: unknown): value is string | null {
 
 function publicWeek(value: unknown): value is VisibleProspectWeek {
   return exactObject(value, ['season_index', 'week']) &&
-    whole(value.season_index, 0) && whole(value.week, 1, 61)
+    // Match the canonical legacy RankingWeek (50 seasons × 61 weeks).
+    whole(value.season_index, 0, 49) && whole(value.week, 1, 61)
 }
 
 function notFuture(visible: VisibleProspectWeek, current: VisibleProspectWeek): boolean {

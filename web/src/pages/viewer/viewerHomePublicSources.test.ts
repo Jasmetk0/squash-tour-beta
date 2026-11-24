@@ -80,6 +80,25 @@ describe('Viewer Home exact public Run/Branch sources', () => {
     expect(verifiedHomeTournamentHistory(s.tournaments, run, branch)).not.toBeNull()
   })
 
+  it('rejects extra or substituted fields outside the public tournament history contract', () => {
+    const s = sources()
+    const [first, ...rest] = s.tournaments.tournaments
+    const { host_city: _city, ...withoutCity } = first
+    const { tournament_count: _count, ...withoutCount } = s.tournaments
+    for (const invalid of [
+      { ...s.tournaments, internal_revision: 'private' },
+      { ...withoutCount, internal_count: s.tournaments.tournament_count },
+      { ...s.tournaments, tournaments: [{ ...first, private_draw: {} }, ...rest] },
+      { ...s.tournaments, tournaments: [{ ...withoutCity, private_city: null }, ...rest] },
+    ]) {
+      expect(verifiedHomeTournamentHistory(invalid, run, branch)).toBeNull()
+    }
+    expect(verifiedHomeTournamentHistory(s.tournaments, run, branch)).not.toBeNull()
+    expect(verifiedHomeTournamentHistory({
+      ...s.tournaments, tournaments: [{ ...first, host_city: null, tour_level: null }, ...rest],
+    }, run, branch)).not.toBeNull()
+  })
+
   it('rejects inconsistent ranking head and malformed Finals evidence', () => {
     const s = sources()
     expect(verifiedHomeSources(s.tournaments, { ...s.ranking, public_head_ordinal: 1931 }, s.race, run, branch)).toBeNull()

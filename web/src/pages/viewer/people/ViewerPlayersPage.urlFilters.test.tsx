@@ -166,6 +166,44 @@ describe('Viewer player directory URL filters (mocked Saved GET, not real HTTP/S
     expectNoForbiddenViewerActions()
   })
 
+  it('shares an exact page of a large roster and restores it with Back/Forward', async () => {
+    const rows = Array.from({ length: 101 }, (_, i) => ({
+      ...player(i + 1, 'active', 'CZE'), name: 'Player ' + String(i + 1).padStart(3, '0'),
+      age: 25 + i % 20, current_ovr: 50 + i % 100
+    }))
+    api.getViewerPlayers.mockResolvedValue({ ...roster(), player_count: rows.length, active_player_count: rows.length, retired_player_count: 0, players: rows })
+    const user = userEvent.setup()
+    mount('/viewer/players?vpPage=2&keep=yes')
+    const table = await screen.findByRole('table')
+    expect(within(table).getAllByRole('row')).toHaveLength(51)
+    expect(within(table).getByRole('link', { name: 'Player 051' })).toBeInTheDocument()
+    expect(within(table).queryByRole('link', { name: 'Player 001' })).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Další' }))
+    expect(params().get('vpPage')).toBe('3')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    await user.click(screen.getByRole('button', { name: 'Back' }))
+    expect(params().get('vpPage')).toBe('2')
+    expect(within(table).getByRole('link', { name: 'Player 051' })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Forward' }))
+    expect(params().get('vpPage')).toBe('3')
+    await user.selectOptions(screen.getByLabelText('Kariéra'), 'active')
+    expect(params().get('vpPage')).toBeNull()
+    expect(params().get('keep')).toBe('yes')
+    expect(within(table).getByRole('link', { name: 'Player 001' })).toBeInTheDocument()
+    expect(api.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
+  it.each(['vpPage=2', 'vpPage=01', 'vpPage=1&vpPage=1', 'vpPage=-1'])(
+    'rejects invalid, noncanonical or ambiguous page links: %s', async page => {
+      mount('/viewer/players?' + page + '&keep=yes')
+      expect(await screen.findByRole('alert')).toHaveTextContent('neplatný nebo nedostupný filtr či stránku')
+      expect(screen.queryByRole('table')).not.toBeInTheDocument()
+      await userEvent.setup().click(screen.getByRole('button', { name: 'Vymazat filtry' }))
+      expect(await screen.findByRole('table')).toBeInTheDocument()
+      expect(params().toString()).toBe('keep=yes')
+    }
+  )
+
   it('rejects duplicate owned filters without discarding unrelated URL parameters', async () => {
     mount('/viewer/players?vpStatus=active&vpStatus=retired&keep=one&keep=two')
     expect(await screen.findByRole('alert')).toBeInTheDocument()

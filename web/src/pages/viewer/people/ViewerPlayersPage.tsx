@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -51,7 +51,7 @@ const labels = {
   sortAge: ['Věk sestupně', 'Age descending'],
   clear: ['Vymazat filtry', 'Clear filters'],
   unknownFilter: ['Neznámá hodnota', 'Unknown value'],
-  invalidFilters: ['Odkaz obsahuje neplatný nebo nedostupný filtr. Uprav jej nebo vymaž filtry.', 'The link contains an invalid or unavailable filter. Correct or clear the filters.'],
+  invalidFilters: ['Odkaz obsahuje neplatný nebo nedostupný filtr či stránku. Uprav výběr nebo vymaž filtry.', 'The link contains an invalid or unavailable filter or page. Correct or clear the selection.'],
   table: ['Uložený seznam hráčů', 'Saved player directory'],
   player: ['Hráč', 'Player'],
   id: ['ID hráče', 'Player ID'],
@@ -88,29 +88,30 @@ const PLAYER_URL_KEYS: Record<keyof PlayerDirectoryFilters, string> = {
   search: 'vpQ', status: 'vpStatus', origin: 'vpOrigin',
   country: 'vpCountry', sort: 'vpSort'
 }
-const PLAYER_URL_VALUES = Object.values(PLAYER_URL_KEYS)
+const PLAYER_FILTER_VALUES = Object.values(PLAYER_URL_KEYS)
+const PLAYER_PAGE_KEY = 'vpPage'
+const PLAYER_URL_VALUES = [...PLAYER_FILTER_VALUES, PLAYER_PAGE_KEY]
 
 function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   runId: string; branchId: string; t: Copy; ignoreUrlFilters: boolean
 }): JSX.Element {
   const [searchParams, setSearchParams] = useSearchParams()
   const activeParams = ignoreUrlFilters ? new URLSearchParams() : searchParams
-  const filters: PlayerDirectoryFilters = {
-    search: activeParams.get(PLAYER_URL_KEYS.search) ?? '',
-    status: (activeParams.get(PLAYER_URL_KEYS.status) ?? 'all') as PlayerStatusFilter,
-    origin: (activeParams.get(PLAYER_URL_KEYS.origin) ?? 'all') as PlayerOriginFilter,
-    country: activeParams.get(PLAYER_URL_KEYS.country) ?? 'all',
-    sort: (activeParams.get(PLAYER_URL_KEYS.sort) ?? 'name') as PlayerDirectorySort
-  }
-  const [page, setPage] = useState(1)
+  const search = activeParams.get(PLAYER_URL_KEYS.search) ?? ''
+  const status = (activeParams.get(PLAYER_URL_KEYS.status) ?? 'all') as PlayerStatusFilter
+  const origin = (activeParams.get(PLAYER_URL_KEYS.origin) ?? 'all') as PlayerOriginFilter
+  const country = activeParams.get(PLAYER_URL_KEYS.country) ?? 'all'
+  const sort = (activeParams.get(PLAYER_URL_KEYS.sort) ?? 'name') as PlayerDirectorySort
+  const filters = useMemo<PlayerDirectoryFilters>(() => ({ search, status, origin, country, sort }),
+    [search, status, origin, country, sort])
+  const rawPage = activeParams.get(PLAYER_PAGE_KEY) ?? '1'
   const [jump, setJump] = useState('')
   const [badJump, setBadJump] = useState(false)
 
   useEffect(() => {
-    setPage(1)
     setJump('')
     setBadJump(false)
-  }, [filters.search, filters.status, filters.origin, filters.country, filters.sort])
+  }, [filters, rawPage])
   const query = useQuery({
     queryKey: ['viewer-players-hub-canonical', runId, branchId],
     queryFn: () => getViewerPlayers(runId),
@@ -118,7 +119,14 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
   })
 
   function movePage(to: number): void {
-    setPage(to); setJump(''); setBadJump(false)
+    setJump(''); setBadJump(false)
+    setSearchParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (ignoreUrlFilters) PLAYER_URL_VALUES.forEach(name => next.delete(name))
+      if (to === 1) next.delete(PLAYER_PAGE_KEY)
+      else next.set(PLAYER_PAGE_KEY, String(to))
+      return next
+    })
   }
   function changeFilter<K extends keyof PlayerDirectoryFilters>(
     key: K, value: PlayerDirectoryFilters[K]
@@ -127,11 +135,11 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
       const next = new URLSearchParams(previous)
       // A stale URL selected under a different Run must not survive a source switch.
       if (ignoreUrlFilters) PLAYER_URL_VALUES.forEach(name => next.delete(name))
+      next.delete(PLAYER_PAGE_KEY)
       if (value === defaultFilters[key]) next.delete(PLAYER_URL_KEYS[key])
       else next.set(PLAYER_URL_KEYS[key], value)
       return next
     }, { replace: key === 'search' })
-    movePage(1)
   }
 
   function clearFilters(): void {
@@ -140,28 +148,30 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
       PLAYER_URL_VALUES.forEach(key => next.delete(key))
       return next
     })
-    movePage(1)
   }
-  if (query.isPending || query.isFetching) return <p role="status" className="status">{t.loading}</p>
-  if (query.isError) return <div role="alert"><p className="error">{t.readError}</p>
-    <button type="button" onClick={() => void query.refetch()}>{t.retry}</button></div>
-
-  const source = verifiedViewerPlayers(query.data, runId, branchId)
-  if (!source) return <div role="alert"><p className="error">{t.corrupt}</p>
-    <button type="button" onClick={() => void query.refetch()}>{t.retry}</button></div>
-
-  const countries = playerDirectoryCountries(source)
+  const source = useMemo(() => verifiedViewerPlayers(query.data, runId, branchId), [query.data, runId, branchId])
+  const countries = useMemo(() => source ? playerDirectoryCountries(source) : [], [source])
   const invalidStatus = !['all', 'active', 'retired'].includes(filters.status)
   const invalidOrigin = !['all', 'initial_world', 'run_prospect'].includes(filters.origin)
   const invalidCountry = filters.country !== 'all' && !countries.includes(filters.country)
   const invalidSort = !['name', 'public_ovr', 'age'].includes(filters.sort)
-  const invalidFilters = invalidStatus || invalidOrigin || invalidCountry || invalidSort || PLAYER_URL_VALUES.some(key => activeParams.getAll(key).length > 1)
-  // Reject unsupported or stale historical selectors; never pretend the link meant All.
-  const found = invalidFilters ? [] : filteredPlayerDirectory(source, filters)
+  const invalidSelection = invalidStatus || invalidOrigin || invalidCountry || invalidSort || PLAYER_FILTER_VALUES.some(key => activeParams.getAll(key).length > 1)
+  const found = useMemo(() => source && !invalidSelection ? filteredPlayerDirectory(source, filters) : [], [source, filters, invalidSelection])
   const pages = Math.ceil(found.length / PLAYER_DIRECTORY_PAGE_SIZE)
-  const currentPage = pages ? Math.min(page, pages) : 0
+  const requestedPage = /^[1-9][0-9]*$/.test(rawPage) ? parsePlayerDirectoryPage(rawPage, Math.max(1, pages)) : null
+  const invalidFilters = invalidSelection || requestedPage === null || activeParams.getAll(PLAYER_PAGE_KEY).length > 1
+  if (query.isPending || query.isFetching) return <p role="status" className="status">{t.loading}</p>
+  if (query.isError) return <div role="alert"><p className="error">{t.readError}</p>
+    <button type="button" onClick={() => void query.refetch()}>{t.retry}</button></div>
+
+  if (!source) return <div role="alert"><p className="error">{t.corrupt}</p>
+    <button type="button" onClick={() => void query.refetch()}>{t.retry}</button></div>
+
+  // An invalid link must not silently display another page. The full source
+  // validation and filtered sort are memoized independently of the page cursor.
+  const currentPage = !invalidFilters && pages ? requestedPage ?? 0 : 0
   const start = currentPage ? (currentPage - 1) * PLAYER_DIRECTORY_PAGE_SIZE : 0
-  const visible = found.slice(start, start + PLAYER_DIRECTORY_PAGE_SIZE)
+  const visible = invalidFilters ? [] : found.slice(start, start + PLAYER_DIRECTORY_PAGE_SIZE)
   function submitJump(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault()
     const next = parsePlayerDirectoryPage(jump, pages)
@@ -179,7 +189,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
         <div><dt>{t.activeCount}</dt><dd>{source.active_player_count}</dd></div>
         <div><dt>{t.retiredCount}</dt><dd>{source.retired_player_count}</dd></div>
       </dl>
-      {source.player_count === 0 ? <p className="empty-state">{t.noPlayers}</p> : (
+      {source.player_count === 0 && !invalidFilters ? <p className="empty-state">{t.noPlayers}</p> : (
         <>
           {invalidFilters ? <p role="alert">{t.invalidFilters}</p> : null}
           <div>
@@ -227,7 +237,7 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
             </select>
             <button type="button" onClick={clearFilters}>{t.clear}</button>
           </div>
-          {found.length === 0 ? <p className="empty-state">{t.noMatch}</p> :
+          {invalidFilters || found.length === 0 ? <p className="empty-state">{t.noMatch}</p> :
             <div className="table-wrap">
               <table aria-label={t.table}>
                 <thead><tr>
@@ -249,8 +259,8 @@ function PlayerDirectoryForBranch({ runId, branchId, t, ignoreUrlFilters }: {
               </table>
             </div>
           }
-          <p role="status">{t.showing} {found.length ? start + 1 : 0}–{found.length ? start + visible.length : 0} {t.of} {found.length}</p>
-          {pages > 1 ? <nav aria-label={t.page}>
+          {!invalidFilters ? <p role="status">{t.showing} {found.length ? start + 1 : 0}–{found.length ? start + visible.length : 0} {t.of} {found.length}</p> : null}
+          {!invalidFilters && pages > 1 ? <nav aria-label={t.page}>
             <button type="button" disabled={currentPage === 1} onClick={() => movePage(1)}>{t.first}</button>
             <button type="button" disabled={currentPage === 1} onClick={() => movePage(currentPage - 1)}>{t.previous}</button>
             <span>{t.page} {currentPage} / {pages}</span>

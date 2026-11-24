@@ -169,7 +169,9 @@ observe(fork_service.NativeForkRuntimeService, "execute", "fork.execute")
 # Task Center / parent synchronization
 for module in (native, tasks):
     observe(module, "validate_native_parent", "validate_native_parent")
-    observe(module, "resolve_revision_run_calendar", "resolve_revision_run_calendar")
+    if hasattr(module, "resolve_revision_run_calendar"):
+        # On the candidate this counts only first-sight (full) validations.
+        observe(module, "resolve_revision_run_calendar", "resolve_revision_run_calendar")
 observe(native, "read_native_task_progress")
 observe(native, "authenticate_children")
 observe(tasks.FullSimulationTaskWorker, "_finish", "task._finish")

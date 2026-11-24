@@ -7,8 +7,11 @@ calling the existing sporting writer. No child approves Entry/results or Saves.
 
 from __future__ import annotations
 
+import hashlib
 import json
+from collections import OrderedDict
 from dataclasses import dataclass
+from threading import Lock
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -198,6 +201,103 @@ def _native_context(repository, session, run_id, branch_id, _loaded_out=None):
     }
 
 
+_EXACT_FACTS_LIMIT = 64
+_exact_facts: OrderedDict = OrderedDict()
+_exact_facts_lock = Lock()
+
+
+def _exact_fact(key, compute):
+    """Return ``compute()`` once per exact input; a pure-function memo.
+
+    ``key`` contains the SHA-256 of every text ``compute`` reads and every
+    other value it depends on. It is never an authority or a proof: changed,
+    tampered or unseen bytes produce another key and are fully validated
+    again, and a failure is never stored. Values must be immutable.
+    """
+    with _exact_facts_lock:
+        if key in _exact_facts:
+            _exact_facts.move_to_end(key)
+            return _exact_facts[key]
+    value = compute()
+    with _exact_facts_lock:
+        _exact_facts[key] = value
+        while len(_exact_facts) > _EXACT_FACTS_LIMIT:
+            _exact_facts.popitem(last=False)
+    return value
+
+
+def _text_sha256(text):
+    return hashlib.sha256(text.encode("utf-8")).digest()
+
+
+def _revision_signature(revision):
+    """Every column that the immutable Saved envelope content hash covers."""
+    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
+
+    return (
+        revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
+        revision.parent_revision_id, revision.kind, revision.payload_schema_version,
+        revision.content_hash_algorithm, revision.content_hash,
+        row_text_sha256(revision, "payload_json"), row_text_sha256(revision, "change_summary_json"),
+    )
+
+
+def verified_revision_calendar(session, *, run_id, revision_id):
+    """``resolve_revision_run_calendar`` evaluated once per exact stored row.
+
+    The Task Center re-validates the same immutable task source several times
+    per step and on every poll. Identical row bytes give an identical result;
+    the first sight of any bytes still performs the full content-hash check.
+    """
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+
+    revision = session.get(BranchSavedRevisionModel, revision_id)
+    if revision is None or revision.run_id != run_id:
+        return resolve_revision_run_calendar(session, run_id=run_id, revision_id=revision_id)
+    return _exact_fact(
+        ("revision_calendar", run_id, _revision_signature(revision)),
+        lambda: resolve_revision_run_calendar(session, run_id=run_id, revision_id=revision_id),
+    )
+
+
+def _verified_saved_calendar(session, *, run_id, branch_id):
+    """``resolve_saved_run_calendar`` evaluated once per exact Run/Branch/HEAD row."""
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
+
+    run = session.get(RunContainerModel, run_id)
+    branch = session.get(RunBranchModel, branch_id)
+    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id) if branch is not None and branch.saved_head_revision_id else None
+    if run is None or branch is None or (branch.saved_head_revision_id and head is None):
+        return resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
+    return _exact_fact(
+        ("saved_calendar", run_id, branch_id, _text_sha256(run.metadata_json), run.timeline_start_season,
+         run.timeline_end_season, branch.run_id, branch.saved_head_revision_id,
+         _revision_signature(head) if head is not None else None),
+        lambda: resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id),
+    )
+
+
+_CHECKPOINT_SCHEMAS = frozenset(f"calendar_sporting_checkpoint.v{i}" for i in range(1, 14))
+_TOUR_SCHEMAS = frozenset(f"calendar_tour_authority.v{i}" for i in range(1, 6))
+_STRICT_WEEK_CHECKPOINTS = frozenset({
+    "calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13",
+})
+
+
+def _checkpoint_progress_facts(raw):
+    """(canonical hash, current week, owner) of one exact live checkpoint text."""
+    state = json.loads(raw)
+    if state.get("schema_version") not in _CHECKPOINT_SCHEMAS:
+        raise ValueError("Native task progress sporting/Tour schema is unsupported")
+    if state["schema_version"] in _STRICT_WEEK_CHECKPOINTS:
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
+        week = parse_checkpoint_json(raw).week.model_dump(mode="json")
+    else:
+        week = state["week"]
+    owner = state.get("baseline", state)
+    return canonical_hash(state), json.dumps(week, sort_keys=True), (owner.get("run_id"), owner.get("branch_id"))
+
+
 def read_native_task_progress(session, *, run_id, branch_id, parent):
     """Hash-checked read projection, never a sporting execution/Save authority.
 
@@ -215,17 +315,17 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
     branch = session.get(RunBranchModel, branch_id)
     if branch is None or branch.run_id != run_id:
         raise ValueError("Native task progress Branch is unavailable")
-    # resolve_saved_run_calendar fully hash-authenticates the immutable Saved
-    # envelope. Reuse its parsed JSON while remaining inside THIS same DB
-    # transaction, rather than decoding the full history a second time.
-    # The native component's separate canonical hash check remains mandatory.
-    verified_payloads: list[dict] = []
-    available_clock = resolve_saved_run_calendar(
-        session, run_id=run_id, branch_id=branch_id,
-        _verified_payload_out=verified_payloads,
-    )
     head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
-    if head.payload_schema_version == "native_fork_saved_root.v2":
+    if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
+        # resolve_saved_run_calendar fully hash-authenticates the immutable Saved
+        # envelope. Reuse its parsed JSON while remaining inside THIS same DB
+        # transaction, rather than decoding the full history a second time.
+        # The native component's separate canonical hash check remains mandatory.
+        verified_payloads: list[dict] = []
+        available_clock = resolve_saved_run_calendar(
+            session, run_id=run_id, branch_id=branch_id,
+            _verified_payload_out=verified_payloads,
+        )
         saved = verified_payloads[0]["content"]["native_fork_runtime"]
         component = saved
         draft = session.scalar(select(BranchWorkingDraftModel).where(BranchWorkingDraftModel.branch_id == branch_id))
@@ -245,23 +345,39 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
         if state["lifecycle"]["week"] != tour["week"] or tour["schema_version"] != "native_fork_tour.v1":
             raise ValueError("Native task progress aggregate has inconsistent current time")
         source_fingerprint = component["fingerprint"]
+        owner = state.get("baseline", state)
+        owner = (owner.get("run_id"), owner.get("branch_id"))
     else:
+        # The original Branch needs only the verified clock, not the payload.
+        available_clock = _verified_saved_calendar(session, run_id=run_id, branch_id=branch_id)
         checkpoint_row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
         tour_row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
         if checkpoint_row is None or tour_row is None:
             raise ValueError("Native task progress lacks its sporting/Tour owner")
-        state, tour = json.loads(checkpoint_row.payload_json), json.loads(tour_row.payload_json)
-        if state.get("schema_version") not in {f"calendar_sporting_checkpoint.v{i}" for i in range(1, 14)} or tour.get("schema_version") not in {f"calendar_tour_authority.v{i}" for i in range(1, 6)}:
+        tour = json.loads(tour_row.payload_json)
+        if tour.get("schema_version") not in _TOUR_SCHEMAS:
             raise ValueError("Native task progress sporting/Tour schema is unsupported")
-        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import parse_checkpoint_json
-        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
-        parse_tour_json(tour_row.payload_json)
-        actual_week = parse_checkpoint_json(checkpoint_row.payload_json).week.model_dump(mode="json") if state["schema_version"] in {"calendar_sporting_checkpoint.v11", "calendar_sporting_checkpoint.v12", "calendar_sporting_checkpoint.v13"} else state["week"]
-        if canonical_hash(state) != checkpoint_row.fingerprint or canonical_hash(tour) != tour_row.fingerprint or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint or actual_week != tour["week"]:
+        # Strict decoding and canonical hashing are pure functions of these
+        # exact texts; compute them once per distinct text, not on every poll.
+        checkpoint_hash, actual_week, owner = _exact_fact(
+            ("checkpoint_progress", _text_sha256(checkpoint_row.payload_json)),
+            lambda: _checkpoint_progress_facts(checkpoint_row.payload_json),
+        )
+
+        def tour_hash():
+            from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
+            parse_tour_json(tour_row.payload_json)
+            return canonical_hash(tour)
+
+        if (
+            checkpoint_hash != checkpoint_row.fingerprint
+            or _exact_fact(("tour_progress", _text_sha256(tour_row.payload_json)), tour_hash) != tour_row.fingerprint
+            or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint
+            or actual_week != json.dumps(tour["week"], sort_keys=True)
+        ):
             raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
         source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
-    owner = state.get("baseline", state)
-    if (owner.get("run_id"), owner.get("branch_id"), tour.get("run_id"), tour.get("branch_id")) != (run_id, branch_id, run_id, branch_id):
+    if (*owner, tour.get("run_id"), tour.get("branch_id")) != (run_id, branch_id, run_id, branch_id):
         raise ValueError("Native task progress has a foreign owner")
     receipts = {r["command_id"]: r for r in tour["receipts"]}
     for child in parent["children"]:
@@ -306,7 +422,7 @@ def validate_native_parent(session, row, payload, command=None):
     if not isinstance(payload, dict) or not isinstance(payload.get("review"), dict) or not isinstance(payload.get("children"), list) or not isinstance(payload.get("control_events"), list):
         raise TypeError("Native Full Simulation parent shape is corrupt")
     command = command or NativeFullSimulationCommand.model_validate(payload["resume_command"])
-    clock = resolve_revision_run_calendar(session, run_id=row.run_id, revision_id=command.expected_revision_id)
+    clock = verified_revision_calendar(session, run_id=row.run_id, revision_id=command.expected_revision_id)
     from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
     source = session.get(BranchSavedRevisionModel, command.expected_revision_id)
     review = payload.get("review", {})
@@ -370,12 +486,12 @@ def validate_native_parent(session, row, payload, command=None):
                 saved_native_closure,
             )
             saved_id = payload["closure_save"]["revision_id"]
-            closing_clock = resolve_revision_run_calendar(session, run_id=row.run_id, revision_id=saved_id)
+            closing_clock = verified_revision_calendar(session, run_id=row.run_id, revision_id=saved_id)
             saved_row = session.get(BranchSavedRevisionModel, saved_id)
             marker = saved_native_closure(json.loads(saved_row.payload_json), branch_id=row.branch_id, calendar=clock)
             if marker is None or closing_clock != clock or marker["fingerprint"] != payload["closure_save"]["marker_fingerprint"] or summary["terminal_saved_revision_id"] != saved_id:
                 raise ValueError("Native completion lost its exact immutable final Saved marker")
-            resolve_revision_run_calendar(session, run_id=row.run_id, revision_id=marker["source_revision_id"])
+            verified_revision_calendar(session, run_id=row.run_id, revision_id=marker["source_revision_id"])
             terminal_source = session.get(BranchSavedRevisionModel, marker["source_revision_id"])
             if terminal_source.content_hash != marker["source_content_hash"]:
                 raise ValueError("Native completion source changed after final Save")
@@ -653,8 +769,11 @@ class NativeFullSimulationDriver:
             DeferredLeaseHeartbeat,
         )
 
-        engine = getattr(self.repository, "_engine", None)
-        if engine is None or engine.dialect.name != "sqlite":
+        from sqlalchemy.engine import Engine
+
+        # Pin a connection of exactly the engine every driver session uses.
+        engine = getattr(self.factory, "kw", {}).get("bind")
+        if not isinstance(engine, Engine) or engine.dialect.name != "sqlite":
             return None
         heartbeat = DeferredLeaseHeartbeat()
         with engine.connect() as connection, paused_cyclic_gc():

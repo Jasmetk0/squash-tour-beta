@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter
+from contextlib import closing
 import hashlib
 import importlib.metadata
 import importlib.util
@@ -93,7 +94,7 @@ def copy_fixture(source, target, expected):
 
 
 def sql_stats(path):
-    with sqlite3.connect(path.as_uri() + "?mode=ro", uri=True) as con:
+    with closing(sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)) as con:
         n, size = con.execute(
             "SELECT COUNT(*), COALESCE(SUM(LENGTH(CAST(payload_json AS BLOB))),0) "
             "FROM branch_saved_revisions"
@@ -179,10 +180,13 @@ def prepare(path):
             require("ab-cup" not in v["edition_evidence"] and
                     not v["state"]["editions"][0]["result_confirmed"],
                     "Fixture already played or completed")
-            with sqlite3.connect(local.as_uri() + "?mode=ro", uri=True) as source:
-                with sqlite3.connect(path) as target:
+            with closing(sqlite3.connect(local.as_uri() + "?mode=ro", uri=True)) as source:
+                with closing(sqlite3.connect(path)) as target:
                     source.backup(target)
-                    target.execute("PRAGMA journal_mode=DELETE")
+                    require(target.execute("PRAGMA journal_mode=DELETE").fetchone() == ("delete",),
+                            "Could not produce standalone SQLite backup")
+    require(not sidecar(path, "-wal").exists() and not sidecar(path, "-shm").exists(),
+            "Fixture unexpectedly has sidecars")
     print(json.dumps({"fixture": str(path), "sha256": file_sha(path),
                       "producer": metadata(), "position": [0, 4],
                       "players": 8, "seed": SEED, "physical": sql_stats(path)}, indent=2))
@@ -322,7 +326,7 @@ def worker(args):
             report["check_wall_s"] = time.perf_counter() - check_started
             report["check_peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         # Run after server shutdown: ensure the physical file itself is sound.
-        with sqlite3.connect(db.as_uri() + "?mode=ro", uri=True) as con:
+        with closing(sqlite3.connect(db.as_uri() + "?mode=ro", uri=True)) as con:
             require(con.execute("PRAGMA quick_check").fetchall() == [("ok",)], "SQLite quick_check failed")
         require(metadata() == meta, "Code or environment changed during measurement")
         report["status"] = "ok"

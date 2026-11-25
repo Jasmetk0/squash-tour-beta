@@ -90,10 +90,14 @@ def test_transition_candidate_is_identical_with_the_full_path(loaded, monkeypatc
 
 def test_a_replay_rebuilds_each_earlier_edition_once_and_rejects_changes(loaded, monkeypatch):
     from beta_engine.domain.tournaments import calendar_tour
-    from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope
-    from beta_engine.domain.tournaments.calendar_native_tour_week import native_confirmed_results
+    from beta_engine.domain.tournaments.calendar_global_slots import (
+        global_replay_projection_scope,
+    )
+    from beta_engine.domain.tournaments.calendar_native_tour_week import (
+        native_confirmed_results,
+    )
 
-    service, session, cmd, context, fingerprints = loaded
+    _service, _session, _cmd, context, _fingerprints = loaded
     ctx, state, _signed = context
     clock, checkpoint = ctx[0], ctx[4]
     target = clock.position_at_ordinal(checkpoint.week.ordinal + 1)
@@ -145,7 +149,7 @@ def test_next_request_reuses_only_identical_verified_inputs(loaded, monkeypatch)
     from beta_engine.domain.tournaments import calendar_native_tour_week as native_week
     from beta_engine.domain.tournaments import calendar_tour
 
-    service, session, cmd, context, fingerprints = loaded
+    _service, _session, _cmd, context, fingerprints = loaded
     ctx, state, _signed = context
     clock, checkpoint = ctx[0], ctx[4]
     target = _target(clock, checkpoint)
@@ -164,7 +168,7 @@ def test_next_request_reuses_only_identical_verified_inputs(loaded, monkeypatch)
             for value, fingerprint in fingerprints.values():
                 slots._prime_private_fingerprint(value, fingerprint)
             if tour is not state:
-                tour.fingerprint  # computed from its actual content
+                _ = tour.fingerprint  # computed from its actual content
             return native_week.native_confirmed_results(tour, checkpoint, _target(run_clock, checkpoint), run_clock)
 
     native_week._VERIFIED_RESULTS.clear()

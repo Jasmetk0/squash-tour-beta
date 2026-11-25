@@ -582,7 +582,7 @@ class MatchEngine:
             if state.service_box == "LEFT"
             else "LEFT"
         )
-        event = RallyEvent.create(
+        event = RallyEvent._create_from_engine(
             schema_version=(
                 "rally_event.v6"
                 if gameplan_context is not None and control_trace is not None
@@ -1314,7 +1314,7 @@ class MatchEngine:
                 if service_box == "LEFT"
                 else "LEFT"
             )
-            event = RallyEvent.create(
+            event = RallyEvent._create_from_engine(
                 schema_version=(
                     "rally_event.v6"
                     if gameplan_context is not None and control_trace is not None
@@ -1570,7 +1570,7 @@ class MatchEngine:
         timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
 
         for position, rally in enumerate(rally_log.events):
-            marker = RallyTimelineEvent.create(
+            marker = RallyTimelineEvent._create_from_engine(
                 match_id=context.match_id,
                 timeline_index=len(timeline_events) + 1,
                 rally_index=rally.rally_index,
@@ -1651,7 +1651,7 @@ class MatchEngine:
             if sample.event_type == "OBJECTIVE_DELAY"
             else BetweenRallyIntervalEvent
         )
-        return event_type.create(
+        return event_type._create_from_engine(
             match_id=context.match_id,
             timeline_index=timeline_index,
             **sample.values,
@@ -1768,7 +1768,7 @@ class MatchEngine:
         timeline_index: int,
         previous_event_hash: str,
     ) -> GameBreakEvent:
-        return GameBreakEvent.create(
+        return GameBreakEvent._create_from_engine(
             match_id=context.match_id,
             timeline_index=timeline_index,
             after_rally_index=previous_rally.rally_index,

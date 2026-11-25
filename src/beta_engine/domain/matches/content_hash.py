@@ -1,15 +1,9 @@
 """Compute a freshly created event's content hash once, from its validated value.
 
-Rally, stamina-transition and timeline events used to hash an unvalidated
-``model_construct`` draft in ``create`` and then hash the validated model again
-in their validator, comparing the two. ``create`` now validates once with only
-that final hash comparison deferred for exactly the instance being created
-(every other validator check still runs), and then stores the hash computed
-from the VALIDATED model. Whenever the original sequence succeeded the two
-hashes were equal, so the created event is byte-identical; the stored hash is
-always the hash its validator recomputes. Any instance not created through this
-path (loading stored data, model_validate, direct construction) is validated in
-full, exactly as before.
+The public event factories hash an unvalidated draft, then validate it with
+that hash. The engine's typed internal factories instead validate a fresh
+event, then hash the validated value. Only that fresh instance defers its
+hash comparison. Persisted events are validated with their original hash.
 """
 
 from __future__ import annotations
@@ -17,6 +11,13 @@ from __future__ import annotations
 from contextvars import ContextVar
 
 _deferred: ContextVar[list | None] = ContextVar("deferred_event_hash_check", default=None)
+_PLACEHOLDER_HASH = "0" * 64
+
+
+def create_with_input_hash(cls, values: dict, hash_field: str, compute_hash):
+    """Keep the public factory's pre-validation hash contract."""
+    draft = cls.model_construct(**values, **{hash_field: _PLACEHOLDER_HASH})
+    return cls(**values, **{hash_field: compute_hash(draft)})
 
 
 def create_with_validated_hash(cls, values: dict, hash_field: str, compute_hash):
@@ -24,7 +25,7 @@ def create_with_validated_hash(cls, values: dict, hash_field: str, compute_hash)
     marker = [cls, False]
     token = _deferred.set(marker)
     try:
-        draft = cls(**values, **{hash_field: "0" * 64})
+        draft = cls(**values, **{hash_field: _PLACEHOLDER_HASH})
     finally:
         _deferred.reset(token)
     if not marker[1]:

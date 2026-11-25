@@ -165,6 +165,21 @@ def test_deferred_check_applies_once_and_only_to_the_created_type():
     assert content_hash._deferred.get() is None
 
 
+@pytest.mark.filterwarnings("ignore:Pydantic serializer warnings:UserWarning")
+def test_public_event_factories_keep_historical_pre_validation_hash_checks():
+    _, result = _match()
+    for event, hash_field in (
+        (result.rally_log.events[0], "event_hash"),
+        (result.timeline_log.events[0], "event_hash"),
+        (result.stamina_log.transitions[0], "transition_hash"),
+    ):
+        values = dict(event)
+        values.pop(hash_field)
+        values["elapsed_seconds"] = str(event.elapsed_seconds)
+        with pytest.raises(ValueError, match="hash mismatch"):
+            type(event).create(**values)
+
+
 def test_lazy_generator_draws_the_identical_sequence():
     rng = DeterministicRng(123456789)
     child = rng.branch(SeedScope.MATCH, "x", 1)
@@ -370,3 +385,16 @@ def test_stamina_rebuild_with_live_memo_is_identical_and_misses_recompute():
         states=initial, elapsed_seconds=source.elapsed_seconds,
         **{**lookup, "cause": StaminaTransitionCause.GAME_BREAK_RECOVERY},
     ) is None
+
+    # Same snapshot object and initial state, but different force/recovery inputs.
+    bar = effective.player_profiles[0].bars[0]
+    bar.workload_cost_factor *= 2
+    updated = MatchStaminaLog.build(
+        context=context, timeline=timeline, rally_events=rally_events, effective=effective
+    )
+    from_memo = MatchStaminaLog.build(
+        context=context, timeline=timeline, rally_events=rally_events,
+        effective=effective, live_memo=memo,
+    )
+    assert updated.model_dump(mode="json") != plain.model_dump(mode="json")
+    assert from_memo.model_dump(mode="json") == updated.model_dump(mode="json")

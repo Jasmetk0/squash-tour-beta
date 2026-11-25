@@ -16,7 +16,7 @@ if this PR is accepted, #1804 is superseded and can be closed by the owner.
 | Tool | What it measures |
 | --- | --- |
 | `scripts/benchmark_match_engine.py` | wall/CPU, engine-only time (inside `MatchEngine.simulate`), peak RSS and a SHA-256 over complete serialized outputs, per scenario |
-| `scripts/profile_match_engine_phases.py` | exclusive CPU per phase (CPU-time sampling, `ITIMER_PROF`, each sample charged to the innermost engine frame), gross allocation volume per phase (second identical pass under `tracemalloc`) and GC runs |
+| `scripts/profile_match_engine_phases.py` | sampled CPU per phase for main-thread scenarios, sampled Python heap rises in a separate `tracemalloc` pass, and GC runs. The threaded HTTP scenario uses the A/B timer. |
 | `scripts/ab_match_engine.py` | interleaved A B B A rounds of two source trees, a fresh `PYTHONHASHSEED=0` process per sample, medians, aborts on any fingerprint difference |
 
 Scenarios: `single` (one real match through the production input path), `set`
@@ -62,12 +62,13 @@ byte format is fixed, so the levers are how often things are computed.
    interval.
 2. **Exact-input stamina memo** (`stamina.py`, `StaminaAdvanceMemo`). The timeline
    rebuild takes the live `advance_states` result only for the very same state
-   objects, the same snapshot object and type-exact scalars (`float.hex`, so
+   objects, the same snapshot object with matching serialized contents and type-exact scalars (`float.hex`, so
    `0.0`/`-0.0` and `1`/`1.0` never merge). Any difference misses and is recomputed,
    so `live stamina state diverged` still detects a disagreement between timeline
    and live loop. Halves `advance_states` calls (all rebuild steps hit).
-3. From #1804: **one hash per created event** (`content_hash.py`); **lazy
-   `random.Random`**; **JSON fast paths** (`_json_value`, fresh-dump payload).
+3. From #1804: **one hash per typed internal engine event** (`content_hash.py`);
+   **lazy `random.Random`**; **JSON fast paths** (`_json_value`, fresh-dump
+   payload). The public factories retain the pre-validation hash check.
 4. **Seed text cached** in `DeterministicRng.derive` (same material
    `v1|scope|parent|parts` and BLAKE2b digest as the reference
    `derive_child_seed`): 2.7 → 1.7 µs per derivation.
@@ -113,9 +114,9 @@ lazy generators draw identical sequences.
 | same, app start + HTTP + SQLite + Lab service | 4.90 s | 4.98 s | ≈ (not changed) |
 
 Sample ranges do not overlap in any engine row (e.g. ko128 engine A 22.1–24.0 s,
-B 14.4–16.6 s). Peak RSS unchanged (50.6 / 89.7 / 135 / 239 MB). Gross allocation
-volume of the 24 matches without the fingerprint dump: 144 → 104 MB (−28 %);
-rally-hash allocations 58 → 25 MB.
+B 14.4–16.6 s). Peak RSS unchanged (50.6 / 89.7 / 135 / 239 MB). The original
+sampled live-heap rise proxy for 24 matches without the fingerprint dump was
+144 → 104 MiB. Short-lived allocations between samples remain outside the estimate.
 
 Increment over #1804 alone (A = #1804 tree, B = candidate, 2 rounds): 24 matches
 engine −8 %, ko128 engine −10 %.

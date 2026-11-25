@@ -11,6 +11,7 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
 )
@@ -34,20 +35,23 @@ class MatchTimelineEventBase(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> Self:
-        return create_with_validated_hash(
-            cls, values, "event_hash",
-            lambda event: cls._content_hash(event.model_dump(
-                mode="json", exclude={"event_hash", "event_hash_algorithm"})),
+        return create_with_input_hash(cls, values, "event_hash", cls._event_hash)
+
+    @classmethod
+    def _create_from_engine(cls, **values: object) -> Self:
+        return create_with_validated_hash(cls, values, "event_hash", cls._event_hash)
+
+    @classmethod
+    def _event_hash(cls, event: MatchTimelineEventBase) -> str:
+        return cls._content_hash(
+            event.model_dump(mode="json", exclude={"event_hash", "event_hash_algorithm"})
         )
 
     @model_validator(mode="after")
     def validate_event_hash(self) -> MatchTimelineEventBase:
         if hash_check_deferred(self):
-            return self  # create() stores the hash of exactly this validated value
-        payload = self.model_dump(
-            mode="json", exclude={"event_hash", "event_hash_algorithm"}
-        )
-        if self.event_hash != self._content_hash(payload):
+            return self  # The engine factory hashes this validated value.
+        if self.event_hash != self._event_hash(self):
             raise ValueError("match timeline event hash mismatch")
         return self
 

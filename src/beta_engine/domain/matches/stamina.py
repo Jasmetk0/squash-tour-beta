@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
 )
@@ -302,10 +303,19 @@ class StaminaTransition(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> Self:
-        return create_with_validated_hash(
-            cls, values, "transition_hash",
-            lambda transition: cls._content_hash(cls._hash_payload(transition)),
+        return create_with_input_hash(
+            cls, values, "transition_hash", cls._transition_hash,
         )
+
+    @classmethod
+    def _create_from_engine(cls, **values: object) -> Self:
+        return create_with_validated_hash(
+            cls, values, "transition_hash", cls._transition_hash,
+        )
+
+    @classmethod
+    def _transition_hash(cls, transition: StaminaTransition) -> str:
+        return cls._content_hash(cls._hash_payload(transition))
 
     @model_validator(mode="after")
     def validate_transition(self) -> StaminaTransition:
@@ -351,7 +361,7 @@ class StaminaTransition(BaseModel):
                 if after.current(dimension) != expected:
                     raise ValueError("stamina transition delta does not match state")
         if hash_check_deferred(self):
-            return self  # create() stores the hash of exactly this validated value
+            return self  # The engine factory hashes this validated value.
         payload = self._hash_payload(self)
         if self.transition_hash != self._content_hash(payload):
             raise ValueError("stamina transition hash mismatch")
@@ -422,6 +432,8 @@ class MatchStaminaLog(BaseModel):
         )
         rally_by_hash = {event.event_hash: event for event in rally_events}
         initial = cls.create_initial_states(effective=effective, player_ids=player_ids)
+        if live_memo is not None and not live_memo.matches_snapshot(effective):
+            live_memo = None
         current = (
             live_memo.chain_start(effective=effective, initial_states=initial)
             if live_memo is not None
@@ -467,7 +479,7 @@ class MatchStaminaLog(BaseModel):
                 workload_units=workload,
                 player_workload_units=player_workloads,
             )
-            transition = StaminaTransition.create(
+            transition = StaminaTransition._create_from_engine(
                 schema_version=(
                     "stamina_transition.v2"
                     if player_workloads is not None
@@ -892,7 +904,7 @@ class StaminaAdvanceMemo:
     meaning. Only ``match_engine`` records into it while simulating a match.
     """
 
-    __slots__ = ("_initial_json", "_steps", "effective", "initial_states")
+    __slots__ = ("_effective_json", "_initial_json", "_steps", "effective", "initial_states")
 
     def __init__(
         self,
@@ -901,9 +913,14 @@ class StaminaAdvanceMemo:
         initial_states: tuple[PlayerStaminaState, PlayerStaminaState],
     ) -> None:
         self.effective = effective
+        self._effective_json = effective.model_dump_json()
         self.initial_states = initial_states
         self._initial_json = _states_json(initial_states)
         self._steps: dict[tuple[object, ...], tuple[object, ...]] = {}
+
+    def matches_snapshot(self, effective: EffectiveMatchStaminaSnapshot) -> bool:
+        """Check the mutable input's contents once before rebuilding the log."""
+        return effective is self.effective and effective.model_dump_json() == self._effective_json
 
     @staticmethod
     def _key(

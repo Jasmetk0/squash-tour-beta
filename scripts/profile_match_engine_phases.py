@@ -7,17 +7,18 @@ domain frame that called them, so e.g. JSON encoding inside a rally event
 validator is "rally event: hash". Samples are exclusive: each lands in exactly
 one phase. Because sampling is statistical, phases below ~1 % are noise.
 
-Allocation pressure is measured with ``tracemalloc`` per phase (bytes allocated
-while the phase is innermost, sampled the same way: the traced-memory delta
-between consecutive samples is charged to the phase that was running), plus the
-number and CPU time of garbage-collector runs, charged to the phase that
-triggered them. Allocation volume is taken from a second, identical pass under
-``tracemalloc`` so that tracing does not distort the CPU shares of the first.
+Allocation pressure uses an approximate sampled heap-rise proxy. In a separate
+``tracemalloc`` pass, the rise from each interval's starting live heap to its
+peak is charged to the phase observed at the sampling point. Short-lived
+allocations can be missed, and phase changes between samples are approximate.
+The CPU pass separately measures GC runs and their time.
 
     python scripts/profile_match_engine_phases.py set
     python scripts/profile_match_engine_phases.py ko128 --no-alloc
 
-Scenarios are those of ``scripts/benchmark_match_engine.py``. Unix only.
+Unix only. The HTTP scenario runs MatchEngine on a server worker thread.
+Use the A/B timer for that scenario. Python delivers the signal callback on
+the main thread, so its stack cannot attribute server-side work.
 """
 
 from __future__ import annotations
@@ -42,23 +43,23 @@ PACKAGE = "beta_engine" + "/"
 _RULES: tuple[tuple[str, frozenset[str] | None, str], ...] = (
     ("core/rng.py", frozenset({"derive", "branch", "derive_child_seed", "__init__", "_random"}), "rng: derive + seed"),
     ("core/rng.py", None, "rng: draws"),
-    ("matches/rallies.py", frozenset({"_json_value", "_hash_payload", "_content_hash"}), "rally event: hash"),
-    ("matches/rallies.py", frozenset({"validate_event", "create"}), "rally event: validate/construct"),
+    ("matches/rallies.py", frozenset({"_json_value", "_hash_payload", "_content_hash", "_event_hash"}), "rally event: hash"),
+    ("matches/rallies.py", frozenset({"validate_event", "create", "_create_from_engine"}), "rally event: validate/construct"),
     ("matches/rallies.py", frozenset({"validate_chain", "validate_rules_timeline"}), "rally log: validate"),
     ("matches/rallies.py", None, "rally event: nested models"),
-    ("matches/timeline.py", frozenset({"_content_hash"}), "timeline event: hash"),
-    ("matches/timeline.py", frozenset({"validate_event_hash", "create"}), "timeline event: validate/construct"),
+    ("matches/timeline.py", frozenset({"_content_hash", "_event_hash"}), "timeline event: hash"),
+    ("matches/timeline.py", frozenset({"validate_event_hash", "create", "_create_from_engine"}), "timeline event: validate/construct"),
     ("matches/timeline.py", frozenset({"validate_chain_and_totals"}), "timeline log: validate"),
     ("matches/timeline.py", None, "timeline event: validate/construct"),
-    ("matches/stamina.py", frozenset({"_hash_payload", "_content_hash"}), "stamina transition: hash"),
-    ("matches/stamina.py", frozenset({"validate_transition", "create"}), "stamina transition: validate/construct"),
+    ("matches/stamina.py", frozenset({"_hash_payload", "_content_hash", "_transition_hash"}), "stamina transition: hash"),
+    ("matches/stamina.py", frozenset({"validate_transition", "create", "_create_from_engine"}), "stamina transition: validate/construct"),
     ("matches/stamina.py", frozenset({"validate_chain", "validate_timeline", "validate_effective_snapshot", "validate_rally_outcomes"}), "stamina log: validate"),
     ("matches/stamina.py", frozenset({"build"}), "stamina log: rebuild from timeline"),
     ("matches/stamina.py", None, "stamina: state math"),
     ("matches/match_engine.py", frozenset({"_base_strength", "_style_and_archetype_adjustment", "_game_probability", "_stamina_impact", "_control_pressure_factor", "_stamina_reserve", "_probability_logit", "_clamp"}), "attributes + probabilities"),
     ("matches/match_engine.py", frozenset({"_prepare_rally_gameplans", "_review_player_gameplan", "_record_gameplan_outcome"}), "gameplans"),
     ("matches/match_engine.py", frozenset({"_resolve_rally_situation"}), "rally rules"),
-    ("matches/match_engine.py", frozenset({"_build_timeline", "_between_rally_interval", "_game_break_event", "_sample_restart_intent", "_player_ready_seconds"}), "timeline construction"),
+    ("matches/match_engine.py", frozenset({"_build_timeline", "_between_rally_interval", "_sample_between_rally_interval", "_game_break_event", "_sample_restart_intent", "_player_ready_seconds"}), "timeline construction"),
     ("matches/match_engine.py", frozenset({"_build_result"}), "result assembly"),
     ("matches/match_engine.py", None, "rally loop + control"),
     ("matches/gameplans.py", None, "gameplans"),
@@ -82,6 +83,9 @@ def _classify(frame) -> str:
     while frame is not None:
         filename = frame.f_code.co_filename.replace("\\", "/")
         if PACKAGE in filename or "/scripts/" in filename:
+            if filename.endswith("/matches/content_hash.py"):
+                frame = frame.f_back
+                continue
             name = frame.f_code.co_name
             for suffix, names, phase in _RULES:
                 if suffix in filename and (names is None or name in names):
@@ -100,7 +104,7 @@ class PhaseSampler:
         self.interval = interval
         self.allocations = allocations
         self.samples: collections.Counter[str] = collections.Counter()
-        self.allocated: collections.Counter[str] = collections.Counter()
+        self.heap_rise: collections.Counter[str] = collections.Counter()
         self.gc_runs: collections.Counter[str] = collections.Counter()
         self.gc_seconds: collections.Counter[str] = collections.Counter()
         self._last_traced = 0
@@ -111,10 +115,8 @@ class PhaseSampler:
         phase = _classify(frame)
         self.samples[phase] += 1
         if self.allocations:
-            # Allocation volume between samples is charged to the running phase.
-            # get_traced_memory is net; reset_peak + peak gives the gross rise.
             current, peak = tracemalloc.get_traced_memory()
-            self.allocated[phase] += max(0, peak - self._last_traced)
+            self.heap_rise[phase] += max(0, peak - self._last_traced)
             tracemalloc.reset_peak()
             self._last_traced = current
 
@@ -146,11 +148,13 @@ def main(argv=None):
     from scripts import benchmark_match_engine as bench
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("scenario", choices=bench.SCENARIOS)
+    parser.add_argument("scenario", choices=tuple(name for name in bench.SCENARIOS if name != "http16"))
     parser.add_argument("--interval", type=float, default=0.0005)
     parser.add_argument("--no-alloc", action="store_true")
     parser.add_argument("--json", action="store_true")
     args = parser.parse_args(argv)
+    if args.interval <= 0:
+        parser.error("--interval must be positive")
     bench.run_scenario(args.scenario, 1)  # warm imports/schemas outside the sample
     # Pass 1: CPU and GC without tracemalloc (which would distort CPU shares).
     cpu = time.process_time()
@@ -158,10 +162,10 @@ def main(argv=None):
         report = bench.run_scenario(args.scenario, 1)
     cpu = time.process_time() - cpu
     if not args.no_alloc:
-        # Pass 2: identical work again, only for allocation volume per phase.
+        # Pass 2: identical work again, for the sampled heap-rise proxy.
         with PhaseSampler(args.interval, True) as alloc_sampler:
             bench.run_scenario(args.scenario, 1)
-        sampler.allocated = alloc_sampler.allocated
+        sampler.heap_rise = alloc_sampler.heap_rise
     total = sum(sampler.samples.values()) or 1
     phases = sorted(sampler.samples, key=sampler.samples.__getitem__, reverse=True)
     rows = [
@@ -169,7 +173,9 @@ def main(argv=None):
             "phase": phase,
             "cpu_share": round(sampler.samples[phase] / total, 4),
             "cpu_seconds": round(cpu * sampler.samples[phase] / total, 3),
-            "allocated_mb": round(sampler.allocated[phase] / 2**20, 1),
+            "sampled_heap_rise_mib": (
+                None if args.no_alloc else round(sampler.heap_rise[phase] / 2**20, 1)
+            ),
             "gc_runs": sampler.gc_runs[phase],
             "gc_seconds": round(sampler.gc_seconds[phase], 3),
         }
@@ -183,10 +189,12 @@ def main(argv=None):
         print(json.dumps(summary))
         return
     print(f"{args.scenario}: {cpu:.2f} s CPU, {total} samples, fingerprint {report['fingerprint'][:12]}")
-    print(f"{'phase':42} {'CPU %':>6} {'CPU s':>7} {'alloc MB':>9} {'GC n':>5} {'GC s':>6}")
+    print(f"{'phase':42} {'CPU %':>6} {'CPU s':>7} {'rise MiB':>9} {'GC n':>5} {'GC s':>6}")
     for row in rows:
+        rise = row["sampled_heap_rise_mib"]
+        formatted_rise = "-" if rise is None else f"{rise:.1f}"
         print(f"{row['phase']:42} {100 * row['cpu_share']:6.1f} {row['cpu_seconds']:7.2f} "
-              f"{row['allocated_mb']:9.1f} {row['gc_runs']:5d} {row['gc_seconds']:6.3f}")
+              f"{formatted_rise:>9} {row['gc_runs']:5d} {row['gc_seconds']:6.3f}")
 
 
 if __name__ == "__main__":

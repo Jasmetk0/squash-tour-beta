@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
 )
@@ -413,16 +414,23 @@ class RallyEvent(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> RallyEvent:
-        return create_with_validated_hash(cls, values, "event_hash", cls._validated_event_hash)
+        return create_with_input_hash(
+            cls, values, "event_hash",
+            lambda event: cls._event_hash(event, fresh_json=False),
+        )
 
     @classmethod
-    def _validated_event_hash(cls, event: RallyEvent) -> str:
+    def _create_from_engine(cls, **values: object) -> RallyEvent:
+        return create_with_validated_hash(cls, values, "event_hash", cls._event_hash)
+
+    @classmethod
+    def _event_hash(cls, event: RallyEvent, *, fresh_json: bool = True) -> str:
         return cls._content_hash(
             cls._hash_payload(
                 event.model_dump(
                     mode="json", exclude={"event_hash", "event_hash_algorithm"}
                 ),
-                _fresh_json_dump=True,
+                _fresh_json_dump=fresh_json,
             )
         )
 
@@ -695,7 +703,7 @@ class RallyEvent(BaseModel):
         elif self.gameplan_context is not None:
             raise ValueError("legacy rally event cannot contain gameplan context")
         if hash_check_deferred(self):
-            return self  # create() stores the hash of exactly this validated value
+            return self  # The engine factory hashes this validated value.
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(

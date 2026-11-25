@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 44,
-    "reported_main_wild_card_count_rows": 44,
+    "reported_main_qualifier_count_rows": 47,
+    "reported_main_wild_card_count_rows": 47,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 47,
+    "second_pass_review_attempted_rows": 55,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,10 +57,11 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "47-row chronological prefix includes new source access, observed Main labels or retained previous evidence; no complete actual Q sheet obtained.",
+    "second_pass_review_note": "55-row chronological prefix includes new source access, observed Main labels or retained prior evidence; one advertised Q window, no actual Q sheet obtained.",
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
-    "main_entrant_crosschecked_rows": 75
+    "main_entrant_crosschecked_rows": 75,
+    "advertised_qualification_window_rows": 1
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -6368,7 +6369,9 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Sanremo_Open_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Sanremo_Open_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Sanremo_Open_%E2%80%93_Singles",
+          "https://kiwix.drnathanhutchins.com/content/wikipedia_en_all_maxi_2026-02/1990_Sanremo_Open_%E2%80%93_Singles",
+          "https://it.wikipedia.org/wiki/Sanremo_Open_1990_-_Singolare"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6410,6 +6413,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://kiwix.drnathanhutchins.com/content/wikipedia_en_all_maxi_2026-02/1990_Sanremo_Open_%E2%80%93_Singles",
+            "outcome": "indexed_main_summary_full_page_http_403"
+          },
+          "remaining": "Indexed draw summary corroborates 32/4Q/3WC; full mirror inaccessible. Original Q graph, dates and primary ranking class not obtained."
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Sanremo_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
+          "note": "Prior Main draw summary corroborated by indexed mirror; full mirror not accessed in this pass."
         }
       }
     },
@@ -6485,8 +6509,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1020000,
@@ -6523,6 +6547,43 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
+          "note": "First-entry Q counts 3/2/2/0; WC counts 1/2/1/1 including seeded WC in BYE position.",
+          "qualifier_counts_by_section": [
+            3,
+            2,
+            2,
+            0
+          ],
+          "wild_card_counts_by_section": [
+            1,
+            2,
+            1,
+            1
+          ],
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            3
+          ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Full Main transcription inspected. Original Q sheet, dates and financial commitment still missing."
         }
       }
     },
@@ -6594,7 +6655,9 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://www.ultimatetennisstatistics.com/tournamentEvent?tournamentEventId=2016",
-          "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/",
+          "https://tennis.esp.br/en/tournaments/prague?tour=ATP&year=1990",
+          "https://web.kurzy.cz/wiki/Czechoslovak_Open_1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6627,6 +6690,24 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "secondary_main_match_count_evidence": {
+          "source_url": "https://tennis.esp.br/en/tournaments/prague?tour=ATP&year=1990",
+          "reported_match_count": 31,
+          "consistent_with_main_entrants": 32,
+          "scope": "Indexed secondary result count corroborates UTS KO32/32; not a Q draw."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/",
+            "outcome": "indexed_event_dates_drawsheet_unavailable_redirect_failed"
+          },
+          "remaining": "ITF index shows dates/country but drawsheet unavailable; no verified seeds, Q/WC, financial commitment or actual Q dates."
         }
       }
     },
@@ -6747,6 +6828,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_GTE_U.S._Men%27s_Hard_Court_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
+          "note": "Prior Main counts retained; contemporary press independently reports 56 players, eight seed BYEs and five wild cards granted by director.",
+          "observed_lucky_losers": 1
+        },
+        "contemporary_entry_allocation_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-13-sp-684-story.html",
+          "published_on": "1990-08-13",
+          "reported_wild_cards_granted": 5,
+          "reported_main_field": 56,
+          "reported_top_seed_byes": 8,
+          "scope": "Contemporary article explicitly reports five wild cards granted in this edition and 56-player field; not proof of permanent reserved-WC policy or Q feeder places."
+        },
+        "contemporary_main_opening_date_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-13-sp-684-story.html",
+          "date": "1990-08-13",
+          "scope": "Reports opening match played at noon on the date of report; no Q dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-13-sp-684-story.html",
+            "outcome": "contemporary_main_entry_and_bye_evidence_no_q_sheet"
+          },
+          "remaining": "No qualifying draw or actual dates; actual WC grants now independently confirmed, reserved policy remains unknown."
         }
       }
     },
@@ -6817,13 +6933,17 @@
         "event_source": "https://wiki.ryanmichaelcurry.com/content/wikipedia_en_all_maxi_2025-08/1990_Volvo_International_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://wiki.ryanmichaelcurry.com/content/wikipedia_en_all_maxi_2025-08/1990_Volvo_International_%E2%80%93_Singles"
+          "https://wiki.ryanmichaelcurry.com/content/wikipedia_en_all_maxi_2025-08/1990_Volvo_International_%E2%80%93_Singles",
+          "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+          "https://cesauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+          "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-737-story.html",
+          "https://en.wikipedia.org/wiki/1990_Volvo_International"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 6,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -6854,6 +6974,75 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://wiki.ryanmichaelcurry.com/content/wikipedia_en_all_maxi_2025-08/1990_Volvo_International_%E2%80%93_Singles",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 6,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
+          "note": "Initial-entry Q counts 0/1/4/2 and WC 4/0/1/1, including seed 2 in BYE position.",
+          "qualifier_counts_by_section": [
+            0,
+            1,
+            4,
+            2
+          ],
+          "wild_card_counts_by_section": [
+            4,
+            0,
+            1,
+            1
+          ],
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            2
+          ]
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "advertised_qualification_window": {
+          "status": "historical_poster_described_by_auctioneer_not_actual_play",
+          "source_url": "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+          "duplicate_listing_url": "https://cesauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+          "source_artifact_year": 1990,
+          "listing_closed_on": "2025-10-12",
+          "start_date": "1990-08-11",
+          "end_date": "1990-08-12",
+          "advertised_main_start_date": "1990-08-13",
+          "advertised_main_end_date": "1990-08-19",
+          "calendar_year_week": 32,
+          "main_calendar_year_week": 33,
+          "scope": "Auction description explicitly transcribes dates from a contemporary tournament poster. Original image text not independently inspected; duplicate listing is not independent corroboration. No actual Q play, entrants or rounds confirmed."
+        },
+        "contemporary_financial_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-737-story.html",
+          "published_on": "1990-08-20",
+          "reported_event_amount_usd": 1000000,
+          "scope": "Contemporary final report confirms advertised $1m event, not exact ranking class."
+        },
+        "alternate_event_end_date": "1990-08-20",
+        "alternate_event_end_date_note": "Secondary event article says August 20; contemporary final report dated August 20 says Sunday final, supporting canonical August 19. Preserve separate reported dates.",
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "advertised_window_reported_actual_dates_not_verified",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+            "outcome": "advertised_qualification_dates_found_actual_draw_not_obtained"
+          },
+          "remaining": "Obtain original poster scan, contemporary results or dated qualifying draw; do not populate certified actual Q dates from auction description. Full qualification graph and exact points unknown."
         }
       }
     },
@@ -6925,7 +7114,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://www.itftennis.com/en/tournament/san-marino/smr/1990/m-wsf-smr-01a-1990/draws-and-results/",
-          "https://sanmarinotennisopen.com/albo-d-oro/"
+          "https://sanmarinotennisopen.com/albo-d-oro/",
+          "https://sanmarinotennisopen.com/tabelloni/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6967,6 +7157,18 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.itftennis.com/en/tournament/san-marino/smr/1990/m-wsf-smr-01a-1990/draws-and-results/",
+            "outcome": "indexed_event_dates_drawsheet_unavailable_redirect_failed"
+          },
+          "remaining": "Organizer roll of honour confirms 1990 occurrence; current tabelloni page does not supply 1990 Q sheets. Seeds, entry labels, dates and class still missing."
         }
       }
     },
@@ -7102,6 +7304,18 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles",
+            "outcome": "prior_secondary_main_evidence_retained"
+          },
+          "remaining": "Existing second-pass correction retained; men's 28/32 with four BYEs, 4Q/3WC/1LL distinct from combined event. No original Q sheet or actual dates obtained in this pass."
         }
       }
     },
@@ -7178,8 +7392,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -7215,6 +7429,31 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Norstar_Bank_Hamlet_Challenge_Cup_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
+          "note": "Four Q across both halves and three WC, including seed 6; top four seed BYEs.",
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            6
+          ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Norstar_Bank_Hamlet_Challenge_Cup_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Actual Q graph/dates and point class unknown; cited World of Tennis 1991 pp. 115, 134 not obtained."
         }
       }
     },
@@ -9603,7 +9842,7 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_san_remo_1990",
+  "next_second_pass_review_occurrence": "atp_1990_bordeaux_1995",
   "field_semantics": {
     "main_entrants": "Reported/cross-checked count of occupied Main entrant positions, not bracket capacity; still historical evidence, not a certified sporting profile.",
     "main_bracket_slots": "Physical knockout bracket positions, including BYEs; null for round-robin group format.",

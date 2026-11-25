@@ -605,3 +605,31 @@ def test_second_pass_stuttgart_through_los_angeles_preserves_source_scope(batch)
         assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 47
+
+
+def test_august_second_pass_distinguishes_advertised_and_actual_qualification(batch):
+    reviewed = batch["occurrences"][47:55]
+    assert [r["series_id"] for r in reviewed] == [
+        "san_remo_1990", "cincinnati", "prague_1999", "atlanta",
+        "new_haven_1998", "san_marino_2000", "schenectady_1994", "winston_salem"]
+    san, cin, pr, ind, nh, sm, sc, li = [r["historical_evidence"] for r in reviewed]
+    for e, q, wc in ((san, 4, 3), (cin, 7, 5), (ind, 7, 5), (nh, 7, 6), (sc, 4, 3), (li, 4, 3)):
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+    assert cin["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [3]
+    assert ind["contemporary_entry_allocation_evidence"]["reported_wild_cards_granted"] == 5
+    assert ind["entry_policy"]["reserved_main_wild_cards"] is None
+    assert pr["secondary_main_match_count_evidence"]["reported_match_count"] == 31
+    window = nh["advertised_qualification_window"]
+    assert window["status"] == "historical_poster_described_by_auctioneer_not_actual_play"
+    assert (window["start_date"], window["end_date"]) == ("1990-08-11", "1990-08-12")
+    from datetime import date
+    assert date.fromisoformat(window["start_date"]).isocalendar().week == window["calendar_year_week"] == 32
+    assert date.fromisoformat(window["advertised_main_start_date"]).isocalendar().week == window["main_calendar_year_week"] == 33
+    assert reviewed[4]["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": 33}]
+    assert nh["second_pass_review"]["qualification_dates_status"] == "advertised_window_reported_actual_dates_not_verified"
+    assert batch["summary"]["advertised_qualification_window_rows"] == sum(
+        "advertised_qualification_window" in r["historical_evidence"] for r in batch["occurrences"])
+    for row in reviewed:
+        e = row["historical_evidence"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 55

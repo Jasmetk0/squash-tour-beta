@@ -21,7 +21,18 @@ class DeterministicRng:
 
     def __init__(self, seed: Seed | int):
         self._seed = seed if isinstance(seed, Seed) else Seed(int(seed))
-        self._random = random.Random(self._seed.value)
+        # Created on first draw from the same seed: identical state and
+        # sequence. Many child RNGs only derive further seeds and never draw.
+        self._generator: random.Random | None = None
+        # Decimal text of the seed, reused by every child derivation.
+        self._seed_text: str | None = None
+
+    @property
+    def _random(self) -> random.Random:
+        generator = self._generator
+        if generator is None:
+            generator = self._generator = random.Random(self._seed.value)
+        return generator
 
     @property
     def seed(self) -> Seed:
@@ -57,7 +68,14 @@ class DeterministicRng:
     def derive(self, scope: SeedScope, *parts: object) -> Seed:
         """Derive a deterministic child seed for the given scope and identity parts."""
 
-        return derive_child_seed(self._seed, scope, *parts)
+        # Same material and digest as ``derive_child_seed`` (the reference),
+        # with this RNG's seed text computed once instead of per child.
+        text = self._seed_text
+        if text is None:
+            text = self._seed_text = str(self._seed.value)
+        material = "|".join(("v1", scope.value, text, *map(str, parts)))
+        digest = hashlib.blake2b(material.encode("utf-8"), digest_size=16).digest()
+        return Seed(int.from_bytes(digest, byteorder="big", signed=False))
 
     def branch(self, scope: SeedScope, *parts: object) -> "DeterministicRng":
         """Create a child RNG deterministically derived from this RNG's seed."""

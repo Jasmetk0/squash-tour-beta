@@ -40,7 +40,13 @@ def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(
         saved_body=json.dumps(revision.payload,sort_keys=True)
         saved_hash=revision.content_hash
         code,catalog=_request('GET',root+'/calendar-tour/atp-source-editions');assert code==200,catalog
-        p=catalog['entries'][2]
+        entries = {entry["profile"]["occurrence_id"]: entry for entry in catalog["entries"]}
+        assert ("atp_2025_dallas" in entries) is verified
+        if verified:
+            dallas = entries["atp_2025_dallas"]
+            assert dallas["qualification_calendar_projection"]["run_ordinals"] == [4]
+            assert dallas["calendar_projection"]["run_weeks"][0]["season_week"] == 6
+        p=entries['atp_2025_rotterdam']
         assert p['profile']['qualification_date_status']==('verified' if verified else 'not_verified')
         assert ('qualification_dates_not_verified' in p['execution_blockers']) is not verified
         assert not p['execution_supported']

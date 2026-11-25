@@ -127,3 +127,35 @@ same stored state between environments.
 The cause and any broader cross-environment requirement remain open.
 Radim and Work will agree any change to the product contract before it is
 recorded as a decision.
+
+## Linux one-week A/B and CPU diagnosis
+
+Use the same pinned SQLite backup for both commits. Start with a short W6
+Run to check the benchmark itself. For a scaling conclusion, repeat at
+matched early and late history depths with the same work and hardware.
+Each worker executes real Tour requests, including explicit Save, and
+checks match and ranking evidence and the complete Saved lineage.
+
+```bash
+export BETA_ENGINE_NEW_RUN_SAVED_STORAGE=saved_v2
+python scripts/profile_native_week_ab.py prepare --database work/week-input.db
+sha=$(sha256sum work/week-input.db | cut -d' ' -f1)
+python scripts/profile_native_week_ab.py ab --a "$base_commit" --b "$candidate_commit" \
+  --input work/week-input.db --sha256 "$sha" --out work/week-timing
+python scripts/profile_native_week_ab.py ab --a "$base_commit" --b "$candidate_commit" \
+  --input work/week-input.db --sha256 "$sha" --out work/week-cpu --profile-cpu
+```
+
+| Evidence | What it measures |
+| --- | --- |
+| Wall and process CPU, HTTP calls, RSS, DB and WAL | Per request and for the measured week. Counts include the selected workload and separate deliberate retries. Health startup and final lineage checks are outside the timed request set. RSS is sampled at each request boundary, with a separate process high-water mark. DB+WAL uses the largest sampled sum at a single boundary. |
+| Logical fetch and OS read counters | SQLite text/BLOB bytes delivered through the instrumented cursor. Linux `/proc/self/io` separately reports bytes returned by read syscalls and storage reads charged to the process. These are whole-process counters, with the client, cache effects and instrumentation included. Their totals have different scopes. |
+| CPU utilization | Process CPU divided by elapsed wall time gives mean occupied logical CPUs over the week. The report also records CPU model, process affinity and machine RAM. This does not identify which threads ran in parallel. |
+| Optional endpoint CPU profiles | Measure total CPU on the synchronous handler thread. Sample its Python stack every 10 ms of wall time and assign the measured CPU intervals to the top frame. JSON/Pydantic, match modules, Saved storage, replay code, SQL and other work are estimates, with sample counts and unsampled CPU reported. C extension work is attributed to its Python caller. Selected replay and Saved lineage scopes also report inclusive sampled CPU, which can overlap each other and the exclusive groups. HTTP response encoding outside the handler is covered by process timing. Use the separate timing run for throughput and RSS baselines. |
+| Component memory | Request RSS covers the whole process. For a separate retained-cache or allocation study use the existing Save memory diagnostic and Python allocation profiler. Those measurements cannot allocate process RSS to individual components. |
+
+For long diagnostics, keep the low-overhead week and Save timeline for
+historical comparisons. The legacy giant Save timer stops when response
+headers arrive, whereas the short driver also reads and decodes the response.
+Use a separate reproduced week for CPU attribution and a retained database
+for cold-open or Restore profiling. Task Center polling needs its own scenario.

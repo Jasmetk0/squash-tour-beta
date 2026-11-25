@@ -1068,43 +1068,17 @@ class CalendarTourService:
             with global_replay_projection_scope():
                 for value, fingerprint in fingerprints.values():
                     _prime_private_fingerprint(value, fingerprint)
-                preview, ctx, state, authority, transition_successor = self._prepare(
+                prepared = self._prepare(
                     session, run_id, branch_id, command, loaded=loaded
                 )
-                if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
-                    raise ValueError(
-                        "Confirmation is stale; review the current inputs again"
-                    )
-                successor, result = self._apply(
-                    session, ctx, state, authority, command,
-                    transition_candidate=(preview["impact"], transition_successor),
-                )
-                successor = successor.model_copy(
-                    update={
-                        "receipts": successor.receipts
-                        + (
-                            CalendarTourReceipt(
-                                command_id=command.command_id,
-                                request=request.model_dump(mode="json"),
-                                result=result,
-                            ),
-                        )
-                    }
-                )
-                put_tour(session, successor)
-                _fault_injection_point("after_tour_write")
+                result, successor = self._install_prepared(session, request, prepared)
             post_fingerprints = {} if include_inspection else None
             if save_values is not None:
                 save_values.clear()
-            post_context = None
-            if successor.schema_version in {
-                "calendar_tour_authority.v3",
-                "calendar_tour_authority.v4", "calendar_tour_authority.v5",
-            }:
-                # Reject any coupled-write discrepancy before this transaction
-                # commits, not on the next inspection or eventual manual Save.
-                post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints, _save_values=save_values)
-                _fault_injection_point("after_native_replay")
+            post_context = self._verify_installed(
+                session, run_id, branch_id, successor,
+                _fingerprints=post_fingerprints, _save_values=save_values,
+            )
             if include_inspection:
                 if post_context is None:
                     post_context = self._context(session, run_id, branch_id, _fingerprints=post_fingerprints, _save_values=save_values)
@@ -1115,6 +1089,58 @@ class CalendarTourService:
                     session, run_id, branch_id, result, post_context, post_fingerprints, save_values,
                 )
             return result
+
+    def _install_prepared(self, session, request, prepared):
+        """Write one reviewed, deterministically prepared command in ``session``.
+
+        ``prepared`` is the exact ``_prepare`` output for this command. The
+        caller owns the BEGIN IMMEDIATE transaction and the private projection
+        scope, and must call ``_verify_installed`` before it commits. Native
+        Full Simulation uses it only for a step prepared in the same unchanged
+        SQLite snapshot; every other caller prepares inside this transaction.
+        """
+        command = request.command
+        preview, ctx, state, authority, transition_successor = prepared
+        if preview["preview_fingerprint"] != request.expected_preview_fingerprint:
+            raise ValueError(
+                "Confirmation is stale; review the current inputs again"
+            )
+        successor, result = self._apply(
+            session, ctx, state, authority, command,
+            transition_candidate=(preview["impact"], transition_successor),
+        )
+        successor = successor.model_copy(
+            update={
+                "receipts": successor.receipts
+                + (
+                    CalendarTourReceipt(
+                        command_id=command.command_id,
+                        request=request.model_dump(mode="json"),
+                        result=result,
+                    ),
+                )
+            }
+        )
+        put_tour(session, successor)
+        _fault_injection_point("after_tour_write")
+        return result, successor
+
+    def _verify_installed(self, session, run_id, branch_id, successor, *, _fingerprints=None, _save_values=None):
+        """Independently re-read and authenticate the coupled rows just written.
+
+        Returns the post-write context, or None for legacy Tour schemas that
+        never had this pre-commit replay. Rejects before the caller commits.
+        """
+        if successor.schema_version not in {
+            "calendar_tour_authority.v3",
+            "calendar_tour_authority.v4", "calendar_tour_authority.v5",
+        }:
+            return None
+        # Reject any coupled-write discrepancy before this transaction
+        # commits, not on the next inspection or eventual manual Save.
+        post_context = self._context(session, run_id, branch_id, _fingerprints=_fingerprints, _save_values=_save_values)
+        _fault_injection_point("after_native_replay")
+        return post_context
 
     def _play_native(
         self, session, ctx, state, authority, command, *, persist, native_inputs=None

@@ -15,8 +15,11 @@ pytestmark = pytest.mark.pr_critical
 LEGACY = Path(__file__).parents[1] / 'fixtures/atp/squash_sporting_profiles_source_v2.json'
 
 
-def profile():
-    return parse_sporting_profile(build_atp_sporting_package().entities[2].payload)
+def profile(series_id="rotterdam"):
+    occurrence_id = f"atp_2025_{series_id}"
+    entity = next(item for item in build_atp_sporting_package().entities
+                  if item.source_entity_id == occurrence_id)
+    return parse_sporting_profile(entity.payload)
 
 
 def test_old_profile_and_package_fingerprints_remain_exact(tmp_path):
@@ -32,13 +35,14 @@ def test_old_profile_and_package_fingerprints_remain_exact(tmp_path):
     assert parsed.qualification_date_status == 'not_verified'
     assert project_qualification_window(RunCalendar.earth_default(), parsed) is None
     # New server defaults cannot silently upgrade this old saved payload.
-    assert build_atp_sporting_package().source_version == 3
+    assert build_atp_sporting_package().source_version == 4
     assert parsed.schema_version.endswith('.v1') and 'qualification_date_evidence' not in entity.payload
 
 
 @pytest.mark.parametrize(('offset','start','season','week'), [(1,2025,0,5),(37,2024,0,21)])
-def test_source_window_maps_to_w5_with_the_actual_run_offset(offset,start,season,week):
-    projection = project_qualification_window(RunCalendar(52,offset,start,2),profile())
+@pytest.mark.parametrize("series_id", ["rotterdam", "dallas"])
+def test_source_window_maps_to_w5_with_the_actual_run_offset(offset,start,season,week,series_id):
+    projection = project_qualification_window(RunCalendar(52,offset,start,2),profile(series_id))
     assert projection['source_start_date'] == '2025-02-01'
     assert projection['source_end_date'] == '2025-02-02'
     assert projection['iso_year_weeks'] == [{'calendar_year':2025,'year_week':5}]

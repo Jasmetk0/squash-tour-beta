@@ -1,3 +1,55 @@
+# Native fork Task Center progress — 24 November 2026 (unmerged candidate)
+
+Repeated Task Center reads of the same native fork state reuse only the
+checked week, match count and source fingerprint. The current transaction
+reads the Saved head and draft and authenticates the exact input texts before
+reuse. Task child receipts and the frozen calendar are also bound to the cache
+key. The first read of a new combination runs the original full projection.
+The memo keeps scalar results only. It has no authority to execute or Save.
+Pause/Stop during installation now release the pinned read/write connection
+before the original path handles the control command.
+
+On a read-only copy of the actual W52 scenario at W23 (29 revisions,
+21 task children), median repeated progress projection was 29.81 → 3.31 ms
+over two 20-read processes per tree, using Python 3.12.14 on the same host.
+Both projected values matched exactly. First-read latency and whole-season
+wall time are separate measurements, and there is no 1,000-player claim.
+
+# Native Full Simulation one-snapshot step — 24 November 2026 (unmerged candidate)
+
+Draft branch `claude/gifted-faraday-yv7dey` on `buuk 27ade97`. Each ordinary
+native child used five transactions: native context under the writer lock,
+a separate Preview, a pending write, Execute (context again, a second
+identical preparation, apply, post-write context) and a receipt reconcile.
+The driver now authenticates the parent and sources once in a read
+transaction, selects the child and prepares it as Preview does. A guarded
+BEGIN IMMEDIATE writer installs it only if SQLite `data_version` on the same
+pinned connection shows no other commit since before the snapshot and the
+parent, Saved HEAD and Working Draft bytes are unchanged. Post-write
+verification, lease/pause/stop fences and explicit Save stay. The child is
+recorded atomically with its sporting write. Pause/stop, terminal, frozen
+pending children, Season Transition and any changed snapshot take the original
+path unchanged. Lease heartbeats may wait at most 90 s during the read.
+Task Center validations of the same immutable bytes are memoized by SHA-256 of
+every input; first sight of any bytes is fully validated.
+
+Fresh copies of identical fixtures, production HTTP/SQLite, deterministic
+persistence UUIDs, this 4-vCPU container, Python 3.11.18. Base mean of two runs
+vs candidate `1c933d4`:
+
+| scenario | worker wall s | worker CPU s | writer lock s | longest lock s |
+|---|---:|---:|---:|---:|
+| short, Tour v1, 4 players | 50.1 → 26.6 | 38.8 → 25.0 | 41.9 → 11.2 | 3.8 → 2.1 |
+| global slots, Tour v5, 32 players | 53.0 → 17.9 | 31.6 → 16.5 | 47.7 → 12.2 | 6.5 → 4.0 |
+| W52 native fork, full season | 137.4 → 73.1 | 119.4 → 61.4 | 104.9 → 29.2 | 3.5 → 3.4 |
+
+Every table, all Saved revisions, the draft and the task parent were
+byte-identical with the base in every run. Peak RSS was unchanged (W52
+~1.7 GiB) or lower (global 0.80 → 0.67 GiB). Task Center polling read cost per
+global-slot poll fell from ~1.1–1.25 s to ~0.24 s. No 1,000-player, hosted or
+multi-season run was performed. Remaining largest locked cost: the mandatory
+post-write context (~3–4 s per global step).
+
 # Guided ATP W52 package setup candidate — 24 November 2026
 
 Admin Run creation offers the ATP Earth and historical ATP Tour package path

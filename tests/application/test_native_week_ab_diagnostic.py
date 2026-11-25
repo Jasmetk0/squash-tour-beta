@@ -347,7 +347,7 @@ def test_windows_does_not_probe_linux_and_rejects_profile_before_start(monkeypat
 def test_linux_io_delta_and_profile_stay_available(monkeypatch):
     with monkeypatch.context() as patch:
         patch.setattr(driver.sys, "platform", "linux")
-        patch.setattr(driver.Path, "read_text", lambda self: "rchar: 120\\nread_bytes: 64")
+        patch.setattr(driver.Path, "read_text", lambda self: "rchar: 120\nread_bytes: 64")
         patch.setattr(driver.os, "sched_getaffinity", lambda pid: {0, 1}, raising=False)
         driver.require_measurement_platform(True)
         assert driver.cpu_affinity_count() == 2

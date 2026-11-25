@@ -101,7 +101,18 @@ def _same(text, pos, ref_text, ref):
         return False
     if length <= 64:
         return text[pos:end] == ref_text[ref.start:ref.end]
-    return text.startswith(ref_text[ref.start:ref.end], pos)
+    if ref.start == 0 and ref.end == len(ref_text):
+        return text.startswith(ref_text, pos)
+    chunk_chars = 1024 * 1024
+    if length <= chunk_chars:
+        return text.startswith(ref_text[ref.start:ref.end], pos)
+    # A changed value may diverge near the start of a large span. Check it
+    # without first copying the complete reference segment.
+    for start in range(ref.start, ref.end, chunk_chars):
+        chunk = ref_text[start:min(start + chunk_chars, ref.end)]
+        if not text.startswith(chunk, pos + start - ref.start):
+            return False
+    return True
 
 
 def _value(text, pos, ref_text, ref, depth):

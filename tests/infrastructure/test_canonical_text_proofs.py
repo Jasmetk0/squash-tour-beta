@@ -128,6 +128,28 @@ def test_number_prefix_of_a_reference_is_not_mistaken_for_the_value():
     assert verify_canonical_text(child.replace("12", "1"), parent_proof) is not None
 
 
+def test_large_relocated_span_checks_both_early_and_late_characters():
+    body = {"value": "first" + "a" * (2 * 1024 * 1024) + "é last"}
+    parent_text = canonical_json({"before": "", "body": body})
+    child_text = canonical_json({"before": "shifts the body", "body": body})
+    parent = verify_canonical_text(parent_text)
+    child = verify_canonical_text(child_text, parent)
+    assert child.layout.keys["body"].same
+    assert span(child, ("body",)) == canonical_json(body)
+
+    previous = (parent, json.loads(parent_text))
+    for marker, changed in [("first", "FIRST"), ("last", "LAST")]:
+        changed_text = child_text.replace(marker, changed, 1)
+        proof = verify_canonical_text(changed_text, parent)
+        assert not proof.layout.keys["body"].same
+        assert canonical_text.decode_sharing(proof, previous) == json.loads(changed_text)
+
+    # Same decoded spelling and length, but non-canonical bytes in a late chunk.
+    noncanonical_text = child_text.replace("\\u00e9", "\\u00E9")
+    assert noncanonical_text != child_text
+    assert verify_canonical_text(noncanonical_text, parent) is None
+
+
 def test_forged_references_and_spans_are_refused():
     child = canonical_json(big_doc(3)).replace(",", ", ", 1)
     with pytest.raises(TypeError):

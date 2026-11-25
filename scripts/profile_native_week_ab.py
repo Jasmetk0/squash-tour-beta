@@ -4,12 +4,14 @@ Linux, Python 3.11+, installed project/test dependencies, clean committed Git
 trees. Run this driver from the diagnostic branch, not from either candidate.
 Use prepare once, then ab with the emitted SHA. No multi-season task is started.
 Timings include identical fetch instrumentation; history verification is separate.
+Use --profile-cpu in a separate run to attribute synchronous endpoint CPU.
 """
 from __future__ import annotations
 
 import argparse
 from collections import Counter
 from contextlib import closing
+from functools import wraps
 import hashlib
 import importlib.metadata
 import importlib.util
@@ -19,26 +21,170 @@ import os
 from pathlib import Path
 import platform
 import re
-import resource
 import shutil
 import sqlite3
 from statistics import median
 import subprocess
 import sys
 import tempfile
+from threading import Event, Thread, get_ident
 import time
 from uuid import NAMESPACE_URL, uuid5
 from itertools import count
 
+if __package__:
+    from . import process_measurement
+else:
+    import process_measurement
+
 SCRIPT = Path(__file__).resolve()
 METRICS = SCRIPT.with_name("profile_native_full_simulation_metrics.py")
 W12_SHA = "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7"
-SCHEMA = 2
+SCHEMA = 3
 PLANS = {
     "w6": [("play", "ab-cup"), ("confirm-result", "ab-cup"), ("transition", None)],
     "w12-1822": [("transition", None)],
 }
 SEED = 231
+PROFILE_ROUTES = {
+    ("GET", ""): "inspect",
+    ("POST", "/preview"): "preview",
+    ("POST", "/execute"): "execute",
+    ("POST", "/save"): "save",
+}
+PHASE_COUNTERS = ("read_syscall_bytes", "storage_read_bytes")
+CPU_SAMPLE_INTERVAL_S = 0.01
+REPLAY_ENTRIES = {
+    ("/infrastructure/db/calendar_native_competition.py", "verify_competition_payload"): "competition_replay",
+    ("/infrastructure/db/repositories.py", "_validated_branch_revision_lineage_core_in_session"): "saved_lineage_validation",
+}
+
+
+def process_io():
+    """Linux process counters, across the server and client threads."""
+    fields = dict(line.split(": ", 1) for line in Path("/proc/self/io").read_text().splitlines())
+    return {"read_syscall_bytes": int(fields["rchar"]), "storage_read_bytes": int(fields["read_bytes"])}
+
+
+def cpu_category(file):
+    if re.search(r"/(?:json|pydantic|pydantic_core)/", file):
+        return "json_pydantic"
+    if "/domain/matches/" in file:
+        return "match_domain"
+    if file.endswith("/infrastructure/db/calendar_native_competition.py"):
+        return "history_replay_functions"
+    if "/saved_v2_" in file or "/saved_revision_" in file:
+        return "saved_storage_functions"
+    if "/sqlalchemy/" in file or "/sqlite3/" in file:
+        return "sqlite_sqlalchemy"
+    return "other"
+
+
+def sample_stack(thread_id):
+    frame = sys._current_frames().get(thread_id)
+    stack = []
+    while frame is not None:
+        code = frame.f_code
+        stack.append((code.co_filename, code.co_firstlineno, code.co_name))
+        frame = frame.f_back
+    return stack
+
+
+def summarize_cpu_samples(samples, start_ns, end_ns):
+    """Charge each sampled CPU interval to the observed top Python frame."""
+    categories, functions, subtree_cpu, subtree_samples = Counter(), Counter(), Counter(), Counter()
+    last_ns = start_ns
+    sample_count = 0
+    for cpu_ns, stack in samples:
+        if cpu_ns <= last_ns or cpu_ns > end_ns:
+            continue
+        elapsed = cpu_ns - last_ns
+        last_ns = cpu_ns
+        if not stack:
+            categories["unattributed"] += elapsed
+            continue
+        sample_count += 1
+        categories[cpu_category(stack[0][0])] += elapsed
+        functions[stack[0]] += elapsed
+        active_roots = {
+            label
+            for frame_file, _, frame_name in stack
+            for (suffix, function), label in REPLAY_ENTRIES.items()
+            if frame_name == function and frame_file.endswith(suffix)
+        }
+        for label in active_roots:
+            subtree_samples[label] += 1
+            subtree_cpu[label] += elapsed
+    categories["unattributed"] += end_ns - last_ns
+    return {"exclusive_total_cpu_s": (end_ns - start_ns) / 1e9,
+            "exclusive_cpu_s": {key: value / 1e9 for key, value in categories.items()},
+            "cpu_sample_count": sample_count,
+            "replay_entry_cpu_s": {key: {"samples": subtree_samples[key], "inclusive_cpu_s": value / 1e9}
+                                   for key, value in subtree_cpu.items()},
+            "top_exclusive_functions": [
+                {"file": file.rsplit("/beta_engine/", 1)[-1] if "/beta_engine/" in file else Path(file).name,
+                 "line": line, "function": name, "cpu_s": elapsed / 1e9}
+                for (file, line, name), elapsed in functions.most_common(12)
+            ]}
+
+
+def sample_thread_cpu(operation, args, kwargs, record):
+    """Read only the endpoint thread's CPU clock and Python stack."""
+    thread_id = get_ident()
+    clock = time.pthread_getcpuclockid(thread_id)
+    stop = Event()
+    samples = []
+
+    def collect():
+        while not stop.wait(CPU_SAMPLE_INTERVAL_S):
+            stack = sample_stack(thread_id)
+            samples.append((time.clock_gettime_ns(clock), stack))
+
+    sampler = Thread(target=collect, daemon=True)
+    sampler.start()
+    start_ns = time.clock_gettime_ns(clock)
+    try:
+        return operation(*args, **kwargs)
+    finally:
+        end_ns = time.clock_gettime_ns(clock)
+        stop.set()
+        sampler.join()
+        record(summarize_cpu_samples(samples, start_ns, end_ns))
+
+
+def profile_endpoints(app):
+    """Profile the worker thread that executes each real sync Tour endpoint."""
+    from inspect import iscoroutinefunction
+    from fastapi import routing
+
+    records = []
+    base = "/admin/runs/{run_id}/branches/{branch_id}/calendar-tour"
+
+    def wrap(original, identifier):
+        @wraps(original)
+        def profiled(*args, **kwargs):
+            return sample_thread_cpu(original, args, kwargs,
+                                     lambda profile: records.append((identifier, profile)))
+        return profiled
+
+    # Newer FastAPI stores included routers lazily. Resolve the effective
+    # dependant used for requests; older versions expose concrete routes.
+    iter_contexts = getattr(routing, "iter_route_contexts", iter)
+    identifiers = set()
+    for route in iter_contexts(app.routes):
+        path = getattr(route, "path", None)
+        if path is None or not path.startswith(base):
+            continue
+        for method in route.methods or ():
+            identifier = PROFILE_ROUTES.get((method, path.removeprefix(base)))
+            if identifier is not None:
+                original = route.dependant.call
+                require(not iscoroutinefunction(original) and identifier not in identifiers,
+                        f"Expected one synchronous endpoint for {identifier}")
+                route.dependant.call = wrap(original, identifier)
+                identifiers.add(identifier)
+    require(identifiers == set(PROFILE_ROUTES.values()), "Cannot attach to all benchmark endpoints")
+    return records
 
 
 def require(condition, message):
@@ -133,8 +279,10 @@ def metadata():
             "Candidate checkout has tracked modifications")
     return {"commit": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD:src"),
             "runner_sha256": file_sha(SCRIPT), "metrics_sha256": file_sha(METRICS),
+            "process_measurement_sha256": file_sha(Path(process_measurement.__file__)),
             "python": sys.version, "platform": platform.platform(),
             "machine": platform.machine(), "cpu_count": os.cpu_count(),
+            "hardware": process_measurement.machine(), "cpu_affinity_count": len(os.sched_getaffinity(0)),
             "dependencies": {name: importlib.metadata.version(name) for name in
                              ("fastapi", "pydantic", "sqlalchemy", "uvicorn", "pytest")},
             "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
@@ -254,16 +402,20 @@ def worker(args):
         pass
     report = {"schema": SCHEMA, "status": "failed", "metadata": meta,
               "input_sha256": args.sha256, "scenario": args.scenario, "seed": SEED,
-              "mode": args.mode, "plan": PLANS[args.scenario], "before": before,
+              "mode": args.mode, "profile_cpu": args.profile_cpu,
+              "plan": PLANS[args.scenario], "before": before,
               "calls": rows}
     try:
-        with ApiServer(database_url=f"sqlite:///{db}") as server:
+        api = ApiServer(database_url=f"sqlite:///{db}")
+        profiles = profile_endpoints(api.app) if args.profile_cpu else None
+        with api as server:
             repo = server.app.state.runtime.repository
             url = flow.tour_url(server)
 
             def call(label, method, suffix="", payload=None, status=200):
                 request_sha256 = digest(payload)
                 sql_before, fetch_before = sql.copy(), fetched.copy()
+                io_before = process_io()
                 wall, cpu = time.perf_counter(), time.process_time()
                 code = None
                 try:
@@ -271,17 +423,28 @@ def worker(args):
                     require(code == status, f"{label}: unexpected HTTP {code}")
                     return value
                 finally:
-                    rows.append({"label": label, "method": method, "status": code,
-                                 "request_sha256": request_sha256,
-                                 "wall_s": time.perf_counter() - wall,
-                                 "cpu_s": time.process_time() - cpu,
-                                 "peak_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
-                                 "sql_calls": sql["count"] - sql_before["count"],
-                                 "sql_cursor_wall_s": sql["cursor_wall_s"] - sql_before["cursor_wall_s"],
-                                 "fetch_rows": fetched["rows"] - fetch_before["rows"],
-                                 "fetch_text_blob_bytes": fetched["text_blob_bytes"] - fetch_before["text_blob_bytes"],
-                                 **physical(db)})
-                    record_progress(progress, rows[-1])
+                    cpu_s, wall_s = time.process_time() - cpu, time.perf_counter() - wall
+                    io_after = process_io()
+                    memory = process_measurement.memory_kib()
+                    row = {
+                        "label": label, "method": method, "status": code,
+                        "request_sha256": request_sha256,
+                        "wall_s": wall_s, "cpu_s": cpu_s,
+                        "current_rss_kib": memory["VmRSS"], "peak_rss_kib": memory["VmHWM"],
+                        **{key: io_after[key] - io_before[key] for key in PHASE_COUNTERS},
+                        "sql_calls": sql["count"] - sql_before["count"],
+                        "sql_cursor_wall_s": sql["cursor_wall_s"] - sql_before["cursor_wall_s"],
+                        "fetch_rows": fetched["rows"] - fetch_before["rows"],
+                        "fetch_text_blob_bytes": fetched["text_blob_bytes"] - fetch_before["text_blob_bytes"],
+                        **physical(db),
+                    }
+                    if profiles is not None and profiles:
+                        identifier, measured_profile = profiles.pop(0)
+                        require(identifier == PROFILE_ROUTES[(method, suffix)] and not profiles,
+                                f"{label}: ambiguous endpoint profile")
+                        row["endpoint_cpu_profile"] = measured_profile
+                    rows.append(row)
+                    record_progress(progress, row)
 
             started, cpu = time.perf_counter(), time.process_time()
             view = call("initial_get", "GET")
@@ -320,7 +483,7 @@ def worker(args):
             report["wall_s"] = sum(row["wall_s"] for row in rows)
             report["elapsed_cpu_s"] = time.process_time() - cpu
             report["cpu_s"] = sum(row["cpu_s"] for row in rows)
-            report["peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            report["peak_rss_kib"] = process_measurement.peak_rss_kib()
             report["after"] = sql_stats(db)
             require([x["label"] for x in rows] == expected_calls(args.scenario, args.mode),
                     "Unexpected request sequence")
@@ -346,13 +509,15 @@ def worker(args):
                     sum(row["fetch_text_blob_bytes"] for row in rows) > 0,
                     "Expected SQL/fetch instrumentation to observe real reads")
             report["check_wall_s"] = time.perf_counter() - check_started
-            report["check_peak_rss_kib"] = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+            report["check_peak_rss_kib"] = process_measurement.peak_rss_kib()
         # Run after server shutdown: ensure the physical file itself is sound.
         with closing(sqlite3.connect(db.as_uri() + "?mode=ro", uri=True)) as con:
             require(con.execute("PRAGMA quick_check").fetchall() == [("ok",)], "SQLite quick_check failed")
         require(metadata() == meta, "Code or environment changed during measurement")
         report["status"] = "ok"
+        validate_report(report)
     except BaseException as exc:
+        report["status"] = "failed"
         report["error"] = type(exc).__name__ + ": " + str(exc)
         raise
     finally:
@@ -365,6 +530,7 @@ def validate_report(item):
     scenario, mode = item["scenario"], item["mode"]
     require(scenario in PLANS and mode in ("normal", "retry"), "unknown scenario/mode")
     require(digest(item["plan"]) == digest(PLANS[scenario]), "unexpected action plan")
+    require(type(item["profile_cpu"]) is bool, "invalid profiling mode")
     require(type(item["seed"]) is int and item["seed"] == SEED, "unexpected seed")
     require(re.fullmatch(r"[0-9a-f]{64}", item["input_sha256"]), "invalid fixture hash")
     require(scenario != "w12-1822" or item["input_sha256"] == W12_SHA, "wrong W12 fixture")
@@ -379,10 +545,28 @@ def validate_report(item):
         require(re.fullmatch(r"[0-9a-f]{64}", row["request_sha256"]), "invalid request digest")
         if get:
             require(row["request_sha256"] == digest(None), "unexpected GET body")
-        for key in ("wall_s", "cpu_s", "peak_rss_kib", "sql_calls", "sql_cursor_wall_s",
-                    "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes"):
+        for key in ("wall_s", "cpu_s", "current_rss_kib", "peak_rss_kib", "sql_calls", "sql_cursor_wall_s",
+                    "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes", *PHASE_COUNTERS):
             require(type(row[key]) in (int, float) and math.isfinite(row[key]) and row[key] >= 0,
                     "invalid phase metric " + key)
+        require(row["current_rss_kib"] <= row["peak_rss_kib"], "current RSS exceeds peak")
+        require(("endpoint_cpu_profile" in row) == item["profile_cpu"], "missing or unexpected CPU profile")
+        if item["profile_cpu"]:
+            profile = row["endpoint_cpu_profile"]
+            total = profile["exclusive_total_cpu_s"]
+            parts = profile["exclusive_cpu_s"]
+            samples = profile["cpu_sample_count"]
+            require(bool(parts) and all(math.isfinite(v) and v >= 0 for v in parts.values())
+                    and 0 < total <= row["cpu_s"] + 1e-6
+                    and type(samples) is int and samples >= 0
+                    and "unattributed" in parts and math.isclose(total, sum(parts.values()), rel_tol=1e-9),
+                    "invalid exclusive CPU decomposition")
+            for replay in profile["replay_entry_cpu_s"].values():
+                require(0 < replay["samples"] <= samples and 0 <= replay["inclusive_cpu_s"] <= total,
+                        "invalid inclusive replay sample")
+    if item["profile_cpu"]:
+        require(any(row["endpoint_cpu_profile"]["cpu_sample_count"] > 0 for row in item["calls"]),
+                "no CPU samples captured")
     for key in ("wall_s", "cpu_s", "elapsed_wall_s", "elapsed_cpu_s",
                 "peak_rss_kib", "check_wall_s"):
         require(type(item[key]) in (int, float) and math.isfinite(item[key]) and item[key] >= 0,
@@ -466,8 +650,10 @@ def comparable(a, b, *, cross_mode=False):
                 if not (cross_mode and r["label"].endswith(":retry"))]
     if requests(a) != requests(b):
         reasons.append("different actual HTTP request bodies")
-    for key in ("runner_sha256", "metrics_sha256", "python", "platform", "machine",
-                "cpu_count", "dependencies", "pythonhashseed", "new_run_storage"):
+    if a["profile_cpu"] != b["profile_cpu"]:
+        reasons.append("different profiling modes")
+    for key in ("runner_sha256", "metrics_sha256", "process_measurement_sha256", "python", "platform", "machine",
+                "cpu_count", "hardware", "cpu_affinity_count", "dependencies", "pythonhashseed", "new_run_storage"):
         if key not in a.get("metadata", {}) or key not in b.get("metadata", {}) or a["metadata"][key] != b["metadata"][key]:
             reasons.append("different/missing environment: " + key)
     return reasons
@@ -477,12 +663,16 @@ def totals(report):
     return {**{k: report[k] for k in ("wall_s", "cpu_s", "elapsed_wall_s", "elapsed_cpu_s",
                                               "peak_rss_kib", "check_wall_s")},
             "http_calls": len(report["calls"]),
+            "mean_busy_logical_cpus": (report["elapsed_cpu_s"] / report["elapsed_wall_s"]
+                                       if report["elapsed_wall_s"] else 0.0),
             **{k: sum(row[k] for row in report["calls"])
-               for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes")},
+               for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes", *PHASE_COUNTERS)},
             "max_sampled_db_bytes": max([report["before"]["db_bytes"], report["after"]["db_bytes"]]
                                         + [row["db_bytes"] for row in report["calls"]]),
             "max_sampled_wal_bytes": max([report["before"]["wal_bytes"], report["after"]["wal_bytes"]]
                                          + [row["wal_bytes"] for row in report["calls"]]),
+            "max_sampled_db_plus_wal_bytes": max(row["db_bytes"] + row["wal_bytes"]
+                                                 for row in (report["before"], *report["calls"], report["after"])),
             **report["after"]}
 
 
@@ -496,9 +686,13 @@ def compare(a, b, *, cross_mode=False):
     x, y = totals(a), totals(b)
     by_label = {row["label"]: row for row in b["calls"]}
     return {"verdict": "equal", "a": x, "b": y,
+            "profile_cpu": a["profile_cpu"],
             "delta_b_minus_a": {k: y[k] - x[k] for k in x},
             "phase_delta_wall_s": {
                 ra["label"]: by_label[ra["label"]]["wall_s"] - ra["wall_s"]
+                for ra in a["calls"] if ra["label"] in by_label},
+            "phase_delta_cpu_s": {
+                ra["label"]: by_label[ra["label"]]["cpu_s"] - ra["cpu_s"]
                 for ra in a["calls"] if ra["label"] in by_label},
             "deliberate_retry_wall_s": sum(row["wall_s"] for row in b["calls"]
                                            if row["label"].endswith(":retry"))}
@@ -552,7 +746,7 @@ def summarize_trials(trials):
         rows = [trial[case] for trial in comparisons]
         result["aggregate"][case] = {
             group: {key: stats([row[group][key] for row in rows]) for key in rows[0][group]}
-            for group in ("a", "b", "delta_b_minus_a", "phase_delta_wall_s")
+             for group in ("a", "b", "delta_b_minus_a", "phase_delta_wall_s", "phase_delta_cpu_s")
         }
         result["aggregate"][case]["deliberate_retry_wall_s"] = stats(
             [row["deliberate_retry_wall_s"] for row in rows])
@@ -572,6 +766,7 @@ def run_ab(args):
     commits = {"A": a, "B": b}
     manifest = {"schema": SCHEMA, "commits": commits, "scenario": args.scenario,
                 "input_sha256": args.sha256, "repetitions": args.repetitions,
+                "profile_cpu": args.profile_cpu,
                 "worker_timeout_s": args.worker_timeout, "cases": [],
                 "status": "failed"}
     trials = []
@@ -603,7 +798,8 @@ def run_ab(args):
                                 proc = subprocess.run(
                                     [sys.executable, str(SCRIPT), "_worker", "--database", str(db),
                                      "--commit", commits[label], "--scenario", args.scenario,
-                                     "--mode", mode, "--sha256", args.sha256, "--out", str(dest)],
+                                     "--mode", mode, "--sha256", args.sha256, "--out", str(dest),
+                                     *(["--profile-cpu"] if args.profile_cpu else [])],
                                     cwd=trees[label], env=child_env(), stdout=log,
                                     stderr=subprocess.STDOUT, timeout=args.worker_timeout, check=False)
                             case["returncode"] = proc.returncode
@@ -612,6 +808,7 @@ def run_ab(args):
                             validate_report(reports[name])
                             require(reports[name]["metadata"]["commit"] == commits[label] and
                                     reports[name]["mode"] == mode and
+                                    reports[name]["profile_cpu"] == args.profile_cpu and
                                     reports[name]["scenario"] == args.scenario and
                                     reports[name]["input_sha256"] == args.sha256,
                                     "Worker report does not match scheduled case")
@@ -656,6 +853,8 @@ def main(argv=None):
     ab.add_argument("--out", type=Path, required=True)
     ab.add_argument("--repetitions", type=int, default=1, help="1-3 independent A/B trials")
     ab.add_argument("--worker-timeout", type=int, default=600, help="Per-process seconds, 1-1800")
+    ab.add_argument("--profile-cpu", action="store_true",
+                    help="Instrument sync Tour endpoint CPU; compare only with the same mode")
     comp = subs.add_parser("compare")
     comp.add_argument("a", type=Path)
     comp.add_argument("b", type=Path)
@@ -666,6 +865,7 @@ def main(argv=None):
     worker_p.add_argument("--out", type=Path, required=True)
     worker_p.add_argument("--scenario", choices=PLANS, required=True)
     worker_p.add_argument("--mode", choices=("normal", "retry"), required=True)
+    worker_p.add_argument("--profile-cpu", action="store_true")
     args = p.parse_args(argv)
     if args.action == "prepare":
         target_imports()

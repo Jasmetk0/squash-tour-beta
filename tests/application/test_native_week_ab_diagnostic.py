@@ -7,7 +7,7 @@ import pytest
 
 from scripts.profile_native_week_ab import (
     PLANS, SCHEMA, SEED, comparable, compare, copy_fixture, digest,
-    expected_calls, file_sha, summarize_trials, trial_order, record_progress,
+    expected_calls, file_sha, summarize_trials, trial_order, record_progress, summarize_cpu_samples,
 )
 
 
@@ -24,10 +24,11 @@ def report(mode="normal", commit="a" * 40):
         rows.append(dict(label=label, method="GET" if get else "POST",
                          status=200 if get or label.endswith(":preview") else 201,
                          request_sha256=digest(None if get else label.replace(":retry", ":execute")),
-                         wall_s=1.0, cpu_s=.8, peak_rss_kib=123,
+                         wall_s=1.0, cpu_s=.8, current_rss_kib=100, peak_rss_kib=123,
+                         read_syscall_bytes=200, storage_read_bytes=64,
                          sql_calls=2, sql_cursor_wall_s=.01, fetch_rows=3,
                          fetch_text_blob_bytes=40, db_bytes=4096, wal_bytes=12))
-    return dict(schema=SCHEMA, status="ok", scenario="w6", mode=mode,
+    return dict(schema=SCHEMA, status="ok", scenario="w6", mode=mode, profile_cpu=False,
                 seed=SEED, plan=json.loads(json.dumps(PLANS["w6"])),
                 input_sha256="f" * 64, before=snapshot,
                 after={**snapshot, "revisions": 13}, calls=rows,
@@ -42,8 +43,9 @@ def report(mode="normal", commit="a" * 40):
                                           ("confirm", "play"), ("head", "confirm"))
                 ],
                 metadata=dict(commit=commit, source_tree="c" * 40,
-                              runner_sha256="r", metrics_sha256="m", python="3.11",
+                              runner_sha256="r", metrics_sha256="m", process_measurement_sha256="p", python="3.11",
                               platform="Linux", machine="x86_64", cpu_count=4,
+                              hardware={"cpu_model": "fixture"}, cpu_affinity_count=4,
                               dependencies={}, pythonhashseed="0", new_run_storage="v1"))
 
 
@@ -56,6 +58,10 @@ def test_equal_commits_comparison_and_retry_cost():
     assert result["verdict"] == "equal"
     assert result["delta_b_minus_a"]["wall_s"] == -2
     assert result["a"]["http_calls"] == 16
+    assert result["a"]["read_syscall_bytes"] == 3200
+    assert result["a"]["storage_read_bytes"] == 1024
+    assert result["a"]["mean_busy_logical_cpus"] == pytest.approx(16 / 17)
+    assert result["a"]["max_sampled_db_plus_wal_bytes"] == 4108
     retry = compare(a, report("retry"), cross_mode=True)
     assert retry["verdict"] == "equal"
     assert retry["delta_b_minus_a"]["http_calls"] == 2
@@ -87,6 +93,10 @@ def test_equal_commits_comparison_and_retry_cost():
     lambda b: b["evidence"].update(match_count=2),
     lambda b: b["evidence"].update(players=7),
     lambda b: b.update(peak_rss_kib=122),
+    lambda b: b["calls"][0].update(storage_read_bytes=-1),
+    lambda b: b["calls"][0].update(current_rss_kib=124),
+    lambda b: b["metadata"].update(cpu_affinity_count=2),
+    lambda b: b.update(profile_cpu=True),
 ])
 def test_incompatible_or_incomplete_report(change):
     a = report()
@@ -103,6 +113,42 @@ def test_changed_sporting_results(key):
     a, b = report(), report()
     b["evidence"][key] = "9" * 64
     assert compare(a, b)["verdict"] == "different_results"
+
+
+def test_profiled_timings_require_both_sides_to_own_the_same_instrumentation():
+    a, b = report(), report()
+    b["profile_cpu"] = True
+    measurement = {"exclusive_total_cpu_s": .35, "exclusive_cpu_s": {"other": .34, "unattributed": .01},
+                   "cpu_sample_count": 11, "replay_entry_cpu_s": {}}
+    for row in b["calls"]:
+        row["endpoint_cpu_profile"] = measurement
+    assert compare(b, b)["verdict"] == "equal"
+    assert "different profiling modes" in compare(a, b)["reasons"]
+    measurement["exclusive_total_cpu_s"] = .5
+    assert compare(b, b)["verdict"] == "not_comparable"
+
+
+def test_replay_subtree_overlaps_sampled_categories_without_double_counting_intervals():
+    replay = ("/beta_engine/infrastructure/db/calendar_native_competition.py", 3, "verify_competition_payload")
+    play = ("/beta_engine/domain/matches/match_engine.py", 12, "play")
+    decode = ("/lib/json/decoder.py", 8, "raw_decode")
+    result = summarize_cpu_samples([(9, [play]), (20, [play, replay, replay]),
+                                    (35, [decode, replay]), (45, [decode])], 10, 40)
+    assert result["exclusive_cpu_s"] == {
+        "match_domain": 10e-9, "json_pydantic": 15e-9, "unattributed": 5e-9,
+    }
+    assert sum(result["exclusive_cpu_s"].values()) == pytest.approx(result["exclusive_total_cpu_s"])
+    assert result["cpu_sample_count"] == 2
+    assert result["replay_entry_cpu_s"] == {
+        "competition_replay": {"samples": 2, "inclusive_cpu_s": 25e-9},
+    }
+    assert result["top_exclusive_functions"][0]["function"] == "raw_decode"
+
+
+def test_endpoint_without_samples_reports_its_cpu_as_unattributed():
+    measured = summarize_cpu_samples([], 10, 40)
+    assert measured["cpu_sample_count"] == 0
+    assert measured["exclusive_cpu_s"] == {"unattributed": 30e-9}
 
 
 def test_changed_logical_history_and_order():

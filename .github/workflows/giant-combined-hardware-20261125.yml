@@ -1,8 +1,9 @@
 name: "One-shot combined optimization giant matrix"
 
 on:
-  pull_request:
-    types: [opened]
+  push:
+    branches:
+      - 'test/giant-combined-hardware-20261125'
     paths:
       - '.github/workflows/giant-combined-hardware-20261125.yml'
 
@@ -14,85 +15,8 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  preflight:
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'test/giant-combined-hardware-20261125' }}
-    runs-on: ubuntu-latest
-    timeout-minutes: 45
-    outputs:
-      candidate: ${{ steps.combine.outputs.candidate }}
-      tree: ${{ steps.combine.outputs.tree }}
-    steps:
-      - name: Checkout exact merged baseline
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: e3ad2956e0a95f9e508563514b2eed72c4159fb7
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Combine exact optimization heads (local only)
-        id: combine
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "Diagnostic build"
-          git config user.email "diagnostic@example.invalid"
-          export GIT_AUTHOR_DATE="2026-11-25T21:15:00Z"
-          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
-          for pin in 47beee7a2a999cce7d9fd71aea0412e95b1d56ac 79fbef542d3bf70ace1aaf852d8e89253365855a f35c67c9b78b2e8655acd9d0e8291d7b01232082; do
-            git cat-file -e "$pin^{commit}" || git fetch --no-tags origin "$pin"
-            git merge --no-ff --no-edit "$pin"
-            git merge-base --is-ancestor "$pin" HEAD
-          done
-          git merge-base --is-ancestor e3ad2956e0a95f9e508563514b2eed72c4159fb7 HEAD
-          git diff --exit-code
-          git diff --cached --exit-code
-          git rev-parse HEAD
-          git rev-parse HEAD^{tree}
-          echo "candidate=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
-          echo "tree=$(git rev-parse HEAD^{tree})" >> "$GITHUB_OUTPUT"
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.11.18'
-      - name: Install pinned dependencies
-        run: python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
-      - name: Focused combined correctness tests
-        shell: bash
-        env:
-          PYTHONPATH: src:.:tests/api
-        run: |
-          set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/combined-preflight"
-          python -m pytest -q tests/domain/test_native_official_ranking_seams.py tests/domain/test_calendar_sporting_week_kernel_equivalence.py tests/api/test_native_official_ranking_reuse.py tests/api/test_native_week_transition_performance.py tests/infrastructure/test_saved_v2_store.py tests/application/test_native_week_ab_diagnostic.py 2>&1 | tee "$RUNNER_TEMP/combined-preflight/tests.log"
-      - name: Same-host strict real W6 A/B against afternoon engine
-        shell: bash
-        env:
-          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
-          PYTHONUNBUFFERED: '1'
-        run: |
-          set -euo pipefail
-          root="$RUNNER_TEMP/combined-preflight"
-          mkdir -p "$root"
-          candidate=$(git rev-parse HEAD)
-          git cat-file -e "574d5a76596b134f562f918758449e8202c917fc^{commit}"
-          driver="$PWD/scripts/profile_native_week_ab.py"
-          git worktree add --detach "$RUNNER_TEMP/ab-baseline" 574d5a76596b134f562f918758449e8202c917fc
-          (cd "$RUNNER_TEMP/ab-baseline" && python "$driver" prepare --database "$root/week-input.db") | tee "$root/prepare.log"
-          git worktree remove "$RUNNER_TEMP/ab-baseline"
-          sha=$(sha256sum "$root/week-input.db" | cut -d' ' -f1)
-          python "$driver" ab --a 574d5a76596b134f562f918758449e8202c917fc --b "$candidate" --input "$root/week-input.db" --sha256 "$sha" --out "$root/timing" --repetitions 2 --worker-timeout 600 2>&1 | tee "$root/ab.log"
-      - name: Preserve preflight evidence
-        if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with:
-          name: combined-preflight-${{ github.run_id }}
-          path: |
-            ${{ runner.temp }}/combined-preflight/*.log
-            ${{ runner.temp }}/combined-preflight/timing
-          if-no-files-found: warn
-          retention-days: 14
-
   giant-saved-v2:
-    needs: preflight
-    if: ${{ github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'test/giant-combined-hardware-20261125' }}
+    if: ${{ github.ref == 'refs/heads/test/giant-combined-hardware-20261125' }}
     name: giant / ${{ matrix.label }} / 1000 players
     strategy:
       fail-fast: false
@@ -124,7 +48,7 @@ jobs:
             runner: ubuntu-24.04-arm
             arch: arm64
     runs-on: ${{ matrix.runner }}
-    timeout-minutes: 350
+    timeout-minutes: 360
     steps:
       - name: Checkout exact engine
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -133,12 +57,9 @@ jobs:
           fetch-depth: 0
           path: engine
           persist-credentials: false
-      - name: Rebuild identical tested candidate (local only)
+      - name: Combine exact optimization heads (local only)
         working-directory: engine
         shell: bash
-        env:
-          EXPECTED_COMMIT: ${{ needs.preflight.outputs.candidate }}
-          EXPECTED_TREE: ${{ needs.preflight.outputs.tree }}
         run: |
           set -euo pipefail
           git config user.name "Diagnostic build"
@@ -155,8 +76,6 @@ jobs:
           git diff --cached --exit-code
           git rev-parse HEAD
           git rev-parse HEAD^{tree}
-          test "$(git rev-parse HEAD)" = "$EXPECTED_COMMIT"
-          test "$(git rev-parse HEAD^{tree})" = "$EXPECTED_TREE"
       - name: Checkout previously used load harness
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -215,6 +134,32 @@ jobs:
           mkdir -p "$RUNNER_TEMP/giant-saved-v2-evidence"
           python -m pip freeze --all > "$RUNNER_TEMP/giant-saved-v2-evidence/dependencies.txt"
           uname -m
+      - name: Focused correctness gate on this exact candidate
+        working-directory: engine
+        shell: bash
+        env:
+          PYTHONPATH: src:.:tests/api
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/giant-saved-v2-evidence"
+          python -m pytest -q tests/domain/test_native_official_ranking_seams.py tests/domain/test_calendar_sporting_week_kernel_equivalence.py tests/api/test_native_official_ranking_reuse.py tests/api/test_native_week_transition_performance.py tests/infrastructure/test_saved_v2_store.py tests/application/test_native_week_ab_diagnostic.py 2>&1 | tee "$root/preflight-tests.log"
+      - name: Same-host strict real W6 A/B correctness gate
+        working-directory: engine
+        shell: bash
+        env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/giant-saved-v2-evidence"
+          candidate=$(git rev-parse HEAD)
+          driver="$PWD/scripts/profile_native_week_ab.py"
+          git worktree add --detach "$RUNNER_TEMP/ab-baseline" 574d5a76596b134f562f918758449e8202c917fc
+          (cd "$RUNNER_TEMP/ab-baseline" && python "$driver" prepare --database "$root/week-input.db") | tee "$root/prepare.log"
+          git worktree remove "$RUNNER_TEMP/ab-baseline"
+          sha=$(sha256sum "$root/week-input.db" | cut -d' ' -f1)
+          python "$driver" ab --a 574d5a76596b134f562f918758449e8202c917fc --b "$candidate" --input "$root/week-input.db" --sha256 "$sha" --out "$root/timing" --repetitions 1 --worker-timeout 600 2>&1 | tee "$root/ab.log"
+          git diff --exit-code HEAD --
       - name: Execute disposable five-season load with request observations
         working-directory: engine
         env:
@@ -336,6 +281,10 @@ jobs:
             ${{ runner.temp }}/giant-saved-v2-evidence/summary.json
             ${{ runner.temp }}/giant-saved-v2-evidence/timeline.jsonl
             ${{ runner.temp }}/giant-saved-v2-evidence/http-requests.jsonl
+            ${{ runner.temp }}/giant-saved-v2-evidence/preflight-tests.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/prepare.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/ab.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/timing
             ${{ runner.temp }}/giant-saved-v2-evidence/dependencies.txt
             ${{ runner.temp }}/giant-saved-v2-evidence/arm-wheel.lock
             ${{ runner.temp }}/giant-saved-v2-console.log

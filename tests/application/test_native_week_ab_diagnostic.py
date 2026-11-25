@@ -2,13 +2,19 @@
 import copy
 import json
 import sqlite3
+import sys
+from types import SimpleNamespace
 
 import pytest
 
+from scripts import profile_native_week_ab as driver
 from scripts.profile_native_week_ab import (
     PLANS, SCHEMA, SEED, comparable, compare, copy_fixture, digest,
     expected_calls, file_sha, summarize_trials, trial_order, record_progress, summarize_cpu_samples,
 )
+
+
+pytestmark = pytest.mark.pr_critical  # Pure, short contract checks; no real benchmark in Fast CI.
 
 
 def report(mode="normal", commit="a" * 40):
@@ -239,7 +245,12 @@ def test_fixture_copy_rejects_dangling_symlink(tmp_path):
     source, target = tmp_path / "source.db", tmp_path / "copy.db"
     source.write_bytes(b"immutable")
     missing = tmp_path / "missing.db"
-    target.symlink_to(missing)
+    try:
+        target.symlink_to(missing)
+    except OSError as exc:
+        if sys.platform == "win32" and getattr(exc, "winerror", None) == 1314:
+            pytest.skip("Windows account lacks symbolic link privilege")
+        raise
     with pytest.raises(FileExistsError):
         copy_fixture(source, target, file_sha(source))
     assert not missing.exists()
@@ -262,3 +273,115 @@ def test_sampled_wal_peak_not_hidden_by_checkpoint():
     assert result["b"]["wal_bytes"] == 0
     assert result["b"]["max_sampled_wal_bytes"] == 100000
     assert result["delta_b_minus_a"]["max_sampled_wal_bytes"] == 99988
+
+
+def windows_report(mode="normal", commit="a" * 40):
+    item = report(mode, commit)
+    item["metadata"].update(platform="Windows-11", cpu_affinity_count=None,
+                            hardware={"cpu_model": "fixture", "memory_metric": "Windows working set"})
+    for row in item["calls"]:
+        row.update(read_syscall_bytes=None, storage_read_bytes=None)
+    return item
+
+
+def test_windows_unavailable_metrics_are_not_zero_in_comparison_or_aggregate():
+    a, b = windows_report(), windows_report(commit="b" * 40)
+    result = compare(a, b)
+    assert result["verdict"] == "equal"
+    for key in driver.PHASE_COUNTERS:
+        for group in ("a", "b", "delta_b_minus_a"):
+            assert result[group][key] is None
+    assert result["a"]["peak_rss_kib"] == 123
+    assert result["a"]["http_calls"] == 16
+    trial = {label + "-" + mode: windows_report(mode, commit)
+             for label, commit in (("A", "a" * 40), ("B", "b" * 40))
+             for mode in ("normal", "retry")}
+    summary = summarize_trials([trial, copy.deepcopy(trial)])
+    assert summary["verdict"] == "equal"
+    for case in summary["aggregate"].values():
+        for group in ("a", "b", "delta_b_minus_a"):
+            for key in driver.PHASE_COUNTERS:
+                assert case[group][key] is None
+    assert summary["aggregate"]["normal"]["a"]["http_calls"]["median"] == 16
+
+
+@pytest.mark.parametrize("change", [
+    lambda b: b["calls"][0].update(read_syscall_bytes=0),
+    lambda b: b["calls"][0].pop("storage_read_bytes"),
+    lambda b: b["metadata"].update(cpu_affinity_count=4),
+    lambda b: b.update(profile_cpu=True),
+    lambda b: b["calls"][0].update(current_rss_kib=None),
+    lambda b: b["calls"][0].update(peak_rss_kib=None),
+])
+def test_windows_rejects_missing_required_or_fabricated_unavailable_metrics(change):
+    a, b = windows_report(), windows_report()
+    change(b)
+    result = compare(a, b)
+    assert result["verdict"] == "not_comparable"
+    assert "delta_b_minus_a" not in result
+
+
+def test_linux_null_io_is_not_comparable_and_mixed_platforms_are_rejected():
+    a, b = report(), report()
+    b["calls"][0]["read_syscall_bytes"] = None
+    assert compare(a, b)["verdict"] == "not_comparable"
+    assert compare(a, windows_report())["verdict"] == "not_comparable"
+
+
+def test_windows_does_not_probe_linux_and_rejects_profile_before_start(monkeypatch):
+    def forbidden(*args, **kwargs):
+        raise AssertionError("Linux probe called on Windows")
+
+    with monkeypatch.context() as patch:
+        patch.setattr(driver.sys, "platform", "win32")
+        patch.setattr(driver.Path, "read_text", forbidden)
+        patch.setattr(driver.os, "sched_getaffinity", forbidden, raising=False)
+        driver.require_measurement_platform()
+        assert driver.cpu_affinity_count() is None
+        assert driver.io_delta(driver.process_io(), driver.process_io()) == {
+            "read_syscall_bytes": None, "storage_read_bytes": None}
+        with pytest.raises(ValueError, match="--profile-cpu requires"):
+            driver.require_measurement_platform(True)
+
+
+def test_linux_io_delta_and_profile_stay_available(monkeypatch):
+    with monkeypatch.context() as patch:
+        patch.setattr(driver.sys, "platform", "linux")
+        patch.setattr(driver.Path, "read_text", lambda self: "rchar: 120\\nread_bytes: 64")
+        patch.setattr(driver.os, "sched_getaffinity", lambda pid: {0, 1}, raising=False)
+        driver.require_measurement_platform(True)
+        assert driver.cpu_affinity_count() == 2
+        assert driver.io_delta({"read_syscall_bytes": 100, "storage_read_bytes": 0},
+                               driver.process_io()) == {
+            "read_syscall_bytes": 20, "storage_read_bytes": 64}
+
+
+def test_measurement_server_disposes_pool_only_after_server_exit():
+    calls = []
+    engine = SimpleNamespace(dispose=lambda: calls.append("dispose"))
+    runtime = SimpleNamespace(repository=SimpleNamespace(_engine=engine))
+
+    class Server:
+        thread = SimpleNamespace(is_alive=lambda: "exit" not in calls)
+        app = SimpleNamespace(state=SimpleNamespace(runtime=runtime))
+
+        def __enter__(self):
+            calls.append("enter")
+            return self
+
+        def __exit__(self, *args):
+            calls.append("exit")
+
+    server = Server()
+    with driver.measurement_server(server) as running:
+        assert running is server
+        assert calls == ["enter"]
+    assert calls == ["enter", "exit", "dispose"]
+
+
+def test_real_process_memory_has_current_and_peak():
+    if not (sys.platform.startswith("linux") or sys.platform == "win32"):
+        pytest.skip("Native week driver supports Linux and Windows")
+    measured = driver.process_measurement.memory_kib()
+    assert 0 < measured["VmRSS"] <= measured["VmHWM"]
+    assert driver.process_measurement.peak_rss_kib() >= measured["VmHWM"]

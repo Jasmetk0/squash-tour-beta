@@ -654,3 +654,26 @@ def test_second_pass_bordeaux_through_toulouse_keeps_observed_labels_separate(ba
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 63
+
+
+def test_second_pass_berlin_through_sao_paulo_no_inferred_entry_policy(batch):
+    reviewed = batch["occurrences"][63:69]
+    assert [r["series_id"] for r in reviewed] == [
+        "berlin_1991", "tel_aviv_1996", "tokyo_indoor_1995",
+        "montpellier", "vienna", "sao_paulo_1993"]
+    b, ta, tok, l, v, sp = [r["historical_evidence"] for r in reviewed]
+    assert b["itf_event_window_evidence"]["prize_money_usd"] == 260000
+    assert b["reported_financial_commitment_usd"] is None
+    for e, q, wc in ((ta, 4, 3), (tok, 6, 4), (l, 4, 3), (v, 4, 3)):
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+    assert ta["observed_lucky_losers"] == l["observed_lucky_losers"] == 1
+    assert (tok["main_entrants"], tok["main_bracket_slots"], tok["main_byes"], tok["main_seeds"]) == (48, 64, 16, 16)
+    assert tok["bye_seed_ranks"] == list(range(1, 17))
+    assert v["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [5]
+    assert sp["main_entry_label_partial_evidence"]["observed_lucky_loser_seed_rank"] == 7
+    assert sp["reported_main_qualifiers"] is sp["reported_main_wild_cards"] is None
+    for row in reviewed:
+        e = row["historical_evidence"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 69

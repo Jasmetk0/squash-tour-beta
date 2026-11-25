@@ -43,8 +43,8 @@ Každá kontrolovaná položka musí mít v ročníkovém přehledu stabilní Se
 Na každé dávce použij stávající verze Category/Series/Calendar/Setup a audit nástrojů. Při změně publikované verze vydej novou verzi podle pravidel adaptéru a zachovej staré uložené payloady a fingerprinty. Ověř duplicitní identitu, přesnou vazbu ročníku a profilů, odmítnutí posunutých fází a stabilitu po restartu z aktuálního skutečně uloženého Runu. Přidej cílené testy a spusť relevantní existující kontroly, například:
 
 ```bash
-python scripts/audit_atp_calendar_full_roster.py --check
-python scripts/audit_atp_earth_week_mapping_v1.py --check
+PYTHONPATH=src python -m scripts.audit_atp_calendar_full_roster --check
+PYTHONPATH=src python -m scripts.audit_atp_earth_week_mapping_v1 --check
 ```
 
 V popisu Draftu uveď rozmezí zpracovaných ročníků a výskytů, počty podle stavu, odkazy, přesný head, skutečně vykonané testy a první otevřenou položku pro další chat. Předání má fungovat i po restartu chatu. Běžná kontrola stavu má pokračovat prací na dalším otevřeném výskytu.

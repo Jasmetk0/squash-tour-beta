@@ -1,0 +1,31 @@
+name: ATP American draw evidence (temporary)
+on:
+  pull_request:
+    branches: [chatgpt/atp-2025-w52-profiles]
+    paths: ['.github/workflows/atp-american-evidence-temp.yml']
+permissions:
+  contents: read
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - shell: bash
+        run: |
+          set -euo pipefail
+          command -v pdftotext
+          cd "$RUNNER_TEMP"
+          for tournament in 2024/499 2025/499 2025/506 2025/8996; do
+            for draw in mds qs; do
+              url="https://www.protennislive.com/posting/$tournament/$draw.pdf"
+              file="${tournament//\//-}-$draw.pdf"
+              echo "::group::$url"
+              if curl -fsSL --connect-timeout 8 --max-time 20 "$url" -o "$file" && head -c 5 "$file" | grep -q '%PDF-' && pdftotext -layout "$file" "$file.txt"; then
+                sha256sum "$file"
+                cat "$file.txt"
+              else
+                echo "SOURCE_UNAVAILABLE $url"
+              fi
+              echo "::endgroup::"
+            done
+          done

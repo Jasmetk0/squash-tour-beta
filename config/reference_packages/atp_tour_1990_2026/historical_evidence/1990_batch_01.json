@@ -33,7 +33,7 @@
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 58,
+    "reported_seed_count_rows": 59,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_q_spot_count_rows": 30,
-    "reported_wc_count_rows": 30,
+    "reported_q_spot_count_rows": 38,
+    "reported_wc_count_rows": 38,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 13,
+    "second_pass_review_attempted_rows": 27,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,7 +57,7 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "The 13-row prefix records attempted second-pass research, not obtained qualifying draws. The external results mirror was checked for the entire year; individual primary link access was attempted for selected early events only."
+    "second_pass_review_note": "27-row chronological prefix includes new source access, observed Main entry labels or explicitly retained previous evidence. No actual Q sheet obtained; not 27 new primary draw verifications."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -1686,13 +1686,16 @@
         "event_source": "https://www.dewiki.de/Lexikon/Newsweek_Champions_Cup_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
-          "https://www.dewiki.de/Lexikon/Newsweek_Champions_Cup_1990"
+          "https://www.dewiki.de/Lexikon/Newsweek_Champions_Cup_1990",
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
+          "https://www.itftennis.com/en/tournament/indian-wells/usa/1990/m-css-usa-01a-1990/draws-and-results/",
+          "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 7,
+        "wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -1718,6 +1721,40 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "observed_lucky_losers": 1,
+        "observed_seeded_wild_card": true,
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "All four first-entry sections inspected; 7 Q, 5 WC including seed 2, 1 LL occupying a bye position. Nominal seed count 16 retained; withdrawal documented in contemporary report.",
+          "observed_lucky_losers": 1,
+          "observed_seeded_wild_cards": 1
+        },
+        "observed_lucky_loser_in_bye_position": true,
+        "contemporary_main_opening_date_evidence": {
+          "date": "1990-03-05",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
+          "published_date": "1990-03-06",
+          "scope": "Main opening day confirmed; does not establish Q dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.itftennis.com/en/tournament/indian-wells/usa/1990/m-css-usa-01a-1990/draws-and-results/",
+            "outcome": "event_metadata_available_drawsheets_not_obtained",
+            "alternative_url": "https://matchstat.com/tennis/tournaments/m/Indian%20Wells/1990/",
+            "alternative_outcome": "generic_qualifying_heading_not_evidence_of_1990_Q_rounds"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -1808,6 +1845,18 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.tennistemple.com/competitions/marrakech/1990/draw",
+            "outcome": "prior_Main_draw_entry_labels_retained_no_new_Q_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -1874,13 +1923,14 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles",
           "https://www.world.tennis/en/tournament/lipton-key-biscayne/usa/1990/m-css-usa-02a-1990/draws-and-results/",
-          "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships"
+          "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships",
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 12,
+        "wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1200000,
@@ -1908,6 +1958,68 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles",
+          "observed_qualifiers": 12,
+          "observed_wild_cards": 2,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Eight sections; 12 Q and 2 WC labels, all 32 seed slots have a bye. No claim that unmarked entrants are all direct acceptances."
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "itf_event_window_evidence": {
+          "source_url": "https://www.world.tennis/en/tournament/lipton-key-biscayne/usa/1990/m-css-usa-02a-1990/draws-and-results/",
+          "start_date": "1990-03-16",
+          "end_date": "1990-03-25",
+          "prize_money_usd": 1200000,
+          "scope": "Event window and purse, not Q dates or full commitment."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.world.tennis/en/tournament/lipton-key-biscayne/usa/1990/m-css-usa-02a-1990/draws-and-results/",
+            "outcome": "event_metadata_available_no_qualifying_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -1961,13 +2073,14 @@
         "event_source": "https://de.wikipedia.org/wiki/Estoril_Open_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Estoril_Open_%E2%80%93_Men%27s_singles",
-          "https://de.wikipedia.org/wiki/Estoril_Open_1990"
+          "https://de.wikipedia.org/wiki/Estoril_Open_1990",
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Estoril_Open_%E2%80%93_Men%27s_singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -1999,6 +2112,29 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "observed_seeded_wild_card": true,
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Estoril_Open_%E2%80%93_Men%27s_singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 2,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Four Q and two observed WC labels including seed 1; no claim that this is the guaranteed allocation.",
+          "observed_seeded_wild_cards": 1
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.tennistemple.com/competitions/estoril-atp/1990/draw",
+            "outcome": "Main_draw_only"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2052,13 +2188,14 @@
         "event_source": "https://de.wikipedia.org/wiki/Prudential-Bache_Securities_Classic_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles",
-          "https://de.wikipedia.org/wiki/Prudential-Bache_Securities_Classic_1990"
+          "https://de.wikipedia.org/wiki/Prudential-Bache_Securities_Classic_1990",
+          "https://wiki.seekkey.tech/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2089,6 +2226,27 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://wiki.seekkey.tech/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Four Q and three WC in two halves of Main draw."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://wiki.seekkey.tech/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles",
+            "outcome": "secondary_Main_draw_only"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2143,13 +2301,14 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Banespa_Open_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/Banespa_Open_1990",
-          "https://en.wikipedia.org/wiki/1990_Banespa_Open"
+          "https://en.wikipedia.org/wiki/1990_Banespa_Open",
+          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2181,6 +2340,27 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Four Q and three WC in two halves of Main draw."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
+            "outcome": "secondary_Main_draw_only"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2236,13 +2416,14 @@
           "https://en.tennistemple.com/competitions/barcelona/1990/draw",
           "https://de.wikipedia.org/wiki/Torneo_God%C3%B3_1990",
           "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
-          "https://en.wikipedia.org/wiki/1990_Torneo_God%C3%B3"
+          "https://en.wikipedia.org/wiki/1990_Torneo_God%C3%B3",
+          "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 7,
+        "wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 375000,
@@ -2274,6 +2455,61 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.tennistemple.com/competitions/barcelona/1990/draw",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "48 first-round entrants plus 8 bye recipients; seven Q, five WC, top eight seed positions have BYEs. Organizer archive lists seed numbers 1–7 and 9–16, omitting 8; preserve distinction from nominal count."
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "organiser_event_window_evidence": {
+          "source_url": "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
+          "start_date": "1990-04-07",
+          "end_date": "1990-04-15",
+          "scope": "Organizer's overall edition window starts two days before canonical main window; not explicit qualification dates.",
+          "listed_seed_numbers": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "missing_seed_number": 8
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
+            "outcome": "official_edition_dates_and_seed_list_not_explicit_Q_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2359,6 +2595,18 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Suntory_Japan_Open_Tennis_Championships_%E2%80%93_Men%27s_singles",
+            "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2467,6 +2715,18 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
+            "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2543,8 +2803,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 140000,
@@ -2566,6 +2826,27 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Four Q and three WC; draw transcription has duplicate seed number 1. Nominal seeds kept, actual assignment requires primary sheet."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
+            "outcome": "secondary_Main_draw_only"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2665,6 +2946,18 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
+            "outcome": "event_summary_only_no_full_Q_or_WC_count"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2767,6 +3060,18 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+            "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2865,6 +3170,18 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
+            "outcome": "redirect_unavailable_no_qualifying_sheet"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -2930,19 +3247,20 @@
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
-        "main_seeds": null,
+        "main_seeds": 8,
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_BMW_Open_%E2%80%93_Singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_BMW_Open",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_BMW_Open_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_BMW_Open"
+          "https://en.wikipedia.org/wiki/1990_BMW_Open",
+          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2973,6 +3291,29 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "observed_seeded_wild_card": true,
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Distinct entrant labels at initial Main entry; no inferred Q capacity, schedule or reserved policy.",
+          "note": "Four Q, three WC including seed 3; draw gives eight nominal seeds.",
+          "observed_seeded_wild_cards": 1
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles",
+            "outcome": "secondary_Main_draw_only"
+          },
+          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
         }
       }
     },
@@ -8223,5 +8564,5 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_indian_wells"
+  "next_second_pass_review_occurrence": "atp_1990_singapore_march_1992"
 }

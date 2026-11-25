@@ -50,7 +50,14 @@
     "second_pass_review_attempted_rows": 13,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
-    "verified_qualification_date_rows": 0
+    "verified_qualification_date_rows": 0,
+    "point_candidate_comparison_counts": {
+      "exact_reported_band_and_bracket_size_candidate": 50,
+      "no_exact_financial_band_row": 13,
+      "missing_reported_financial_commitment": 11,
+      "finals_separate_group_points_candidate": 1
+    },
+    "second_pass_review_note": "The 13-row prefix records attempted second-pass research, not obtained qualifying draws. The external results mirror was checked for the entire year; individual primary link access was attempted for selected early events only."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -286,7 +293,44 @@
         "status": "secondary_candidate_not_verified_for_occurrence"
       }
     ],
-    "source_tier_mapping_caution": "Secondary ranking table groups rows under CHAMP SERIES without distinguishing ordinary Championship Series and Championship Series Single Week. Do not map either automatically or infer prize subclass thresholds."
+    "source_tier_mapping_caution": "Secondary ranking table groups rows under CHAMP SERIES without distinguishing ordinary Championship Series and Championship Series Single Week. Do not map either automatically or infer prize subclass thresholds.",
+    "candidate_comparison_method": {
+      "source_url": "https://openerarankings.com/RankingRules1990",
+      "iteration": 1990,
+      "world_series_reported_band_labels_usd": [
+        150000,
+        250000,
+        375000,
+        500000,
+        625000
+      ],
+      "champ_series_reported_band_labels_usd": [
+        500000,
+        750000,
+        1000000,
+        1250000,
+        1500000,
+        1750000,
+        2000000
+      ],
+      "champ_series_128_reported_band_labels_usd": [
+        1000000,
+        1250000,
+        1500000,
+        1750000,
+        2000000
+      ],
+      "world_series_md_labels": [
+        32,
+        64
+      ],
+      "champ_series_md_labels": [
+        32,
+        64,
+        128
+      ],
+      "notes": "Compare exact reported commitment against the published secondary row labels and working bracket positions. Do not infer that commitment defines the official prize class or that MD denotes bracket capacity. No nearest-band interpolation, no certified points or Q-loss defaults."
+    }
   },
   "finals_alternate_window": {
     "alternate_date_concept": "atp_finals_heritage_reported_competition_interval",
@@ -393,6 +437,18 @@
             "status": "http_403",
             "note": "Do not confuse 7308 current archive path with historical 339 index used by third-party results."
           }
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -485,6 +541,18 @@
             "url": "https://www.itftennis.com/en/tournament/wellington/nzl/1990/m-wsf-nzl-01a-1990/draws-and-results/",
             "status": "event_page_accessible_qualifying_sheet_not_obtained"
           }
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -572,6 +640,18 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -671,6 +751,16 @@
             "url": "https://www.itftennis.com/mens/tournaments/printabledrawsheet.asp?event=1010011281&tournament=1010005083",
             "status": "redirect_unavailable"
           }
+        },
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 175000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -757,6 +847,18 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -843,6 +945,18 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -933,6 +1047,16 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 600000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -1020,6 +1144,16 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 600000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -1099,6 +1233,16 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1200000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -1177,6 +1321,20 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
         }
       }
     },
@@ -1264,6 +1422,19 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories."
+          ]
         }
       }
     },
@@ -1343,6 +1514,19 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
         }
       }
     },
@@ -1437,6 +1621,18 @@
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
           "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -1508,7 +1704,21 @@
           "Confirm original qualifying draw, dates and feeder structure; no assumed Q size or rounds.",
           "Verify historical financial class, points and rank bonus policy against primary evidence.",
           "Resolve historical profile contract and shared catalog coordination before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -1586,6 +1796,18 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -1672,7 +1894,21 @@
           "Resolve historical profile contract and shared catalog coordination before publication."
         ],
         "alternate_annual_index_date": "1990-03-12",
-        "main_round_schedule_status": "not_verified_two_week_source_window"
+        "main_round_schedule_status": "not_verified_two_week_source_window",
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1500000,
+          "working_bracket_positions": 128,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -1751,6 +1987,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -1829,6 +2077,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -1909,6 +2169,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -1988,6 +2260,20 @@
           "event_specific_entrants": 56,
           "english_event_summary_draw": 64,
           "interpretation": "56 entrants plus 8 BYEs in 64 positions; source disagreement retained"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
         }
       }
     },
@@ -2059,7 +2345,21 @@
           "Confirm original qualifying draw, dates and feeder structure; no assumed Q size or rounds.",
           "Verify historical financial class, points and rank bonus policy against primary evidence.",
           "Resolve historical profile contract and shared catalog coordination before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -2155,6 +2455,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -2244,7 +2556,17 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 165000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -2333,7 +2655,17 @@
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
         ],
-        "observed_wild_cards_minimum": 1
+        "observed_wild_cards_minimum": 1,
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 210000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -2421,7 +2753,21 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -2509,7 +2855,17 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 310000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -2605,6 +2961,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -2700,6 +3068,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -2789,7 +3169,17 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 230000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -2879,7 +3269,21 @@
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
         ],
-        "alternate_event_end_date": "1990-05-14"
+        "alternate_event_end_date": "1990-05-14",
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -2967,7 +3371,17 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1280000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -3055,7 +3469,17 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 175000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -3151,6 +3575,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3248,6 +3684,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3337,7 +3785,20 @@
           "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
           "Verify historic financial class and complete awards from primary source.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -3434,6 +3895,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3530,6 +4003,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3631,6 +4116,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3727,6 +4224,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -3816,7 +4325,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 300000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -3904,7 +4423,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 175000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4012,7 +4541,21 @@
           14,
           15,
           16
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -4100,7 +4643,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "no_exact_financial_band_row",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 450000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4189,7 +4742,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4277,7 +4840,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4367,7 +4940,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4463,6 +5046,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -4558,6 +5153,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -4656,7 +5263,17 @@
           6,
           7,
           8
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4745,7 +5362,17 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -4846,7 +5473,21 @@
           6,
           7,
           8
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -4934,7 +5575,21 @@
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
           "Verify historical points and source profile compatibility before publication."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -5030,6 +5685,18 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -5147,6 +5814,19 @@
           "observed_wild_cards": 3,
           "observed_lucky_losers": 1,
           "reviewed_on": "2026-11-25"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
         }
       }
     },
@@ -5242,7 +5922,20 @@
           2,
           3,
           4
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -5336,6 +6029,16 @@
           "annual_summary_entrants": 28,
           "event_specific_entrants": 32,
           "interpretation": "Use event-specific draw candidate; preserve original annual claim; not a published sporting profile"
+        },
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -5437,6 +6140,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -5537,6 +6252,18 @@
           "band_usd": 500000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -5643,6 +6370,18 @@
           "annual_summary": "indoor hard",
           "event_specific": "outdoor hard",
           "status": "event-specific and contemporary evidence favours outdoor"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -5736,6 +6475,16 @@
           "annual_summary_entrants": 28,
           "event_specific_entrants": 32,
           "interpretation": "Use event-specific draw candidate; preserve original annual claim; not a published sporting profile"
+        },
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -5838,6 +6587,18 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -5927,7 +6688,21 @@
           "Confirm original Q draw, dates and feeder structure.",
           "Verify exact historical awards and financial band.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -6020,6 +6795,16 @@
           "annual_summary_entrants": 28,
           "event_specific_entrants": 32,
           "interpretation": "Event-specific candidate supersedes annual number for working field distribution; preserve disagreement; not certified"
+        },
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -6115,6 +6900,16 @@
           "annual_summary_entrants": 28,
           "event_specific_entrants": 32,
           "interpretation": "Event-specific candidate supersedes annual number for working field distribution; preserve disagreement; not certified"
+        },
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
         }
       }
     },
@@ -6221,6 +7016,18 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -6310,7 +7117,21 @@
           "Confirm original Q draw, dates and feeder structure.",
           "Verify exact historical awards and financial band.",
           "Resolve profile representation and shared catalog coordination."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 1000000,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": "CHAMP SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
+            "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
+            "Active entrants differ from bracket positions; exact rule for row selection unverified."
+          ]
+        }
       }
     },
     {
@@ -6411,6 +7232,18 @@
           "band_usd": 500000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -6511,6 +7344,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -6616,6 +7461,18 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 150000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -6725,7 +7582,17 @@
           15,
           16
         ],
-        "alternate_event_end_date": "1990-10-29"
+        "alternate_event_end_date": "1990-10-29",
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -6832,7 +7699,17 @@
           14,
           15,
           16
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "missing_reported_financial_commitment",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": 64,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": []
+        }
       }
     },
     {
@@ -6928,6 +7805,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -7023,6 +7912,18 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 250000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
         }
       }
     },
@@ -7122,7 +8023,19 @@
           "event_specific_entrants": 32,
           "interpretation": "Event-specific candidate supersedes annual number for working field distribution; preserve disagreement; not certified"
         },
-        "licence_continuity_status": "replacement_announcement_not_proof_of_legal_continuity"
+        "licence_continuity_status": "replacement_announcement_not_proof_of_legal_continuity",
+        "point_candidate_comparison": {
+          "status": "exact_reported_band_and_bracket_size_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": 500000,
+          "working_bracket_positions": 32,
+          "source_tier_candidate": "WORLD SERIES",
+          "source_rule_certified": false,
+          "notes": [
+            "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
+          ]
+        }
       }
     },
     {
@@ -7266,7 +8179,19 @@
         "remaining": [
           "Verify exact 1990 Finals point awards and historical group/entry policies.",
           "Coordinate new versioned Saved sporting profile; do not copy 2025 points."
-        ]
+        ],
+        "point_candidate_comparison": {
+          "status": "finals_separate_group_points_candidate",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "rule_iteration": 1990,
+          "reported_financial_commitment_usd": null,
+          "working_bracket_positions": null,
+          "source_tier_candidate": null,
+          "source_rule_certified": false,
+          "notes": [
+            "Use group-format candidate, not knockout table."
+          ]
+        }
       }
     }
   ],

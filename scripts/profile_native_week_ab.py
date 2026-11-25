@@ -276,6 +276,10 @@ def physical(path):
 
 
 def copy_fixture(source, target, expected):
+    # Windows exclusive creation can follow a dangling symlink. Reject it
+    # explicitly before opening the destination; exists() alone misses it.
+    if target.is_symlink():
+        raise FileExistsError(f"Fixture destination is a symbolic link: {target}")
     require(source.is_file() and not target.exists(), "Need immutable source and fresh target")
     require(not sidecar(source, "-wal").exists() and not sidecar(source, "-shm").exists(),
             "Fixture must be a closed, checkpointed standalone SQLite backup")

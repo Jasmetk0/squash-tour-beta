@@ -23,18 +23,22 @@
       "atp_championship_single_week": 9,
       "atp_finals": 1
     },
-    "individual_detail_reviewed": 4,
-    "queued_for_individual_review": 71,
+    "individual_detail_reviewed": 13,
+    "queued_for_individual_review": 62,
     "published_sporting_profiles": 0,
     "plan_verified": 0,
-    "played_and_reopened": 0
+    "played_and_reopened": 0,
+    "reported_main_geometry_rows": 13,
+    "reported_qualification_size_rows": 8,
+    "candidate_point_row_links": 6
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
     "https://www.stevegtennis.com/tennis-calendar/atp/1990",
     "https://en.wikipedia.org/wiki/1990_ATP_Tour",
     "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
-    "https://www.openerarankings.com/RankingRules1990"
+    "https://www.openerarankings.com/RankingRules1990",
+    "https://de.wikipedia.org/wiki/ATP_Tour_1990"
   ],
   "historical_points_evidence": {
     "status": "secondary_reconstruction_not_authoritative_profile",
@@ -53,7 +57,82 @@
       "round_of_32": 1,
       "qualifier": 6
     },
-    "note": "Secondary table iteration 1 lists World Series 150K, not 125K. Do not silently map 125K advertised purses to that row. Sydney advertised 150K still needs verification of exact ATP prize class and full Q awards. Blank Q-loss cells are not verified zeros. ATP confirms ranking-based bonuses continued through 1999. The modern fixed-stage profile must not silently drop those bonuses. First-round points are not zero; BYE loss rules need verification."
+    "note": "The 1990 iteration is distinct from 1991 and 1992. Compare reported prize money and separately reported financial commitment; candidate bands are hypotheses, not established mapping. Exact 150K and 250K source rows recorded with blank Q-loss cells retained as unknown. No rounding 175K, 600K or 1.2M into a neighbouring band. ATP confirms ranking bonuses through 1999.",
+    "bye_loss_rule_secondary": "If first played Main match is lost after a bye, award first-round points (not the advanced round).",
+    "qualifier_award_additive_secondary": true,
+    "bonus_exception_secondary": "ATP World Championship (no opponent rank bonuses).",
+    "best_results_count_secondary": 14,
+    "bonus_bands_secondary": [
+      {
+        "from_rank": 1,
+        "to_rank": 1,
+        "points": 50
+      },
+      {
+        "from_rank": 2,
+        "to_rank": 5,
+        "points": 45
+      },
+      {
+        "from_rank": 6,
+        "to_rank": 10,
+        "points": 36
+      },
+      {
+        "from_rank": 11,
+        "to_rank": 20,
+        "points": 24
+      },
+      {
+        "from_rank": 21,
+        "to_rank": 30,
+        "points": 18
+      },
+      {
+        "from_rank": 31,
+        "to_rank": 50,
+        "points": 12
+      },
+      {
+        "from_rank": 51,
+        "to_rank": 75,
+        "points": 6
+      },
+      {
+        "from_rank": 76,
+        "to_rank": 100,
+        "points": 3
+      },
+      {
+        "from_rank": 101,
+        "to_rank": 150,
+        "points": 2
+      },
+      {
+        "from_rank": 151,
+        "to_rank": 200,
+        "points": 1
+      }
+    ],
+    "base_points_250k_32_candidate": {
+      "champion": 103,
+      "finalist": 78,
+      "semifinal": 52,
+      "quarterfinal": 26,
+      "round_of_16": 13,
+      "round_of_32": 1,
+      "qualifier": 6
+    },
+    "base_points_500k_32_candidate": {
+      "champion": 133,
+      "finalist": 100,
+      "semifinal": 67,
+      "quarterfinal": 34,
+      "round_of_16": 17,
+      "round_of_32": 1,
+      "qualifier": 8
+    },
+    "qualifying_loss_points": null
   },
   "finals_alternate_window": {
     "alternate_date_concept": "atp_finals_heritage_reported_competition_interval",
@@ -68,7 +147,7 @@
     "reconciliation": "different_official_date_window_concepts_preserved",
     "series_id": "atp_finals"
   },
-  "first_next_unreviewed_occurrence": "atp_1990_dallas",
+  "first_next_unreviewed_occurrence": "atp_1990_indian_wells",
   "occurrences": [
     {
       "queue_index": 1,
@@ -129,7 +208,17 @@
           "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
           "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
           "Resolve runtime representation before publishing a Saved sporting profile."
-        ]
+        ],
+        "reported_financial_commitment_usd": 150000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "main_bracket_slots": 32,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 150000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
       }
     },
     {
@@ -191,7 +280,17 @@
           "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
           "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
           "Resolve runtime representation before publishing a Saved sporting profile."
-        ]
+        ],
+        "reported_financial_commitment_usd": 150000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "main_bracket_slots": 32,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 150000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
       }
     },
     {
@@ -238,7 +337,7 @@
         "event_source": "https://newikis.com/en/1990_Benson_and_Hedges_Open",
         "qualifier_spots": 4,
         "wild_cards": 3,
-        "reported_prize_money": null,
+        "reported_prize_money": 125000,
         "category_label": "ATP World Series",
         "event_held": true,
         "main_draw_capacity": 32,
@@ -252,7 +351,17 @@
           "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
           "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
           "Resolve runtime representation before publishing a Saved sporting profile."
-        ]
+        ],
+        "reported_financial_commitment_usd": 150000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "main_bracket_slots": 32,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 150000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
       }
     },
     {
@@ -316,7 +425,10 @@
           "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
           "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
           "Resolve runtime representation before publishing a Saved sporting profile."
-        ]
+        ],
+        "reported_financial_commitment_usd": 175000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "main_bracket_slots": 32
       }
     },
     {
@@ -351,10 +463,51 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Volvo Tennis San Francisco",
+        "host_city": "San Francisco",
+        "country": "USA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Volvo_San_Francisco_%E2%80%93_Singles",
+        "event_source": "https://www.dewiki.de/Lexikon/Volvo_Tennis_San_Francisco_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Volvo_San_Francisco_%E2%80%93_Singles",
+          "https://www.dewiki.de/Lexikon/Volvo_Tennis_San_Francisco_1990",
+          "https://www.upi.com/Archives/1990/02/11/Agassi-wins-singles-final-in-San-Francisco-tournament/1393634712400/"
+        ],
+        "qualification_size_secondary": 32,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Historical city/name reconciled with the existing Series host history.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 6,
@@ -388,10 +541,51 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Chevrolet Classic",
+        "host_city": "Guarujá",
+        "country": "BRA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Chevrolet_Classic_%E2%80%93_Singles",
+        "event_source": "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Chevrolet_Classic_%E2%80%93_Singles",
+          "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990"
+        ],
+        "qualification_size_secondary": 32,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "One observed lucky loser, separate from four qualifiers; one nominal seed withdrew. No historical substitutions imported.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ],
+        "observed_lucky_losers": 1,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 150000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 7,
@@ -425,10 +619,44 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Stella Artois Italian Indoors",
+        "host_city": "Milan",
+        "country": "ITA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Stella_Artois_Indoor_%E2%80%93_Singles",
+        "event_source": "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Stella_Artois_Italian_Indoors_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Stella_Artois_Indoor_%E2%80%93_Singles",
+          "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Stella_Artois_Italian_Indoors_1990",
+          "https://www.itftennis.com/en/tournament/milan/ita/1990/m-wsf-ita-01a-1990/draws-and-results/"
+        ],
+        "qualification_size_secondary": 32,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 540000,
+        "reported_financial_commitment_usd": 600000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "The 1990 venue is Milan, not Sofia. Reported commitment 600k does not exactly match the 1990 table labels; do not round to a prize band.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 8,
@@ -462,10 +690,44 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Belgian Indoor Championships",
+        "host_city": "Brussels",
+        "country": "BEL",
+        "category_label": "ATP Championship Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships",
+          "https://www.itftennis.com/en/tournament/brussels/bel/1990/m-csd-bel-01a-1990/draws-and-results/"
+        ],
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 465000,
+        "reported_financial_commitment_usd": 600000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Use event-specific draw and ITF: German annual summary duplicates Toronto's title/result in its Brussels row; do not use that row as evidence of identity or results.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 9,
@@ -499,10 +761,44 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "SkyDome World Tennis Tournament",
+        "host_city": "Toronto",
+        "country": "CAN",
+        "category_label": "ATP Championship Series",
+        "event_held": true,
+        "main_draw_capacity": 56,
+        "main_bracket_slots": 64,
+        "main_seeds": 16,
+        "main_byes": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_SkyDome_World_Tennis_Tournament_%E2%80%93_Singles",
+        "event_source": "https://de.wikipedia.org/wiki/SkyDome_World_Tennis_Tournament_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_SkyDome_World_Tennis_Tournament_%E2%80%93_Singles",
+          "https://de.wikipedia.org/wiki/SkyDome_World_Tennis_Tournament_1990",
+          "https://www.itftennis.com/en/tournament/toronto-indoor/can/1990/m-csd-can-01a-1990/draws-and-results/"
+        ],
+        "qualification_size_secondary": 28,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 1005000,
+        "reported_financial_commitment_usd": 1200000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Only top 8 of 16 seeds have byes. 56 entrants occupy 64 bracket positions. Q28 is reported field, not a verified feeder graph.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 10,
@@ -536,10 +832,43 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Ebel U.S. Pro Indoor",
+        "host_city": "Philadelphia",
+        "country": "USA",
+        "category_label": "ATP Championship Series",
+        "event_held": true,
+        "main_draw_capacity": 48,
+        "main_bracket_slots": 64,
+        "main_seeds": 16,
+        "main_byes": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
+        "event_source": "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
+          "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990"
+        ],
+        "qualification_size_secondary": 24,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 825000,
+        "reported_financial_commitment_usd": 1000000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "48 entrants / 64 positions, all 16 seeds receive byes. Q24 is a reported field, not verified feeder graph.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 11,
@@ -573,10 +902,44 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Eurocard Classics",
+        "host_city": "Stuttgart",
+        "country": "FRG",
+        "category_label": "ATP Championship Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Eurocard_Classics_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Eurocard_Classics",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Eurocard_Classics_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_Eurocard_Classics",
+          "https://www.itftennis.com/en/tournament/stuttgart-indoor/ger/1990/m-csd-ger-01a-1990/draws-and-results/"
+        ],
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 825000,
+        "reported_financial_commitment_usd": 1000000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Distinct February indoor Series, not Stuttgart outdoor.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 12,
@@ -610,10 +973,44 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Volvo U.S. National Indoor",
+        "host_city": "Memphis",
+        "country": "USA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 48,
+        "main_bracket_slots": 64,
+        "main_seeds": 16,
+        "main_byes": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles",
+        "event_source": "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Volvo_U.S._National_Indoor_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles",
+          "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Volvo_U.S._National_Indoor_1990",
+          "https://www.itftennis.com/en/tournament/memphis/usa/1990/m-wsf-usa-02a-1990/draws-and-results/"
+        ],
+        "qualification_size_secondary": 24,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Memphis under continuing Series rio, not Rio de Janeiro. 48 entrants / 64 positions, all 16 seeds receive byes.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 13,
@@ -647,10 +1044,51 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "ABN AMRO World Tennis Tournament",
+        "host_city": "Rotterdam",
+        "country": "NLD",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_ABN_World_Tennis_Tournament_%E2%80%93_Singles",
+        "event_source": "https://de.wikipedia.org/wiki/ABN_AMRO_World_Tennis_Tournament_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_ABN_World_Tennis_Tournament_%E2%80%93_Singles",
+          "https://de.wikipedia.org/wiki/ABN_AMRO_World_Tennis_Tournament_1990",
+          "https://www.abnamro-open.nl/over-ons/historie/de-jaren-90/1990"
+        ],
+        "qualification_size_secondary": 32,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Historical city/name reconciled with the existing Series host history.",
+        "remaining": [
+          "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
+          "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
+          "Publish only after resolving representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 500000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 14,

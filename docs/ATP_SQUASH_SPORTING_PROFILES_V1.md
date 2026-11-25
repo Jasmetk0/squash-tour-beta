@@ -34,16 +34,17 @@ Both phases are calendar-projected from Saved source data; Admin proposes the
 round slots. The 43 nodes describe scheduled geometry, not executed matches.
 Native Ranked W52 execution remains outside this source-only change.
 
-### Next research queue (not imported profiles)
+### Additional ATP 500 profiles (same unreleased source v6 / Setup v7)
 
-| Event | Official schedule evidence | Remaining review |
-| --- | --- | --- |
-| Doha 2025 | [ATP schedule/points](https://www.atptour.com/en/news/doha-2025-history-draw-schedule), [Q draw](https://www.protennislive.com/posting/2025/451/qs.pdf) | Q 15–16 Feb; Q16/4, points 25/13/0; Main 17–22 Feb per canonical Calendar; obtain and inspect full Main PDF and hash both files. The schedule article contains a typo in the detailed Main end date. |
-| Dubai 2025 | [ATP schedule](https://www.atptour.com/en/news/dubai-2025-history-draw-schedule) | Q 22–23 Feb; obtain both original draw PDFs, exact capacities and hashes. |
-| Halle 2025 | [ATP schedule](https://www.atptour.com/en/news/halle-2025-atp-500-history-draw-schedule) | Q 14–15 Jun; obtain both original draw PDFs and hashes. |
-| Dubai 2024 | [ATP schedule](https://www.atptour.com/en/news/dubai-2024-history-draw-schedule), [Main draw](https://www.protennislive.com/posting/2024/495/mds.pdf) | Main 32/8 seeds/3 WC/4 Q; actual LL and SE recorded in historical draw; obtain Q PDF and verify nominal configuration without assuming substitution semantics. |
+| Event | Qualification | Main | Main/Q weeks (calendar year) | Source |
+| --- | --- | --- | --- | --- |
+| Doha 2025 | 15–16 Feb | 17–22 Feb | W08/W07 | [ATP](https://www.atptour.com/en/news/doha-2025-history-draw-schedule) |
+| Dubai 2025 | 22–23 Feb | 24 Feb–1 Mar | W09/W08 | [ATP](https://www.atptour.com/en/news/dubai-2025-history-draw-schedule) |
+| Halle 2025 | 14–15 Jun | 16–22 Jun | W25/W24 | [ATP](https://www.atptour.com/en/news/halle-2025-atp-500-history-draw-schedule) |
+| Dubai 2024 | 24–25 Feb | 26 Feb–2 Mar | W09/W08 | [ATP](https://www.atptour.com/en/news/dubai-2024-history-draw-schedule) |
+| Halle 2024 | 15–16 Jun | 17–23 Jun | W25/W24 | [ATP](https://www.atptour.com/en/news/halle-2024-atp-500-history-draw-schedule) |
 
-These are research notes only: none are added to the sporting package by this change. Source availability or a calendar match does not prove full sporting readiness.
+Each has a full Main32, 8 seeds, 3 Main WC, zero BYEs, Q16 in four sections of four, four Q winners and 43 planned matches. All four actual Q winners are present in each final Main draw. The additional historical LL, PR and SE designations are not imported, and do not create additional qualification-winner spots. This is the existing nominal Admin-selected squash geometry, not a reproduction of historical selection or replacement rules. The 2025 Doha schedule article has a typo in the detailed end-date line; the canonical archive and both PDF headers agree on 17–22 February. All five Main points are 500/330/200/100/50/0 and Q points 25/13/0. The ten original PDF SHA-256 values are stored in the profiles; [evidence run 45688533510](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45688533510) downloaded and extracted the original draw files. Doha 2024 remains outside the package: the Q PDF could not be downloaded, and its Main draw has BYEs. No sporting execution claim.
 
 ## Dallas Open 2025
 

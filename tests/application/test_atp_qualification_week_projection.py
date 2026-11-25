@@ -116,7 +116,7 @@ def test_dallas_source_v4_payloads_and_entity_fingerprints_are_unchanged(tmp_pat
     assert old.source_fingerprint != current.source_fingerprint
     old_by_id = {e.source_entity_id: e for e in old.entities}
     current_by_id = {e.source_entity_id: e for e in current.entities}
-    assert set(current_by_id) - set(old_by_id) == {"atp_2025_munich", "atp_2025_vienna", "atp_2024_atp_finals", "atp_2024_next_gen_atp_finals"}
+    assert set(current_by_id) - set(old_by_id) == {"atp_2025_munich", "atp_2025_vienna", "atp_2024_atp_finals", "atp_2024_next_gen_atp_finals", "atp_2025_doha", "atp_2025_dubai", "atp_2025_halle", "atp_2024_dubai", "atp_2024_halle"}
     for key, entity in old_by_id.items():
         assert current_by_id[key].payload == entity.payload
         assert current_by_id[key].fingerprint == entity.fingerprint
@@ -131,6 +131,7 @@ def test_source_v5_payloads_and_entity_fingerprints_remain_exact(tmp_path):
     current_by_id = {e.source_entity_id: e for e in current.entities}
     assert set(current_by_id) - {e.source_entity_id for e in old.entities} == {
         "atp_2024_atp_finals", "atp_2024_next_gen_atp_finals",
+        "atp_2025_doha", "atp_2025_dubai", "atp_2025_halle", "atp_2024_dubai", "atp_2024_halle",
     }
     for entity in old.entities:
         assert current_by_id[entity.source_entity_id] == entity

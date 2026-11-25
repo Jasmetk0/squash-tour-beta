@@ -403,6 +403,251 @@
         "https://www.tennis365.com/tennis-features/prize-money-points-fonseca-tien-next-gen-finals"
       ],
       "native_announcement_lead_weeks": 1
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_doha",
+      "category_id": "atp_500",
+      "name": "Qatar ExxonMobil Open 2025",
+      "source_start_date": "2025-02-17",
+      "source_end_date": "2025-02-22",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/451/mds.pdf",
+        "https://www.protennislive.com/posting/2025/451/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/451/mds.pdf": "565d58dae211ecdd1a3b7fba492948eb90bf093a71777f872567406274925fea",
+        "https://www.protennislive.com/posting/2025/451/qs.pdf": "4336569f6ec8aeac5d4da338087c77f73d766434f0f733ac5e59998b7e45ad8a"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-15",
+        "end_date": "2025-02-16",
+        "source_urls": [
+          "https://www.atptour.com/en/news/doha-2025-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-02-11"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_dubai",
+      "category_id": "atp_500",
+      "name": "Dubai Duty Free Tennis Championships 2025",
+      "source_start_date": "2025-02-24",
+      "source_end_date": "2025-03-01",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/495/mds.pdf",
+        "https://www.protennislive.com/posting/2025/495/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/495/mds.pdf": "05394f9fab10011742eca34cca7f90c5ed0eee0057e23c5cbee05e08e5561f9f",
+        "https://www.protennislive.com/posting/2025/495/qs.pdf": "9034e19a94b1bda83fbeadfcb2e6d37a1c4985fee762ff12d8299cec21245a6d"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-22",
+        "end_date": "2025-02-23",
+        "source_urls": [
+          "https://www.atptour.com/en/news/dubai-2025-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-02-17"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_halle",
+      "category_id": "atp_500",
+      "name": "Terra Wortmann Open 2025",
+      "source_start_date": "2025-06-16",
+      "source_end_date": "2025-06-22",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/500/mds.pdf",
+        "https://www.protennislive.com/posting/2025/500/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/500/mds.pdf": "e398e7befb97350d4478631343f8f13339a6d367894e2ea505792d43e2641ca1",
+        "https://www.protennislive.com/posting/2025/500/qs.pdf": "cf3516a5edb2cf908af6b57f321b04e91c49f02287be0208c7bbc369d22f17d6"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-06-14",
+        "end_date": "2025-06-15",
+        "source_urls": [
+          "https://www.atptour.com/en/news/halle-2025-atp-500-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-06-11"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_dubai",
+      "category_id": "atp_500",
+      "name": "Dubai Duty Free Tennis Championships 2024",
+      "source_start_date": "2024-02-26",
+      "source_end_date": "2024-03-02",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/495/mds.pdf",
+        "https://www.protennislive.com/posting/2024/495/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/495/mds.pdf": "fcc3131c56265b38aefa5fc2755ad81e9867e4ac9e6bb6729b209bcf118a01a0",
+        "https://www.protennislive.com/posting/2024/495/qs.pdf": "27b52647f012ab949b566f66737532755c5e70a44aded061b0dc3aad0c9b884f"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-02-24",
+        "end_date": "2024-02-25",
+        "source_urls": [
+          "https://www.atptour.com/en/news/dubai-2024-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2024-02-23"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_halle",
+      "category_id": "atp_500",
+      "name": "Terra Wortmann Open 2024",
+      "source_start_date": "2024-06-17",
+      "source_end_date": "2024-06-23",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/500/mds.pdf",
+        "https://www.protennislive.com/posting/2024/500/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/500/mds.pdf": "b0a9ee8f6d9e9703ebde04d0ea9e0be0aac56109520a337cd76323dea690a90a",
+        "https://www.protennislive.com/posting/2024/500/qs.pdf": "a05875682cca037ef364f0406bbab5d9b4367bf2c5b13212aa58ff24af147346"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-06-15",
+        "end_date": "2024-06-16",
+        "source_urls": [
+          "https://www.atptour.com/en/news/halle-2024-atp-500-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2024-06-11"
+        ]
+      }
     }
   ]
 }

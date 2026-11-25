@@ -71,10 +71,14 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
 @pytest.mark.parametrize(
     ("offset", "start", "expected"),
     [
-        (1, 2025, {"munich": (0, 15, 16), "vienna": (0, 42, 43)}),
-        (37, 2024, {"munich": (0, 31, 32), "vienna": (1, 6, 7)}),
+        (1, 2025, {"munich": (0, 15, 16), "vienna": (0, 42, 43),
+                   "doha": (0, 7, 8), "dubai": (0, 8, 9), "halle": (0, 24, 25)}),
+        (37, 2024, {"munich": (0, 31, 32), "vienna": (1, 6, 7),
+                     "doha": (0, 23, 24), "dubai": (0, 24, 25), "halle": (0, 40, 41)}),
+        (1, 2024, {"atp_2024_dubai": (0, 8, 9), "atp_2024_halle": (0, 24, 25)}),
+        (37, 2023, {"atp_2024_dubai": (0, 24, 25), "atp_2024_halle": (0, 40, 41)}),
     ],
-    ids=["calendar-year", "shifted-year"],
+    ids=["2025-calendar-year", "2025-shifted-year", "2024-calendar-year", "2024-shifted-year"],
 )
 def test_new_atp_profiles_import_save_preview_and_cold_reopen(tmp_path, monkeypatch, offset, start, expected):
     import json
@@ -119,7 +123,7 @@ def test_new_atp_profiles_import_save_preview_and_cold_reopen(tmp_path, monkeypa
         before = _request("GET", working)
         previews = []
         for series_id, (season, qweek, mweek) in expected.items():
-            occurrence_id = f"atp_2025_{series_id}"
+            occurrence_id = series_id if series_id.startswith("atp_") else f"atp_2025_{series_id}"
             entry = entries[occurrence_id]
             assert entry["qualification_calendar_projection"]["run_weeks"] == [
                 {"season_index": season, "season_week": qweek}]

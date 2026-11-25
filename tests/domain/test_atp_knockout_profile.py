@@ -7,7 +7,7 @@ pytestmark = pytest.mark.pr_critical
 
 
 def profile(series_id="rotterdam"):
-    occurrence_id = f"atp_2025_{series_id}"
+    occurrence_id = series_id if series_id.startswith("atp_") else f"atp_2025_{series_id}"
     entity = next(item for item in build_atp_sporting_package().entities
                   if item.source_entity_id == occurrence_id)
     return parse_sporting_profile(entity.payload)
@@ -18,6 +18,11 @@ def profile(series_id="rotterdam"):
     ("dallas", 3, "2025-02-01", "2025-02-02"),
     ("munich", 3, "2025-04-12", "2025-04-13"),
     ("vienna", 3, "2025-10-18", "2025-10-19"),
+    ("atp_2025_doha", 3, "2025-02-15", "2025-02-16"),
+    ("atp_2025_dubai", 3, "2025-02-22", "2025-02-23"),
+    ("atp_2025_halle", 3, "2025-06-14", "2025-06-15"),
+    ("atp_2024_dubai", 3, "2024-02-24", "2024-02-25"),
+    ("atp_2024_halle", 3, "2024-06-15", "2024-06-16"),
 ])
 def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series_id, wild_cards, q_start, q_end):
     p = profile(series_id)

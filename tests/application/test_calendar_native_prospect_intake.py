@@ -1,6 +1,4 @@
 """Run W/O-aware 15th-birthday preflight; pure replay against Saved source bytes."""
-from dataclasses import dataclass
-
 import pytest
 
 from beta_engine.application.calendar_native_prospect_intake import (
@@ -11,14 +9,18 @@ from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.prospect_sporting_profile import (
     materialize_prospect_sporting_profile,
 )
+from beta_engine.domain.run_packages import canonical_hash
+from beta_engine.infrastructure.db.run_prospect_source_state import (
+    RUN_PROSPECT_SOURCE_SCHEMA,
+    RunProspectSourceSnapshot,
+)
 
 pytestmark = pytest.mark.pr_critical
 
 
-@dataclass(frozen=True)
-class SignedSource:
-    records: tuple[dict, ...]
-    fingerprint: str = "f" * 64
+def signed_source(records):
+    payload = {"schema_version": RUN_PROSPECT_SOURCE_SCHEMA, "run_id": "run", "records": records}
+    return RunProspectSourceSnapshot(**payload, fingerprint=canonical_hash(payload))
 
 
 def source_at(clock, target, *, pid="prospect-1", prepared=True, **overrides):
@@ -81,14 +83,16 @@ def test_exact_native_calendar_15th_birthday_across_seasons(w, offset, week):
         week=target.season_week,
     )
     due = source_at(clock, next_week)
-    out = preflight(clock, current, SignedSource((due,)))
+    source = signed_source((due,))
+    out = preflight(clock, current, source)
     assert out["due_count"] == 1
     assert out["due"][0]["player_id"] == "prospect-1"
     assert out["target_week"]["week"] == target.season_week
     assert out["target_week"]["season_index"] == target.season_index
+    assert out["source_fingerprint"] == source.fingerprint
     assert out["native_activation_supported"] is False
     assert out["blocked"] is True
-    assert out == preflight(clock, current, SignedSource((due,)))
+    assert out == preflight(clock, current, signed_source((due,)))
 
 
 def test_past_and_future_birthdays_are_not_preemptively_activated():
@@ -96,7 +100,7 @@ def test_past_and_future_birthdays_are_not_preemptively_activated():
     current = RunWeekPosition(calendar=clock, season_index=0, week=3)
     earlier = RunWeekPosition(calendar=clock, season_index=0, week=2)
     future = RunWeekPosition(calendar=clock, season_index=0, week=5)
-    source = SignedSource((
+    source = signed_source((
         source_at(clock, earlier, pid="earlier"),
         source_at(clock, future, pid="future"),
     ))
@@ -120,7 +124,7 @@ def test_incompatible_birth_or_source_fails_closed(damage, code):
     start = RunWeekPosition(calendar=clock, season_index=0, week=1)
     target = RunWeekPosition(calendar=clock, season_index=0, week=2)
     row = source_at(clock, target, **damage)
-    result = preflight(clock, start, SignedSource((row,)))
+    result = preflight(clock, start, signed_source((row,)))
     assert result["due_count"] == 0
     assert result["problems"] == [{"prospect_id": "prospect-1", "code": code}]
 
@@ -133,7 +137,7 @@ def test_missing_and_foreign_sporting_profile_cannot_be_inferred():
     foreign = source_at(clock, target, pid="prospect-2")
     foreign["profile"]["canonical_sporting_profile"]["player_id"] = "other"
     for row in (missing, foreign):
-        result = preflight(clock, start, SignedSource((row,)))
+        result = preflight(clock, start, signed_source((row,)))
         assert result["due_count"] == 0
         assert result["problems"][0]["code"] == "prospect_sporting_profile_unready"
 

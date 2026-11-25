@@ -82,7 +82,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         assert local_status == 200 and catalog == global_catalog
         expected_calendar_size = catalog["children"][2]["entity_count"]
         assert expected_calendar_size == 2444
-        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size, 6]
+        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size, 8]
         assert catalog["dated_years"] == list(range(1990, 2027))
         assert catalog["undated_years"] == []
         assert _request("GET", base)[1]["state"] is None

@@ -49,18 +49,36 @@ def audit(calendar: dict, sporting: dict, years: list[int] | None = None) -> dic
         raise ValueError("Requested year not in calendar coverage")
     if any(p["atp_season_year"] not in coverage for p in occurrences.values()):
         raise ValueError("Dated occurrence without year coverage")
-    rows = []
-    for year in selected:
-        dated = [(key, event) for key, event in sorted(occurrences.items())
-                 if event["atp_season_year"] == year]
+    by_year = {year: [] for year in coverage}
+    for key, event in sorted(occurrences.items()):
+        by_year[event["atp_season_year"]].append((key, event))
+    # Validate every year's membership partition, even if not requested.
+    for year, dated in by_year.items():
         metadata = coverage[year]
+        dated_ids = {event["series_id"] for _, event in dated}
+        undated = metadata["undated_series_ids"]
+        cancelled = metadata["known_not_held_series_ids"]
         if len(dated) != metadata["dated_series_count"]:
             raise ValueError(f"Calendar dated count mismatch: {year}")
+        partitions = (dated_ids, set(undated), set(cancelled))
+        if (len(set(undated)) != len(undated) or len(set(cancelled)) != len(cancelled)
+                or any(partitions[i] & partitions[j] for i, j in ((0, 1), (0, 2), (1, 2)))
+                or sum(map(len, partitions)) != metadata["roster_series_count"]):
+            raise ValueError(f"Calendar membership partition mismatch: {year}")
+    rows = []
+    for year in selected:
+        dated = by_year[year]
+        metadata = coverage[year]
         counts = Counter(event["category_id"] for _, event in dated)
         present = Counter(event["category_id"] for key, event in dated if key in profiles)
         events = [
             {"occurrence_id": key, "category_id": event["category_id"],
              "start_date": event["start_date"], "end_date": event["end_date"],
+             "source_url": event["source_url"],
+             "year_source_state": event["year_source_state"],
+             "duration_days_inclusive": event["duration_days_inclusive"],
+             "iso_weeks_occupied": event["iso_weeks_occupied"],
+             "three_or_more_iso_weeks": len(event["iso_weeks_occupied"]) >= 3,
              "profile_status": "profiled" if key in profiles else "missing",
              "profile_schema": profiles[key]["schema_version"] if key in profiles else None}
             for key, event in dated
@@ -71,6 +89,9 @@ def audit(calendar: dict, sporting: dict, years: list[int] | None = None) -> dic
             "dated": len(dated), "profiled": count, "missing": len(dated) - count,
             "undated_series_ids": sorted(metadata["undated_series_ids"]),
             "known_not_held_series_ids": sorted(metadata["known_not_held_series_ids"]),
+            "missing_three_or_more_iso_weeks": [e["occurrence_id"] for e in events
+                                                  if e["profile_status"] == "missing"
+                                                  and e["three_or_more_iso_weeks"]],
             "categories": {category: {"dated": total, "profiled": present[category],
                                        "missing": total - present[category]}
                            for category, total in sorted(counts.items())},

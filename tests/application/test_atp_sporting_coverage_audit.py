@@ -55,3 +55,40 @@ def test_profile_binding_fail_closed_even_outside_requested_year(sources, damage
 def test_unknown_year_rejected(sources):
     with pytest.raises(ValueError, match="Requested year"):
         audit(*sources, [2027])
+
+
+
+def test_category_backlog_and_multiweek_source_flags(sources):
+    report = audit(*sources, [2024, 2025])
+    first, second = report["years"]
+    assert first["categories"]["atp_250"] == {"dated": 38, "profiled": 0, "missing": 38}
+    assert first["categories"]["atp_500"] == {"dated": 13, "profiled": 0, "missing": 13}
+    assert second["categories"]["atp_500"] == {"dated": 16, "profiled": 4, "missing": 12}
+    assert second["missing_three_or_more_iso_weeks"] == [
+        "atp_2025_canadian_open", "atp_2025_cincinnati",
+    ]
+    event = next(e for e in second["occurrences"] if e["occurrence_id"] == "atp_2025_doha")
+    assert event["profile_status"] == "missing"
+    assert event["year_source_state"] == "verified_results_archive"
+    assert event["duration_days_inclusive"] == 6
+    assert event["iso_weeks_occupied"] == [{"iso_week": 8, "iso_year": 2025}]
+
+
+@pytest.mark.parametrize("damage", ["dated_count", "overlap", "duplicate", "roster"])
+def test_invalid_calendar_membership_outside_requested_year(sources, damage):
+    original, sporting = sources
+    calendar = deepcopy(original)
+    coverage = next(e["payload"] for e in calendar["entities"]
+                    if e["source_entity_id"] == "season_2025_date_coverage")
+    if damage == "dated_count":
+        coverage["dated_series_count"] += 1
+    elif damage == "overlap":
+        coverage["undated_series_ids"].append("doha")
+        coverage["roster_series_count"] += 1
+    elif damage == "duplicate":
+        coverage["known_not_held_series_ids"].extend(["not_held", "not_held"])
+        coverage["roster_series_count"] += 1
+    else:
+        coverage["roster_series_count"] += 1
+    with pytest.raises(ValueError, match="Calendar .* mismatch: 2025"):
+        audit(calendar, sporting, [2024])

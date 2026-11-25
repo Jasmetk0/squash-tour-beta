@@ -4,7 +4,7 @@
 
 Setup source v7 / sporting Category v6 append two independent 2024 group profiles: ATP Finals (10–17 November, 200 per group win, 400 semifinal win, 500 final win) and Next Gen ATP Finals (18–22 December, unranked). Both retain the existing eight-player, two-group, crossover semifinal and squash BO5 adaptation with Admin-selected entrants. No automatic Race or age selection and no historical player identities or results. The 2024 dates match the existing canonical Calendar. Source links are stored on each profile. Existing v5 profiles remain identical.
 
-Run `python scripts/audit_atp_sporting_coverage.py --year 2024 --year 2025` for deterministic source coverage by year/category and per-occurrence missing/profiled status. This read-only tool checks identity, category and Main dates against the canonical Calendar. Undated and known-not-held memberships are separately reported. A profile is not a claim of native execution readiness or full-season acceptance. It does not verify live external sources or change Run data.
+Run `python scripts/audit_atp_sporting_coverage.py --year 2024 --year 2025` for deterministic source coverage by year/category and per-occurrence missing/profiled status. This read-only tool checks identity, category and Main dates against the canonical Calendar. Undated and known-not-held memberships are separately reported. The audit validates the complete yearly membership partition regardless of selected years. Each dated row includes the original source URL, source state, inclusive duration and occupied ISO weeks; missing events spanning at least three ISO weeks are flagged for chronology research (not an execution decision). A profile is not a claim of native execution readiness or full-season acceptance. It does not verify live external sources or change Run data.
 
 ## Munich and Vienna 2025
 
@@ -33,6 +33,17 @@ PDF SHA-256 values were obtained from complete downloads in
 Both phases are calendar-projected from Saved source data; Admin proposes the
 round slots. The 43 nodes describe scheduled geometry, not executed matches.
 Native Ranked W52 execution remains outside this source-only change.
+
+### Next research queue (not imported profiles)
+
+| Event | Official schedule evidence | Remaining review |
+| --- | --- | --- |
+| Doha 2025 | [ATP schedule/points](https://www.atptour.com/en/news/doha-2025-history-draw-schedule), [Q draw](https://www.protennislive.com/posting/2025/451/qs.pdf) | Q 15–16 Feb; Q16/4, points 25/13/0; Main 17–22 Feb per canonical Calendar; obtain and inspect full Main PDF and hash both files. The schedule article contains a typo in the detailed Main end date. |
+| Dubai 2025 | [ATP schedule](https://www.atptour.com/en/news/dubai-2025-history-draw-schedule) | Q 22–23 Feb; obtain both original draw PDFs, exact capacities and hashes. |
+| Halle 2025 | [ATP schedule](https://www.atptour.com/en/news/halle-2025-atp-500-history-draw-schedule) | Q 14–15 Jun; obtain both original draw PDFs and hashes. |
+| Dubai 2024 | [ATP schedule](https://www.atptour.com/en/news/dubai-2024-history-draw-schedule), [Main draw](https://www.protennislive.com/posting/2024/495/mds.pdf) | Main 32/8 seeds/3 WC/4 Q; actual LL and SE recorded in historical draw; obtain Q PDF and verify nominal configuration without assuming substitution semantics. |
+
+These are research notes only: none are added to the sporting package by this change. Source availability or a calendar match does not prove full sporting readiness.
 
 ## Dallas Open 2025
 

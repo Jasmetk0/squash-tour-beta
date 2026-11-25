@@ -23,14 +23,17 @@
       "atp_championship_single_week": 9,
       "atp_finals": 1
     },
-    "individual_detail_reviewed": 21,
-    "queued_for_individual_review": 54,
+    "individual_detail_reviewed": 36,
+    "queued_for_individual_review": 39,
     "published_sporting_profiles": 0,
     "plan_verified": 0,
     "played_and_reopened": 0,
-    "reported_main_geometry_rows": 21,
+    "reported_main_geometry_rows": 36,
     "reported_qualification_size_rows": 13,
-    "candidate_point_row_links": 10
+    "candidate_point_row_links": 16,
+    "annual_census_only_rows": 39,
+    "annual_or_individual_historical_evidence_rows": 75,
+    "reported_seed_count_rows": 30
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -147,7 +150,7 @@
     "reconciliation": "different_official_date_window_concepts_preserved",
     "series_id": "atp_finals"
   },
-  "first_next_unreviewed_occurrence": "atp_1990_hong_kong",
+  "first_next_unreviewed_occurrence": "atp_1990_eastbourne",
   "occurrences": [
     {
       "queue_index": 1,
@@ -1744,10 +1747,69 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Philips Open",
+        "canonical_1990_host_city": "Nice",
+        "canonical_1990_country_code": "FRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Philips Open",
+        "host_city": "Nice",
+        "country": "FRA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
+        "event_source": "https://www.latimes.com/archives/la-xpm-1990-04-20-sp-1653-story.html",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
+          "https://www.latimes.com/archives/la-xpm-1990-04-20-sp-1653-story.html"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Actual host Nice; separate Salem Hong Kong next week.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 23,
@@ -1781,10 +1843,62 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "KAL Cup Korea Open",
+        "canonical_1990_host_city": "Seoul",
+        "canonical_1990_country_code": "KOR",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 140000,
+        "reported_financial_commitment_usd": 165000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "KAL Cup Korea Open",
+        "host_city": "Seoul",
+        "country": "KOR",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
+        "event_source": "https://www.itftennis.com/en/tournament/seoul/kor/1990/m-wsf-kor-01a-1990/draws-and-results/",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
+          "https://www.itftennis.com/en/tournament/seoul/kor/1990/m-wsf-kor-01a-1990/draws-and-results/"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 140000,
+        "reported_financial_commitment_usd": 165000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "ITF confirms dates but draw sheets not loaded.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 24,
@@ -1818,10 +1932,62 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Salem Open",
+        "canonical_1990_host_city": "Hong Kong",
+        "canonical_1990_country_code": "HKG",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 185000,
+        "reported_financial_commitment_usd": 210000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Salem Open",
+        "host_city": "Hong Kong",
+        "country": "HKG",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": null,
+        "event_source": "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 185000,
+        "reported_financial_commitment_usd": 210000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Event report confirms 32 and at least one WC, not total or seeds.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "observed_wild_cards_minimum": 1
+      }
     },
     {
       "queue_index": 25,
@@ -1855,10 +2021,61 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Monte Carlo Open",
+        "canonical_1990_host_city": "Monte Carlo",
+        "canonical_1990_country_code": "MCO",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      },
+      "historical_evidence": {
+        "historical_name": "Monte Carlo Open",
+        "host_city": "Monte Carlo",
+        "country": "MCO",
+        "category_label": "ATP Championship Series, Single Week",
+        "event_held": true,
+        "main_draw_capacity": 56,
+        "main_bracket_slots": 64,
+        "main_byes": 8,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": 6,
+        "wild_cards": 4,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Six Q, four WC; 56 reported field, eight candidate BYEs.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 26,
@@ -1892,10 +2109,61 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Madrid Tennis Grand Prix",
+        "canonical_1990_host_city": "Madrid",
+        "canonical_1990_country_code": "ESP",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 279000,
+        "reported_financial_commitment_usd": 310000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Madrid Tennis Grand Prix",
+        "host_city": "Madrid",
+        "country": "ESP",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": null,
+        "event_source": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 279000,
+        "reported_financial_commitment_usd": 310000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "ITF confirms dates; annual table supplies size, seed count unresolved.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 27,
@@ -1929,10 +2197,69 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "BMW Open",
+        "canonical_1990_host_city": "Munich",
+        "canonical_1990_country_code": "FRG",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "BMW Open",
+        "host_city": "Munich",
+        "country": "FRG",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_BMW_Open_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_BMW_Open",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_BMW_Open_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_BMW_Open"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Draw32 reported; exact seed count not certified here.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 28,
@@ -1966,10 +2293,68 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Epson Singapore Super Tennis",
+        "canonical_1990_host_city": "Singapore",
+        "canonical_1990_country_code": "SGP",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Epson Singapore Super Tennis",
+        "host_city": "Singapore",
+        "country": "SGP",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": null,
+        "event_source": "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Men's April 30 event, not the women's DHL Singapore Open.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 29,
@@ -2003,10 +2388,62 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "U.S. Men's Clay Court Championships",
+        "canonical_1990_host_city": "Kiawah Island",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 197000,
+        "reported_financial_commitment_usd": 230000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "U.S. Men's Clay Court Championships",
+        "host_city": "Kiawah Island",
+        "country": "USA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 197000,
+        "reported_financial_commitment_usd": 230000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Kiawah Island; no inference from Series ID or misleading surface in annual source.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 30,
@@ -2040,10 +2477,63 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "ATP German Open",
+        "canonical_1990_host_city": "Hamburg",
+        "canonical_1990_country_code": "FRG",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      },
+      "historical_evidence": {
+        "historical_name": "ATP German Open",
+        "host_city": "Hamburg",
+        "country": "FRG",
+        "category_label": "ATP Championship Series, Single Week",
+        "event_held": true,
+        "main_draw_capacity": 56,
+        "main_bracket_slots": 64,
+        "main_byes": 8,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_ATP_German_Open",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_ATP_German_Open"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Event article reports May 14 end; archive May 13 retained, alternate source date recorded.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "alternate_event_end_date": "1990-05-14"
+      }
     },
     {
       "queue_index": 31,
@@ -2077,10 +2567,61 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Italian Open",
+        "canonical_1990_host_city": "Rome",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 64,
+        "reported_prize_money_usd": 1005000,
+        "reported_financial_commitment_usd": 1280000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Italian Open",
+        "host_city": "Rome",
+        "country": "ITA",
+        "category_label": "ATP Championship Series, Single Week",
+        "event_held": true,
+        "main_draw_capacity": 64,
+        "main_bracket_slots": 64,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 1005000,
+        "reported_financial_commitment_usd": 1280000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "64 draw with 16 seeds; Q and LL observed in transcription; total counts unresolved.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 32,
@@ -2114,10 +2655,61 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Yugoslav Open",
+        "canonical_1990_host_city": "Umag",
+        "canonical_1990_country_code": "YUG",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 147500,
+        "reported_financial_commitment_usd": 175000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Yugoslav Open",
+        "host_city": "Umag",
+        "country": "YUG",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 147500,
+        "reported_financial_commitment_usd": 175000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Country Yugoslavia in 1990; no modern Croatia backfill.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 33,
@@ -2151,10 +2743,69 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Muratti-Time Internazionali di Tennis",
+        "canonical_1990_host_city": "Bologna",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Muratti-Time Internazionali di Tennis",
+        "host_city": "Bologna",
+        "country": "ITA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Muratti-Time_Internazionali_di_Tennis",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
+          "https://en.wikipedia.org/wiki/1990_Muratti-Time_Internazionali_di_Tennis"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Event-specific sources located, seed count still unresolved.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 34,
@@ -2188,10 +2839,70 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Torneo Internazionale Città di Firenze",
+        "canonical_1990_host_city": "Florence",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Torneo Internazionale Città di Firenze",
+        "host_city": "Florence",
+        "country": "ITA",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "One observed LL separate from four Q.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "observed_lucky_losers": 1,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 35,
@@ -2225,10 +2936,62 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Stella Artois Championships",
+        "canonical_1990_host_city": "London",
+        "canonical_1990_country_code": "GBR",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      },
+      "historical_evidence": {
+        "historical_name": "Stella Artois Championships",
+        "host_city": "London",
+        "country": "GBR",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 56,
+        "main_bracket_slots": 64,
+        "main_byes": 8,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": null,
+        "main_draw_source": "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2000",
+        "event_source": "https://www.tennis.esp.br/en/tournaments/queen-s-club?tour=ATP&year=1990",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2000",
+          "https://www.tennis.esp.br/en/tournaments/queen-s-club?tour=ATP&year=1990"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "Two event-specific summaries agree 56 players, not full verification of BYE placement.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ]
+      }
     },
     {
       "queue_index": 36,
@@ -2262,10 +3025,70 @@
         }
       ],
       "calendar_status": "canonical_archive_membership_and_date_reconciled",
-      "detail_status": "queued_for_individual_review",
+      "detail_status": "partial_historical_evidence",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Rosmalen Grass Court Championships",
+        "canonical_1990_host_city": "Rosmalen",
+        "canonical_1990_country_code": "NLD",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      },
+      "historical_evidence": {
+        "historical_name": "Rosmalen Grass Court Championships",
+        "host_city": "Rosmalen",
+        "country": "NLD",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_bracket_slots": 32,
+        "main_byes": 0,
+        "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships",
+        "source_urls": [
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
+          "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships"
+        ],
+        "source_review_date": "2026-11-25",
+        "qualification_size_secondary": null,
+        "qualification_entrants": null,
+        "qualifier_spots": 4,
+        "wild_cards": 2,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "reported_prize_money": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "identity_note": "One observed LL separate from four Q; only two WC.",
+        "remaining": [
+          "Confirm original Q draw, dates, exact feeder structure and any missing seeds.",
+          "Verify historic financial class and complete awards from primary source.",
+          "Resolve profile representation and shared catalog coordination."
+        ],
+        "observed_lucky_losers": 1,
+        "candidate_point_row": {
+          "source_url": "https://www.openerarankings.com/RankingRules1990",
+          "iteration": 1990,
+          "band_usd": 250000,
+          "bracket_positions": 32,
+          "status": "secondary_candidate_not_verified_for_occurrence"
+        }
+      }
     },
     {
       "queue_index": 37,
@@ -2302,7 +3125,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Manchester Open",
+        "canonical_1990_host_city": "Manchester",
+        "canonical_1990_country_code": "GBR",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 38,
@@ -2339,7 +3178,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Genoa tournament",
+        "canonical_1990_host_city": "Genoa",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 39,
@@ -2376,7 +3231,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Swedish Open",
+        "canonical_1990_host_city": "Båstad",
+        "canonical_1990_country_code": "SWE",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 40,
@@ -2413,7 +3284,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Suisse Open Gstaad",
+        "canonical_1990_host_city": "Gstaad",
+        "canonical_1990_country_code": "CHE",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 275000,
+        "reported_financial_commitment_usd": 300000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 41,
@@ -2450,7 +3337,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Hall of Fame Tennis Championships",
+        "canonical_1990_host_city": "Newport",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 150000,
+        "reported_financial_commitment_usd": 175000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 42,
@@ -2487,7 +3390,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Mercedes Cup",
+        "canonical_1990_host_city": "Stuttgart",
+        "canonical_1990_country_code": "FRG",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 825000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 43,
@@ -2524,7 +3443,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Washington Tennis Classic",
+        "canonical_1990_host_city": "Washington",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 420000,
+        "reported_financial_commitment_usd": 450000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 44,
@@ -2561,7 +3496,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Dutch Open",
+        "canonical_1990_host_city": "Hilversum",
+        "canonical_1990_country_code": "NLD",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 215000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 45,
@@ -2598,7 +3549,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Canadian Open",
+        "canonical_1990_host_city": "Toronto",
+        "canonical_1990_country_code": "CAN",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 930000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 46,
@@ -2635,7 +3602,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Head Cup",
+        "canonical_1990_host_city": "Kitzbühel",
+        "canonical_1990_country_code": "AUT",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 337500,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 47,
@@ -2672,7 +3655,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Volvo Tennis Los Angeles",
+        "canonical_1990_host_city": "Los Angeles",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 48,
@@ -2709,7 +3708,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Sanremo Open",
+        "canonical_1990_host_city": "San Remo",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://tennis-db.com/tournaments?season=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 49,
@@ -2746,7 +3761,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Thriftway ATP Championships",
+        "canonical_1990_host_city": "Cincinnati",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 1020000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 50,
@@ -2783,7 +3814,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Škoda Czech Open",
+        "canonical_1990_host_city": "Prague",
+        "canonical_1990_country_code": "CSK",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 148400,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 51,
@@ -2820,7 +3867,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "U.S. Men's Hard Court Championships",
+        "canonical_1990_host_city": "Indianapolis",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 825000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 52,
@@ -2857,7 +3920,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Volvo International",
+        "canonical_1990_host_city": "New Haven",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 825000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 53,
@@ -2894,7 +3973,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Internazionali di Tennis di San Marino",
+        "canonical_1990_host_city": "San Marino",
+        "canonical_1990_country_code": "SMR",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 54,
@@ -2931,7 +4026,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "OTB Open",
+        "canonical_1990_host_city": "Schenectady",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 55,
@@ -2968,7 +4079,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Norstar Bank Hamlet Challenge Cup",
+        "canonical_1990_host_city": "Long Island",
+        "canonical_1990_country_code": "USA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 56,
@@ -3005,7 +4132,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Grand Prix Passing Shot",
+        "canonical_1990_host_city": "Bordeaux",
+        "canonical_1990_country_code": "FRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 270000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 57,
@@ -3042,7 +4185,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Geneva Open",
+        "canonical_1990_host_city": "Geneva",
+        "canonical_1990_country_code": "CHE",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 58,
@@ -3079,7 +4238,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Swiss Indoors",
+        "canonical_1990_host_city": "Basel",
+        "canonical_1990_country_code": "CHE",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 59,
@@ -3116,7 +4291,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Queensland Open",
+        "canonical_1990_host_city": "Brisbane",
+        "canonical_1990_country_code": "AUS",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 60,
@@ -3153,7 +4344,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Campionati Internazionali di Sicilia",
+        "canonical_1990_host_city": "Palermo",
+        "canonical_1990_country_code": "ITA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 270000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 61,
@@ -3190,7 +4397,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Athens Open",
+        "canonical_1990_host_city": "Athens",
+        "canonical_1990_country_code": "GRC",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 62,
@@ -3227,7 +4450,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Australian Indoor Tennis Championship",
+        "canonical_1990_host_city": "Sydney",
+        "canonical_1990_country_code": "AUS",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 63,
@@ -3264,7 +4503,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Grand Prix de Tennis de Toulouse",
+        "canonical_1990_host_city": "Toulouse",
+        "canonical_1990_country_code": "FRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 260000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 64,
@@ -3301,7 +4556,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Berlin Open",
+        "canonical_1990_host_city": "Berlin",
+        "canonical_1990_country_code": "DEU",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 260000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 65,
@@ -3338,7 +4609,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Tel Aviv Open",
+        "canonical_1990_host_city": "Tel Aviv",
+        "canonical_1990_country_code": "ISR",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 66,
@@ -3375,7 +4662,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Seiko World Super Tennis",
+        "canonical_1990_host_city": "Tokyo",
+        "canonical_1990_country_code": "JPN",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 750000,
+        "reported_financial_commitment_usd": 1000000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 67,
@@ -3412,7 +4715,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Grand Prix de Tennis de Lyon",
+        "canonical_1990_host_city": "Lyon",
+        "canonical_1990_country_code": "FRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 68,
@@ -3449,7 +4768,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "CA Tennis Trophy",
+        "canonical_1990_host_city": "Vienna",
+        "canonical_1990_country_code": "AUT",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 69,
@@ -3486,7 +4821,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Philips Open São Paulo",
+        "canonical_1990_host_city": "São Paulo",
+        "canonical_1990_country_code": "BRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 28,
+        "reported_prize_money_usd": 125000,
+        "reported_financial_commitment_usd": 150000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 4
+      }
     },
     {
       "queue_index": 70,
@@ -3523,7 +4874,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Stockholm Open",
+        "canonical_1990_host_city": "Stockholm",
+        "canonical_1990_country_code": "SWE",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 840000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 71,
@@ -3560,7 +4927,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Paris Open",
+        "canonical_1990_host_city": "Paris",
+        "canonical_1990_country_code": "FRA",
+        "canonical_host_source": "https://www.atptour.com/en/scores/results-archive?year=1990",
+        "reported_main_entrants": 48,
+        "reported_prize_money_usd": 1650000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 16
+      }
     },
     {
       "queue_index": 72,
@@ -3597,7 +4980,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Citibank Open",
+        "canonical_1990_host_city": "Itaparica",
+        "canonical_1990_country_code": "BRA",
+        "canonical_host_source": "https://tennis-db.com/tournaments?season=1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 73,
@@ -3634,7 +5033,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Kremlin Cup",
+        "canonical_1990_host_city": "Moscow",
+        "canonical_1990_country_code": "SUN",
+        "canonical_host_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "reported_main_entrants": 32,
+        "reported_prize_money_usd": 225000,
+        "reported_financial_commitment_usd": 250000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 32,
+        "candidate_byes_if_full_reported_field": 0
+      }
     },
     {
       "queue_index": 74,
@@ -3671,7 +5086,23 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "Benson & Hedges Championships",
+        "canonical_1990_host_city": "Wembley",
+        "canonical_1990_country_code": "GBR",
+        "canonical_host_source": "https://tennis-db.com/tournaments?season=1990",
+        "reported_main_entrants": 56,
+        "reported_prize_money_usd": 450000,
+        "reported_financial_commitment_usd": 500000,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "candidate_knockout_slots": 64,
+        "candidate_byes_if_full_reported_field": 8
+      }
     },
     {
       "queue_index": 75,
@@ -3708,7 +5139,29 @@
       "detail_status": "queued_for_individual_review",
       "profile_status": "not_in_published_sporting_source",
       "plan_status": "not_tested",
-      "played_and_reopened_status": "not_tested"
+      "played_and_reopened_status": "not_tested",
+      "annual_census_evidence": {
+        "status": "secondary_annual_summary_not_individual_draw_verification",
+        "historical_name_reported": "ATP Tour World Championships",
+        "canonical_1990_host_city": "Frankfurt",
+        "canonical_1990_country_code": "DEU",
+        "canonical_host_source": "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
+        "reported_main_entrants": 8,
+        "reported_prize_money_usd": 2020000,
+        "reported_financial_commitment_usd": null,
+        "source_url": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+        "secondary_cross_reference": "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+        "reviewed_on": "2026-11-25",
+        "remaining": "Verify event-specific draw, seeds, BYE placement, qualification, dates, points and source disagreements before publishing.",
+        "format": "round_robin_then_knockout",
+        "format_source_url": "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+        "competition_window_secondary": {
+          "start_date": "1990-11-13",
+          "end_date": "1990-11-18"
+        },
+        "reported_field": 8,
+        "note": "Annual summary reports $2.02m; not certified points or exact prize pool. Official heritage identifies round robin and semifinals; preserve canonical archive window separately."
+      }
     }
   ]
 }

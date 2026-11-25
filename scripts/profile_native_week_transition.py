@@ -516,6 +516,32 @@ def stage(args):
             pstats.Stats(profile, stream=stream).strip_dirs().sort_stats("cumulative").print_stats(120)
 
 
+def report(args):
+    """Summarize measure roots: per-phase seconds, peaks and exact equality."""
+    rows, digests = [], {}
+    for root in args.roots:
+        timing = json.loads((root / "timings.json").read_text())
+        restart = json.loads((root / "restart.json").read_text())
+        meta = timing["metadata"]
+        phases = {r["phase"]: r["seconds"] for r in timing["phases"] + restart["phases"]}
+        cpu = {r["phase"]: r["process_cpu_s"] for r in timing["phases"] + restart["phases"]}
+        expected = (root / "expected.json").read_bytes()
+        evidence = (root / "evidence.json").read_bytes()
+        digest = (hashlib.sha256(expected).hexdigest(), hashlib.sha256(evidence).hexdigest())
+        digests.setdefault(digest, []).append(root.name)
+        week = sum(phases[k] for k in ("preview", "execute", "save", "first_saved_get"))
+        rows.append({"root": root.name, "git_sha": meta["git_sha"][:9], **phases,
+                     "week_preview_execute_save_first_get": round(week, 3),
+                     "preview_execute_cpu": round(cpu["preview"] + cpu["execute"], 3),
+                     "peak_rss_mib": max(meta["peak_rss_mib"], restart["metadata"]["peak_rss_mib"]),
+                     "peak_db_plus_wal_mib": round(max(meta["peak_db_plus_wal_bytes"],
+                                                       restart["metadata"]["peak_db_plus_wal_bytes"]) / 2**20, 1),
+                     "saved_revisions": restart["metadata"]["saved_revisions"],
+                     "quick_check": restart["metadata"]["sqlite_quick_check"],
+                     "input_sha256": meta["input_sha256"][:12]})
+    print(json.dumps({"rows": rows, "identical_groups": list(digests.values())}, indent=1))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="mode", required=True)
@@ -543,8 +569,10 @@ def main(argv=None):
     t.add_argument("--repeat", type=int, default=5)
     t.add_argument("--phases", action="store_true")
     t.add_argument("--profile", action="store_true")
+    r = sub.add_parser("report")
+    r.add_argument("roots", type=Path, nargs="+")
     args = parser.parse_args(argv)
-    {"prepare": prepare, "measure": measure, "stage": stage}[args.mode](args)
+    {"prepare": prepare, "measure": measure, "stage": stage, "report": report}[args.mode](args)
 
 
 if __name__ == "__main__":

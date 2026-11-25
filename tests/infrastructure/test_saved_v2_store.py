@@ -243,6 +243,45 @@ def _child_digest(connection, envelope):
     return next(d for (d,) in connection.execute("SELECT digest FROM saved_revision_nodes") if d not in envelope)
 
 
+@pytest.mark.parametrize("ensure_ascii", [True, False])
+def test_parent_index_matches_exact_materialized_value_hints(tmp_path, monkeypatch, ensure_ascii):
+    text = json.dumps(payload(events=4), ensure_ascii=ensure_ascii, sort_keys=True, separators=(",", ":"))
+    _path, connection, envelope, _state = _sqlite_store(tmp_path, text)
+    expected, streamed = st.KnownValueIndex(), st.KnownValueIndex()
+    st.read_payload(connection, "run", envelope,
+                    on_value_node=lambda digest, raw, start, end: expected.add("run", digest, raw, start, end))
+
+    def no_materialization(*args, **kwargs):
+        pytest.fail("the parent index does not need a complete materialized text")
+
+    monkeypatch.setattr(st, "materialize", no_materialization)
+    st.warm_value_index(connection, "run", envelope, index=streamed)
+    root, _ = st.parse_envelope(envelope, run_id="run")
+    assert streamed.knows_root("run", root)
+    assert dict(streamed._entries) == dict(expected._entries)
+    appended = json.dumps(payload(events=5), ensure_ascii=ensure_ascii, sort_keys=True, separators=(",", ":"))
+    first, second = st.Encoder("run", index=expected), st.Encoder("run", index=streamed)
+    assert first.encode(appended) == second.encode(appended)
+    assert first.nodes == second.nodes and first.reused == second.reused > 0
+
+
+def test_parent_index_requires_actual_complete_nodes_and_exact_envelope(tmp_path):
+    text = canonical(payload(events=3))
+    _path, connection, envelope, _state = _sqlite_store(tmp_path, text)
+    index = st.KnownValueIndex()
+    st.warm_value_index(connection, "run", envelope, index=index)
+    root, chars = st.parse_envelope(envelope, run_id="run")
+    forged = st.envelope_text(run_id="run", root=root, chars=chars + 1)
+    with pytest.raises(st.SavedV2IntegrityError, match="size differs"):
+        st.warm_value_index(connection, "run", forged, index=index)
+    connection.execute("BEGIN")
+    connection.execute("UPDATE saved_revision_nodes SET body = body || ' ' WHERE digest = ?",
+                       (_child_digest(connection, envelope),))
+    with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
+        st.warm_value_index(connection, "run", envelope, index=index)
+    connection.execute("ROLLBACK")
+
+
 def test_snapshot_reuse_is_bounded_by_the_transaction(tmp_path):
     import sqlite3
 

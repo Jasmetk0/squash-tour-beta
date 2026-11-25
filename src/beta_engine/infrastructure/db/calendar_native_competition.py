@@ -238,7 +238,6 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
     ) != (run_id, branch_id, component.get("fingerprint"), checkpoint.fingerprint):
         raise ValueError("Native competition identity or coupled Tour owner differs")
     root_cp, root_tour = checkpoint.competition_root, state.competition_root_tour
-    old = root_payload(payload, root_cp, root_tour)
     if evidence is None:
         evidence = _parse_saved_calendar_match_evidence(
             payload, run_id=run_id, branch_id=branch_id
@@ -246,7 +245,10 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
     prefix = authenticated_global_prefix(payload, checkpoint, state, verified_global_prefix)
     world = load_saved_initial_world(payload, run_id=run_id, branch_id=branch_id)
     life = load_saved_lifecycle(payload, run_id=run_id, branch_id=branch_id)
-    health = load_saved_health(payload, run_id=run_id, branch_id=branch_id)
+    health = load_saved_health(
+        payload, run_id=run_id, branch_id=branch_id,
+        _validated_calendar_inputs=(payload, run_id, branch_id, world, life),
+    )
     source = load_saved_run_prospect_source(payload, run_id=run_id)
     if source is None and isinstance(checkpoint, GlobalCompetitionCheckpoint):
         from beta_engine.infrastructure.db.run_prospect_source_state import RunProspectSourceSnapshot
@@ -255,6 +257,7 @@ def _verify_competition_payload(payload, checkpoint, evidence=None, *, verified_
     # has_replayed_global_components. An arbitrary shorter lifecycle/Health
     # prefix is not sufficient evidence for this sporting/Tour state.
     if prefix is None:
+        old = root_payload(payload, root_cp, root_tour)
         if (
             saved_checkpoint(old, evidence, run_id=run_id, branch_id=branch_id) != root_cp
             or saved_tour(old, run_id=run_id, branch_id=branch_id, checkpoint=root_cp)

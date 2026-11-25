@@ -14,7 +14,7 @@ import time
 import pytest
 from sqlalchemy import text
 
-from beta_engine.domain.run_revisions import canonical_json
+from beta_engine.domain.run_revisions import VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND, canonical_json
 from beta_engine.infrastructure.db.cyclic_gc import paused_cyclic_gc, with_paused_cyclic_gc
 from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
 from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
@@ -141,7 +141,7 @@ def test_memoized_dependency_graph_equals_original_and_follows_writes(source):  
         again = actual_dependency_signature(session, row)
         assert first == again == without_scope(actual_dependency_signature, session, row)
         assert again[1] is first[1]  # one shared graph value inside one snapshot
-        assert _dependency_proof_key(again) == hashlib.sha256(canonical_json(first).encode()).hexdigest()
+        assert _dependency_proof_key(again) == without_scope(_dependency_proof_key, first)
         # An actual (re-hashed) rewrite changes the snapshot: nothing memoized survives.
         rewrite_source(session, "Changed after a successful read")
         fresh = session.get(BranchSavedRevisionModel, "saved")
@@ -149,7 +149,85 @@ def test_memoized_dependency_graph_equals_original_and_follows_writes(source):  
         changed = actual_dependency_signature(session, fresh)
         assert changed != first
         assert changed == without_scope(actual_dependency_signature, session, fresh)
-        assert _dependency_proof_key(changed) == hashlib.sha256(canonical_json(changed).encode()).hexdigest()
+        assert _dependency_proof_key(changed) == without_scope(_dependency_proof_key, changed)
+
+
+def test_same_snapshot_tour_ancestors_share_one_graph_and_one_graph_hash(source, monkeypatch):
+    from sqlalchemy import insert
+    from sqlalchemy.orm.attributes import set_committed_value
+
+    from beta_engine.infrastructure.db import native_fork_runtime_state as runtime
+    from beta_engine.infrastructure.db.models import RunBranchModel
+
+    _, factory = source
+    first_tour = 40
+    last = 80
+    ids = [f"native-{i:03}" for i in range(last)]
+    with factory.begin() as session:
+        original = session.get(BranchSavedRevisionModel, "saved")
+        session.execute(insert(BranchSavedRevisionModel), [
+            {
+                "revision_id": revision_id, "run_id": "run", "branch_id": "branch",
+                "sequence": original.sequence + index + 1,
+                "parent_revision_id": ids[index - 1] if index else "saved",
+                "kind": VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND,
+                "payload_schema_version": original.payload_schema_version,
+                "content_hash_algorithm": original.content_hash_algorithm,
+                "content_hash": original.content_hash,
+                "payload_json": canonical_json({"content": {"calendar_tour_authority": {}}})
+                if index >= first_tour else original.payload_json,
+                "change_summary_json": original.change_summary_json,
+            }
+            for index, revision_id in enumerate(ids)
+        ])
+        session.get(RunBranchModel, "branch").saved_head_revision_id = ids[-1]
+
+    encoded_graphs = []
+    large_hash_inputs = []
+    sha256 = hashlib.sha256
+
+    def count_graph_encodes(value):
+        if type(value) is tuple and len(value) > 10:
+            encoded_graphs.append(len(value))
+        return canonical_json(value)
+
+    def count_graph_hashes(data=b""):
+        if len(data) > 4096:
+            large_hash_inputs.append(len(data))
+        return sha256(data)
+
+    monkeypatch.setattr(runtime, "canonical_json", count_graph_encodes)
+    monkeypatch.setattr(runtime.hashlib, "sha256", count_graph_hashes)
+    with factory() as session, native_read_proof_scope():
+        session.execute(text("BEGIN"))
+        head = actual_dependency_signature(session, session.get(BranchSavedRevisionModel, ids[-1]))
+        for revision_id in ids[first_tour:]:
+            model = session.get(BranchSavedRevisionModel, revision_id)
+            result = actual_dependency_signature(session, model)
+            assert result[1] is head[1] and result[2] is head[2]
+            assert len(_dependency_proof_key(result)) == 64
+        assert encoded_graphs == [last + 1]
+        assert len(large_hash_inputs) == 1
+
+        tour_ancestor = session.get(BranchSavedRevisionModel, ids[first_tour])
+        ancestor = actual_dependency_signature(session, tour_ancestor)
+        assert ancestor == without_scope(actual_dependency_signature, session, tour_ancestor)
+        assert _dependency_proof_key(ancestor) == without_scope(_dependency_proof_key, ancestor)
+        assert _dependency_proof_key(ancestor) != _dependency_proof_key(head)
+        set_committed_value(tour_ancestor, "change_summary_json", '{"stale":true}')
+        with pytest.raises(ValueError, match="differs from its actual stored bytes"):
+            actual_dependency_signature(session, tour_ancestor)
+
+        # An older row without a back edge must retain its own smaller graph.
+        early = session.get(BranchSavedRevisionModel, ids[first_tour - 1])
+        signature = actual_dependency_signature(session, early)
+        assert len(signature[1]) == first_tour + 1
+        assert signature == without_scope(actual_dependency_signature, session, early)
+
+        for revision_id in ids[:first_tour]:
+            actual_dependency_signature(session, session.get(BranchSavedRevisionModel, revision_id))
+        snapshot = runtime._physical_read_cache(session)
+        assert len(snapshot["dependency_graphs"]) <= runtime._MAX_SNAPSHOT_DEPENDENCY_GRAPHS
 
 
 def test_changed_actual_row_is_rejected_even_with_a_warm_snapshot(source):  # noqa: F811

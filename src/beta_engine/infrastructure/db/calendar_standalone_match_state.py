@@ -506,7 +506,7 @@ def load_saved_calendar_match(payload: dict, *, run_id: str, branch_id: str, _sp
 def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
                                 _sporting_component_proofs=None,
                                 _verified_saved_prefix=None, _verified_global_prefix=None,
-                                _payload_proof=None):
+                                _payload_proof=None, _predecoded_checkpoint=None):
     """Return the coupled sources, sharing only exact transaction-local proofs.
 
     ``_payload_proof`` may only be the canonical-text proof of the exact stored
@@ -514,6 +514,9 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
     lets the private cache keys and the checkpoint decoder use the proven
     spans instead of re-encoding the multi-megabyte components; every value,
     validator and replay below is unchanged.
+
+    A newly captured v13 checkpoint may be supplied by the Save coordinator.
+    Its full canonical value is rebound to the candidate before full replay.
     """
     from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
         saved_checkpoint,
@@ -560,7 +563,7 @@ def load_saved_calendar_sources(payload: dict, *, run_id: str, branch_id: str,
         checkpoint = saved_checkpoint(payload, state, run_id=run_id, branch_id=branch_id,
             _prefix_proofs=_sporting_component_proofs.setdefault('_prefixes',{}) if _sporting_component_proofs is not None else None,
             _verified_saved_prefix=_verified_saved_prefix, _verified_global_prefix=_verified_global_prefix,
-            _payload_proof=_payload_proof)
+            _payload_proof=_payload_proof, _predecoded_checkpoint=_predecoded_checkpoint)
         if key is not None:
             _sporting_component_proofs[key] = (state,checkpoint)
     else:

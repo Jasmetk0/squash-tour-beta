@@ -214,10 +214,7 @@ def _warm_index_from_parent(connection, target):
     root, _ = store.parse_envelope(row[1], run_id=target.run_id)
     if store.KNOWN.knows_root(target.run_id, root):
         return
-    run_id = target.run_id
-    store.read_payload(_driver(connection), run_id, row[1],
-                       on_value_node=lambda d, t, s, e: store.KNOWN.add(run_id, d, t, s, e))
-    store.KNOWN.remember_root(run_id, root)
+    store.warm_value_index(_driver(connection), target.run_id, row[1], index=store.KNOWN)
 
 
 def _encode(connection, run_id, logical, *, use_index):

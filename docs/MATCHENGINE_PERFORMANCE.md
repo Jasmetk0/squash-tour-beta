@@ -1,6 +1,6 @@
 # MatchEngine performance (25 November 2026)
 
-Branch `claude/matchengine-hotpath-20261125` from `buuk 8af660d`. Scope:
+Branch `claude/awesome-maxwell-m305sa` from `buuk 8af660d`. Scope:
 `domain/matches`, the directly used `core/rng.py`, focused tests and benchmark
 tools. No sporting rule, probability, RNG draw order, seed, schema, hash
 definition, result, score, time or log changes. Saved v1/v2, SQLite, stored-history

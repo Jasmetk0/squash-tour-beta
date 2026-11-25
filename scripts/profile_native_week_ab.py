@@ -41,9 +41,16 @@ SCRIPT = Path(__file__).resolve()
 METRICS = SCRIPT.with_name("profile_native_full_simulation_metrics.py")
 W12_SHA = "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7"
 SCHEMA = 3
+SLOT_PLAN = [("next-slot", None), ("next-slot", None), ("next-slot", None),
+             ("confirm-result", "ab-slot-measured"), ("transition", None)]
+# Shared global-slot week after a reproducible number of fully played weeks.
+# Every week has the same sporting program (one 8-player v2 knockout, 7 real
+# MatchEngine matches), so only the history length differs between depths.
+SLOT_DEPTHS = {"slots-d2": 2, "slots-d8": 8}
 PLANS = {
     "w6": [("play", "ab-cup"), ("confirm-result", "ab-cup"), ("transition", None)],
     "w12-1822": [("transition", None)],
+    **{name: SLOT_PLAN for name in SLOT_DEPTHS},
 }
 SEED = 231
 PROFILE_ROUTES = {
@@ -319,6 +326,76 @@ def evidence(view):
             "inspection_sha256": digest(view), "head": view["saved_head_revision_id"]}
 
 
+def slot_spec(scenario):
+    depth = SLOT_DEPTHS[scenario]
+    week = 4 + depth
+    return {"start": [0, week], "end": [0, week + 1], "players": 16,
+            "initial_matches": 7 * depth, "final_matches": 7 * (depth + 1)}
+
+
+def prepare_slots(path, depth):
+    """W52 Run, 16 players, ``depth`` fully played weeks, then one Saved draw."""
+    from beta_engine.domain.calendar.run_calendar import RunCalendar
+    flow, ApiServer, _ = target_imports()
+    producer = metadata()
+    require(not path.exists(), "Never overwrite a fixture")
+    path.parent.mkdir(parents=True, exist_ok=True)
+
+    def run(server, action, name, edition=None, data=None):
+        cmd = flow.command(flow.inspect(server), action, name=name, edition_id=edition, data=data)
+        cmd["seed"] = SEED
+        flow.execute(server, cmd)
+
+    with tempfile.TemporaryDirectory() as temp:
+        local = Path(temp) / "prepare.db"
+        with ApiServer(database_url=f"sqlite:///{local}") as server:
+            flow.setup(server, RunCalendar(52, 1, 2030, 2), count=16)
+            ids = [f"ab-slot-{k:02d}" for k in range(depth)] + ["ab-slot-measured"]
+            for k, edition in enumerate(ids):
+                week = flow.inspect(server)["state"]["week"]
+                run(server, "create-edition", edition + ":create", data={
+                    "schema_version": "calendar_tournament_edition.v2",
+                    "simulation_seed": 700 + k, "edition_id": edition, "name": edition,
+                    "week": {**week, "week": 4 + k}, "announcement_week": {**week, "week": 3},
+                    "start_slot": 1, "main_entrant_count": 8, "ranked": True, "validity_weeks": 52,
+                    "point_table": {"champion": 100, "finalist": 60, "semifinal": 30, "quarterfinal": 15}})
+                flow.save_tour(server)
+            for week in (2, 3):
+                run(server, "transition", f"ab-prepare-{week}")
+                flow.save_tour(server)
+            players = sorted(p["player_id"] for p in flow.inspect(server)["players"])
+            for k, edition in enumerate(ids):
+                field = players[k % 2 * 8:(k % 2 + 1) * 8]
+                run(server, "submit", edition + ":applications", edition, {"player_ids": field})
+                for action in ("approve", "draw"):
+                    run(server, action, edition + ":" + action, edition)
+                flow.save_tour(server)
+                if edition == "ab-slot-measured":
+                    break
+                for slot in range(3):
+                    run(server, "next-slot", f"{edition}:slot-{slot}")
+                    flow.save_tour(server)
+                run(server, "confirm-result", edition + ":confirm", edition)
+                flow.save_tour(server)
+                run(server, "transition", edition + ":transition")
+                flow.save_tour(server)
+            v = flow.inspect(server)
+            spec = slot_spec(f"slots-d{depth}")
+            require(v["saved"] and position(v) == spec["start"] and len(v["players"]) == 16,
+                    "Unexpected slot fixture")
+            require(evidence(v)["match_count"] == spec["initial_matches"], "Unexpected slot history")
+            with closing(sqlite3.connect(local.as_uri() + "?mode=ro", uri=True)) as source:
+                with closing(sqlite3.connect(path)) as target:
+                    source.backup(target)
+                    require(target.execute("PRAGMA journal_mode=DELETE").fetchone() == ("delete",),
+                            "Could not produce standalone SQLite backup")
+    require(not sidecar(path, "-wal").exists() and not sidecar(path, "-shm").exists(),
+            "Fixture unexpectedly has sidecars")
+    print(json.dumps({"fixture": str(path), "sha256": file_sha(path), "scenario": f"slots-d{depth}",
+                      "producer": producer, "position": slot_spec(f"slots-d{depth}")["start"],
+                      "players": 16, "seed": SEED, "physical": sql_stats(path)}, indent=2))
+
+
 def prepare(path):
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from tests.api.test_native_full_simulation_tasks import approve_draw
@@ -455,14 +532,21 @@ def worker(args):
                 require(initial_position == [0, 4] and initial_players == 8
                         and view["state"]["week"]["calendar"]["weeks_per_year"] == 6,
                         "Unexpected W6 fixture position/players/calendar")
+            elif args.scenario in SLOT_DEPTHS:
+                spec = slot_spec(args.scenario)
+                require(initial_position == spec["start"] and initial_players == spec["players"]
+                        and view["state"]["week"]["calendar"]["weeks_per_year"] == 52,
+                        "Unexpected slot fixture position/players/calendar")
             else:
                 require(initial_position == [1, 1] and initial_players == 256
                         and before["revisions"] == 46, "Unexpected archived W12 fixture")
             initial_evidence = evidence(view)
             report["initial_evidence"] = initial_evidence
             old_head = view["saved_head_revision_id"]
-            for action, edition in PLANS[args.scenario]:
-                cmd = flow.command(view, action, name="ab-week:" + action, edition_id=edition)
+            for step, (action, edition) in enumerate(PLANS[args.scenario]):
+                name = (f"ab-week:{step}:{action}" if args.scenario in SLOT_DEPTHS
+                        else "ab-week:" + action)
+                cmd = flow.command(view, action, name=name, edition_id=edition)
                 cmd["seed"] = SEED
                 preview = call(action + ":preview", "POST", "/preview", cmd)
                 approved = {"command": cmd, "expected_preview_fingerprint": preview["preview_fingerprint"],
@@ -498,6 +582,11 @@ def worker(args):
                 cup = view["edition_evidence"]["ab-cup"]
                 require(len(cup["matches"]) == 3 and len(cup["results"]) == 4 and
                         view["state"]["rankings"], "Missing real matches/results/ranking")
+            elif args.scenario in SLOT_DEPTHS:
+                cup = view["edition_evidence"]["ab-slot-measured"]
+                require(len(cup["matches"]) == 7 and len(cup["results"]) == 8 and
+                        report["evidence"]["match_count"] == slot_spec(args.scenario)["final_matches"],
+                        "Missing real slot matches/results")
             else:
                 require(report["evidence"]["match_count"] == 24 and
                         initial_evidence["edition_evidence_sha256"] == report["evidence"]["edition_evidence_sha256"],
@@ -597,14 +686,20 @@ def validate_report(item):
         require(type(ev["players"]) is int and type(ev["match_count"]) is int
                 and ev["players"] > 0 and ev["match_count"] >= 0, "invalid sporting counts")
     initial, final = item["initial_evidence"], item["evidence"]
-    start, end, players, matches = (
-        ([0, 4], [0, 5], 8, 3) if scenario == "w6" else ([1, 1], [1, 2], 256, 24)
-    )
+    if scenario in SLOT_DEPTHS:
+        spec = slot_spec(scenario)
+        start, end, players, matches, initial_matches = (
+            spec["start"], spec["end"], spec["players"], spec["final_matches"], spec["initial_matches"])
+    else:
+        start, end, players, matches = (
+            ([0, 4], [0, 5], 8, 3) if scenario == "w6" else ([1, 1], [1, 2], 256, 24)
+        )
+        initial_matches = 0 if scenario == "w6" else 24
     require(initial["position"] == start and final["position"] == end
             and initial["players"] == final["players"] == players
             and final["match_count"] == matches,
             "unexpected sporting position/counts")
-    require(initial["match_count"] == (0 if scenario == "w6" else 24),
+    require(initial["match_count"] == initial_matches,
             "unexpected initial match count")
     require(item["history"] and item["history"][-1]["id"] == final["head"],
             "missing/mismatched history")
@@ -845,6 +940,8 @@ def main(argv=None):
     subs = p.add_subparsers(dest="action", required=True)
     prep = subs.add_parser("prepare")
     prep.add_argument("--database", type=Path, required=True)
+    prep.add_argument("--slot-depth", type=int, choices=sorted(SLOT_DEPTHS.values()),
+                      help="Build the W52 shared-slot fixture with this many played weeks")
     ab = subs.add_parser("ab")
     for key in ("a", "b", "sha256"):
         ab.add_argument("--" + key, required=True)
@@ -869,7 +966,10 @@ def main(argv=None):
     args = p.parse_args(argv)
     if args.action == "prepare":
         target_imports()
-        prepare(args.database.resolve())
+        if args.slot_depth is not None:
+            prepare_slots(args.database.resolve(), args.slot_depth)
+        else:
+            prepare(args.database.resolve())
         return 0
     if args.action == "_worker":
         worker(args)

@@ -103,6 +103,10 @@ def prepare_native_tour_week(
     ``turn_pro_model`` is the recorded Master v87 model when replaying Signed
     history; new transitions use the current default calibration.
     """
+    from beta_engine.domain.tournaments.calendar_global_slots import (
+        appended_checkpoint_fingerprint,
+    )
+
     ordinal = checkpoint.week.ordinal + 1
     if ordinal >= clock.season_count * clock.weeks_per_year:
         raise ValueError("Native Tour target exceeds the Run horizon")
@@ -207,7 +211,10 @@ def prepare_native_tour_week(
         "recovered_players_fingerprint": sport.recovered_players_fingerprint,
         "target_players_fingerprint": sport.target_players_fingerprint,
         "advance_fingerprint": sport.fingerprint,
-        "checkpoint_fingerprint": successor.fingerprint,
+        # The same canonical hash; the successor only appends this week's
+        # event, so the earlier history is not re-encoded when its exact
+        # hash state is already known (see appended_checkpoint_fingerprint).
+        "checkpoint_fingerprint": appended_checkpoint_fingerprint(checkpoint, successor),
         "player_count": len(successor.players),
         "changed_player_count": len(changes),
         "attribute_change_count": sum(c["changed_attributes"] for c in changes),

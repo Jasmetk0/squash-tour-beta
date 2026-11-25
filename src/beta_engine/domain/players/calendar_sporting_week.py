@@ -145,8 +145,21 @@ def played_counts(checkpoint, knockout):
     return tuple(sorted(counts.items()))
 
 
+# Physical/Move attributes use the physical decline age (KeyError for an
+# unknown name, exactly as the per-attribute catalog lookup it replaces).
+_USES_PHYSICAL_DECLINE = {
+    name: group in {"Physical", "Move"} for name, group in ATTRIBUTE_TO_GROUP.items()
+}
+
+
 def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, counts, official=False):
-    """Two pure stages consuming only end-of-completed-week facts."""
+    """Two pure stages consuming only end-of-completed-week facts.
+
+    Per player, the age comparisons and the rate split are evaluated once, not
+    once per attribute. Each roll is a stateless hash of its own identity, so
+    a roll whose value cannot change the attribute (no direction, or no
+    fractional remainder) is not computed; every other roll is the same hash.
+    """
     if completed_week.ordinal != checkpoint.week.ordinal:
         raise ValueError("Development cannot use a future or skipped week")
     profiles = {p.player_id: p for p in world.players}
@@ -159,14 +172,14 @@ def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, coun
     source = checkpoint.fingerprint
     developed, recovered = [], []
     count_by_id = dict(counts)
+    modulus = 10000 * width
     for player in checkpoint.players:
-        if official and age_in_run_years(profiles[player.player_id],completed_week)>=world.lifecycle_policy.automatic_retirement_age:
+        age = age_in_run_years(profiles[player.player_id], completed_week)
+        if official and age >= world.lifecycle_policy.automatic_retirement_age:
             developed.append(player)
             recovered.append(player)
             continue
-        age = age_in_run_years(
-            profiles[player.player_id], completed_week
-        ) - old.timing_shift(player.development_timing)
+        age -= old.timing_shift(player.development_timing)
         # A yearly rate divided by W, without float rounding or a universal 61-week clock.
         threshold = max(
             0,
@@ -174,30 +187,23 @@ def develop_and_recover(checkpoint, world, *, completed_week, seed, policy, coun
             + (player.current_form - player.long_term_form_norm)
             * policy.annual_form_influence_basis_points,
         )
+        whole, remainder = divmod(threshold, modulus)
+        grows = age <= old.growth_end_age and player.ovr < player.potential_ovr
+        directions = {
+            True: 1 if grows else (-1 if age >= old.physical_decline_age else 0),
+            False: 1 if grows else (-1 if age >= old.other_decline_age else 0),
+        }
+        # _roll joins str() of its parts with "|", so joining the four
+        # per-player parts once gives the identical hashed text per attribute.
+        prefix = "|".join(str(part) for part in (policy.policy_id, source, seed, player.player_id))
         attrs = []
-        below_potential = player.ovr < player.potential_ovr
         for name, value in player.attributes:
-            decline = (
-                old.physical_decline_age
-                if ATTRIBUTE_TO_GROUP[name] in {"Physical", "Move"}
-                else old.other_decline_age
-            )
-            direction = (
-                1
-                if age <= old.growth_end_age and below_potential
-                else (-1 if age >= decline else 0)
-            )
-            roll = _roll(
-                policy.policy_id,
-                source,
-                seed,
-                player.player_id,
-                name,
-                modulus=10000 * width,
-            )
-            whole, remainder = divmod(threshold, 10000 * width)
-            delta = direction * (whole + (1 if roll < remainder else 0))
-            attrs.append((name, min(200, max(0, value + delta))))
+            direction = directions[_USES_PHYSICAL_DECLINE[name]]
+            if direction and remainder:
+                step = whole + (1 if _roll(prefix, name, modulus=modulus) < remainder else 0)
+            else:
+                step = whole
+            attrs.append((name, min(200, max(0, value + direction * step))))
         developed_player = player.model_copy(update={"attributes": tuple(attrs)})
         developed.append(developed_player)
         difference = player.long_term_form_norm - player.current_form

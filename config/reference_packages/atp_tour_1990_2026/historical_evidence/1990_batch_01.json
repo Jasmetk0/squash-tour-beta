@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 42,
-    "reported_main_wild_card_count_rows": 42,
+    "reported_main_qualifier_count_rows": 44,
+    "reported_main_wild_card_count_rows": 44,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 41,
+    "second_pass_review_attempted_rows": 47,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,7 +57,7 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "41-row chronological prefix includes new source access, observed Main labels or retained previous evidence; no complete actual Q sheet obtained.",
+    "second_pass_review_note": "47-row chronological prefix includes new source access, observed Main labels or retained previous evidence; no complete actual Q sheet obtained.",
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75
@@ -5581,6 +5581,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Mercedes_Cup_%E2%80%93_Singles",
+          "observed_qualifiers": 5,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Main draw labels or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Main draw summary explicitly reports 48, 5Q, 3WC, 16 seeds, not a qualification sheet."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Mercedes_Cup_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "No actual Q graph, phase dates or ranking class; modern ATP 250 label does not define 1990 Championship Series."
         }
       }
     },
@@ -5637,7 +5658,7 @@
         "candidate_byes_if_full_reported_field": 8
       },
       "historical_evidence": {
-        "historical_name": "Legg Mason Tennis Classic",
+        "historical_name": "Sovran Bank Classic",
         "host_city": "Washington",
         "country": "USA",
         "category_label": "ATP Championship Series",
@@ -5651,20 +5672,23 @@
         "event_source": "https://hu.tennistemple.com/competitions/washington/1990/draw",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://hu.tennistemple.com/competitions/washington/1990/draw"
+          "https://hu.tennistemple.com/competitions/washington/1990/draw",
+          "https://www.washingtonpost.com/archive/sports/1990/07/16/field-is-deep-they-have-come-to-sovran/90d9d9aa-7b80-459c-aa0c-f4fd51f53d90/",
+          "https://www.washingtonpost.com/archive/sports/1990/07/15/at-crossroads-in-search-of-open-territory/7930a323-3a78-4c2c-8b8e-44c9baf36e19/",
+          "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 4,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 420000,
         "reported_financial_commitment_usd": 450000,
         "financial_source": "https://dewiki.de/Lexikon/ATP_Tour_1990",
         "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
-        "identity_note": "Draw shows seeded BYEs and Q/WC tags, but totals not yet counted. Annual source reports 56; retain historical tier rather than current website category.",
+        "identity_note": "Contemporary Washington Post identifies Sovran Bank Classic and Championship Series; prior historical evidence used later sponsor Legg Mason. Stable Series ID unchanged.",
         "remaining": [
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
@@ -5684,6 +5708,52 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://hu.tennistemple.com/competitions/washington/1990/draw",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 4,
+          "reviewed_on": "2026-11-25",
+          "scope": "Main draw labels or explicit Main draw summary; no reserved policy inferred.",
+          "note": "All 28 initial played pairings and eight BYE positions checked in secondary draw; seven Q and four WC; top eight seed BYEs confirmed by second source.",
+          "corroboration_url": "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles"
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "contemporary_financial_evidence": {
+          "source_url": "https://www.washingtonpost.com/archive/sports/1990/07/16/field-is-deep-they-have-come-to-sovran/90d9d9aa-7b80-459c-aa0c-f4fd51f53d90/",
+          "corroboration_url": "https://www.washingtonpost.com/archive/sports/1990/07/15/at-crossroads-in-search-of-open-territory/7930a323-3a78-4c2c-8b8e-44c9baf36e19/",
+          "published_on": "1990-07-16",
+          "reported_purse_usd": 550000,
+          "singles_champion_prize_usd": 70000,
+          "singles_finalist_prize_usd": 36880,
+          "scope": "Two contemporary reports describe $550k purse; prior secondary $420k prize/$450k commitment retained as distinct conflicting reports. No direct ranking class."
+        },
+        "contemporary_main_opening_date_evidence": {
+          "source_url": "https://www.washingtonpost.com/archive/sports/1990/07/16/field-is-deep-they-have-come-to-sovran/90d9d9aa-7b80-459c-aa0c-f4fd51f53d90/",
+          "date": "1990-07-16",
+          "scope": "July 16 report confirms Main opening that day; not Q window."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Historical category and name confirmed by press; Q sheet and dates missing. $450k reported commitment has no exact secondary point row; no interpolation or automatic $550k substitution."
         }
       }
     },
@@ -5788,6 +5858,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Dutch_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 2,
+          "reviewed_on": "2026-11-25",
+          "scope": "Main draw labels or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Event-specific draw summary lists 32, 8 seeds, 4Q and 2WC."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Dutch_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Actual qualifying entrants, phase dates and financial commitment missing."
         }
       }
     },
@@ -5858,13 +5949,14 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles"
+          "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
+          "https://www.itftennis.com/en/tournament/canadian-open/can/1990/m-css-can-01a-1990/draws-and-results/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 930000,
@@ -5891,6 +5983,55 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-25",
+          "scope": "Main draw labels or explicit Main draw summary; no reserved policy inferred.",
+          "note": "First-round sections contain Q counts 2/2/2/1 and WC counts 0/2/2/1; top eight seeded players have BYEs.",
+          "qualifier_counts_by_section": [
+            2,
+            2,
+            2,
+            1
+          ],
+          "wild_card_counts_by_section": [
+            0,
+            2,
+            2,
+            1
+          ]
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "ITF men's archive redirect failed; actual Q draw, phase dates and financial commitment missing. Women's July 30 event excluded.",
+          "additional_source_attempts": [
+            {
+              "url": "https://www.itftennis.com/en/tournament/canadian-open/can/1990/m-css-can-01a-1990/draws-and-results/",
+              "outcome": "redirect_unavailable"
+            }
+          ]
         }
       }
     },
@@ -5996,6 +6137,25 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "secondary_main_match_count_evidence": {
+          "source_url": "https://goatstats.tennis/tournament/1990-319",
+          "reported_match_count": 47,
+          "reported_draw_slots": 64,
+          "consistent_with_main_entrants": 48,
+          "scope": "Secondary source reports 47 matches and 64 draw slots; corroborates candidate geometry but does not establish exact BYE placement or seed count."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://goatstats.tennis/tournament/1990-319",
+            "outcome": "secondary_match_count_available_no_q_sheet"
+          },
+          "remaining": "Source states 47 recorded matches, 64-slot draw; no complete seed/BYE placement, Q/WC counts, Q sheet, dates or financial commitment."
         }
       }
     },
@@ -6067,7 +6227,9 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles"
+          "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles",
+          "https://www.latimes.com/archives/la-xpm-1990-07-30-sp-867-story.html",
+          "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6109,6 +6271,33 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Main draw labels or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Secondary draw summary explicitly lists 32, 8 seeds, 4Q and 3WC."
+        },
+        "contemporary_main_opening_date_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-07-30-sp-867-story.html",
+          "corroboration_url": "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html",
+          "date": "1990-07-30",
+          "scope": "Contemporary articles establish Main opening July 30 and first-round play; first source explicitly identifies World Series and distinguishes appearance fees from purse. Not qualification dates or ranking class."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "No Q draw or dates; 1991/1992/1993 prequalification articles cannot establish 1990 rules or days."
         }
       }
     },
@@ -9414,7 +9603,7 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_stuttgart",
+  "next_second_pass_review_occurrence": "atp_1990_san_remo_1990",
   "field_semantics": {
     "main_entrants": "Reported/cross-checked count of occupied Main entrant positions, not bracket capacity; still historical evidence, not a certified sporting profile.",
     "main_bracket_slots": "Physical knockout bracket positions, including BYEs; null for round-robin group format.",

@@ -577,3 +577,31 @@ def test_second_pass_rosmalen_through_newport_source_boundaries(batch):
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 41
+
+
+def test_second_pass_stuttgart_through_los_angeles_preserves_source_scope(batch):
+    reviewed = batch["occurrences"][41:47]
+    assert [r["series_id"] for r in reviewed] == [
+        "stuttgart", "washington", "belgrade_2012", "canadian_open",
+        "kitzbuhel", "los_cabos"]
+    s, w, h, c, k, la = [r["historical_evidence"] for r in reviewed]
+    for e, q, wc in ((s, 5, 3), (w, 7, 4), (h, 4, 2), (c, 7, 5), (la, 4, 3)):
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+        assert e["main_entry_label_evidence"]["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+        assert e["main_entry_label_evidence"]["source_url"] in e["source_urls"]
+    assert w["historical_name"] == "Sovran Bank Classic"
+    assert w["reported_prize_money"] == 420000
+    assert w["reported_financial_commitment_usd"] == 450000
+    assert w["contemporary_financial_evidence"]["reported_purse_usd"] == 550000
+    assert w["point_candidate_comparison"]["status"] == "no_exact_financial_band_row"
+    assert w["bye_seed_ranks"] == c["bye_seed_ranks"] == list(range(1, 9))
+    assert sum(c["main_entry_label_evidence"]["qualifier_counts_by_section"]) == 7
+    assert sum(c["main_entry_label_evidence"]["wild_card_counts_by_section"]) == 5
+    assert k["secondary_main_match_count_evidence"]["reported_match_count"] == k["main_entrants"] - 1
+    assert k["main_seeds"] is None
+    assert la["contemporary_main_opening_date_evidence"]["date"] == "1990-07-30"
+    for row in reviewed:
+        e = row["historical_evidence"]
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 47

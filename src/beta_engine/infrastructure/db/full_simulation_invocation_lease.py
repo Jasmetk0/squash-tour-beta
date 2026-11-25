@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 import logging
-from threading import Event, Thread
+from threading import Event, Lock, Thread
 import time
 from typing import Iterator
 from uuid import uuid4
@@ -24,7 +24,37 @@ from beta_engine.infrastructure.db.models import FullSimulationExecutionLeaseMod
 LEASE_SCOPE = "all_runs"
 LEASE_SECONDS = 180
 RENEW_INTERVAL_SECONDS = 10
+# A native Full Simulation step may read and prepare one child from a single
+# SQLite snapshot and then reuse it only if no other connection committed in
+# the meantime. A renewal commit would always invalidate that snapshot, so the
+# step may hold renewal back for at most this long. The guarded child writer
+# still verifies the lease time at BEGIN IMMEDIATE and at COMMIT: a longer
+# step falls back to its complete path, and an expired lease is still fenced.
+HEARTBEAT_DEFERRAL_SECONDS = 90
+_heartbeat_gate = Lock()
 _LOG = logging.getLogger(__name__)
+
+
+class DeferredLeaseHeartbeat:
+    """Process-local, bounded hold on lease heartbeat commits.
+
+    ``acquire`` waits at most ``wait_seconds`` for an in-flight heartbeat and
+    reports whether the hold was obtained; ``release`` is idempotent. The
+    heartbeat thread itself waits at most ``HEARTBEAT_DEFERRAL_SECONDS`` and
+    then renews anyway, so this never grants or extends lease ownership.
+    """
+
+    def __init__(self):
+        self.held = False
+
+    def acquire(self, wait_seconds=35.0):
+        self.held = _heartbeat_gate.acquire(timeout=wait_seconds)
+        return self.held
+
+    def release(self):
+        if self.held:
+            self.held = False
+            _heartbeat_gate.release()
 
 
 def _start_writer(session: Session) -> None:
@@ -116,7 +146,11 @@ def full_simulation_invocation_lease(
 
     def heartbeat() -> None:
         while not stop.wait(RENEW_INTERVAL_SECONDS):
+            # Bounded: a held gate only postpones this commit, never skips it.
+            gated = _heartbeat_gate.acquire(timeout=HEARTBEAT_DEFERRAL_SECONDS)
             try:
+                if stop.is_set():
+                    return
                 if not renew_invocation_lease(factory, token=token):
                     _LOG.warning("Full Simulation invocation lease was reclaimed")
                     return
@@ -126,6 +160,9 @@ def full_simulation_invocation_lease(
                 # A temporary SQLite writer lock may block renewal; the
                 # next child commit still checks owner token transactionally.
                 _LOG.exception("Full Simulation invocation heartbeat failed")
+            finally:
+                if gated:
+                    _heartbeat_gate.release()
 
     worker = Thread(target=heartbeat, name="full-simulation-lease-renewal", daemon=True)
     worker.start()

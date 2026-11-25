@@ -73,6 +73,15 @@ evidence. Every new native runtime/helper is watched by that workflow. Its Draft
 skips do not count as passes. Shared legacy control/persistence changes also retain
 their existing FAX task/browser and native Tour/Save acceptance gates.
 
+Since 24 November 2026 its `native-task-controls` job also runs
+`tests/api/test_native_full_simulation_prepared_step.py`: the one-snapshot child
+step against the original complete path (byte-equal rows on original, native
+fork and global-slot Tour v5), a concurrent commit, changed HEAD/Working Draft/
+parent, pause and lease expiry between the read and write phase, restart after
+the step commit before the Task Center result, and exact retry of a frozen
+pending child. `scripts/profile_native_full_simulation_step.py` is diagnostic
+only; its timings are never a pass criterion.
+
 ## Draft feedback and review acceptance — 21 October 2026
 
 During implementation, keep the PR in Draft. Fast CI and CodeQL still run on

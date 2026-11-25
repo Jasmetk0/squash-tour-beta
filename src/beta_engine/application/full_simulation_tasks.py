@@ -29,8 +29,8 @@ from beta_engine.application.native_full_simulation import (
 from beta_engine.application.native_full_simulation import (
     _write as write_native_parent,
 )
-from beta_engine.application.run_calendar_read_authority import (
-    resolve_revision_run_calendar,
+from beta_engine.application.native_full_simulation import (
+    verified_revision_calendar,
 )
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.infrastructure.db.full_simulation_invocation_lease import (
@@ -402,7 +402,8 @@ def _project(session, row, observer_instance=None, calendar_cache=None):
     if calendar_cache is None:
         calendar_cache = {}
     if calendar_key not in calendar_cache:
-        calendar_cache[calendar_key] = resolve_revision_run_calendar(
+        # Content-hash checked on first sight of these exact row bytes.
+        calendar_cache[calendar_key] = verified_revision_calendar(
             session, run_id=row.run_id, revision_id=command.expected_revision_id
         )
     calendar = calendar_cache[calendar_key]

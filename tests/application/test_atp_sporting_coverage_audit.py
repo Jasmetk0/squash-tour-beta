@@ -21,7 +21,7 @@ def test_real_source_coverage_is_deterministic_and_not_execution(sources):
     assert report == audit(calendar, sporting, [2024, 2025])
     assert not report["execution_readiness_assessed"]
     assert [(row["year"], row["dated"], row["profiled"], row["missing"])
-            for row in report["years"]] == [(2024, 62, 6, 56), (2025, 57, 14, 43)]
+            for row in report["years"]] == [(2024, 62, 9, 53), (2025, 57, 14, 43)]
     for row in report["years"]:
         assert sum(v["missing"] for v in row["categories"].values()) == row["missing"]
         assert len(row["occurrences"]) == row["dated"]
@@ -62,7 +62,7 @@ def test_category_backlog_and_multiweek_source_flags(sources):
     report = audit(*sources, [2024, 2025])
     first, second = report["years"]
     assert first["categories"]["atp_250"] == {"dated": 38, "profiled": 2, "missing": 36}
-    assert first["categories"]["atp_500"] == {"dated": 13, "profiled": 2, "missing": 11}
+    assert first["categories"]["atp_500"] == {"dated": 13, "profiled": 5, "missing": 8}
     assert second["categories"]["atp_250"] == {"dated": 30, "profiled": 4, "missing": 26}
     assert second["categories"]["atp_500"] == {"dated": 16, "profiled": 8, "missing": 8}
     assert second["missing_three_or_more_iso_weeks"] == [

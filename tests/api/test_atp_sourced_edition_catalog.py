@@ -44,6 +44,7 @@ def test_sporting_catalog_uses_saved_profiles_and_retains_outside_horizon_source
             "atp_2025_doha", "atp_2025_dubai", "atp_2025_halle", "atp_2024_dubai", "atp_2024_halle",
             "atp_2024_stuttgart", "atp_2025_stuttgart", "atp_2025_queens_club",
             "atp_2024_delray_beach", "atp_2025_delray_beach", "atp_2025_houston", "atp_2025_santiago",
+            "atp_2024_rotterdam", "atp_2024_acapulco", "atp_2024_vienna",
         }
         assert {e["profile"]["occurrence_id"]: e["profile"]["played_group_win_points"]
                 for e in catalog["entries"] if e["execution_supported"]} == {

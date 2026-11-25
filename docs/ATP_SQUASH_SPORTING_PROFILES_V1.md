@@ -67,6 +67,16 @@ Stuttgart has 28 actual Main entrants in a 32-position bracket, four unplaced BY
 
 Each uses 28 actual Main entrants, 4 unplaced BYEs, 8 nominal seeds, 3 Main WC, 16 Q entrants and four Q winners (39 matches if fully played). All four Q winners are present in the respective final Main draws; historical LL/SE/PR and personal results are not copied. Houston's dates use the contemporary newspaper's explicit dates, corroborated by the archived Q match results; its capacity and points come from the official draw PDFs, not from the newspaper. The Delray Beach 2025 Q PDF does not print points: its 13/7/0 awards are independently checked against the [2025 ATP rulebook, §9.G, p.264](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf). The same rulebook explains the zero-point first loss after BYE; native ranking adoption remains out of scope. [Evidence run 45691597086](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45691597086) downloaded eight original PDFs including Buenos Aires 2025; the Houston hashes come from run 45690237346. Buenos Aires remains excluded pending clarification of the qualified player's replacement (only three Q markers in final Main despite four qualifying winners), even though its [organizer's schedule](https://iebmasargentinaopen.com/todo-lo-que-tenes-que-saber-sobre-el-ieb-argentina-open-2025/) is complete. Source v6 / Setup v7 remain unreleased; previous v5 payloads unchanged.
 
+### Further 2024 ATP500 profiles
+
+| Event | Qualification | Main | Q/Main calendar weeks | Official dated source |
+| --- | --- | --- | --- | --- |
+| Rotterdam 2024 | 10–11 Feb | 12–18 Feb | W06/W07 | [ATP, 8 Feb](https://www.atptour.com/en/news/rotterdam-2024-history-draw-schedule) |
+| Acapulco 2024 | 24–25 Feb | 26 Feb–2 Mar | W08/W09 | [ATP, 23 Feb](https://www.atptour.com/en/news/acapulco-2024-history-draw-schedule) |
+| Vienna 2024 | 19–20 Oct | 21–27 Oct | W42/W43 | [ATP, 15 Oct](https://www.atptour.com/en/news/vienna-2024-atp-500-history-draw-schedule?q=ton) |
+
+Each retains Main32/Q16, 8 seeds, 3 Main WC, four qualifying winners, no BYEs, 43 matches and ATP500 points. The original six draw PDF hashes are in the profile source. [Evidence run 45694538668](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45694538668) obtained ten of fourteen attempted original PDFs. Acapulco 2025 and Rio 2025 require separate review of seed substitution; Rio 2025 Q points are not printed in its PDF. Rio 2024 and Queen's 2024 original PDFs were unavailable in this run. None of these four are imported. Historical replacements/identities and native execution remain out of scope.
+
 ## Dallas Open 2025
 
 Setup source v5 and sporting Category source v4 add Dallas. On a calendar-year

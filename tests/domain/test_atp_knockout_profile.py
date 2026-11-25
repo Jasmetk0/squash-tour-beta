@@ -24,6 +24,9 @@ def profile(series_id="rotterdam"):
     ("atp_2024_dubai", 3, "2024-02-24", "2024-02-25"),
     ("atp_2024_halle", 3, "2024-06-15", "2024-06-16"),
     ("atp_2025_queens_club", 3, "2025-06-14", "2025-06-15"),
+    ("atp_2024_rotterdam", 3, "2024-02-10", "2024-02-11"),
+    ("atp_2024_acapulco", 3, "2024-02-24", "2024-02-25"),
+    ("atp_2024_vienna", 3, "2024-10-19", "2024-10-20"),
 ])
 def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series_id, wild_cards, q_start, q_end):
     p = profile(series_id)

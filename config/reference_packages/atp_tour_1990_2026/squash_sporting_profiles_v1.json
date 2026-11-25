@@ -991,6 +991,153 @@
           "2025-01-24"
         ]
       }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_rotterdam",
+      "category_id": "atp_500",
+      "name": "ABN AMRO Open 2024",
+      "source_start_date": "2024-02-12",
+      "source_end_date": "2024-02-18",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/407/mds.pdf",
+        "https://www.protennislive.com/posting/2024/407/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/407/mds.pdf": "a9cf4e17c317fc71409f6769e047eed85c9bbca139ce0a267ce575e42c693407",
+        "https://www.protennislive.com/posting/2024/407/qs.pdf": "884ef1e3a97f896a33672308e59a983135e35c7a28b031f6684596f1e4e5ea69"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-02-10",
+        "end_date": "2024-02-11",
+        "source_urls": [
+          "https://www.atptour.com/en/news/rotterdam-2024-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2024-02-08"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_acapulco",
+      "category_id": "atp_500",
+      "name": "Abierto Mexicano Telcel 2024",
+      "source_start_date": "2024-02-26",
+      "source_end_date": "2024-03-02",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/807/mds.pdf",
+        "https://www.protennislive.com/posting/2024/807/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/807/mds.pdf": "9cfdc3960050a5eae7260a6c8c87c50fb9bdacf94d41be2d4f6aced201ffc71c",
+        "https://www.protennislive.com/posting/2024/807/qs.pdf": "306419ddbf664e36ec6200a3531972d969fb859f19ab1130e8cdf054bd906010"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-02-24",
+        "end_date": "2024-02-25",
+        "source_urls": [
+          "https://www.atptour.com/en/news/acapulco-2024-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2024-02-23"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_vienna",
+      "category_id": "atp_500",
+      "name": "Erste Bank Open 2024",
+      "source_start_date": "2024-10-21",
+      "source_end_date": "2024-10-27",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/337/mds.pdf",
+        "https://www.protennislive.com/posting/2024/337/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/337/mds.pdf": "63d95b149e6236e7ada0b2e43fb14b7f9363bd54e78938643923299f93722beb",
+        "https://www.protennislive.com/posting/2024/337/qs.pdf": "e6e9c3093e730de6f03c16fa679a9bc76d7c6b728b74987f1f655c505f799bfb"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-10-19",
+        "end_date": "2024-10-20",
+        "source_urls": [
+          "https://www.atptour.com/en/news/vienna-2024-atp-500-history-draw-schedule?q=ton"
+        ],
+        "published_dates": [
+          "2024-10-15"
+        ]
+      }
     }
   ]
 }

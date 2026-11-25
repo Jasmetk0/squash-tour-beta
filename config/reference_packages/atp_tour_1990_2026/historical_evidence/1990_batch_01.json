@@ -61,7 +61,8 @@
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75,
-    "advertised_qualification_window_rows": 1
+    "advertised_qualification_window_rows": 1,
+    "targeted_import_candidates_reviewed_rows": 3
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -341,6 +342,17 @@
       "secondary_exact_awards_source": "https://openerarankings.com/RankingRules1990",
       "squash_policy_status": "not_approved_by_this_evidence_batch",
       "note": "Historical ATP source rules are not automatically Run ranking rules. Work/Claude must coordinate source provenance and any approved versioned adaptation. No unknown Q awards defaulted."
+    },
+    "qualification_loss_rule_research": {
+      "status": "secondary_support_for_no_early_q_loss_awards_not_certified",
+      "source_urls": [
+        "https://openerarankings.com/RankingRules1990",
+        "https://openerarankings.com/RankingRules1996"
+      ],
+      "source_iteration_1990": "Q award shown; QR1/QR2/QR3 cells blank. Text says successful qualifiers receive additional points.",
+      "later_iteration_evidence": "Same secondary author states awards for elimination in qualifying at Championship Series or above appeared after 1997; table marks such awards from 1997 onward. Exact transition wording differs from table labels; neither is independent nor primary 1990 evidence.",
+      "qualification_loss_points": null,
+      "scope": "Strengthens hypothesis of no ordinary 1990 Q-loss stage awards; does not establish rank bonus applicability in qualifying or every tier. Never treat blank as explicit zero or make a squash rule from this alone."
     }
   },
   "finals_alternate_window": {
@@ -850,7 +862,9 @@
           "https://www.latimes.com/archives/la-xpm-1990-02-08-sp-421-story.html",
           "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
           "https://openerarankings.com/RankingRules1990",
-          "https://www.atptour.com/en/scores/results-archive?year=1990"
+          "https://www.atptour.com/en/scores/results-archive?year=1990",
+          "https://www.latimes.com/archives/la-xpm-1990-02-18-sp-1580-story.html",
+          "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -999,6 +1013,29 @@
             "ranking_example": "ATPKnockoutProfile forbids unknown fields and exposes only stage-based main_points/qualification_points. A rank-dependent bonus policy cannot be added as rank_dependent_bonus_awards; Work and Claude must coordinate a versioned policy if approved.",
             "qualification_points_error": "Incomplete Qualification points",
             "qualification_example": "If 32 actual Q entrants and 4 equal sections were later verified, 3 Q rounds would require qualifier, round_1_loss, round_2_loss, round_3_loss; only the candidate qualifier award is available. This is conditional geometry, not a verified Q draw."
+          },
+          "additional_targeted_research": {
+            "status": "no_new_actual_qualification_evidence",
+            "reviewed_on": "2026-11-25",
+            "source_attempts": [
+              {
+                "url": "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html",
+                "outcome": "contemporary_main_results_not_q"
+              },
+              {
+                "url": "https://www.latimes.com/archives/la-xpm-1990-02-18-sp-1580-story.html",
+                "outcome": "contemporary_appearance_fee_and_tier_context_not_ranking_band"
+              },
+              {
+                "url": "https://obnb.uk/p10088706-the-atp-tour-year-one-1990-the-official-illustrated-guide-to-the-77-tournaments-in-the-new-atp-tour-with-the-full-results",
+                "outcome": "bibliographic_record_no_contents"
+              },
+              {
+                "url": "https://openlibrary.org/books/OL14874076M/World_of_tennis.",
+                "outcome": "bibliographic_record_no_contents"
+              }
+            ],
+            "note": "Retain all actual Q data, exact points and hashes as unknown."
           }
         }
       }
@@ -6937,7 +6974,11 @@
           "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
           "https://cesauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
           "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-737-story.html",
-          "https://en.wikipedia.org/wiki/1990_Volvo_International"
+          "https://en.wikipedia.org/wiki/1990_Volvo_International",
+          "https://www.world.tennis/en/tournament/new-haven/usa/1990/m-csd-usa-03a-1990/draws-and-results/",
+          "https://matchstat.com/tennis/tournaments/m/New%20Haven/1990/",
+          "https://www.stevegtennis.com/draw-results/atp/New%20Haven/1990",
+          "https://openerarankings.com/RankingRules1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6950,7 +6991,7 @@
         "reported_financial_commitment_usd": 1000000,
         "financial_source": "https://dewiki.de/Lexikon/ATP_Tour_1990",
         "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
-        "identity_note": "56 and nominal 16 seeds in transcribed draw; eight BYEs by field arithmetic; Q and WC totals unresolved.",
+        "identity_note": "Secondary Main draw counts 56 entrants, 16 seeds, eight BYEs, 7Q and 6WC. ITF Main dates/purse corroborated; advertised Q days distinct from actual Q play.",
         "remaining": [
           "Confirm qualification draw, phase dates and complete feeder structure.",
           "Resolve unknown or conflicting Main details using original draw.",
@@ -7043,6 +7084,61 @@
             "outcome": "advertised_qualification_dates_found_actual_draw_not_obtained"
           },
           "remaining": "Obtain original poster scan, contemporary results or dated qualifying draw; do not populate certified actual Q dates from auction description. Full qualification graph and exact points unknown."
+        },
+        "itf_event_window_evidence": {
+          "source_url": "https://www.world.tennis/en/tournament/new-haven/usa/1990/m-csd-usa-03a-1990/draws-and-results/",
+          "start_date": "1990-08-13",
+          "end_date": "1990-08-19",
+          "prize_money_usd": 825000,
+          "surface": "outdoor hard",
+          "grade_as_displayed": "2.5",
+          "scope": "Official ITF event metadata verifies Main window and prize, not ATP ranking class, qualification window or Q draw; grade is ITF displayed value, not mapped to ATP category."
+        },
+        "targeted_import_research": {
+          "status": "blocked_candidate_advertised_q_window_only",
+          "reviewed_on": "2026-11-25",
+          "source_attempts": [
+            {
+              "url": "https://www.world.tennis/en/tournament/new-haven/usa/1990/m-csd-usa-03a-1990/draws-and-results/",
+              "outcome": "metadata_accessible_no_qualification_sheet"
+            },
+            {
+              "url": "https://matchstat.com/tennis/tournaments/m/New%20Haven/1990/",
+              "outcome": "main_draw_accessible_points_heading_empty_no_verified_q_sheet"
+            },
+            {
+              "url": "https://www.stevegtennis.com/draw-results/atp/New%20Haven/1990",
+              "outcome": "indexed_main_draw_full_page_timeout"
+            },
+            {
+              "url": "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+              "outcome": "auction_description_rechecked_not_original_image"
+            }
+          ],
+          "candidate_points": {
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "source_tier_label": "CHAMP SERIES",
+            "source_md_label": 64,
+            "band_usd": 1000000,
+            "main_points": {
+              "champion": 230,
+              "finalist": 173,
+              "semifinal": 115,
+              "quarterfinal": 58,
+              "round_of_16": 29,
+              "round_of_32": 15,
+              "round_of_64": 1
+            },
+            "qualifier_addition": 7,
+            "qualification_loss_points": null,
+            "certified": false,
+            "note": "Exact secondary $1m/64 row; actual 56 entrants, bracket 64. Source tier/band meaning and actual qualifying feeder policy unresolved."
+          },
+          "remaining": [
+            "Original dated qualifying sheet or contemporary qualifying results",
+            "Actual Q entrant count and feeder geometry; 7 observed Q is not reserved rule",
+            "Primary financial classification and full points policy"
+          ]
         }
       }
     },
@@ -10277,7 +10373,11 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_ATP_Tour_World_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_ATP_Tour_World_Championships",
-          "https://www.nittoatpfinals.com/en/heritage/results-1970-1999"
+          "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+          "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
+          "https://www.washingtonpost.com/archive/sports/1990/11/18/agassi-edberg-to-meet-in-atp-finale/d5fccd05-0eb0-4b69-89c5-c6305acb067c/",
+          "https://www.skysports.com/tennis/news/5629180/atp-tour-finals-history",
+          "https://openerarankings.com/RankingRules1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10348,6 +10448,85 @@
             "outcome": "official_group_results_read"
           },
           "remaining": "Official 2 groups of 4, 12 group matches, 2 semifinals, final and Nov 13–18 competition dates cross-checked. Exact 1990 ranking awards and entry rules still unverified; do not use knockout Q policy or modern points."
+        },
+        "targeted_import_research": {
+          "status": "preferred_group_contract_candidate_not_approved_or_published",
+          "reviewed_on": "2026-11-25",
+          "why_preferred": "Official 8-player format and crossovers match existing ATPSportingProfile group geometry; no qualifying draw, Q phase dates or Q-loss awards needed. This avoids knockout PDF-hash and Q-table blockers, but historical points remain secondary and squash policy needs approval.",
+          "official_group_evidence": {
+            "source_url": "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+            "source_scope": "Two 4-player groups, 12 round robin matches, two crossover semifinals and final; November 13–18; actual source window kept distinct from archive Nov 12–18.",
+            "contemporary_source_url": "https://www.washingtonpost.com/archive/sports/1990/11/18/agassi-edberg-to-meet-in-atp-finale/d5fccd05-0eb0-4b69-89c5-c6305acb067c/",
+            "contemporary_scope": "November 18 report confirms top-eight event and semifinal phase; not ranking awards.",
+            "source_pdf_url": "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
+            "pdf_text_access": "indexed_text_available_but_render_403",
+            "pdf_sha256": null,
+            "pdf_scope": "ATP retrospective PDF lists $2m event and competition window but extracted match rows contain contradictions; use corrected official heritage HTML for match topology. No verified PDF bytes or hash."
+          },
+          "points_evidence": {
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "secondary_complete_table": {
+              "champion_by_group_wins": {
+                "1": 300,
+                "2": 350,
+                "3": 400
+              },
+              "finalist_by_group_wins": {
+                "1": 150,
+                "2": 200,
+                "3": 250
+              },
+              "non_finalist_by_group_wins": {
+                "0": 0,
+                "1": 50,
+                "2": 100,
+                "3": 150
+              }
+            },
+            "independent_context_url": "https://www.skysports.com/tennis/news/5629180/atp-tour-finals-history",
+            "independent_context_scope": "Retrospective report says an undefeated champion received the equivalent of a major title in that era; not independent confirmation of every 1990 point amount.",
+            "primary_exact_table_verified": false
+          },
+          "proposed_adaptation": {
+            "status": "contract_probe_only_not_approved_for_import",
+            "source_model": "src/beta_engine/domain/tournaments/atp_sporting_profile.py",
+            "source_model_checked_at": "639894de4066bc8ead31a8829d4add08b23ddb55",
+            "profile_schema": "atp_squash_group_profile.v1",
+            "source_start_date": "1990-11-12",
+            "source_end_date": "1990-11-18",
+            "source_urls": [
+              "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+              "https://openerarankings.com/RankingRules1990"
+            ],
+            "played_group_win_points": 50,
+            "knockout_stage_points": {
+              "champion": 250,
+              "finalist": 100,
+              "semifinal": 0
+            },
+            "max_points": 400,
+            "ranked": true,
+            "entry_policy": "admin_selected_no_automatic_race_or_age",
+            "native_announcement_lead_weeks": 1,
+            "match_best_of": 5,
+            "knockout_best_of": 5,
+            "policy_origin": "Existing 2025 squash group rules used for an isolated compatibility probe only; no claim historic ATP scoring, tie-break, entry or announcement policy is approved.",
+            "run_positions": {
+              "calendar_year": {
+                "season_index": 0,
+                "season_week": 46
+              },
+              "offset_37": {
+                "season_index": 1,
+                "season_week": 10
+              }
+            }
+          },
+          "remaining": [
+            "Verify exact 1990 ATP Finals ranking point table against primary authority or obtain explicit owner approval of a documented secondary-based squash adaptation",
+            "Confirm ranking eligibility and expiry policy separately with Claude/Work",
+            "Coordinate shared catalog version, then Save and native execution/reopen under Work"
+          ]
         }
       }
     }
@@ -10390,5 +10569,51 @@
     "observed_lucky_losers": "Observed replacement labels, not additional guaranteed qualification places.",
     "qualification_size_secondary": "Reported Q draw size; does not establish actual participants, sections, byes or dates.",
     "entry_policy": "Certified reserved places and replacement policy are independent of observed entry labels; null until evidenced."
+  },
+  "primary_source_acquisition": {
+    "status": "bibliographic_leads_only_content_not_obtained",
+    "reviewed_on": "2026-11-25",
+    "leads": [
+      {
+        "title": "The ATP tour: year one, 1990: the official illustrated guide to the 77 tournaments in the new ATP tour, with the full results",
+        "publisher": "Bloomsbury",
+        "year": 1991,
+        "isbn10": "0747509123",
+        "source_url": "https://obnb.uk/p10088706-the-atp-tour-year-one-1990-the-official-illustrated-guide-to-the-77-tournaments-in-the-new-atp-tour-with-the-full-results",
+        "status": "catalog_record_only",
+        "request_scope": "Seek original ranking regulations, classification, qualifying sheets and dated rounds for San Francisco/New Haven, and Finals awards. 77 in title is not the scope of the 75-occurrence package; compare event definitions first."
+      },
+      {
+        "title": "World of Tennis 1991",
+        "publisher": "CollinsWillow",
+        "year": 1991,
+        "isbn10": "0002184036",
+        "isbn13": "9780002184038",
+        "pages": 448,
+        "source_url": "https://openlibrary.org/books/OL14874076M/World_of_tennis.",
+        "status": "catalog_record_only_no_readable_scan",
+        "request_scope": "1990 season yearbook, not the 1990 edition covering 1989. Inspect tournament pages and ranking rule appendix; no claim it contains full Q sheets until inspected."
+      }
+    ],
+    "scope": "Public catalog entries identify physical publications, not verified contents, dates, points or PDF hashes."
+  },
+  "import_candidate_priority": {
+    "status": "research_priority_not_publication_decision",
+    "reviewed_on": "2026-11-25",
+    "ordered": [
+      {
+        "occurrence_id": "atp_1990_atp_finals",
+        "reason": "Existing group contract can represent secondary additive table and official format without Q; exact primary points or explicit adaptation approval missing."
+      },
+      {
+        "occurrence_id": "atp_1990_new_haven_1998",
+        "reason": "Advertised Q dates and official Main dates/purse, actual Q graph and ranking rules missing."
+      },
+      {
+        "occurrence_id": "atp_1990_dallas",
+        "reason": "Reported Q32 and observed Q4, no actual Q date/graph and exact awards."
+      }
+    ],
+    "next_research": "Original 1990 ATP guide/yearbook; exact Finals point rule; actual Q sheets for New Haven and San Francisco. Coordinate before publication."
   }
 }

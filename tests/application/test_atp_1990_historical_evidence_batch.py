@@ -703,3 +703,80 @@ def test_second_pass_final_six_preserves_wembley_conflict_and_finals_group_rules
     assert batch["summary"]["second_pass_review_attempted_rows"] == 75
     assert batch["next_second_pass_review_occurrence"] is None
     assert all("second_pass_review" in r["historical_evidence"] for r in batch["occurrences"])
+
+
+def test_targeted_historical_candidates_remain_separate_from_published_profiles(batch):
+    by_id = {r["occurrence_id"]: r for r in batch["occurrences"]}
+    order = batch["import_candidate_priority"]["ordered"]
+    assert [x["occurrence_id"] for x in order] == [
+        "atp_1990_atp_finals", "atp_1990_new_haven_1998", "atp_1990_dallas"]
+    assert batch["summary"]["targeted_import_candidates_reviewed_rows"] == len(order)
+    assert all(by_id[x["occurrence_id"]]["profile_status"] == "not_in_published_sporting_source" for x in order)
+    assert batch["historical_points_evidence"]["qualification_loss_rule_research"]["qualification_loss_points"] is None
+    assert batch["historical_points_evidence"]["qualifying_loss_points"] is None
+    assert batch["primary_source_acquisition"]["status"] == "bibliographic_leads_only_content_not_obtained"
+    assert [x["isbn10"] for x in batch["primary_source_acquisition"]["leads"]] == ["0747509123", "0002184036"]
+    nh = by_id["atp_1990_new_haven_1998"]["historical_evidence"]
+    assert nh["itf_event_window_evidence"]["prize_money_usd"] == 825000
+    assert nh["reported_financial_commitment_usd"] == 1000000
+    assert nh["qualification_start_date"] is nh["qualification_end_date"] is nh["qualification_entrants"] is None
+    assert nh["targeted_import_research"]["candidate_points"]["qualification_loss_points"] is None
+    assert nh["targeted_import_research"]["candidate_points"]["certified"] is False
+
+
+@pytest.mark.parametrize("clock,position_key", [
+    (RunCalendar(52, 1, 1990, 2), "calendar_year"),
+    (RunCalendar(52, 37, 1989, 2), "offset_37"),
+])
+def test_frankfurt_secondary_points_fit_existing_group_contract_without_publication(batch, clock, position_key):
+    # Compatibility probe only: use the existing squash policy fields from a
+    # published modern profile, replace sourced geometry/points with historical
+    # candidate values, and validate an isolated in-memory Edition. This is not
+    # source certification, a Package import, schedule preview or actual Run.
+    from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package, parse_sporting_profile
+    from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    e = r["historical_evidence"]
+    candidate = e["targeted_import_research"]
+    proposed = candidate["proposed_adaptation"]
+    entity = next(e for e in build_atp_sporting_package().entities
+                  if e.source_entity_id == "atp_2025_atp_finals")
+    modern = parse_sporting_profile(entity.payload)
+    payload = modern.model_dump(mode="json")
+    payload.update({
+        "occurrence_id": r["occurrence_id"], "category_id": r["category_id"],
+        "name": e["historical_name"],
+        "source_start_date": proposed["source_start_date"],
+        "source_end_date": proposed["source_end_date"],
+        "source_urls": proposed["source_urls"],
+        "played_group_win_points": proposed["played_group_win_points"],
+        "knockout_stage_points": proposed["knockout_stage_points"],
+    })
+    profile = parse_sporting_profile(payload)
+    assert profile.group_count == 2 and profile.group_size == 4
+    assert profile.advancing_per_group == 2 and len(profile.knockout_crossings) == 2
+    pos = proposed["run_positions"][position_key]
+    expected = r["run_positions_offset_1_start_1990" if position_key == "calendar_year" else "run_positions_offset_37_start_1989"]
+    assert expected == [pos]
+    week = RunWeekPosition(calendar=clock, season_index=pos["season_index"], week=pos["season_week"])
+    announcement = RunWeekPosition(calendar=clock, season_index=pos["season_index"], week=pos["season_week"]-1)
+    edition = profile.build_edition(run_id="historical-contract-probe", branch_id="probe",
+        command_id="probe", week=week, announcement_week=announcement, start_slot=1, seed=0)
+    assert edition.main_entrant_count == 8 and edition.validity_weeks == 52
+    assert edition.week == week
+    stages = profile.knockout_stage_points
+    table = candidate["points_evidence"]["secondary_complete_table"]
+    for wins in (1, 2, 3):
+        assert wins * profile.played_group_win_points + stages["champion"] == table["champion_by_group_wins"][str(wins)]
+        assert wins * profile.played_group_win_points + stages["finalist"] == table["finalist_by_group_wins"][str(wins)]
+    for wins in range(4):
+        assert wins * profile.played_group_win_points + stages["semifinal"] == table["non_finalist_by_group_wins"][str(wins)]
+    assert proposed["max_points"] == 400
+    assert modern.played_group_win_points == 200 and modern.knockout_stage_points["champion"] == 900
+    assert candidate["points_evidence"]["primary_exact_table_verified"] is False
+    assert proposed["status"] == "contract_probe_only_not_approved_for_import"
+    assert candidate["official_group_evidence"]["pdf_sha256"] is None
+    assert r["profile_status"] == "not_in_published_sporting_source"
+    assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
+    assert not any(e.source_entity_id == r["occurrence_id"] for e in build_atp_sporting_package().entities)

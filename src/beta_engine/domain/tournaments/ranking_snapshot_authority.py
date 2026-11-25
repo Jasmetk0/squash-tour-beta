@@ -9,6 +9,7 @@ from typing import Literal
 from pydantic import Field, model_validator
 from beta_engine.domain.rankings.calendar_official import CalendarOfficialRankingSnapshot
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
+from beta_engine.domain.replay_scope import identity_value
 
 from beta_engine.domain.rankings.official import (
     FrozenInput,
@@ -59,6 +60,11 @@ class TournamentRankingSnapshotAuthority(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
+        # The embedded complete ranking makes this hash proportional to the
+        # classified players; a replay scope computes it once per object.
+        return identity_value(self, "fingerprint", self._fingerprint)
+
+    def _fingerprint(self) -> str:
         return hashlib.sha256(
             json.dumps(
                 self.model_dump(mode="json"),

@@ -52,6 +52,31 @@ def identity_value(value, name, compute):
     return result
 
 
+def identity_values(name, objects, compute, *, key=()):
+    """``compute()``, memoized per the identities of ALL ``objects`` and ``key``.
+
+    For a pure function of several frozen models (and a hashable immutable
+    ``key``). Only a value that was actually returned is remembered, so an
+    exception is raised again by every call. The entry keeps the objects
+    alive, so no identity can be reused by a different object.
+    """
+    memo = _memo.get()
+    if memo is None:
+        return compute()
+    values = memo.setdefault("composite", {})
+    index = (name, tuple(id(o) for o in objects), key)
+    known = values.get(index)
+    if known is not None and len(known[0]) == len(objects) and all(
+        a is b for a, b in zip(known[0], objects)
+    ):
+        return known[1]
+    result = compute()
+    values[index] = (tuple(objects), result)
+    while len(values) > MAX_IDENTITY_VALUES:
+        values.pop(next(iter(values)))
+    return result
+
+
 def already_checked(name, objects):
     """True if the pure check ``name`` already PASSED for these exact objects."""
     memo = _memo.get()

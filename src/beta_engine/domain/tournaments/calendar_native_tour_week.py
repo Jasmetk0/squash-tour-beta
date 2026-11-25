@@ -94,6 +94,21 @@ def native_turn_pro_decisions(
     return decisions, model
 
 
+def native_confirmed_results(state, checkpoint, target, clock):
+    """Every published result of each confirmed Edition completed before ``target``.
+
+    Expired results stay in this tuple: they may stop counting, but their
+    sources remain part of the ranking proof.
+    """
+    events = {t.tournament_id: t for t in checkpoint.tournaments}
+    return tuple(
+        r
+        for a in state.editions
+        if a.result_confirmed and a.edition.week.ordinal < target.ordinal
+        for r in published_edition_results(a, events[a.edition.edition_id], clock)
+    )
+
+
 def prepare_native_tour_week(
     *, state, checkpoint, world, source, lifecycle, health, clock, knockout, command,
     turn_pro_model=None,
@@ -167,13 +182,7 @@ def prepare_native_tour_week(
             [h.model_dump(mode="json") for h in prepared_health]
         ),
     )
-    events = {t.tournament_id: t for t in checkpoint.tournaments}
-    results = tuple(
-        r
-        for a in state.editions
-        if a.result_confirmed and a.edition.week.ordinal < target.ordinal
-        for r in published_edition_results(a, events[a.edition.edition_id], clock)
-    )
+    results = native_confirmed_results(state, checkpoint, target, clock)
     ranking, proof = calculate_native_ranking_from_signed_lifecycle(
         states=(*lifecycle, successor_life),
         source=source,

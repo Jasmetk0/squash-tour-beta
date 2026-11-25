@@ -17,7 +17,7 @@ in the retained W10 fixture. The actual Task Center and real matches were
 exercised separately in the smaller HTTP/SQLite regression. No full-week
 or tournament speedup is established.
 
-# Native fork Task Center progress — 24 November 2026 (unmerged candidate)
+# Native fork Task Center progress — 24 November 2026 (merged in #1878)
 
 Repeated Task Center reads of the same native fork state reuse only the
 checked week, match count and source fingerprint. The current transaction
@@ -34,9 +34,9 @@ over two 20-read processes per tree, using Python 3.12.14 on the same host.
 Both projected values matched exactly. First-read latency and whole-season
 wall time are separate measurements, and there is no 1,000-player claim.
 
-# Native Full Simulation one-snapshot step — 24 November 2026 (unmerged candidate)
+# Native Full Simulation one-snapshot step — 24 November 2026 (merged in #1878)
 
-Draft branch `claude/gifted-faraday-yv7dey` on `buuk 27ade97`. Each ordinary
+Original measurement branch `claude/gifted-faraday-yv7dey` on `buuk 27ade97`. Each ordinary
 native child used five transactions: native context under the writer lock,
 a separate Preview, a pending write, Execute (context again, a second
 identical preparation, apply, post-write context) and a receipt reconcile.

@@ -153,3 +153,41 @@ def test_published_results_memo_never_remembers_failure_or_crosses_a_clock(monke
         assert calendar_tour.published_edition_results(authority, event, extended) == ("r3",)
     assert calendar_tour.published_edition_results(authority, event, first) == ("r4",)
     assert len(calls) == 5
+
+
+def test_verified_results_cache_is_bounded_and_never_keeps_a_failure(monkeypatch):
+    from beta_engine.domain.tournaments import calendar_native_tour_week as week
+
+    monkeypatch.setattr(week, "_VERIFIED_RESULTS", type(week._VERIFIED_RESULTS)())
+    monkeypatch.setattr(week, "_MAX_VERIFIED_RESULT_ENTRIES", 2)
+    monkeypatch.setattr(week, "_MAX_VERIFIED_RESULTS", 3)
+    calls = []
+    outcomes = {"bad": ValueError("unverified"), "a": ("a1",), "b": ("b1", "b2"),
+                "c": ("c1",), "big": ("x", "y", "z", "w")}
+
+    def full(state, checkpoint, target, clock):
+        calls.append(state)
+        value = outcomes[state]
+        if isinstance(value, Exception):
+            raise value
+        return value
+
+    monkeypatch.setattr(week, "_native_confirmed_results", full)
+
+    def get(name):
+        return week.native_confirmed_results(name, None, None, None, key=("k", name))
+
+    for _ in range(2):
+        with pytest.raises(ValueError, match="unverified"):
+            get("bad")
+    assert get("a") == ("a1",) and get("a") == ("a1",)
+    assert get("b") == ("b1", "b2")          # 3 results in 2 entries: both kept
+    assert week.native_results_cache_stats() == {"entries": 2, "results": 3}
+    assert get("c") == ("c1",)               # evicts the least recently used "a"
+    assert get("big") == ("x", "y", "z", "w")  # above the bound: never retained
+    assert get("big") == ("x", "y", "z", "w")
+    assert get("a") == ("a1",)
+    assert calls == ["bad", "bad", "a", "b", "c", "big", "big", "a"]
+    # No key (no private scope / unverified input): always the full path.
+    assert week.native_confirmed_results("a", None, None, None, key=None) == ("a1",)
+    assert calls[-1] == "a" and len(calls) == 9

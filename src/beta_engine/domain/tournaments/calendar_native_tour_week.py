@@ -100,11 +100,15 @@ def native_turn_pro_decisions(
 
 # Published Official Ranking results recorded under the exact canonical
 # fingerprints of the complete Tour state and sporting checkpoint they were
-# derived from (see ``_results_key``). Bounded; values are frozen models only.
+# derived from (see ``_results_key``). Values are deeply immutable frozen
+# models (strings, integers, booleans and frozen weeks), about 2.3 KB each.
+# One entry already serves Preview, Execute and the post-write replay of one
+# Week Transition; a longer history above the result bound is not retained,
+# i.e. it keeps the original full path (at most about 150 MB retained).
 _VERIFIED_RESULTS = OrderedDict()
 _VERIFIED_RESULTS_LOCK = Lock()
-_MAX_VERIFIED_RESULT_ENTRIES = 8
-_MAX_VERIFIED_RESULTS = 262144
+_MAX_VERIFIED_RESULT_ENTRIES = 4
+_MAX_VERIFIED_RESULTS = 65536
 
 
 def _results_key(state, checkpoint, target, clock):

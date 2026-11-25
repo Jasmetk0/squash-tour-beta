@@ -393,3 +393,49 @@ def test_point_row_comparison_never_rounds_or_certifies_historical_awards(batch)
     assert dict(counts) == batch["summary"]["point_candidate_comparison_counts"]
     assert sum(counts.values()) == 75
     assert batch["summary"]["published_sporting_profiles"] == 0
+
+
+def test_second_pass_spring_entry_labels_and_phase_boundaries(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    expected = {
+        "indian_wells": (7, 5),
+        "miami": (12, 2),
+        "estoril": (4, 2),
+        "orlando_1991": (4, 3),
+        "rio_carpet_1990": (4, 3),
+        "barcelona": (7, 5),
+        "seoul_1996": (4, 3),
+        "munich": (4, 3),
+    }
+    for series_id, (q, wc) in expected.items():
+        e = rows[series_id]["historical_evidence"]
+        labels = e["main_entry_label_evidence"]
+        assert labels["observed_qualifiers"] == e["qualifier_spots"] == q
+        assert labels["observed_wild_cards"] == e["wild_cards"] == wc
+        assert labels["source_url"] in e["source_urls"]
+        assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+        assert q + wc <= e["main_draw_capacity"]
+        assert e["qualification_entrants"] is None
+        assert e["qualification_start_date"] is None
+        assert e["qualification_end_date"] is None
+    iw = rows["indian_wells"]["historical_evidence"]
+    assert iw["observed_lucky_loser_in_bye_position"] is True
+    assert iw["observed_lucky_losers"] == 1
+    assert iw["observed_seeded_wild_card"] is True
+    assert iw["contemporary_main_opening_date_evidence"]["date"] == rows["indian_wells"]["original_start_date"]
+    miami = rows["miami"]["historical_evidence"]
+    assert miami["bye_seed_ranks"] == list(range(1, 33))
+    assert miami["itf_event_window_evidence"]["start_date"] == rows["miami"]["original_start_date"]
+    assert miami["itf_event_window_evidence"]["end_date"] == rows["miami"]["original_end_date"]
+    barcelona = rows["barcelona"]["historical_evidence"]
+    window = barcelona["organiser_event_window_evidence"]
+    assert window["start_date"] == "1990-04-07"
+    assert rows["barcelona"]["original_start_date"] == "1990-04-09"
+    assert window["end_date"] == rows["barcelona"]["original_end_date"]
+    assert window["missing_seed_number"] == 8
+    assert window["listed_seed_numbers"] == [1, 2, 3, 4, 5, 6, 7, 9, 10, 11, 12, 13, 14, 15, 16]
+    assert barcelona["bye_seed_ranks"] == list(range(1, 9))
+    assert barcelona["qualification_start_date"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 27
+    assert all("source_access" in row["historical_evidence"]["second_pass_review"]
+               for row in batch["occurrences"][13:27])

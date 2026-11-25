@@ -13,7 +13,7 @@ jobs:
       - shell: bash
         run: |
           set -euo pipefail
-          command -v pdftotext
+          command -v pdftotext || { sudo apt-get update -qq && sudo apt-get install -y poppler-utils; }
           cd "$RUNNER_TEMP"
           for tournament in 2024/499 2025/499 2025/506 2025/8996; do
             for draw in mds qs; do

@@ -10,6 +10,7 @@ import pytest
 from beta_engine.domain.run_branch_archive import (
     FULL_RUN_FORMAT, FULL_RUN_SCOPE, decode, encode,
 )
+from beta_engine.infrastructure.db import run_branch_archive
 from beta_engine.infrastructure.db.saved_v2_hooks import ENVIRONMENT_VARIABLE
 from beta_engine.infrastructure.db.saved_v2_store import ENVELOPE_PREFIX
 from tests.api.test_player_generation_calendar_gate import _dump
@@ -98,6 +99,14 @@ def test_full_archive_cold_roundtrip_saved_v2_includes_every_branch(tmp_path, mo
                 (preview["selected_head_revision_id"],),
             ).fetchone()
         assert stored.startswith(ENVELOPE_PREFIX)
+        with monkeypatch.context() as limited:
+            limited.setattr(run_branch_archive, "MAX_ARCHIVE_BYTES", len(stored))
+            status, result = _request(
+                "POST", archive_root(server) + "/export/preview",
+                {"run_id": rid, "branch_id": branch, "mode": "full_run"},
+            )
+            assert status == 409 and result["detail"]["code"] == "archive_request_too_large"
+        assert _dump(source) == before
     server.app.state.runtime.repository._engine.dispose()
     source.unlink()
     installation = tmp_path / "independent-installation"

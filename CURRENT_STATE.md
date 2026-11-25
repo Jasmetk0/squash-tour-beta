@@ -1,3 +1,22 @@
+# Task Center progress without warm Saved v2 reconstruction — 25 November 2026 (unmerged candidate)
+
+The Task Center reads Saved v2 revision headers before the payload. On repeat
+reads it uses the existing snapshot-bound digest path, which re-fetches and
+authenticates every reachable node but skips rebuilding the logical JSON when
+its exact digest is known. The first read of new inputs still validates the
+full envelope. Saved v1 keeps its eager inline read. For the original Timeline,
+repeated reads also reuse the verified week, match count and source fingerprint
+bound to exact live checkpoint and Tour texts, accepted receipts and clocks.
+
+Paired fresh-process reads of the identical 1,000-player W10 Saved v2 database
+(55 revisions, 274 MiB), two processes and 12 repeat reads per process and tree.
+Average of per-process warm medians was 686 → 310 ms (55% less) with identical
+result. Cold timings ranged from 17–20 s and both trees peaked at 2,216 MiB.
+This was the production progress projection with no recorded Task Center parent
+in the retained W10 fixture. The actual Task Center and real matches were
+exercised separately in the smaller HTTP/SQLite regression. No full-week
+or tournament speedup is established.
+
 # Native fork Task Center progress — 24 November 2026 (unmerged candidate)
 
 Repeated Task Center reads of the same native fork state reuse only the

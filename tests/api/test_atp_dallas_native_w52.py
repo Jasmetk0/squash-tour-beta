@@ -99,6 +99,16 @@ def authority(view, occurrence_id=DALLAS):
     return CalendarEditionAuthority.model_validate_json(json.dumps(edition(view, occurrence_id)))
 
 
+def sporting_outcomes(matches):
+    """Seed-determined sporting content; Saved revision ids are excluded."""
+    return {
+        mid: (m.seed, m.result.player_a_id, m.result.player_b_id, m.result.winner_player_id,
+              [(g.winner_player_id, g.winner_games, g.loser_games) for g in m.result.sets],
+              len(m.result.rally_log.events))
+        for mid, m in sorted(matches.items())
+    }
+
+
 def accepted_matches(repo):
     with repo._session_factory() as session:
         cp = load_checkpoint(session, run_id="run", branch_id="branch")
@@ -125,20 +135,20 @@ def timed_slot(server, name):
     return result, request, saved
 
 
-def prepare_dallas_entry(server, *, wild_cards=True, occurrence_id=DALLAS, name_prefix="dallas"):
-    """W05: native applications, field approval, Admin Wild Cards and Draw."""
+def prepare_dallas_entry(server, *, occurrence_id=DALLAS, name_prefix="dallas", players=slice(0, 44),
+                         direct=25, wild_cards=3):
+    """Q week: native applications and field approval; returns WC nominees."""
     view = inspect(server)
-    players = sorted(p["player_id"] for p in view["players"])
-    applicants = players[:44]
+    applicants = sorted(p["player_id"] for p in view["players"])[players]
     execute(server, command(view, "submit", name=f"{name_prefix}-submit", edition_id=occurrence_id,
                             data={"player_ids": applicants}))
     execute(server, command(inspect(server), "approve", name=f"{name_prefix}-approve", edition_id=occurrence_id))
     field = edition(inspect(server), occurrence_id)["field"]
-    assert len(field["direct_main_player_ids"]) == 25
+    assert len(field["direct_main_player_ids"]) == direct
     assert len(field["qualification_player_ids"]) == 16
     below = field["below_qualification_cut_player_ids"]
-    assert len(below) == 3
-    return below if wild_cards else []
+    assert len(below) == wild_cards
+    return below
 
 
 @pytest.fixture(scope="module")
@@ -257,6 +267,7 @@ def dallas_run(tmp_path_factory):
         assert view["next_slot"] is None
         assert not edition(view)["tournament_fingerprint"]
         record["q_matches"] = {mid: m.fingerprint for mid, m in q_matches.items()}
+        record["q_outcomes"] = sporting_outcomes(q_matches)
         record["after_q"] = view
         record["after_q_saved"] = saved
     return record
@@ -357,3 +368,40 @@ def test_dallas_q_week_main_week_save_restart_and_official_points(dallas_run):
     dallas_run["final"] = published
     print("DALLAS_TIMINGS", json.dumps(TIMINGS))
     print("DALLAS_W05_W06_EVENT", json.dumps(dallas_run["w05_w06_event"]))
+
+
+def test_same_seed_reproduces_dallas_qualification_in_an_independent_run(dallas_run, tmp_path):
+    """A second Run from identical inputs/seeds yields the same 12 Q results."""
+    with ApiServer(database_url=f"sqlite:///{tmp_path / 'dallas-repeat.db'}") as server:
+        repo, _ = setup(server, CLOCK, count=48)
+        _save_atp_source(server)
+        view = inspect(server)
+        entry = catalog_entry(server)
+        code, review = preview_scheduled(server, DALLAS, scheduled_request(view, entry, dallas_schedule(view)))
+        assert code == 200, review
+        confirm(server, review)
+        save_tour(server)
+        for week in (2, 3, 4):
+            transition(server, f"repeat-week-{week}")
+        wild_cards = prepare_dallas_entry(server)
+        execute(server, command(inspect(server), "draw", name="dallas-draw", edition_id=DALLAS,
+                                data={"wild_card_player_ids": wild_cards}))
+        save_tour(server)
+        plan = scheduled_edition_plan(authority(inspect(server)))
+        assert plan.draw.model_dump(exclude={"run_id", "branch_id"}) == dallas_run["plan"].draw.model_dump(
+            exclude={"run_id", "branch_id"})
+        timed_slot(server, "repeat-q-1")
+        timed_slot(server, "repeat-q-2")
+        ids = {p.match_id for p in plan.topology.plans}
+        repeat = sporting_outcomes({mid: m for mid, m in accepted_matches(repo).items() if mid in ids})
+        assert repeat == dallas_run["q_outcomes"]
+
+        # Branch isolation: a native fork of this Saved head is rejected
+        # explicitly instead of remapping the cross-week source silently.
+        from beta_engine.infrastructure.db.native_fork_baseline import prepare_native_fork_baseline_in_session
+        head = inspect(server)["saved_head_revision_id"]
+        with repo._session_factory() as session:
+            with pytest.raises(ValueError, match="Scheduled cross-week"):
+                prepare_native_fork_baseline_in_session(
+                    repo, session, run_id="run", source_branch_id="branch",
+                    source_revision_id=head, target_branch_id="fork")

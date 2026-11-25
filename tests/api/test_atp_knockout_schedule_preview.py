@@ -5,7 +5,9 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark=pytest.mark.pr_critical
 
 
-def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp_path):
+@pytest.mark.parametrize("series_id", ["rotterdam", "dallas"])
+def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp_path, series_id):
+    occurrence_id = f"atp_2025_{series_id}"
     with ApiServer(database_url=f"sqlite:///{tmp_path/'schedule.db'}") as server:
         r,b=_make_run(server,name='ATP phase schedule',start=2025,count=2)
         root=server.base_url+f'/admin/runs/{r}/branches/{b}'
@@ -23,8 +25,13 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
         assert code==201,saved
         code,catalog=_request('GET',root+'/calendar-tour/atp-source-editions')
         assert code==200,catalog
-        profile=catalog['entries'][2]
+        profile = next(entry for entry in catalog["entries"]
+                       if entry["profile"]["occurrence_id"] == occurrence_id)
         clock=profile['calendar_projection']['run_weeks'][0]
+        assert clock["season_week"] == 6
+        assert profile["qualification_calendar_projection"]["run_weeks"] == [
+            {"season_index": 0, "season_week": 5}
+        ]
         # Source windows constrain weeks; exact round slots remain an Admin proposal.
         calendar={'schema_version':'run_calendar.v1','weeks_per_year':52,'season_start_year_week':1,'start_year':2025,'season_count':2}
         def position(week,slot):
@@ -33,7 +40,7 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
                  'expected_profile_fingerprint':profile['profile_fingerprint'],
                  'schedule':{'calendar':calendar,'qualification':[position(5,1),position(5,2)],
                              'main':[position(6,n) for n in range(1,6)]}}
-        url=root+'/calendar-tour/atp-source-editions/atp_2025_rotterdam/schedule-preview'
+        url=root+f'/calendar-tour/atp-source-editions/{occurrence_id}/schedule-preview'
         before=_request('GET',working)
         code,plan=_request('POST',url,request)
         assert code==200,plan

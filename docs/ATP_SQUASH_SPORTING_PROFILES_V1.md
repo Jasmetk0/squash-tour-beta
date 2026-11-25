@@ -1,5 +1,21 @@
 # Saved ATP squash sporting profiles V1
 
+## Dallas Open 2025
+
+Setup source v5 and sporting Category source v4 add Dallas. On a calendar-year
+W52 Run, Qualification on 1–2 February maps to W05 and Main on 3–9 February
+maps to W06. The Saved catalog projects each phase separately using the Run's
+actual season offset. The sourced draw has 32 Main places, eight seeds, three
+Main wild cards and four places fed by a 16-player Qualification draw. The
+profile records the phase points and PDF SHA-256 hashes. Historical player
+identities, results and substitutions stay in the sources. The Saved schedule
+preview validates the phase weeks. Native Ranked W52 execution is still pending.
+Earlier Setup versions retain their explicitly Saved profiles.
+
+- [Dallas Open phase dates and points](https://www.dallasopen.com/en/media/news/dallas-2025-history-draw-schedule)
+- [Main draw PDF](https://www.protennislive.com/posting/2025/424/mds.pdf)
+- [Qualification draw PDF](https://www.protennislive.com/posting/2025/424/qs.pdf)
+
 ## Completed results and calendar ranking inputs
 
 `assemble_knockout_result_facts` is shared clock-free sporting assembly. The
@@ -239,7 +255,7 @@ and browser gates remain separate; skipped Draft gates are not executed passes.
 
 ## Sourced Qualification dates — 11 November 2026
 
-New imports use Setup source v4, sporting Category source v3 and Rotterdam
+Setup source v4 and sporting Category source v3 introduced Rotterdam
 knockout profile v2. The historical v1 profile / Category v2 remains readable
 with exactly its original JSON and fingerprints; it still says `not_verified`.
 A new server source never upgrades an existing Run snapshot automatically.

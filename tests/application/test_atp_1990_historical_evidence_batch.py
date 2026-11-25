@@ -677,3 +677,29 @@ def test_second_pass_berlin_through_sao_paulo_no_inferred_entry_policy(batch):
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 69
+
+
+def test_second_pass_final_six_preserves_wembley_conflict_and_finals_group_rules(batch):
+    reviewed = batch["occurrences"][69:75]
+    assert [r["series_id"] for r in reviewed] == [
+        "stockholm", "paris_masters", "itaparica_1990", "moscow",
+        "wembley_1990", "atp_finals"]
+    s, p, i, m, w, a = [r["historical_evidence"] for r in reviewed]
+    for e, q, wc in ((s, 6, 4), (p, 6, 4), (i, 4, 2), (m, 4, 3), (w, 4, 3)):
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+    assert s["observed_lucky_losers"] == 3
+    assert s["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [3]
+    assert i["main_seeds"] == 8
+    disagreement = w["main_draw_source_disagreement"]
+    assert (disagreement["annual_summary_entrants"], disagreement["secondary_infobox_entrants"],
+            disagreement["secondary_expanded_draw_entrants"]) == (56, 16, 32)
+    assert w["observed_lucky_losers"] == 2
+    assert w["main_geometry_status"] == "candidate_field_not_certified_full_draw"
+    assert a["group_format"]["total_matches"] == 15
+    assert a["second_pass_review"]["qualification_draw_status"] == "not_applicable"
+    assert a["point_candidate_comparison"]["source_rule_certified"] is False
+    assert batch["summary"]["second_pass_review_attempted_rows"] == 75
+    assert batch["next_second_pass_review_occurrence"] is None
+    assert all("second_pass_review" in r["historical_evidence"] for r in batch["occurrences"])

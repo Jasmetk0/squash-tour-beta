@@ -1,0 +1,2962 @@
+{
+  "schema_version": "atp_1990_historical_evidence_batch.v1",
+  "source_year": 1990,
+  "reviewed_on": "2026-11-25",
+  "base_commit": "e3ad2956e0a95f9e508563514b2eed72c4159fb7",
+  "source_blob_sha": {
+    "calendar": "026bb1cb25ab897a38c92e38ebb8242a80f7f640",
+    "seasons": "ebc16cb2b82ec50844ddbc2a615b6b8e0f768e94",
+    "category": "4a749e2a80d1122650265a94e330bc8487e20982",
+    "series": "998a96208a13b39d138db75250f054a074df6a5a",
+    "sporting_profiles": "400660d4a7839041debb9adafa7becfd90ea0d6a"
+  },
+  "source_year_status": "verified_atp_results_archive_with_separate_finals_historical_window",
+  "source_as_of": "2026-11-04",
+  "scope": "Reference evidence only; not a Package source, no runtime authority or generated results.",
+  "summary": {
+    "all_dated_occurrences": 2407,
+    "year_dated_occurrences": 75,
+    "year_memberships": 75,
+    "category_counts": {
+      "atp_world_series": 53,
+      "atp_championship_series": 12,
+      "atp_championship_single_week": 9,
+      "atp_finals": 1
+    },
+    "individual_detail_reviewed": 4,
+    "queued_for_individual_review": 71,
+    "published_sporting_profiles": 0,
+    "plan_verified": 0,
+    "played_and_reopened": 0
+  },
+  "source_urls": [
+    "https://www.atptour.com/en/scores/results-archive?year=1990",
+    "https://www.stevegtennis.com/tennis-calendar/atp/1990",
+    "https://en.wikipedia.org/wiki/1990_ATP_Tour",
+    "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+    "https://www.openerarankings.com/RankingRules1990"
+  ],
+  "historical_points_evidence": {
+    "status": "secondary_reconstruction_not_authoritative_profile",
+    "rule_year": 1990,
+    "source_urls": [
+      "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+      "https://www.openerarankings.com/RankingRules1990"
+    ],
+    "rank_dependent_bonus_awards": true,
+    "base_points_150k_32_candidate": {
+      "champion": 90,
+      "finalist": 68,
+      "semifinal": 45,
+      "quarterfinal": 23,
+      "round_of_16": 12,
+      "round_of_32": 1,
+      "qualifier": 6
+    },
+    "note": "Secondary table iteration 1 lists World Series 150K, not 125K. Do not silently map 125K advertised purses to that row. Sydney advertised 150K still needs verification of exact ATP prize class and full Q awards. Blank Q-loss cells are not verified zeros. ATP confirms ranking-based bonuses continued through 1999. The modern fixed-stage profile must not silently drop those bonuses. First-round points are not zero; BYE loss rules need verification."
+  },
+  "finals_alternate_window": {
+    "alternate_date_concept": "atp_finals_heritage_reported_competition_interval",
+    "alternate_end_date": "1990-11-18",
+    "alternate_source_url": "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+    "alternate_start_date": "1990-11-13",
+    "archive_end_date": "1990-11-18",
+    "archive_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+    "archive_start_date": "1990-11-12",
+    "calendar_date_concept": "official_atp_annual_results_archive_event_window",
+    "no_match_day_or_playable_calendar_claim": true,
+    "reconciliation": "different_official_date_window_concepts_preserved",
+    "series_id": "atp_finals"
+  },
+  "first_next_unreviewed_occurrence": "atp_1990_dallas",
+  "occurrences": [
+    {
+      "queue_index": 1,
+      "occurrence_id": "atp_1990_brisbane",
+      "series_id": "brisbane",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-01-01",
+      "original_end_date": "1990-01-07",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 1
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 1
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 1
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 17
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "partial_historical_evidence",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Australian Men's Hardcourt Championships",
+        "host_city": "Adelaide",
+        "country": "AUS",
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships_%E2%80%93_Singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships",
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "reported_prize_money": 125000,
+        "identity_note": "Stable brisbane Series refers to January Adelaide, not the separate September Brisbane event.",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "qualification_entrants": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "remaining": [
+          "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
+          "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
+          "Resolve runtime representation before publishing a Saved sporting profile."
+        ]
+      }
+    },
+    {
+      "queue_index": 2,
+      "occurrence_id": "atp_1990_wellington_1992",
+      "series_id": "wellington_1992",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-01-01",
+      "original_end_date": "1990-01-07",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 1
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 1
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 1
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 17
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "partial_historical_evidence",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "BP National Championships",
+        "host_city": "Wellington",
+        "country": "NZL",
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_BP_National_Championships_%E2%80%93_Singles",
+        "event_source": "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "reported_prize_money": 125000,
+        "identity_note": "Stable ID suffix is not the occurrence year; existing source Series records 1990–1992.",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "qualification_entrants": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "remaining": [
+          "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
+          "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
+          "Resolve runtime representation before publishing a Saved sporting profile."
+        ]
+      }
+    },
+    {
+      "queue_index": 3,
+      "occurrence_id": "atp_1990_auckland",
+      "series_id": "auckland",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-01-08",
+      "original_end_date": "1990-01-14",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 2
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 2
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 2
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 18
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "partial_historical_evidence",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Benson and Hedges Open",
+        "host_city": "Auckland",
+        "country": "NZL",
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Benson_and_Hedges_Open_%E2%80%93_Singles",
+        "event_source": "https://newikis.com/en/1990_Benson_and_Hedges_Open",
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "reported_prize_money": null,
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "qualification_entrants": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "remaining": [
+          "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
+          "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
+          "Resolve runtime representation before publishing a Saved sporting profile."
+        ]
+      }
+    },
+    {
+      "queue_index": 4,
+      "occurrence_id": "atp_1990_sydney_2019",
+      "series_id": "sydney_2019",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-01-08",
+      "original_end_date": "1990-01-14",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 2
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 2
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 2
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 18
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "partial_historical_evidence",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested",
+      "historical_evidence": {
+        "historical_name": "Holden NSW Open",
+        "host_city": "Sydney",
+        "country": "AUS",
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
+        "event_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open",
+        "qualifier_spots": null,
+        "wild_cards": null,
+        "reported_prize_money": 150000,
+        "qualification_size_secondary": 32,
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Holden_NSW_Open_1990/Herren",
+        "identity_note": "January Sydney-1; separate indoor Sydney occurrence belongs to sydney_indoor_1994.",
+        "category_label": "ATP World Series",
+        "event_held": true,
+        "main_draw_capacity": 32,
+        "main_seeds": 8,
+        "main_byes": 0,
+        "qualification_entrants": null,
+        "qualification_start_date": null,
+        "qualification_end_date": null,
+        "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
+        "remaining": [
+          "Confirm original qualification draw and dates; distinguish actual entrants from nominal capacity.",
+          "Verify exact prize-money class, qualification awards and historical rank-dependent bonus policy against primary evidence.",
+          "Resolve runtime representation before publishing a Saved sporting profile."
+        ]
+      }
+    },
+    {
+      "queue_index": 5,
+      "occurrence_id": "atp_1990_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-02-05",
+      "original_end_date": "1990-02-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 6
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 6
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 6
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 22
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 6,
+      "occurrence_id": "atp_1990_maceio_1992",
+      "series_id": "maceio_1992",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-02-05",
+      "original_end_date": "1990-02-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 6
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 6
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 6
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 22
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 7,
+      "occurrence_id": "atp_1990_sofia",
+      "series_id": "sofia",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-02-05",
+      "original_end_date": "1990-02-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 6
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 6
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 6
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 22
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 8,
+      "occurrence_id": "atp_1990_brussels_championship_1992",
+      "series_id": "brussels_championship_1992",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-02-12",
+      "original_end_date": "1990-02-18",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 7
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 7
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 7
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 23
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 9,
+      "occurrence_id": "atp_1990_toronto_indoor_1990",
+      "series_id": "toronto_indoor_1990",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-02-12",
+      "original_end_date": "1990-02-18",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 7
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 7
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 7
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 23
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 10,
+      "occurrence_id": "atp_1990_philadelphia_1998",
+      "series_id": "philadelphia_1998",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-02-19",
+      "original_end_date": "1990-02-25",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 8
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 8
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 8
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 24
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 11,
+      "occurrence_id": "atp_1990_stuttgart_indoor_feb_1995",
+      "series_id": "stuttgart_indoor_feb_1995",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-02-19",
+      "original_end_date": "1990-02-25",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 8
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 8
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 8
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 24
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 12,
+      "occurrence_id": "atp_1990_rio",
+      "series_id": "rio",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-02-26",
+      "original_end_date": "1990-03-04",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 9
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 9
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 9
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 25
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 13,
+      "occurrence_id": "atp_1990_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-02-26",
+      "original_end_date": "1990-03-04",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 9
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 9
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 9
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 25
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 14,
+      "occurrence_id": "atp_1990_indian_wells",
+      "series_id": "indian_wells",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-03-05",
+      "original_end_date": "1990-03-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 10
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 10
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 10
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 26
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 15,
+      "occurrence_id": "atp_1990_marrakech",
+      "series_id": "marrakech",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-03-05",
+      "original_end_date": "1990-03-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 10
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 10
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 10
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 26
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 16,
+      "occurrence_id": "atp_1990_miami",
+      "series_id": "miami",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-03-16",
+      "original_end_date": "1990-03-25",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 11
+        },
+        {
+          "calendar_year": 1990,
+          "year_week": 12
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 12
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 11
+        },
+        {
+          "season_index": 0,
+          "season_week": 12
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 27
+        },
+        {
+          "season_index": 0,
+          "season_week": 28
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 17,
+      "occurrence_id": "atp_1990_estoril",
+      "series_id": "estoril",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-02",
+      "original_end_date": "1990-04-08",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 14
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 14
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 14
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 30
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 18,
+      "occurrence_id": "atp_1990_orlando_1991",
+      "series_id": "orlando_1991",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-02",
+      "original_end_date": "1990-04-08",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 14
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 14
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 14
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 30
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 19,
+      "occurrence_id": "atp_1990_rio_carpet_1990",
+      "series_id": "rio_carpet_1990",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-02",
+      "original_end_date": "1990-04-08",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 14
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 14
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 14
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 30
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 20,
+      "occurrence_id": "atp_1990_barcelona",
+      "series_id": "barcelona",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-04-09",
+      "original_end_date": "1990-04-15",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 15
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 15
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 15
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 31
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 21,
+      "occurrence_id": "atp_1990_tokyo",
+      "series_id": "tokyo",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-04-09",
+      "original_end_date": "1990-04-15",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 15
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 15
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 15
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 31
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 22,
+      "occurrence_id": "atp_1990_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-16",
+      "original_end_date": "1990-04-22",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 16
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 16
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 16
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 32
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 23,
+      "occurrence_id": "atp_1990_seoul_1996",
+      "series_id": "seoul_1996",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-16",
+      "original_end_date": "1990-04-22",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 16
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 16
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 16
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 32
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 24,
+      "occurrence_id": "atp_1990_hong_kong_salem_2002",
+      "series_id": "hong_kong_salem_2002",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-23",
+      "original_end_date": "1990-04-29",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 17
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 17
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 17
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 33
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 25,
+      "occurrence_id": "atp_1990_monte_carlo",
+      "series_id": "monte_carlo",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-04-23",
+      "original_end_date": "1990-04-29",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 17
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 17
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 17
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 33
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 26,
+      "occurrence_id": "atp_1990_madrid_clay_1994",
+      "series_id": "madrid_clay_1994",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-30",
+      "original_end_date": "1990-05-06",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 18
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 18
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 18
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 27,
+      "occurrence_id": "atp_1990_munich",
+      "series_id": "munich",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-30",
+      "original_end_date": "1990-05-06",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 18
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 18
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 18
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 28,
+      "occurrence_id": "atp_1990_singapore_march_1992",
+      "series_id": "singapore_march_1992",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-04-30",
+      "original_end_date": "1990-05-06",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 18
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 18
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 18
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 29,
+      "occurrence_id": "atp_1990_birmingham_1994",
+      "series_id": "birmingham_1994",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-05-07",
+      "original_end_date": "1990-05-13",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 19
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 19
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 19
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 35
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 30,
+      "occurrence_id": "atp_1990_hamburg",
+      "series_id": "hamburg",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-05-07",
+      "original_end_date": "1990-05-13",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 19
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 19
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 19
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 35
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 31,
+      "occurrence_id": "atp_1990_rome",
+      "series_id": "rome",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-05-14",
+      "original_end_date": "1990-05-20",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 20
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 20
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 20
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 36
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 32,
+      "occurrence_id": "atp_1990_umag",
+      "series_id": "umag",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-05-14",
+      "original_end_date": "1990-05-20",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 20
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 20
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 20
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 36
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 33,
+      "occurrence_id": "atp_1990_bologna_1998",
+      "series_id": "bologna_1998",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-05-21",
+      "original_end_date": "1990-05-27",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 21
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 21
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 21
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 37
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 34,
+      "occurrence_id": "atp_1990_florence_1994",
+      "series_id": "florence_1994",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-06-11",
+      "original_end_date": "1990-06-17",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 24
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 24
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 24
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 35,
+      "occurrence_id": "atp_1990_queens_club",
+      "series_id": "queens_club",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-06-11",
+      "original_end_date": "1990-06-17",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 24
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 24
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 24
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 36,
+      "occurrence_id": "atp_1990_s_hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-06-11",
+      "original_end_date": "1990-06-17",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 24
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 24
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 24
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 37,
+      "occurrence_id": "atp_1990_eastbourne",
+      "series_id": "eastbourne",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-06-18",
+      "original_end_date": "1990-06-24",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 25
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 25
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 25
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 41
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 38,
+      "occurrence_id": "atp_1990_poertschach_2008",
+      "series_id": "poertschach_2008",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-06-18",
+      "original_end_date": "1990-06-24",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 25
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 25
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 25
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 41
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 39,
+      "occurrence_id": "atp_1990_bastad",
+      "series_id": "bastad",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-09",
+      "original_end_date": "1990-07-15",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 28
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 28
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 28
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 44
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 40,
+      "occurrence_id": "atp_1990_gstaad",
+      "series_id": "gstaad",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-09",
+      "original_end_date": "1990-07-15",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 28
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 28
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 28
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 44
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 41,
+      "occurrence_id": "atp_1990_newport",
+      "series_id": "newport",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-09",
+      "original_end_date": "1990-07-15",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 28
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 28
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 28
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 44
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 42,
+      "occurrence_id": "atp_1990_stuttgart",
+      "series_id": "stuttgart",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-07-16",
+      "original_end_date": "1990-07-22",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 29
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 29
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 29
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 45
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 43,
+      "occurrence_id": "atp_1990_washington",
+      "series_id": "washington",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-07-16",
+      "original_end_date": "1990-07-22",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 29
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 29
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 29
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 45
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 44,
+      "occurrence_id": "atp_1990_belgrade_2012",
+      "series_id": "belgrade_2012",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-23",
+      "original_end_date": "1990-07-29",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 30
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 30
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 30
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 46
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 45,
+      "occurrence_id": "atp_1990_canadian_open",
+      "series_id": "canadian_open",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-07-23",
+      "original_end_date": "1990-07-29",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 30
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 30
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 30
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 46
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 46,
+      "occurrence_id": "atp_1990_kitzbuhel",
+      "series_id": "kitzbuhel",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-30",
+      "original_end_date": "1990-08-05",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 31
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 31
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 31
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 47
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 47,
+      "occurrence_id": "atp_1990_los_cabos",
+      "series_id": "los_cabos",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-30",
+      "original_end_date": "1990-08-05",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 31
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 31
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 31
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 47
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 48,
+      "occurrence_id": "atp_1990_san_remo_1990",
+      "series_id": "san_remo_1990",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-07-30",
+      "original_end_date": "1990-08-05",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 31
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 31
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 31
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 47
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 49,
+      "occurrence_id": "atp_1990_cincinnati",
+      "series_id": "cincinnati",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-08-06",
+      "original_end_date": "1990-08-12",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 32
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 32
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 32
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 48
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 50,
+      "occurrence_id": "atp_1990_prague_1999",
+      "series_id": "prague_1999",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-08-06",
+      "original_end_date": "1990-08-12",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 32
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 32
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 32
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 48
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 51,
+      "occurrence_id": "atp_1990_atlanta",
+      "series_id": "atlanta",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-08-13",
+      "original_end_date": "1990-08-19",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 33
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 33
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 33
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 49
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 52,
+      "occurrence_id": "atp_1990_new_haven_1998",
+      "series_id": "new_haven_1998",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-08-13",
+      "original_end_date": "1990-08-19",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 33
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 33
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 33
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 49
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 53,
+      "occurrence_id": "atp_1990_san_marino_2000",
+      "series_id": "san_marino_2000",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-08-20",
+      "original_end_date": "1990-08-26",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 34
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 34
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 50
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 54,
+      "occurrence_id": "atp_1990_schenectady_1994",
+      "series_id": "schenectady_1994",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-08-20",
+      "original_end_date": "1990-08-26",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 34
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 34
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 50
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 55,
+      "occurrence_id": "atp_1990_winston_salem",
+      "series_id": "winston_salem",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-08-20",
+      "original_end_date": "1990-08-26",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 34
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 34
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 34
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 0,
+          "season_week": 50
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 56,
+      "occurrence_id": "atp_1990_bordeaux_1995",
+      "series_id": "bordeaux_1995",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-09-10",
+      "original_end_date": "1990-09-16",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 37
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 37
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 37
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 1
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 57,
+      "occurrence_id": "atp_1990_cologne_1992_clay",
+      "series_id": "cologne_1992_clay",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-09-10",
+      "original_end_date": "1990-09-16",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 37
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 37
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 37
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 1
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 58,
+      "occurrence_id": "atp_1990_basel",
+      "series_id": "basel",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-09-24",
+      "original_end_date": "1990-09-30",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 39
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 39
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 39
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 3
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 59,
+      "occurrence_id": "atp_1990_brisbane_autumn_1992",
+      "series_id": "brisbane_autumn_1992",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-09-24",
+      "original_end_date": "1990-09-30",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 39
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 39
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 39
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 3
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 60,
+      "occurrence_id": "atp_1990_palermo",
+      "series_id": "palermo",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-09-24",
+      "original_end_date": "1990-09-30",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 39
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 39
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 39
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 3
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 61,
+      "occurrence_id": "atp_1990_athens_1994",
+      "series_id": "athens_1994",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-01",
+      "original_end_date": "1990-10-07",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 40
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 40
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 4
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 62,
+      "occurrence_id": "atp_1990_sydney_indoor_1994",
+      "series_id": "sydney_indoor_1994",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-10-01",
+      "original_end_date": "1990-10-07",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 40
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 40
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 4
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 63,
+      "occurrence_id": "atp_1990_toulouse_2000",
+      "series_id": "toulouse_2000",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-01",
+      "original_end_date": "1990-10-07",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 40
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 40
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 40
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 4
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 64,
+      "occurrence_id": "atp_1990_berlin_1991",
+      "series_id": "berlin_1991",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-08",
+      "original_end_date": "1990-10-14",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 41
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 41
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 41
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 5
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 65,
+      "occurrence_id": "atp_1990_tel_aviv_1996",
+      "series_id": "tel_aviv_1996",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-08",
+      "original_end_date": "1990-10-14",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 41
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 41
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 41
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 5
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 66,
+      "occurrence_id": "atp_1990_tokyo_indoor_1995",
+      "series_id": "tokyo_indoor_1995",
+      "category_id": "atp_championship_series",
+      "original_start_date": "1990-10-08",
+      "original_end_date": "1990-10-14",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 41
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 41
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 41
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 5
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 67,
+      "occurrence_id": "atp_1990_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-15",
+      "original_end_date": "1990-10-21",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 42
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 42
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 42
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 6
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 68,
+      "occurrence_id": "atp_1990_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-15",
+      "original_end_date": "1990-10-21",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 42
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 42
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 42
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 6
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 69,
+      "occurrence_id": "atp_1990_sao_paulo_1993",
+      "series_id": "sao_paulo_1993",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-10-22",
+      "original_end_date": "1990-10-28",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 43
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 43
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 43
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 7
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 70,
+      "occurrence_id": "atp_1990_stockholm",
+      "series_id": "stockholm",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-10-22",
+      "original_end_date": "1990-10-28",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 43
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 43
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 43
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 7
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 71,
+      "occurrence_id": "atp_1990_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_championship_single_week",
+      "original_start_date": "1990-10-29",
+      "original_end_date": "1990-11-04",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 44
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 44
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 44
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 8
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 72,
+      "occurrence_id": "atp_1990_itaparica_1990",
+      "series_id": "itaparica_1990",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-11-05",
+      "original_end_date": "1990-11-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 45
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 45
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 45
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 9
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 73,
+      "occurrence_id": "atp_1990_moscow",
+      "series_id": "moscow",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-11-05",
+      "original_end_date": "1990-11-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 45
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 45
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 45
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 9
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 74,
+      "occurrence_id": "atp_1990_wembley_1990",
+      "series_id": "wembley_1990",
+      "category_id": "atp_world_series",
+      "original_start_date": "1990-11-05",
+      "original_end_date": "1990-11-11",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 45
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 45
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 45
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 9
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    },
+    {
+      "queue_index": 75,
+      "occurrence_id": "atp_1990_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "original_start_date": "1990-11-12",
+      "original_end_date": "1990-11-18",
+      "calendar_source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "calendar_source_basis": "official_published_event_dates",
+      "mapped_year_weeks": [
+        {
+          "calendar_year": 1990,
+          "year_week": 46
+        }
+      ],
+      "source_finish_iso_week": {
+        "calendar_year": 1990,
+        "year_week": 46
+      },
+      "run_positions_offset_1_start_1990": [
+        {
+          "season_index": 0,
+          "season_week": 46
+        }
+      ],
+      "run_positions_offset_37_start_1989": [
+        {
+          "season_index": 1,
+          "season_week": 10
+        }
+      ],
+      "calendar_status": "canonical_archive_membership_and_date_reconciled",
+      "detail_status": "queued_for_individual_review",
+      "profile_status": "not_in_published_sporting_source",
+      "plan_status": "not_tested",
+      "played_and_reopened_status": "not_tested"
+    }
+  ]
+}

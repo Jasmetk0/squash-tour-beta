@@ -90,7 +90,7 @@ def test_first_january_evidence_is_not_playability(batch):
                and row["played_and_reopened_status"] == "not_tested"
                for row in rows)
     reviewed = batch["summary"]["individual_detail_reviewed"]
-    assert reviewed >= 36
+    assert reviewed == 75
     assert all("historical_evidence" in row for row in rows[:reviewed])
     assert all("historical_evidence" not in row for row in rows[reviewed:])
     assert batch["summary"]["published_sporting_profiles"] == 0
@@ -123,7 +123,11 @@ def test_february_geometry_and_evidence_boundaries(batch):
         assert evidence["main_byes"] == byes
         assert evidence["qualification_size_secondary"] == q
     for evidence in rows.values():
-        assert evidence["main_draw_capacity"] + evidence["main_byes"] == evidence["main_bracket_slots"]
+        if evidence.get("format") == "round_robin_then_knockout":
+            assert evidence["main_bracket_slots"] is None
+            assert evidence["main_byes"] is None
+        else:
+            assert evidence["main_draw_capacity"] + evidence["main_byes"] == evidence["main_bracket_slots"]
         assert evidence["qualification_entrants"] is None
         assert evidence["qualification_start_date"] is None
         assert evidence["qualification_end_date"] is None
@@ -262,3 +266,41 @@ def test_april_june_sources_and_frankfurt_finals(batch):
     assert p == batch["historical_points_evidence"]["finals_1990_candidate"]
     assert all(row["qualification_loss_points"] is None
                for row in batch["historical_points_evidence"]["world_series_64_candidate_rows"])
+
+
+def test_1990_first_pass_completed_without_claiming_sporting_readiness(batch):
+    summary = batch["summary"]
+    assert summary["individual_detail_reviewed"] == 75
+    assert summary["annual_census_only_rows"] == summary["queued_for_individual_review"] == 0
+    assert batch["first_next_unreviewed_occurrence"] is None
+    assert batch["next_open_evidence_occurrence"] == "atp_1990_brisbane"
+    assert summary["published_sporting_profiles"] == summary["plan_verified"] == summary["played_and_reopened"] == 0
+    rows = {row["series_id"]: row["historical_evidence"] for row in batch["occurrences"]}
+    assert sum(e["qualifier_spots"] is not None for e in rows.values()) == summary["reported_q_spot_count_rows"]
+    assert sum(e["wild_cards"] is not None for e in rows.values()) == summary["reported_wc_count_rows"]
+    assert sum("main_draw_source_disagreement" in e for e in rows.values()) == summary["main_draw_disagreement_rows"]
+    for series_id in ("bordeaux_1995", "cologne_1992_clay", "basel",
+                      "brisbane_autumn_1992", "palermo", "athens_1994",
+                      "toulouse_2000", "berlin_1991", "tel_aviv_1996",
+                      "montpellier", "vienna", "sao_paulo_1993"):
+        e = rows[series_id]
+        assert e["main_draw_source_disagreement"]["annual_summary_entrants"] == 28
+        assert e["main_draw_capacity"] == 32
+        assert e["main_byes"] == 0
+    assert rows["wembley_1990"]["main_draw_source_disagreement"]["annual_summary_entrants"] == 56
+    assert rows["wembley_1990"]["licence_continuity_status"] == "replacement_announcement_not_proof_of_legal_continuity"
+    assert rows["wembley_1990"]["main_geometry_status"] == "candidate_field_not_certified_full_draw"
+    for series_id, seeds in (("stuttgart", 16), ("atlanta", 8),
+                            ("cincinnati", 8), ("winston_salem", 4),
+                            ("stockholm", 16), ("paris_masters", 16)):
+        e = rows[series_id]
+        assert e["bye_seed_ranks"] == list(range(1, seeds + 1))
+        assert len(e["bye_seed_ranks"]) == e["main_byes"]
+    assert rows["stuttgart"]["qualifier_spots"] == 5
+    assert rows["atlanta"]["qualifier_spots"] == 7
+    assert rows["atlanta"]["observed_lucky_losers"] == 1
+    assert rows["atp_finals"]["format"] == "round_robin_then_knockout"
+    assert rows["atp_finals"]["group_format"]["total_matches"] == 15
+    assert rows["atp_finals"]["main_bracket_slots"] is None
+    assert rows["atp_finals"]["qualification_status"] == "not_a_standard_knockout_qualification_phase"
+    assert all(e["remaining"] for e in rows.values())

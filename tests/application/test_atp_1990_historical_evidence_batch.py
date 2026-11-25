@@ -89,18 +89,22 @@ def test_first_january_evidence_is_not_playability(batch):
                and row["plan_status"] == "not_tested"
                and row["played_and_reopened_status"] == "not_tested"
                for row in rows)
-    assert sum("historical_evidence" in row for row in rows) == 13
+    reviewed = batch["summary"]["individual_detail_reviewed"]
+    assert reviewed >= 21
+    assert all("historical_evidence" in row for row in rows[:reviewed])
+    assert all("historical_evidence" not in row for row in rows[reviewed:])
     assert batch["summary"]["published_sporting_profiles"] == 0
     assert batch["historical_points_evidence"]["rank_dependent_bonus_awards"] is True
-    assert batch["first_next_unreviewed_occurrence"] == rows[13]["occurrence_id"]
-    assert rows[13]["series_id"] == "indian_wells"
+    assert batch["first_next_unreviewed_occurrence"] == (
+        rows[reviewed]["occurrence_id"] if reviewed < len(rows) else None
+    )
 
 
 def test_february_geometry_and_evidence_boundaries(batch):
     rows = {row["series_id"]: row["historical_evidence"]
             for row in batch["occurrences"] if "historical_evidence" in row}
-    assert len(rows) == batch["summary"]["individual_detail_reviewed"] == 13
-    assert batch["summary"]["queued_for_individual_review"] == 62
+    assert len(rows) == batch["summary"]["individual_detail_reviewed"]
+    assert batch["summary"]["queued_for_individual_review"] == 75 - len(rows)
     assert rows["dallas"]["host_city"] == "San Francisco"
     assert rows["maceio_1992"]["host_city"] == "Guarujá"
     assert rows["sofia"]["host_city"] == "Milan"
@@ -165,3 +169,32 @@ def test_reviewed_series_history_matches_canonical_1990_identity(batch):
         assert len(hosts) == 1
         assert normalized(hosts[0]["city"]) == normalized(row["historical_evidence"]["host_city"])
         assert hosts[0]["country_code"] == row["historical_evidence"]["country"]
+
+
+def test_march_april_geometry_and_preserved_source_disagreements(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    for name, entrants, seeds, byes, slots in (
+        ("indian_wells", 56, 16, 8, 64),
+        ("miami", 96, 32, 32, 128),
+        ("barcelona", 56, 16, 8, 64),
+        ("tokyo", 56, 16, 8, 64),
+    ):
+        evidence = rows[name]["historical_evidence"]
+        assert (evidence["main_draw_capacity"], evidence["main_seeds"],
+                evidence["main_byes"], evidence["main_bracket_slots"]) == (
+                    entrants, seeds, byes, slots
+                )
+    miami = rows["miami"]
+    assert miami["original_start_date"] == "1990-03-16"
+    assert miami["original_end_date"] == "1990-03-25"
+    assert [week["year_week"] for week in miami["mapped_year_weeks"]] == [11, 12]
+    assert miami["historical_evidence"]["alternate_annual_index_date"] == "1990-03-12"
+    assert miami["historical_evidence"]["main_round_schedule_status"] == "not_verified_two_week_source_window"
+    assert rows["barcelona"]["historical_evidence"]["main_draw_source_disagreement"]["annual_summary_entrants"] == 32
+    assert rows["estoril"]["historical_evidence"]["venue_locality_secondary"] == "Oeiras"
+    assert rows["rio_carpet_1990"]["historical_evidence"]["surface_enclosure_status"] == "conflicting_secondary_sources"
+    for name, q, wc in (("marrakech", 4, 3), ("tokyo", 7, 5)):
+        evidence = rows[name]["historical_evidence"]
+        assert evidence["qualifier_spots"] == q
+        assert evidence["wild_cards"] == wc
+    assert rows["miami"]["historical_evidence"]["qualification_entrants"] is None

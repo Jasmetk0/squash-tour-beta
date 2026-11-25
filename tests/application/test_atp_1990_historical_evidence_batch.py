@@ -142,3 +142,26 @@ def test_february_geometry_and_evidence_boundaries(batch):
     assert bands[-1]["to_rank"] == 200
     assert all(left["to_rank"] + 1 == right["from_rank"]
                for left, right in zip(bands, bands[1:]))
+
+
+def test_reviewed_series_history_matches_canonical_1990_identity(batch):
+    import unicodedata
+
+    def normalized(value):
+        return "".join(char for char in unicodedata.normalize("NFD", value)
+                       if unicodedata.category(char) != "Mn").casefold()
+
+    entities = {row["source_entity_id"]: row["payload"]
+                for row in read(ROOT / "series.json")["entities"]}
+    for row in batch["occurrences"]:
+        if "historical_evidence" not in row:
+            continue
+        payload = entities[row["series_id"]]
+        assert any(period["from"] <= 1990 <= period["to"]
+                   and period["category_id"] == row["category_id"]
+                   for period in payload["history_periods"])
+        hosts = [entry for entry in payload.get("historical_host_change", [])
+                 if entry["year"] == 1990]
+        assert len(hosts) == 1
+        assert normalized(hosts[0]["city"]) == normalized(row["historical_evidence"]["host_city"])
+        assert hosts[0]["country_code"] == row["historical_evidence"]["country"]

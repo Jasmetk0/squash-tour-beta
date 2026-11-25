@@ -12,12 +12,12 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.pr_critical
 
 
-@pytest.mark.parametrize('version',[2,4,5],ids=['historical-v1','dallas-source-v4','new-source-v5'])
+@pytest.mark.parametrize('version',[2,4,5,6],ids=['historical-v1','dallas-source-v4','munich-vienna-v5','finals-source-v6'])
 def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(tmp_path,monkeypatch,version):
     verified = version >= 4
     database=f"sqlite:///{tmp_path/'qualification.db'}"
     document=ATPHistoricalCalendarAdapter().build_document()
-    if version < 5:
+    if version < 6:
         legacy=Path(__file__).parents[1]/f'fixtures/atp/squash_sporting_profiles_source_v{version}.json'
         (tmp_path/'squash_sporting_profiles_v1.json').write_bytes(legacy.read_bytes())
         old=build_atp_sporting_package(tmp_path)
@@ -43,8 +43,10 @@ def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(
         code,catalog=_request('GET',root+'/calendar-tour/atp-source-editions');assert code==200,catalog
         entries = {entry["profile"]["occurrence_id"]: entry for entry in catalog["entries"]}
         assert ("atp_2025_dallas" in entries) is verified
-        assert ("atp_2025_munich" in entries) is (version == 5)
-        assert ("atp_2025_vienna" in entries) is (version == 5)
+        assert ("atp_2025_munich" in entries) is (version >= 5)
+        assert ("atp_2025_vienna" in entries) is (version >= 5)
+        assert ("atp_2024_atp_finals" in entries) is (version == 6)
+        assert ("atp_2024_next_gen_atp_finals" in entries) is (version == 6)
         if verified:
             dallas = entries["atp_2025_dallas"]
             assert dallas["qualification_calendar_projection"]["run_ordinals"] == [4]

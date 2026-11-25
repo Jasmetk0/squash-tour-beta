@@ -1,5 +1,11 @@
 # Saved ATP squash sporting profiles V1
 
+## 2024 Finals and source coverage audit
+
+Setup source v7 / sporting Category v6 append two independent 2024 group profiles: ATP Finals (10–17 November, 200 per group win, 400 semifinal win, 500 final win) and Next Gen ATP Finals (18–22 December, unranked). Both retain the existing eight-player, two-group, crossover semifinal and squash BO5 adaptation with Admin-selected entrants. No automatic Race or age selection and no historical player identities or results. The 2024 dates match the existing canonical Calendar. Source links are stored on each profile. Existing v5 profiles remain identical.
+
+Run `python scripts/audit_atp_sporting_coverage.py --year 2024 --year 2025` for deterministic source coverage by year/category and per-occurrence missing/profiled status. This read-only tool checks identity, category and Main dates against the canonical Calendar. Undated and known-not-held memberships are separately reported. A profile is not a claim of native execution readiness or full-season acceptance. It does not verify live external sources or change Run data.
+
 ## Munich and Vienna 2025
 
 Setup source v6 and sporting Category source v5 append two profiles without

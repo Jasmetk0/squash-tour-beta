@@ -64,12 +64,16 @@ def test_invalid_knockout_configuration_cannot_become_a_ready_profile(patch):
         ATPKnockoutProfile.model_validate_json(json.dumps({**profile().model_dump(mode='json'), **patch}))
 
 
-@pytest.mark.parametrize(("year", "q_start", "q_end"), [
-    (2024, "2024-06-08", "2024-06-09"),
-    (2025, "2025-06-07", "2025-06-08"),
+@pytest.mark.parametrize(("occurrence", "q_start", "q_end"), [
+    ("atp_2024_stuttgart", "2024-06-08", "2024-06-09"),
+    ("atp_2025_stuttgart", "2025-06-07", "2025-06-08"),
+    ("atp_2024_delray_beach", "2024-02-10", "2024-02-11"),
+    ("atp_2025_delray_beach", "2025-02-08", "2025-02-09"),
+    ("atp_2025_houston", "2025-03-29", "2025-03-30"),
+    ("atp_2025_santiago", "2025-02-22", "2025-02-23"),
 ])
-def test_atp_250_28_player_geometry_counts_byes_not_matches(year, q_start, q_end):
-    p = profile(f"atp_{year}_stuttgart")
+def test_atp_250_28_player_geometry_counts_byes_not_matches(occurrence, q_start, q_end):
+    p = profile(occurrence)
     g = p.geometry()
     assert p.category_id == "atp_250"
     assert (p.main_entrants, p.qualification_entrants, p.qualifier_spots) == (28, 16, 4)

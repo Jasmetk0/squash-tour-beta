@@ -795,6 +795,202 @@
           "2025-06-11"
         ]
       }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_delray_beach",
+      "category_id": "atp_250",
+      "name": "Delray Beach Open 2024",
+      "source_start_date": "2024-02-12",
+      "source_end_date": "2024-02-18",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/499/mds.pdf",
+        "https://www.protennislive.com/posting/2024/499/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/499/mds.pdf": "eb516a5f773b6a1400b8fb6d919f968fa44cb03d92fde9b3a3f601d5d1d37741",
+        "https://www.protennislive.com/posting/2024/499/qs.pdf": "85336b96647868c783f1b6373766c24ba5e31fc0daa9297862b2c67fcbfcd328"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-02-10",
+        "end_date": "2024-02-11",
+        "source_urls": [
+          "https://www.delraybeachopen.com/en/tournament/news/fritz-and-paul-rankings-race"
+        ],
+        "published_dates": [
+          "2024-01-10"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_delray_beach",
+      "category_id": "atp_250",
+      "name": "Delray Beach Open 2025",
+      "source_start_date": "2025-02-10",
+      "source_end_date": "2025-02-16",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/499/mds.pdf",
+        "https://www.protennislive.com/posting/2025/499/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/499/mds.pdf": "70bec7dd3702230a2098b32b300d7d2fea8cf19dde8c3b09f18aa3dd24665c6d",
+        "https://www.protennislive.com/posting/2025/499/qs.pdf": "7e45b0a117b9fa965cd4621e776f515ce5f56b2cefa92232f1e06c87670b7775"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-08",
+        "end_date": "2025-02-09",
+        "source_urls": [
+          "https://www.delraybeachopen.com/en/tournament/news/2025-dbo-fritz-and-paul"
+        ],
+        "published_dates": [
+          "2024-10-23"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_houston",
+      "category_id": "atp_250",
+      "name": "U.S. Men's Clay Court Championship 2025",
+      "source_start_date": "2025-03-31",
+      "source_end_date": "2025-04-06",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/717/mds.pdf",
+        "https://www.protennislive.com/posting/2025/717/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/717/mds.pdf": "41325ebab18bd7742a10c31bda96b8845e4a44cee46e94697f519bc5cc637d78",
+        "https://www.protennislive.com/posting/2025/717/qs.pdf": "0c96129d25e8fa38c7f508cfead20dd4095410bdc13222e29f4e2baba1007c2c"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-03-29",
+        "end_date": "2025-03-30",
+        "source_urls": [
+          "https://www.houstonchronicle.com/la-voz/article/conciertos-de-emmanuel-marisela-tenis-golf-y-20244570.php"
+        ],
+        "published_dates": [
+          "2025-03-27"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_santiago",
+      "category_id": "atp_250",
+      "name": "Movistar Chile Open 2025",
+      "source_start_date": "2025-02-24",
+      "source_end_date": "2025-03-02",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/8996/mds.pdf",
+        "https://www.protennislive.com/posting/2025/8996/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/8996/mds.pdf": "e92c81f5debe57fddb0c111d449df05bd4343beae2976a15e0f2765b5abf774a",
+        "https://www.protennislive.com/posting/2025/8996/qs.pdf": "bda6c992b52d0db5a0ac3545f51c66efb4bda25ee34e7916b8318194ea898eb4"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-22",
+        "end_date": "2025-02-23",
+        "source_urls": [
+          "https://www.chileopen.cl/todo-lo-que-necesitas-saber-para-el-movistar-chileopen-2025-horarios-shows-y-m%C3%A1s"
+        ],
+        "published_dates": [
+          "2025-01-24"
+        ]
+      }
     }
   ]
 }

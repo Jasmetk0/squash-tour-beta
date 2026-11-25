@@ -70,6 +70,7 @@ from beta_engine.domain.matches.stamina import (
     EffectiveMatchStaminaSnapshot,
     MatchStaminaLog,
     PlayerStaminaState,
+    StaminaAdvanceMemo,
     StaminaDimension,
     StaminaTransitionCause,
 )
@@ -92,6 +93,35 @@ from beta_engine.domain.matches.working_state import (
     MatchRallyWorkingState,
     MatchWorkingInput,
 )
+
+
+@dataclass(frozen=True, slots=True)
+class _BetweenRallySample:
+    """Sampled restart after one rally, before it becomes a hashed timeline event.
+
+    The live rally loop needs only the elapsed time and kind (for stamina); the
+    timeline needs the same values as an event with its chain position. Both use
+    the identical RNG branch, so the live sample is reused by ``_build_timeline``
+    when the rally hash and derived interval seed prove it is the same restart.
+    """
+
+    previous_rally_hash: str
+    interval_seed: int
+    event_type: str
+    elapsed_seconds: float
+    values: dict[str, object]
+
+
+@dataclass(frozen=True, slots=True)
+class _LiveMatchReuse:
+    """Exact live evidence one full ``simulate`` call hands to its own result.
+
+    Both parts only ever replace a recomputation with the value the live loop
+    computed from provably identical inputs; anything else is recomputed.
+    """
+
+    interval_samples: dict[int, _BetweenRallySample]
+    stamina: StaminaAdvanceMemo
 
 
 @dataclass(slots=True)
@@ -623,7 +653,7 @@ class MatchEngine:
             player_workload_units=player_workloads,
         )
         if not set_complete:
-            interval = self._between_rally_interval(
+            interval = self._sample_between_rally_interval(
                 context=context,
                 timing=working_input.timing,
                 previous_rally=event,
@@ -632,8 +662,6 @@ class MatchEngine:
                 ).branch(
                     SeedScope.MATCH, "between-rally", event.rally_index
                 ),
-                timeline_index=event.rally_index * 2,
-                previous_event_hash="0" * 64,
             )
             _, stamina_states = MatchStaminaLog.advance_states(
                 effective=working_input.stamina,
@@ -826,6 +854,10 @@ class MatchEngine:
             for plan in gameplans.initial_gameplans
         )
         timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
+        live_reuse = _LiveMatchReuse(
+            interval_samples={},
+            stamina=StaminaAdvanceMemo(effective=stamina, initial_states=stamina_states),
+        )
 
         for set_number in range(1, context.best_of + 1):
             retired_player_id = self._retirement_if_triggered(
@@ -853,6 +885,7 @@ class MatchEngine:
                     stamina=stamina,
                     expected_final_stamina_states=stamina_states,
                     gameplan_applied=gameplan_applied,
+                    live_reuse=live_reuse,
                 )
 
             (
@@ -888,6 +921,7 @@ class MatchEngine:
                 gameplan_states=gameplan_states,
                 gameplan_applied=gameplan_applied,
                 rules=rules,
+                live_reuse=live_reuse,
             )
             rally_events.extend(set_events)
             sets.append(set_result)
@@ -913,9 +947,9 @@ class MatchEngine:
                     stamina=stamina,
                     expected_final_stamina_states=stamina_states,
                     gameplan_applied=gameplan_applied,
+                    live_reuse=live_reuse,
                 )
-            _, stamina_states = MatchStaminaLog.advance_states(
-                effective=stamina,
+            _, stamina_states = live_reuse.stamina.advance(
                 states=stamina_states,
                 cause=StaminaTransitionCause.GAME_BREAK_RECOVERY,
                 elapsed_seconds=timing.nominal_game_break_seconds,
@@ -946,6 +980,7 @@ class MatchEngine:
             stamina=stamina,
             expected_final_stamina_states=stamina_states,
             gameplan_applied=gameplan_applied,
+            live_reuse=live_reuse,
         )
 
     def _build_result(
@@ -966,6 +1001,7 @@ class MatchEngine:
         gameplan_applied: bool,
         retired_player_id: str | None = None,
         retired_at_set_start: int | None = None,
+        live_reuse: _LiveMatchReuse | None = None,
     ) -> MatchResult:
         rally_log = MatchRallyLog.create(
             match_id=context.match_id,
@@ -988,12 +1024,14 @@ class MatchEngine:
             timing=timing,
             termination_reason=termination_reason,
             retired_at_set_start=retired_at_set_start,
+            interval_samples=live_reuse.interval_samples if live_reuse else None,
         )
         stamina_log = MatchStaminaLog.build(
             context=context,
             timeline=timeline_log,
             rally_events=rally_log.events,
             effective=stamina,
+            live_memo=live_reuse.stamina if live_reuse else None,
         )
         if stamina_log.final_states != expected_final_stamina_states:
             raise ValueError("live stamina state diverged from authoritative timeline")
@@ -1041,6 +1079,7 @@ class MatchEngine:
         gameplan_states: tuple[PlayerGameplanState, PlayerGameplanState],
         gameplan_applied: bool,
         rules: EffectiveRallyRulesSnapshot,
+        live_reuse: _LiveMatchReuse,
     ) -> tuple[
         str,
         SetResult,
@@ -1336,8 +1375,7 @@ class MatchEngine:
                     states=gameplan_states,
                     winner_player_id=rally_winner,
                 )
-            _, stamina_states = MatchStaminaLog.advance_states(
-                effective=stamina,
+            _, stamina_states = live_reuse.stamina.advance(
                 states=stamina_states,
                 cause=StaminaTransitionCause.RALLY_WORKLOAD,
                 elapsed_seconds=event.elapsed_seconds,
@@ -1345,18 +1383,18 @@ class MatchEngine:
                 player_workload_units=player_workloads,
             )
             if not set_complete:
-                interval = self._between_rally_interval(
+                # Only the elapsed time and kind are needed live; the timeline
+                # reuses this exact sample instead of drawing the restart again.
+                interval = self._sample_between_rally_interval(
                     context=context,
                     timing=timing,
                     previous_rally=event,
                     interval_rng=timeline_rng.branch(
                         SeedScope.MATCH, "between-rally", event.rally_index
                     ),
-                    timeline_index=event.rally_index * 2,
-                    previous_event_hash="0" * 64,
                 )
-                _, stamina_states = MatchStaminaLog.advance_states(
-                    effective=stamina,
+                live_reuse.interval_samples[event.rally_index] = interval
+                _, stamina_states = live_reuse.stamina.advance(
                     states=stamina_states,
                     cause=(
                         StaminaTransitionCause.OBJECTIVE_DELAY_RECOVERY
@@ -1522,9 +1560,11 @@ class MatchEngine:
         timing: EffectiveMatchTimingSnapshot,
         termination_reason: MatchTerminationReason,
         retired_at_set_start: int | None,
+        interval_samples: dict[int, _BetweenRallySample] | None = None,
     ) -> MatchTimelineLog:
         """Build time truth from an isolated RNG branch after scoring is complete."""
 
+        samples = interval_samples or {}
         timeline_events: list[MatchTimelineEvent] = []
         previous_hash = rally_log.input_snapshot_hash
         timeline_rng = match_rng.branch(SeedScope.MATCH, "timeline-v1")
@@ -1557,6 +1597,7 @@ class MatchEngine:
                     ),
                     timeline_index=len(timeline_events) + 1,
                     previous_event_hash=previous_hash,
+                    sample=samples.get(rally.rally_index),
                 )
                 timeline_events.append(interval)
                 previous_hash = interval.event_hash
@@ -1592,7 +1633,39 @@ class MatchEngine:
         interval_rng: DeterministicRng,
         timeline_index: int,
         previous_event_hash: str,
+        sample: _BetweenRallySample | None = None,
     ) -> BetweenRallyIntervalEvent | ObjectiveDelayEvent:
+        if (
+            sample is None
+            or sample.previous_rally_hash != previous_rally.event_hash
+            or sample.interval_seed != interval_rng.seed.value
+        ):
+            sample = self._sample_between_rally_interval(
+                context=context,
+                timing=timing,
+                previous_rally=previous_rally,
+                interval_rng=interval_rng,
+            )
+        event_type = (
+            ObjectiveDelayEvent
+            if sample.event_type == "OBJECTIVE_DELAY"
+            else BetweenRallyIntervalEvent
+        )
+        return event_type.create(
+            match_id=context.match_id,
+            timeline_index=timeline_index,
+            **sample.values,
+            previous_event_hash=previous_event_hash,
+        )
+
+    def _sample_between_rally_interval(
+        self,
+        *,
+        context: MatchContext,
+        timing: EffectiveMatchTimingSnapshot,
+        previous_rally: RallyEvent,
+        interval_rng: DeterministicRng,
+    ) -> _BetweenRallySample:
         player_a_id = context.player_a.player.player_id
         player_b_id = context.player_b.player.player_id
         server_player_id = previous_rally.post_rally_state.next_server_player_id
@@ -1644,38 +1717,46 @@ class MatchEngine:
             previous_rally.rules_resolution.context, ExternalInterruptionRuleContext
         ):
             facts = previous_rally.rules_resolution.context
-            return ObjectiveDelayEvent.create(
-                match_id=context.match_id,
-                timeline_index=timeline_index,
-                after_rally_index=previous_rally.rally_index,
-                set_number=previous_rally.set_number,
-                reason=facts.reason,
-                interruption_elapsed_seconds=facts.interruption_elapsed_seconds,
-                restart_ready_seconds=round(max(readiness.values()), 3),
-                elapsed_seconds=round(
-                    max(facts.interruption_elapsed_seconds, *readiness.values()), 3
-                ),
-                previous_event_hash=previous_event_hash,
+            elapsed = round(
+                max(facts.interruption_elapsed_seconds, *readiness.values()), 3
             )
-        return BetweenRallyIntervalEvent.create(
-            match_id=context.match_id,
-            timeline_index=timeline_index,
-            after_rally_index=previous_rally.rally_index,
-            set_number=previous_rally.set_number,
-            server_player_id=server_player_id,
-            receiver_player_id=receiver_player_id,
-            server_intent=server_intent,
-            receiver_intent=receiver_intent,
-            server_decision_factors=server_factors,
-            receiver_decision_factors=receiver_factors,
-            server_ready_seconds=server_ready,
-            receiver_ready_seconds=receiver_ready,
-            official_ready_seconds=official_ready,
-            court_ready_seconds=court_ready,
-            dominant_readiness=dominant,
-            elapsed_seconds=round(max(readiness.values()), 3),
-            interval_seed=str(interval_rng.seed.value),
-            previous_event_hash=previous_event_hash,
+            return _BetweenRallySample(
+                previous_rally_hash=previous_rally.event_hash,
+                interval_seed=interval_rng.seed.value,
+                event_type="OBJECTIVE_DELAY",
+                elapsed_seconds=elapsed,
+                values={
+                    "after_rally_index": previous_rally.rally_index,
+                    "set_number": previous_rally.set_number,
+                    "reason": facts.reason,
+                    "interruption_elapsed_seconds": facts.interruption_elapsed_seconds,
+                    "restart_ready_seconds": round(max(readiness.values()), 3),
+                    "elapsed_seconds": elapsed,
+                },
+            )
+        elapsed = round(max(readiness.values()), 3)
+        return _BetweenRallySample(
+            previous_rally_hash=previous_rally.event_hash,
+            interval_seed=interval_rng.seed.value,
+            event_type="BETWEEN_RALLY_INTERVAL",
+            elapsed_seconds=elapsed,
+            values={
+                "after_rally_index": previous_rally.rally_index,
+                "set_number": previous_rally.set_number,
+                "server_player_id": server_player_id,
+                "receiver_player_id": receiver_player_id,
+                "server_intent": server_intent,
+                "receiver_intent": receiver_intent,
+                "server_decision_factors": server_factors,
+                "receiver_decision_factors": receiver_factors,
+                "server_ready_seconds": server_ready,
+                "receiver_ready_seconds": receiver_ready,
+                "official_ready_seconds": official_ready,
+                "court_ready_seconds": court_ready,
+                "dominant_readiness": dominant,
+                "elapsed_seconds": elapsed,
+                "interval_seed": str(interval_rng.seed.value),
+            },
         )
 
     @staticmethod

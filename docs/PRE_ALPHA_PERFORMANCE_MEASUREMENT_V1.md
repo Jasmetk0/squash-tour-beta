@@ -128,7 +128,7 @@ The cause and any broader cross-environment requirement remain open.
 Radim and Work will agree any change to the product contract before it is
 recorded as a decision.
 
-## Linux one-week A/B and CPU diagnosis
+## One-week A/B on Linux and Windows; Linux CPU diagnosis
 
 Use the same pinned SQLite backup for both commits. Start with a short W6
 Run to check the benchmark itself. For a scaling conclusion, repeat at
@@ -159,3 +159,102 @@ historical comparisons. The legacy giant Save timer stops when response
 headers arrive, whereas the short driver also reads and decodes the response.
 Use a separate reproduced week for CPU attribution and a retained database
 for cold-open or Restore profiling. Task Center polling needs its own scenario.
+
+
+### Windows PowerShell: short real W6 A/A, then A/B
+
+Use a clean checkout of the diagnostic driver with Git and Python 3.11+
+(3.12 recommended). Install the project and test dependencies in one
+environment shared by both detached commit worktrees. Prefer the same
+locked dependency environment for all comparisons; the following editable
+dev installation is a fallback for a fresh local environment, not a lock:
+
+```powershell
+py -3.12 -m venv .venv
+$python = (Resolve-Path .venv/Scripts/python.exe).Path
+& $python -m pip install -e ".[dev]"
+& $python -m pytest -q tests/application/test_native_week_ab_diagnostic.py
+if ($LASTEXITCODE -ne 0) { throw "Diagnostic contract tests failed" }
+```
+
+On a machine with long checkout paths, prefer a short repository path;
+Git for Windows may also need `git config --local core.longpaths true`.
+Run from the repository root with no other simulation running. Keep the
+driver checkout unchanged while the experiment runs. The candidate commits
+must already be available locally (fetch them before the run).
+
+```powershell
+$env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE = "saved_v2"
+$env:PYTHONHASHSEED = "0"
+$driver = "scripts/profile_native_week_ab.py"
+# Use fresh paths: prepare and ab never overwrite inputs or reports.
+$inputDb = "work/week-input.db"
+& $python $driver prepare --database $inputDb
+if ($LASTEXITCODE -ne 0) { throw "Prepare failed" }
+$sha = (Get-FileHash -Algorithm SHA256 -LiteralPath $inputDb).Hash.ToLowerInvariant()
+$commit = (git rev-parse HEAD).Trim()
+& $python $driver ab --scenario w6 --a $commit --b $commit --input $inputDb --sha256 $sha --out work/week-aa
+if ($LASTEXITCODE -ne 0) { throw "A/A failed" }
+& $python $driver compare work/week-aa/A-normal.json work/week-aa/B-normal.json
+if ($LASTEXITCODE -ne 0) { throw "A/A comparison failed" }
+(Get-Content work/week-aa/comparison.json -Raw | ConvertFrom-Json).verdict
+(Get-Content work/week-aa/manifest.json -Raw | ConvertFrom-Json).status
+if ((Get-FileHash -Algorithm SHA256 -LiteralPath $inputDb).Hash.ToLowerInvariant() -ne $sha) {
+    throw "Original fixture changed"
+}
+```
+
+The A/A run must report `equal` in both JSON files and the standalone
+comparison (exit 0). The normal path executes 16 measured HTTP requests,
+the deliberate retry path 18; both play three matches, confirm the result,
+explicitly Save each of three operations and advance S1W4 to S1W5 with
+eight players. The full inspection, logical history and actual request
+digests must agree; the worker also checks SQLite integrity. Exact
+performance numbers need not agree even for identical commits. Every case
+has a fresh byte-identical backup and a separate worker process. A and B
+have separate detached Git worktrees even for A/A; the current driver
+and dependency environment are held constant. Retain the JSON reports,
+phase logs, manifest and comparison, not the disposable copies.
+
+For A/B, use two full lowercase commit hashes and another fresh output
+directory. For example, compare the current driver checkout against its
+first parent (or assign the two intended full commit hashes explicitly):
+
+```powershell
+$a = (git rev-parse HEAD~1).Trim()
+$b = (git rev-parse HEAD).Trim()
+& $python $driver ab --scenario w6 --a $a --b $b --input $inputDb --sha256 $sha --out work/week-ab
+if ($LASTEXITCODE -ne 0) { throw "A/B failed or results differ" }
+& $python $driver compare work/week-ab/A-normal.json work/week-ab/B-normal.json
+if ($LASTEXITCODE -ne 0) { throw "A/B comparison failed" }
+```
+
+Use `--repetitions 2` and a new output directory for a repeated timing
+run; each trial then has its own subdirectory. A later independent run
+should start from the same immutable backup and use the same hardware,
+Python and dependencies. Do not interpret a cross-platform timing delta
+as an A/B result: the comparator deliberately rejects different
+environments.
+
+| Metric | Windows | Linux |
+| --- | --- | --- |
+| Wall/process CPU, HTTP count, DB/WAL and SQL/fetch metrics | measured | measured |
+| Current and peak RSS fields | Windows working set in KiB | Linux resident set in KiB |
+| Process CPU affinity count | JSON null (unavailable) | measured |
+| Linux read syscall/storage read bytes | JSON null (unavailable) | measured |
+| Optional `--profile-cpu` | rejected before starting measurement | existing endpoint CPU sampler |
+
+Unavailable counters stay null in request reports, totals, deltas and
+repetition summaries. Zero is a real measurement, never a substitute for
+an unavailable counter. Logical SQLite fetch bytes are still measured on
+Windows and are not equivalent to physical disk read bytes. The portable
+working set and peak cover the whole process (not individual components);
+peak includes startup as in the Linux driver. The server's SQLite pool
+is disposed after shutdown before deleting temporary files. There is no
+Windows endpoint CPU attribution in this slice; ordinary process CPU
+timing remains available.
+
+The commands above are the real acceptance procedure, not a claim that
+Windows or a new A/A run has already passed. The merged #1876 Linux A/A
+evidence predates the Windows port; obtain fresh final-head evidence before
+treating this as accepted on the Windows reference PC.

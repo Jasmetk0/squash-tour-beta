@@ -10377,7 +10377,11 @@
           "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
           "https://www.washingtonpost.com/archive/sports/1990/11/18/agassi-edberg-to-meet-in-atp-finale/d5fccd05-0eb0-4b69-89c5-c6305acb067c/",
           "https://www.skysports.com/tennis/news/5629180/atp-tour-finals-history",
-          "https://openerarankings.com/RankingRules1990"
+          "https://openerarankings.com/RankingRules1990",
+          "https://www.latimes.com/archives/la-xpm-1990-11-12-sp-3456-story.html",
+          "https://www.washingtonpost.com/archive/sports/1990/11/19/agassi-overwhelms-edberg-for-atp-title/9b9d3dd5-a4ba-4d46-bac3-6939b98640ee/",
+          "https://openerarankings.com/About",
+          "https://datahub.io/core/atp-world-tour-tennis-data"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10485,7 +10489,34 @@
             },
             "independent_context_url": "https://www.skysports.com/tennis/news/5629180/atp-tour-finals-history",
             "independent_context_scope": "Retrospective report says an undefeated champion received the equivalent of a major title in that era; not independent confirmation of every 1990 point amount.",
-            "primary_exact_table_verified": false
+            "primary_exact_table_verified": false,
+            "source_authority_note": {
+              "source_url": "https://openerarankings.com/About",
+              "status": "volunteer_reconstruction_not_official",
+              "scope": "Site expressly identifies data as volunteer reconstruction, not official ATP data; same-site ranking breakdown cannot independently certify its own point table."
+            },
+            "ranking_snapshot_attempt": {
+              "status": "not_obtained_no_independent_point_verification",
+              "dataset_catalog_url": "https://datahub.io/core/atp-world-tour-tennis-data",
+              "dataset_csv_url": "https://datahub.io/core/atp-world-tour-tennis-data/_r/-/csv/4_rankings/rankings_1990.csv",
+              "before_date": "1990-11-12",
+              "after_date": "1990-11-19",
+              "attempts": [
+                {
+                  "url": "https://www.ultimatetennisstatistics.com/rankingsTable?date=12-11-1990&rankType=RANK",
+                  "outcome": "not_accessible"
+                },
+                {
+                  "url": "https://www.ultimatetennisstatistics.com/rankingsTable?date=19-11-1990&rankType=RANK",
+                  "outcome": "not_accessible"
+                },
+                {
+                  "url": "https://datahub.io/core/atp-world-tour-tennis-data/_r/-/csv/4_rankings/rankings_1990.csv",
+                  "outcome": "download_failed"
+                }
+              ],
+              "scope": "Even actual weekly ranking deltas are net changes, not necessarily tournament awards: Best14 replacement, expiry and other changes must be accounted for. No snapshot values imported or inferred."
+            }
           },
           "proposed_adaptation": {
             "status": "contract_probe_only_not_approved_for_import",
@@ -10526,7 +10557,95 @@
             "Verify exact 1990 ATP Finals ranking point table against primary authority or obtain explicit owner approval of a documented secondary-based squash adaptation",
             "Confirm ranking eligibility and expiry policy separately with Claude/Work",
             "Coordinate shared catalog version, then Save and native execution/reopen under Work"
-          ]
+          ],
+          "contemporary_entry_evidence": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-11-12-sp-3456-story.html",
+            "published_on": "1990-11-12",
+            "reported_top_ranked_entrants": 8,
+            "reported_first_alternate_rank": 9,
+            "group_count": 2,
+            "group_size": 4,
+            "advancing_per_group": 2,
+            "reported_best_results_count": 14,
+            "reported_pre_event_top_two_gap_points": 225,
+            "scope": "Contemporary AP reporting confirms edition-specific field and first alternate, group advancement, Best 14 context and top-two points gap. It does not certify general eligibility, alternate replacement mechanics, individual points or historical squash ranking behavior."
+          },
+          "contemporary_financial_crosscheck": {
+            "source_url": "https://www.washingtonpost.com/archive/sports/1990/11/19/agassi-overwhelms-edberg-for-atp-title/9b9d3dd5-a4ba-4d46-bac3-6939b98640ee/",
+            "published_on": "1990-11-19",
+            "reported_event_purse_usd": 2000000,
+            "reported_champion_final_win_prize_usd": 600000,
+            "reported_champion_total_prize_usd": 950000,
+            "scope": "Contemporary final report confirms $2m event purse and distinct final-win and total earnings; not ranking points. Preserve $2.02m annual secondary figure separately."
+          },
+          "anonymous_award_reconciliation": {
+            "status": "candidate_arithmetic_not_historical_awards_certification",
+            "format_source_url": "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+            "points_source_url": "https://openerarankings.com/RankingRules1990",
+            "scope": "Only anonymous aggregate counts derived from published round-robin outcomes; no identities, historical match scores or result imports. Candidate point outputs are calculated, not independently reported.",
+            "rows": [
+              {
+                "stage": "champion",
+                "played_group_wins": 2,
+                "count": 1,
+                "points_each": 350
+              },
+              {
+                "stage": "finalist",
+                "played_group_wins": 3,
+                "count": 1,
+                "points_each": 250
+              },
+              {
+                "stage": "semifinal",
+                "played_group_wins": 3,
+                "count": 1,
+                "points_each": 150
+              },
+              {
+                "stage": "semifinal",
+                "played_group_wins": 2,
+                "count": 1,
+                "points_each": 100
+              },
+              {
+                "stage": "group_only",
+                "played_group_wins": 1,
+                "count": 2,
+                "points_each": 50
+              },
+              {
+                "stage": "group_only",
+                "played_group_wins": 0,
+                "count": 2,
+                "points_each": 0
+              }
+            ],
+            "total_entrants": 8,
+            "total_played_group_wins": 12,
+            "total_group_points": 600,
+            "total_knockout_points": 350,
+            "total_points": 950
+          },
+          "runtime_boundary": {
+            "status": "read_only_contract_inspection_no_native_play",
+            "source_model_checked_at": "395189a96c4ac4a5ac17717c30bcdc06ff2bc194",
+            "composition_source": "src/beta_engine/domain/tournaments/hybrid_ranking_policy_authority.py",
+            "native_result_source": "src/beta_engine/domain/tournaments/calendar_groups.py",
+            "composition_policy_id": "single_tournament_sum_group_plus_knockout_no_double_count.v1",
+            "group_component_policy_id": "played_group_match_win_only.v1",
+            "walkover_error": "Group W/O Official Ranking reward requires an explicit decided policy",
+            "scope": "Native completed_group_result counts played/retirement wins, rejects group walkover awards when points are nonzero, and uses the shared composition function. Do not infer historical ATP walkover behavior or change policy in this evidence branch. Proposed probe exercises production award composition, not completed_group_result or Save."
+          },
+          "validation_baseline": {
+            "head": "395189a96c4ac4a5ac17717c30bcdc06ff2bc194",
+            "workflow_run_id": 45710958425,
+            "workflow_conclusion": "success",
+            "backend_pr_critical_tests": "success",
+            "focused_earth_validation": "skipped",
+            "earth_realism_audit": "skipped",
+            "scope": "Previous exact HEAD group compatibility test included in pr_critical suite. Not validation of this new commit, not actual Run or both W52 audits."
+          }
         }
       }
     }

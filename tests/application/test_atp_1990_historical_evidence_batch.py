@@ -780,3 +780,55 @@ def test_frankfurt_secondary_points_fit_existing_group_contract_without_publicat
     assert r["profile_status"] == "not_in_published_sporting_source"
     assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
     assert not any(e.source_entity_id == r["occurrence_id"] for e in build_atp_sporting_package().entities)
+
+
+def test_frankfurt_candidate_award_reconciliation_uses_production_composition(batch):
+    from beta_engine.domain.tournaments.hybrid_ranking_policy_authority import (
+        TournamentHybridRankingPolicyAuthority, hybrid_phase_point_components,
+    )
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    c = r["historical_evidence"]["targeted_import_research"]
+    proposed = c["proposed_adaptation"]
+    policy = TournamentHybridRankingPolicyAuthority(
+        run_id="historical-award-probe", branch_id="probe",
+        event_id=r["occurrence_id"], configured_by_command_id="probe",
+        played_group_win_points=proposed["played_group_win_points"],
+        knockout_stage_points=tuple(sorted(proposed["knockout_stage_points"].items())),
+    )
+    boundary = c["runtime_boundary"]
+    assert policy.composition_policy_id == boundary["composition_policy_id"]
+    assert policy.group_component_policy_id == boundary["group_component_policy_id"]
+    aggregate = c["anonymous_award_reconciliation"]
+    entrants = wins = group_total = knockout_total = 0
+    for row in aggregate["rows"]:
+        stage = None if row["stage"] == "group_only" else row["stage"]
+        parts = hybrid_phase_point_components(
+            policy=policy, played_group_wins=row["played_group_wins"],
+            knockout_reached_stage=stage)
+        assert len(parts) == (1 if stage is None else 2)
+        assert sum(part.points_awarded for part in parts) == row["points_each"]
+        entrants += row["count"]
+        wins += row["count"] * row["played_group_wins"]
+        group_total += row["count"] * parts[0].points_awarded
+        knockout_total += row["count"] * sum(part.points_awarded for part in parts[1:])
+    assert entrants == aggregate["total_entrants"] == 8
+    assert wins == aggregate["total_played_group_wins"] == 12
+    assert group_total == aggregate["total_group_points"] == 600
+    assert knockout_total == aggregate["total_knockout_points"] == 350
+    assert group_total + knockout_total == aggregate["total_points"] == 950
+    for group_wins in range(4):
+        for stage in (None, "semifinal", "finalist", "champion"):
+            parts = hybrid_phase_point_components(
+                policy=policy, played_group_wins=group_wins,
+                knockout_reached_stage=stage)
+            assert sum(part.points_awarded for part in parts) == (
+                50 * group_wins + (0 if stage is None else dict(policy.knockout_stage_points)[stage]))
+    with pytest.raises(ValueError, match="lacks knockout stage values"):
+        hybrid_phase_point_components(policy=policy, played_group_wins=1,
+                                      knockout_reached_stage="unknown")
+    assert c["points_evidence"]["primary_exact_table_verified"] is False
+    assert c["points_evidence"]["ranking_snapshot_attempt"]["status"] == "not_obtained_no_independent_point_verification"
+    assert c["contemporary_entry_evidence"]["reported_first_alternate_rank"] == 9
+    assert r["historical_evidence"]["reported_prize_money"] == 2020000
+    assert c["contemporary_financial_crosscheck"]["reported_event_purse_usd"] == 2000000
+    assert r["profile_status"] == "not_in_published_sporting_source"

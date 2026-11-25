@@ -89,8 +89,56 @@ def test_first_january_evidence_is_not_playability(batch):
                and row["plan_status"] == "not_tested"
                and row["played_and_reopened_status"] == "not_tested"
                for row in rows)
-    assert sum("historical_evidence" in row for row in rows) == 4
+    assert sum("historical_evidence" in row for row in rows) == 13
     assert batch["summary"]["published_sporting_profiles"] == 0
     assert batch["historical_points_evidence"]["rank_dependent_bonus_awards"] is True
-    assert batch["first_next_unreviewed_occurrence"] == rows[4]["occurrence_id"]
-    assert rows[4]["series_id"] == "dallas"
+    assert batch["first_next_unreviewed_occurrence"] == rows[13]["occurrence_id"]
+    assert rows[13]["series_id"] == "indian_wells"
+
+
+def test_february_geometry_and_evidence_boundaries(batch):
+    rows = {row["series_id"]: row["historical_evidence"]
+            for row in batch["occurrences"] if "historical_evidence" in row}
+    assert len(rows) == batch["summary"]["individual_detail_reviewed"] == 13
+    assert batch["summary"]["queued_for_individual_review"] == 62
+    assert rows["dallas"]["host_city"] == "San Francisco"
+    assert rows["maceio_1992"]["host_city"] == "Guarujá"
+    assert rows["sofia"]["host_city"] == "Milan"
+    assert rows["rio"]["host_city"] == "Memphis"
+    assert rows["maceio_1992"]["observed_lucky_losers"] == 1
+    assert rows["maceio_1992"]["qualifier_spots"] == 4
+    for name, entrants, seeds, byes, q in (
+        ("toronto_indoor_1990", 56, 16, 8, 28),
+        ("philadelphia_1998", 48, 16, 16, 24),
+        ("rio", 48, 16, 16, 24),
+    ):
+        evidence = rows[name]
+        assert evidence["main_draw_capacity"] == entrants
+        assert evidence["main_bracket_slots"] == 64
+        assert evidence["main_seeds"] == seeds
+        assert evidence["main_byes"] == byes
+        assert evidence["qualification_size_secondary"] == q
+    for evidence in rows.values():
+        assert evidence["main_draw_capacity"] + evidence["main_byes"] == evidence["main_bracket_slots"]
+        assert evidence["qualification_entrants"] is None
+        assert evidence["qualification_start_date"] is None
+        assert evidence["qualification_end_date"] is None
+        assert evidence["point_table_status"] == "unresolved_exact_prize_band_and_full_historical_awards"
+    assert sum(row.get("qualification_size_secondary") is not None
+               for row in rows.values()) == batch["summary"]["reported_qualification_size_rows"]
+    assert sum("candidate_point_row" in row for row in rows.values()) == batch["summary"]["candidate_point_row_links"]
+    for evidence in rows.values():
+        if "candidate_point_row" in evidence:
+            candidate = evidence["candidate_point_row"]
+            assert candidate["status"] == "secondary_candidate_not_verified_for_occurrence"
+            assert candidate["iteration"] == 1990
+            assert candidate["band_usd"] == evidence["reported_financial_commitment_usd"]
+    points = batch["historical_points_evidence"]
+    assert points["qualifying_loss_points"] is None
+    assert points["base_points_150k_32_candidate"]["round_of_32"] == 1
+    assert points["base_points_250k_32_candidate"]["champion"] == 103
+    bands = points["bonus_bands_secondary"]
+    assert bands[0] == {"from_rank": 1, "to_rank": 1, "points": 50}
+    assert bands[-1]["to_rank"] == 200
+    assert all(left["to_rank"] + 1 == right["from_rank"]
+               for left, right in zip(bands, bands[1:]))

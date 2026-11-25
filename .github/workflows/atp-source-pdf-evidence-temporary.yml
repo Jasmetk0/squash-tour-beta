@@ -1,0 +1,34 @@
+name: ATP source PDF evidence (temporary diagnostic)
+on:
+  pull_request:
+    types: [opened, synchronize]
+permissions:
+  contents: read
+jobs:
+  source-evidence:
+    if: github.head_ref == 'chatgpt/atp-2025-w52-profiles'
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Hash exact ATP draw PDFs
+        run: |
+          python - <<'PY'
+          import hashlib
+          import urllib.request
+          from concurrent.futures import ThreadPoolExecutor
+
+          urls = [
+              f"https://www.protennislive.com/posting/2025/{event}/{draw}.pdf"
+              for event in (308, 337) for draw in ("mds", "qs")
+          ]
+          def inspect(url):
+              req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0", "Accept": "application/pdf"})
+              with urllib.request.urlopen(req, timeout=20) as response:
+                  data = response.read(5_000_001)
+              if not data.startswith(b"%PDF-") or len(data) > 5_000_000 or b"%%EOF" not in data[-2048:]:
+                  raise ValueError(f"Not a complete bounded PDF: {url}")
+              return f"{url} SHA256={hashlib.sha256(data).hexdigest()} bytes={len(data)}"
+          with ThreadPoolExecutor(max_workers=4) as pool:
+              for result in pool.map(inspect, urls):
+                  print(result, flush=True)
+          PY

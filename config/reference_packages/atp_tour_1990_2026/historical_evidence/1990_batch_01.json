@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 40,
-    "reported_main_wild_card_count_rows": 40,
+    "reported_main_qualifier_count_rows": 42,
+    "reported_main_wild_card_count_rows": 42,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 35,
+    "second_pass_review_attempted_rows": 41,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,7 +57,7 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "35-row chronological prefix includes new source access, observed Main labels or explicitly retained previous evidence. No complete actual Q sheet obtained; not 35 primary draw verifications.",
+    "second_pass_review_note": "41-row chronological prefix includes new source access, observed Main labels or retained previous evidence; no complete actual Q sheet obtained.",
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75
@@ -4732,6 +4732,28 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 2,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main positions only; repeated later-round labels excluded. No reserved policy inferred.",
+          "note": "Secondary draw shows one Q in top half and three Q in bottom half; two WC and one LL in bottom half.",
+          "observed_lucky_losers": 1
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Complete Q sheet and dates not found; modern Rosmalen schedule is not evidence for 1990."
         }
       }
     },
@@ -4807,8 +4829,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4845,6 +4867,33 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main positions only; repeated later-round labels excluded. No reserved policy inferred.",
+          "note": "Three Q in section 1, one Q in section 2; one WC in section 1 and two WC in section 2 including seed 2. One SE.",
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            2
+          ],
+          "observed_special_exempts": 1
+        },
+        "observed_special_exempts": 1,
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Main labels establish observed entry methods, not allocation or qualifying dates. Referenced World of Tennis 1991 pp. 114, 133 not obtained."
         }
       }
     },
@@ -4963,6 +5012,26 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "itf_event_window_evidence": {
+          "source_url": "https://www.world.tennis/en/tournament/genoa/ita/1990/m-wsf-ita-04a-1990/draws-and-results/",
+          "start_date": "1990-06-18",
+          "end_date": "1990-06-24",
+          "prize_money_usd": 225000,
+          "surface": "outdoor clay",
+          "scope": "ITF metadata confirms window, host nation, surface and prize, not draw or Q dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.world.tennis/en/tournament/genoa/ita/1990/m-wsf-ita-04a-1990/draws-and-results/",
+            "outcome": "official_event_metadata_no_drawsheet"
+          },
+          "remaining": "ITF metadata confirms outdoor clay against annual grass; actual Main seeds, Q/WC labels, Q sheet, dates and points remain unknown."
         }
       }
     },
@@ -5076,6 +5145,36 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.tennistemple.com/competitions/bastad/1990/draw",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main positions only; repeated later-round labels excluded. No reserved policy inferred.",
+          "note": "Four Q and three WC across 16 initial matches; seven observed seed ranks, missing nominal seed 5.",
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            6,
+            7,
+            8
+          ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.tennistemple.com/competitions/bastad/1990/draw",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "No actual Q graph or dates; absence of seed 5 not proof of substitution policy."
         }
       }
     },
@@ -5147,7 +5246,9 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.tennistemple.com/competitions/gstaad/1990/draw",
-          "https://www.itftennis.com/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=M&matchTypeCode=S&tournamentId=1010004773"
+          "https://www.itftennis.com/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=M&matchTypeCode=S&tournamentId=1010004773",
+          "https://www.world.tennis/en/tournament/gstaad/sui/1990/m-wsf-sui-01a-1990/draws-and-results/",
+          "https://www.latimes.com/archives/la-xpm-1990-07-14-sp-71-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5180,6 +5281,47 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.tennistemple.com/competitions/gstaad/1990/draw",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main positions only; repeated later-round labels excluded. No reserved policy inferred.",
+          "note": "Four Q and three WC across first 16 matches; all eight seed ranks listed."
+        },
+        "itf_event_window_evidence": {
+          "source_url": "https://www.world.tennis/en/tournament/gstaad/sui/1990/m-wsf-sui-01a-1990/draws-and-results/",
+          "start_date": "1990-07-09",
+          "end_date": "1990-07-15",
+          "prize_money_usd": 275000,
+          "surface": "outdoor clay",
+          "scope": "ITF event metadata, not Q dates or ranking class."
+        },
+        "contemporary_financial_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-07-14-sp-71-story.html",
+          "published_on": "1990-07-14",
+          "reported_event_amount_usd": 305000,
+          "scope": "Contemporary press event amount conflicts with $275k prize and $300k reported commitment; no exact ranking class established."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.world.tennis/en/tournament/gstaad/sui/1990/m-wsf-sui-01a-1990/draws-and-results/",
+            "outcome": "official_event_metadata_no_drawsheet"
+          },
+          "remaining": "ITF print Main link returned generic page on review, and candidate Q print URL inaccessible. No actual qualification evidence or exact ranking class.",
+          "additional_source_attempts": [
+            {
+              "url": "https://www.itftennis.com/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=Q&matchTypeCode=S&tournamentId=1010004773",
+              "outcome": "inaccessible_candidate_url_not_a_verified_draw_link"
+            }
+          ]
         }
       }
     },
@@ -5246,17 +5388,19 @@
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
         "main_seeds": 8,
-        "main_draw_source": "https://en.tennistemple.com/competitions/newport/1990",
+        "main_draw_source": "https://en.tennistemple.com/competitions/newport/1990/draw",
         "event_source": "https://en.tennistemple.com/competitions/newport/1990",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.tennistemple.com/competitions/newport/1990"
+          "https://en.tennistemple.com/competitions/newport/1990",
+          "https://en.tennistemple.com/competitions/newport/1990/draw",
+          "https://www.upi.com/Archives/1990/07/15/Aldrich-wins-Hall-of-Fame-tennis-tourney/3985648014400/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 1,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 150000,
@@ -5283,6 +5427,33 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.tennistemple.com/competitions/newport/1990/draw",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 1,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main positions only; repeated later-round labels excluded. No reserved policy inferred.",
+          "note": "Four Q and one WC explicitly tagged in all 16 initial Main matches; one observed WC is not a proof of the full reserved allocation."
+        },
+        "contemporary_financial_evidence": {
+          "source_url": "https://www.upi.com/Archives/1990/07/15/Aldrich-wins-Hall-of-Fame-tennis-tourney/3985648014400/",
+          "published_on": "1990-07-15",
+          "reported_event_amount_usd": 150000,
+          "scope": "UPI confirms final date and $150k event amount; not ranking class or Q dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.tennistemple.com/competitions/newport/1990/draw",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Actual Q dates, entrant graph, reserved wild cards and ranking class unknown; no inference from current tournament calendar."
         }
       }
     },
@@ -9243,7 +9414,7 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_s_hertogenbosch",
+  "next_second_pass_review_occurrence": "atp_1990_stuttgart",
   "field_semantics": {
     "main_entrants": "Reported/cross-checked count of occupied Main entrant positions, not bracket capacity; still historical evidence, not a certified sporting profile.",
     "main_bracket_slots": "Physical knockout bracket positions, including BYEs; null for round-robin group format.",

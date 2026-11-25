@@ -550,3 +550,30 @@ def test_second_pass_june_seed_and_entry_labels_remain_observations(batch):
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 35
+
+
+def test_second_pass_rosmalen_through_newport_source_boundaries(batch):
+    rows = batch["occurrences"]
+    reviewed = rows[35:41]
+    assert [r["series_id"] for r in reviewed] == [
+        "s_hertogenbosch", "eastbourne", "poertschach_2008", "bastad",
+        "gstaad", "newport"]
+    r, m, g, b, s, n = [r["historical_evidence"] for r in reviewed]
+    assert (r["reported_main_qualifiers"], r["reported_main_wild_cards"], r["observed_lucky_losers"]) == (4, 2, 1)
+    assert (m["reported_main_qualifiers"], m["reported_main_wild_cards"], m["observed_special_exempts"]) == (4, 3, 1)
+    assert m["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [2]
+    assert g["itf_event_window_evidence"]["surface"] == "outdoor clay"
+    assert g["itf_event_window_evidence"]["prize_money_usd"] == 225000
+    assert b["main_entry_label_evidence"]["observed_seed_ranks"] == [1, 2, 3, 4, 6, 7, 8]
+    assert s["itf_event_window_evidence"]["prize_money_usd"] == 275000
+    assert s["reported_financial_commitment_usd"] == 300000
+    assert s["contemporary_financial_evidence"]["reported_event_amount_usd"] == 305000
+    assert s["point_candidate_comparison"]["status"] == "no_exact_financial_band_row"
+    assert (n["reported_main_qualifiers"], n["reported_main_wild_cards"]) == (4, 1)
+    assert n["contemporary_financial_evidence"]["reported_event_amount_usd"] == 150000
+    for row in reviewed:
+        e = row["historical_evidence"]
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 41

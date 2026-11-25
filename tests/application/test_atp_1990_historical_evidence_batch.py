@@ -304,3 +304,92 @@ def test_1990_first_pass_completed_without_claiming_sporting_readiness(batch):
     assert rows["atp_finals"]["main_bracket_slots"] is None
     assert rows["atp_finals"]["qualification_status"] == "not_a_standard_knockout_qualification_phase"
     assert all(e["remaining"] for e in rows.values())
+
+
+def test_second_pass_crosscheck_and_corrected_schenectady_field(batch):
+    audit = batch["second_pass_source_audit"]
+    assert audit["status"] == "research_cross_check_only_not_profile_provenance"
+    assert audit["matched_occurrences"] == audit["matching_source_start_dates"] == 75
+    assert audit["main_field_matches_before_correction"] == 74
+    assert audit["main_field_matches_after_event_specific_correction"] == 75
+    assert audit["qual_file_tour_level_rows"] == 0
+    assert audit["qual_file_rows"] == 2233
+    assert audit["main_field_disagreements"] == [{
+        "occurrence_id": "atp_1990_schenectady_1994",
+        "previous_candidate": 32,
+        "independent_reported_field": 28,
+    }]
+    rows = batch["occurrences"]
+    reviewed = batch["summary"]["second_pass_review_attempted_rows"]
+    assert reviewed >= 13
+    assert all("second_pass_review" in row["historical_evidence"]
+               for row in rows[:reviewed])
+    assert batch["next_second_pass_review_occurrence"] == (
+        rows[reviewed]["occurrence_id"] if reviewed < len(rows) else None
+    )
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+    e = next(row["historical_evidence"] for row in rows
+             if row["series_id"] == "schenectady_1994")
+    assert (e["main_draw_capacity"], e["main_bracket_slots"],
+            e["main_seeds"], e["main_byes"]) == (28, 32, 8, 4)
+    assert e["bye_seed_ranks"] == [1, 2, 3, 4]
+    assert (e["qualifier_spots"], e["wild_cards"],
+            e["observed_lucky_losers"]) == (4, 3, 1)
+    assert e["main_draw_source_disagreement"]["annual_summary_entrants"] == 32
+
+
+def test_main_entry_labels_are_not_qualification_draws(batch):
+    rows = {row["series_id"]: row["historical_evidence"]
+            for row in batch["occurrences"]}
+    for name in ("brisbane", "wellington_1992", "auckland", "sydney_2019",
+                 "sofia", "brussels_championship_1992",
+                 "stuttgart_indoor_feb_1995", "rotterdam", "schenectady_1994"):
+        e = rows[name]
+        labels = e["main_entry_label_evidence"]
+        assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+        assert labels["observed_qualifiers"] == e["qualifier_spots"] == 4
+        assert labels["observed_wild_cards"] == e["wild_cards"] == 3
+        assert e["qualification_entrants"] is None
+        assert e["qualification_start_date"] is None
+    sydney = rows["sydney_2019"]["main_entry_label_evidence"]
+    assert sydney["observed_seeded_wild_cards"] == 1
+    assert sydney["observed_special_exempts"] == 1
+    assert (sydney["observed_qualifiers"] + sydney["observed_wild_cards"]
+            + sydney["observed_special_exempts"] + sydney["unmarked_entrants"]) == 32
+    assert rows["sofia"]["observed_seeded_wild_card"] is True
+
+
+def test_point_row_comparison_never_rounds_or_certifies_historical_awards(batch):
+    method = batch["historical_points_evidence"]["candidate_comparison_method"]
+    counts = Counter()
+    for row in batch["occurrences"]:
+        e = row["historical_evidence"]
+        c = e["point_candidate_comparison"]
+        counts[c["status"]] += 1
+        assert c["source_rule_certified"] is False
+        assert c["rule_iteration"] == 1990
+        assert c["reported_financial_commitment_usd"] == e["reported_financial_commitment_usd"]
+        assert c["working_bracket_positions"] == e["main_bracket_slots"]
+        if row["category_id"] == "atp_finals":
+            assert c["status"] == "finals_separate_group_points_candidate"
+            assert c["source_tier_candidate"] is None
+        elif c["reported_financial_commitment_usd"] is None:
+            assert c["status"] == "missing_reported_financial_commitment"
+        else:
+            world = row["category_id"] == "atp_world_series"
+            slots = c["working_bracket_positions"]
+            expected_tier = "WORLD SERIES" if world else "CHAMP SERIES"
+            assert c["source_tier_candidate"] == expected_tier
+            bands = method["world_series_reported_band_labels_usd"] if world else (
+                method["champ_series_128_reported_band_labels_usd"] if slots == 128
+                else method["champ_series_reported_band_labels_usd"])
+            sizes = method["world_series_md_labels"] if world else method["champ_series_md_labels"]
+            expected = ("no_exact_bracket_size_row" if slots not in sizes else
+                        "exact_reported_band_and_bracket_size_candidate"
+                        if c["reported_financial_commitment_usd"] in bands
+                        else "no_exact_financial_band_row")
+            assert c["status"] == expected
+    assert dict(counts) == batch["summary"]["point_candidate_comparison_counts"]
+    assert sum(counts.values()) == 75
+    assert batch["summary"]["published_sporting_profiles"] == 0

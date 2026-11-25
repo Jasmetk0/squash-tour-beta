@@ -33,20 +33,24 @@
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 57,
+    "reported_seed_count_rows": 58,
     "reported_field_distribution_all_year": {
       "8": 1,
-      "28": 1,
-      "32": 51,
+      "28": 2,
+      "32": 50,
       "48": 8,
       "56": 12,
       "64": 1,
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_q_spot_count_rows": 22,
-    "reported_wc_count_rows": 22,
-    "main_draw_disagreement_rows": 14
+    "reported_q_spot_count_rows": 30,
+    "reported_wc_count_rows": 30,
+    "main_draw_disagreement_rows": 15,
+    "second_pass_review_attempted_rows": 13,
+    "second_pass_main_field_crosscheck_rows": 75,
+    "complete_verified_qualification_draw_rows": 0,
+    "verified_qualification_date_rows": 0
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -341,8 +345,8 @@
         "country": "AUS",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships_%E2%80%93_Singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships",
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "reported_prize_money": 125000,
         "identity_note": "Stable brisbane Series refers to January Adelaide, not the separate September Brisbane event.",
         "category_label": "ATP World Series",
@@ -368,6 +372,27 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers.",
+          "atp_main_link_access": {
+            "url": "https://www.atptour.com/en/scores/archive/adelaide/7308/1990/draws?matchtype=singles",
+            "status": "http_403",
+            "note": "Do not confuse 7308 current archive path with historical 339 index used by third-party results."
+          }
         }
       }
     },
@@ -413,8 +438,8 @@
         "country": "NZL",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_BP_National_Championships_%E2%80%93_Singles",
         "event_source": "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "reported_prize_money": 125000,
         "identity_note": "Stable ID suffix is not the occurrence year; existing source Series records 1990–1992.",
         "category_label": "ATP World Series",
@@ -440,6 +465,26 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_BP_National_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers.",
+          "itf_access": {
+            "url": "https://www.itftennis.com/en/tournament/wellington/nzl/1990/m-wsf-nzl-01a-1990/draws-and-results/",
+            "status": "event_page_accessible_qualifying_sheet_not_obtained"
+          }
         }
       }
     },
@@ -511,6 +556,22 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Benson_and_Hedges_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
         }
       }
     },
@@ -556,8 +617,8 @@
         "country": "AUS",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open",
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "reported_prize_money": 150000,
         "qualification_size_secondary": 32,
         "qualification_size_source": "https://de.wikipedia.org/wiki/Holden_NSW_Open_1990/Herren",
@@ -578,7 +639,39 @@
         ],
         "reported_financial_commitment_usd": 175000,
         "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-        "main_bracket_slots": 32
+        "main_bracket_slots": 32,
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates.",
+          "observed_seeded_wild_cards": 1,
+          "note": "Secondary draw includes a combined seed/WC label. Some results feeds omit the WC tag for a seeded entrant; preserve the draw transcription rather than silently treating it as direct. One SE is explicitly tagged; unmarked is not proof of direct acceptance.",
+          "observed_special_exempts": 1,
+          "unmarked_entrants": 24
+        },
+        "observed_seeded_wild_card": true,
+        "observed_special_exempts": 1,
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
+          "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open",
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
+          "https://www.latimes.com/archives/la-xpm-1990-01-10-sp-418-story.html"
+        ],
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers.",
+          "itf_draw_access": {
+            "url": "https://www.itftennis.com/mens/tournaments/printabledrawsheet.asp?event=1010011281&tournament=1010005083",
+            "status": "redirect_unavailable"
+          }
+        }
       }
     },
     {
@@ -656,6 +749,14 @@
           "band_usd": 250000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
         }
       }
     },
@@ -734,6 +835,14 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
         }
       }
     },
@@ -792,8 +901,8 @@
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 540000,
@@ -805,7 +914,26 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Stella_Artois_Indoor_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates.",
+          "observed_seeded_wild_cards": 1,
+          "note": "Secondary draw includes a combined seed/WC label. Some results feeds omit the WC tag for a seeded entrant; preserve the draw transcription rather than silently treating it as direct."
+        },
+        "observed_seeded_wild_card": true,
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -863,8 +991,8 @@
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 465000,
@@ -876,7 +1004,23 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -947,7 +1091,15 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -1017,7 +1169,15 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -1075,8 +1235,8 @@
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -1088,7 +1248,23 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Eurocard_Classics_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -1159,7 +1335,15 @@
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
           "Publish only after resolving representation and shared catalog coordination."
-        ]
+        ],
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+        }
       }
     },
     {
@@ -1217,8 +1401,8 @@
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -1237,6 +1421,22 @@
           "band_usd": 500000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_ABN_World_Tennis_Tournament_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Count distinct initial Main entrants once; seeds are orthogonal to entry method; no inference of Q draw or dates."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
         }
       }
     },
@@ -4891,29 +5091,30 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_draw_capacity": 28,
         "main_bracket_slots": 32,
-        "main_byes": 0,
-        "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
-        "main_seeds": null,
-        "main_draw_source": null,
+        "main_byes": 4,
+        "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
+        "main_seeds": 8,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_OTB_International_Open",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_OTB_International_Open"
+          "https://en.wikipedia.org/wiki/1990_OTB_International_Open",
+          "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
         "reported_financial_commitment_usd": 150000,
         "financial_source": "https://dewiki.de/Lexikon/ATP_Tour_1990",
         "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
-        "identity_note": "Combined ATP/WTA event; event article gives Aug 20–27, ATP men's calendar ends Aug 26. Keep distinct date concepts and no WTA data.",
+        "identity_note": "Combined ATP/WTA event; event article gives Aug 20–27, ATP men's calendar ends Aug 26. Keep distinct date concepts and no WTA data. Second-pass correction: men's singles draw explicitly reports 28 entrants; top four BYEs. Do not confuse the women's field with men's.",
         "remaining": [
           "Confirm original qualification draw, dates and feeder structure.",
           "Verify exact historical awards and financial band.",
@@ -4926,6 +5127,26 @@
           "band_usd": 150000,
           "bracket_positions": 32,
           "status": "secondary_candidate_not_verified_for_occurrence"
+        },
+        "observed_lucky_losers": 1,
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4
+        ],
+        "main_draw_source_disagreement": {
+          "annual_summary_entrants": 32,
+          "event_specific_entrants": 28,
+          "interpretation": "Event-specific men's singles draw explicitly lists 28 (3WC/4Q/1LL); top four seeds have BYEs. Annual 32 is not active entrants."
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "observed_lucky_losers": 1,
+          "reviewed_on": "2026-11-25"
         }
       }
     },
@@ -7049,5 +7270,33 @@
       }
     }
   ],
-  "next_open_evidence_occurrence": "atp_1990_brisbane"
+  "next_open_evidence_occurrence": "atp_1990_brisbane",
+  "second_pass_source_audit": {
+    "status": "research_cross_check_only_not_profile_provenance",
+    "attribution": "Jeff Sackmann / Tennis Abstract, mirror of tennis_atp, CC BY-NC-SA 4.0",
+    "mirror_url": "https://github.com/azhou5849/tennis-atp-sackmann-data",
+    "upstream_url": "https://github.com/JeffSackmann/tennis_atp",
+    "license_url": "https://creativecommons.org/licenses/by-nc-sa/4.0/",
+    "main_file_url": "https://github.com/azhou5849/tennis-atp-sackmann-data/blob/master/atp_matches_1990.csv",
+    "main_blob_sha": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+    "qualification_file_url": "https://github.com/azhou5849/tennis-atp-sackmann-data/blob/master/atp_matches_qual_chall_1990.csv",
+    "qualification_blob_sha": "e67ffea2df04a0123a8325149077f2cdae4014f8",
+    "review_date": "2026-11-25",
+    "matched_occurrences": 75,
+    "matching_source_start_dates": 75,
+    "main_field_matches_before_correction": 74,
+    "main_field_disagreements": [
+      {
+        "occurrence_id": "atp_1990_schenectady_1994",
+        "previous_candidate": 32,
+        "independent_reported_field": 28
+      }
+    ],
+    "main_field_matches_after_event_specific_correction": 75,
+    "qual_file_rows": 2233,
+    "qual_file_tour_level_rows": 0,
+    "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
+    "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
+  },
+  "next_second_pass_review_occurrence": "atp_1990_indian_wells"
 }

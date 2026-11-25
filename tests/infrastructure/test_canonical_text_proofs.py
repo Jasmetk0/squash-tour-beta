@@ -459,3 +459,34 @@ def test_composite_proven_hash_equals_canonical_hash_of_the_plain_structure():
         "missing": None}, "run": decoded["run"], "list": [2, {"b": 1, "a": "é"}]}
     assert canonical_text.composite_proven_hash(composite) == canonical_hash(plain)
     assert canonical_text.composite_proven_hash(plain) == canonical_hash(plain)
+
+
+def test_composite_span_reuses_only_the_exact_encoded_operation_proof(monkeypatch):
+    from beta_engine.domain.run_packages import canonical_hash
+
+    monkeypatch.setattr(canonical_text, "LAYOUT_THRESHOLD", 1)
+    original = {"items": ["a" * 20000, "é", {"escaped": "\x01"}]}
+    text = canonical_json(original)
+    proof = verify_canonical_text(text)
+    other = verify_canonical_text(canonical_json({"items": ["z" * 20000, "é", {"escaped": "\x01"}]}))
+    value = canonical_text.ProvenSpan(proof, ("items", 0), original["items"][0])
+    parts = []
+
+    class RecordingDigest:
+        def update(self, data):
+            parts.append(data)
+
+    with canonical_text.operation_proof_scope():
+        canonical_text.proven_ascii_bytes(other)
+        canonical_text._hash_update_composite(RecordingDigest(), value)
+        assert type(parts[-1]) is bytes
+        encoded = canonical_text.proven_ascii_bytes(proof)
+        canonical_text._hash_update_composite(RecordingDigest(), value)
+        assert type(parts[-1]) is memoryview and parts[-1].obj is encoded
+        assert parts[-1].tobytes() == parts[-2]
+        for index, item in enumerate(original["items"]):
+            piece = canonical_text.ProvenSpan(proof, ("items", index), item)
+            assert canonical_text.composite_proven_hash(piece) == canonical_hash(item)
+        assert canonical_text.composite_proven_hash(
+            canonical_text.ProvenSpan(proof, ("items", 3), original["items"])
+        ) == canonical_hash(original["items"])

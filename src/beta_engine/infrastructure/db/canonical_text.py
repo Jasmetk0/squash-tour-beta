@@ -407,14 +407,7 @@ def span(proof, path):
     """
     if type(proof) is not ProvenCanonicalText:
         raise TypeError("span requires a ProvenCanonicalText")
-    node = proof.layout
-    for key in path:
-        if node is None:
-            return None
-        if isinstance(key, int):
-            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
-        else:
-            node = node.keys.get(key) if node.keys is not None else None
+    node = _layout_at(proof.layout, path)
     if node is None:
         return None
     return proof.text[node.start:node.end]
@@ -519,9 +512,12 @@ def composite_canonical_hash(members):
 def _layout_at(layout, path):
     node = layout
     for key in path:
-        if node is None or node.keys is None:
+        if node is None:
             return None
-        node = node.keys.get(key)
+        if isinstance(key, int):
+            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
+        else:
+            node = node.keys.get(key) if node.keys is not None else None
     return node
 
 
@@ -592,10 +588,23 @@ class ProvenSpan:
 
 def _hash_update_composite(digest, value):
     if type(value) is ProvenSpan:
-        text = span(value.proof, value.path) if value.proof is not None else None
-        if text is None or not _non_ascii_free(text):
-            text = json.dumps(value.value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-        digest.update(text.encode("utf-8"))
+        proof = value.proof
+        if proof is not None:
+            if type(proof) is not ProvenCanonicalText:
+                raise TypeError("span requires a ProvenCanonicalText")
+            node = _layout_at(proof.layout, value.path)
+            if node is not None and proof.text.find("\\u", node.start, node.end) == -1:
+                operation = _operation_proofs.get()
+                slot = operation.get("ascii_bytes") if operation is not None else None
+                # The same proof's full ASCII encoding may already be present
+                # from the revision hash. Reuse it without growing the cache.
+                if slot is not None and slot[0] is proof.text:
+                    digest.update(memoryview(slot[1])[node.start:node.end])
+                else:
+                    digest.update(proof.text[node.start:node.end].encode("utf-8"))
+                return
+        digest.update(json.dumps(value.value, sort_keys=True, separators=(",", ":"),
+                                 ensure_ascii=False).encode("utf-8"))
     elif type(value) is dict:
         digest.update(b"{")
         for index, key in enumerate(sorted(value)):

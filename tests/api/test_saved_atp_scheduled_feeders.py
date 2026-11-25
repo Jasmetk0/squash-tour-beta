@@ -40,7 +40,8 @@ def test_saved_atp_draw_reopens_without_reading_live_draw_and_rejects_corruption
         });assert code==200,applied
         code,saved=_request('POST',working+'/save',{'expected_draft_version':applied['draft_version']});assert code==201,saved
         code,catalog=_request('GET',root+'/calendar-tour/atp-source-editions');assert code==200,catalog
-        entry=catalog['entries'][2]
+        entry = next(item for item in catalog["entries"]
+                     if item["profile"]["occurrence_id"] == "atp_2025_rotterdam")
         clock={'schema_version':'run_calendar.v1','weeks_per_year':52,'season_start_year_week':1,'start_year':2025,'season_count':2}
         def position(w,s): return {'week':{'calendar':clock,'season_index':0,'week':w},'slot':s}
         body={'expected_saved_head':catalog['saved_head_revision_id'],'expected_profile_fingerprint':entry['profile_fingerprint'],

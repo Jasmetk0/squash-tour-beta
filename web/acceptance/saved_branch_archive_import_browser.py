@@ -1,8 +1,8 @@
-"""Real Chromium/HTTP/SQLite acceptance for read-only Saved Branch import preview.
+"""Real Chromium/HTTP/SQLite acceptance for cold archive restore.
 
 Construct a portable archive with the production MatchEngine and explicit Save,
 then upload it via the actual Admin browser to an independent cold SQLite target.
-Do not call /import/confirm; no archive restore is part of this gate.
+Verify preview isolation, then explicitly restore a whole Run and restart.
 """
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ import re
 import subprocess
 import sys
 from pathlib import Path
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
@@ -53,7 +53,8 @@ def main() -> None:
     from beta_engine.domain.run_branch_archive import Archive
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_player_generation_calendar_gate import _dump
-    from tests.api.test_run_branch_archive_api import export, manual_match
+    from tests.api.test_full_run_archive_api import create_branch, full_preview
+    from tests.api.test_run_branch_archive_api import archive_root, export, manual_match, raw_request
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
     work.mkdir(exist_ok=True)
@@ -62,11 +63,17 @@ def main() -> None:
     target_path = root / "target.sqlite"
     archive_file = root / "valid-browser-source.sqbranch"
     tampered_file = root / "tampered-browser-source.sqbranch"
+    collision_file = root / "collision-browser-source.sqbranch"
+    collision_name = "Browser archive collision"
 
     with ApiServer(database_url=f"sqlite:///{source_path}") as source:
         run_id, branch_id, match, saved = manual_match(source)
         saved_head = saved["saved_revision"]["revision_id"]
-        raw, reviewed_export = export(source, run_id, branch_id)
+        _, initial_export = export(source, run_id, branch_id)
+        fork = create_branch(source, run_id, branch_id, initial_export["history"][0]["revision_id"])
+        reviewed_export, command = full_preview(source, run_id, branch_id)
+        status, raw = raw_request(archive_root(source) + "/export", json.dumps(command).encode())
+        assert status == 200, raw[:2000]
         assert match["result"], "Source must use an actual completed MatchEngine result"
         assert reviewed_export["selected_head_revision_id"] == saved_head
         archive = Archive(raw)
@@ -75,8 +82,27 @@ def main() -> None:
         tampered = bytearray(raw)
         tampered[-1] ^= 1
         tampered_file.write_bytes(tampered)
+        history_paths = [
+            f"/run-containers/{run_id}/branches/{bid}/saved-revisions"
+            for bid in (branch_id, fork)
+        ]
+        histories = [_request("GET", source.base_url + path) for path in history_paths]
+        assert all(status == 200 for status, _ in histories)
+        replay_path = (
+            f"/admin/runs/{run_id}/branches/{branch_id}/authoritative-simulation"
+            "/match-replay?group_id=standalone-match-group-1"
+        )
+        code, other = _request(
+            "POST", source.base_url + "/run-containers", {"display_name": collision_name}
+        )
+        assert code == 201, other
+        collision, _ = export(source, other["run_id"], other["viewer_branch_id"])
+        collision_file.write_bytes(collision)
         source_state = _dump(source_path)
     assert source_state == _dump(source_path)
+    source.app.state.runtime.repository._engine.dispose()
+    for suffix in ("", "-wal", "-shm"):
+        Path(str(source_path) + suffix).unlink(missing_ok=True)
 
     api = f"http://127.0.0.1:{API_PORT}"
     web = f"http://127.0.0.1:{WEB_PORT}"
@@ -151,7 +177,7 @@ def main() -> None:
             expect(page.get_by_role("heading", name="Saved Branch import review")).to_be_visible()
             assert not requests, requests
             expect(page.get_by_role("button", name="Validate archive and conflicts")).to_be_disabled()
-            assert page.get_by_role("button", name="Restore", exact=True).count() == 0
+            assert page.get_by_role("button", name="Restore Run", exact=True).count() == 0
 
             picker = page.get_by_label("Select an archive up to 128 MiB")
             picker.set_input_files(str(archive_file))
@@ -179,6 +205,8 @@ def main() -> None:
             expect(page.get_by_text(hashlib.sha256(raw).hexdigest(), exact=True)).to_be_visible()
             assert _dump(target_path) == baseline, "Import preview wrote to the cold SQLite target"
             assert len(requests) == 1 and requests[0].endswith("/import/preview"), requests
+            expect(page.get_by_role("button", name="Restore Run")).to_be_disabled()
+            expect(page.get_by_text("Entire Saved Run", exact=True)).to_be_visible()
             page.screenshot(path=str(root / "import-clean-en.png"), full_page=True)
 
             # CS/EN is a presentation switch, never a new import request.
@@ -212,11 +240,11 @@ def main() -> None:
             # side effect of the import preview flow.
             code, collision_run = _request(
                 "POST", api + "/run-containers",
-                {"display_name": archive.run.display_name},
+                {"display_name": collision_name},
             )
             assert code == 201, collision_run
             colliding_state = _dump(target_path)
-            picker.set_input_files(str(archive_file))
+            picker.set_input_files(str(collision_file))
             with page.expect_response(
                 lambda resp: resp.request.method == "POST" and
                 resp.url.endswith("/admin/run-archives/import/preview"),
@@ -229,7 +257,7 @@ def main() -> None:
                 "Import není možný: cílová databáze již obsahuje kolidující identity."
             )).to_be_visible()
             expect(page.get_by_text("run_name_exists", exact=False)).to_be_visible()
-            expect(page.get_by_text(archive.run.display_name, exact=False).first).to_be_visible()
+            expect(page.get_by_text(collision_name, exact=False).first).to_be_visible()
             assert _dump(target_path) == colliding_state
             assert all(x.endswith("/import/preview") for x in requests), requests
             page.screenshot(path=str(root / "import-collision-cs.png"), full_page=True)
@@ -245,7 +273,7 @@ def main() -> None:
                 "Import není možný: cílová databáze již obsahuje kolidující identity."
             )).to_have_count(0)
             picker = page.get_by_label("Vybrat archiv do 128 MiB")
-            picker.set_input_files(str(archive_file))
+            picker.set_input_files(str(collision_file))
             with page.expect_response(
                 lambda resp: resp.request.method == "POST" and
                 resp.url.endswith("/admin/run-archives/import/preview"),
@@ -261,6 +289,56 @@ def main() -> None:
             assert _dump(target_path) == colliding_state
             assert len(requests) == 4, requests
             assert all(url.endswith("/import/preview") for url in requests), requests
+
+            picker.set_input_files(str(archive_file))
+            page.get_by_role("button", name="Ověřit archiv a konflikty").click()
+            restore = page.get_by_role("button", name="Obnovit Run")
+            expect(restore).to_be_disabled(timeout=20000)
+            page.get_by_label("Jméno operátora").fill("Archive browser acceptance")
+            page.get_by_label("Důvod obnovy").fill("Restore a verified whole Run")
+            expect(restore).to_be_disabled()
+            assert _dump(target_path) == colliding_state
+            page.get_by_role("checkbox", name="Potvrzuji obnovu z ověřeného souboru.").check()
+            confirm_url = api + "/admin/run-archives/import/confirm?"
+            committed_before_reply = []
+
+            def lose_first_restore_response(route):
+                if route.request.method != "POST" or committed_before_reply:
+                    route.continue_()
+                    return
+                response = route.fetch(max_redirects=0, timeout=180000)
+                committed_before_reply.append(response.status)
+                route.abort()
+
+            page.route(lambda url: url.startswith(confirm_url), lose_first_restore_response)
+            restore.click()
+            retry = page.get_by_role("button", name="Ověřit výsledek opakováním obnovy")
+            expect(retry).to_be_enabled(timeout=180000)
+            assert committed_before_reply == [201], committed_before_reply
+            after_first_restore = _dump(target_path)
+            assert after_first_restore != colliding_state
+            with page.expect_response(
+                lambda resp: resp.request.method == "POST"
+                and "/admin/run-archives/import/confirm?" in resp.url,
+                timeout=180000,
+            ) as restore_response:
+                retry.click()
+            assert restore_response.value.status == 201, restore_response.value.text()[:2000]
+            restored_link = page.get_by_role("link", name="Otevřít obnovený Run")
+            expect(restored_link).to_have_attribute("href", f"/admin/runs/{run_id}")
+            page.screenshot(path=str(root / "import-restored-cs.png"), full_page=True)
+            confirm_requests = [url for url in requests if url.startswith(confirm_url)]
+            assert len(requests) == 7 and len(confirm_requests) == 2
+            assert parse_qs(urlsplit(confirm_requests[0]).query) == parse_qs(
+                urlsplit(confirm_requests[1]).query
+            )
+            assert _dump(target_path) == after_first_restore, "Retry wrote duplicate rows"
+
+            stop_process(server)
+            server = start_backend()
+            assert [_request("GET", api + path) for path in history_paths] == histories
+            assert _request("GET", api + replay_path) == (200, match["stored_replay"])
+            assert _request("GET", api + f"/run-containers/{collision_run['run_id']}")[0] == 200
             assert not errors, errors
             assert not external, external
 
@@ -272,10 +350,12 @@ def main() -> None:
                 "clean_preview": True, "tampered_archive_rejected": True,
                 "persisted_name_conflict": True, "reopened_conflict": True,
                 "target_sqlite_unchanged_by_previews": True,
-                "preview_http_posts": requests, "page_errors": errors,
+                "preview_http_post_count": 5, "page_errors": errors,
                 "blocked_external_requests": external,
                 "browser_external_deny_probe": True,
-                "import_confirm_calls": 0, "restore_performed": False
+                "import_confirm_calls": 2, "restore_performed": True,
+                "lost_response_exact_retry_without_writes": True,
+                "restored_branch_count": 2, "restart_preserved_history_and_replay": True
             }, indent=2))
             browser.close()
     finally:

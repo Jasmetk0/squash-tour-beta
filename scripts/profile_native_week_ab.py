@@ -1,16 +1,16 @@
 """One real native Tour week, two immutable commits, isolated processes.
 
-Linux, Python 3.11+, installed project/test dependencies, clean committed Git
+Linux or Windows, Python 3.11+, installed project/test dependencies, clean committed Git
 trees. Run this driver from the diagnostic branch, not from either candidate.
 Use prepare once, then ab with the emitted SHA. No multi-season task is started.
 Timings include identical fetch instrumentation; history verification is separate.
-Use --profile-cpu in a separate run to attribute synchronous endpoint CPU.
+On Linux, use --profile-cpu in a separate run to attribute synchronous endpoint CPU.
 """
 from __future__ import annotations
 
 import argparse
 from collections import Counter
-from contextlib import closing
+from contextlib import closing, contextmanager
 from functools import wraps
 import hashlib
 import importlib.metadata
@@ -60,10 +60,46 @@ REPLAY_ENTRIES = {
 }
 
 
+def require_measurement_platform(profile_cpu=False):
+    require(sys.platform.startswith("linux") or sys.platform == "win32",
+            "Native week measurement requires Linux or Windows")
+    require(not profile_cpu or sys.platform.startswith("linux"),
+            "--profile-cpu requires the Linux endpoint thread CPU clock")
+
+
 def process_io():
-    """Linux process counters, across the server and client threads."""
+    """Linux process counters; Windows explicitly reports unavailable (None)."""
+    if sys.platform == "win32":
+        return dict.fromkeys(PHASE_COUNTERS)
     fields = dict(line.split(": ", 1) for line in Path("/proc/self/io").read_text().splitlines())
     return {"read_syscall_bytes": int(fields["rchar"]), "storage_read_bytes": int(fields["read_bytes"])}
+
+
+def io_delta(before, after):
+    return {key: None if before[key] is None and after[key] is None
+            else after[key] - before[key] for key in PHASE_COUNTERS}
+
+
+def cpu_affinity_count():
+    # Do not substitute total logical CPUs for process affinity.
+    return None if sys.platform == "win32" else len(os.sched_getaffinity(0))
+
+
+@contextmanager
+def measurement_server(api):
+    """Release the benchmark's SQLite pool after the real server stops.
+
+    Windows cannot unlink a SQLite file while pooled handles are still open.
+    ApiServer's context manager stops its thread but does not dispose the pool.
+    """
+    try:
+        with api as server:
+            yield server
+    finally:
+        require(not api.thread.is_alive(), "Benchmark API server did not stop")
+        runtime = getattr(api.app.state, "runtime", None)
+        if runtime is not None:
+            runtime.repository._engine.dispose()
 
 
 def cpu_category(file):
@@ -282,7 +318,7 @@ def metadata():
             "process_measurement_sha256": file_sha(Path(process_measurement.__file__)),
             "python": sys.version, "platform": platform.platform(),
             "machine": platform.machine(), "cpu_count": os.cpu_count(),
-            "hardware": process_measurement.machine(), "cpu_affinity_count": len(os.sched_getaffinity(0)),
+            "hardware": process_measurement.machine(), "cpu_affinity_count": cpu_affinity_count(),
             "dependencies": {name: importlib.metadata.version(name) for name in
                              ("fastapi", "pydantic", "sqlalchemy", "uvicorn", "pytest")},
             "pythonhashseed": os.environ.get("PYTHONHASHSEED"),
@@ -328,7 +364,7 @@ def prepare(path):
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp:
         local = Path(temp) / "prepare.db"
-        with ApiServer(database_url=f"sqlite:///{local}") as server:
+        with measurement_server(ApiServer(database_url=f"sqlite:///{local.as_posix()}")) as server:
             flow.setup(server, RunCalendar(6, 6, 2030, 2), count=8)
             flow.create_edition(server, "ab-cup", size=4)
             for week in (3, 4):
@@ -365,7 +401,7 @@ def expected_calls(scenario, mode):
 
 
 def worker(args):
-    require(sys.platform.startswith("linux"), "RSS accounting requires Linux")
+    require_measurement_platform(args.profile_cpu)
     require(args.scenario in PLANS, "Unknown scenario")
     require(args.scenario != "w12-1822" or args.sha256 == W12_SHA, "Wrong archived W12 hash")
     meta = metadata()
@@ -406,9 +442,9 @@ def worker(args):
               "plan": PLANS[args.scenario], "before": before,
               "calls": rows}
     try:
-        api = ApiServer(database_url=f"sqlite:///{db}")
+        api = ApiServer(database_url=f"sqlite:///{db.as_posix()}")
         profiles = profile_endpoints(api.app) if args.profile_cpu else None
-        with api as server:
+        with measurement_server(api) as server:
             repo = server.app.state.runtime.repository
             url = flow.tour_url(server)
 
@@ -431,7 +467,7 @@ def worker(args):
                         "request_sha256": request_sha256,
                         "wall_s": wall_s, "cpu_s": cpu_s,
                         "current_rss_kib": memory["VmRSS"], "peak_rss_kib": memory["VmHWM"],
-                        **{key: io_after[key] - io_before[key] for key in PHASE_COUNTERS},
+                        **io_delta(io_before, io_after),
                         "sql_calls": sql["count"] - sql_before["count"],
                         "sql_cursor_wall_s": sql["cursor_wall_s"] - sql_before["cursor_wall_s"],
                         "fetch_rows": fetched["rows"] - fetch_before["rows"],
@@ -531,6 +567,13 @@ def validate_report(item):
     require(scenario in PLANS and mode in ("normal", "retry"), "unknown scenario/mode")
     require(digest(item["plan"]) == digest(PLANS[scenario]), "unexpected action plan")
     require(type(item["profile_cpu"]) is bool, "invalid profiling mode")
+    report_platform = item["metadata"]["platform"]
+    windows = report_platform.startswith("Windows")
+    require(windows or report_platform.startswith("Linux"), "unknown measurement platform")
+    affinity = item["metadata"]["cpu_affinity_count"]
+    require(affinity is None if windows else type(affinity) is int and affinity > 0,
+            "invalid/unavailable CPU affinity")
+    require(not windows or not item["profile_cpu"], "CPU sampling requires Linux")
     require(type(item["seed"]) is int and item["seed"] == SEED, "unexpected seed")
     require(re.fullmatch(r"[0-9a-f]{64}", item["input_sha256"]), "invalid fixture hash")
     require(scenario != "w12-1822" or item["input_sha256"] == W12_SHA, "wrong W12 fixture")
@@ -546,9 +589,13 @@ def validate_report(item):
         if get:
             require(row["request_sha256"] == digest(None), "unexpected GET body")
         for key in ("wall_s", "cpu_s", "current_rss_kib", "peak_rss_kib", "sql_calls", "sql_cursor_wall_s",
-                    "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes", *PHASE_COUNTERS):
+                    "fetch_rows", "fetch_text_blob_bytes", "db_bytes", "wal_bytes"):
             require(type(row[key]) in (int, float) and math.isfinite(row[key]) and row[key] >= 0,
                     "invalid phase metric " + key)
+        for key in PHASE_COUNTERS:
+            value = row[key]
+            require(value is None if windows else type(value) is int and value >= 0,
+                    "invalid/unavailable Linux I/O metric " + key)
         require(row["current_rss_kib"] <= row["peak_rss_kib"], "current RSS exceeds peak")
         require(("endpoint_cpu_profile" in row) == item["profile_cpu"], "missing or unexpected CPU profile")
         if item["profile_cpu"]:
@@ -666,7 +713,9 @@ def totals(report):
             "mean_busy_logical_cpus": (report["elapsed_cpu_s"] / report["elapsed_wall_s"]
                                        if report["elapsed_wall_s"] else 0.0),
             **{k: sum(row[k] for row in report["calls"])
-               for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes", *PHASE_COUNTERS)},
+               for k in ("sql_calls", "sql_cursor_wall_s", "fetch_rows", "fetch_text_blob_bytes")},
+            **{k: None if report["calls"][0][k] is None else sum(row[k] for row in report["calls"])
+               for k in PHASE_COUNTERS},
             "max_sampled_db_bytes": max([report["before"]["db_bytes"], report["after"]["db_bytes"]]
                                         + [row["db_bytes"] for row in report["calls"]]),
             "max_sampled_wal_bytes": max([report["before"]["wal_bytes"], report["after"]["wal_bytes"]]
@@ -687,7 +736,7 @@ def compare(a, b, *, cross_mode=False):
     by_label = {row["label"]: row for row in b["calls"]}
     return {"verdict": "equal", "a": x, "b": y,
             "profile_cpu": a["profile_cpu"],
-            "delta_b_minus_a": {k: y[k] - x[k] for k in x},
+            "delta_b_minus_a": {k: None if x[k] is None or y[k] is None else y[k] - x[k] for k in x},
             "phase_delta_wall_s": {
                 ra["label"]: by_label[ra["label"]]["wall_s"] - ra["wall_s"]
                 for ra in a["calls"] if ra["label"] in by_label},
@@ -739,6 +788,9 @@ def summarize_trials(trials):
         return result
 
     def stats(values):
+        if all(value is None for value in values):
+            return None
+        require(all(value is not None for value in values), "mixed metric availability")
         return {"median": median(values), "min": min(values), "max": max(values)}
 
     result["aggregate"] = {}
@@ -754,6 +806,7 @@ def summarize_trials(trials):
 
 
 def run_ab(args):
+    require_measurement_platform(args.profile_cpu)
     a, b = exact_commit(args.a), exact_commit(args.b)
     require(1 <= args.repetitions <= 3, "Use 1-3 isolated repetitions")
     require(1 <= args.worker_timeout <= 1800, "Worker timeout must be 1-1800 seconds")
@@ -804,7 +857,7 @@ def run_ab(args):
                                     stderr=subprocess.STDOUT, timeout=args.worker_timeout, check=False)
                             case["returncode"] = proc.returncode
                             require(proc.returncode == 0, f"{name}: worker failed ({proc.returncode})")
-                            reports[name] = json.loads(dest.read_text())
+                            reports[name] = json.loads(dest.read_text(encoding="utf-8"))
                             validate_report(reports[name])
                             require(reports[name]["metadata"]["commit"] == commits[label] and
                                     reports[name]["mode"] == mode and
@@ -854,7 +907,7 @@ def main(argv=None):
     ab.add_argument("--repetitions", type=int, default=1, help="1-3 independent A/B trials")
     ab.add_argument("--worker-timeout", type=int, default=600, help="Per-process seconds, 1-1800")
     ab.add_argument("--profile-cpu", action="store_true",
-                    help="Instrument sync Tour endpoint CPU; compare only with the same mode")
+                    help="Linux only: instrument sync Tour endpoint CPU; compare only with the same mode")
     comp = subs.add_parser("compare")
     comp.add_argument("a", type=Path)
     comp.add_argument("b", type=Path)
@@ -868,6 +921,7 @@ def main(argv=None):
     worker_p.add_argument("--profile-cpu", action="store_true")
     args = p.parse_args(argv)
     if args.action == "prepare":
+        require_measurement_platform()
         target_imports()
         prepare(args.database.resolve())
         return 0
@@ -875,7 +929,7 @@ def main(argv=None):
         worker(args)
         return 0
     if args.action == "compare":
-        result = compare(json.loads(args.a.read_text()), json.loads(args.b.read_text()))
+        result = compare(json.loads(args.a.read_text(encoding="utf-8")), json.loads(args.b.read_text(encoding="utf-8")))
         print(json.dumps(result, indent=2))
         return 0 if result["verdict"] == "equal" else 2
     return run_ab(args)

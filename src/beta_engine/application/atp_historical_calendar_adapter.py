@@ -87,7 +87,7 @@ class ATPHistoricalCalendarAdapter:
         return CanonicalPackageDocument(
             package_type=PackageType.SETUP,
             package_id=CALENDAR_SETUP_ID,
-            source_version=5,
+            source_version=6,
             provenance={
                 "adapter": "server_atp_tour_calendar_reference_setup.v1",
                 "historical_span": {"from": 1990, "to": 2026},

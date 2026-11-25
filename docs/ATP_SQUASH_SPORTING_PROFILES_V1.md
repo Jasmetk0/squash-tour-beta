@@ -1,5 +1,33 @@
 # Saved ATP squash sporting profiles V1
 
+## Munich and Vienna 2025
+
+Setup source v6 and sporting Category source v5 append two profiles without
+changing the four earlier payloads. The Main windows match the existing historical
+Calendar occurrences. The official draw PDFs supply the ATP 500 scheduled geometry
+(32 Main places, eight seeds, three wild cards, 16 Q entrants in four independent
+four-player sections, four Q winners, zero byes). The points are Main
+500/330/200/100/50/0 and Q 25/13/0. Historical lucky losers, withdrawals and
+results are not imported as scheduled slots.
+
+| Occurrence | Qualification | Main | W52 (start 2025, offset 1) Q/Main | W52 (start 2024, offset 37) Q/Main |
+|---|---|---|---|---|
+| Munich | Apr 12–13 | Apr 14–20 | S0 W15/W16 | S0 W31/W32 |
+| Vienna | Oct 18–19 | Oct 20–26 | S0 W42/W43 | S1 W06/W07 |
+
+Sources: [Munich official phase schedule (Apr 8)](https://www.atptour.com/en/news/munich-2025-atp-500-history-draw-schedule),
+[Main draw](https://www.protennislive.com/posting/2025/308/mds.pdf),
+[Q draw](https://www.protennislive.com/posting/2025/308/qs.pdf);
+[Vienna official phase schedule (Oct 14)](https://www.erstebank-open.com/en/news/storys/vienna-2025-atp-500-history-draw-schedule),
+[Main draw](https://www.protennislive.com/posting/2025/337/mds.pdf),
+[Q draw](https://www.protennislive.com/posting/2025/337/qs.pdf).
+PDF SHA-256 values were obtained from complete downloads in
+[the source evidence run](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45672128407).
+
+Both phases are calendar-projected from Saved source data; Admin proposes the
+round slots. The 43 nodes describe scheduled geometry, not executed matches.
+Native Ranked W52 execution remains outside this source-only change.
+
 ## Dallas Open 2025
 
 Setup source v5 and sporting Category source v4 add Dallas. On a calendar-year

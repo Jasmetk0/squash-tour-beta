@@ -633,3 +633,24 @@ def test_august_second_pass_distinguishes_advertised_and_actual_qualification(ba
         e = row["historical_evidence"]
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 55
+
+
+def test_second_pass_bordeaux_through_toulouse_keeps_observed_labels_separate(batch):
+    reviewed = batch["occurrences"][55:63]
+    assert [r["series_id"] for r in reviewed] == [
+        "bordeaux_1995", "cologne_1992_clay", "basel", "brisbane_autumn_1992",
+        "palermo", "athens_1994", "sydney_indoor_1994", "toulouse_2000"]
+    b, g, bs, br, p, a, s, t = [r["historical_evidence"] for r in reviewed]
+    for e, q, wc in ((b, 4, 3), (g, 4, 3), (bs, 4, 3), (br, 4, 3), (p, 4, 1), (a, 3, 3), (s, 6, 4)):
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+        assert e["main_entry_label_evidence"]["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+    assert g["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [1]
+    assert a["observed_lucky_losers"] == 1
+    assert (s["main_entrants"], s["main_bracket_slots"], s["main_byes"], s["main_seeds"]) == (48, 64, 16, 16)
+    assert s["bye_seed_ranks"] == list(range(1, 17))
+    assert t["reported_main_qualifiers"] is t["reported_main_wild_cards"] is None
+    for row in reviewed:
+        e = row["historical_evidence"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 63

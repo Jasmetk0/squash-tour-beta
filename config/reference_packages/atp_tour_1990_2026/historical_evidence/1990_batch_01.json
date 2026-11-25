@@ -33,7 +33,7 @@
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 62,
+    "reported_seed_count_rows": 63,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 47,
-    "reported_main_wild_card_count_rows": 47,
+    "reported_main_qualifier_count_rows": 50,
+    "reported_main_wild_card_count_rows": 50,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 55,
+    "second_pass_review_attempted_rows": 63,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,7 +57,7 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "55-row chronological prefix includes new source access, observed Main labels or retained prior evidence; one advertised Q window, no actual Q sheet obtained.",
+    "second_pass_review_note": "63-row chronological prefix includes new source access, observed Main labels or retained prior evidence; one advertised Q window, no actual Q sheet obtained.",
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75,
@@ -7563,6 +7563,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Secondary summary confirms Main32/8 seeds/4Q/3WC."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_summary_available_no_q_sheet"
+          },
+          "remaining": "Actual Q participants, dates and financial commitment missing. Annual 28 conflict retained."
         }
       }
     },
@@ -7639,8 +7660,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -7681,6 +7702,32 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Geneva_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Top half 1Q/3WC; bottom half 3Q/0WC; seed 1 also WC.",
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            1
+          ]
+        },
+        "observed_seeded_wild_card": true,
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Geneva_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Source cites World of Tennis 1991 pp.115,135; original yearbook and Q draw not obtained. Do not identify with modern Geneva licence."
         }
       }
     },
@@ -7798,6 +7845,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Secondary Main summary explicitly reports four Q and three WC."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_summary_available_no_q_sheet"
+          },
+          "remaining": "Original Q graph, dates and exact ranking class not obtained."
         }
       }
     },
@@ -7921,6 +7989,28 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://www.ultimatetennisstatistics.com/tournamentEvent?extId=326&name=Brisbane&season=1990",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Prior UTS full first-round label counts retained; current page accessible, wire source returns 403.",
+          "observed_lucky_losers": 1
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.ultimatetennisstatistics.com/tournamentEvent?extId=326&name=Brisbane&season=1990",
+            "outcome": "secondary_main_draw_available_prior_counts_retained"
+          },
+          "remaining": "Prior rain-delay and conflicting purse report retained; UPI link now inaccessible. No actual Q graph/dates or financial classification."
         }
       }
     },
@@ -8029,6 +8119,27 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 1,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Secondary Main summary explicitly reports four Q and one WC; not evidence only one reserved card."
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_summary_available_no_q_sheet"
+          },
+          "remaining": "Original Q graph, dates and financial commitment missing."
         }
       }
     },
@@ -8106,8 +8217,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 3,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -8148,6 +8259,29 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Athens_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 3,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Initial labels across top/bottom halves: Q 1/2, WC 1/2, one LL in bottom half.",
+          "observed_lucky_losers": 1
+        },
+        "observed_lucky_losers": 1,
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Athens_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Three observed Q and one LL cannot establish number of reserved Q places. World of Tennis 1991 pp.115,136 referenced but not inspected."
         }
       }
     },
@@ -8212,20 +8346,22 @@
         "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
-        "main_geometry_status": "candidate_field_not_certified_full_draw",
-        "main_seeds": null,
-        "main_draw_source": "https://library.futurelabz.dev/content/wikipedia_en_all_maxi_2026-02/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
+        "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
+        "main_seeds": 16,
+        "main_draw_source": "https://en.wikipedia.org/wiki/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
         "event_source": "https://www.latimes.com/archives/la-xpm-1990-10-02-sp-1894-story.html",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://library.futurelabz.dev/content/wikipedia_en_all_maxi_2026-02/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
-          "https://www.latimes.com/archives/la-xpm-1990-10-02-sp-1894-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-10-02-sp-1894-story.html",
+          "https://en.wikipedia.org/wiki/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
+          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2029"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 6,
+        "reported_main_wild_cards": 4,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -8256,6 +8392,57 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 6,
+          "observed_wild_cards": 4,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants or explicit Main draw summary; no reserved policy inferred.",
+          "note": "Four sections: Q 2/2/2/0, WC 1/0/0/3; all 16 seeds have BYE.",
+          "qualifier_counts_by_section": [
+            2,
+            2,
+            2,
+            0
+          ],
+          "wild_card_counts_by_section": [
+            1,
+            0,
+            0,
+            3
+          ]
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "All sixteen seed BYEs explicit; UTS indexed KO48/48 corroborates active field. Original Q graph, dates and exact ranking class missing."
         }
       }
     },
@@ -8364,6 +8551,22 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_entry_labels_not_reliable"
+          },
+          "remaining": "Draw lists 32 and 8 seeds but entrant labels omitted; do not infer zero Q/WC. Original Q graph, dates and commitment missing."
+        },
+        "main_entry_label_partial_evidence": {
+          "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
+          "scope": "Main draw transcription omits entry-method labels; unknown is not zero."
         }
       }
     },
@@ -9842,7 +10045,7 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_bordeaux_1995",
+  "next_second_pass_review_occurrence": "atp_1990_berlin_1991",
   "field_semantics": {
     "main_entrants": "Reported/cross-checked count of occupied Main entrant positions, not bracket capacity; still historical evidence, not a certified sporting profile.",
     "main_bracket_slots": "Physical knockout bracket positions, including BYEs; null for round-robin group format.",

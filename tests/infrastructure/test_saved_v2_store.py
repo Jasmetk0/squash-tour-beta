@@ -243,6 +243,73 @@ def _child_digest(connection, envelope):
     return next(d for (d,) in connection.execute("SELECT digest FROM saved_revision_nodes") if d not in envelope)
 
 
+def _shared_digest_roots(tmp_path):
+    _path, connection, _unused, state = _sqlite_store(tmp_path, "{}")
+    def insert(parts):
+        body = st.node_body("v", parts)
+        digest = st.sha256_hex(body)
+        connection.execute("INSERT INTO saved_revision_nodes VALUES ('run', ?, ?)", (digest, body))
+        return digest
+
+    leaf = insert(['"same history"'])
+    subtree = insert(["[", ("ref", leaf), "]"])
+    roots = []
+    for key in ("a", "b"):
+        opening = f'{{"{key}":'
+        root = insert([opening, ("ref", subtree), "}"])
+        expected = opening + '["same history"]}'
+        stored = st.envelope_text(run_id="run", root=root, chars=len(expected))
+        text = st.read_payload(connection, "run", stored)
+        assert text == expected
+        digest = hashlib.sha256(text.encode()).digest()
+        st.remember_text_sha256("run", stored, text, digest)
+        roots.append((root, stored, digest))
+    return connection, state, leaf, subtree, roots
+
+
+def test_stored_digests_share_subtrees_only_in_the_actual_snapshot(tmp_path, monkeypatch):
+    connection, state, leaf, subtree, (first, second) = _shared_digest_roots(tmp_path)
+    visited = []
+    authenticate = st.authenticated_nodes
+
+    def traced(*args, **kwargs):
+        nodes = authenticate(*args, **kwargs)
+        visited.append(set(nodes))
+        return nodes
+
+    monkeypatch.setattr(st, "authenticated_nodes", traced)
+    with connection:
+        connection.execute("BEGIN")
+        assert st.stored_text_sha256(connection, "run", first[1], state=state) == first[2]
+        assert st.stored_text_sha256(connection, "run", second[1], state=state) == second[2]
+        assert visited == [{first[0], subtree, leaf}, {second[0]}]
+    st.bump_snapshot(state)
+    with connection:
+        connection.execute("BEGIN")
+        assert st.stored_text_sha256(connection, "run", second[1], state=state) == second[2]
+        assert visited[-1] == {second[0], subtree, leaf}
+        connection.execute("UPDATE saved_revision_nodes SET body='damaged' WHERE digest=?", (leaf,))
+        assert state.cache is None
+        with pytest.raises(st.SavedV2IntegrityError, match="does not match"):
+            st.stored_text_sha256(connection, "run", second[1], state=state)
+        connection.rollback()
+    connection.close()
+
+
+def test_stored_digest_subtrees_preserve_exact_per_root_node_limit(tmp_path, monkeypatch):
+    connection, state, _leaf, _subtree, (first, second) = _shared_digest_roots(tmp_path)
+    with connection:
+        connection.execute("BEGIN")
+        # Each root reaches three nodes although the union contains four.
+        monkeypatch.setattr(st, "MAX_NODES", 3)
+        assert st.stored_text_sha256(connection, "run", first[1], state=state) == first[2]
+        assert st.stored_text_sha256(connection, "run", second[1], state=state) == second[2]
+        monkeypatch.setattr(st, "MAX_NODES", 2)
+        with pytest.raises(st.SavedV2IntegrityError, match="graph is too large"):
+            st.stored_text_sha256(connection, "run", second[1], state=state)
+    connection.close()
+
+
 @pytest.mark.parametrize("ensure_ascii", [True, False])
 def test_parent_index_matches_exact_materialized_value_hints(tmp_path, monkeypatch, ensure_ascii):
     text = json.dumps(payload(events=4), ensure_ascii=ensure_ascii, sort_keys=True, separators=(",", ":"))

@@ -216,13 +216,15 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
                               on_value_node=on_value_node, derived=derived)
 
 
-def authenticated_nodes(fetch, *, run_id, root, verified=None):
+def authenticated_nodes(fetch, *, run_id, root, verified=None, _authenticated_subtrees=None):
     """Fetch every node reachable from ``root`` and authenticate its ACTUAL body.
 
     Each body returned by ``fetch`` (rows of this Run only) must hash to its own
     digest; a missing, foreign or changed node raises. ``verified`` has the
     meaning described in ``materialize``. Returns {digest: parsed node}; a node
     whose subtree has a derived value of the same snapshot is not descended.
+    The private digest-only path can also omit subtrees already authenticated
+    in this snapshot. Callers that need parsed nodes never use that option.
     """
     derived = getattr(verified, "derived", None)
     nodes, pending = {}, [root]
@@ -230,6 +232,8 @@ def authenticated_nodes(fetch, *, run_id, root, verified=None):
         batch, following = [], []
         for digest in dict.fromkeys(pending):
             if digest in nodes:
+                continue
+            if _authenticated_subtrees is not None and digest in _authenticated_subtrees:
                 continue
             known = verified.get(digest) if verified is not None else None
             if known is not None:
@@ -258,6 +262,10 @@ def authenticated_nodes(fetch, *, run_id, root, verified=None):
         if len(nodes) > MAX_NODES:
             raise SavedV2IntegrityError("v2 node graph is too large")
         pending = following
+    if _authenticated_subtrees and len(nodes) + len(_authenticated_subtrees) > MAX_NODES:
+        # The union includes unrelated nodes. Use the ordinary count if this
+        # conservative bound cannot establish that the root fits the limit.
+        return authenticated_nodes(fetch, run_id=run_id, root=root, verified=verified)
     return nodes
 
 
@@ -795,7 +803,7 @@ class SnapshotCache:
     request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "node_chars", "derived", "texts", "chars")
+    __slots__ = ("key", "formats", "nodes", "node_chars", "derived", "authenticated_subtrees", "texts", "chars")
 
     def __init__(self, key):
         self.key = key
@@ -803,6 +811,7 @@ class SnapshotCache:
         self.nodes = {}               # (run_id, digest) -> parsed verified node
         self.node_chars = 0
         self.derived = {}             # (run_id, digest) -> (size, flattened pieces)
+        self.authenticated_subtrees = {}  # run_id -> digests of completely authenticated subtrees
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
 
@@ -830,6 +839,18 @@ class SnapshotCache:
         while self.chars > SNAPSHOT_TEXT_CHARS and self.texts:
             _, old = self.texts.popitem(last=False)
             self.chars -= len(old)
+
+    def remember_authenticated_subtrees(self, run_id, nodes):
+        size = 96  # digest text and set entry, under the same budget
+        if not nodes or self.node_chars + size > SNAPSHOT_NODE_CHARS:
+            return
+        complete = self.authenticated_subtrees.setdefault(run_id, set())
+        for digest in nodes:
+            if self.node_chars + size > SNAPSHOT_NODE_CHARS:
+                break
+            if digest not in complete:
+                complete.add(digest)
+                self.node_chars += size
 
 
 GUARD_TRIGGERS = tuple(
@@ -1067,7 +1088,8 @@ def stored_text_sha256(dbapi_connection, run_id, stored, *, state=None):
     Returns a digest only when this process already hashed the text of the same
     (Run, root, size) AND every node reachable from that root is present in
     this Run now, in this connection's current snapshot, with a body that hashes
-    to its digest (re-fetched; shared with the snapshot's verified node cache).
+    to its digest (re-fetched in this snapshot). Overlapping immutable subtrees
+    already authenticated in this exact snapshot need only one traversal.
     None means: materialize and hash the text the ordinary way.
     """
     envelope = stored_envelope(dbapi_connection, run_id, stored, state=state)
@@ -1079,8 +1101,13 @@ def stored_text_sha256(dbapi_connection, run_id, stored, *, state=None):
         return None
     cache = snapshot_cache(dbapi_connection, state)
     try:
-        authenticated_nodes(connection_fetch(dbapi_connection), run_id=run_id, root=root,
-                            verified=_RunView(cache, run_id) if cache is not None else None)
+        nodes = authenticated_nodes(
+            connection_fetch(dbapi_connection), run_id=run_id, root=root,
+            verified=_RunView(cache, run_id) if cache is not None else None,
+            _authenticated_subtrees=cache.authenticated_subtrees.get(run_id) if cache is not None else None,
+        )
+        if cache is not None:
+            cache.remember_authenticated_subtrees(run_id, nodes)
     except Exception:
         bump_snapshot(state)
         raise

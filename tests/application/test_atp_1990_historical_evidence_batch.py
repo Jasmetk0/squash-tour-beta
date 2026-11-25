@@ -90,7 +90,7 @@ def test_first_january_evidence_is_not_playability(batch):
                and row["played_and_reopened_status"] == "not_tested"
                for row in rows)
     reviewed = batch["summary"]["individual_detail_reviewed"]
-    assert reviewed >= 21
+    assert reviewed >= 36
     assert all("historical_evidence" in row for row in rows[:reviewed])
     assert all("historical_evidence" not in row for row in rows[reviewed:])
     assert batch["summary"]["published_sporting_profiles"] == 0
@@ -198,3 +198,67 @@ def test_march_april_geometry_and_preserved_source_disagreements(batch):
         assert evidence["qualifier_spots"] == q
         assert evidence["wild_cards"] == wc
     assert rows["miami"]["historical_evidence"]["qualification_entrants"] is None
+
+
+def test_full_year_census_is_distinct_from_individual_draw_review(batch):
+    rows = batch["occurrences"]
+    summary = batch["summary"]
+    assert sum("annual_census_evidence" in row or "historical_evidence" in row
+               for row in rows) == summary["annual_or_individual_historical_evidence_rows"] == 75
+    assert sum("annual_census_evidence" in row and "historical_evidence" not in row
+               for row in rows) == summary["annual_census_only_rows"]
+    entities = {row["source_entity_id"]: row["payload"]
+                for row in read(ROOT / "series.json")["entities"]}
+    counts = Counter()
+    for row in rows:
+        e = row.get("historical_evidence")
+        a = row.get("annual_census_evidence")
+        n = e["main_draw_capacity"] if e else a["reported_main_entrants"]
+        counts[str(n)] += 1
+        if a:
+            assert a["status"] == "secondary_annual_summary_not_individual_draw_verification"
+            host = next(h for h in entities[row["series_id"]]["historical_host_change"]
+                        if h["year"] == 1990)
+            assert a["canonical_1990_host_city"] == host["city"]
+            assert a["canonical_1990_country_code"] == host["country_code"]
+            if row["series_id"] != "atp_finals":
+                slots = a["candidate_knockout_slots"]
+                assert slots >= a["reported_main_entrants"]
+                assert slots // 2 < a["reported_main_entrants"]
+                assert slots - a["reported_main_entrants"] == a["candidate_byes_if_full_reported_field"]
+            else:
+                assert "candidate_knockout_slots" not in a
+        if e is None:
+            assert row["detail_status"] == "queued_for_individual_review"
+    assert dict(counts) == summary["reported_field_distribution_all_year"]
+    assert sum(row.get("historical_evidence", {}).get("main_seeds") is not None
+               for row in rows) == summary["reported_seed_count_rows"]
+
+
+def test_april_june_sources_and_frankfurt_finals(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    assert rows["hong_kong"]["historical_evidence"]["host_city"] == "Nice"
+    assert rows["hong_kong_salem_2002"]["historical_evidence"]["host_city"] == "Hong Kong"
+    assert rows["hong_kong_salem_2002"]["historical_evidence"]["wild_cards"] is None
+    assert rows["hong_kong_salem_2002"]["historical_evidence"]["observed_wild_cards_minimum"] == 1
+    assert rows["hamburg"]["historical_evidence"]["alternate_event_end_date"] == "1990-05-14"
+    assert rows["hamburg"]["original_end_date"] == "1990-05-13"
+    for name, q, wc in (("hong_kong", 4, 3), ("monte_carlo", 6, 4),
+                        ("umag", 4, 3), ("florence_1994", 4, 3),
+                        ("s_hertogenbosch", 4, 2)):
+        e = rows[name]["historical_evidence"]
+        assert (e["qualifier_spots"], e["wild_cards"]) == (q, wc)
+    for name in ("florence_1994", "s_hertogenbosch"):
+        assert rows[name]["historical_evidence"]["observed_lucky_losers"] == 1
+    a = rows["atp_finals"]["annual_census_evidence"]
+    f = a["official_format_evidence"]
+    assert (f["group_count"], f["group_size"], f["advancing_per_group"]) == (2, 4, 2)
+    assert f["group_matches"] == 12 and f["total_matches"] == 15
+    assert f["competition_start_date"] == "1990-11-13"
+    assert rows["atp_finals"]["original_start_date"] == "1990-11-12"
+    p = a["points_candidate"]
+    assert p["group_win"] * 3 + p["champion_knockout_component"] == p["undefeated_champion"] == 400
+    assert p["status"] == "secondary_not_verified_for_publication"
+    assert p == batch["historical_points_evidence"]["finals_1990_candidate"]
+    assert all(row["qualification_loss_points"] is None
+               for row in batch["historical_points_evidence"]["world_series_64_candidate_rows"])

@@ -1,5 +1,5 @@
 {
-  "schema_version": "atp_1990_historical_evidence_batch.v1",
+  "schema_version": "atp_1990_historical_evidence_batch.v2",
   "source_year": 1990,
   "reviewed_on": "2026-11-25",
   "base_commit": "e3ad2956e0a95f9e508563514b2eed72c4159fb7",
@@ -33,7 +33,7 @@
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 59,
+    "reported_seed_count_rows": 60,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,10 +44,10 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_q_spot_count_rows": 38,
-    "reported_wc_count_rows": 38,
+    "reported_main_qualifier_count_rows": 39,
+    "reported_main_wild_card_count_rows": 39,
     "main_draw_disagreement_rows": 15,
-    "second_pass_review_attempted_rows": 27,
+    "second_pass_review_attempted_rows": 32,
     "second_pass_main_field_crosscheck_rows": 75,
     "complete_verified_qualification_draw_rows": 0,
     "verified_qualification_date_rows": 0,
@@ -57,7 +57,10 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "27-row chronological prefix includes new source access, observed Main entry labels or explicitly retained previous evidence. No actual Q sheet obtained; not 27 new primary draw verifications."
+    "second_pass_review_note": "32-row chronological prefix includes new source access, observed Main labels or explicitly retained previous evidence. No complete actual Q sheet obtained; not 32 primary draw verifications.",
+    "calendar_verified_rows": 75,
+    "full_sporting_format_verified_rows": 0,
+    "main_entrant_crosschecked_rows": 75
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -330,6 +333,13 @@
         128
       ],
       "notes": "Compare exact reported commitment against the published secondary row labels and working bracket positions. Do not infer that commitment defines the official prize class or that MD denotes bracket capacity. No nearest-band interpolation, no certified points or Q-loss defaults."
+    },
+    "atp_vs_squash_boundary": {
+      "primary_atp_history_source": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+      "primary_confirmed": "Best 14 over previous 52 weeks and points by tournament category and prize-money levels; historical bonus points.",
+      "secondary_exact_awards_source": "https://openerarankings.com/RankingRules1990",
+      "squash_policy_status": "not_approved_by_this_evidence_batch",
+      "note": "Historical ATP source rules are not automatically Run ranking rules. Work/Claude must coordinate source provenance and any approved versioned adaptation. No unknown Q awards defaulted."
     }
   },
   "finals_alternate_window": {
@@ -389,13 +399,13 @@
         "country": "AUS",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships_%E2%80%93_Singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships",
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "reported_prize_money": 125000,
         "identity_note": "Stable brisbane Series refers to January Adelaide, not the separate September Brisbane event.",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_seeds": 8,
         "main_byes": 0,
         "qualification_entrants": null,
@@ -449,6 +459,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -494,13 +509,13 @@
         "country": "NZL",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_BP_National_Championships_%E2%80%93_Singles",
         "event_source": "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "reported_prize_money": 125000,
         "identity_note": "Stable ID suffix is not the occurrence year; existing source Series records 1990–1992.",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_seeds": 8,
         "main_byes": 0,
         "qualification_entrants": null,
@@ -553,6 +568,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -598,12 +618,12 @@
         "country": "NZL",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_Benson_and_Hedges_Open_%E2%80%93_Singles",
         "event_source": "https://newikis.com/en/1990_Benson_and_Hedges_Open",
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "reported_prize_money": 125000,
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_seeds": 8,
         "main_byes": 0,
         "qualification_entrants": null,
@@ -652,6 +672,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -697,15 +722,15 @@
         "country": "AUS",
         "main_draw_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
         "event_source": "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open",
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "reported_prize_money": 150000,
         "qualification_size_secondary": 32,
         "qualification_size_source": "https://de.wikipedia.org/wiki/Holden_NSW_Open_1990/Herren",
         "identity_note": "January Sydney-1; separate indoor Sydney occurrence belongs to sydney_indoor_1994.",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_seeds": 8,
         "main_byes": 0,
         "qualification_entrants": null,
@@ -761,6 +786,11 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -806,7 +836,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -815,12 +845,16 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Volvo_San_Francisco_%E2%80%93_Singles",
           "https://www.dewiki.de/Lexikon/Volvo_Tennis_San_Francisco_1990",
-          "https://www.upi.com/Archives/1990/02/11/Agassi-wins-singles-final-in-San-Francisco-tournament/1393634712400/"
+          "https://www.upi.com/Archives/1990/02/11/Agassi-wins-singles-final-in-San-Francisco-tournament/1393634712400/",
+          "https://www.latimes.com/archives/la-xpm-1990-02-08-sp-421-story.html",
+          "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+          "https://openerarankings.com/RankingRules1990",
+          "https://www.atptour.com/en/scores/results-archive?year=1990"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -846,7 +880,8 @@
           "qualification_draw_status": "not_obtained",
           "qualification_dates_status": "not_obtained",
           "point_rule_status": "secondary_not_primary_verified",
-          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers."
+          "remaining": "Find primary qualifying sheet with actual participants, feeder sections and phase dates; missing Q-loss awards and ranking model remain blockers.",
+          "additional_candidate_review": "See import_candidate_evidence; new contemporary financial evidence, no actual Q sheet/dates or exact ranking class."
         },
         "point_candidate_comparison": {
           "status": "exact_reported_band_and_bracket_size_candidate",
@@ -859,6 +894,111 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Volvo_San_Francisco_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Secondary Main draw reports 32 entrants, 8 seeds, 4 Q and 3 WC; not proof of reserved places, Q feeder structure or actual dates."
+        },
+        "qualification_size_source": "https://www.dewiki.de/Lexikon/Volvo_Tennis_San_Francisco_1990",
+        "import_candidate_evidence": {
+          "status": "blocked_research_candidate_not_publishable",
+          "reviewed_on": "2026-11-25",
+          "main_window": {
+            "source_url": "https://www.atptour.com/en/scores/results-archive?year=1990",
+            "start_date": "1990-02-05",
+            "end_date": "1990-02-11",
+            "calendar_year_week": 6,
+            "scope": "Official event window mapped to Main W06; does not certify Q dates."
+          },
+          "financial_evidence": [
+            {
+              "source_url": "https://www.dewiki.de/Lexikon/Volvo_Tennis_San_Francisco_1990",
+              "source_type": "secondary",
+              "reported_prize_money_usd": 225000,
+              "reported_financial_commitment_usd": 250000,
+              "scope": "Explicitly distinguishes prize money and financial commitment; labels 32E/32Q/16D and World Series."
+            },
+            {
+              "source_url": "https://www.latimes.com/archives/la-xpm-1990-02-08-sp-421-story.html",
+              "source_type": "contemporary_press",
+              "published_on": "1990-02-08",
+              "reported_purse_usd": 250000,
+              "scope": "Contemporary report describes 250000 purse and nearly 450000 compensation package including appearance guarantees. Not ATP ranking class or Q rules."
+            },
+            {
+              "source_url": "https://www.upi.com/Archives/1990/02/11/Agassi-wins-singles-final-in-San-Francisco-tournament/1393634712400/",
+              "source_type": "contemporary_wire",
+              "published_on": "1990-02-11",
+              "reported_event_amount_usd": 250000,
+              "scope": "Confirms final on February 11 and advertised tournament amount, not official points class."
+            }
+          ],
+          "financial_class_status": "250000_candidate_strengthened_not_certified; retain differing definitions of money",
+          "qualification_source_attempts": [
+            {
+              "url": "https://www.protennislive.com/posting/1990/424/qs.pdf",
+              "outcome": "not_accessible_no_bytes"
+            },
+            {
+              "url": "https://www.protennislive.com/posting/1990/424/mds.pdf",
+              "outcome": "not_accessible_no_bytes"
+            },
+            {
+              "url": "https://www.atptour.com/en/scores/archive/san-francisco/424/1990/draws?matchtype=qualifier",
+              "outcome": "not_accessible"
+            },
+            {
+              "url": "https://www.stevegtennis.com/draw-results/atp/San%20Francisco/1990",
+              "outcome": "http_403"
+            }
+          ],
+          "qualification_actual_entrants": null,
+          "qualification_feeder_sections": null,
+          "qualification_reserved_advancers": null,
+          "qualification_start_date": null,
+          "qualification_end_date": null,
+          "primary_point_table": null,
+          "pdf_hashes": null,
+          "atp_rule_evidence": {
+            "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+            "confirmed": "Best 14 over 52 weeks; category and prize-money levels; opponent-ranked bonus system retained through 1999.",
+            "secondary_source_url": "https://openerarankings.com/RankingRules1990",
+            "secondary_candidate_main_awards": {
+              "champion": 103,
+              "finalist": 78,
+              "semifinal": 52,
+              "quarterfinal": 26,
+              "round_of_16": 13,
+              "round_of_32": 1
+            },
+            "secondary_candidate_qualifier_addition": 6,
+            "qualification_loss_awards": null,
+            "exact_occurrence_class_verified": false
+          },
+          "squash_adaptation": {
+            "status": "requires_work_and_product_approval",
+            "note": "Do not assume ATP Best 14, rank bonus, BYE-first-play award, qualifying-loss award or historical acceptance policy is approved squash behavior. Keep ordinary Run policy and existing published packages unchanged."
+          },
+          "work_handoff": {
+            "source_model": "src/beta_engine/domain/tournaments/atp_knockout_profile.py",
+            "source_model_checked_at": "f430d3aa13dab73724fe7ca6425ab43a85afa88e",
+            "validator": "ATPKnockoutProfile.validate_source",
+            "provenance_error": "Knockout sources require exact PDF evidence hashes",
+            "example": "The verified contemporary HTML article and official archive URL cannot be represented as source_urls with source_pdf_sha256={} because URL and hash key sets must match. Do not hash HTML and label it PDF.",
+            "ranking_error": "extra_forbidden",
+            "ranking_example": "ATPKnockoutProfile forbids unknown fields and exposes only stage-based main_points/qualification_points. A rank-dependent bonus policy cannot be added as rank_dependent_bonus_awards; Work and Claude must coordinate a versioned policy if approved.",
+            "qualification_points_error": "Incomplete Qualification points",
+            "qualification_example": "If 32 actual Q entrants and 4 equal sections were later verified, 3 Q rounds would require qualifier, round_1_loss, round_2_loss, round_3_loss; only the candidate qualifier award is available. This is conditional geometry, not a verified Q draw."
+          }
         }
       }
     },
@@ -904,7 +1044,7 @@
         "country": "BRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -916,8 +1056,8 @@
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -957,6 +1097,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1002,7 +1147,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -1015,8 +1160,8 @@
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 540000,
@@ -1057,6 +1202,11 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1102,7 +1252,7 @@
         "country": "BEL",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -1115,8 +1265,8 @@
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 465000,
@@ -1154,6 +1304,11 @@
           "source_tier_candidate": "CHAMP SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1199,7 +1354,7 @@
         "country": "CAN",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 8,
@@ -1212,8 +1367,8 @@
         ],
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1005000,
@@ -1243,6 +1398,11 @@
           "source_tier_candidate": "CHAMP SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1288,7 +1448,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 16,
@@ -1300,8 +1460,8 @@
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -1335,6 +1495,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1380,7 +1545,7 @@
         "country": "FRG",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -1393,8 +1558,8 @@
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -1435,6 +1600,11 @@
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1480,7 +1650,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 16,
@@ -1493,8 +1663,8 @@
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -1527,6 +1697,11 @@
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1572,7 +1747,7 @@
         "country": "NLD",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -1585,8 +1760,8 @@
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -1633,6 +1808,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1678,7 +1858,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 8,
@@ -1694,8 +1874,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "qualifier_spots": 7,
-        "wild_cards": 5,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -1755,6 +1935,11 @@
             "alternative_outcome": "generic_qualifying_heading_not_evidence_of_1990_Q_rounds"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1800,7 +1985,7 @@
         "country": "MAR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -1813,8 +1998,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -1857,6 +2042,11 @@
             "outcome": "prior_Main_draw_entry_labels_retained_no_new_Q_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -1914,7 +2104,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 96,
+        "main_entrants": 96,
         "main_bracket_slots": 128,
         "main_seeds": 32,
         "main_byes": 32,
@@ -1929,8 +2119,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 12,
-        "wild_cards": 2,
+        "reported_main_qualifiers": 12,
+        "reported_main_wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1200000,
@@ -2020,6 +2210,11 @@
             "outcome": "event_metadata_available_no_qualifying_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2065,7 +2260,7 @@
         "country": "PRT",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -2079,8 +2274,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 2,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2135,6 +2330,11 @@
             "outcome": "Main_draw_only"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2180,7 +2380,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -2194,8 +2394,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2247,6 +2447,11 @@
             "outcome": "secondary_Main_draw_only"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2292,7 +2497,7 @@
         "country": "BRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_seeds": 8,
         "main_byes": 0,
@@ -2307,8 +2512,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2361,6 +2566,11 @@
             "outcome": "secondary_Main_draw_only"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2406,7 +2616,7 @@
         "country": "ESP",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 8,
@@ -2422,8 +2632,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "qualifier_spots": 7,
-        "wild_cards": 5,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 375000,
@@ -2510,6 +2720,11 @@
             "outcome": "official_edition_dates_and_seed_list_not_explicit_Q_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2555,7 +2770,7 @@
         "country": "JPN",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_seeds": 16,
         "main_byes": 8,
@@ -2568,8 +2783,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 7,
-        "wild_cards": 5,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -2607,6 +2822,11 @@
             "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2668,7 +2888,7 @@
         "country": "FRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -2683,8 +2903,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2727,6 +2947,11 @@
             "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2788,7 +3013,7 @@
         "country": "KOR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -2803,8 +3028,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 140000,
@@ -2847,6 +3072,11 @@
             "outcome": "secondary_Main_draw_only"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -2908,7 +3138,7 @@
         "country": "HKG",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -2922,8 +3152,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 185000,
@@ -2958,6 +3188,11 @@
             "outcome": "event_summary_only_no_full_Q_or_WC_count"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -3019,7 +3254,7 @@
         "country": "MCO",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3033,8 +3268,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 6,
-        "wild_cards": 4,
+        "reported_main_qualifiers": 6,
+        "reported_main_wild_cards": 4,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -3072,6 +3307,11 @@
             "outcome": "prior_entry_evidence_retained_no_new_Q_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -3133,7 +3373,7 @@
         "country": "ESP",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3147,8 +3387,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 279000,
@@ -3182,6 +3422,11 @@
             "outcome": "redirect_unavailable_no_qualifying_sheet"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -3243,7 +3488,7 @@
         "country": "FRG",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3259,8 +3504,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -3314,6 +3559,11 @@
             "outcome": "secondary_Main_draw_only"
           },
           "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -3375,22 +3625,25 @@
         "country": "SGP",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
-        "main_seeds": null,
+        "main_seeds": 8,
         "main_draw_source": null,
         "event_source": "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis"
+          "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis",
+          "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
+          "https://eresources.nlb.gov.sg/newspapers/digitised/issue/straitstimes19900430-1",
+          "https://eresources.nlb.gov.sg/newspapers/digitised/article/straitstimes19900430-1.2.61.3"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -3421,6 +3674,35 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
+            "outcome": "official_event_metadata_no_drawsheet"
+          },
+          "remaining": "Find actual Main/qualification sheets; press gives seed list and Main opening but no Q participants/dates. Exact ranking class and full awards unresolved."
+        },
+        "contemporary_main_opening_date_evidence": {
+          "date": "1990-04-30",
+          "source_url": "https://eresources.nlb.gov.sg/newspapers/digitised/issue/straitstimes19900430-1",
+          "scope": "30 April issue announces tournament starts that day and lists eight singles seeds; sixth ordinal missing in OCR but eight names listed. No Q dates."
+        },
+        "itf_event_window_evidence": {
+          "source_url": "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
+          "start_date": "1990-04-30",
+          "end_date": "1990-05-06",
+          "prize_money_usd": 225000,
+          "scope": "Official event metadata; does not prove ranking class, Q phase or full financial commitment."
         }
       }
     },
@@ -3482,7 +3764,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3497,8 +3779,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 197000,
@@ -3520,7 +3802,35 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
-        }
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Actual Q draw, dates and ranking band still missing; reported 230000 commitment does not match exact secondary table."
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants counted once, seed and entry method independent; no Q feeder rule inferred.",
+          "note": "32 Main entrants, eight seeds; seed 8 also labelled WC.",
+          "observed_seeded_wild_cards": 1
+        },
+        "observed_seeded_wild_card": true
       }
     },
     {
@@ -3581,7 +3891,7 @@
         "country": "FRG",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3596,8 +3906,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -3624,6 +3934,38 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Q feeder structure, dates and precise labels count remain open; withdrawn seed/replacement positions mean nominal seed policy is not identical to actual entries."
+        },
+        "nominal_bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "main_entry_label_partial_evidence": {
+          "source_url": "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
+          "scope": "56 Main / 64 slots / 8 BYEs; source states top-eight seed BYE rule but lists seeds 8 and 12 withdrawn and shows LL in a bye position; actual final seed assignment not certified.",
+          "observed_lucky_loser_in_bye_position": true
         }
       }
     },
@@ -3685,7 +4027,7 @@
         "country": "ITA",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 64,
+        "main_entrants": 64,
         "main_bracket_slots": 64,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3699,8 +4041,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1005000,
@@ -3722,6 +4064,29 @@
           "source_tier_candidate": "CHAMP SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Q feeder draw and dates absent; exact labels totals and official ranking class still open; 1280000 reported commitment does not match an exact band."
+        },
+        "main_entry_label_partial_evidence": {
+          "source_url": "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
+          "scope": "64 Main and 16 nominal seeds; first-round rows explicitly show Q, WC, LL and SE; do not infer their total counts or guaranteed allocations from partial review.",
+          "observed_special_exempt_present": true,
+          "observed_lucky_loser_present": true
         }
       }
     },
@@ -3783,7 +4148,7 @@
         "country": "YUG",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3797,8 +4162,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 147500,
@@ -3820,6 +4185,32 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
+        },
+        "second_pass_review": {
+          "status": "qualification_source_search_attempted_unresolved",
+          "reviewed_on": "2026-11-25",
+          "qualification_draw_status": "not_obtained",
+          "qualification_dates_status": "not_obtained",
+          "point_rule_status": "secondary_not_primary_verified",
+          "source_access": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
+            "outcome": "secondary_main_draw_available_no_q_sheet"
+          },
+          "remaining": "Source reports 4Q/3WC in Main, but no Q draw or actual dates; 175000 commitment has no exact secondary band."
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-25",
+          "scope": "Initial Main entrants counted once, seed and entry method independent; no Q feeder rule inferred.",
+          "note": "Secondary draw explicitly reports 32 entrants, 8 seeds, 4Q and 3WC."
         }
       }
     },
@@ -3881,7 +4272,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -3896,8 +4287,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -3928,6 +4319,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -3989,7 +4385,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -4004,8 +4400,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4037,6 +4433,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4098,7 +4499,7 @@
         "country": "GBR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -4113,8 +4514,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -4139,6 +4540,11 @@
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4200,7 +4606,7 @@
         "country": "NLD",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
@@ -4215,8 +4621,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 2,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4248,6 +4654,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4309,7 +4720,7 @@
         "country": "GBR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -4323,8 +4734,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4356,6 +4767,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4417,7 +4833,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -4432,8 +4848,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4469,6 +4885,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4530,7 +4951,7 @@
         "country": "SWE",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -4544,8 +4965,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -4577,6 +4998,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4638,7 +5064,7 @@
         "country": "CHE",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -4653,8 +5079,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 275000,
@@ -4676,6 +5102,11 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4737,7 +5168,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -4751,8 +5182,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 150000,
@@ -4774,6 +5205,11 @@
           "source_tier_candidate": "WORLD SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4835,7 +5271,7 @@
         "country": "FRG",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -4851,8 +5287,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 5,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 5,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -4896,6 +5332,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -4957,7 +5398,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -4971,8 +5412,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 420000,
@@ -4994,6 +5435,11 @@
           "source_tier_candidate": "CHAMP SERIES",
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5055,7 +5501,7 @@
         "country": "NLD",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5070,8 +5516,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 2,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 215000,
@@ -5093,6 +5539,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5154,7 +5605,7 @@
         "country": "CAN",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5168,8 +5619,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 930000,
@@ -5191,6 +5642,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5252,7 +5708,7 @@
         "country": "AUT",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -5268,8 +5724,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 337500,
@@ -5291,6 +5747,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5352,7 +5813,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5367,8 +5828,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -5399,6 +5860,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5460,7 +5926,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5474,8 +5940,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -5506,6 +5972,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5567,7 +6038,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5581,8 +6052,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1020000,
@@ -5614,6 +6085,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5675,7 +6151,7 @@
         "country": "CSK",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -5690,8 +6166,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 148400,
@@ -5713,6 +6189,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5774,7 +6255,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5790,8 +6271,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 7,
-        "wild_cards": 5,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -5828,6 +6309,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5889,7 +6375,7 @@
         "country": "USA",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 56,
+        "main_entrants": 56,
         "main_bracket_slots": 64,
         "main_byes": 8,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -5903,8 +6389,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -5930,6 +6416,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -5991,7 +6482,7 @@
         "country": "SMR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
@@ -6006,8 +6497,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -6038,6 +6529,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6099,7 +6595,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 28,
+        "main_entrants": 28,
         "main_bracket_slots": 32,
         "main_byes": 4,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6114,8 +6610,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -6168,6 +6664,11 @@
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6229,7 +6730,7 @@
         "country": "USA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 28,
+        "main_entrants": 28,
         "main_bracket_slots": 32,
         "main_byes": 4,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6244,8 +6745,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -6276,6 +6777,11 @@
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6337,7 +6843,7 @@
         "country": "FRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6352,8 +6858,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 270000,
@@ -6380,6 +6886,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6441,7 +6952,7 @@
         "country": "CHE",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6456,8 +6967,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -6493,6 +7004,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6554,7 +7070,7 @@
         "country": "CHE",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6568,8 +7084,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -6605,6 +7121,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6666,7 +7187,7 @@
         "country": "AUS",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6682,8 +7203,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -6723,6 +7244,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6784,7 +7310,7 @@
         "country": "ITA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6798,8 +7324,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 1,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 1,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 270000,
@@ -6826,6 +7352,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -6887,7 +7418,7 @@
         "country": "GRC",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -6903,8 +7434,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -6940,6 +7471,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7001,7 +7537,7 @@
         "country": "AUS",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -7016,8 +7552,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -7043,6 +7579,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7104,7 +7645,7 @@
         "country": "FRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -7118,8 +7659,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 260000,
@@ -7146,6 +7687,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7207,7 +7753,7 @@
         "country": "DEU",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -7223,8 +7769,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 260000,
@@ -7251,6 +7797,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7312,7 +7863,7 @@
         "country": "ISR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -7329,8 +7880,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -7369,6 +7920,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7430,7 +7986,7 @@
         "country": "JPN",
         "category_label": "ATP Championship Series",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -7445,8 +8001,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 750000,
@@ -7472,6 +8028,11 @@
             "Secondary CHAMP SERIES label does not distinguish regular and Single Week categories.",
             "Active entrants differ from bracket positions; exact rule for row selection unverified."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7533,7 +8094,7 @@
         "country": "FRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -7547,8 +8108,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -7585,6 +8146,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7646,7 +8212,7 @@
         "country": "AUT",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -7660,8 +8226,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -7697,6 +8263,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7758,7 +8329,7 @@
         "country": "BRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -7773,8 +8344,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -7814,6 +8385,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7875,7 +8451,7 @@
         "country": "SWE",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -7891,8 +8467,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 840000,
@@ -7933,6 +8509,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -7994,7 +8575,7 @@
         "country": "FRA",
         "category_label": "ATP Championship Series, Single Week",
         "event_held": true,
-        "main_draw_capacity": 48,
+        "main_entrants": 48,
         "main_bracket_slots": 64,
         "main_byes": 16,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -8009,8 +8590,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1650000,
@@ -8050,6 +8631,11 @@
           "source_tier_candidate": null,
           "source_rule_certified": false,
           "notes": []
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -8111,7 +8697,7 @@
         "country": "BRA",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -8126,8 +8712,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -8158,6 +8744,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -8219,7 +8810,7 @@
         "country": "SUN",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "secondary_event_draw_field_supported_not_published_profile",
@@ -8233,8 +8824,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": 4,
-        "wild_cards": 3,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -8265,6 +8856,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -8326,7 +8922,7 @@
         "country": "GBR",
         "category_label": "ATP World Series",
         "event_held": true,
-        "main_draw_capacity": 32,
+        "main_entrants": 32,
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
@@ -8345,8 +8941,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 450000,
@@ -8376,6 +8972,11 @@
           "notes": [
             "Financial commitment is not proven ranking classification; source MD column may not mean bracket positions when BYEs exist."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     },
@@ -8468,7 +9069,7 @@
         "category_label": "ATP Tour World Championships",
         "event_held": true,
         "format": "round_robin_then_knockout",
-        "main_draw_capacity": 8,
+        "main_entrants": 8,
         "main_seeds": null,
         "main_bracket_slots": null,
         "main_byes": null,
@@ -8483,8 +9084,8 @@
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "qualifier_spots": null,
-        "wild_cards": null,
+        "reported_main_qualifiers": null,
+        "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "qualification_status": "not_a_standard_knockout_qualification_phase",
@@ -8532,6 +9133,11 @@
           "notes": [
             "Use group-format candidate, not knockout table."
           ]
+        },
+        "entry_policy": {
+          "reserved_main_qualifier_spots": null,
+          "reserved_main_wild_cards": null,
+          "lucky_loser_replacement_rule": null
         }
       }
     }
@@ -8564,5 +9170,15 @@
     "qual_file_scope": "All inspected rows level C (Challenger); no ATP Tour qualifying rounds.",
     "usage_restriction": "Cross-check in research only. No raw player/result rows or CSV imported, no automatic derived sporting data publication; review licensing before any ingestion or commercial reuse. Event-specific publicly sourced facts support the correction independently."
   },
-  "next_second_pass_review_occurrence": "atp_1990_singapore_march_1992"
+  "next_second_pass_review_occurrence": "atp_1990_bologna_1998",
+  "field_semantics": {
+    "main_entrants": "Reported/cross-checked count of occupied Main entrant positions, not bracket capacity; still historical evidence, not a certified sporting profile.",
+    "main_bracket_slots": "Physical knockout bracket positions, including BYEs; null for round-robin group format.",
+    "main_byes": "Unoccupied knockout bracket positions; null for group format.",
+    "reported_main_qualifiers": "Reported Q count in Main draw or secondary summary; not a certified number of reserved qualification feeder places.",
+    "reported_main_wild_cards": "Reported WC count in Main draw or secondary summary; not a certified allocation policy.",
+    "observed_lucky_losers": "Observed replacement labels, not additional guaranteed qualification places.",
+    "qualification_size_secondary": "Reported Q draw size; does not establish actual participants, sections, byes or dates.",
+    "entry_policy": "Certified reserved places and replacement policy are independent of observed entry labels; null until evidenced."
+  }
 }

@@ -81,7 +81,7 @@ def test_first_january_evidence_is_not_playability(batch):
     assert [row["historical_evidence"]["host_city"] for row in rows[:4]] == [
         "Adelaide", "Wellington", "Auckland", "Sydney",
     ]
-    assert all(row["historical_evidence"]["main_draw_capacity"] == 32
+    assert all(row["historical_evidence"]["main_entrants"] == 32
                for row in rows[:4])
     assert all(row["historical_evidence"]["qualification_start_date"] is None
                for row in rows[:4])
@@ -110,14 +110,14 @@ def test_february_geometry_and_evidence_boundaries(batch):
     assert rows["sofia"]["host_city"] == "Milan"
     assert rows["rio"]["host_city"] == "Memphis"
     assert rows["maceio_1992"]["observed_lucky_losers"] == 1
-    assert rows["maceio_1992"]["qualifier_spots"] == 4
+    assert rows["maceio_1992"]["reported_main_qualifiers"] == 4
     for name, entrants, seeds, byes, q in (
         ("toronto_indoor_1990", 56, 16, 8, 28),
         ("philadelphia_1998", 48, 16, 16, 24),
         ("rio", 48, 16, 16, 24),
     ):
         evidence = rows[name]
-        assert evidence["main_draw_capacity"] == entrants
+        assert evidence["main_entrants"] == entrants
         assert evidence["main_bracket_slots"] == 64
         assert evidence["main_seeds"] == seeds
         assert evidence["main_byes"] == byes
@@ -127,7 +127,7 @@ def test_february_geometry_and_evidence_boundaries(batch):
             assert evidence["main_bracket_slots"] is None
             assert evidence["main_byes"] is None
         else:
-            assert evidence["main_draw_capacity"] + evidence["main_byes"] == evidence["main_bracket_slots"]
+            assert evidence["main_entrants"] + evidence["main_byes"] == evidence["main_bracket_slots"]
         assert evidence["qualification_entrants"] is None
         assert evidence["qualification_start_date"] is None
         assert evidence["qualification_end_date"] is None
@@ -184,7 +184,7 @@ def test_march_april_geometry_and_preserved_source_disagreements(batch):
         ("tokyo", 56, 16, 8, 64),
     ):
         evidence = rows[name]["historical_evidence"]
-        assert (evidence["main_draw_capacity"], evidence["main_seeds"],
+        assert (evidence["main_entrants"], evidence["main_seeds"],
                 evidence["main_byes"], evidence["main_bracket_slots"]) == (
                     entrants, seeds, byes, slots
                 )
@@ -199,8 +199,8 @@ def test_march_april_geometry_and_preserved_source_disagreements(batch):
     assert rows["rio_carpet_1990"]["historical_evidence"]["surface_enclosure_status"] == "conflicting_secondary_sources"
     for name, q, wc in (("marrakech", 4, 3), ("tokyo", 7, 5)):
         evidence = rows[name]["historical_evidence"]
-        assert evidence["qualifier_spots"] == q
-        assert evidence["wild_cards"] == wc
+        assert evidence["reported_main_qualifiers"] == q
+        assert evidence["reported_main_wild_cards"] == wc
     assert rows["miami"]["historical_evidence"]["qualification_entrants"] is None
 
 
@@ -217,7 +217,7 @@ def test_full_year_census_is_distinct_from_individual_draw_review(batch):
     for row in rows:
         e = row.get("historical_evidence")
         a = row.get("annual_census_evidence")
-        n = e["main_draw_capacity"] if e else a["reported_main_entrants"]
+        n = e["main_entrants"] if e else a["reported_main_entrants"]
         counts[str(n)] += 1
         if a:
             assert a["status"] == "secondary_annual_summary_not_individual_draw_verification"
@@ -243,7 +243,7 @@ def test_april_june_sources_and_frankfurt_finals(batch):
     rows = {row["series_id"]: row for row in batch["occurrences"]}
     assert rows["hong_kong"]["historical_evidence"]["host_city"] == "Nice"
     assert rows["hong_kong_salem_2002"]["historical_evidence"]["host_city"] == "Hong Kong"
-    assert rows["hong_kong_salem_2002"]["historical_evidence"]["wild_cards"] is None
+    assert rows["hong_kong_salem_2002"]["historical_evidence"]["reported_main_wild_cards"] is None
     assert rows["hong_kong_salem_2002"]["historical_evidence"]["observed_wild_cards_minimum"] == 1
     assert rows["hamburg"]["historical_evidence"]["alternate_event_end_date"] == "1990-05-14"
     assert rows["hamburg"]["original_end_date"] == "1990-05-13"
@@ -251,7 +251,7 @@ def test_april_june_sources_and_frankfurt_finals(batch):
                         ("umag", 4, 3), ("florence_1994", 4, 3),
                         ("s_hertogenbosch", 4, 2)):
         e = rows[name]["historical_evidence"]
-        assert (e["qualifier_spots"], e["wild_cards"]) == (q, wc)
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
     for name in ("florence_1994", "s_hertogenbosch"):
         assert rows[name]["historical_evidence"]["observed_lucky_losers"] == 1
     a = rows["atp_finals"]["annual_census_evidence"]
@@ -276,8 +276,8 @@ def test_1990_first_pass_completed_without_claiming_sporting_readiness(batch):
     assert batch["next_open_evidence_occurrence"] == "atp_1990_brisbane"
     assert summary["published_sporting_profiles"] == summary["plan_verified"] == summary["played_and_reopened"] == 0
     rows = {row["series_id"]: row["historical_evidence"] for row in batch["occurrences"]}
-    assert sum(e["qualifier_spots"] is not None for e in rows.values()) == summary["reported_q_spot_count_rows"]
-    assert sum(e["wild_cards"] is not None for e in rows.values()) == summary["reported_wc_count_rows"]
+    assert sum(e["reported_main_qualifiers"] is not None for e in rows.values()) == summary["reported_main_qualifier_count_rows"]
+    assert sum(e["reported_main_wild_cards"] is not None for e in rows.values()) == summary["reported_main_wild_card_count_rows"]
     assert sum("main_draw_source_disagreement" in e for e in rows.values()) == summary["main_draw_disagreement_rows"]
     for series_id in ("bordeaux_1995", "cologne_1992_clay", "basel",
                       "brisbane_autumn_1992", "palermo", "athens_1994",
@@ -285,7 +285,7 @@ def test_1990_first_pass_completed_without_claiming_sporting_readiness(batch):
                       "montpellier", "vienna", "sao_paulo_1993"):
         e = rows[series_id]
         assert e["main_draw_source_disagreement"]["annual_summary_entrants"] == 28
-        assert e["main_draw_capacity"] == 32
+        assert e["main_entrants"] == 32
         assert e["main_byes"] == 0
     assert rows["wembley_1990"]["main_draw_source_disagreement"]["annual_summary_entrants"] == 56
     assert rows["wembley_1990"]["licence_continuity_status"] == "replacement_announcement_not_proof_of_legal_continuity"
@@ -296,8 +296,8 @@ def test_1990_first_pass_completed_without_claiming_sporting_readiness(batch):
         e = rows[series_id]
         assert e["bye_seed_ranks"] == list(range(1, seeds + 1))
         assert len(e["bye_seed_ranks"]) == e["main_byes"]
-    assert rows["stuttgart"]["qualifier_spots"] == 5
-    assert rows["atlanta"]["qualifier_spots"] == 7
+    assert rows["stuttgart"]["reported_main_qualifiers"] == 5
+    assert rows["atlanta"]["reported_main_qualifiers"] == 7
     assert rows["atlanta"]["observed_lucky_losers"] == 1
     assert rows["atp_finals"]["format"] == "round_robin_then_knockout"
     assert rows["atp_finals"]["group_format"]["total_matches"] == 15
@@ -331,10 +331,10 @@ def test_second_pass_crosscheck_and_corrected_schenectady_field(batch):
     assert batch["summary"]["verified_qualification_date_rows"] == 0
     e = next(row["historical_evidence"] for row in rows
              if row["series_id"] == "schenectady_1994")
-    assert (e["main_draw_capacity"], e["main_bracket_slots"],
+    assert (e["main_entrants"], e["main_bracket_slots"],
             e["main_seeds"], e["main_byes"]) == (28, 32, 8, 4)
     assert e["bye_seed_ranks"] == [1, 2, 3, 4]
-    assert (e["qualifier_spots"], e["wild_cards"],
+    assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"],
             e["observed_lucky_losers"]) == (4, 3, 1)
     assert e["main_draw_source_disagreement"]["annual_summary_entrants"] == 32
 
@@ -348,8 +348,8 @@ def test_main_entry_labels_are_not_qualification_draws(batch):
         e = rows[name]
         labels = e["main_entry_label_evidence"]
         assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
-        assert labels["observed_qualifiers"] == e["qualifier_spots"] == 4
-        assert labels["observed_wild_cards"] == e["wild_cards"] == 3
+        assert labels["observed_qualifiers"] == e["reported_main_qualifiers"] == 4
+        assert labels["observed_wild_cards"] == e["reported_main_wild_cards"] == 3
         assert e["qualification_entrants"] is None
         assert e["qualification_start_date"] is None
     sydney = rows["sydney_2019"]["main_entry_label_evidence"]
@@ -410,11 +410,11 @@ def test_second_pass_spring_entry_labels_and_phase_boundaries(batch):
     for series_id, (q, wc) in expected.items():
         e = rows[series_id]["historical_evidence"]
         labels = e["main_entry_label_evidence"]
-        assert labels["observed_qualifiers"] == e["qualifier_spots"] == q
-        assert labels["observed_wild_cards"] == e["wild_cards"] == wc
+        assert labels["observed_qualifiers"] == e["reported_main_qualifiers"] == q
+        assert labels["observed_wild_cards"] == e["reported_main_wild_cards"] == wc
         assert labels["source_url"] in e["source_urls"]
         assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
-        assert q + wc <= e["main_draw_capacity"]
+        assert q + wc <= e["main_entrants"]
         assert e["qualification_entrants"] is None
         assert e["qualification_start_date"] is None
         assert e["qualification_end_date"] is None
@@ -439,3 +439,95 @@ def test_second_pass_spring_entry_labels_and_phase_boundaries(batch):
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 27
     assert all("source_access" in row["historical_evidence"]["second_pass_review"]
                for row in batch["occurrences"][13:27])
+
+
+def test_historical_v2_names_and_statuses_separate_geometry_from_entry_policy(batch):
+    assert batch["schema_version"] == "atp_1990_historical_evidence_batch.v2"
+    rows = batch["occurrences"]
+    summary = batch["summary"]
+    assert summary["calendar_verified_rows"] == sum(
+        r["calendar_status"] == "canonical_archive_membership_and_date_reconciled"
+        for r in rows) == 75
+    assert summary["main_entrant_crosschecked_rows"] == 75
+    assert summary["full_sporting_format_verified_rows"] == 0
+    assert summary["published_sporting_profiles"] == summary["plan_verified"] == summary["played_and_reopened"] == 0
+    for row in rows:
+        e = row["historical_evidence"]
+        assert not {"main_draw_capacity", "qualifier_spots", "wild_cards"} & e.keys()
+        assert e["entry_policy"] == {
+            "reserved_main_qualifier_spots": None,
+            "reserved_main_wild_cards": None,
+            "lucky_loser_replacement_rule": None,
+        }
+    miami = next(r["historical_evidence"] for r in rows if r["series_id"] == "miami")
+    assert (miami["main_entrants"], miami["main_bracket_slots"], miami["main_byes"]) == (96, 128, 32)
+    assert miami["reported_main_qualifiers"] == 12
+    assert miami["entry_policy"]["reserved_main_qualifier_spots"] is None
+
+
+def test_san_francisco_candidate_does_not_invent_q_or_ranking_provenance(batch):
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "dallas")
+    e = r["historical_evidence"]
+    c = e["import_candidate_evidence"]
+    assert r["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": 6}]
+    assert (e["main_entrants"], e["main_bracket_slots"], e["main_byes"], e["main_seeds"]) == (32, 32, 0, 8)
+    assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"], e["qualification_size_secondary"]) == (4, 3, 32)
+    assert c["financial_evidence"][0]["reported_prize_money_usd"] == 225000
+    assert c["financial_evidence"][1]["reported_purse_usd"] == 250000
+    for key in ("qualification_actual_entrants", "qualification_feeder_sections",
+                "qualification_reserved_advancers", "qualification_start_date",
+                "qualification_end_date", "primary_point_table", "pdf_hashes"):
+        assert c[key] is None
+    assert c["atp_rule_evidence"]["secondary_candidate_qualifier_addition"] == 6
+    assert c["atp_rule_evidence"]["qualification_loss_awards"] is None
+    assert c["atp_rule_evidence"]["exact_occurrence_class_verified"] is False
+    assert c["squash_adaptation"]["status"] == "requires_work_and_product_approval"
+
+
+def test_historical_handoff_reproduces_current_profile_contract_blockers(batch):
+    # Use a real existing, valid modern profile as a control. These deliberately
+    # invalid patches are contract probes, not fabricated historical profiles.
+    from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package, parse_sporting_profile
+    from beta_engine.domain.tournaments.atp_knockout_profile import ATPKnockoutProfile
+
+    entity = next(e for e in build_atp_sporting_package().entities
+                  if e.source_entity_id == "atp_2025_dallas")
+    payload = parse_sporting_profile(entity.payload).model_dump(mode="json")
+    historical = next(r["historical_evidence"]["import_candidate_evidence"]
+                      for r in batch["occurrences"] if r["series_id"] == "dallas")
+    handoff = historical["work_handoff"]
+    html_url = historical["financial_evidence"][1]["source_url"]
+    with pytest.raises(ValueError, match=handoff["provenance_error"]):
+        ATPKnockoutProfile.model_validate_json(json.dumps({
+            **payload, "source_urls": [html_url], "source_pdf_sha256": {},
+        }))
+    with pytest.raises(ValueError, match=handoff["ranking_error"]):
+        ATPKnockoutProfile.model_validate_json(json.dumps({
+            **payload, "rank_dependent_bonus_awards": True,
+        }))
+    with pytest.raises(ValueError, match=handoff["qualification_points_error"]):
+        ATPKnockoutProfile.model_validate_json(json.dumps({
+            **payload, "qualification_points": {"qualifier": 6},
+        }))
+
+
+def test_second_pass_may_evidence_is_not_a_complete_qualification_draw(batch):
+    rows = batch["occurrences"]
+    assert [r["series_id"] for r in rows[27:32]] == [
+        "singapore_march_1992", "birmingham_1994", "hamburg", "rome", "umag"]
+    by_id = {r["series_id"]: r["historical_evidence"] for r in rows}
+    sg = by_id["singapore_march_1992"]
+    assert sg["main_seeds"] == 8
+    assert sg["itf_event_window_evidence"]["prize_money_usd"] == 225000
+    assert sg["contemporary_main_opening_date_evidence"]["date"] == "1990-04-30"
+    for name in ("birmingham_1994", "umag"):
+        e = by_id[name]
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (4, 3)
+    assert by_id["birmingham_1994"]["observed_seeded_wild_card"] is True
+    assert by_id["hamburg"]["nominal_bye_seed_ranks"] == list(range(1, 9))
+    assert by_id["rome"]["main_entry_label_partial_evidence"]["observed_special_exempt_present"]
+    for r in rows[27:32]:
+        e = r["historical_evidence"]
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 32

@@ -923,7 +923,7 @@ def _proven_dependency_branches(row):
     """
     import json as _json
 
-    from beta_engine.infrastructure.db.canonical_text import PROOFS
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, span
 
     raw = row[9]
     if type(raw) is not str or len(raw) < 64 * 1024:
@@ -935,9 +935,9 @@ def _proven_dependency_branches(row):
     if content is None or content.keys is None:
         return None
     branches = set()
-    baseline = content.keys.get("native_fork_baseline")
+    baseline = span(proof, ("content", "native_fork_baseline"))
     if baseline is not None:
-        value = _json.loads(raw[baseline.start:baseline.end])
+        value = _json.loads(baseline)
         if not isinstance(value, dict):
             return None
         state = value.get("state")

@@ -390,6 +390,76 @@ def test_span_hash_uses_shared_ascii_bytes_with_the_same_result():
     assert canonical_text.proven_ascii_bytes(proof) == text.encode("ascii")
 
 
+def test_relocated_layout_keeps_exact_nested_spans_without_copying_children():
+    from beta_engine.domain.run_packages import canonical_hash
+
+    value = {"before": "", **_history(2)}
+    first_text = canonical_json(value)
+    first = verify_canonical_text(first_text)
+    assert first is not None
+    value["before"] = "moves the content to a new location"
+    moved = verify_canonical_text(canonical_json(value), first)
+    assert moved is not None
+    assert moved.layout.keys["content"].keys is first.layout.keys["content"].keys
+
+    path = ("content", "checkpoint", "state", "events", 0)
+    child = value["content"]["checkpoint"]["state"]["events"][0]
+    assert span(moved, path) == canonical_json(child)
+    assert canonical_text.span_canonical_hash(moved, path) == canonical_hash(child)
+    previous = canonical_text.decode_sharing(moved, (first, json.loads(first_text)))
+
+    # Descend into an old layout with two different shifts, then change data
+    # after those shifts have been applied.
+    value["before"] = ""
+    value["content"]["checkpoint"]["state"]["root"]["pad"] += "!"
+    changed_sibling = verify_canonical_text(canonical_json(value), moved)
+    assert changed_sibling is not None
+    assert span(changed_sibling, path) == canonical_json(child)
+    decoded = canonical_text.decode_sharing(changed_sibling, (moved, previous))
+    assert decoded == value
+    assert decoded["content"]["checkpoint"]["state"]["events"][0] is (
+        previous["content"]["checkpoint"]["state"]["events"][0]
+    )
+    child["week"] = 9
+    changed_child_text = canonical_json(value)
+    changed_child = verify_canonical_text(changed_child_text, changed_sibling)
+    assert changed_child is not None
+    assert span(changed_child, path) == canonical_json(child)
+    assert canonical_text.span_canonical_hash(changed_child, path) == canonical_hash(child)
+    assert canonical_text.decode_sharing(changed_child, (changed_sibling, decoded)) == value
+    assert verify_canonical_text(
+        changed_child_text.replace('"week":9', '"week": 9', 1), changed_sibling
+    ) is None
+
+
+def test_large_proven_hash_streams_the_exact_whole_text_and_subspan(monkeypatch):
+    import hashlib
+
+    from beta_engine.domain.run_packages import canonical_hash
+
+    value = {**_history(3), "escaped": {"value": "é" * 1000}}
+    text = canonical_json(value)
+    proof = verify_canonical_text(text)
+    assert proof is not None
+    monkeypatch.setattr(canonical_text, "_MAX_HASH_BUFFER_CHARS", 64 * 1024)
+    monkeypatch.setattr(canonical_text, "_HASH_CHUNK_CHARS", 1024)
+
+    def no_full_buffer(_proof):
+        pytest.fail("Large text must not be encoded into one bytes buffer")
+
+    monkeypatch.setattr(canonical_text, "proven_ascii_bytes", no_full_buffer)
+    with canonical_text.operation_proof_scope():
+        digest = hashlib.sha256(b"prefix")
+        canonical_text.update_hash_from_proven_text(digest, proof)
+        digest.update(b"suffix")
+        assert digest.digest() == hashlib.sha256(b"prefix" + text.encode() + b"suffix").digest()
+        assert canonical_text.span_canonical_hash(proof, ("escaped",)) is None
+        checkpoint = ("content", "checkpoint", "state")
+        assert canonical_text.span_canonical_hash(proof, checkpoint) == canonical_hash(
+            value["content"]["checkpoint"]["state"]
+        )
+
+
 def test_span_hash_reuses_only_the_reference_digest_of_byte_identical_spans(monkeypatch):
     import hashlib
 
@@ -400,9 +470,9 @@ def test_span_hash_reuses_only_the_reference_digest_of_byte_identical_spans(monk
     previous, computed = None, []
     original = canonical_text._span_digest
 
-    def counting(proof, node):
-        computed.append((proof, node.start, node.end))
-        return original(proof, node)
+    def counting(proof, start, end):
+        computed.append((proof, start, end))
+        return original(proof, start, end)
 
     monkeypatch.setattr(canonical_text, "_span_digest", counting)
     for n in range(2, 6):

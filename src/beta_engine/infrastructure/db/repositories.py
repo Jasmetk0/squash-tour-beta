@@ -493,7 +493,7 @@ def _saved_revision_model_content_hash(
     see canonical_text.py), hashing them is hashing the defined input. Any other
     text takes the ordinary full re-encoding. No declared hash is trusted.
     """
-    from beta_engine.infrastructure.db.canonical_text import PROOFS, proven_ascii_bytes
+    from beta_engine.infrastructure.db.canonical_text import PROOFS, update_hash_from_proven_text
 
     if (revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
             revision.parent_revision_id, revision.kind, revision.payload_schema_version) != (
@@ -511,13 +511,12 @@ def _saved_revision_model_content_hash(
         payload=None, change_summary=revision.change_summary,
     )
     digest = hashlib.sha256(b"{")
-    payload_bytes = proven_ascii_bytes(proof)  # shared with this text's span hashes
     for index, key in enumerate(sorted(envelope)):
         if index:
             digest.update(b",")
         digest.update(canonical_json(key).encode("utf-8") + b":")
         if key == "payload":
-            digest.update(payload_bytes if payload_bytes is not None else proof.text.encode("utf-8"))
+            update_hash_from_proven_text(digest, proof)
         else:
             digest.update(canonical_json(envelope[key]).encode("utf-8"))
     digest.update(b"}")

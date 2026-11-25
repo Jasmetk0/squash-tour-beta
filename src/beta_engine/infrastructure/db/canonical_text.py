@@ -47,6 +47,8 @@ MAX_DEPTH = 8
 # Bounded process memory for reference texts kept alive between validations.
 MAX_REFERENCE_CHARACTERS = 96 * 1024 * 1024
 MAX_REFERENCES = 4
+_MAX_HASH_BUFFER_CHARS = 16 * 1024 * 1024
+_HASH_CHUNK_CHARS = 1024 * 1024
 
 _decoder = json.JSONDecoder()
 
@@ -58,9 +60,9 @@ def _canonical(value) -> str:
 class Layout:
     """Spans of one proven-canonical text; children only for large containers."""
 
-    __slots__ = ("start", "end", "keys", "items", "same")
+    __slots__ = ("start", "end", "keys", "items", "same", "child_shift")
 
-    def __init__(self, start, end, keys=None, items=None, same=False):
+    def __init__(self, start, end, keys=None, items=None, same=False, child_shift=0):
         self.start = start
         self.end = end
         self.keys = keys    # dict: key -> Layout (objects)
@@ -68,6 +70,9 @@ class Layout:
         # True only where THIS proof found the span byte-identical to the
         # reference proof's value at the same path (see decode_sharing).
         self.same = same
+        # Offset inherited by descendants of an unchanged container that moved
+        # in the new text. Its layout can be shared without copying each node.
+        self.child_shift = child_shift
 
 
 class _NotCanonical(Exception):
@@ -89,7 +94,7 @@ def _leaf(text, pos):
     return end
 
 
-def _same(text, pos, ref_text, ref):
+def _same(text, pos, ref_text, ref, shift):
     """Byte-equal to a proven-canonical reference value at ``pos``."""
     length = ref.end - ref.start
     end = pos + length
@@ -99,27 +104,29 @@ def _same(text, pos, ref_text, ref):
     # ``pos`` is exactly the reference segment only if a delimiter follows.
     if end < len(text) and text[end] not in ",]}":
         return False
+    reference = ref_text[ref.start + shift:ref.end + shift]
     if length <= 64:
-        return text[pos:end] == ref_text[ref.start:ref.end]
-    return text.startswith(ref_text[ref.start:ref.end], pos)
+        return text[pos:end] == reference
+    return text.startswith(reference, pos)
 
 
-def _value(text, pos, ref_text, ref, depth):
+def _value(text, pos, ref_text, ref, depth, ref_shift=0):
     """Verify the value starting at ``pos``; return (end, Layout or None)."""
-    if ref is not None and _same(text, pos, ref_text, ref):
+    if ref is not None and _same(text, pos, ref_text, ref, ref_shift):
         end = pos + (ref.end - ref.start)
         # A reference value is a complete JSON value; the container grammar of
         # the caller checks the delimiter that must follow it.
-        relocated = _relocated(ref, pos - ref.start)
-        # Mark the match on a node of this proof (never on the reference's).
-        return end, Layout(relocated.start, relocated.end, relocated.keys, relocated.items, same=True)
+        return end, Layout(
+            pos, end, ref.keys, ref.items, same=True,
+            child_shift=ref.child_shift + pos - ref.start,
+        )
     if pos >= len(text):
         raise _NotCanonical
     opener = text[pos]
     if depth < MAX_DEPTH and opener == "{" and ref is not None and ref.keys is not None:
-        return _object(text, pos, ref_text, ref, depth)
+        return _object(text, pos, ref_text, ref, depth, ref_shift)
     if depth < MAX_DEPTH and opener == "[" and ref is not None and ref.items is not None:
-        return _array(text, pos, ref_text, ref, depth)
+        return _array(text, pos, ref_text, ref, depth, ref_shift)
     if depth < MAX_DEPTH and opener in "{[":
         # No usable reference: still record a layout for large containers so
         # that LATER texts can reuse this one. Small ones are re-encoded whole.
@@ -128,14 +135,6 @@ def _value(text, pos, ref_text, ref, depth):
             return _container_layout(text, pos, end, depth)
         return end, None
     return _leaf(text, pos), None
-
-
-def _relocated(ref, shift):
-    if shift == 0:
-        return ref
-    keys = None if ref.keys is None else {k: _relocated(v, shift) for k, v in ref.keys.items()}
-    items = None if ref.items is None else [_relocated(v, shift) for v in ref.items]
-    return Layout(ref.start + shift, ref.end + shift, keys, items)
 
 
 def _container_layout(text, start, end, depth):
@@ -149,12 +148,13 @@ def _container_layout(text, start, end, depth):
     return end, layout
 
 
-def _object(text, pos, ref_text, ref, depth, _verified=False):
+def _object(text, pos, ref_text, ref, depth, ref_shift=0, *, _verified=False):
     start = pos
     pos += 1
     keys = {}
     previous = None
     ref_keys = ref.keys or {}
+    ref_child_shift = ref_shift + ref.child_shift
     if text.startswith("}", pos):
         end = pos + 1
         return ((Layout(start, end, keys={}), end) if _verified else (end, Layout(start, end, keys={})))
@@ -179,7 +179,9 @@ def _object(text, pos, ref_text, ref, depth, _verified=False):
             if value_end - value_start >= LAYOUT_THRESHOLD and depth + 1 < MAX_DEPTH and text[value_start] in "{[":
                 child = _container_layout(text, value_start, value_end, depth + 1)[1]
         else:
-            value_end, child = _value(text, value_start, ref_text, ref_keys.get(key), depth + 1)
+            value_end, child = _value(
+                text, value_start, ref_text, ref_keys.get(key), depth + 1, ref_child_shift,
+            )
         keys[key] = child if child is not None else Layout(value_start, value_end)
         if text.startswith(",", value_end):
             pos = value_end + 1
@@ -191,11 +193,12 @@ def _object(text, pos, ref_text, ref, depth, _verified=False):
         raise _NotCanonical
 
 
-def _array(text, pos, ref_text, ref, depth, _verified=False):
+def _array(text, pos, ref_text, ref, depth, ref_shift=0, *, _verified=False):
     start = pos
     pos += 1
     items = []
     ref_items = ref.items or []
+    ref_child_shift = ref_shift + ref.child_shift
     if text.startswith("]", pos):
         end = pos + 1
         return ((Layout(start, end, items=[]), end) if _verified else (end, Layout(start, end, items=[])))
@@ -208,7 +211,9 @@ def _array(text, pos, ref_text, ref, depth, _verified=False):
                 child = _container_layout(text, pos, value_end, depth + 1)[1]
         else:
             value_end, child = _value(
-                text, pos, ref_text, ref_items[index] if index < len(ref_items) else None, depth + 1)
+                text, pos, ref_text, ref_items[index] if index < len(ref_items) else None,
+                depth + 1, ref_child_shift,
+            )
         items.append(child if child is not None else Layout(pos, value_end))
         index += 1
         if text.startswith(",", value_end):
@@ -399,6 +404,22 @@ class CanonicalTextProofs:
 PROOFS = CanonicalTextProofs()
 
 
+def _locate_span(proof, path):
+    node = proof.layout
+    shift = 0
+    same = node.same
+    for key in path:
+        shift += node.child_shift
+        if isinstance(key, int):
+            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
+        else:
+            node = node.keys.get(key) if node.keys is not None else None
+        if node is None:
+            return None
+        same = same or node.same
+    return node.start + shift, node.end + shift, same
+
+
 def span(proof, path):
     """Exact text of the value at ``path`` inside a proven-canonical text.
 
@@ -407,17 +428,11 @@ def span(proof, path):
     """
     if type(proof) is not ProvenCanonicalText:
         raise TypeError("span requires a ProvenCanonicalText")
-    node = proof.layout
-    for key in path:
-        if node is None:
-            return None
-        if isinstance(key, int):
-            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
-        else:
-            node = node.keys.get(key) if node.keys is not None else None
-    if node is None:
+    location = _locate_span(proof, path)
+    if location is None:
         return None
-    return proof.text[node.start:node.end]
+    start, end, _ = location
+    return proof.text[start:end]
 
 
 def _non_ascii_free(text):
@@ -453,6 +468,22 @@ def proven_ascii_bytes(proof):
     return data
 
 
+def update_hash_from_proven_text(digest, proof, start=0, end=None):
+    """Hash an exact canonical span without a full encoded copy of large texts."""
+    if type(proof) is not ProvenCanonicalText:
+        raise TypeError("hash input requires a ProvenCanonicalText")
+    text = proof.text
+    if end is None:
+        end = len(text)
+    if len(text) <= _MAX_HASH_BUFFER_CHARS:
+        data = proven_ascii_bytes(proof)
+        if data is not None:
+            digest.update(memoryview(data)[start:end])
+            return
+    for pos in range(start, end, _HASH_CHUNK_CHARS):
+        digest.update(text[pos:min(pos + _HASH_CHUNK_CHARS, end)].encode("utf-8"))
+
+
 def span_canonical_hash(proof, path):
     """``canonical_hash(value_at(path))`` from the proven exact span, or None.
 
@@ -469,36 +500,26 @@ def span_canonical_hash(proof, path):
     memo = proof.span_hashes if type(path) is tuple else None
     if memo is not None and path in memo:
         return memo[path]
-    node = proof.layout
-    same = node.same
-    for key in path:
-        if node is None:
-            return None
-        if isinstance(key, int):
-            node = node.items[key] if node.items is not None and 0 <= key < len(node.items) else None
-        else:
-            node = node.keys.get(key) if node.keys is not None else None
-        same = same or (node is not None and node.same)
-    if node is None:
+    location = _locate_span(proof, path)
+    if location is None:
         return None
+    start, end, same = location
     inherited = proof.reference_span_hashes
     if memo is not None and same and inherited is not None and path in inherited:
         memo[path] = inherited[path]
         return memo[path]
-    digest = _span_digest(proof, node)
+    digest = _span_digest(proof, start, end)
     if memo is not None:
         memo[path] = digest
     return digest
 
 
-def _span_digest(proof, node):
-    if proof.text.find("\\u", node.start, node.end) != -1:
+def _span_digest(proof, start, end):
+    if proof.text.find("\\u", start, end) != -1:
         return None
-    data = proven_ascii_bytes(proof)
-    if data is None:
-        text = proof.text[node.start:node.end]
-        return hashlib.sha256(text.encode("utf-8")).hexdigest()
-    return hashlib.sha256(memoryview(data)[node.start:node.end]).hexdigest()
+    digest = hashlib.sha256()
+    update_hash_from_proven_text(digest, proof, start, end)
+    return digest.hexdigest()
 
 
 def composite_canonical_hash(members):
@@ -559,20 +580,21 @@ def decode_sharing(proof, previous):
 _MISSING = object()
 
 
-def _shared_value(text, node, old_node, old_value):
+def _shared_value(text, node, old_node, old_value, shift=0):
     if node.same and old_node is not None and old_value is not _MISSING:
         return old_value
     if old_node is not None:
+        child_shift = shift + node.child_shift
         if node.keys is not None and old_node.keys is not None and type(old_value) is dict:
-            return {key: _shared_value(text, child, old_node.keys.get(key), old_value.get(key, _MISSING))
+            return {key: _shared_value(text, child, old_node.keys.get(key), old_value.get(key, _MISSING), child_shift)
                     for key, child in node.keys.items()}
         if (node.items is not None and old_node.items is not None and type(old_value) is list
                 and len(old_value) == len(old_node.items)):
             old_items = old_node.items
-            return [_shared_value(text, child, old_items[index], old_value[index])
-                    if index < len(old_items) else json.loads(text[child.start:child.end])
+            return [_shared_value(text, child, old_items[index], old_value[index], child_shift)
+                    if index < len(old_items) else json.loads(text[child.start + child_shift:child.end + child_shift])
                     for index, child in enumerate(node.items)]
-    return json.loads(text[node.start:node.end])
+    return json.loads(text[node.start + shift:node.end + shift])
 
 
 class ProvenSpan:

@@ -47,7 +47,7 @@ def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(
         assert ("atp_2025_vienna" in entries) is (version >= 5)
         assert ("atp_2024_atp_finals" in entries) is (version == 6)
         assert ("atp_2024_next_gen_atp_finals" in entries) is (version == 6)
-        for occurrence_id in ("atp_2025_doha", "atp_2025_dubai", "atp_2025_halle", "atp_2024_dubai", "atp_2024_halle",):
+        for occurrence_id in ("atp_2025_doha", "atp_2025_dubai", "atp_2025_halle", "atp_2024_dubai", "atp_2024_halle", "atp_2024_stuttgart", "atp_2025_stuttgart", "atp_2025_queens_club",):
             assert (occurrence_id in entries) is (version == 6)
         if verified:
             dallas = entries["atp_2025_dallas"]

@@ -72,11 +72,11 @@ def test_saved_cross_week_schedule_preview_keeps_main_date_and_never_commits(tmp
     ("offset", "start", "expected"),
     [
         (1, 2025, {"munich": (0, 15, 16), "vienna": (0, 42, 43),
-                   "doha": (0, 7, 8), "dubai": (0, 8, 9), "halle": (0, 24, 25)}),
+                   "doha": (0, 7, 8), "dubai": (0, 8, 9), "halle": (0, 24, 25), "stuttgart": (0, 23, 24), "queens_club": (0, 24, 25)}),
         (37, 2024, {"munich": (0, 31, 32), "vienna": (1, 6, 7),
-                     "doha": (0, 23, 24), "dubai": (0, 24, 25), "halle": (0, 40, 41)}),
-        (1, 2024, {"atp_2024_dubai": (0, 8, 9), "atp_2024_halle": (0, 24, 25)}),
-        (37, 2023, {"atp_2024_dubai": (0, 24, 25), "atp_2024_halle": (0, 40, 41)}),
+                     "doha": (0, 23, 24), "dubai": (0, 24, 25), "halle": (0, 40, 41), "stuttgart": (0, 39, 40), "queens_club": (0, 40, 41)}),
+        (1, 2024, {"atp_2024_dubai": (0, 8, 9), "atp_2024_halle": (0, 24, 25), "atp_2024_stuttgart": (0, 23, 24)}),
+        (37, 2023, {"atp_2024_dubai": (0, 24, 25), "atp_2024_halle": (0, 40, 41), "atp_2024_stuttgart": (0, 39, 40)}),
     ],
     ids=["2025-calendar-year", "2025-shifted-year", "2024-calendar-year", "2024-shifted-year"],
 )
@@ -144,7 +144,7 @@ def test_new_atp_profiles_import_save_preview_and_cold_reopen(tmp_path, monkeypa
             path = catalog_path + f"/{occurrence_id}/schedule-preview"
             code, plan = _request("POST", root + path, request)
             assert code == 200, plan
-            assert plan["actual_match_count"] == 43
+            assert plan["actual_match_count"] == (39 if occurrence_id.endswith("_stuttgart") else 43)
             assert plan["qualification_dates_verified"] is True
             assert plan["sporting_execution_ready"] is plan["run_mutated"] is False
             assert plan["schedule"]["qualification"][0]["week"]["week"] == qweek

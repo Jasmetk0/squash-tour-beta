@@ -648,6 +648,153 @@
           "2024-06-11"
         ]
       }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2024_stuttgart",
+      "category_id": "atp_250",
+      "name": "BOSS OPEN 2024",
+      "source_start_date": "2024-06-10",
+      "source_end_date": "2024-06-16",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2024/321/mds.pdf",
+        "https://www.protennislive.com/posting/2024/321/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2024/321/mds.pdf": "856e50b107b44229e82f8623333b2631e1d250f7a145e7717cd90be1a307dcc0",
+        "https://www.protennislive.com/posting/2024/321/qs.pdf": "0a910332c6fec4d609c4b4c67c966f941c506058909df0100b7ae450d690bbb9"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2024-06-08",
+        "end_date": "2024-06-09",
+        "source_urls": [
+          "https://bossopen.com/en/news/packed-program-at-the-boss-open"
+        ],
+        "published_dates": [
+          "2024-04-09"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_stuttgart",
+      "category_id": "atp_250",
+      "name": "BOSS OPEN 2025",
+      "source_start_date": "2025-06-09",
+      "source_end_date": "2025-06-15",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/321/mds.pdf",
+        "https://www.protennislive.com/posting/2025/321/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/321/mds.pdf": "a7a9ac92bba7f97b171efd42612e0a2dbbb8c1a1ad7195514f7561d391e6ae3b",
+        "https://www.protennislive.com/posting/2025/321/qs.pdf": "717a3a05e6f197a431d8e683eca8f9f391f944909f0bc6bf8302ac01b0d7131b"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 28,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 4,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 250,
+        "finalist": 165,
+        "semifinal": 100,
+        "quarterfinal": 50,
+        "round_of_16": 25,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 13,
+        "round_2_loss": 7,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-06-07",
+        "end_date": "2025-06-08",
+        "source_urls": [
+          "https://www.atptour.com/en/news/stuttgart-2025-atp-250-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-06-06"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_queens_club",
+      "category_id": "atp_500",
+      "name": "HSBC Championships 2025",
+      "source_start_date": "2025-06-16",
+      "source_end_date": "2025-06-22",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/311/mds.pdf",
+        "https://www.protennislive.com/posting/2025/311/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/311/mds.pdf": "c0793c199cbcd5b65d08d43a8d61f47e8a8a9657f7afe21f71bc3833b50cb070",
+        "https://www.protennislive.com/posting/2025/311/qs.pdf": "14f01e40e7f0931a60ceb8bbcc61ce55995691f1e062350998bb202021a3b487"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-06-14",
+        "end_date": "2025-06-15",
+        "source_urls": [
+          "https://www.atptour.com/en/news/queens-2025-atp-500-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-06-11"
+        ]
+      }
     }
   ]
 }

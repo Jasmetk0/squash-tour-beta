@@ -46,6 +46,16 @@ Native Ranked W52 execution remains outside this source-only change.
 
 Each has a full Main32, 8 seeds, 3 Main WC, zero BYEs, Q16 in four sections of four, four Q winners and 43 planned matches. All four actual Q winners are present in each final Main draw. The additional historical LL, PR and SE designations are not imported, and do not create additional qualification-winner spots. This is the existing nominal Admin-selected squash geometry, not a reproduction of historical selection or replacement rules. The 2025 Doha schedule article has a typo in the detailed end-date line; the canonical archive and both PDF headers agree on 17–22 February. All five Main points are 500/330/200/100/50/0 and Q points 25/13/0. The ten original PDF SHA-256 values are stored in the profiles; [evidence run 45688533510](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45688533510) downloaded and extracted the original draw files. Doha 2024 remains outside the package: the Q PDF could not be downloaded, and its Main draw has BYEs. No sporting execution claim.
 
+### First ATP 250 profiles and Queen's 2025 (same unreleased source v6 / Setup v7)
+
+| Event | Qualification | Main | Main/Q calendar weeks | Evidence |
+| --- | --- | --- | --- | --- |
+| Stuttgart 2024 | 8–9 Jun | 10–16 Jun | W24/W23 | [Organizer schedule](https://bossopen.com/en/news/packed-program-at-the-boss-open) |
+| Stuttgart 2025 | 7–8 Jun | 9–15 Jun | W24/W23 | [ATP schedule](https://www.atptour.com/en/news/stuttgart-2025-atp-250-history-draw-schedule) |
+| Queen's 2025 | 14–15 Jun | 16–22 Jun | W25/W24 | [ATP schedule](https://www.atptour.com/en/news/queens-2025-atp-500-history-draw-schedule) |
+
+Stuttgart has 28 actual Main entrants in a 32-position bracket, four unplaced BYEs, eight nominal seeds, three Main WC, and 16 Q entrants in four sections producing four winners. The Main awards are 250/165/100/50/25/0 and Q 13/7/0. Exactly 27 Main + 12 Q matches if fully played, not 43. The existing source geometry describes unplaced BYEs; their placement and points unlock after a BYE belong to the native Draw/ranking authorities, not to this data change. The 2024 final draw includes a seed withdrawal and LL in that position; nominal seed count and four Q winners remain unchanged. Historical player identities, replacements and results are not imported. Queen's is Main32/Q16, 8 seeds, 3 Main WC, four Q winners, 43 matches and the existing ATP500 awards. All six original draw PDF hashes are recorded in the package; [evidence run 45690237346](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45690237346) also obtained Houston and Geneva 2025 PDFs. Houston still needs independent dated Q-window evidence; Geneva Q overlaps the Main source window, requiring separate schedule review. Neither is imported.
+
 ## Dallas Open 2025
 
 Setup source v5 and sporting Category source v4 add Dallas. On a calendar-year

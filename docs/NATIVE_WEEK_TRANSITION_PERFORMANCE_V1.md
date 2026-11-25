@@ -127,6 +127,21 @@ command's Preview.
 
 ## Growth
 
+Stage (in-process Execute preparation), 1,000-player Run, median of 3 per run,
+order base c1 c2 c2 c1 base per point, identical preview body and successor
+fingerprint across all trees at every point:
+
+| input week (revisions) | base s | after 1 (c1) s | after 1+2 (c2) s |
+|---|---:|---:|---:|
+| W2 (12) | 0.85 / 1.01 | 0.93 / 0.86 | 0.82 / 0.81 |
+| W4, after 4 played Editions (25) | 2.67 / 2.84 | 1.75 / 1.82 | 1.70 / 1.67 |
+| W6 (27) | 3.53 / 3.12 | 2.23 / 1.99 | 1.89 / 1.86 |
+| W8 → Season 2 (29) | 3.93 / 3.79 | 2.34 / 2.52 | 2.26 / 2.18 |
+| S2W1 → W2 (30, partial: base c1 c2 c2) | 4.07 | 2.30 | 2.41 |
+
+From W4 to W8 the base preparation grows by ≈0.29 s per Saved week; the
+candidate by ≈0.13 s. W2→W4 includes the first played Editions (11 extra Saves).
+
 Per-preparation stage CPU (base): W2 0.95 s, W3 1.33 s, W4 2.8–3.0 s (first
 played Editions in history), W5 3.2–3.7 s, W7 3.8–4.1 s for 1,000 players. The
 history-proportional parts were the successor hash (now O(new event) once the

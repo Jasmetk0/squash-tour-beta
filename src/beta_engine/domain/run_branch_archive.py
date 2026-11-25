@@ -17,13 +17,11 @@ from beta_engine.domain.run_revisions import saved_revision_content_hash
 FORMAT = "run_branch_archive.v1"
 ENGINE_CAPABILITY = "run_branch_archive.v1"
 MINIMUM_ENGINE_BASE = "9980628243f6ac637cb6ab803af1e4c632520849+archive.v1"
-# Per-request parser budget, not a Run/history quota. No compression/extraction.
-MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
-ID = Annotated[str, Field(min_length=1, max_length=128, pattern=r"^\S(?:.*\S)?$")]
-Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
-PART_NAMES = ("run", "branches", "revisions", "audits", "checkpoints", "allocator")
-OMITTED_AREAS = (
-    "unselected_branch_future",
+FULL_RUN_FORMAT = "run_full_archive.v1"
+FULL_RUN_MINIMUM_ENGINE = "engine+full-run-archive.v1"
+BRANCH_SCOPE = "custom_selected_saved_branch_with_dependency_history"
+FULL_RUN_SCOPE = "full_saved_run"
+FULL_RUN_OMITTED_AREAS = (
     "recovery_drafts",
     "working_changes",
     "caches",
@@ -31,6 +29,15 @@ OMITTED_AREAS = (
     "worker_processes_and_task_controls",
     "global_packages",
     "non_saved_authoring_receipts",
+)
+# Per-request parser budget, not a Run/history quota. No compression/extraction.
+MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
+ID = Annotated[str, Field(min_length=1, max_length=128, pattern=r"^\S(?:.*\S)?$")]
+Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
+PART_NAMES = ("run", "branches", "revisions", "audits", "checkpoints", "allocator")
+OMITTED_AREAS = (
+    "unselected_branch_future",
+    *FULL_RUN_OMITTED_AREAS,
 )
 SUPPORTED_SCHEMAS = {
     "empty_run_saved_revision_v1",
@@ -131,7 +138,7 @@ class BranchSpec(Closed):
     forked_from_saved_revision_id: ID | None
     saved_head_revision_id: ID
     metadata_json: str
-    role: Literal["selected", "dependency"]
+    role: Literal["selected", "dependency", "included"]
     # A fresh CLEAN draft is created; no source draft identity or contents travel.
 
 
@@ -266,16 +273,27 @@ class Part(Closed):
     data_json: str
 
 
-class Envelope(Closed):
-    format: Literal["run_branch_archive.v1"]
-    engine_capability: Literal["run_branch_archive.v1"]
-    minimum_engine: Literal["9980628243f6ac637cb6ab803af1e4c632520849+archive.v1"]
-    scope: Literal["custom_selected_saved_branch_with_dependency_history"]
+class ArchiveSelection(Closed):
     selected_branch_id: ID
     selected_head_revision_id: ID
     omitted_branch_ids: list[ID]
     omitted_areas: list[str]
     parts: list[Part]
+
+
+class Envelope(ArchiveSelection):
+    format: Literal["run_branch_archive.v1"]
+    engine_capability: Literal["run_branch_archive.v1"]
+    minimum_engine: Literal["9980628243f6ac637cb6ab803af1e4c632520849+archive.v1"]
+    scope: Literal["custom_selected_saved_branch_with_dependency_history"]
+
+
+class FullRunEnvelope(ArchiveSelection):
+    format: Literal["run_full_archive.v1"]
+    engine_capability: Literal["run_full_archive.v1"]
+    minimum_engine: Literal["engine+full-run-archive.v1"]
+    scope: Literal["full_saved_run"]
+    branch_ids: list[ID]
 
 
 class Archive:
@@ -288,18 +306,29 @@ class Archive:
                 f"Archive exceeds this operation's {MAX_ARCHIVE_BYTES}-byte parser budget",
             )
         value = decode(raw)
-        if not isinstance(value, dict) or value.get("format") != FORMAT:
+        if not isinstance(value, dict) or value.get("format") not in (
+            FORMAT, FULL_RUN_FORMAT
+        ):
             fail(
                 "unsupported_archive_version",
-                f"Requires {FORMAT}; unknown versions cannot be downgraded",
+                f"Requires {FORMAT} or {FULL_RUN_FORMAT}; unknown versions cannot be downgraded",
             )
-        self.envelope = Envelope.model_validate(value)
+        self.envelope = (
+            FullRunEnvelope.model_validate(value)
+            if value["format"] == FULL_RUN_FORMAT
+            else Envelope.model_validate(value)
+        )
         self.raw_digest, self.size = digest(raw), len(raw)
         if [p.name for p in self.envelope.parts] != list(PART_NAMES):
             fail(
                 "invalid_manifest", "Archive must contain exactly the ordered v1 parts"
             )
-        if self.envelope.omitted_areas != list(OMITTED_AREAS):
+        omitted_areas = (
+            FULL_RUN_OMITTED_AREAS
+            if isinstance(self.envelope, FullRunEnvelope)
+            else OMITTED_AREAS
+        )
+        if self.envelope.omitted_areas != list(omitted_areas):
             fail("invalid_manifest", "Unsupported omitted-area declaration")
         parts = {}
         for part in self.envelope.parts:
@@ -364,6 +393,16 @@ class Archive:
                 "invalid_manifest",
                 "Omitted Branch identities overlap or are not unique/ordered",
             )
+        full_run = isinstance(self.envelope, FullRunEnvelope)
+        if full_run:
+            if (
+                self.envelope.omitted_branch_ids
+                or self.envelope.branch_ids != sorted(branches)
+                or any(b.role == "dependency" for b in self.branches)
+            ):
+                fail("invalid_manifest", "Full archive must include its entire declared Branch roster")
+        elif any(b.role == "included" for b in self.branches):
+            fail("invalid_manifest", "Branch archive only accepts selected and dependency Branches")
         reached, branch_paths = set(), {}
         for branch in self.branches:
             if (
@@ -425,6 +464,8 @@ class Archive:
             self.run.viewer_branch_id,
             activation.branch_id,
         }
+        if full_run:
+            needed.update(branches)
         previous = set()
         while needed != previous:
             previous = set(needed)
@@ -541,6 +582,7 @@ def pack(
     selected_branch_id,
     selected_head_revision_id,
     omitted_branch_ids,
+    full_run=False,
 ):
     values = (run, branches, revisions, audits, checkpoints, allocator)
     parts = []
@@ -554,16 +596,24 @@ def pack(
                 "data_json": raw.decode("utf-8"),
             }
         )
-    return encode(
-        {
-            "format": FORMAT,
-            "engine_capability": ENGINE_CAPABILITY,
-            "minimum_engine": MINIMUM_ENGINE_BASE,
-            "scope": "custom_selected_saved_branch_with_dependency_history",
-            "selected_branch_id": selected_branch_id,
-            "selected_head_revision_id": selected_head_revision_id,
-            "omitted_branch_ids": omitted_branch_ids,
-            "omitted_areas": list(OMITTED_AREAS),
-            "parts": parts,
-        }
-    )
+    envelope = {
+        "format": FORMAT,
+        "engine_capability": ENGINE_CAPABILITY,
+        "minimum_engine": MINIMUM_ENGINE_BASE,
+        "scope": BRANCH_SCOPE,
+        "selected_branch_id": selected_branch_id,
+        "selected_head_revision_id": selected_head_revision_id,
+        "omitted_branch_ids": omitted_branch_ids,
+        "omitted_areas": list(OMITTED_AREAS),
+        "parts": parts,
+    }
+    if full_run:
+        envelope.update(
+            format=FULL_RUN_FORMAT,
+            engine_capability=FULL_RUN_FORMAT,
+            minimum_engine=FULL_RUN_MINIMUM_ENGINE,
+            scope=FULL_RUN_SCOPE,
+            branch_ids=[branch["branch_id"] for branch in branches],
+            omitted_areas=list(FULL_RUN_OMITTED_AREAS),
+        )
+    return encode(envelope)

@@ -189,7 +189,7 @@ def _check_clean(repository, session, branch, payload):
         )
 
 
-def collect_archive(repository, session, *, run_id, branch_id, expected_head=None):
+def collect_archive(repository, session, *, run_id, branch_id, expected_head=None, full_run=False):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
     run = session.get(RunContainerModel, run_id)
     if run is None:
@@ -255,6 +255,9 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
     candidates = session.scalars(
         select(RunBranchModel).where(RunBranchModel.run_id == run_id)
     ).all()
+    if full_run:
+        for candidate in candidates:
+            anchor(candidate.branch_id)
     candidates.sort(
         key=lambda b: (
             b.branch_id != branch_id,
@@ -353,6 +356,7 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         if not pending:
             break
     specs = []
+    other_role = "included" if full_run else "dependency"
     for bid in sorted(branches):
         branch, rid = branches[bid], anchors[bid]
         if rid == branch.saved_head_revision_id:
@@ -367,10 +371,16 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
                 forked_from_saved_revision_id=branch.forked_from_saved_revision_id,
                 saved_head_revision_id=rid,
                 metadata_json=branch.metadata_json,
-                role="selected" if bid == branch_id else "dependency",
+                role="selected" if bid == branch_id else other_role,
             ).model_dump()
         )
     revision_ids = set(rows)
+    if full_run and revision_ids != set(session.scalars(
+        select(BranchSavedRevisionModel.revision_id).where(
+            BranchSavedRevisionModel.run_id == run_id
+        )
+    )):
+        fail("incomplete_run_history", "Full archive cannot omit Saved revisions outside Branch history")
     audits = [
         AuditSpec.model_validate(_row_values(a, AuditSpec)).model_dump()
         for a in session.scalars(
@@ -395,6 +405,15 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             .order_by(BranchSavedRevisionCheckpointModel.checkpoint_id)
         )
     ]
+    if full_run:
+        for model, primary_key, included in (
+            (BranchRevisionAuditEventModel, BranchRevisionAuditEventModel.audit_event_id, audits),
+            (BranchSavedRevisionCheckpointModel, BranchSavedRevisionCheckpointModel.checkpoint_id, checkpoints),
+        ):
+            if set(session.scalars(select(primary_key).where(model.run_id == run_id))) != {
+                row[primary_key.key] for row in included
+            }:
+                fail("incomplete_run_history", "Full archive cannot omit original audits or checkpoints")
     allocator = session.get(RunPackageIdentityAllocatorModel, run_id)
     omitted = sorted(
         set(
@@ -427,6 +446,7 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         selected_branch_id=branch_id,
         selected_head_revision_id=selected.saved_head_revision_id,
         omitted_branch_ids=omitted,
+        full_run=full_run,
     )
     return raw
 

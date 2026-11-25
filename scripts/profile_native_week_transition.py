@@ -24,14 +24,13 @@ import json
 import marshal
 import multiprocessing
 import os
-import platform
 import pstats
-import resource
 import sqlite3
 import subprocess
 import sys
 import threading
 import time
+from contextlib import closing
 from itertools import count
 from pathlib import Path
 from uuid import NAMESPACE_URL, uuid5
@@ -39,7 +38,7 @@ from uuid import NAMESPACE_URL, uuid5
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
-os.environ.setdefault("BETA_ENGINE_NEW_RUN_SAVED_STORAGE", "saved_v2")
+from scripts.process_measurement import machine, peak_rss_kib
 
 # (module, attribute, phase label). Labels group the Master/Task phases.
 PHASES = (
@@ -115,8 +114,14 @@ def take_phases():
 
 
 def backup(source, destination):
-    with sqlite3.connect(Path(source).as_uri() + "?mode=ro", uri=True) as s, sqlite3.connect(destination) as d:
-        s.backup(d)
+    uri = source.resolve(strict=True).as_uri() + "?mode=ro"
+    with closing(sqlite3.connect(uri, uri=True)) as reader, closing(sqlite3.connect(destination)) as writer:
+        reader.backup(writer)
+
+
+def file_sha(path):
+    with path.open("rb") as stream:
+        return hashlib.file_digest(stream, "sha256").hexdigest()
 
 
 def database_bytes(path):
@@ -127,16 +132,7 @@ def database_bytes(path):
 
 
 def peak_rss_mib():
-    return round(resource.getrusage(resource.RUSAGE_SELF).ru_maxrss / 1024, 1)
-
-
-def machine():
-    model = next((line.split(":", 1)[1].strip() for line in Path("/proc/cpuinfo").read_text().splitlines()
-                  if line.startswith("model name")), platform.processor())
-    memory = next((line.split()[1] for line in Path("/proc/meminfo").read_text().splitlines()
-                   if line.startswith("MemTotal")), "0")
-    return {"cpu": model, "logical_cpus": os.cpu_count(), "mem_mib": int(memory) // 1024,
-            "python": sys.version.split()[0], "platform": platform.platform()}
+    return round(peak_rss_kib() / 1024, 1)
 
 
 def git(*args):
@@ -229,6 +225,9 @@ def prepare(args):
     from tests.api.test_saved_revision_history_api import ApiServer
 
     out = args.out
+    stop = (args.stop_season, args.stop_week)
+    if not (0 <= args.stop_season < args.seasons and 1 <= args.stop_week <= args.width):
+        raise ValueError("Requested stop must be inside the Run calendar")
     out.mkdir(parents=True, exist_ok=False)
     database = out / "build.db"
     width = args.width
@@ -262,17 +261,20 @@ def prepare(args):
         while True:
             view = inspect(server)
             week = view["state"]["week"]
+            position = (week["season_index"], week["week"])
+            if position > stop:
+                raise ValueError(f"Fixture opens at {position}, after requested stop {stop}")
             if week["week"] == play_week and week["season_index"] == 0 and not view["state"]["editions"][0]["result_confirmed"]:
                 slots = _play(server, fields)
                 note(step="played", editions=len(fields), slots=slots)
                 view = inspect(server)
             snapshot = out / f"week-{week['season_index']:02d}-{week['week']:02d}.db"
-            with sqlite3.connect(database) as live:
+            with closing(sqlite3.connect(database)) as live:
                 live.execute("PRAGMA wal_checkpoint(TRUNCATE)")
             backup(database, snapshot)
             note(step="snapshot", file=snapshot.name, players=len(view["players"]),
                  saved_head=view["saved_head_revision_id"])
-            if week["season_index"] == args.stop_season and week["week"] == args.stop_week:
+            if position == stop:
                 break
             action = "season-transition" if week["week"] == width else "transition"
             if view["season_transition_blockers" if action == "season-transition" else "transition_blockers"]:
@@ -282,7 +284,7 @@ def prepare(args):
             note(step=action, season=week["season_index"], week=week["week"])
     meta = {"git_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD:src"),
             "args": {k: str(v) for k, v in vars(args).items()}, "machine": machine(),
-            "steps": log, "snapshots": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
+            "steps": log, "snapshots": {p.name: file_sha(p)
                                         for p in sorted(out.glob("week-*.db"))}}
     (out / "fixture.json").write_text(json.dumps(meta, indent=1))
     database.unlink()
@@ -313,7 +315,7 @@ def measure(args):
     root.mkdir(parents=True, exist_ok=args.restart_child)
     database = root / "run.db"
     if not args.restart_child:
-        input_sha = hashlib.sha256(args.input.read_bytes()).hexdigest()
+        input_sha = file_sha(args.input)
         if args.sha256 and input_sha != args.sha256:
             raise ValueError("Input SHA-256 mismatch")
         backup(args.input, database)
@@ -351,14 +353,13 @@ def measure(args):
             take_phases()
             if args.profile:
                 profiler[0] = cProfile.Profile()
-            cpu = resource.getrusage(resource.RUSAGE_SELF)
+            cpu = time.process_time()
             started = time.perf_counter()
             status, value = _request(method, url + path, body)
             seconds = time.perf_counter() - started
-            after = resource.getrusage(resource.RUSAGE_SELF)
             assert status == expect, (label, status, value)
             row = {"phase": label, "seconds": round(seconds, 3),
-                   "process_cpu_s": round(after.ru_utime + after.ru_stime - cpu.ru_utime - cpu.ru_stime, 3),
+                   "process_cpu_s": round(time.process_time() - cpu, 3),
                    "peak_rss_mib": peak_rss_mib(), **{f"bytes_{k}": v for k, v in database_bytes(database).items()}}
             if args.phases:
                 row["stages"] = take_phases()
@@ -419,11 +420,13 @@ def measure(args):
             (root / "expected.json").write_text(json.dumps(view, sort_keys=True))
     sampler.stop.set()
     sampler.join()
-    with sqlite3.connect(database) as db:
+    with closing(sqlite3.connect(database)) as db:
         integrity = db.execute("PRAGMA quick_check").fetchone()[0]
         revisions = db.execute("SELECT count(*) FROM branch_saved_revisions").fetchone()[0]
+    if integrity != "ok":
+        raise ValueError(f"Fixture copy failed SQLite quick_check: {integrity}")
     metadata = {"git_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD:src"),
-                "script_sha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                "script_sha256": file_sha(Path(__file__)),
                 "input": str(args.input), "input_sha256": input_sha, "machine": machine(),
                 "phases_instrumented": args.phases, "profiled": args.profile,
                 "peak_rss_mib": peak_rss_mib(), "peak_db_plus_wal_bytes": sampler.peak_db_wal,
@@ -501,7 +504,7 @@ def stage(args):
     assert len(digests) == 1, digests
     preview_fp, body_hash, successor_fp = digests.pop()
     result = {"metadata": {"git_sha": git("rev-parse", "HEAD"), "source_tree": git("rev-parse", "HEAD:src"),
-                           "input_sha256": hashlib.sha256(args.input.read_bytes()).hexdigest(),
+                           "input_sha256": file_sha(args.input),
                            "machine": machine(), "action": action, "players": len(view["players"]),
                            "week": week, "repeat": args.repeat},
               "preview_fingerprint": preview_fp, "preview_body_sha256": body_hash,
@@ -518,11 +521,18 @@ def stage(args):
 
 def report(args):
     """Summarize measure roots: per-phase seconds, peaks and exact equality."""
-    rows, digests = [], {}
+    rows, digests, comparisons = [], {}, set()
     for root in args.roots:
         timing = json.loads((root / "timings.json").read_text())
         restart = json.loads((root / "restart.json").read_text())
         meta = timing["metadata"]
+        restarted = restart["metadata"]
+        if (restarted["input_sha256"] != meta["input_sha256"]
+                or restarted["git_sha"] != meta["git_sha"]
+                or restarted["sqlite_quick_check"] != "ok"
+                or meta["sqlite_quick_check"] != "ok"):
+            raise ValueError(f"{root}: restart evidence does not match the measured run")
+        comparisons.add((meta["input_sha256"], meta["phases_instrumented"], meta["profiled"]))
         phases = {r["phase"]: r["seconds"] for r in timing["phases"] + restart["phases"]}
         cpu = {r["phase"]: r["process_cpu_s"] for r in timing["phases"] + restart["phases"]}
         expected = (root / "expected.json").read_bytes()
@@ -539,7 +549,11 @@ def report(args):
                      "saved_revisions": restart["metadata"]["saved_revisions"],
                      "quick_check": restart["metadata"]["sqlite_quick_check"],
                      "input_sha256": meta["input_sha256"][:12]})
-    print(json.dumps({"rows": rows, "identical_groups": list(digests.values())}, indent=1))
+    if len(comparisons) != 1:
+        raise ValueError("Compare the same input SHA-256 and instrumentation mode")
+    identical = len(digests) == 1
+    print(json.dumps({"rows": rows, "identical_groups": list(digests.values()), "identical": identical}, indent=1))
+    return 0 if identical else 2
 
 
 def main(argv=None):
@@ -572,8 +586,9 @@ def main(argv=None):
     r = sub.add_parser("report")
     r.add_argument("roots", type=Path, nargs="+")
     args = parser.parse_args(argv)
-    {"prepare": prepare, "measure": measure, "stage": stage, "report": report}[args.mode](args)
+    os.environ.setdefault("BETA_ENGINE_NEW_RUN_SAVED_STORAGE", "saved_v2")
+    return {"prepare": prepare, "measure": measure, "stage": stage, "report": report}[args.mode](args)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

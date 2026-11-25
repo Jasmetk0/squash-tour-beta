@@ -30,6 +30,12 @@ SQLite with Saved v2 and the ordinary 120-second client deadline:
 4. `stage` repeats the exact Execute preparation in process (context loaded and
    fingerprints primed as Execute does) and reports digests of the preview body
    and successor checkpoint.
+5. `report` requires the same input hash and instrumentation mode, successful
+   SQLite integrity checks and matching restart metadata. It exits with status
+   2 if the complete inspection or transition evidence differs.
+
+The tool uses the shared process measurement helpers for Linux, Windows and
+macOS. The measurements below were taken on Linux.
 
 Hardware: Intel Xeon @ 2.10 GHz, 4 logical CPUs, 15.7 GiB RAM, Linux 6.18,
 CPython 3.11.18 with the Fast CI lock file (pydantic 2.14.2, SQLAlchemy 2.1.6).

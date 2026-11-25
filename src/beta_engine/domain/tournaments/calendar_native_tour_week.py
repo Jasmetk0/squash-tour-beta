@@ -1,5 +1,9 @@
 """Pure complete birth-week preparation shared by execution and Signed replay."""
 
+from collections import OrderedDict
+from threading import Lock
+
+from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_lifecycle import advance_calendar_lifecycle
 from beta_engine.domain.players.calendar_native_competition import (
@@ -94,12 +98,90 @@ def native_turn_pro_decisions(
     return decisions, model
 
 
-def native_confirmed_results(state, checkpoint, target, clock):
+# Published Official Ranking results recorded under the exact canonical
+# fingerprints of the complete Tour state and sporting checkpoint they were
+# derived from (see ``_results_key``). Bounded; values are frozen models only.
+_VERIFIED_RESULTS = OrderedDict()
+_VERIFIED_RESULTS_LOCK = Lock()
+_MAX_VERIFIED_RESULT_ENTRIES = 8
+_MAX_VERIFIED_RESULTS = 262144
+
+
+def _results_key(state, checkpoint, target, clock):
+    """The complete input identity, or None: then the full path always runs.
+
+    Only inside a private replay scope, only for the exact native global-slot
+    Tour v5 / checkpoint v13 types, and only from canonical hashes THIS
+    operation has already computed or primed from its authenticated Saved
+    context (a missing hash is never computed here). The results are a pure
+    function of these two complete values, the Run clock and the target week.
+    """
+    from beta_engine.domain.tournaments.calendar_global_slots import (
+        GlobalCompetitionCheckpoint,
+        GlobalTourState,
+        _replay_projections,
+    )
+
+    scope = _replay_projections.get()
+    if (
+        scope is None
+        or type(state) is not GlobalTourState
+        or type(checkpoint) is not GlobalCompetitionCheckpoint
+        or type(clock) is not RunCalendar
+    ):
+        return None
+    memo = scope["fingerprints"]
+    known = [memo.get((id(value), False)) for value in (state, checkpoint)]
+    if any(item is None or item[0] is not value for item, value in zip(known, (state, checkpoint))):
+        return None
+    return (
+        state.schema_version, checkpoint.schema_version, state.run_id, state.branch_id,
+        known[0][1], known[1][1], target.ordinal, clock,
+    )
+
+
+def native_results_cache_stats():
+    """Measurement only: retained entries and result models."""
+    with _VERIFIED_RESULTS_LOCK:
+        return {
+            "entries": len(_VERIFIED_RESULTS),
+            "results": sum(len(v) for v in _VERIFIED_RESULTS.values()),
+        }
+
+
+_UNSET = object()
+
+
+def native_confirmed_results(state, checkpoint, target, clock, *, key=_UNSET):
     """Every published result of each confirmed Edition completed before ``target``.
 
     Expired results stay in this tuple: they may stop counting, but their
-    sources remain part of the ranking proof.
+    sources remain part of the ranking proof. The same complete verified
+    inputs (identical canonical state and checkpoint hashes) reuse the results
+    that the full path derived and validated for them, e.g. in Preview, Execute
+    and its post-write replay of one Week Transition. A failure is never kept.
     """
+    if key is _UNSET:
+        key = _results_key(state, checkpoint, target, clock)
+    if key is not None:
+        with _VERIFIED_RESULTS_LOCK:
+            known = _VERIFIED_RESULTS.get(key)
+            if known is not None:
+                _VERIFIED_RESULTS.move_to_end(key)
+                return known
+    results = _native_confirmed_results(state, checkpoint, target, clock)
+    if key is not None and len(results) <= _MAX_VERIFIED_RESULTS:
+        with _VERIFIED_RESULTS_LOCK:
+            _VERIFIED_RESULTS[key] = results
+            _VERIFIED_RESULTS.move_to_end(key)
+            while len(_VERIFIED_RESULTS) > _MAX_VERIFIED_RESULT_ENTRIES or (
+                sum(len(v) for v in _VERIFIED_RESULTS.values()) > _MAX_VERIFIED_RESULTS
+            ):
+                _VERIFIED_RESULTS.popitem(last=False)
+    return results
+
+
+def _native_confirmed_results(state, checkpoint, target, clock):
     events = {t.tournament_id: t for t in checkpoint.tournaments}
     return tuple(
         r
@@ -125,6 +207,9 @@ def prepare_native_tour_week(
     target = RunWeekPosition(
         calendar=clock, season_index=position.season_index, week=position.season_week
     )
+    # Identify the complete verified inputs before later hashing can evict
+    # the caller's already computed state/checkpoint fingerprints.
+    results_key = _results_key(state, checkpoint, target, clock)
     season = checkpoint.week.week == clock.weeks_per_year
     if command["action"] != ("season-transition" if season else "transition"):
         raise ValueError("Native Tour command does not own this Week/Season boundary")
@@ -182,7 +267,7 @@ def prepare_native_tour_week(
             [h.model_dump(mode="json") for h in prepared_health]
         ),
     )
-    results = native_confirmed_results(state, checkpoint, target, clock)
+    results = native_confirmed_results(state, checkpoint, target, clock, key=results_key)
     ranking, proof = calculate_native_ranking_from_signed_lifecycle(
         states=(*lifecycle, successor_life),
         source=source,

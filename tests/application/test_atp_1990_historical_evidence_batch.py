@@ -531,3 +531,22 @@ def test_second_pass_may_evidence_is_not_a_complete_qualification_draw(batch):
         assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
     assert batch["summary"]["second_pass_review_attempted_rows"] >= 32
+
+
+def test_second_pass_june_seed_and_entry_labels_remain_observations(batch):
+    rows = batch["occurrences"]
+    assert [r["series_id"] for r in rows[32:35]] == [
+        "bologna_1998", "florence_1994", "queens_club"]
+    b, f, q = [r["historical_evidence"] for r in rows[32:35]]
+    assert b["main_seeds"] == 8
+    assert b["reported_main_qualifiers"] is b["reported_main_wild_cards"] is None
+    assert f["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [3, 6, 7]
+    assert f["main_entry_label_evidence"]["observed_lucky_losers"] == 1
+    assert (q["main_entrants"], q["main_bracket_slots"], q["main_byes"], q["main_seeds"]) == (56, 64, 8, 16)
+    assert q["bye_seed_ranks"] == list(range(1, 9))
+    assert (q["reported_main_qualifiers"], q["reported_main_wild_cards"]) == (7, 4)
+    for e in (b, f, q):
+        assert e["second_pass_review"]["qualification_draw_status"] == "not_obtained"
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert batch["summary"]["second_pass_review_attempted_rows"] >= 35

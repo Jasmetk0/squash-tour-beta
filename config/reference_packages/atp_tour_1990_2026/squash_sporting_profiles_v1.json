@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "source_version": 3,
+  "source_version": 4,
   "profiles": [
     {
       "schema_version": "atp_squash_group_profile.v1",
@@ -150,6 +150,55 @@
         "published_dates": [
           "2025-01-15",
           "2025-01-29"
+        ]
+      }
+    },
+    {
+      "schema_version": "atp_squash_knockout_profile.v2",
+      "occurrence_id": "atp_2025_dallas",
+      "category_id": "atp_500",
+      "name": "Dallas Open 2025",
+      "source_start_date": "2025-02-03",
+      "source_end_date": "2025-02-09",
+      "source_urls": [
+        "https://www.protennislive.com/posting/2025/424/mds.pdf",
+        "https://www.protennislive.com/posting/2025/424/qs.pdf"
+      ],
+      "source_pdf_sha256": {
+        "https://www.protennislive.com/posting/2025/424/mds.pdf": "315ee14a5d0444ab7cfc93ea11d286248edb060465284b5ced1a7c3d7c047a89",
+        "https://www.protennislive.com/posting/2025/424/qs.pdf": "9c9d41c0b94cd94214205b5a73eab8d5bc2e489b066e71c3c76e5470ce49e208"
+      },
+      "qualification_date_status": "verified",
+      "entrant_selection": "admin_selected_no_automatic_race_or_age",
+      "main_entrants": 32,
+      "qualification_entrants": 16,
+      "qualifier_spots": 4,
+      "wild_cards": 3,
+      "seeds_count": 8,
+      "byes": 0,
+      "match_best_of": 5,
+      "ranked": true,
+      "main_points": {
+        "champion": 500,
+        "finalist": 330,
+        "semifinal": 200,
+        "quarterfinal": 100,
+        "round_of_16": 50,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 25,
+        "round_2_loss": 13,
+        "round_1_loss": 0
+      },
+      "qualification_date_evidence": {
+        "start_date": "2025-02-01",
+        "end_date": "2025-02-02",
+        "source_urls": [
+          "https://www.dallasopen.com/en/media/news/dallas-2025-history-draw-schedule"
+        ],
+        "published_dates": [
+          "2025-01-28"
         ]
       }
     }

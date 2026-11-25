@@ -36,11 +36,13 @@ def test_sporting_catalog_uses_saved_profiles_and_retains_outside_horizon_source
         code, catalog = _request("GET", target)
         assert code == 200, catalog
         assert catalog["run_id"] == r and catalog["branch_id"] == b
-        assert len(catalog["entries"]) == 3
+        entries = {entry["profile"]["occurrence_id"]: entry for entry in catalog["entries"]}
+        assert set(entries) == {
+            "atp_2025_atp_finals", "atp_2025_dallas", "atp_2025_next_gen_atp_finals", "atp_2025_rotterdam",
+        }
         assert [e["profile"]["played_group_win_points"] for e in catalog["entries"] if e["execution_supported"]] == [200, 0]
         assert all(e["calendar_projection"]["outside_year_weeks"] for e in catalog["entries"])
-        knockout = catalog['entries'][2]
-        assert knockout['profile']['occurrence_id'] == 'atp_2025_rotterdam'
+        knockout = entries['atp_2025_rotterdam']
         assert knockout['knockout_geometry']['actual_match_count'] == 43
         assert knockout['execution_supported'] is False
         code, refused = _request('POST', target + '/atp_2025_rotterdam/preview', {

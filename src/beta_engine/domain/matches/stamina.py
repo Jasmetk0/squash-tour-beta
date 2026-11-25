@@ -9,6 +9,11 @@ from typing import TYPE_CHECKING, Literal, Self
 
 from pydantic import BaseModel, Field, model_validator
 
+from beta_engine.domain.matches.content_hash import (
+    create_with_input_hash,
+    create_with_validated_hash,
+    hash_check_deferred,
+)
 from beta_engine.domain.matches.rallies import RallyEvent
 from beta_engine.domain.matches.timeline import MatchTimelineLog
 
@@ -298,9 +303,19 @@ class StaminaTransition(BaseModel):
 
     @classmethod
     def create(cls, **values: object) -> Self:
-        draft = cls.model_construct(**values, transition_hash="0" * 64)
-        payload = cls._hash_payload(draft)
-        return cls(**values, transition_hash=cls._content_hash(payload))
+        return create_with_input_hash(
+            cls, values, "transition_hash", cls._transition_hash,
+        )
+
+    @classmethod
+    def _create_from_engine(cls, **values: object) -> Self:
+        return create_with_validated_hash(
+            cls, values, "transition_hash", cls._transition_hash,
+        )
+
+    @classmethod
+    def _transition_hash(cls, transition: StaminaTransition) -> str:
+        return cls._content_hash(cls._hash_payload(transition))
 
     @model_validator(mode="after")
     def validate_transition(self) -> StaminaTransition:
@@ -345,6 +360,8 @@ class StaminaTransition(BaseModel):
                 )
                 if after.current(dimension) != expected:
                     raise ValueError("stamina transition delta does not match state")
+        if hash_check_deferred(self):
+            return self  # The engine factory hashes this validated value.
         payload = self._hash_payload(self)
         if self.transition_hash != self._content_hash(payload):
             raise ValueError("stamina transition hash mismatch")
@@ -407,6 +424,7 @@ class MatchStaminaLog(BaseModel):
         timeline: MatchTimelineLog,
         rally_events: tuple[RallyEvent, ...],
         effective: EffectiveMatchStaminaSnapshot,
+        live_memo: StaminaAdvanceMemo | None = None,
     ) -> MatchStaminaLog:
         player_ids = (
             context.player_a.player.player_id,
@@ -414,7 +432,13 @@ class MatchStaminaLog(BaseModel):
         )
         rally_by_hash = {event.event_hash: event for event in rally_events}
         initial = cls.create_initial_states(effective=effective, player_ids=player_ids)
-        current = initial
+        if live_memo is not None and not live_memo.matches_snapshot(effective):
+            live_memo = None
+        current = (
+            live_memo.chain_start(effective=effective, initial_states=initial)
+            if live_memo is not None
+            else initial
+        )
         transitions: list[StaminaTransition] = []
         previous_hash = timeline.match_log_hash
         for source in timeline.events:
@@ -435,7 +459,19 @@ class MatchStaminaLog(BaseModel):
                 workload = 0.0
                 player_workloads = None
                 cause = StaminaTransitionCause.GAME_BREAK_RECOVERY
-            deltas, after = cls.advance_states(
+            recorded = (
+                live_memo.recorded(
+                    effective=effective,
+                    states=current,
+                    cause=cause,
+                    elapsed_seconds=source.elapsed_seconds,
+                    workload_units=workload,
+                    player_workload_units=player_workloads,
+                )
+                if live_memo is not None
+                else None
+            )
+            deltas, after = recorded or cls.advance_states(
                 effective=effective,
                 states=current,
                 cause=cause,
@@ -443,7 +479,7 @@ class MatchStaminaLog(BaseModel):
                 workload_units=workload,
                 player_workload_units=player_workloads,
             )
-            transition = StaminaTransition.create(
+            transition = StaminaTransition._create_from_engine(
                 schema_version=(
                     "stamina_transition.v2"
                     if player_workloads is not None
@@ -840,3 +876,134 @@ class MatchStaminaLog(BaseModel):
                 != effort_context.probability_before_effort_player_a
             ):
                 raise ValueError("rally effort and outcome probabilities do not agree")
+
+
+def _exact_scalar(value: object) -> tuple[str, object]:
+    # Type-exact identity of a numeric input: 0.0/-0.0 and 1/1.0 compare equal
+    # but produce different stamina bytes, so they must never share a memo entry.
+    if type(value) is float:
+        return ("float", value.hex())
+    return (type(value).__name__, value)
+
+
+def _states_json(states: tuple[PlayerStaminaState, PlayerStaminaState]) -> tuple[bytes, ...]:
+    return tuple(state.model_dump_json().encode("utf-8") for state in states)
+
+
+class StaminaAdvanceMemo:
+    """Exact-input record of the live ``advance_states`` results of one match.
+
+    ``MatchStaminaLog.build`` rebuilds every transition from the authoritative
+    timeline and compares its final states with the live ones. ``advance_states``
+    is a pure function of (effective snapshot, states, cause, elapsed, workload,
+    player workloads), so when the rebuild presents exactly the inputs the live
+    rally loop already evaluated (the same state objects, the same snapshot
+    object and type-exact equal scalars), its result is that live result. Any
+    input that differs, e.g. a timeline elapsed time that disagrees with the live
+    loop, misses the memo and is recomputed, so the divergence check keeps its
+    meaning. Only ``match_engine`` records into it while simulating a match.
+    """
+
+    __slots__ = ("_effective_json", "_initial_json", "_steps", "effective", "initial_states")
+
+    def __init__(
+        self,
+        *,
+        effective: EffectiveMatchStaminaSnapshot,
+        initial_states: tuple[PlayerStaminaState, PlayerStaminaState],
+    ) -> None:
+        self.effective = effective
+        self._effective_json = effective.model_dump_json()
+        self.initial_states = initial_states
+        self._initial_json = _states_json(initial_states)
+        self._steps: dict[tuple[object, ...], tuple[object, ...]] = {}
+
+    def matches_snapshot(self, effective: EffectiveMatchStaminaSnapshot) -> bool:
+        """Check the mutable input's contents once before rebuilding the log."""
+        return effective is self.effective and effective.model_dump_json() == self._effective_json
+
+    @staticmethod
+    def _key(
+        states: tuple[PlayerStaminaState, PlayerStaminaState],
+        cause: StaminaTransitionCause,
+        elapsed_seconds: float,
+        workload_units: float,
+        player_workload_units: dict[str, float] | None,
+    ) -> tuple[object, ...]:
+        return (
+            id(states),
+            cause,
+            _exact_scalar(elapsed_seconds),
+            _exact_scalar(workload_units),
+            None
+            if player_workload_units is None
+            else tuple(
+                sorted(
+                    (player_id, _exact_scalar(units))
+                    for player_id, units in player_workload_units.items()
+                )
+            ),
+        )
+
+    def advance(
+        self,
+        *,
+        states: tuple[PlayerStaminaState, PlayerStaminaState],
+        cause: StaminaTransitionCause,
+        elapsed_seconds: float,
+        workload_units: float,
+        player_workload_units: dict[str, float] | None = None,
+    ) -> tuple[
+        tuple[PlayerStaminaDelta, PlayerStaminaDelta],
+        tuple[PlayerStaminaState, PlayerStaminaState],
+    ]:
+        deltas, after = MatchStaminaLog.advance_states(
+            effective=self.effective,
+            states=states,
+            cause=cause,
+            elapsed_seconds=elapsed_seconds,
+            workload_units=workload_units,
+            player_workload_units=player_workload_units,
+        )
+        key = self._key(
+            states, cause, elapsed_seconds, workload_units, player_workload_units
+        )
+        # The input states object is retained, so its id cannot be reused.
+        self._steps[key] = (states, deltas, after)
+        return deltas, after
+
+    def chain_start(
+        self,
+        *,
+        effective: EffectiveMatchStaminaSnapshot,
+        initial_states: tuple[PlayerStaminaState, PlayerStaminaState],
+    ) -> tuple[PlayerStaminaState, PlayerStaminaState]:
+        """The live initial states when they are byte-identical to the rebuild's."""
+        if effective is self.effective and _states_json(initial_states) == self._initial_json:
+            return self.initial_states
+        return initial_states
+
+    def recorded(
+        self,
+        *,
+        effective: EffectiveMatchStaminaSnapshot,
+        states: tuple[PlayerStaminaState, PlayerStaminaState],
+        cause: StaminaTransitionCause,
+        elapsed_seconds: float,
+        workload_units: float,
+        player_workload_units: dict[str, float] | None = None,
+    ) -> (
+        tuple[
+            tuple[PlayerStaminaDelta, PlayerStaminaDelta],
+            tuple[PlayerStaminaState, PlayerStaminaState],
+        ]
+        | None
+    ):
+        if effective is not self.effective:
+            return None
+        entry = self._steps.get(
+            self._key(states, cause, elapsed_seconds, workload_units, player_workload_units)
+        )
+        if entry is None or entry[0] is not states:
+            return None
+        return entry[1], entry[2]

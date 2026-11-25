@@ -165,6 +165,32 @@ def _turn_pro_week(world, state, target, checkpoint, seed):
     return lifecycle, decisions, model
 
 
+def _scheduled_transition_blockers(authority, cp):
+    """A cross-week Edition may leave its Q week only with every Q match accepted."""
+    eid = authority.edition.edition_id
+    binding = authority.scheduled_binding
+    if authority.edition.week.ordinal > cp.week.ordinal:
+        return []
+    if binding.final_round.week.ordinal <= cp.week.ordinal:
+        return [] if authority.result_confirmed else ["edition_not_terminal:" + eid]
+    if authority.draw is None:
+        return ["scheduled_edition_draw_missing:" + eid]
+    from beta_engine.domain.tournaments.calendar_global_slots import GlobalSlot
+    from beta_engine.domain.tournaments.native_scheduled_knockout import (
+        scheduled_edition_plan, scheduled_expected_positions,
+    )
+
+    history = getattr(cp, "history_global_slots", getattr(cp, "events", ()))
+    accepted = {m.match_id for s in history if isinstance(s, GlobalSlot) for m in s.accepted}
+    expected = scheduled_expected_positions(scheduled_edition_plan(authority))
+    if any(
+        mid not in accepted and position.week.ordinal <= cp.week.ordinal
+        for mid, position in expected.items()
+    ):
+        return ["scheduled_round_incomplete:" + eid]
+    return []
+
+
 class CalendarTourCommand(FrozenInput):
     action: Literal[
         "initialize",
@@ -647,7 +673,7 @@ class CalendarTourService:
                         for r, award in zip(
                             edition_results(a, event),
                             event.ranking_awards
-                            if event.schema_version == "native_canonical_tournament_result.v2"
+                            if event.schema_version in {"native_canonical_tournament_result.v2", "native_scheduled_knockout_result.v1"}
                             else event.prepared_awards,
                             strict=True,
                         )
@@ -657,7 +683,7 @@ class CalendarTourService:
                             "match_id": m.match_id,
                             "slot": next((slot.number for slot in getattr(cp, "history_global_slots", getattr(cp, "events", ())) if hasattr(slot, "accepted") and any(x.match_id == m.match_id for x in slot.accepted)), None) if a.edition.schema_version in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} else native_match_slot(a, i)
                             if event.schema_version
-                            in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8"}
+                            in {"calendar_followup_knockout.v6", "calendar_followup_knockout.v7", "calendar_followup_knockout.v8", "native_scheduled_knockout_result.v1"}
                             else a.edition.start_slot + 3 + i,
                             "player_a_id": m.result.player_a_id,
                             "player_b_id": m.result.player_b_id,
@@ -746,7 +772,7 @@ class CalendarTourService:
             ],
             "state": state.model_dump(mode="json") if state else None,
             "edition_evidence": evidence,
-            "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} for a in state.editions) else None,
+            "next_slot": slot_inspection(state, cp) if state and cp and any(a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"} for a in state.editions) else None,
             "contributions": contributions,
             "transition_blockers": self._transition_blockers(
                 state, ctx, session, _checkpoint_fingerprint=checkpoint_fingerprint
@@ -939,7 +965,7 @@ class CalendarTourService:
         if authority is not None and authority.canonical_binding is not None and command.action != "confirm-result":
             raise ValueError("Adopted Saved Draw is immutable; use Next Match / Next Slot or independent result confirmation")
         if state and command.action == "play":
-            if authority and authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"}:
+            if authority and authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"}:
                 raise ValueError("Use Next Slot / Next Match for a shared-slot Edition")
             if authority.draw is None or authority.tournament_fingerprint:
                 raise ValueError(
@@ -1217,6 +1243,9 @@ class CalendarTourService:
         ):
             blockers.append("health_healing_or_permanent_effect_authority_unsupported")
         for authority in state.editions:
+            if authority.scheduled_binding is not None:
+                blockers.extend(_scheduled_transition_blockers(authority, cp))
+                continue
             if (
                 authority.edition.week.ordinal <= cp.week.ordinal
                 and not authority.result_confirmed
@@ -1416,6 +1445,104 @@ class CalendarTourService:
             ),
         }, successor
 
+    def _scheduled_binding(self, session, state, command, edition):
+        """Server-side derivation from the exact Saved profile; never client data."""
+        from beta_engine.domain.tournaments.calendar_tour import build_scheduled_edition
+        from beta_engine.domain.tournaments.native_scheduled_knockout import (
+            NativeScheduledKnockoutBinding,
+        )
+
+        raw = command.data.get("scheduled_binding")
+        if not isinstance(raw, dict):
+            raise ValueError("Scheduled v5 Edition requires its reviewed Saved profile binding")
+        binding = NativeScheduledKnockoutBinding.model_validate_json(json.dumps(raw))
+        if binding.source_saved_revision_id != command.expected_saved_head:
+            raise ValueError("Scheduled profile binding differs from the reviewed Saved head")
+        if session is not None:
+            from beta_engine.application.atp_knockout_schedule_preview import (
+                ATPKnockoutSchedulePreviewRequest,
+                validate_saved_atp_knockout_schedule,
+            )
+            from beta_engine.application.atp_saved_tour_source import read_saved_atp_source
+
+            calendar, revision, package_state = read_saved_atp_source(
+                session, run_id=state.run_id, branch_id=state.branch_id
+            )
+            if (
+                revision.revision_id,
+                revision.branch_id,
+                revision.content_hash,
+            ) != (
+                binding.source_saved_revision_id,
+                state.branch_id,
+                binding.source_saved_content_hash,
+            ):
+                raise ValueError(
+                    "Scheduled ATP source is not this Branch's current Saved head"
+                )
+            profile, fingerprint, _source, _geometry = validate_saved_atp_knockout_schedule(
+                calendar=calendar,
+                state=package_state,
+                occurrence_id=edition.edition_id,
+                request=ATPKnockoutSchedulePreviewRequest(
+                    expected_saved_head=revision.revision_id,
+                    expected_profile_fingerprint=binding.source_profile_fingerprint,
+                    schedule=binding.schedule,
+                ),
+            )
+            if profile != binding.profile or fingerprint != binding.source_profile_fingerprint:
+                raise ValueError("Scheduled Edition differs from its copied Saved profile")
+        if edition != build_scheduled_edition(binding):
+            raise ValueError("Scheduled Edition differs from its copied Saved profile/schedule")
+        return binding
+
+    def _scheduled_wild_cards(self, session, ctx, state, authority, command, native_inputs):
+        """Admin-named Wild Cards resolved by the existing WC rules."""
+        from beta_engine.domain.tournaments.wild_card_authority import (
+            TournamentWildCardAuthorityBuilder,
+        )
+
+        _clock, _rev, world, _health, cp, _saved, _evidence = ctx
+        count = authority.scheduled_binding.profile.wild_cards
+        if set(command.data) - {"wild_card_player_ids"}:
+            raise ValueError("Scheduled Draw accepts only Admin Wild Card nominations")
+        ids = command.data.get("wild_card_player_ids", [])
+        if (
+            not isinstance(ids, list)
+            or len(ids) != count
+            or len(set(ids)) != len(ids)
+            or any(type(p) is not str for p in ids)
+        ):
+            raise ValueError(f"Scheduled Draw requires exactly {count} distinct Wild Card players")
+        if not count:
+            return authority
+        lifecycle = (
+            native_inputs[0]
+            if native_inputs is not None
+            else get_lifecycle(session, run_id=state.run_id, branch_id=state.branch_id, week=cp.week)
+        )
+        owned = {p.player_id: p for p in lifecycle.players}
+        direct = set(authority.field.direct_main_player_ids)
+        applicants = {s.player_id for s in authority.submissions}
+        for pid in ids:
+            if pid not in owned or owned[pid].status == "retired" or pid in direct:
+                raise ValueError("Wild Card player is foreign, retired or already in Direct Main")
+            if lifecycle.policy.requires_turn_pro:
+                require_professional_for_entry(lifecycle, pid, cp.week)
+            elif pid not in applicants:
+                # Historical rule: only an application creates Tour entry and
+                # ranking membership; a WC cannot silently create it.
+                raise ValueError("Historical-rule Wild Card requires a valid application")
+        wc = TournamentWildCardAuthorityBuilder.build(
+            field=authority.field,
+            field_sequence=1,
+            command_id=command.command_id,
+            original_wild_card_player_ids=tuple(ids),
+        )
+        if len(wc.active_wild_card_player_ids) != count:
+            raise ValueError("Every reserved Wild Card slot must be filled")
+        return authority.model_copy(update={"wild_card_authority": wc})
+
     def _apply(
         self,
         session,
@@ -1442,7 +1569,7 @@ class CalendarTourService:
             and command.action not in {"transition", "season-transition"}
             and not (
                 command.action == "adopt-saved-draw" or (command.action == "create-edition"
-                and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"})
+                and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"})
             )
         ):
             from beta_engine.domain.tournaments.calendar_native_tour import (
@@ -1460,7 +1587,7 @@ class CalendarTourService:
                 replace_checkpoint(session, previous=previous_cp, successor=cp, _verified_previous=previous_cp, _repository=self.repository)
             state = state.model_copy(update={"checkpoint_fingerprint": cp.fingerprint})
             ctx = (*ctx[:4], cp, *ctx[5:])
-        if (command.action == "adopt-saved-draw" or (command.action == "create-edition" and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"})) and state.schema_version != "native_fork_tour.v1":
+        if (command.action == "adopt-saved-draw" or (command.action == "create-edition" and command.data.get("schema_version") in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"})) and state.schema_version != "native_fork_tour.v1":
             from beta_engine.domain.tournaments.calendar_global_slots import upgrade
             previous_cp = cp
             state, cp = upgrade(state, cp, command.expected_saved_head)
@@ -1556,7 +1683,9 @@ class CalendarTourService:
             state = state.model_copy(update={"editions": (*state.editions, adopted)})
             result["adopted_source_plan_fingerprint"] = adopted.canonical_binding.source_plan_fingerprint
         elif command.action == "create-edition":
-            edition = CalendarTourEdition.model_validate_json(json.dumps(command.data))
+            edition = CalendarTourEdition.model_validate_json(json.dumps(
+                {k: v for k, v in command.data.items() if k != "scheduled_binding"}
+            ))
             if (
                 edition.week.calendar != clock
                 or edition.week.ordinal < cp.week.ordinal
@@ -1567,14 +1696,19 @@ class CalendarTourService:
                 )
             if any(a.edition.edition_id == edition.edition_id for a in state.editions):
                 raise ValueError("Edition identity already exists")
-            if edition.schema_version != "calendar_tournament_edition.v3" and (edition.main_entrant_count not in (4, 8) or not edition.ranked):
+            scheduled_binding = None
+            if edition.schema_version == "calendar_tournament_edition.v5":
+                scheduled_binding = self._scheduled_binding(session, state, command, edition)
+            elif "scheduled_binding" in command.data:
+                raise ValueError("Only a scheduled v5 Edition may carry a scheduled binding")
+            if edition.schema_version not in {"calendar_tournament_edition.v3", "calendar_tournament_edition.v5"} and (edition.main_entrant_count not in (4, 8) or not edition.ranked):
                 raise ValueError(
                     "Current executor supports full Ranked main-only 4/8 fields"
                 )
             if edition.schema_version == "calendar_tournament_edition.v3":
                 if (edition.group_configuration.rules.run_id, edition.group_configuration.rules.branch_id) != (state.run_id, state.branch_id):
                     raise ValueError("Group rules have a foreign Run/Branch source")
-            else:
+            elif edition.schema_version != "calendar_tournament_edition.v5":
                 policy_type = (
                     CalendarFollowupEightPointPolicy
                     if edition.main_entrant_count == 8
@@ -1587,7 +1721,7 @@ class CalendarTourService:
                 )
             if any(
                 a.edition.week.ordinal == edition.week.ordinal
-                and not (edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"})
+                and not (edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"})
                 and not (
                     edition.start_slot
                     > a.edition.start_slot + a.edition.main_entrant_count + 2
@@ -1614,6 +1748,7 @@ class CalendarTourService:
                             edition=edition,
                             created_command_id=command.command_id,
                             created_saved_head=command.expected_saved_head,
+                            scheduled_binding=scheduled_binding,
                         ),
                     )
                 }
@@ -1767,10 +1902,21 @@ class CalendarTourService:
         else:
             if authority is None:
                 raise ValueError("This command requires an Edition")
-            if authority.edition.week.ordinal != cp.week.ordinal:
+            operation_week = (
+                authority.scheduled_binding.final_round.week
+                if authority.scheduled_binding is not None and command.action == "confirm-result"
+                else authority.edition.week
+            )
+            if operation_week.ordinal != cp.week.ordinal:
                 raise ValueError(
                     "Edition operation is outside its scheduled current week"
                 )
+            if (
+                authority.scheduled_binding is not None
+                and command.action in {"submit", "approve", "draw"}
+                and state.slot_cursor >= authority.edition.start_slot
+            ):
+                raise ValueError("Scheduled Entry/Draw must precede its first Qualification round")
             if not any(
                 authority.edition.edition_id
                 in t.public_event.get("announced_edition_ids", [])
@@ -1891,7 +2037,7 @@ class CalendarTourService:
                     # replace that trigger or treat a later slot as simultaneous.
                     simultaneous = tuple(
                         s for a in state.editions for s in a.submissions
-                        if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"}
+                        if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"}
                         and s.decision_position == submissions[0].decision_position
                     )
                     record_valid_application_submission_batch(
@@ -1911,9 +2057,15 @@ class CalendarTourService:
                     }
                 )
             elif command.action == "approve":
+                capacity = authority.entry_capacity
+                required = (
+                    capacity.direct_main_slots + capacity.qualification_draw_size
+                    if authority.scheduled_binding is not None
+                    else authority.edition.main_entrant_count
+                )
                 if (
                     authority.field
-                    or len(authority.submissions) < authority.edition.main_entrant_count
+                    or len(authority.submissions) < required
                 ):
                     raise ValueError(
                         "Approval requires enough valid applications and an unapproved Edition"
@@ -1932,12 +2084,12 @@ class CalendarTourService:
                     applications=tuple(
                         s.to_entry_field_application() for s in authority.submissions
                     ),
-                    capacity=authority.edition.capacity,
+                    capacity=capacity,
                 )
                 accepted = set(field.direct_main_player_ids)
                 if any(
                     a.field
-                    and not (authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"})
+                    and not (authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"} and a.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"})
                     and a.edition.edition_id != authority.edition.edition_id
                     and a.edition.week.ordinal == cp.week.ordinal
                     and accepted.intersection(a.field.direct_main_player_ids)
@@ -1955,6 +2107,15 @@ class CalendarTourService:
                     raise ValueError(
                         "Draw requires an approved field and no existing draw"
                     )
+                if authority.scheduled_binding is not None:
+                    authority = self._scheduled_wild_cards(
+                        session, ctx, state, authority, command, _native_inputs
+                    )
+                    result["wild_card_player_ids"] = list(
+                        authority.wild_card_authority.active_wild_card_player_ids
+                    ) if authority.wild_card_authority else []
+                elif command.data:
+                    raise ValueError("Draw accepts Wild Card input only for a scheduled v5 Edition")
                 draw = build_draw(authority, command.command_id, command.seed)
                 authority = authority.model_copy(
                     update={
@@ -1963,6 +2124,13 @@ class CalendarTourService:
                         "draw_command_id": command.command_id,
                     }
                 )
+                if authority.scheduled_binding is not None:
+                    # Validates the complete source-sized field, seeds and capacity.
+                    from beta_engine.domain.tournaments.native_scheduled_knockout import (
+                        scheduled_edition_plan,
+                    )
+
+                    result["scheduled_plan_fingerprint"] = scheduled_edition_plan(authority).fingerprint
                 result["draw"] = draw.model_dump(mode="json")
             elif command.action == "play":
                 if authority.draw is None or authority.tournament_fingerprint:
@@ -2077,7 +2245,7 @@ class CalendarTourService:
             }
             state = state.model_copy(
                 update={
-                    "slot_cursor": state.slot_cursor if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"} else authority.edition.start_slot
+                    "slot_cursor": state.slot_cursor if authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"} else authority.edition.start_slot
                     + offsets[command.action],
                     "editions": tuple(
                         authority

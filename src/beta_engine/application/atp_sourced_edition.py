@@ -1,6 +1,7 @@
 """One data-driven Saved ATP profile -> ordinary native Tour preview path."""
 import json
 
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import text
 
 from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_earth_weeks_on_run
@@ -123,5 +124,70 @@ def preview_atp_sourced_edition(repository, *, run_id: str, branch_id: str, occu
         seed=request.seed, operator_label=request.operator_label,
         audit_reason=f"{request.audit_reason} [ATP profile {occurrence_id} {fingerprint}]",
         data=edition.model_dump(mode="json"),
+    )
+    return CalendarTourService(repository).preview(run_id=run_id, branch_id=branch_id, command=command)
+
+
+class ATPScheduledEditionPreviewRequest(BaseModel):
+    """Review one copied knockout profile with an explicit Q/Main round schedule."""
+
+    model_config = ConfigDict(extra="forbid")
+    command_id: str = Field(min_length=1, max_length=100)
+    expected_saved_head: str = Field(min_length=1)
+    expected_checkpoint_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_tour_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    expected_profile_fingerprint: str = Field(pattern=r"^[0-9a-f]{64}$")
+    schedule: dict
+    seed: int = Field(default=1, strict=True)
+    operator_label: str = Field(min_length=1, max_length=160)
+    audit_reason: str = Field(min_length=1, max_length=800)
+
+
+def preview_atp_scheduled_edition(repository, *, run_id: str, branch_id: str, occurrence_id: str,
+                                  request: ATPScheduledEditionPreviewRequest):
+    """Read-only: derive the native v5 create-edition command from Saved data.
+
+    Points, seeds, capacities and chronology come from the copied Saved profile
+    and the validated schedule; the subsequent Execute re-derives and compares.
+    """
+    from beta_engine.application.atp_knockout_schedule_preview import (
+        ATPKnockoutSchedulePreviewRequest, validate_saved_atp_knockout_schedule,
+    )
+    from beta_engine.domain.run_packages import canonical_hash
+    from beta_engine.domain.tournaments.calendar_tour import build_scheduled_edition
+    from beta_engine.domain.tournaments.native_scheduled_knockout import NativeScheduledKnockoutBinding
+
+    schedule_request = ATPKnockoutSchedulePreviewRequest.model_validate_json(json.dumps({
+        "expected_saved_head": request.expected_saved_head,
+        "expected_profile_fingerprint": request.expected_profile_fingerprint,
+        "schedule": request.schedule,
+    }))
+    with repository._session_factory() as session:
+        session.execute(text("BEGIN"))
+        calendar, revision, state = read_saved_atp_source(session, run_id=run_id, branch_id=branch_id)
+        if request.expected_saved_head != revision.revision_id:
+            raise ValueError("Saved ATP source changed; refresh the Tour")
+        if revision.branch_id != branch_id:
+            raise ValueError("Scheduled ATP Edition requires a Branch-owned materialized Saved source")
+        profile, fingerprint, _source, _geometry = validate_saved_atp_knockout_schedule(
+            calendar=calendar, state=state, occurrence_id=occurrence_id, request=schedule_request,
+        )
+        binding = NativeScheduledKnockoutBinding(
+            source_saved_revision_id=revision.revision_id,
+            source_saved_content_hash=revision.content_hash,
+            source_profile_fingerprint=fingerprint,
+            profile_payload_fingerprint=canonical_hash(profile.model_dump(mode="json")),
+            profile=profile,
+            schedule=schedule_request.schedule,
+        )
+    edition = build_scheduled_edition(binding)
+    command = CalendarTourCommand(
+        action="create-edition", command_id=request.command_id,
+        expected_saved_head=request.expected_saved_head,
+        expected_checkpoint_fingerprint=request.expected_checkpoint_fingerprint,
+        expected_tour_fingerprint=request.expected_tour_fingerprint,
+        seed=request.seed, operator_label=request.operator_label,
+        audit_reason=f"{request.audit_reason} [ATP profile {occurrence_id} {fingerprint}]",
+        data={**edition.model_dump(mode="json"), "scheduled_binding": binding.model_dump(mode="json")},
     )
     return CalendarTourService(repository).preview(run_id=run_id, branch_id=branch_id, command=command)

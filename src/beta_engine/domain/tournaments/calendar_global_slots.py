@@ -82,6 +82,10 @@ from beta_engine.domain.tournaments.calendar_group_withdrawals import (
 from beta_engine.domain.tournaments.native_canonical_knockout import (
     is_canonical_edition, canonical_edition_plan, completed_canonical_result,
 )
+from beta_engine.domain.tournaments.native_scheduled_knockout import (
+    completed_scheduled_result, is_scheduled_edition, scheduled_edition_plan,
+    scheduled_expected_positions, scheduled_slot_rows,
+)
 
 _replay_projections = ContextVar("global_slot_private_replay_projections", default=None)
 _MATCH_REPLAY_BYTES = 32 * 1024 * 1024
@@ -480,8 +484,21 @@ def _prime_private_fingerprint(value, fingerprint):
             memo.pop(next(iter(memo)))
 
 
+SLOT_EDITION_SCHEMAS = frozenset({
+    "calendar_tournament_edition.v2", "calendar_tournament_edition.v3",
+    "calendar_tournament_edition.v4", "calendar_tournament_edition.v5",
+})
+
+
 def is_slot_edition(authority):
-    return authority.edition.schema_version in {"calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"}
+    return authority.edition.schema_version in SLOT_EDITION_SCHEMAS
+
+
+def edition_plays_in_week(authority, week):
+    """A scheduled v5 Edition spans its explicit Q and Main weeks."""
+    if is_scheduled_edition(authority):
+        return week.ordinal in authority.scheduled_binding.play_week_ordinals
+    return authority.edition.week.ordinal == week.ordinal
 
 
 def is_group_edition(authority):
@@ -501,6 +518,10 @@ def edition_plan(authority, matches, slots=()):
 
 
 def slot_match_id(authority, index):
+    if is_scheduled_edition(authority):
+        if authority.draw is None:
+            return authority.edition.edition_id + ":scheduled:pending-draw"
+        return scheduled_edition_plan(authority).topology.plans[index].match_id
     if is_canonical_edition(authority):
         return authority.canonical_binding.plan(authority.draw).topology.plans[index].match_id
     if is_group_edition(authority):
@@ -524,6 +545,8 @@ def slot_match_id(authority, index):
 
 
 def match_seed(authority, match_id):
+    if is_scheduled_edition(authority):
+        return scheduled_edition_plan(authority).match_seed(match_id)
     if is_canonical_edition(authority):
         return authority.canonical_binding.plan(authority.draw).match_seed(match_id)
     return int(
@@ -566,8 +589,13 @@ class FrozenCanonicalSlotMatch(FrozenSlotMatch):
     index: int = Field(ge=0, le=16383)
 
 
+class FrozenScheduledSlotMatch(FrozenSlotMatch):
+    schema_version: Literal["frozen_scheduled_knockout_match.v1"] = "frozen_scheduled_knockout_match.v1"
+    index: int = Field(ge=0, le=16383)
+
+
 class GlobalSlot(FrozenInput):
-    schema_version: Literal["calendar_global_slot.v1", "calendar_global_slot.v2", "calendar_global_slot.v3", "calendar_global_slot.v4"] = "calendar_global_slot.v1"
+    schema_version: Literal["calendar_global_slot.v1", "calendar_global_slot.v2", "calendar_global_slot.v3", "calendar_global_slot.v4", "calendar_global_slot.v5"] = "calendar_global_slot.v1"
     run_id: str
     branch_id: str
     week: RunWeekPosition
@@ -576,7 +604,7 @@ class GlobalSlot(FrozenInput):
     source_health_fingerprint: str
     players: tuple[PlayerSportingRecord, ...]
     authorities: tuple[CalendarEditionAuthority, ...]
-    scheduled: tuple[FrozenSlotMatch | FrozenGroupSlotMatch | FrozenCanonicalSlotMatch, ...]
+    scheduled: tuple[FrozenSlotMatch | FrozenGroupSlotMatch | FrozenCanonicalSlotMatch | FrozenScheduledSlotMatch, ...]
     accepted: tuple[CalendarContinuationMatch, ...] = ()
     group_tie_decisions: tuple[NativeGroupTieDecision, ...] = Field(default=(), exclude_if=lambda value: not value)
     group_withdrawals: tuple[NativeGroupWithdrawal, ...] = Field(default=(), exclude_if=lambda value: not value)
@@ -598,7 +626,7 @@ class GlobalSlot(FrozenInput):
             return known[1]
         result = canonical_hash(
             {
-                "schema_version": "calendar_slot_snapshot.v2" if self.schema_version == "calendar_global_slot.v4" else "calendar_slot_snapshot.v1",
+                "schema_version": "calendar_slot_snapshot.v2" if self.schema_version in {"calendar_global_slot.v4", "calendar_global_slot.v5"} else "calendar_slot_snapshot.v1",
                 "run_id": self.run_id,
                 "branch_id": self.branch_id,
                 "week": self.week.model_dump(mode="json"),
@@ -638,13 +666,37 @@ class GlobalSlot(FrozenInput):
 
     @model_validator(mode="after")
     def canonical_evidence(self):
-        if self.schema_version != "calendar_global_slot.v4" and (
+        if self.schema_version not in {"calendar_global_slot.v4", "calendar_global_slot.v5"} and (
             any(isinstance(m, FrozenCanonicalSlotMatch) for m in self.scheduled)
             or any(is_canonical_edition(a) for a in self.authorities)
         ):
             raise ValueError("Historical Global Slot cannot acquire canonical v4 match inputs")
+        if (self.schema_version == "calendar_global_slot.v5") != any(
+            is_scheduled_edition(a) for a in self.authorities
+        ) or (
+            self.schema_version != "calendar_global_slot.v5"
+            and any(isinstance(m, FrozenScheduledSlotMatch) for m in self.scheduled)
+        ):
+            raise ValueError("Scheduled cross-week knockout requires a v5 Global Slot")
         for item in self.scheduled:
             authority = next((a for a in self.authorities if a.edition.edition_id == item.edition_id), None)
+            scheduled = authority is not None and is_scheduled_edition(authority)
+            if scheduled != isinstance(item, FrozenScheduledSlotMatch):
+                raise ValueError("Scheduled Edition requires its explicitly versioned frozen match type")
+            if scheduled:
+                plan = scheduled_edition_plan(authority)
+                position = scheduled_expected_positions(plan).get(item.match_id)
+                if (
+                    position is None
+                    or item.index >= len(plan.topology.plans)
+                    or slot_match_id(authority, item.index) != item.match_id
+                    or item.seed != plan.match_seed(item.match_id)
+                    or item.source_saved_head != plan.source_saved_revision_id
+                    or (position.week.season_index, position.week.week, position.slot)
+                    != (self.week.season_index, self.week.week, self.number)
+                ):
+                    raise ValueError("Scheduled frozen match differs from its exact source node/seed/round slot")
+                continue
             canonical = authority is not None and is_canonical_edition(authority)
             if canonical != isinstance(item, FrozenCanonicalSlotMatch):
                 raise ValueError("Canonical Edition requires its explicitly versioned frozen match type")
@@ -652,7 +704,7 @@ class GlobalSlot(FrozenInput):
                 plan = authority.canonical_binding.plan(authority.draw)
                 if item.index >= len(plan.topology.plans) or slot_match_id(authority, item.index) != item.match_id or item.seed != match_seed(authority, item.match_id) or item.source_saved_head != authority.canonical_binding.saved_revision_id:
                     raise ValueError("Canonical frozen match differs from its exact source node/seed/Saved head")
-        if self.schema_version not in {'calendar_global_slot.v3', 'calendar_global_slot.v4'} and (self.group_withdrawals or self.walkovers):
+        if self.schema_version not in {'calendar_global_slot.v3', 'calendar_global_slot.v4', 'calendar_global_slot.v5'} and (self.group_withdrawals or self.walkovers):
             raise ValueError('Historical slot cannot acquire withdrawal or walkover evidence')
         if self.schema_version == "calendar_global_slot.v1" and (self.group_tie_decisions or any(isinstance(m, FrozenGroupSlotMatch) for m in self.scheduled) or any(is_group_edition(a) for a in self.authorities)):
             raise ValueError("Historical slot cannot acquire group authority")
@@ -884,6 +936,13 @@ def completed_tournaments(events, *, owner=None):
     matches = {m.match_id: m for e in slots for m in e.accepted}
     result = []
     for eid, a in sorted(authorities.items()):
+        if is_scheduled_edition(a):
+            # Q and Main slots freeze the same Draw authority; only the played
+            # origin differs, which is outside the execution fingerprint.
+            event = completed_scheduled_result(a, slots, owner=owner)
+            if event is not None:
+                result.append(event)
+            continue
         if is_canonical_edition(a):
             event = completed_canonical_result(a, slots, owner=owner)
             if event is not None:
@@ -1002,12 +1061,20 @@ def next_schedule(state, checkpoint):
     for a in state.editions:
         if (
             not is_slot_edition(a)
-            or a.edition.week.ordinal != state.week.ordinal
+            or not edition_plays_in_week(a, state.week)
             or a.tournament_fingerprint
         ):
             continue
         if not a.draw:
-            due.append((a.edition.start_slot + 3, a, 0, ()))
+            due.append((a.edition.start_slot if is_scheduled_edition(a) else a.edition.start_slot + 3, a, 0, ()))
+            continue
+        if is_scheduled_edition(a):
+            plan = scheduled_slot_rows(a, accepted, week=state.week)
+            missing = [(i, item) for i, item in enumerate(plan) if item[0] not in accepted]
+            if missing:
+                number = min(item[1] for _, item in missing)
+                indexes = {p.match_id: n for n, p in enumerate(scheduled_edition_plan(a).topology.plans)}
+                due.extend((number, a, indexes[item[0]], item[2]) for _, item in missing if item[1] == number)
             continue
         try:
             plan = edition_plan(a, accepted, history)
@@ -1068,7 +1135,7 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
         )
     )
     initial = GlobalSlot.model_construct(
-        schema_version="calendar_global_slot.v4" if any(is_canonical_edition(a) for a in authorities) else "calendar_global_slot.v2" if any(is_group_edition(a) for a in authorities) else "calendar_global_slot.v1",
+        schema_version="calendar_global_slot.v5" if any(is_scheduled_edition(a) for a in authorities) else "calendar_global_slot.v4" if any(is_canonical_edition(a) for a in authorities) else "calendar_global_slot.v2" if any(is_group_edition(a) for a in authorities) else "calendar_global_slot.v1",
         run_id=state.run_id,
         branch_id=state.branch_id,
         week=lifecycle.week,
@@ -1091,7 +1158,7 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
             player_profiles=tuple(project_player_health(profiles[pid]) for pid in pids)
         )
         scheduled.append(
-            (FrozenCanonicalSlotMatch if is_canonical_edition(a) else FrozenGroupSlotMatch if is_group_edition(a) else FrozenSlotMatch)(
+            (FrozenScheduledSlotMatch if is_scheduled_edition(a) else FrozenCanonicalSlotMatch if is_canonical_edition(a) else FrozenGroupSlotMatch if is_group_edition(a) else FrozenSlotMatch)(
                 **({"effective_match_format": (a.draw.schedule.matches[i].effective_match_format
                     if i < len(a.draw.schedule.matches) else EffectiveMatchFormatSnapshot.create(
                         format=MatchFormat(best_of=a.edition.group_configuration.knockout_best_of, games_to=11, win_by=2),
@@ -1105,7 +1172,10 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
                     baseline, world, lifecycle, source, pids
                 ),
                 health=medical,
-                source_saved_head=a.played_saved_head or head,
+                source_saved_head=(
+                    scheduled_edition_plan(a).source_saved_revision_id
+                    if is_scheduled_edition(a) else a.played_saved_head or head
+                ),
                 sequence=1,
             )
         )
@@ -1231,7 +1301,7 @@ def accept_slot(checkpoint, slot, *, match_id=None):
     nonplayed = tuple(sorted((*slot.walkovers, *(walkovers[s.match_id] for s in selected
         if s.match_id in walkovers)), key=lambda m: m.match_id))
     successor = slot.model_copy(update={"accepted": accepted, 'walkovers': nonplayed,
-        **({'schema_version': 'calendar_global_slot.v3'} if nonplayed and slot.schema_version != 'calendar_global_slot.v4' else {})})
+        **({'schema_version': 'calendar_global_slot.v3'} if nonplayed and slot.schema_version not in {'calendar_global_slot.v4', 'calendar_global_slot.v5'} else {})})
     if getattr(checkpoint, "schema_version", None) == "native_fork_competition.v1":
         return checkpoint.with_global_slot(successor), successor
     events = checkpoint.events

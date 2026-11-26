@@ -966,7 +966,7 @@ def test_barcelona_contemporary_main_draw_resolves_geometry_not_qualification_da
     assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
     assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert batch["summary"]["contemporary_printed_main_draw_evidence_rows"] == 1
-    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 4
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 5
     assert batch["summary"]["verified_qualification_date_rows"] == 0
     assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
 
@@ -1156,7 +1156,7 @@ def test_orlando_and_estoril_contemporary_reports_do_not_certify_q_fields(batch)
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert e["point_candidate_comparison"]["source_rule_certified"] is False
         assert row["profile_status"] == "not_in_published_sporting_source"
-    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 4
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 5
 
 
 def test_latest_frankfurt_ci_is_test_only_prior_head_evidence(batch):
@@ -1229,4 +1229,65 @@ def test_indian_wells_contemporary_qualifier_and_ranking_announcement_scope(batc
     assert upi["effective_season"] == announcement["effective_season"] == 1990
     assert upi["best_results_count"] == announcement["best_results_count"] == 14
     assert announcement["primary_full_rule_text"] is None
-    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 4
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 5
+
+
+def test_1990_entry_commitments_are_not_ranking_counting_or_actual_draws(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    rules = batch["historical_points_evidence"]
+    announced = rules["preseason_entry_commitment_announcement"]
+    assert announced["announced_for_season"] == 1990
+    assert announced["reported_top10_championship_events_required"] == 11
+    assert announced["reported_top10_designated_single_championship_week"] == 7
+    assert announced["reported_top10_designated_per_event_dual_championship_week"] == 3
+    assert announced["reported_top10_required_open_week"] is False
+    assert announced["reported_planned_tournaments"] == 77
+    assert len(rows) == batch["summary"]["year_dated_occurrences"] == 75
+    la = rows["los_cabos"]
+    evidence = la["historical_evidence"]
+    assert la["category_id"] == "atp_world_series"
+    assert evidence["preseason_category_announcement"]["reported_1990_main_start_date"] == la["original_start_date"]
+    itf = evidence["itf_event_metadata_crosscheck"]
+    assert (itf["start_date"], itf["end_date"]) == (la["original_start_date"], la["original_end_date"])
+    assert itf["prize_money_usd"] == evidence["reported_prize_money"] == 225000
+    assert evidence["preseason_category_announcement"]["announced_event_amount_usd"] == 250000
+    assert evidence["point_candidate_comparison"]["source_rule_certified"] is False
+    iw = rows["indian_wells"]
+    e = iw["historical_evidence"]
+    assert iw["category_id"] == "atp_championship_single_week"
+    assert e["preseason_category_announcement"]["announced_category_description"] == "Championship Series"
+    # The advance announcement and actual edition report differ. Do not
+    # replace the edition-specific entitlement with a general planned number.
+    assert e["contemporary_main_opening_date_evidence"]["reported_designated_top10_players_entitlement"] == 6
+    ranking = rules["ranking_inclusion_source_disagreement"]
+    late = ranking["late_decade_press_crosscheck"]
+    assert late["reported_best_results_count_since_1990"] == 14
+    assert late["reported_rolling_weeks"] == 52
+    assert late["reported_bonus_elimination_effective_year"] == 2000
+    assert ranking["primary_rule_page"] is None
+
+
+def test_stuttgart_indoor_qualifier_and_evidence_count(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    indoor = rows["stuttgart_indoor_feb_1995"]
+    outdoor = rows["stuttgart"]
+    e = indoor["historical_evidence"]
+    q = e["contemporary_qualification_completion_evidence"]
+    assert indoor["original_start_date"] == "1990-02-19"
+    assert outdoor["original_start_date"] == "1990-07-16"
+    assert q["source_url"] in e["source_urls"]
+    assert indoor["original_start_date"] <= q["published_on"] <= indoor["original_end_date"]
+    assert q["minimum_confirmed_qualifiers"] == 1
+    assert q["reported_qualifier_reached"] == "quarterfinal"
+    assert "contemporary_qualification_completion_evidence" not in outdoor["historical_evidence"]
+    for row in (indoor, outdoor):
+        e = row["historical_evidence"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    count = sum(
+        bool(e.get("contemporary_qualification_completion_evidence") or
+             e.get("targeted_import_research", {}).get("actual_qualification_partial_evidence"))
+        for e in (row["historical_evidence"] for row in batch["occurrences"])
+    )
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == count == 5

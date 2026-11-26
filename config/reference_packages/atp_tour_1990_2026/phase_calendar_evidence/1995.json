@@ -1,0 +1,6013 @@
+{
+ "atp_season_year": 1995,
+ "counts": {
+  "occurrences": 80,
+  "wikipedia_dates_agree": 34,
+  "wikipedia_dates_differ": 39,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-01-02..1995-01-09 differ from canonical 1995-01-02..1995-01-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-01-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-01-02",
+   "main_year_weeks": [
+    [
+     1995,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1995_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Australian_Men's_Hardcourt_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-01-02",
+     "1995-01-09"
+    ],
+    "main_article": {
+     "bytes": 153736,
+     "revision_id": 1341098489,
+     "sha256": "8e90d84037086963a35cb98e490f7d75270fc964f388b26e97d36a6cef7ba7fa",
+     "url": "https://en.wikipedia.org/wiki/1995_Australian_Men's_Hardcourt_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Australian Men's Hardcourt Championships Adelaide, AustraliaATP World Series Hard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 333080,
+     "revision_id": 1284187750,
+     "sha256": "45070ca3f146e3c9421549408122aa4006a5cf5f5d75b14958972befad13b56f",
+     "url": "https://en.wikipedia.org/wiki/1995_Australian_Men's_Hardcourt_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-01-02..1995-01-09 differ from canonical 1995-01-02..1995-01-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-01-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-01-02",
+   "main_year_weeks": [
+    [
+     1995,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1995_doha",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "doha",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Qatar_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-01-02",
+     "1995-01-09"
+    ],
+    "main_article": {
+     "bytes": 150946,
+     "revision_id": 1216577956,
+     "sha256": "97e13e9d1fb2099ba6134e3a38f6caf5f3e99b63b8e3c83809dca31c561967cb",
+     "url": "https://en.wikipedia.org/wiki/1995_Qatar_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar Open Doha, QatarATP World Series Hard – $600,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328289,
+     "revision_id": 1216578067,
+     "sha256": "13fa0ca9a1dba229843aebc3f913e76651ae57550e62b9ef319a3d3e7b10c0e2",
+     "url": "https://en.wikipedia.org/wiki/1995_Qatar_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-01-09..1995-01-16 differ from canonical 1995-01-09..1995-01-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1995-01-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-01-09",
+   "main_year_weeks": [
+    [
+     1995,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1995_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Benson_and_Hedges_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-01-09",
+     "1995-01-16"
+    ],
+    "main_article": {
+     "bytes": 156062,
+     "revision_id": 1277541677,
+     "sha256": "9fbb635a745944febca70fd7faf5892d27181e53359572f1bc91017999d51970",
+     "url": "https://en.wikipedia.org/wiki/1995_Benson_and_Hedges_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Benson and Hedges Open Auckland, New ZealandATP World Series Hard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 315884,
+     "revision_id": 1276266388,
+     "sha256": "f4ab6dce33070d70e6a479925ee8916dc7a65c9f855edf6fdf2f7632b6762ee9",
+     "url": "https://en.wikipedia.org/wiki/1995_Benson_and_Hedges_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-01-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-01-09",
+   "main_year_weeks": [
+    [
+     1995,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1995_jakarta_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "jakarta_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Indonesia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-01-09",
+     "1995-01-15"
+    ],
+    "main_article": {
+     "bytes": 143952,
+     "revision_id": 1361652880,
+     "sha256": "eee393c3493f8ad4fc082c8909e432c003d3ac9ee08ccdddcf37832abfaac3e9",
+     "url": "https://en.wikipedia.org/wiki/1995_Indonesia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Indonesia Open Jakarta, IndonesiaATP World SeriesHard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323719,
+     "revision_id": 1218892464,
+     "sha256": "cb7fba2fa1d67d818d5118c45b31613a73965769031cc776d22978e29a8492b3",
+     "url": "https://en.wikipedia.org/wiki/1995_Indonesia_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-01-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-01-09",
+   "main_year_weeks": [
+    [
+     1995,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1995_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Peters_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-01-09",
+     "1995-01-15"
+    ],
+    "main_article": {
+     "bytes": 200372,
+     "revision_id": 1386100878,
+     "sha256": "b23ffb6d764e3c82f7c564901d650064e2b46035f55ff32fab3e2f350a15fdb3",
+     "url": "https://en.wikipedia.org/wiki/1995_Peters_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Sydney Outdoors Sydney, AustraliaATP World Series Hard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 315292,
+     "revision_id": 1216578307,
+     "sha256": "6739874075500e5d97a9813d1c0aea2df5a92d87512934eaa3877ebb3b4edef9",
+     "url": "https://en.wikipedia.org/wiki/1995_Peters_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-06",
+   "main_year_weeks": [
+    [
+     1995,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1995_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-02-06..1995-02-13 differ from canonical 1995-02-06..1995-02-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-06",
+   "main_year_weeks": [
+    [
+     1995,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1995_dubai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "dubai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Dubai_Tennis_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-02-06",
+     "1995-02-13"
+    ],
+    "main_article": {
+     "bytes": 152043,
+     "revision_id": 1374902566,
+     "sha256": "0c9d29ac0ac84e193ac2ee68c5b32cba074d13c9c08b95800f71413b317f61a4",
+     "url": "https://en.wikipedia.org/wiki/1995_Dubai_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Dubai Tennis Championships Dubai, United Arab EmiratesATP World Series Hard – $1,014,250 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331948,
+     "revision_id": 1311957092,
+     "sha256": "faaa0d0bd182894f2605489a32dad0689997bc0359de34682ef6ef9849f8412a",
+     "url": "https://en.wikipedia.org/wiki/1995_Dubai_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-06",
+   "main_year_weeks": [
+    [
+     1995,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1995_lyon",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "lyon",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-02-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-13",
+   "main_year_weeks": [
+    [
+     1995,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1995_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-02-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-13",
+   "main_year_weeks": [
+    [
+     1995,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1995_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-02-20..1995-02-27 differ from canonical 1995-02-20..1995-02-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-02-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-20",
+   "main_year_weeks": [
+    [
+     1995,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1995_philadelphia_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "philadelphia_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Comcast_U.S._Indoor",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-02-20",
+     "1995-02-27"
+    ],
+    "main_article": {
+     "bytes": 151256,
+     "revision_id": 1172367927,
+     "sha256": "ec6481a4ad998af85f25c467d1affce7f2768b281b516cc4f206f0bedb7db6a0",
+     "url": "https://en.wikipedia.org/wiki/1995_Comcast_U.S._Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Comcast U.S. Indoor Philadelphia, Pennsylvania, USATP Championship SeriesCarpet (i) – $589,250 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 508597,
+     "revision_id": 1328927188,
+     "sha256": "6b5f623816a25f1b3f7659cdb54b3aa631437cc6d1d493757d1c5caf25e80e58",
+     "url": "https://en.wikipedia.org/wiki/1995_Comcast_U.S._Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-02-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-20",
+   "main_year_weeks": [
+    [
+     1995,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1995_stuttgart_indoor_feb_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "stuttgart_indoor_feb_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Eurocard_Open_(February)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-02-20",
+     "1995-02-26"
+    ],
+    "main_article": {
+     "bytes": 146560,
+     "revision_id": 1373916427,
+     "sha256": "6f3d517041537faf7a91f05f18e8c6a13b647603c9439e069103420b46afdc2e",
+     "url": "https://en.wikipedia.org/wiki/1995_Eurocard_Open_(February)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Eurocard Open Stuttgart, GermanyATP Championship SeriesCarpet (i) – $2,125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 317934,
+     "revision_id": 1319818615,
+     "sha256": "179f6bbbb6a3f367481ba8b6a8bbaf6a08a6b3bfb7fdedd949795c6488c47722",
+     "url": "https://en.wikipedia.org/wiki/1995_Eurocard_Open_(February)_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1995-03-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-27",
+   "main_year_weeks": [
+    [
+     1995,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1995_acapulco",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "acapulco",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Abierto_Mexicano_Telcel",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-02-27",
+     "1995-03-05"
+    ],
+    "main_article": {
+     "bytes": 152092,
+     "revision_id": 1266512696,
+     "sha256": "9581ab19c3ece345c9f5ce60a156bfa38d9dd9530b44df0f39763fd55f202f51",
+     "url": "https://en.wikipedia.org/wiki/1995_Abierto_Mexicano_Telcel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Abierto Mexicano Telcel Mexico City, MexicoATP World Series Clay – $305,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326986,
+     "revision_id": 1266513053,
+     "sha256": "d94f94f8e0be21bc0f7de7636cd56b78310985ab2f3102c8c66af9c408cb22f5",
+     "url": "https://en.wikipedia.org/wiki/1995_Abierto_Mexicano_Telcel_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-02-27..1995-03-06 differ from canonical 1995-02-27..1995-03-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-03-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-27",
+   "main_year_weeks": [
+    [
+     1995,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1995_las_vegas_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "las_vegas_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Tennis_Channel_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-02-27",
+     "1995-03-06"
+    ],
+    "main_article": {
+     "bytes": 157620,
+     "revision_id": 1216580072,
+     "sha256": "8e67fce525372975e97b6318e0fe703aff6ccd0e71830d4fe9a987dc3627a66f",
+     "url": "https://en.wikipedia.org/wiki/1995_Tennis_Channel_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tennis Channel Open Scottsdale, Arizona, USATP World Series Clay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330453,
+     "revision_id": 1352028953,
+     "sha256": "ff44d86945f88ecace1110da322505633a48ec0bb6f47f669ba5a20c42c01295",
+     "url": "https://en.wikipedia.org/wiki/1995_MassMutual_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-02-27..1995-03-06 differ from canonical 1995-02-27..1995-03-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-03-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-02-27",
+   "main_year_weeks": [
+    [
+     1995,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1995_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-02-27",
+     "1995-03-06"
+    ],
+    "main_article": {
+     "bytes": 161409,
+     "revision_id": 1362081700,
+     "sha256": "bd7509e731a51cdec53c5a2983a17a9203ebc4dc9690524976832879538bc946",
+     "url": "https://en.wikipedia.org/wiki/1995_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN AMRO World Tennis Tournament Rotterdam, The NetherlandsATP World Series Carpet (i) – $575,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330793,
+     "revision_id": 1361714770,
+     "sha256": "43a7fa3663b33735c8f928ebffd605463c29e51e7b0974c6ff4a925e0add3ca9",
+     "url": "https://en.wikipedia.org/wiki/1995_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-03-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-03-06",
+   "main_year_weeks": [
+    [
+     1995,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1995_copenhagen_2003",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "copenhagen_2003",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Copenhagen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-03-06",
+     "1995-03-12"
+    ],
+    "main_article": {
+     "bytes": 154212,
+     "revision_id": 1321629214,
+     "sha256": "dc627eed8da4349cf0ee5df6a9154a896b4702187354709e812c0480b892c7de",
+     "url": "https://en.wikipedia.org/wiki/1995_Copenhagen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copenhagen Open Copenhagen, DenmarkATP World SeriesCarpet (i) – $203,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327168,
+     "revision_id": 1311959737,
+     "sha256": "0dd8daa65b1c61f57da3841bcacdc867f77e4fe45e36d68a49477106d679c8d7",
+     "url": "https://en.wikipedia.org/wiki/1995_Copenhagen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-03-06..1995-03-13 differ from canonical 1995-03-06..1995-03-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-03-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-03-06",
+   "main_year_weeks": [
+    [
+     1995,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1995_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Newsweek_Champions_Cup_and_the_State_Farm_Evert_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-03-06",
+     "1995-03-13"
+    ],
+    "main_article": {
+     "bytes": 208276,
+     "revision_id": 1283803244,
+     "sha256": "1c4e6e797deb7d6df9cd0edf82b93de9f4bdc0b3b46c472fecef8fdade8eef22",
+     "url": "https://en.wikipedia.org/wiki/1995_Newsweek_Champions_Cup_and_the_State_Farm_Evert_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Newsweek Champions Cup Indian Wells, California, USATP Championship Series, Single-WeekHard – $1,550,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 485950,
+     "revision_id": 1272779267,
+     "sha256": "ae24943ed59690c70b339db3fcb246552ed4d8d5c50d29e76631d2892bf27648",
+     "url": "https://en.wikipedia.org/wiki/1995_Newsweek_Champions_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-03-17..1995-03-26 differ from canonical 1995-03-13..1995-03-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": null,
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": null,
+    "seeds": 32,
+    "wild_cards": 5
+   },
+   "main_end_date": "1995-03-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-03-13",
+   "main_year_weeks": [
+    [
+     1995,
+     11
+    ],
+    [
+     1995,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1995_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11,
+    12
+   ],
+   "run_weeks_offset_37": [
+    27,
+    28
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Lipton_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-03-17",
+     "1995-03-26"
+    ],
+    "main_article": {
+     "bytes": 199225,
+     "revision_id": 1172368117,
+     "sha256": "b9e08de89816541e739f5f1b0f8cb19ec4c33dec948d115389e512b80d0b9d5d",
+     "url": "https://en.wikipedia.org/wiki/1995_Lipton_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Miami Masters Key Biscayne, Florida, USATP Championship Series, Single-WeekHard – $2,250,000 – 96S/48D Singles – Doubles",
+    "singles_article": {
+     "bytes": 740497,
+     "revision_id": 1276266972,
+     "sha256": "3946e05d14dbf07b344ea50dc2f1e9bc25e31356012425b858304618958a97ea",
+     "url": "https://en.wikipedia.org/wiki/1995_Lipton_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-03-13..1995-03-20 differ from canonical 1995-03-13..1995-03-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1995-03-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-03-13",
+   "main_year_weeks": [
+    [
+     1995,
+     11
+    ],
+    [
+     1995,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1995_st_petersburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11,
+    12
+   ],
+   "run_weeks_offset_37": [
+    27,
+    28
+   ],
+   "series_id": "st_petersburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_St._Petersburg_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-03-13",
+     "1995-03-20"
+    ],
+    "main_article": {
+     "bytes": 153547,
+     "revision_id": 1216580805,
+     "sha256": "585dcca4351a250296465d3519242c90033a6b8e3b2735a731e01f30b1d74e8b",
+     "url": "https://en.wikipedia.org/wiki/1995_St._Petersburg_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "St. Petersburg Open Saint Petersburg, RussiaATP World SeriesCarpet (i) – $300,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328241,
+     "revision_id": 1311956562,
+     "sha256": "e49e3a494c5aeb65356f752008738c3879d35826dda20606ad6dc8d65dbe9334",
+     "url": "https://en.wikipedia.org/wiki/1995_St._Petersburg_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-03-20..1995-03-27 differ from canonical 1995-03-20..1995-03-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-03-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-03-20",
+   "main_year_weeks": [
+    [
+     1995,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1995_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12
+   ],
+   "run_weeks_offset_37": [
+    28
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Grand_Prix_Hassan_II",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-03-20",
+     "1995-03-27"
+    ],
+    "main_article": {
+     "bytes": 153654,
+     "revision_id": 1335416612,
+     "sha256": "06ef2ce7100298325916c32919fe427e16787c1dd715926c6cabebb4a0e08489",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan II Casablanca, MoroccoATP World SeriesClay – $203,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 318961,
+     "revision_id": 1311953327,
+     "sha256": "9e1d17a40cf4d99e9918ea925bf4a8cc1adaef8ab4822345d45b8a8fb366d24e",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-04-03..1995-04-10 differ from canonical 1995-04-03..1995-04-09; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-03",
+   "main_year_weeks": [
+    [
+     1995,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1995_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Estoril_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-04-03",
+     "1995-04-10"
+    ],
+    "main_article": {
+     "bytes": 148342,
+     "revision_id": 1361654885,
+     "sha256": "924c7a2b155e72c480d25c0f0ecf45ff06100dc9049dee75fbee6cb698df59a7",
+     "url": "https://en.wikipedia.org/wiki/1995_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril Open Oeiras, PortugalATP World SeriesClay – $550,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328320,
+     "revision_id": 1311897288,
+     "sha256": "0d9e96d76ae0b828d52aef61506407f56af5a444fe1f84827a808578ab2beeac",
+     "url": "https://en.wikipedia.org/wiki/1995_Estoril_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-03",
+   "main_year_weeks": [
+    [
+     1995,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1995_johannesburg_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "johannesburg_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_South_African_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-04-03",
+     "1995-04-09"
+    ],
+    "main_article": {
+     "bytes": 151737,
+     "revision_id": 1333932490,
+     "sha256": "0e4ee2210a2caff681480527b66b836f37b468c5f55ad220ebdf343c8016b51c",
+     "url": "https://en.wikipedia.org/wiki/1995_South_African_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "South African Open Johannesburg, South AfricaATP World SeriesHard – $303,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-04-10..1995-04-17 differ from canonical 1995-04-10..1995-04-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-10",
+   "main_year_weeks": [
+    [
+     1995,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1995_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Torneo_Godó",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-04-10",
+     "1995-04-17"
+    ],
+    "main_article": {
+     "bytes": 161883,
+     "revision_id": 1225391267,
+     "sha256": "615011dc8658c95297b869695bb484a25b42114f4647f2989c32826e71d0e1ba",
+     "url": "https://en.wikipedia.org/wiki/1995_Torneo_God%C3%B3"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Torneo Godó Barcelona, SpainATP Championship SeriesClay – $775,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 482976,
+     "revision_id": 1311958036,
+     "sha256": "5a6796901b1a42d27677aea010d33e3e9a8462914015ab51ecf36b48a3e04860",
+     "url": "https://en.wikipedia.org/wiki/1995_Torneo_God%C3%B3_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 5
+   },
+   "main_end_date": "1995-04-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-10",
+   "main_year_weeks": [
+    [
+     1995,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1995_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-04-10",
+     "1995-04-16"
+    ],
+    "main_article": {
+     "bytes": 203749,
+     "revision_id": 1372152960,
+     "sha256": "e6411e0fa0cc07f69aa4f473388e7b608654753d9eb26d95cd19421ce19477f7",
+     "url": "https://en.wikipedia.org/wiki/1995_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Japan Open Tennis Championships Tokyo, JapanATP Championship SeriesHard – $935,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 489639,
+     "revision_id": 1346001214,
+     "sha256": "81ebfd21cf84063686d2ed2823f04ced13c05960098485b365376f50a8b058c0",
+     "url": "https://en.wikipedia.org/wiki/1995_Japan_Open_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-04-17..1995-04-22 differ from canonical 1995-04-17..1995-04-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-17",
+   "main_year_weeks": [
+    [
+     1995,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1995_bermuda_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "bermuda_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_XL_Bermuda_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-04-17",
+     "1995-04-22"
+    ],
+    "main_article": {
+     "bytes": 141481,
+     "revision_id": 1340303651,
+     "sha256": "28e10f763f472289b96c18398eb3fd57f3e5df1e78f26c4d634231a640300c25",
+     "url": "https://en.wikipedia.org/wiki/1995_XL_Bermuda_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "XL Bermuda Open Bermuda, BermudaATP World SeriesClay – $303,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 331938,
+     "revision_id": 1339711550,
+     "sha256": "169ea842d129236328899e598c0675fa18e5eeab50fbcdde90146aa3459632ad",
+     "url": "https://en.wikipedia.org/wiki/1995_XL_Bermuda_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-04-17..1995-04-24 differ from canonical 1995-04-17..1995-04-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-17",
+   "main_year_weeks": [
+    [
+     1995,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1995_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Philips_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-04-17",
+     "1995-04-24"
+    ],
+    "main_article": {
+     "bytes": 150237,
+     "revision_id": 1373919134,
+     "sha256": "c8cc4e0915bade01c0f9ae4e8a6093e0b125040a21b7227f3963adc77dd65565",
+     "url": "https://en.wikipedia.org/wiki/1995_Philips_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Philips Open Nice, FranceATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330642,
+     "revision_id": 1311959325,
+     "sha256": "bb8dc7ae83432e2838d935cb0b563e5c18330b1d7d31b5c4986bdf08161a88f5",
+     "url": "https://en.wikipedia.org/wiki/1995_Philips_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-17",
+   "main_year_weeks": [
+    [
+     1995,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1995_hong_kong_salem_2002",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "hong_kong_salem_2002",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-04-17",
+     "1995-04-23"
+    ],
+    "main_article": {
+     "bytes": 149308,
+     "revision_id": 1232719238,
+     "sha256": "0ba6a4858fde3d432155c39f1790684f4881eb06b5f0f73062a12d1a440adf51",
+     "url": "https://en.wikipedia.org/wiki/1995_Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Salem Open Hong KongATP World SeriesHard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 333702,
+     "revision_id": 1276267374,
+     "sha256": "2c839549a688c438440eebec07b61d8fa59bd6331de33426fec2b474f7a6cf7d",
+     "url": "https://en.wikipedia.org/wiki/1995_Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-24",
+   "main_year_weeks": [
+    [
+     1995,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1995_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Monte_Carlo_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-04-24",
+     "1995-04-30"
+    ],
+    "main_article": {
+     "bytes": 184327,
+     "revision_id": 1192339303,
+     "sha256": "3d4be734383fbaf75fb8b5d7794ec6b9e9729f8f45bceca3ef64a6465e97693c",
+     "url": "https://en.wikipedia.org/wiki/1995_Monte_Carlo_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte Carlo Masters Roquebrune-Cap-Martin, FranceATP Championship Series, Single-WeekClay – $1,545,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 796175,
+     "revision_id": 1311953423,
+     "sha256": "742033cc32a01db5922547288d32d1e9d37a9e678dd83364088654fd9afe758c",
+     "url": "https://en.wikipedia.org/wiki/1995_Monte_Carlo_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-04-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-04-24",
+   "main_year_weeks": [
+    [
+     1995,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1995_seoul_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "seoul_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Seoul_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-04-24",
+     "1995-04-30"
+    ],
+    "main_article": {
+     "bytes": 144495,
+     "revision_id": 1216582309,
+     "sha256": "ba1419b75ff6295877e7f06f6979676f3e326803be90f4a3dad518fd2b7f9776",
+     "url": "https://en.wikipedia.org/wiki/1995_Seoul_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Seoul Open Seoul, South KoreaATP World SeriesHard – $203,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328963,
+     "revision_id": 1216582362,
+     "sha256": "c4cdadf6ce8ca60c22ec043133e8bad6ef2615ee92d3725d5db749b32607be66",
+     "url": "https://en.wikipedia.org/wiki/1995_Seoul_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-01",
+   "main_year_weeks": [
+    [
+     1995,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1995_atlanta_verizon_2001",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "atlanta_verizon_2001",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_AT&T_Challenge",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-05-01",
+     "1995-05-07"
+    ],
+    "main_article": {
+     "bytes": 149005,
+     "revision_id": 1216583411,
+     "sha256": "751cd29a0abc0dffa456dd2816e0b4282bf290f31d49155c12251a741c2b0a51",
+     "url": "https://en.wikipedia.org/wiki/1995_AT%26T_Challenge"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "AT&T Challenge Atlanta, GA, USATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 333093,
+     "revision_id": 1216583671,
+     "sha256": "e8783dc30102e8da328de0877d83e7ff002af7525324a9ed8f5f0a3a23949b84",
+     "url": "https://en.wikipedia.org/wiki/1995_AT%26T_Challenge_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-05-01..1995-05-08 differ from canonical 1995-05-01..1995-05-07; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-01",
+   "main_year_weeks": [
+    [
+     1995,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1995_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_BMW_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-05-01",
+     "1995-05-08"
+    ],
+    "main_article": {
+     "bytes": 153684,
+     "revision_id": 1322231751,
+     "sha256": "aeb6640b00496153c3d5d40faf0c72dfd733ccca77906b5bcfd22428daafa72e",
+     "url": "https://en.wikipedia.org/wiki/1995_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW Open Munich, GermanyATP World SeriesClay – $400,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326183,
+     "revision_id": 1216582628,
+     "sha256": "1ad01d9b10c292592c9735bb063cfc93578d680718d68d04ab4634ecb3afbe82",
+     "url": "https://en.wikipedia.org/wiki/1995_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-05-08..1995-05-15 differ from canonical 1995-05-08..1995-05-14; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-08",
+   "main_year_weeks": [
+    [
+     1995,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1995_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_ATP_German_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-05-08",
+     "1995-05-15"
+    ],
+    "main_article": {
+     "bytes": 156961,
+     "revision_id": 1284773039,
+     "sha256": "a5ee196f03bf869c5f495d565aabce103dd1010f3daa49cde975c6dbdc13d4ab",
+     "url": "https://en.wikipedia.org/wiki/1995_ATP_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP German Open Hamburg Masters, GermanyATP Championship Series, Single-WeekClay – $1,545,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 459251,
+     "revision_id": 1311953457,
+     "sha256": "11394b51b569db3d706a7a0a9b8b5e80ce1eb11e75bed786c2c2941f6a91bdff",
+     "url": "https://en.wikipedia.org/wiki/1995_ATP_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-05-08..1995-05-15 differ from canonical 1995-05-08..1995-05-14; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-08",
+   "main_year_weeks": [
+    [
+     1995,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1995_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_U.S._Men's_Clay_Court_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-05-08",
+     "1995-05-15"
+    ],
+    "main_article": {
+     "bytes": 160121,
+     "revision_id": 1320307898,
+     "sha256": "585b599f51606a8015d9e5523a6832d0489a55baea9f9cd8db8bc993ae41f7c3",
+     "url": "https://en.wikipedia.org/wiki/1995_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court Championships Pinehurst, North Carolina, USATP World SeriesClay – $264,250 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 312572,
+     "revision_id": 1346293504,
+     "sha256": "07d0e61035a21e64e26f835c4ef447ec62029c562d6ead350433e84ecf1897e4",
+     "url": "https://en.wikipedia.org/wiki/1995_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-05-15..1995-05-22 differ from canonical 1995-05-15..1995-05-21; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-15",
+   "main_year_weeks": [
+    [
+     1995,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1995_delray_beach",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "delray_beach",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_International_Tennis_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-05-15",
+     "1995-05-22"
+    ],
+    "main_article": {
+     "bytes": 154788,
+     "revision_id": 1216584777,
+     "sha256": "5cec715ab27ddbacbbe38d17bef9d7d6b2017fe0fbf85f977aa5374dc3a1ec3c",
+     "url": "https://en.wikipedia.org/wiki/1995_International_Tennis_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "International Tennis Championships Coral Springs, FL, USATP World SeriesClay – $230,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 334274,
+     "revision_id": 1328926955,
+     "sha256": "d1bc424faf6d88dc4dc3e330e01878500fe3c975858bdb1933bf903005dab025",
+     "url": "https://en.wikipedia.org/wiki/1995_International_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-05-15..1995-05-22 differ from canonical 1995-05-15..1995-05-21; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 64,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-15",
+   "main_year_weeks": [
+    [
+     1995,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1995_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Italian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-05-15",
+     "1995-05-22"
+    ],
+    "main_article": {
+     "bytes": 206659,
+     "revision_id": 1374509120,
+     "sha256": "8665a635db4e087161a60bab65410501d43185f4e5457dd108fc3faac6eb4eff",
+     "url": "https://en.wikipedia.org/wiki/1995_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Italian Open Rome Masters, ItalyATP Championship Series, Single-WeekClay – $1,750,000 – 64S/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 888267,
+     "revision_id": 1311953443,
+     "sha256": "a84cc375a32134c7cc5560a2781536455d8d5379da2dbadf98f39d90429d1601",
+     "url": "https://en.wikipedia.org/wiki/1995_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-05-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-05-22",
+   "main_year_weeks": [
+    [
+     1995,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_1995_bologna_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "bologna_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Internazionali_di_Carisbo",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-05-22",
+     "1995-05-28"
+    ],
+    "main_article": {
+     "bytes": 147268,
+     "revision_id": 1216585226,
+     "sha256": "7b929c42095a8d5f20c415a6fd5c32c560ec913353c50f809390448dbfeb6fec",
+     "url": "https://en.wikipedia.org/wiki/1995_Internazionali_di_Carisbo"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Internazionali di Carisbo Bologna, ItalyATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331531,
+     "revision_id": 1311960792,
+     "sha256": "bbdbce8b261a9abc03094f3f15aa5e5b113a484b9df00116179e93303bc5fa91",
+     "url": "https://en.wikipedia.org/wiki/1995_Internazionali_di_Carisbo_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-12",
+   "main_year_weeks": [
+    [
+     1995,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1995_porto_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "porto_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Oporto_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-06-12",
+     "1995-06-18"
+    ],
+    "main_article": {
+     "bytes": 139562,
+     "revision_id": 1311961333,
+     "sha256": "395c9ef0d8d0214bd6605e9359efbebbc13ed48024ede323b7161e64248d527d",
+     "url": "https://en.wikipedia.org/wiki/1995_Oporto_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Oporto Open Maia, PortugalATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 324790,
+     "revision_id": 1311961365,
+     "sha256": "839a849b5c71a3635f88170a8cb13c11590852f08a4420107665e86f7c48d0e8",
+     "url": "https://en.wikipedia.org/wiki/1995_Oporto_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-06-12..1995-06-19 differ from canonical 1995-06-12..1995-06-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-12",
+   "main_year_weeks": [
+    [
+     1995,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1995_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Stella_Artois_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-06-12",
+     "1995-06-19"
+    ],
+    "main_article": {
+     "bytes": 159518,
+     "revision_id": 1276263542,
+     "sha256": "2693c97acc32800926b86167ddb751a279adf7e5b91207f6f12c24aaf7ee4dd7",
+     "url": "https://en.wikipedia.org/wiki/1995_Stella_Artois_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Queen's Club Championships London, Great BritainATP World SeriesGrass – $600,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 470714,
+     "revision_id": 1216588337,
+     "sha256": "0f95d4af7249bfaa5a4e95a459dba8ba09c3788d45a413a2077f5440f356b559",
+     "url": "https://en.wikipedia.org/wiki/1995_Stella_Artois_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-06-12..1995-06-19 differ from canonical 1995-06-12..1995-06-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-12",
+   "main_year_weeks": [
+    [
+     1995,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1995_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Ordina_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-06-12",
+     "1995-06-19"
+    ],
+    "main_article": {
+     "bytes": 150767,
+     "revision_id": 1342475587,
+     "sha256": "8d9dd07f81d6900b23740c0b486e0e074e862a7e1730dfba11b806102772a3d9",
+     "url": "https://en.wikipedia.org/wiki/1995_Ordina_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Ordina Open Rosmalen, The NetherlandsATP World SeriesGrass – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328672,
+     "revision_id": 1342476628,
+     "sha256": "44f5699c9979449f74a35de70692385bd19bba80c258ce986ab2c02e947e1e44",
+     "url": "https://en.wikipedia.org/wiki/1995_Ordina_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-19",
+   "main_year_weeks": [
+    [
+     1995,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1995_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Nottingham_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-06-19",
+     "1995-06-25"
+    ],
+    "main_article": {
+     "bytes": 151665,
+     "revision_id": 1275776183,
+     "sha256": "d298f1b5c771b60fc656f679245592bc14126939a33513f36897e1fc4822050a",
+     "url": "https://en.wikipedia.org/wiki/1995_Nottingham_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Nottingham Open Nottingham, Great BritainATP World SeriesGrass – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323627,
+     "revision_id": 1120714471,
+     "sha256": "ac994ee53356ff74aceaacd4b8970e8955e86dcf59cc1ede5899551f311986da",
+     "url": "https://en.wikipedia.org/wiki/1995_Nottingham_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-06-19..1995-06-26 differ from canonical 1995-06-19..1995-06-25; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-19",
+   "main_year_weeks": [
+    [
+     1995,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1995_halle",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "halle",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Gerry_Weber_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-06-19",
+     "1995-06-26"
+    ],
+    "main_article": {
+     "bytes": 151747,
+     "revision_id": 1383098101,
+     "sha256": "87f29c313cbf0907ecc7afd84c54413a423b5a23a309e8378405b24cc280a6af",
+     "url": "https://en.wikipedia.org/wiki/1995_Gerry_Weber_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Gerry Weber Open Halle, GermanyATP World SeriesGrass – $700,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323295,
+     "revision_id": 1120713690,
+     "sha256": "1990a5addf09ab7bd8978acb5473f8304322ee6c2336c7d8b80a81a3f3f8e050",
+     "url": "https://en.wikipedia.org/wiki/1995_Gerry_Weber_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-06-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-06-19",
+   "main_year_weeks": [
+    [
+     1995,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1995_poertschach_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "poertschach_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Hypo_Group_Tennis_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-06-19",
+     "1995-06-25"
+    ],
+    "main_article": {
+     "bytes": 151873,
+     "revision_id": 1216588511,
+     "sha256": "7f5ab8f39e371669545817316e2ccd13d3a3bf70434a16d29acd9bcce044af01",
+     "url": "https://en.wikipedia.org/wiki/1995_Hypo_Group_Tennis_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hypo Group Tennis International St. Poelten, AustriaATP World SeriesClay – $350,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330507,
+     "revision_id": 1216588562,
+     "sha256": "3264497f32eab22ca19ddd3a8b114876f6510350dc668092df4c64da3bd5aab3",
+     "url": "https://en.wikipedia.org/wiki/1995_ATP_St._P%C3%B6lten_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-10",
+   "main_year_weeks": [
+    [
+     1995,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1995_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-07-10",
+     "1995-07-16"
+    ],
+    "main_article": {
+     "bytes": 194409,
+     "revision_id": 1342434519,
+     "sha256": "835766eccadb61db3178d5ff59d82e10257f7271d6355551f4d70a576ff77c16",
+     "url": "https://en.wikipedia.org/wiki/1995_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swedish Open Båstad, SwedenATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 300931,
+     "revision_id": 1311958721,
+     "sha256": "ccfb536bec35026de095b02367002b585d2688fca8783df246ebc531473d5972",
+     "url": "https://en.wikipedia.org/wiki/1995_Swedish_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-10",
+   "main_year_weeks": [
+    [
+     1995,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1995_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Rado_Swiss_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-07-10",
+     "1995-07-16"
+    ],
+    "main_article": {
+     "bytes": 153496,
+     "revision_id": 1361554117,
+     "sha256": "690f163441c665a38f861bcfc9e0cf2909e6e0b61b3c997c749237b32480d08d",
+     "url": "https://en.wikipedia.org/wiki/1995_Rado_Swiss_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rado Swiss Open Gstaad, SwitzerlandATP World SeriesClay – $525,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-10",
+   "main_year_weeks": [
+    [
+     1995,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1995_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-07-10",
+     "1995-07-16"
+    ],
+    "main_article": {
+     "bytes": 154705,
+     "revision_id": 1172368012,
+     "sha256": "d4c9e921cd59bf36b5d2c0696b6026941518546f07def5e5daafe09a15d24620",
+     "url": "https://en.wikipedia.org/wiki/1995_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hall of Fame Tennis Championships Newport, Rhode Island, USATP World SeriesGrass – $230,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-07-17..1995-07-24 differ from canonical 1995-07-17..1995-07-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-17",
+   "main_year_weeks": [
+    [
+     1995,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1995_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Mercedes_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-07-17",
+     "1995-07-24"
+    ],
+    "main_article": {
+     "bytes": 150401,
+     "revision_id": 1375566610,
+     "sha256": "8ed4ba4d3b00dc2ddbd0b05d6b5562fef36c5af4a3dc641f9e55f82d75a85623",
+     "url": "https://en.wikipedia.org/wiki/1995_Mercedes_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mercedes Cup Stuttgart, GermanyATP Championship SeriesClay – $915,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 441320,
+     "revision_id": 1346244826,
+     "sha256": "31318a8baf29e5bdbb12c5b30d1c34f8869d35dd6e73b82745a4c743345e4c57",
+     "url": "https://en.wikipedia.org/wiki/1995_Mercedes_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-07-17..1995-07-24 differ from canonical 1995-07-17..1995-07-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-17",
+   "main_year_weeks": [
+    [
+     1995,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1995_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Legg_Mason_Tennis_Classic",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-07-17",
+     "1995-07-24"
+    ],
+    "main_article": {
+     "bytes": 157319,
+     "revision_id": 1172368107,
+     "sha256": "8344ac65d825d53fb2084cd07d05864c1019253ec01fd516e7ceb79a2235c258",
+     "url": "https://en.wikipedia.org/wiki/1995_Legg_Mason_Tennis_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Legg Mason Tennis Classic Washington, D.C., USATP Championship SeriesHard – $550,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 495431,
+     "revision_id": 1387850428,
+     "sha256": "265ac6a233bcb66da78e2aa4ed91f00e30bcc3db6c3d5364de7b8ccd624b05d4",
+     "url": "https://en.wikipedia.org/wiki/1995_Legg_Mason_Tennis_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-24",
+   "main_year_weeks": [
+    [
+     1995,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1995_belgrade_2012",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "belgrade_2012",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Dutch_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-07-24",
+     "1995-07-30"
+    ],
+    "main_article": {
+     "bytes": 149380,
+     "revision_id": 1372150947,
+     "sha256": "25fb7ee84c2c9ba46db652bf0de05dacccf27200bd5b815cffd0328a2768ab12",
+     "url": "https://en.wikipedia.org/wiki/1995_Dutch_Open_(tennis)"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Dutch Open Amsterdam, The NetherlandsATP World SeriesClay – $475,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 321730,
+     "revision_id": 1130992834,
+     "sha256": "1ea4c5c6ade5e2c0fa84b0f5cc002e715f5d759f1a9365cd7dc8d9dab9994ac8",
+     "url": "https://en.wikipedia.org/wiki/1995_Dutch_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-07-24..1995-07-31 differ from canonical 1995-07-24..1995-07-30; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-07-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-24",
+   "main_year_weeks": [
+    [
+     1995,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1995_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Canadian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-07-24",
+     "1995-07-31"
+    ],
+    "main_article": {
+     "bytes": 214828,
+     "revision_id": 1344300466,
+     "sha256": "69ea748f515cabfb7370a962448c0443b7d40954c3e6d167eb241d188b3b2045",
+     "url": "https://en.wikipedia.org/wiki/1995_Canadian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Canadian Open Montreal, Quebec, CanadaATP Championship Series, Single-WeekHard – $1,545,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 464044,
+     "revision_id": 1120770715,
+     "sha256": "fbaca0dd7152ed179fb7343451b5e4d2ad29612cc0a9cb14ca62f6b9106d3ef5",
+     "url": "https://en.wikipedia.org/wiki/1995_Canadian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-07-31..1995-08-07 differ from canonical 1995-07-31..1995-08-06; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-31",
+   "main_year_weeks": [
+    [
+     1995,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1995_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_EA_Generali_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-07-31",
+     "1995-08-07"
+    ],
+    "main_article": {
+     "bytes": 159827,
+     "revision_id": 1116659989,
+     "sha256": "386f8835ddb05c87aeb2d35dc3c24e0180bfa5cba6529000443e3e4f60da66a3",
+     "url": "https://en.wikipedia.org/wiki/1995_EA_Generali_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Austrian Open Kitzbühel, AustriaATP World SeriesClay – $400,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 446591,
+     "revision_id": 1346255430,
+     "sha256": "6b479ba73946ca4d65a883ccd976caf988383cd92ee8f4989702649311f1e407",
+     "url": "https://en.wikipedia.org/wiki/1995_EA_Generali_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-07-31..1995-08-07 differ from canonical 1995-07-31..1995-08-06; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-31",
+   "main_year_weeks": [
+    [
+     1995,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1995_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Infiniti_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-07-31",
+     "1995-08-07"
+    ],
+    "main_article": {
+     "bytes": 166075,
+     "revision_id": 1172368030,
+     "sha256": "ff23b4beb296a8c45bd51d2eb5b9a851a6569def05b42a90841bba1b8816f36e",
+     "url": "https://en.wikipedia.org/wiki/1995_Infiniti_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Infiniti Open Los Angeles, CA, USATP World SeriesHard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326561,
+     "revision_id": 1172368038,
+     "sha256": "48e228ed131cb4e644cdef40cc550bc8ff14c1aa38efe1452cdb58d1dd152a24",
+     "url": "https://en.wikipedia.org/wiki/1995_Infiniti_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-07-31",
+   "main_year_weeks": [
+    [
+     1995,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1995_prague_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "prague_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Skoda_Czech_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-07-31",
+     "1995-08-06"
+    ],
+    "main_article": {
+     "bytes": 147946,
+     "revision_id": 1338707971,
+     "sha256": "987c5931f105d6bd8668be038a6aaf9a54b0cf6dd9335ecc407ac6b2f61add00",
+     "url": "https://en.wikipedia.org/wiki/1995_Skoda_Czech_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Skoda Czech Open Prague, Czech RepublicATP World SeriesClay – $340,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 323719,
+     "revision_id": 1190291087,
+     "sha256": "ba130f46fa7eda2f8b398fee48f194e6a3dbf8f78eec3ad71484cdccd7ee63ae",
+     "url": "https://en.wikipedia.org/wiki/1995_Skoda_Czech_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-08-07..1995-08-14 differ from canonical 1995-08-07..1995-08-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-07",
+   "main_year_weeks": [
+    [
+     1995,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1995_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Thriftway_ATP_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-08-07",
+     "1995-08-14"
+    ],
+    "main_article": {
+     "bytes": 160739,
+     "revision_id": 1381804677,
+     "sha256": "7e6129dbd8db9d164800d253de3eaaee872a4f6b44eeb12f7e4379a2aa2c51d9",
+     "url": "https://en.wikipedia.org/wiki/1995_Thriftway_ATP_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Thriftway ATP Championships Mason, Ohio, USATP Championship Series, Single-WeekHard – $1,545,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 464572,
+     "revision_id": 1272779298,
+     "sha256": "992bdc2af79bf627ac829b0f789a5b0bd6cd0fce1787f15307b1d190420c1ceb",
+     "url": "https://en.wikipedia.org/wiki/1995_Thriftway_ATP_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-07",
+   "main_year_weeks": [
+    [
+     1995,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1995_san_marino_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "san_marino_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Campionati_Internazionali_di_San_Marino",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-08-07",
+     "1995-08-13"
+    ],
+    "main_article": {
+     "bytes": 149458,
+     "revision_id": 1375685527,
+     "sha256": "90b9cedc8ff526332740c640c3fb46adb6b301dfe8fb3f08ec6ba1a1803fe341",
+     "url": "https://en.wikipedia.org/wiki/1995_Campionati_Internazionali_di_San_Marino"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di San Marino San Marino, San MarinoATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328746,
+     "revision_id": 1375685501,
+     "sha256": "a4893fd96793ab55bdd4bf516f9c3ab7725bb5728c3369bb9a36488082733f04",
+     "url": "https://en.wikipedia.org/wiki/1995_Campionati_Internazionali_di_San_Marino_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-14",
+   "main_year_weeks": [
+    [
+     1995,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1995_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_RCA_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-08-14",
+     "1995-08-20"
+    ],
+    "main_article": {
+     "bytes": 153725,
+     "revision_id": 1367444057,
+     "sha256": "57b9a19af771ab0c7dcd1515d232b8b312bdf10627fe8f0c12cf69a136a002fa",
+     "url": "https://en.wikipedia.org/wiki/1995_RCA_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "RCA Championships Indianapolis, IN, USATP Championship SeriesHard – $915,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 487837,
+     "revision_id": 1172368247,
+     "sha256": "f70505a2e1a20a3ff314c5f33392e04083acc2172e1913d8bd59cd66df197775",
+     "url": "https://en.wikipedia.org/wiki/1995_RCA_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-08-14..1995-08-21 differ from canonical 1995-08-14..1995-08-20; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-14",
+   "main_year_weeks": [
+    [
+     1995,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1995_new_haven_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "new_haven_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Volvo_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-08-14",
+     "1995-08-21"
+    ],
+    "main_article": {
+     "bytes": 148294,
+     "revision_id": 1361735882,
+     "sha256": "8e4a6f2ae5955b9120ccb3f99686000f3dd1c675fbd4d2f04a94b918a82c38d0",
+     "url": "https://en.wikipedia.org/wiki/1995_Volvo_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Volvo International New Haven, CT, USATP Championship SeriesHard – $915,000 – 56S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 466462,
+     "revision_id": 1272779334,
+     "sha256": "562b1aa15e48aaf53f9d904dd732dd2ee839d9a9e3661712cd207b942b871324",
+     "url": "https://en.wikipedia.org/wiki/1995_Volvo_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-08-21..1995-08-28 differ from canonical 1995-08-21..1995-08-27; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-21",
+   "main_year_weeks": [
+    [
+     1995,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1995_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Croatia_Open_Umag",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-08-21",
+     "1995-08-28"
+    ],
+    "main_article": {
+     "bytes": 150558,
+     "revision_id": 1308792910,
+     "sha256": "f892f0ce2cbe5245ebbe7663666a857ec28dce4bf2fdcb6b7ad42fc87468e220",
+     "url": "https://en.wikipedia.org/wiki/1995_Croatia_Open_Umag"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Croatia Open Umag Umag, CroatiaATP World SeriesClay – $375,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327525,
+     "revision_id": 1311960739,
+     "sha256": "5d638a2c90145156f4b37d2d89c53c7d72bf9aa651e72f2122a65424d3ec4a58",
+     "url": "https://en.wikipedia.org/wiki/1995_Croatia_Open_Umag_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-08-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-08-21",
+   "main_year_weeks": [
+    [
+     1995,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1995_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Waldbaum's_Hamlet_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-08-21",
+     "1995-08-27"
+    ],
+    "main_article": {
+     "bytes": 148543,
+     "revision_id": 1374509631,
+     "sha256": "7c6f777da5384e17357080a46cae117f23ff3f298fadac91606ce03fbfc2446b",
+     "url": "https://en.wikipedia.org/wiki/1995_Waldbaum's_Hamlet_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Waldbaum's Hamlet Cup Long Island, NY, USATP World SeriesHard – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323863,
+     "revision_id": 1361236490,
+     "sha256": "6151b42c875a325d7d3d62c2eccd2a343818b1f696e3fb9d55ee69a6424900a1",
+     "url": "https://en.wikipedia.org/wiki/1995_Waldbaum's_Hamlet_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-09-11..1995-09-18 differ from canonical 1995-09-11..1995-09-17; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-09-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-09-11",
+   "main_year_weeks": [
+    [
+     1995,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1995_belgrade_clay_2021",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "belgrade_clay_2021",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Romanian_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-09-11",
+     "1995-09-18"
+    ],
+    "main_article": {
+     "bytes": 148323,
+     "revision_id": 1373919691,
+     "sha256": "b0bbfd2b49a33e0268a11b9d225bc38273fdffbbd4a8888d62fe0bbe6eef7c10",
+     "url": "https://en.wikipedia.org/wiki/1995_Romanian_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Romanian Open Bucharest, RomaniaATP World SeriesClay – $1,350,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 515792,
+     "revision_id": 1311961054,
+     "sha256": "6214942eefef4190a903c7428f71e66837a05c76a09ebab43d27aece3ad4aad1",
+     "url": "https://en.wikipedia.org/wiki/1995_Romanian_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-09-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-09-11",
+   "main_year_weeks": [
+    [
+     1995,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1995_bogota_colombia_2001",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "bogota_colombia_2001",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Club_Colombia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-09-11",
+     "1995-09-17"
+    ],
+    "main_article": {
+     "bytes": 145072,
+     "revision_id": 1361669240,
+     "sha256": "d47960efc1aa71e016d8548f320f1f8129bc969edbbee40a0999d24ec8c7a0f2",
+     "url": "https://en.wikipedia.org/wiki/1995_Club_Colombia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Club Colombia Open Bogotá, ColombiaATP World SeriesClay – $303,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-09-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-09-11",
+   "main_year_weeks": [
+    [
+     1995,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1995_bordeaux_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "bordeaux_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Grand_Prix_Passing_Shot",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-09-11",
+     "1995-09-17"
+    ],
+    "main_article": {
+     "bytes": 146644,
+     "revision_id": 1374256426,
+     "sha256": "c79cf5e4493e70f1b519483946f5bc8deb3298824ff8f79de1f8b7e53ac25c3c",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_Passing_Shot"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Passing Shot Bordeaux, FranceATP World SeriesHard – $375,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330791,
+     "revision_id": 1216749246,
+     "sha256": "1c8f8ed9918c66b680ca5c263deaa0d2b9b543421f89c514ed9ac16763cc56b7",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_Passing_Shot_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-09-25",
+   "main_year_weeks": [
+    [
+     1995,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_1995_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Davidoff_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-09-25",
+     "1995-10-01"
+    ],
+    "main_article": {
+     "bytes": 155322,
+     "revision_id": 1373919937,
+     "sha256": "36ca9aeb8a313e4a8bed588f3d2044ef397aecef0dc1d9f8d1cd88f28f253f28",
+     "url": "https://en.wikipedia.org/wiki/1995_Davidoff_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Davidoff Swiss Indoors Basel, SwitzerlandATP World SeriesCarpet (i) – $975,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 335166,
+     "revision_id": 1276266419,
+     "sha256": "e192f5926fdaaa02de6c5bc9421f27544350cccd5fb40a46fd9dbfe2bae88e69",
+     "url": "https://en.wikipedia.org/wiki/1995_Davidoff_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-09-25",
+   "main_year_weeks": [
+    [
+     1995,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_1995_palermo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "palermo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Campionati_Internazionali_di_Sicilia",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-09-25",
+     "1995-10-01"
+    ],
+    "main_article": {
+     "bytes": 151516,
+     "revision_id": 1216748835,
+     "sha256": "9a6cc32095355293c3f682cec8da08c20435bbfb3749eb23d959fb6c4ec39d84",
+     "url": "https://en.wikipedia.org/wiki/1995_Campionati_Internazionali_di_Sicilia"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di Sicilia Palermo, ItalyATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331607,
+     "revision_id": 1311959153,
+     "sha256": "9a45b261589a6b84c09bf019ea80e175eb3931e1ba2242923016f1314b282515",
+     "url": "https://en.wikipedia.org/wiki/1995_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-10-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-02",
+   "main_year_weeks": [
+    [
+     1995,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1995_brussels",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "brussels",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-10-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-02",
+   "main_year_weeks": [
+    [
+     1995,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1995_singapore_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "singapore_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-02",
+   "main_year_weeks": [
+    [
+     1995,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1995_toulouse_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "toulouse_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Grand_Prix_de_Tennis_de_Toulouse",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-10-02",
+     "1995-10-08"
+    ],
+    "main_article": {
+     "bytes": 148532,
+     "revision_id": 1343713969,
+     "sha256": "b7b7d1e8b206c575126d5c38f4d9c27ff8c60728ca475407e50a9bec76d34f6c",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_de_Tennis_de_Toulouse"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de Toulouse Toulouse, FranceATP World SeriesHard (i) – $375,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 326421,
+     "revision_id": 1216746320,
+     "sha256": "c345445f8fcfd5fc7d75f725dbcd0752ee0d1c9822789dd6d9e46de1482fbd9a",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-09",
+   "main_year_weeks": [
+    [
+     1995,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1995_ostrava_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "ostrava_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_IPB_Czech_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-10-09",
+     "1995-10-15"
+    ],
+    "main_article": {
+     "bytes": 140793,
+     "revision_id": 1339722206,
+     "sha256": "cc6d79e24cd0ed2fa2c05f63ca46cec21be6cff4607b5bf5251376f126375a9d",
+     "url": "https://en.wikipedia.org/wiki/1995_IPB_Czech_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "IPB Czech Indoor Ostrava, Czech RepublicATP World Series$375,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 327472,
+     "revision_id": 1339679795,
+     "sha256": "2d64f0457dbe4d4d47e15976492c659c77f1da6f973eeb226042460a6ee8c238",
+     "url": "https://en.wikipedia.org/wiki/1995_IPB_Czech_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-09..1995-10-16 differ from canonical 1995-10-09..1995-10-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-09",
+   "main_year_weeks": [
+    [
+     1995,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1995_tel_aviv_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "tel_aviv_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Tel_Aviv_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-09",
+     "1995-10-16"
+    ],
+    "main_article": {
+     "bytes": 155030,
+     "revision_id": 1216733696,
+     "sha256": "2e60602e5b65aeed542d58ed65e27b9085b3c774f4c562c0fd988cc47cc3adfb",
+     "url": "https://en.wikipedia.org/wiki/1995_Tel_Aviv_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tel Aviv Open Tel Aviv, IsraelATP World Series$250,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 328267,
+     "revision_id": 1216734061,
+     "sha256": "4c478c6cc35e26326c89ca2e2c5299ff81106df27ad3a3e1d1d57c6236da36bc",
+     "url": "https://en.wikipedia.org/wiki/1995_Tel_Aviv_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-09",
+   "main_year_weeks": [
+    [
+     1995,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1995_tokyo_indoor_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "tokyo_indoor_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Tokyo_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-10-09",
+     "1995-10-15"
+    ],
+    "main_article": {
+     "bytes": 141926,
+     "revision_id": 1030466881,
+     "sha256": "1b42c0f25fa538b50b7d6fcd4fda99808c6164d423b6869aa3f9471587d71f9f",
+     "url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tokyo Indoor Tokyo Indoor, JapanATP Championship Series$895,000 Singles – Doubles",
+    "singles_article": {
+     "bytes": 421038,
+     "revision_id": 1276270195,
+     "sha256": "62bb600813eebfb509f43c9935eee1381ce77988107c864506b4971cc2568cee",
+     "url": "https://en.wikipedia.org/wiki/1995_Tokyo_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-16",
+   "main_year_weeks": [
+    [
+     1995,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1995_beijing_1997",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "beijing_1997",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Nokia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-10-16",
+     "1995-10-22"
+    ],
+    "main_article": {
+     "bytes": 200020,
+     "revision_id": 1367442115,
+     "sha256": "410efec83313e788c865757a5ef5906ad73dbc24a5ae961eca12912138a24a5b",
+     "url": "https://en.wikipedia.org/wiki/1995_Nokia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Nokia Open Beijing, ChinaATP World Series$303,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 329479,
+     "revision_id": 1381125068,
+     "sha256": "62c866ddf48e6a448aca20a5a52737ef187df60885d9deb6f848db34a568776f",
+     "url": "https://en.wikipedia.org/wiki/1995_Nokia_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-16..1995-10-23 differ from canonical 1995-10-16..1995-10-22; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-16",
+   "main_year_weeks": [
+    [
+     1995,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1995_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Grand_Prix_de_Tennis_de_Lyon",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-16",
+     "1995-10-23"
+    ],
+    "main_article": {
+     "bytes": 152960,
+     "revision_id": 1253033676,
+     "sha256": "30335fdd48727c6124a55001a94227d97d55d5cd91e75de395a52d319a83c658",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_de_Tennis_de_Lyon"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de Lyon Lyon, FranceATP World Series$575,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 329009,
+     "revision_id": 1362177553,
+     "sha256": "85a0188d1921b82a39c1b51557e0ae13a8126110ed0540fc3dd7324e04351b27",
+     "url": "https://en.wikipedia.org/wiki/1995_Grand_Prix_de_Tennis_de_Lyon_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-16..1995-10-23 differ from canonical 1995-10-16..1995-10-22; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-16",
+   "main_year_weeks": [
+    [
+     1995,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1995_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_CA-TennisTrophy",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-16",
+     "1995-10-23"
+    ],
+    "main_article": {
+     "bytes": 153443,
+     "revision_id": 1355432339,
+     "sha256": "dc79e954c5206cb061a065e9b64c59794795c778cd368ef8460c8f2471262847",
+     "url": "https://en.wikipedia.org/wiki/1995_CA-TennisTrophy"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "CA-TennisTrophy Vienna, AustriaATP World Series$465,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 328338,
+     "revision_id": 1355431183,
+     "sha256": "c45250a0d8b6f7dc1659aa59f3833d1c8c6a61f963c56220514de357c76e72f2",
+     "url": "https://en.wikipedia.org/wiki/1995_CA-TennisTrophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-23..1995-10-30 differ from canonical 1995-10-23..1995-10-29; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-23",
+   "main_year_weeks": [
+    [
+     1995,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1995_essen_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "essen_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Eurocard_Open_(October)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-23",
+     "1995-10-30"
+    ],
+    "main_article": {
+     "bytes": 147633,
+     "revision_id": 1373920972,
+     "sha256": "6c05b869d8009e8bc08fedebc3d7c31a0ce5cef70af42f628234792aa5f591f1",
+     "url": "https://en.wikipedia.org/wiki/1995_Eurocard_Open_(October)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Eurocard Open Essen Masters, GermanyATP Championship Series, Single-Week$1,844,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 441010,
+     "revision_id": 1222771823,
+     "sha256": "80bb1c5d857b20023c58ec1c592fa04293754e2097ca32a87d8d1ad69e7e7fc9",
+     "url": "https://en.wikipedia.org/wiki/1995_Eurocard_Open_(October)_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-23..1995-10-30 differ from canonical 1995-10-23..1995-10-29; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-10-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-23",
+   "main_year_weeks": [
+    [
+     1995,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1995_santiago_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "santiago_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Hellmann's_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-23",
+     "1995-10-30"
+    ],
+    "main_article": {
+     "bytes": 149417,
+     "revision_id": 1364160211,
+     "sha256": "b568d1fab1d56bafbc74b2099a1a99967e09dd7307692c52b816011b9a6ca285",
+     "url": "https://en.wikipedia.org/wiki/1995_Hellmann's_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hellmann's Cup Santiago, ChileATP World Series$203,750Singles – Doubles",
+    "singles_article": {
+     "bytes": 332603,
+     "revision_id": 1311953182,
+     "sha256": "f784993c0b5d1264da39cd902857155324b38fa75898c69e7453eb315f2d02f5",
+     "url": "https://en.wikipedia.org/wiki/1995_Hellmann's_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-11-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-30",
+   "main_year_weeks": [
+    [
+     1995,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1995_montevideo_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "montevideo_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Topper_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-10-30",
+     "1995-11-05"
+    ],
+    "main_article": {
+     "bytes": 141785,
+     "revision_id": 1216707737,
+     "sha256": "c1fc4c44bbe867777174e4577fc0652b4484053f4cd1c61ede57616a75046d13",
+     "url": "https://en.wikipedia.org/wiki/1995_Topper_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Topper Open Montevideo, UruguayATP World SeriesClay – $203,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 327733,
+     "revision_id": 1311961311,
+     "sha256": "c8bf32967c5d0b51fb93babe677fe173173fe0f8d5277d7f329097be58e730f2",
+     "url": "https://en.wikipedia.org/wiki/1995_Topper_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-10-30..1995-11-06 differ from canonical 1995-10-30..1995-11-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "1995-11-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-10-30",
+   "main_year_weeks": [
+    [
+     1995,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1995_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Paris_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-10-30",
+     "1995-11-06"
+    ],
+    "main_article": {
+     "bytes": 155816,
+     "revision_id": 1289037612,
+     "sha256": "0f84376ccd95641477a378b928698f050f013c7b161c7d32c03923a8f53904c3",
+     "url": "https://en.wikipedia.org/wiki/1995_Paris_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris Open Paris Masters, FranceATP Championship Series, Single-Week$2,000,000Singles – Doubles",
+    "singles_article": {
+     "bytes": 737359,
+     "revision_id": 1360369101,
+     "sha256": "e7427e489923fc99c6dc66f1248b6f0a89746b88807d78bbc34d62767a731d54",
+     "url": "https://en.wikipedia.org/wiki/1995_Paris_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1995-11-06..1995-11-13 differ from canonical 1995-11-06..1995-11-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-11-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-11-06",
+   "main_year_weeks": [
+    [
+     1995,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1995_buenos_aires_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "buenos_aires_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Topper_South_American_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1995-11-06",
+     "1995-11-13"
+    ],
+    "main_article": {
+     "bytes": 154729,
+     "revision_id": 1260666264,
+     "sha256": "1895b527f74f2c5ab56512963d179817e11c3477b80fb8b307e1449fb9122a2d",
+     "url": "https://en.wikipedia.org/wiki/1995_Topper_South_American_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Topper South American Open Buenos Aires, ArgentinaATP World SeriesClay – $303,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328885,
+     "revision_id": 1311952854,
+     "sha256": "c7e50934b3dc3e8a2e33c7c1aefbbb402859b24b05d71cd550faa5cd30c5626d",
+     "url": "https://en.wikipedia.org/wiki/1995_Topper_South_American_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "1995-11-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-11-06",
+   "main_year_weeks": [
+    [
+     1995,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1995_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-11-06",
+     "1995-11-12"
+    ],
+    "main_article": {
+     "bytes": 149670,
+     "revision_id": 1216595391,
+     "sha256": "089cec4c362d52a684a054399bcfd5d42d1628b72ccfaf0c34df9024f3b51fbc",
+     "url": "https://en.wikipedia.org/wiki/1995_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin Cup Moscow, RussiaATP World SeriesCarpet (i) – $1,125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331038,
+     "revision_id": 1317558280,
+     "sha256": "67120a3eff3cf8fd79a0299c55054779d9fc1a99c8cf0725493a5df0d55761aa",
+     "url": "https://en.wikipedia.org/wiki/1995_Kremlin_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1995-11-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-11-06",
+   "main_year_weeks": [
+    [
+     1995,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1995_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1995_Stockholm_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1995-11-06",
+     "1995-11-12"
+    ],
+    "main_article": {
+     "bytes": 156618,
+     "revision_id": 1216595079,
+     "sha256": "57786bad301c285dd050bd33fa8d09e6edd0e0018b699789a85b08852b368380",
+     "url": "https://en.wikipedia.org/wiki/1995_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm Open Stockholm, SwedenATP World SeriesHard (i) – $800,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327151,
+     "revision_id": 1276267397,
+     "sha256": "7b0ecf93aa02998657c4358947c0fb9bc54cdbe32da044cf06ecd0e8e6bdd82e",
+     "url": "https://en.wikipedia.org/wiki/1995_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1995-11-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1995",
+   "main_start_date": "1995-11-14",
+   "main_year_weeks": [
+    [
+     1995,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1995_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 1647865,
+  "revision_id": 1362344964,
+  "role": "secondary_source",
+  "sha256": "9974944785d0208b7736993abba51c5b66e2f81457b5d87b64c0f5d11867cb96",
+  "url": "https://en.wikipedia.org/wiki/1995_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

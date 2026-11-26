@@ -1,0 +1,703 @@
+{
+ "note": "Counts this checkout only; Draft branches are not included. 2026 is provisional.",
+ "schema_version": "atp.historical_inventory.v1",
+ "totals": {
+  "not_held_memberships": 24,
+  "occurrences": 2407,
+  "published_profiles": 6,
+  "years": 37,
+  "years_with_phase_calendar_evidence": 29
+ },
+ "years": [
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 53
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 75,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1990
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 54
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 76,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 1991
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 56
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 78,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1992
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 62
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 84,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1993
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 63
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 85,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 1994
+  },
+  {
+   "categories": {
+    "atp_championship_series": 11,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 59
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 80,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 1995
+  },
+  {
+   "categories": {
+    "atp_championship_series": 11,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 57
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 78,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 1996
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 53
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 75,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1997
+  },
+  {
+   "categories": {
+    "atp_championship_series": 12,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 52
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 74,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1998
+  },
+  {
+   "categories": {
+    "atp_championship_series": 11,
+    "atp_championship_single_week": 9,
+    "atp_finals": 1,
+    "atp_world_series": 45
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 66,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 1999
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 44,
+    "atp_international_series_gold": 11,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 65,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 2000
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 46,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 65,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 1
+   },
+   "year": 2001
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 43,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 2002
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 44,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 63,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_atp_results_archive_with_separate_finals_historical_window",
+   "week_review_flags": {},
+   "year": 2003
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 44,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 63,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 2004
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 44,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 63,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 2005
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 44,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 63,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {},
+   "year": 2006
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 43,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 11
+   },
+   "year": 2007
+  },
+  {
+   "categories": {
+    "atp_finals": 1,
+    "atp_international_series": 42,
+    "atp_international_series_gold": 9,
+    "tennis_masters_series": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 1,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 10
+   },
+   "year": 2008
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 18
+   },
+   "year": 2009
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 16,
+    "cross_iso_year": 1,
+    "reviewed_source_iso_week_53_not_projected": 1
+   },
+   "year": 2010
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 14,
+    "cross_iso_year": 1
+   },
+   "year": 2011
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 12,
+    "cross_iso_year": 1,
+    "monday_finish_majority_in_prior_iso_week": 1,
+    "non_weekend_finish": 1,
+    "single_week_majority_precedes_finish_week": 1
+   },
+   "year": 2012
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 61,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 11,
+    "cross_iso_year": 1,
+    "monday_finish_majority_in_prior_iso_week": 1,
+    "non_weekend_finish": 1,
+    "single_week_majority_precedes_finish_week": 1
+   },
+   "year": 2013
+  },
+  {
+   "categories": {
+    "atp_250": 39,
+    "atp_500": 11,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 60,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 12,
+    "cross_iso_year": 1
+   },
+   "year": 2014
+  },
+  {
+   "categories": {
+    "atp_250": 39,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 12
+   },
+   "year": 2015
+  },
+  {
+   "categories": {
+    "atp_250": 39,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 12,
+    "monday_finish_majority_in_prior_iso_week": 2,
+    "non_weekend_finish": 2,
+    "single_week_majority_precedes_finish_week": 2
+   },
+   "year": 2016
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 64,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 13,
+    "cross_iso_year": 1,
+    "monday_finish_majority_in_prior_iso_week": 1,
+    "non_weekend_finish": 1,
+    "single_week_majority_precedes_finish_week": 1
+   },
+   "year": 2017
+  },
+  {
+   "categories": {
+    "atp_250": 40,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 64,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 11,
+    "cross_iso_year": 1
+   },
+   "year": 2018
+  },
+  {
+   "categories": {
+    "atp_250": 39,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 63,
+   "phase_calendar_evidence_file": true,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 14
+   },
+   "year": 2019
+  },
+  {
+   "categories": {
+    "atp_250": 18,
+    "atp_500": 7,
+    "atp_finals": 1,
+    "atp_masters_1000": 3
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 12,
+   "occurrences": 29,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 5,
+    "monday_finish_majority_in_prior_iso_week": 1,
+    "non_weekend_finish": 1,
+    "single_week_majority_precedes_finish_week": 1
+   },
+   "year": 2020
+  },
+  {
+   "categories": {
+    "atp_250": 39,
+    "atp_500": 9,
+    "atp_finals": 1,
+    "atp_masters_1000": 8,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 7,
+   "occurrences": 58,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 14,
+    "non_weekend_finish": 2,
+    "single_week_majority_precedes_finish_week": 2
+   },
+   "year": 2021
+  },
+  {
+   "categories": {
+    "atp_250": 42,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 8,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 4,
+   "occurrences": 65,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 9
+   },
+   "year": 2022
+  },
+  {
+   "categories": {
+    "atp_250": 38,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 13,
+    "cross_iso_year": 1,
+    "non_weekend_finish": 4,
+    "single_week_majority_precedes_finish_week": 4
+   },
+   "year": 2023
+  },
+  {
+   "categories": {
+    "atp_250": 38,
+    "atp_500": 13,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 62,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 16,
+    "cross_iso_year": 1,
+    "monday_finish_majority_in_prior_iso_week": 2,
+    "non_weekend_finish": 6,
+    "single_week_majority_precedes_finish_week": 6
+   },
+   "year": 2024
+  },
+  {
+   "categories": {
+    "atp_250": 30,
+    "atp_500": 16,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 57,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [
+    "atp_2025_atp_finals",
+    "atp_2025_dallas",
+    "atp_2025_munich",
+    "atp_2025_next_gen_atp_finals",
+    "atp_2025_rotterdam",
+    "atp_2025_vienna"
+   ],
+   "status": "verified_results_archive",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 14,
+    "cross_iso_year": 1,
+    "non_weekend_finish": 6,
+    "single_week_majority_precedes_finish_week": 4,
+    "three_week_interval_manual_sporting_review": 2
+   },
+   "year": 2025
+  },
+  {
+   "categories": {
+    "atp_250": 29,
+    "atp_500": 16,
+    "atp_finals": 1,
+    "atp_masters_1000": 9,
+    "next_gen_finals": 1
+   },
+   "historical_evidence_files": [],
+   "not_held_memberships": 0,
+   "occurrences": 56,
+   "phase_calendar_evidence_file": false,
+   "published_profiles": [],
+   "status": "provisional_published_schedule",
+   "week_review_flags": {
+    "compressed_boundary_iso_week": 12,
+    "non_weekend_finish": 5,
+    "provisional_2026": 56,
+    "single_week_majority_precedes_finish_week": 4,
+    "three_week_interval_manual_sporting_review": 1
+   },
+   "year": 2026
+  }
+ ]
+}

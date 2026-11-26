@@ -1,0 +1,5066 @@
+{
+ "atp_season_year": 1998,
+ "counts": {
+  "occurrences": 74,
+  "wikipedia_dates_agree": 34,
+  "wikipedia_dates_differ": 19,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-01-05..1998-01-12 differ from canonical 1998-01-05..1998-01-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-01-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-01-05",
+   "main_year_weeks": [
+    [
+     1998,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1998_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Adelaide_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-01-05",
+     "1998-01-12"
+    ],
+    "main_article": {
+     "bytes": 154316,
+     "revision_id": 1374491803,
+     "sha256": "af206737d4ceef7dc702f593a01ba4e6070aa8e91de78596bc6449108a700e69",
+     "url": "https://en.wikipedia.org/wiki/1998_Adelaide_International"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Adelaide InternationalAdelaide, AustraliaATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 328211,
+     "revision_id": 1374385824,
+     "sha256": "bb8f3944b8f022f614bd3186db29bee01c96e804822943f1a0f3dab9231df4f9",
+     "url": "https://en.wikipedia.org/wiki/1998_Australian_Men's_Hardcourt_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-01-05..1998-01-12 differ from canonical 1998-01-05..1998-01-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-01-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-01-05",
+   "main_year_weeks": [
+    [
+     1998,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1998_doha",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "doha",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Qatar_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-01-05",
+     "1998-01-12"
+    ],
+    "main_article": {
+     "bytes": 145746,
+     "revision_id": 1159959515,
+     "sha256": "a1e8f7289661f757ad7c7f0817c882b36179b209129b0b63e81df2acb093891f",
+     "url": "https://en.wikipedia.org/wiki/1998_Qatar_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar OpenDoha, QatarATP World SeriesHard – $975,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 326313,
+     "revision_id": 1192791040,
+     "sha256": "49b192df097f38aac897ddb856babb274376c71bc41b846487a93e4f15f57db9",
+     "url": "https://en.wikipedia.org/wiki/1998_Qatar_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1998-01-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-01-12",
+   "main_year_weeks": [
+    [
+     1998,
+     3
+    ]
+   ],
+   "occurrence_id": "atp_1998_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    3
+   ],
+   "run_weeks_offset_37": [
+    19
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Heineken_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-01-12",
+     "1998-01-18"
+    ],
+    "main_article": {
+     "bytes": 157906,
+     "revision_id": 1321499368,
+     "sha256": "b60dfdb86c3705ea47c45725db19a70807de2e29b4bbcdd533182522eb6deb0e",
+     "url": "https://en.wikipedia.org/wiki/1998_Heineken_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Heineken Open Auckland, New ZealandATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 302370,
+     "revision_id": 1192791867,
+     "sha256": "eb15c2280df324afe1a78cc1029b9126e52bea7f79f43ecaa9b190ed2efd701c",
+     "url": "https://en.wikipedia.org/wiki/1998_Heineken_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-01-11..1998-01-17 differ from canonical 1998-01-12..1998-01-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-01-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-01-12",
+   "main_year_weeks": [
+    [
+     1998,
+     3
+    ]
+   ],
+   "occurrence_id": "atp_1998_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    3
+   ],
+   "run_weeks_offset_37": [
+    19
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Sydney_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-01-11",
+     "1998-01-17"
+    ],
+    "main_article": {
+     "bytes": 201636,
+     "revision_id": 1386100927,
+     "sha256": "3653d7e0b693338888c8008386bda11c63cc11d26d2d8c06b915be02fd477c05",
+     "url": "https://en.wikipedia.org/wiki/1998_Sydney_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Sydney InternationalSydney, AustraliaATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 325073,
+     "revision_id": 1245081868,
+     "sha256": "9a5907ca0b054c7c667eb57942fd823965600429f4c090e85b2330774851b4c8",
+     "url": "https://en.wikipedia.org/wiki/1998_Sydney_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-02-02..1998-02-09 differ from canonical 1998-02-02..1998-02-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1998-02-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-02",
+   "main_year_weeks": [
+    [
+     1998,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1998_lyon",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "lyon",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Open_13",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-02-02",
+     "1998-02-09"
+    ],
+    "main_article": {
+     "bytes": 145203,
+     "revision_id": 1372144386,
+     "sha256": "e98818a9291a32187b524f8de40c0659f0d31aa5d58bf13fb058738bd9a5c47b",
+     "url": "https://en.wikipedia.org/wiki/1998_Open_13"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Open 13 Marseille, FranceATP World SeriesHard (i) – $514,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 316907,
+     "revision_id": 1311952774,
+     "sha256": "c069fde8e74257b1d2c247480f202267f0bc87667db3e12fcbf9d93f5745c00e",
+     "url": "https://en.wikipedia.org/wiki/1998_Open_13_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-02-02..1998-02-09 differ from canonical 1998-02-02..1998-02-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-02-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-02",
+   "main_year_weeks": [
+    [
+     1998,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1998_split_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "split_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Croatian_Indoors",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-02-02",
+     "1998-02-09"
+    ],
+    "main_article": {
+     "bytes": 140586,
+     "revision_id": 1361655912,
+     "sha256": "701614bf88360fd116ebd0e43dd2423d229e2915f62b4e6e9d399b5233f08339",
+     "url": "https://en.wikipedia.org/wiki/1998_Croatian_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Croatian IndoorsSplit, CroatiaATP World SeriesCarpet (i) – $375,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 321017,
+     "revision_id": 1335883469,
+     "sha256": "185834d120908e8934350768889cf9b1e74615db7552187537d42ef281b918e7",
+     "url": "https://en.wikipedia.org/wiki/1998_Croatian_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-02-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-09",
+   "main_year_weeks": [
+    [
+     1998,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1998_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Sybase_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-02-09",
+     "1998-02-15"
+    ],
+    "main_article": {
+     "bytes": 151551,
+     "revision_id": 1172528062,
+     "sha256": "819f89f5d1b6bcd01729f8fa0c85e5ddce039a5e617d761eeea926c3e6b4b057",
+     "url": "https://en.wikipedia.org/wiki/1998_Sybase_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Sybase Open San Jose, United States ATP World SeriesHard (i) – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 325320,
+     "revision_id": 1194411347,
+     "sha256": "3e19934291234765d0a33e5397670fe02288b2b981d2ba35a64f3ed0abdd887a",
+     "url": "https://en.wikipedia.org/wiki/1998_Sybase_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 31,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-02-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-09",
+   "main_year_weeks": [
+    [
+     1998,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1998_dubai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "dubai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Dubai_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-02-09",
+     "1998-02-15"
+    ],
+    "main_article": {
+     "bytes": 149021,
+     "revision_id": 1334671238,
+     "sha256": "56b134c9dca41d65ceebdeb289d575ede55272b8b0307128ebd5801a4ce71af2",
+     "url": "https://en.wikipedia.org/wiki/1998_Dubai_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Dubai Tennis Championships Dubai, United Arab Emirates ATP World SeriesHard – $1,014,250 – 32S/31Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 322735,
+     "revision_id": 1211067152,
+     "sha256": "7ef128c3eb9d7a92b75b8ede7d1e1517c5bb2878c2f732acbd18e456c55c5f0b",
+     "url": "https://en.wikipedia.org/wiki/1998_Dubai_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-02-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-09",
+   "main_year_weeks": [
+    [
+     1998,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1998_st_petersburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "st_petersburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_St._Petersburg_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-02-09",
+     "1998-02-15"
+    ],
+    "main_article": {
+     "bytes": 147549,
+     "revision_id": 1280794493,
+     "sha256": "4c632d0fb53d6511c7f8438060b137eb5254b89ff5ef224c4ca5ca9e8c7c6bf7",
+     "url": "https://en.wikipedia.org/wiki/1998_St._Petersburg_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "St. Petersburg Open St. Petersburg, Russia ATP World SeriesCarpet (i) – $315,000 – 32S/28Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 316731,
+     "revision_id": 1194410944,
+     "sha256": "8c774bc78cedfdaded8330d48a24c81cb8265b88757f64b9d4849e326e41492b",
+     "url": "https://en.wikipedia.org/wiki/1998_St._Petersburg_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-02-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-16",
+   "main_year_weeks": [
+    [
+     1998,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1998_antwerp_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "antwerp_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-02-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-16",
+   "main_year_weeks": [
+    [
+     1998,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1998_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-23",
+   "main_year_weeks": [
+    [
+     1998,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1998_philadelphia_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "philadelphia_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-02-23",
+   "main_year_weeks": [
+    [
+     1998,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1998_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-03-02..1998-03-09 differ from canonical 1998-03-02..1998-03-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-03-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-02",
+   "main_year_weeks": [
+    [
+     1998,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1998_las_vegas_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "las_vegas_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Tennis_Channel_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-03-02",
+     "1998-03-09"
+    ],
+    "main_article": {
+     "bytes": 151329,
+     "revision_id": 1374514951,
+     "sha256": "8a68e952acdd73d293e8920163e8b2cc998784ec5ecebb936189b560c40807b2",
+     "url": "https://en.wikipedia.org/wiki/1998_Tennis_Channel_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tennis Channel OpenScottsdale, United StatesATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 509844,
+     "revision_id": 1272779757,
+     "sha256": "28d1cd13ef22fec43903751c704f153ef0992a4549a305f1b845fbd415e71cfc",
+     "url": "https://en.wikipedia.org/wiki/1998_Tennis_Channel_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-03-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-02",
+   "main_year_weeks": [
+    [
+     1998,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1998_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-03-02",
+     "1998-03-08"
+    ],
+    "main_article": {
+     "bytes": 153241,
+     "revision_id": 1362081813,
+     "sha256": "5848d8d3b81b7bbe08118fe2b15309527f50c1347bab9d28195dbdb4a653b7c2",
+     "url": "https://en.wikipedia.org/wiki/1998_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN AMRO World Tennis TournamentRotterdam, NetherlandsATP World SeriesCarpet (i) – $725,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 319908,
+     "revision_id": 1361715761,
+     "sha256": "95274b03cbfa53690faf351a1684855917781072f15a05454b14899e67c13a28",
+     "url": "https://en.wikipedia.org/wiki/1998_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-03-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-09",
+   "main_year_weeks": [
+    [
+     1998,
+     11
+    ]
+   ],
+   "occurrence_id": "atp_1998_copenhagen_2003",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11
+   ],
+   "run_weeks_offset_37": [
+    27
+   ],
+   "series_id": "copenhagen_2003",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Copenhagen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-03-09",
+     "1998-03-15"
+    ],
+    "main_article": {
+     "bytes": 138250,
+     "revision_id": 1318097388,
+     "sha256": "fb8eb6131aec9893a76d13b3fae5f98278fb598eced0f87a8e09cc12c1a3762a",
+     "url": "https://en.wikipedia.org/wiki/1998_Copenhagen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copenhagen OpenCopenhagen, DenmarkATP World SeriesCarpet (i) – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 319495,
+     "revision_id": 1159938586,
+     "sha256": "79a5c05e9e348a5accc9e9ceec9b66c98cfa40af36a7a1bb96142c77da1bdb90",
+     "url": "https://en.wikipedia.org/wiki/1998_Copenhagen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-03-05..1998-03-15 differ from canonical 1998-03-09..1998-03-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-03-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-09",
+   "main_year_weeks": [
+    [
+     1998,
+     11
+    ]
+   ],
+   "occurrence_id": "atp_1998_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11
+   ],
+   "run_weeks_offset_37": [
+    27
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Newsweek_Champions_Cup_and_the_State_Farm_Evert_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-03-05",
+     "1998-03-15"
+    ],
+    "main_article": {
+     "bytes": 202365,
+     "revision_id": 1240871002,
+     "sha256": "3e0731bc69f2248691307a0c410b964f767a0461c24d14b874639d217d534f98",
+     "url": "https://en.wikipedia.org/wiki/1998_Newsweek_Champions_Cup_and_the_State_Farm_Evert_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Newsweek Champions Cup Indian Wells, United StatesATP Super 9Hard – $2,200,000 – 56S/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 648407,
+     "revision_id": 1272779835,
+     "sha256": "66111c9728015a195e0afca8f5f8d6593e9c1a0f9471fcd54e8cc4d535cc550a",
+     "url": "https://en.wikipedia.org/wiki/1998_Newsweek_Champions_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All thirty-two seeds received a bye to the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": 64,
+    "qualifying_rounds_derived": 2,
+    "seeds": 32,
+    "wild_cards": 6
+   },
+   "main_end_date": "1998-03-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-16",
+   "main_year_weeks": [
+    [
+     1998,
+     12
+    ],
+    [
+     1998,
+     13
+    ]
+   ],
+   "occurrence_id": "atp_1998_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12,
+    13
+   ],
+   "run_weeks_offset_37": [
+    28,
+    29
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Lipton_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-03-16",
+     "1998-03-29"
+    ],
+    "main_article": {
+     "bytes": 195227,
+     "revision_id": 1216434347,
+     "sha256": "06abc507acb4ed21261c478dd7c457430116f7907e66f057bd67a7118bbf345c",
+     "url": "https://en.wikipedia.org/wiki/1998_Lipton_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Lipton Championships Key Biscayne, United StatesATP Super 9Hard – $2,450,000 – 96S/64Q/48DSingles – Doubles",
+    "singles_article": {
+     "bytes": 717524,
+     "revision_id": 1319863930,
+     "sha256": "58d316e90c6cd5fc36fda79c6852c2c32eaf44515fb803b75bd3e18f325e0c64",
+     "url": "https://en.wikipedia.org/wiki/1998_Lipton_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-03-23..1998-03-30 differ from canonical 1998-03-23..1998-03-29; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-03-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-03-23",
+   "main_year_weeks": [
+    [
+     1998,
+     13
+    ]
+   ],
+   "occurrence_id": "atp_1998_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    13
+   ],
+   "run_weeks_offset_37": [
+    29
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Grand_Prix_Hassan_II",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-03-23",
+     "1998-03-30"
+    ],
+    "main_article": {
+     "bytes": 147100,
+     "revision_id": 1335417412,
+     "sha256": "b383bb3c9f825f8b3b1bdb1462b14b7b138102b3570dde33555c7932ca43cfc1",
+     "url": "https://en.wikipedia.org/wiki/1998_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan IICasablanca, MoroccoATP World SeriesClay – $210,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 315173,
+     "revision_id": 1294607059,
+     "sha256": "0f010142d99f3b5c7691fef7cd6cb9fe63858bb2c98e270db84424aa1cb04afd",
+     "url": "https://en.wikipedia.org/wiki/1998_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-04-06..1998-04-13 differ from canonical 1998-04-06..1998-04-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-06",
+   "main_year_weeks": [
+    [
+     1998,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1998_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Estoril_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-04-06",
+     "1998-04-13"
+    ],
+    "main_article": {
+     "bytes": 164102,
+     "revision_id": 1282093258,
+     "sha256": "365e689afed9630b5e95e1d58564d7f53ab3c38b267a180075acec808f09f49f",
+     "url": "https://en.wikipedia.org/wiki/1998_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril OpenOeiras, PortugalATP World SeriesClay – $600,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 317366,
+     "revision_id": 1181031378,
+     "sha256": "6a3f1a12001eacd2bcdeed0d329a3707cedf8fb4026cc741a884aa3c8de95d0f",
+     "url": "https://en.wikipedia.org/wiki/1998_Estoril_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-06",
+   "main_year_weeks": [
+    [
+     1998,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1998_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-06",
+     "1998-04-12"
+    ],
+    "main_article": {
+     "bytes": 142750,
+     "revision_id": 1375199122,
+     "sha256": "d9832c04e0168d2529fbf2f49f39d7584602573e433215d0d850584d4337cfed",
+     "url": "https://en.wikipedia.org/wiki/1998_Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Salem OpenHong Kong SARATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 320057,
+     "revision_id": 1321126922,
+     "sha256": "85126b8143841d9863a325b4cb2f5d3894721c6e07d3ef9b97370d752d417091",
+     "url": "https://en.wikipedia.org/wiki/1998_Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-04-06..1998-04-13 differ from canonical 1998-04-06..1998-04-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 22,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-06",
+   "main_year_weeks": [
+    [
+     1998,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1998_hong_kong_salem_2002",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "hong_kong_salem_2002",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Gold_Flake_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-04-06",
+     "1998-04-13"
+    ],
+    "main_article": {
+     "bytes": 153115,
+     "revision_id": 1321499349,
+     "sha256": "7fc3a5eb6c9485c2a77d665b4473d0851f4086f7b982b52dc1fa0fb4e2a956d7",
+     "url": "https://en.wikipedia.org/wiki/1998_Gold_Flake_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Gold Flake OpenChennai, IndiaATP World SeriesHard – $405,000 – 32S/22Q/16D/3QSingles – Doubles",
+    "singles_article": {
+     "bytes": 326238,
+     "revision_id": 1098597713,
+     "sha256": "cbaf747453519b5179a3366c61c20bc441e1a0116965e60354e1617f21b312d6",
+     "url": "https://en.wikipedia.org/wiki/1998_Gold_Flake_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-13",
+   "main_year_weeks": [
+    [
+     1998,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1998_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Torneo_Godó",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-13",
+     "1998-04-19"
+    ],
+    "main_article": {
+     "bytes": 155723,
+     "revision_id": 1225392302,
+     "sha256": "57351cca51b2931e1c9a54a2569e1435f98f8d0413d5692017b74340ba681a02",
+     "url": "https://en.wikipedia.org/wiki/1998_Torneo_God%C3%B3"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Torneo GodóBarcelona, SpainATP Championship SeriesClay – $825,000 – 56S/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 453573,
+     "revision_id": 1375687515,
+     "sha256": "94806867158717e640a9f92ab5721216731a07f88e7b07cb33089629d256a98b",
+     "url": "https://en.wikipedia.org/wiki/1998_Torneo_God%C3%B3_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-13",
+   "main_year_weeks": [
+    [
+     1998,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1998_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-13",
+     "1998-04-19"
+    ],
+    "main_article": {
+     "bytes": 203897,
+     "revision_id": 1313649472,
+     "sha256": "b886a8924f8db16a94923162f81c9071b522169e43b8a288aebb1540aa232af1",
+     "url": "https://en.wikipedia.org/wiki/1998_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Japan Open Tennis ChampionshipsTokyo, JapanATP Championship SeriesHard – $755,000 – 56S/28D/5QSingles – Doubles",
+    "singles_article": {
+     "bytes": 457539,
+     "revision_id": 1159947449,
+     "sha256": "d17948ff9fd1f453128190e9954a4b45fd6b334781c06cebb11da70d9ebfff3b",
+     "url": "https://en.wikipedia.org/wiki/1998_Japan_Open_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-04-20..1998-04-27 differ from canonical 1998-04-20..1998-04-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-20",
+   "main_year_weeks": [
+    [
+     1998,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1998_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_U.S._Men's_Clay_Court_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-04-20",
+     "1998-04-27"
+    ],
+    "main_article": {
+     "bytes": 154048,
+     "revision_id": 1320308845,
+     "sha256": "48611cce18cdaf7905d80641cf1e8a496cfa5c9d2cba1493ddb39af35722c936",
+     "url": "https://en.wikipedia.org/wiki/1998_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court ChampionshipsOrlando, United StatesATP World Series Clay – $264,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 300956,
+     "revision_id": 1346293387,
+     "sha256": "f44debed4f007113b2fe028ef11982cb3ef880604cd95a8acae2a15d7f87e2e3",
+     "url": "https://en.wikipedia.org/wiki/1998_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-04-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-20",
+   "main_year_weeks": [
+    [
+     1998,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1998_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Monte_Carlo_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-20",
+     "1998-04-26"
+    ],
+    "main_article": {
+     "bytes": 185288,
+     "revision_id": 1321499393,
+     "sha256": "a6cbdd14e8f9658211b7dcbc07d2e4263c6e34a175391f1977e73a7bb0feb165",
+     "url": "https://en.wikipedia.org/wiki/1998_Monte_Carlo_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte Carlo OpenRoquebrune-Cap-Martin, FranceATP Super 9 Clay – $2,200,000 – 56S/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 465169,
+     "revision_id": 1159951419,
+     "sha256": "1370fb3e45d0556a2ac25ac59d1557aa42ff47b960670f0e2043f6ba5abab583",
+     "url": "https://en.wikipedia.org/wiki/1998_Monte_Carlo_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-27",
+   "main_year_weeks": [
+    [
+     1998,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1998_atlanta_verizon_2001",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "atlanta_verizon_2001",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_AT&T_Challenge",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-27",
+     "1998-05-03"
+    ],
+    "main_article": {
+     "bytes": 142510,
+     "revision_id": 1172527500,
+     "sha256": "008e1661d1b9e89fbf92b7e44ce7a0a6f74690b85c44dd2c20db9441036a4753",
+     "url": "https://en.wikipedia.org/wiki/1998_AT%26T_Challenge"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "AT&T ChallengeAtlanta, United States ATP World SeriesClay – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 322463,
+     "revision_id": 1294607146,
+     "sha256": "7f4dfd3b22788d1bc27aaec4f7a14ac237a13e748d9e1bcc145affec9804b7ad",
+     "url": "https://en.wikipedia.org/wiki/1998_AT%26T_Challenge_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-04-27..1998-05-04 differ from canonical 1998-04-27..1998-05-03; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-27",
+   "main_year_weeks": [
+    [
+     1998,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1998_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_BMW_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-04-27",
+     "1998-05-04"
+    ],
+    "main_article": {
+     "bytes": 146879,
+     "revision_id": 1166188506,
+     "sha256": "de1b8ebaf6d5aa92604b304781b1f65ae60d460a6e2ea4d09d3ebc644f874a14",
+     "url": "https://en.wikipedia.org/wiki/1998_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW OpenMunich, Germany ATP World SeriesClay – $500,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 315880,
+     "revision_id": 1073872108,
+     "sha256": "2958cf7ac7e7b360ca2c23af03414475265e03a1992b4e7df3a1782ca7f5ebb9",
+     "url": "https://en.wikipedia.org/wiki/1998_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-04-27",
+   "main_year_weeks": [
+    [
+     1998,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1998_prague_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "prague_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Prague_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-04-27",
+     "1998-05-03"
+    ],
+    "main_article": {
+     "bytes": 144822,
+     "revision_id": 1338708528,
+     "sha256": "2405b43bb63ac2f13fd8453d416302590c3310f06b5695745f97a8de4998b81b",
+     "url": "https://en.wikipedia.org/wiki/1998_Prague_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Prague OpenPrague, Czech Republic ATP World SeriesClay – $340,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 321263,
+     "revision_id": 1269943762,
+     "sha256": "e5b4826fdc70078fabdbbfb407d900d17fcf9e12484918b061369ab753f3a21c",
+     "url": "https://en.wikipedia.org/wiki/1998_Prague_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-05-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-05-04",
+   "main_year_weeks": [
+    [
+     1998,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1998_delray_beach",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "delray_beach",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-05-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-05-04",
+   "main_year_weeks": [
+    [
+     1998,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1998_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 64,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-05-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-05-11",
+   "main_year_weeks": [
+    [
+     1998,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1998_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Italian_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-05-11",
+     "1998-05-17"
+    ],
+    "main_article": {
+     "bytes": 203747,
+     "revision_id": 1315855669,
+     "sha256": "81bfb28b4799876ef895435689e5a129a498af843e96137c85923202d4f8aa7a",
+     "url": "https://en.wikipedia.org/wiki/1998_Italian_Open_(tennis)"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Italian OpenRome, ItalyATP Super 9Clay – $2,200,000 – 64S/32DSingles – Doubles",
+    "singles_article": {
+     "bytes": 698071,
+     "revision_id": 1331753169,
+     "sha256": "512684df1a3783dd557de3d8c7f003f85e38a4358d7f22a86b2904c9968abefb",
+     "url": "https://en.wikipedia.org/wiki/1998_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-05-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-05-18",
+   "main_year_weeks": [
+    [
+     1998,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_1998_poertschach_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "poertschach_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_International_Raiffeisen_Grand_Prix",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-05-18",
+     "1998-05-24"
+    ],
+    "main_article": {
+     "bytes": 147268,
+     "revision_id": 1270757261,
+     "sha256": "0a6fcf6a535aa209d92b709ed799f5f1e4ff3aa79793001d2834ff390b68841c",
+     "url": "https://en.wikipedia.org/wiki/1998_International_Raiffeisen_Grand_Prix"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "International Raiffeisen Grand PrixSt. Pölten, AustriaATP World SeriesClay – $400,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 322465,
+     "revision_id": 1294607104,
+     "sha256": "6294926d1cb93c1fdaf3051d52fcdcac33dd12f628eb0a9f42b377fdfe834432",
+     "url": "https://en.wikipedia.org/wiki/1998_International_Raiffeisen_Grand_Prix_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-06-08",
+   "main_year_weeks": [
+    [
+     1998,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1998_bologna_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "bologna_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-06-08",
+   "main_year_weeks": [
+    [
+     1998,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1998_halle",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "halle",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-06-08",
+   "main_year_weeks": [
+    [
+     1998,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1998_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-06-15",
+   "main_year_weeks": [
+    [
+     1998,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1998_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Nottingham_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-06-15",
+     "1998-06-21"
+    ],
+    "main_article": {
+     "bytes": 150689,
+     "revision_id": 1321499457,
+     "sha256": "ff3eccad17425b3fb308287a34e38d0840900f749060cd3041f128308646e732",
+     "url": "https://en.wikipedia.org/wiki/1998_Nottingham_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Nottingham OpenNottingham, Great Britain ATP World SeriesGrass – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 316881,
+     "revision_id": 1091457423,
+     "sha256": "11496f258b4ea1ccd49ef442e7267ab475359c78dda4461dc2e288daef385145",
+     "url": "https://en.wikipedia.org/wiki/1998_Nottingham_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 25,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-06-15",
+   "main_year_weeks": [
+    [
+     1998,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1998_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Heineken_Trophy",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-06-15",
+     "1998-06-21"
+    ],
+    "main_article": {
+     "bytes": 193440,
+     "revision_id": 1367620037,
+     "sha256": "a4f7992c54024d3396dc48652c645daf2c066d60cb1526ace6122390c8911430",
+     "url": "https://en.wikipedia.org/wiki/1998_Heineken_Trophy"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Heineken Trophy's-Hertogenbosch, NetherlandsATP World SeriesGrass – $475,000 – 32S/25Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 322168,
+     "revision_id": 1294607099,
+     "sha256": "6c6f783ab55cb6221113f6214362311ee4251879e032be7766c2fbecaf94e594",
+     "url": "https://en.wikipedia.org/wiki/1998_Heineken_Trophy_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-06",
+   "main_year_weeks": [
+    [
+     1998,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1998_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-06",
+   "main_year_weeks": [
+    [
+     1998,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1998_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-06",
+   "main_year_weeks": [
+    [
+     1998,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1998_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-07-06",
+     "1998-07-12"
+    ],
+    "main_article": {
+     "bytes": 153504,
+     "revision_id": 1253622318,
+     "sha256": "13cbadd7346dee9b7edaf71bed8aa6f985b74a5322b6f28faa8c83c23ce5b9c6",
+     "url": "https://en.wikipedia.org/wiki/1998_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Miller Lite Hall of Fame Tennis Championships Newport, United StatesATP World SeriesGrass – $275,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 325311,
+     "revision_id": 1172527780,
+     "sha256": "6d9bcd19f430fb1f09a17d83e944eaf36d39123529cea63ab31f9b98d3bbbd95",
+     "url": "https://en.wikipedia.org/wiki/1998_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-07-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-20",
+   "main_year_weeks": [
+    [
+     1998,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1998_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-07-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-20",
+   "main_year_weeks": [
+    [
+     1998,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1998_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-27",
+   "main_year_weeks": [
+    [
+     1998,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1998_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Generali_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-07-27",
+     "1998-08-02"
+    ],
+    "main_article": {
+     "bytes": 149477,
+     "revision_id": 1274884479,
+     "sha256": "1fd5dd3969879c4bad1c662755b2228dab7b40847387e6900658350cc463c20d",
+     "url": "https://en.wikipedia.org/wiki/1998_Generali_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Generali OpenKitzbühel, Austria ATP World SeriesClay – $500,000 – 48S/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 415824,
+     "revision_id": 1346255753,
+     "sha256": "d3ce61a94b22e25df0edf31dc0c05db17866311793243efae4d20905e56a342f",
+     "url": "https://en.wikipedia.org/wiki/1998_Generali_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "1998-08-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-27",
+   "main_year_weeks": [
+    [
+     1998,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1998_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Mercedes-Benz_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-07-27",
+     "1998-08-02"
+    ],
+    "main_article": {
+     "bytes": 166152,
+     "revision_id": 1373929217,
+     "sha256": "76512f7a87c5991a1a4a0c3396f185a9742e85cf5eab82bfad8e4429d822d857",
+     "url": "https://en.wikipedia.org/wiki/1998_Mercedes-Benz_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Mercedes-Benz CupLos Angeles, United States ATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 320647,
+     "revision_id": 1172527887,
+     "sha256": "c6d27a4fba82cd96bae56c626ab277fb31d631f907a14ac58c01f2c2fb0f8068",
+     "url": "https://en.wikipedia.org/wiki/1998_Mercedes-Benz_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1998-08-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-07-27",
+   "main_year_weeks": [
+    [
+     1998,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1998_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Croatia_Open_Umag",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-07-27",
+     "1998-08-02"
+    ],
+    "main_article": {
+     "bytes": 144877,
+     "revision_id": 1308792865,
+     "sha256": "520aa46781f4c7ba7eddec97c77bfe38098120e5750fed185731c9d75dd39c88",
+     "url": "https://en.wikipedia.org/wiki/1998_Croatia_Open_Umag"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Croatia Open UmagUmag, Croatia ATP World SeriesClay – $375,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 322241,
+     "revision_id": 1308787227,
+     "sha256": "a6710060e8633d4d2200dc840bfc1e75124a5be5ebf432abe37b8f9f20aab9d5",
+     "url": "https://en.wikipedia.org/wiki/1998_Croatia_Open_Umag_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-08-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-03",
+   "main_year_weeks": [
+    [
+     1998,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1998_belgrade_2012",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "belgrade_2012",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-08-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-03",
+   "main_year_weeks": [
+    [
+     1998,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1998_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-08-10..1998-08-17 differ from canonical 1998-08-10..1998-08-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-10",
+   "main_year_weeks": [
+    [
+     1998,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1998_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Great_American_Insurance_ATP_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-08-10",
+     "1998-08-17"
+    ],
+    "main_article": {
+     "bytes": 158677,
+     "revision_id": 1381804779,
+     "sha256": "7eb293a4b9096110f0143eca7f4fb745a5cd86b134d9587c3720b6222f702697",
+     "url": "https://en.wikipedia.org/wiki/1998_Great_American_Insurance_ATP_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Great American Insurance ATP ChampionshipsMason, United StatesATP Super 9Hard – $2,200,000 – 56S/28Q/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 468297,
+     "revision_id": 1272779774,
+     "sha256": "4e5fe44db3a9cf3fddd2474e02d58684c9ebf8f88c5b7a6c152119f52fb045bb",
+     "url": "https://en.wikipedia.org/wiki/1998_Great_American_Insurance_ATP_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 23,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-10",
+   "main_year_weeks": [
+    [
+     1998,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1998_san_marino_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "san_marino_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Campionati_Internazionali_di_San_Marino",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-08-10",
+     "1998-08-16"
+    ],
+    "main_article": {
+     "bytes": 145681,
+     "revision_id": 1021138881,
+     "sha256": "ef35e4b0cba45050f87acd3218559a4db2bce3b6c9ca6eb728f4311cb05217e1",
+     "url": "https://en.wikipedia.org/wiki/1998_Campionati_Internazionali_di_San_Marino"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di San MarinoCity of San Marino, San MarinoATP World SeriesClay – $275,000 – 32S/23Q/16D/2QSingles – Doubles",
+    "singles_article": {
+     "bytes": 320452,
+     "revision_id": 1294606722,
+     "sha256": "b2e1c4f577dca529fdcd856c2db45c959aed5465df99b3d6b58e66d984bd7663",
+     "url": "https://en.wikipedia.org/wiki/1998_Campionati_Internazionali_di_San_Marino_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-17",
+   "main_year_weeks": [
+    [
+     1998,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1998_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_RCA_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-08-17",
+     "1998-08-23"
+    ],
+    "main_article": {
+     "bytes": 149447,
+     "revision_id": 1183632149,
+     "sha256": "cd9ac1a1b9a18f9830a58705bf3a858b89ed8c7ba76d5882ed3f01cdc687643a",
+     "url": "https://en.wikipedia.org/wiki/1998_RCA_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "RCA ChampionshipsIndianapolis, United States ATP Championship SeriesHard – $915,000 – 56S/28Q/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 485763,
+     "revision_id": 1172528040,
+     "sha256": "407fc71a0a003f56a817e019d5f36ea05399d911138941124928d55497c00c56",
+     "url": "https://en.wikipedia.org/wiki/1998_RCA_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-17",
+   "main_year_weeks": [
+    [
+     1998,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1998_new_haven_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "new_haven_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Pilot_Pen_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-08-17",
+     "1998-08-23"
+    ],
+    "main_article": {
+     "bytes": 210223,
+     "revision_id": 1368227989,
+     "sha256": "bb8c50021f835e8c376dc867cb455b9fc5abcf5139941d9479eddda6be59d3f2",
+     "url": "https://en.wikipedia.org/wiki/1998_Pilot_Pen_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Pilot Pen InternationalNew Haven, United States ATP Championship SeriesHard – $745,000 – 56S/28Q/28DSingles – Doubles",
+    "singles_article": {
+     "bytes": 458592,
+     "revision_id": 1301409174,
+     "sha256": "178bdec45f1d85af5c9b8d2f939e4450ba64578a1288baa56065d000cc881c63",
+     "url": "https://en.wikipedia.org/wiki/1998_Pilot_Pen_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-24",
+   "main_year_weeks": [
+    [
+     1998,
+     35
+    ]
+   ],
+   "occurrence_id": "atp_1998_boston_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    35
+   ],
+   "run_weeks_offset_37": [
+    51
+   ],
+   "series_id": "boston_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_MFS_Pro_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-08-24",
+     "1998-08-30"
+    ],
+    "main_article": {
+     "bytes": 148150,
+     "revision_id": 1172527856,
+     "sha256": "100a778216107f19352eb18563a8e36874d75852e859e67c35c6695411143bbb",
+     "url": "https://en.wikipedia.org/wiki/1998_MFS_Pro_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "MFS Pro Tennis ChampionshipsBoston, United StatesATP World SeriesHard – $315,000 – 32S/16D/3QSingles – Doubles",
+    "singles_article": {
+     "bytes": 320541,
+     "revision_id": 1172528110,
+     "sha256": "2ebb7cb7dc4b24e9a2b5cfbb9d79d3258e60a83e57baf10941089c02553fc34a",
+     "url": "https://en.wikipedia.org/wiki/1998_U.S._Pro_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-08-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-08-24",
+   "main_year_weeks": [
+    [
+     1998,
+     35
+    ]
+   ],
+   "occurrence_id": "atp_1998_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    35
+   ],
+   "run_weeks_offset_37": [
+    51
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Waldbaum's_Hamlet_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-08-24",
+     "1998-08-30"
+    ],
+    "main_article": {
+     "bytes": 141568,
+     "revision_id": 1272779880,
+     "sha256": "2f928fe7297d238b17de11b04d9c82bfa75aab0c9ae151fca908d8c371823cec",
+     "url": "https://en.wikipedia.org/wiki/1998_Waldbaum's_Hamlet_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Waldbaum's Hamlet CupLong Island, United StatesATP World SeriesHard – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 321647,
+     "revision_id": 1272779890,
+     "sha256": "9c7ea2245b1bdf4e0a92fd09a0eec1482a6425211ab5461031a88a5bb291fbb7",
+     "url": "https://en.wikipedia.org/wiki/1998_Waldbaum's_Hamlet_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-09-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-09-14",
+   "main_year_weeks": [
+    [
+     1998,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_1998_bangkok_2013",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "bangkok_2013",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-09-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-09-14",
+   "main_year_weeks": [
+    [
+     1998,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_1998_belgrade_clay_2021",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "belgrade_clay_2021",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-09-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-09-14",
+   "main_year_weeks": [
+    [
+     1998,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_1998_brighton_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "brighton_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-09-28..1998-10-05 differ from canonical 1998-09-28..1998-10-04; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 29,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-09-28",
+   "main_year_weeks": [
+    [
+     1998,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1998_brussels",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "brussels",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Majorca_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-09-28",
+     "1998-10-05"
+    ],
+    "main_article": {
+     "bytes": 141251,
+     "revision_id": 1379672072,
+     "sha256": "0b53ef09b5ca1cece3929930887ea1ea2dedab18a8dacbd88ae291872429e06d",
+     "url": "https://en.wikipedia.org/wiki/1998_Majorca_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Majorca OpenMallorca, SpainATP World SeriesClay – $425,000 – 32S/29Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 296987,
+     "revision_id": 1311953242,
+     "sha256": "8e905dca8f67aad20494d120d5f19995f2389a4da5ac5c33fca89185db25d675",
+     "url": "https://en.wikipedia.org/wiki/1998_Majorca_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-09-28",
+   "main_year_weeks": [
+    [
+     1998,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1998_toulouse_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "toulouse_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Grand_Prix_de_Tennis_de_Toulouse",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-09-28",
+     "1998-10-04"
+    ],
+    "main_article": {
+     "bytes": 143950,
+     "revision_id": 1218800231,
+     "sha256": "9e3083541e2b4aa7a878cd03300adecadd64e3d3982baba6d0c1d9fd16b124f6",
+     "url": "https://en.wikipedia.org/wiki/1998_Grand_Prix_de_Tennis_de_Toulouse"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de ToulouseToulouse, FranceATP World SeriesHard (i) – $375,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 475439,
+     "revision_id": 1224463299,
+     "sha256": "af2e56e04fe3d15d598647dfd8067b2eb462970c485e8205b8cd3ed465609822",
+     "url": "https://en.wikipedia.org/wiki/1998_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-10-05..1998-10-12 differ from canonical 1998-10-05..1998-10-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-05",
+   "main_year_weeks": [
+    [
+     1998,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1998_bangalore_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "bangalore_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Shanghai_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-10-05",
+     "1998-10-12"
+    ],
+    "main_article": {
+     "bytes": 140660,
+     "revision_id": 1295137005,
+     "sha256": "864d95a41e1e5b6ebf7da35bc582ccda3de76e1dc2a0407789c151caa93ab61b",
+     "url": "https://en.wikipedia.org/wiki/1998_Shanghai_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Shanghai OpenShanghai, China ATP World SeriesCarpet (i) – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 321112,
+     "revision_id": 1076108484,
+     "sha256": "acb41750644d70f1064c153bad07b0179544bc5164a6286dba334d283d693f53",
+     "url": "https://en.wikipedia.org/wiki/1998_Shanghai_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-05",
+   "main_year_weeks": [
+    [
+     1998,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1998_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Davidoff_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-10-05",
+     "1998-10-11"
+    ],
+    "main_article": {
+     "bytes": 153468,
+     "revision_id": 1372763691,
+     "sha256": "4ef190d20146eaffce0caf76422c9521ea5bac5176e1cb97d0fb2645151ef3b1",
+     "url": "https://en.wikipedia.org/wiki/1998_Davidoff_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Davidoff Swiss IndoorsBasel, Switzerland ATP World SeriesHard (i) – $975,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 329970,
+     "revision_id": 1340445903,
+     "sha256": "104cb1a7c2545a7de8214614af1fc7c6b1efc99de7eab4faa9ac9d163c4c96d8",
+     "url": "https://en.wikipedia.org/wiki/1998_Davidoff_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-05",
+   "main_year_weeks": [
+    [
+     1998,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1998_palermo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "palermo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Campionati_Internazionali_di_Sicilia",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-10-05",
+     "1998-10-11"
+    ],
+    "main_article": {
+     "bytes": 146037,
+     "revision_id": 1375688862,
+     "sha256": "514e4b1419a030bb8fe93b79d314661df586aafce22ce5c24b270b41570197aa",
+     "url": "https://en.wikipedia.org/wiki/1998_Campionati_Internazionali_di_Sicilia"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di SiciliaPalermo, Italy ATP World SeriesClay – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 318994,
+     "revision_id": 1294606607,
+     "sha256": "18a8b84b4f0bf177e20520cac5b82164497d48675ba441690880f0dc72846d2e",
+     "url": "https://en.wikipedia.org/wiki/1998_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-12",
+   "main_year_weeks": [
+    [
+     1998,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1998_singapore_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "singapore_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Singapore_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-10-12",
+     "1998-10-18"
+    ],
+    "main_article": {
+     "bytes": 141660,
+     "revision_id": 1367225057,
+     "sha256": "6e95625bc3e4c6245c12c50761e571e16b0f13334f498b76e7ffc826e0d36ff6",
+     "url": "https://en.wikipedia.org/wiki/1998_Singapore_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Singapore OpenSingapore, Singapore ATP Championship SeriesHard (i) – $575,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 321355,
+     "revision_id": 1308678512,
+     "sha256": "59ef692b160b7aa6716c860e9dd7fd7f8b02079c22fc0ac0ba301f8bbeb7ecd1",
+     "url": "https://en.wikipedia.org/wiki/1998_Singapore_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-10-12..1998-10-19 differ from canonical 1998-10-12..1998-10-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-10-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-12",
+   "main_year_weeks": [
+    [
+     1998,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1998_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_CA-TennisTrophy",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-10-12",
+     "1998-10-19"
+    ],
+    "main_article": {
+     "bytes": 147315,
+     "revision_id": 1372146728,
+     "sha256": "b83ed1900b0923a7caa4bab0eff3fc7b91cf0770b75ba8e8d2693842ce33b702",
+     "url": "https://en.wikipedia.org/wiki/1998_CA-TennisTrophy"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "CA-TennisTrophyVienna, Austria ATP Championship SeriesCarpet (i) – $675,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 319535,
+     "revision_id": 1080363457,
+     "sha256": "1aba3a584e834850fd12d2df5b0cf208d2cd5940c88b8c97dd117349105605b8",
+     "url": "https://en.wikipedia.org/wiki/1998_CA-TennisTrophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-10-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-19",
+   "main_year_weeks": [
+    [
+     1998,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1998_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-10-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-19",
+   "main_year_weeks": [
+    [
+     1998,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1998_ostrava_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "ostrava_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-11-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-26",
+   "main_year_weeks": [
+    [
+     1998,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1998_acapulco",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "acapulco",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Abierto_Mexicano_Telcel",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-10-26",
+     "1998-11-01"
+    ],
+    "main_article": {
+     "bytes": 145544,
+     "revision_id": 1293573624,
+     "sha256": "d68d13afaaadf3f1da1cbd85ca582411678f66095d262166a762f3584070f35b",
+     "url": "https://en.wikipedia.org/wiki/1998_Abierto_Mexicano_Telcel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Abierto Mexicano TelcelMexico City, MexicoATP World SeriesClay – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 320161,
+     "revision_id": 1294606856,
+     "sha256": "2ed56c9eead0e6496eeb93be9775ddbb416bf8544b8e96285f6e4797a6bce6c9",
+     "url": "https://en.wikipedia.org/wiki/1998_Abierto_Mexicano_Telcel_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-10-26..1998-11-02 differ from canonical 1998-10-26..1998-11-01; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-11-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-10-26",
+   "main_year_weeks": [
+    [
+     1998,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1998_stuttgart_indoor_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "stuttgart_indoor_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Eurocard_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-10-26",
+     "1998-11-02"
+    ],
+    "main_article": {
+     "bytes": 144207,
+     "revision_id": 1361717821,
+     "sha256": "4bfc9333d5c741c6d37dc3f10ded4e722686d0be8e8184e494552135dac53d43",
+     "url": "https://en.wikipedia.org/wiki/1998_Eurocard_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Eurocard OpenStuttgart, GermanyATP Super 9Hard (i) – $2,200,000 – 48S/28Q/32D/3QSingles – Doubles",
+    "singles_article": {
+     "bytes": 441065,
+     "revision_id": 1361717949,
+     "sha256": "90ce22c3e543825f9964368554f62c50f6de1004e26cf0880ffa7ed8d6d523aa",
+     "url": "https://en.wikipedia.org/wiki/1998_Eurocard_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-11-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-02",
+   "main_year_weeks": [
+    [
+     1998,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1998_bogota_colombia_2001",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "bogota_colombia_2001",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Cerveza_Club_Colombia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-11-02",
+     "1998-11-08"
+    ],
+    "main_article": {
+     "bytes": 142752,
+     "revision_id": 1341569411,
+     "sha256": "401013486bef3c0e68edeea973e5e026a930cc538e673b7303ba26b499f813ad",
+     "url": "https://en.wikipedia.org/wiki/1998_Cerveza_Club_Colombia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Cerveza Club Colombia OpenBogotá, ColombiaATP World SeriesClay – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 320212,
+     "revision_id": 1341566536,
+     "sha256": "836c51851b0dcbeb22216cb363d37a05b771236517ef021b0a7bb3e06e729459",
+     "url": "https://en.wikipedia.org/wiki/1998_Cerveza_Club_Colombia_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-11-02..1998-11-09 differ from canonical 1998-11-02..1998-11-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": 24,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "1998-11-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-02",
+   "main_year_weeks": [
+    [
+     1998,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1998_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Paris_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-11-02",
+     "1998-11-09"
+    ],
+    "main_article": {
+     "bytes": 148776,
+     "revision_id": 1289037782,
+     "sha256": "c55df4142c57ab05397a364aa3ca367fcc951be29c0033535544493c3cfeea83",
+     "url": "https://en.wikipedia.org/wiki/1998_Paris_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris OpenParis, FranceATP Super 9Carpet (i) – $2,300,000 – 48S/24Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 444565,
+     "revision_id": 1163447682,
+     "sha256": "86fafeb3f709473fcd902bd2307955ca4c92fb2f4cc9b8a1e717804fc859d580",
+     "url": "https://en.wikipedia.org/wiki/1998_Paris_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "1998-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-09",
+   "main_year_weeks": [
+    [
+     1998,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1998_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-11-09",
+     "1998-11-15"
+    ],
+    "main_article": {
+     "bytes": 184605,
+     "revision_id": 1362420521,
+     "sha256": "f7c291c898552b512c2537d1b41f5e5f96e5b4bd6bed40e6d54aaf806a49e5d9",
+     "url": "https://en.wikipedia.org/wiki/1998_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin CupMoscow, Russia ATP World SeriesCarpet (i) – $1,125,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 319536,
+     "revision_id": 1177965308,
+     "sha256": "99f3112c5d315615763fd764872bbd1843e95acbc48c441d07318e227b5981f9",
+     "url": "https://en.wikipedia.org/wiki/1998_Kremlin_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1998-11-09..1998-11-16 differ from canonical 1998-11-09..1998-11-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-09",
+   "main_year_weeks": [
+    [
+     1998,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1998_santiago_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "santiago_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Chevrolet_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1998-11-09",
+     "1998-11-16"
+    ],
+    "main_article": {
+     "bytes": 142892,
+     "revision_id": 1364161913,
+     "sha256": "2b1246cf9229c06d0c8259c80da3fdd7832a69bda41745ebaae5f49835c6bb2c",
+     "url": "https://en.wikipedia.org/wiki/1998_Chevrolet_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Chevrolet CupSantiago, Chile ATP World SeriesClay – $315,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 315683,
+     "revision_id": 1184946530,
+     "sha256": "cf0e45f3f46990b550d2ab6cf43fe47ef76b975a39b4240677262f06378276e8",
+     "url": "https://en.wikipedia.org/wiki/1998_Movistar_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1998-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-09",
+   "main_year_weeks": [
+    [
+     1998,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1998_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1998_Stockholm_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1998-11-09",
+     "1998-11-15"
+    ],
+    "main_article": {
+     "bytes": 152628,
+     "revision_id": 1301567352,
+     "sha256": "789e5d52dcc2d3e1aae087475e9c7c13597daf3e43d61433a14caf4499c1fa81",
+     "url": "https://en.wikipedia.org/wiki/1998_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm OpenStockholm, Sweden ATP World SeriesHard (i) – $800,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 318711,
+     "revision_id": 1301409419,
+     "sha256": "0f37a11e4f96709a8ba92574a530efd2df833aab9bf8dad9c62ff668050e121b",
+     "url": "https://en.wikipedia.org/wiki/1998_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1998-11-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1998",
+   "main_start_date": "1998-11-23",
+   "main_year_weeks": [
+    [
+     1998,
+     48
+    ]
+   ],
+   "occurrence_id": "atp_1998_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    48
+   ],
+   "run_weeks_offset_37": [
+    12
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 1728079,
+  "revision_id": 1385068294,
+  "role": "secondary_source",
+  "sha256": "28c358c464f57d142565d9de52e8a25c659fbe67c6db6bd622221b8bee80970f",
+  "url": "https://en.wikipedia.org/wiki/1998_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

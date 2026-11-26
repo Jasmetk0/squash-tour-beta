@@ -1,0 +1,4657 @@
+{
+ "atp_season_year": 2010,
+ "counts": {
+  "occurrences": 61,
+  "wikipedia_dates_agree": 38,
+  "wikipedia_dates_differ": 19,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-01-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-01-03",
+   "main_year_weeks": [
+    [
+     2010,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2010_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week",
+    "cross_iso_year",
+    "reviewed_source_iso_week_53_not_projected"
+   ],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Brisbane_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-01-03",
+     "2010-01-10"
+    ],
+    "main_article": {
+     "bytes": 244871,
+     "revision_id": 1383807537,
+     "sha256": "76524b9453685a7cee826a9af724227dcaeb02d5b05d7c1dd90a6b308c61aab3",
+     "url": "https://en.wikipedia.org/wiki/2010_Brisbane_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brisbane InternationalBrisbane, AustraliaATP World Tour 250Hard – $372,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 482314,
+     "revision_id": 1388062108,
+     "sha256": "666c083f1cf728d54f841fab49d5f9e0df7bb5e0f9560a8ccb44ffb980649307",
+     "url": "https://en.wikipedia.org/wiki/2010_Brisbane_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-01-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-01-04",
+   "main_year_weeks": [
+    [
+     2010,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2010_doha",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "doha",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Qatar_ExxonMobil_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-01-04",
+     "2010-01-09"
+    ],
+    "main_article": {
+     "bytes": 163680,
+     "revision_id": 1370104444,
+     "sha256": "be845087c7a0295c7451bcfa3a2b860e42bcc265ae9b937bfceb3bd84990e3c0",
+     "url": "https://en.wikipedia.org/wiki/2010_Qatar_ExxonMobil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar ExxonMobil Open Doha, QatarATP World Tour 250Hard – $1,024,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 510961,
+     "revision_id": 1333610170,
+     "sha256": "097d11f6f99668e9395bda78516c13d186cac407306850bf087686cf83ae96e4",
+     "url": "https://en.wikipedia.org/wiki/2010_Qatar_ExxonMobil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-01-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-01-04",
+   "main_year_weeks": [
+    [
+     2010,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2010_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Aircel_Chennai_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-01-04",
+     "2010-01-10"
+    ],
+    "main_article": {
+     "bytes": 164247,
+     "revision_id": 1184929931,
+     "sha256": "80603300959773fa4438cf0662a5f5d410a2006b4bcd61c19394f06ac95d1ba4",
+     "url": "https://en.wikipedia.org/wiki/2010_Aircel_Chennai_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Aircel Chennai Open Chennai, IndiaATP World Tour 250Hard – $398,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 511764,
+     "revision_id": 1184946424,
+     "sha256": "af746bf9c526a374164399e6251d3f13b76fea706f47b5bcd87abedf8aef5984",
+     "url": "https://en.wikipedia.org/wiki/2010_Aircel_Chennai_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye to the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-01-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-01-11",
+   "main_year_weeks": [
+    [
+     2010,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2010_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Heineken_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-01-11",
+     "2010-01-16"
+    ],
+    "main_article": {
+     "bytes": 168438,
+     "revision_id": 1223391663,
+     "sha256": "3e758418851cf02fb90f29889e3e31b7146ee1d7bc98cb5e71937b2e4c3724c6",
+     "url": "https://en.wikipedia.org/wiki/2010_Heineken_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Heineken Open Auckland, New ZealandATP World Tour 250Hard – $355,500 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 421546,
+     "revision_id": 1120660727,
+     "sha256": "3de46adc63c826a571ccad1c64a356c36e66f128b8ec95e0b7213f4721135202",
+     "url": "https://en.wikipedia.org/wiki/2010_Heineken_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-01-10..2010-01-16 differ from canonical 2010-01-11..2010-01-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye to the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-01-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-01-11",
+   "main_year_weeks": [
+    [
+     2010,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2010_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Medibank_International_Sydney",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-01-10",
+     "2010-01-16"
+    ],
+    "main_article": {
+     "bytes": 234915,
+     "revision_id": 1386101199,
+     "sha256": "93db7377db8db03e4901d73e933ffbafcd731aa6f80e593fc16df06f8f42fdf8",
+     "url": "https://en.wikipedia.org/wiki/2010_Medibank_International_Sydney"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Medibank International Sydney Sydney, AustraliaATP World Tour 250Hard – $372,500 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 486767,
+     "revision_id": 1333609198,
+     "sha256": "53979f8027c932179c3214d9119e957eeff7a2795b8ca7938b6c17142c89b2f0",
+     "url": "https://en.wikipedia.org/wiki/2010_Medibank_International_Sydney_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2010-02-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-01",
+   "main_year_weeks": [
+    [
+     2010,
+     5
+    ]
+   ],
+   "occurrence_id": "atp_2010_cordoba",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    5
+   ],
+   "run_weeks_offset_37": [
+    21
+   ],
+   "series_id": "cordoba",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-01",
+   "main_year_weeks": [
+    [
+     2010,
+     5
+    ]
+   ],
+   "occurrence_id": "atp_2010_johannesburg_2011",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    5
+   ],
+   "run_weeks_offset_37": [
+    21
+   ],
+   "series_id": "johannesburg_2011",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_SA_Tennis_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-01",
+     "2010-02-07"
+    ],
+    "main_article": {
+     "bytes": 154727,
+     "revision_id": 1360767197,
+     "sha256": "f7f6e5a72abff5d8b3ae6f3f90f0ce6ce1c6684a61686bbb8fcbbef36e25dccc",
+     "url": "https://en.wikipedia.org/wiki/2010_SA_Tennis_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "SA Tennis Open Johannesburg, South AfricaATP World Tour 250Hard – $442,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 451704,
+     "revision_id": 1294463936,
+     "sha256": "f2341b931abc834730c2ca77dba6bf38ff0240cbc36e29d235fe957d963c19e8",
+     "url": "https://en.wikipedia.org/wiki/2010_SA_Tennis_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2010-02-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-01",
+   "main_year_weeks": [
+    [
+     2010,
+     5
+    ]
+   ],
+   "occurrence_id": "atp_2010_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    5
+   ],
+   "run_weeks_offset_37": [
+    21
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-08",
+   "main_year_weeks": [
+    [
+     2010,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2010_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_SAP_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-08",
+     "2010-02-14"
+    ],
+    "main_article": {
+     "bytes": 174216,
+     "revision_id": 1321101861,
+     "sha256": "be0a8d14674900d42e2edef10a6179ad5f9a3e75c6203e2b06bdb39271f0059b",
+     "url": "https://en.wikipedia.org/wiki/2010_SAP_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "SAP Open San Jose, United StatesATP World Tour 250Hard (i) – $531,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 498913,
+     "revision_id": 1272784685,
+     "sha256": "a99249512ce088888e39206a9e04deb0537627252569b0ed95fbfd4e77aa302f",
+     "url": "https://en.wikipedia.org/wiki/2010_SAP_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-02-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-08",
+   "main_year_weeks": [
+    [
+     2010,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2010_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-08",
+     "2010-02-14"
+    ],
+    "main_article": {
+     "bytes": 172082,
+     "revision_id": 1362082264,
+     "sha256": "c8db54098ea1a47ee011e0b1d4fd07c303205a320c1bc7921f842f30776985bf",
+     "url": "https://en.wikipedia.org/wiki/2010_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN AMRO World Tennis Tournament Rotterdam, NetherlandsATP World Tour 500Hard (i) – €1,150,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 417561,
+     "revision_id": 1361427616,
+     "sha256": "1382cb5b292ed1bde4e3df9df48c324e38a6ee4befb681632c3f14a6f87e8813",
+     "url": "https://en.wikipedia.org/wiki/2010_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-08",
+   "main_year_weeks": [
+    [
+     2010,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2010_sao_paulo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "sao_paulo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Brasil_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-08",
+     "2010-02-14"
+    ],
+    "main_article": {
+     "bytes": 152126,
+     "revision_id": 1334519702,
+     "sha256": "8421c17240b25e41d425c333401e1d94e15e37e95c70ba3004078fa0e122d0c1",
+     "url": "https://en.wikipedia.org/wiki/2010_Brasil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brasil Open Costa do Sauípe, BrazilATP World Tour 250Clay (red) – $442,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 499291,
+     "revision_id": 1334580242,
+     "sha256": "4ad4b5bab2c263cd29279a56b474c40be128a6c7bfae305f48ed388300f14dc9",
+     "url": "https://en.wikipedia.org/wiki/2010_Brasil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-15",
+   "main_year_weeks": [
+    [
+     2010,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2010_buenos_aires",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "buenos_aires",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Copa_Telmex",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-15",
+     "2010-02-21"
+    ],
+    "main_article": {
+     "bytes": 170254,
+     "revision_id": 1161284313,
+     "sha256": "46eebd54d749fc2f68c336f7646c6e21f5cec7c86bad42f975803120841b7015",
+     "url": "https://en.wikipedia.org/wiki/2010_Copa_Telmex"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copa Telmex Buenos Aires, ArgentinaATP World Tour 250Clay (red) – $475,300 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 495911,
+     "revision_id": 1120660362,
+     "sha256": "89a25945949a3fb8d880a95de827b786c07678d00d728ac3ea1ad7f48f7e82c7",
+     "url": "https://en.wikipedia.org/wiki/2010_Copa_Telmex_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2010-02-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-15",
+   "main_year_weeks": [
+    [
+     2010,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2010_lyon",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "lyon",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2010-02-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-15",
+   "main_year_weeks": [
+    [
+     2010,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2010_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-22",
+   "main_year_weeks": [
+    [
+     2010,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2010_acapulco",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "acapulco",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Abierto_Mexicano_Telcel",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-22",
+     "2010-02-27"
+    ],
+    "main_article": {
+     "bytes": 238760,
+     "revision_id": 1327276972,
+     "sha256": "6fe2b6d1bcf5b6160d34de9f481ac84db812ca78faa3c1bc11888879386274d0",
+     "url": "https://en.wikipedia.org/wiki/2010_Abierto_Mexicano_Telcel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Abierto Mexicano Telcel Acapulco, MexicoATP World Tour 500Clay (red) – $955,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 414682,
+     "revision_id": 1365435711,
+     "sha256": "8203b24b22af613bb2d78e1e1eb60050d46233cb8009784ab2b427c6c35d37c0",
+     "url": "https://en.wikipedia.org/wiki/2010_Abierto_Mexicano_Telcel_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-22",
+   "main_year_weeks": [
+    [
+     2010,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2010_delray_beach",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "delray_beach",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Delray_Beach_International_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-02-22",
+     "2010-02-28"
+    ],
+    "main_article": {
+     "bytes": 173954,
+     "revision_id": 1386947108,
+     "sha256": "04cb12f508b12777e193b96a45bc35cdf67a2a5e35f7a8573ca6e9ed8107c24c",
+     "url": "https://en.wikipedia.org/wiki/2010_Delray_Beach_International_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Delray Beach International Tennis Championships Delray Beach, United StatesATP World Tour 250Hard – $442,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 522755,
+     "revision_id": 1386947114,
+     "sha256": "f487dcf9218f6ba15f537e3c10aefd8e729fe1ed282c41603fe61e6d72836c70",
+     "url": "https://en.wikipedia.org/wiki/2010_Delray_Beach_International_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-02-22..2010-02-28 differ from canonical 2010-02-22..2010-02-27; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-02-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-02-22",
+   "main_year_weeks": [
+    [
+     2010,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2010_dubai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "dubai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Dubai_Tennis_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-02-22",
+     "2010-02-28"
+    ],
+    "main_article": {
+     "bytes": 249256,
+     "revision_id": 1334674393,
+     "sha256": "fac4ff720d194d669bb73dd30982f94cf38591797fe4f414d8e2cf4da2d8c340",
+     "url": "https://en.wikipedia.org/wiki/2010_Dubai_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barclays Dubai Tennis Championships Dubai, United Arab EmiratesATP World Tour 500Hard – $1,619,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 418852,
+     "revision_id": 1365287080,
+     "sha256": "016a10c05f87bfdcbfb8211e9ee38005f4ea9be78f6b5670f65ccd71417a51bb",
+     "url": "https://en.wikipedia.org/wiki/2010_Dubai_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-03-08..2010-03-21 differ from canonical 2010-03-11..2010-03-21; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 32,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-03-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-03-11",
+   "main_year_weeks": [
+    [
+     2010,
+     10
+    ],
+    [
+     2010,
+     11
+    ]
+   ],
+   "occurrence_id": "atp_2010_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10,
+    11
+   ],
+   "run_weeks_offset_37": [
+    26,
+    27
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_BNP_Paribas_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-03-08",
+     "2010-03-21"
+    ],
+    "main_article": {
+     "bytes": 350887,
+     "revision_id": 1272784266,
+     "sha256": "a21c79e8ec77d2004e49321979d4988216e901eb6064c92efd46014f799a46e2",
+     "url": "https://en.wikipedia.org/wiki/2010_BNP_Paribas_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BNP Paribas Open Indian Wells, United StatesATP World Tour Masters 1000Hard – $3,645,000 – 96S/32DSingles – Doubles",
+    "singles_article": {
+     "bytes": 994895,
+     "revision_id": 1365787564,
+     "sha256": "092760551b5df03c2e84ba556d23b25278c99b6fbab373f4d1f2b3c4ea5fd86d",
+     "url": "https://en.wikipedia.org/wiki/2010_BNP_Paribas_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-03-22..2010-04-04 differ from canonical 2010-03-24..2010-04-04; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": null,
+    "seeds": 32,
+    "wild_cards": 4
+   },
+   "main_end_date": "2010-04-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-03-24",
+   "main_year_weeks": [
+    [
+     2010,
+     12
+    ],
+    [
+     2010,
+     13
+    ]
+   ],
+   "occurrence_id": "atp_2010_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12,
+    13
+   ],
+   "run_weeks_offset_37": [
+    28,
+    29
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Sony_Ericsson_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-03-22",
+     "2010-04-04"
+    ],
+    "main_article": {
+     "bytes": 457873,
+     "revision_id": 1378438128,
+     "sha256": "3c5169a2e655543b5e669fd80e09dd6285858cdb917ee46af34cd911d3a815bb",
+     "url": "https://en.wikipedia.org/wiki/2010_Sony_Ericsson_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Sony Ericsson Open Key Biscayne, United StatesATP World Tour Masters 1000Hard – $3,645,000 – 96S/32DSingles – Doubles",
+    "singles_article": {
+     "bytes": 989061,
+     "revision_id": 1272784716,
+     "sha256": "82b927d245ddf015dbc76bda04e962ffd9ffbe00628065f35d62202b293b9c6c",
+     "url": "https://en.wikipedia.org/wiki/2010_Sony_Ericsson_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-04-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-04-05",
+   "main_year_weeks": [
+    [
+     2010,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_2010_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_U.S._Men's_Clay_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-04-05",
+     "2010-04-11"
+    ],
+    "main_article": {
+     "bytes": 173871,
+     "revision_id": 1320310565,
+     "sha256": "c29c65ff8be5995f1d92ff71fd570dd3ca80260c5ae0b03237d703f055805b4e",
+     "url": "https://en.wikipedia.org/wiki/2010_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "US Men's Clay Court Championships Houston, United StatesATP World Tour 250Clay – $442,500 (maroon) – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 449432,
+     "revision_id": 1346292915,
+     "sha256": "e564793778d6ee3bbe7008c5b339da17390b5b5917f9ad07b646c83f40813bb8",
+     "url": "https://en.wikipedia.org/wiki/2010_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-04-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-04-05",
+   "main_year_weeks": [
+    [
+     2010,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_2010_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Grand_Prix_Hassan_II",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-04-05",
+     "2010-04-11"
+    ],
+    "main_article": {
+     "bytes": 155939,
+     "revision_id": 1335421143,
+     "sha256": "f49a2c66edeb1d419aa4b794afc1248cdc6bf44b6c2295dcc390ad84b79711d4",
+     "url": "https://en.wikipedia.org/wiki/2010_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan II Casablanca, MoroccoATP World Tour 250Clay (red) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 435355,
+     "revision_id": 1108437209,
+     "sha256": "11ff8e68a02da55accefea321d39ffab1a96339ea8940762b8049ac099b05cdd",
+     "url": "https://en.wikipedia.org/wiki/2010_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-04-10..2010-04-18 differ from canonical 2010-04-11..2010-04-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-04-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-04-11",
+   "main_year_weeks": [
+    [
+     2010,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_2010_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Monte-Carlo_Rolex_Masters",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-04-10",
+     "2010-04-18"
+    ],
+    "main_article": {
+     "bytes": 304564,
+     "revision_id": 1179334383,
+     "sha256": "72c9638b13f1887cd03f6eb5c9c80148d5a64a28151766e779e219ee77fbecf4",
+     "url": "https://en.wikipedia.org/wiki/2010_Monte-Carlo_Rolex_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte-Carlo Rolex Masters Roquebrune-Cap-Martin, FranceATP World Tour Masters 1000Clay (red) – €2,227,500 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 634209,
+     "revision_id": 1353059400,
+     "sha256": "a8844e09b3a8adb28ccea66ab67741c713aee903070d6fba9a0544d48b182183",
+     "url": "https://en.wikipedia.org/wiki/2010_Monte-Carlo_Rolex_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-04-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-04-19",
+   "main_year_weeks": [
+    [
+     2010,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_2010_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Barcelona_Open_Banco_Sabadell",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-04-19",
+     "2010-04-25"
+    ],
+    "main_article": {
+     "bytes": 210748,
+     "revision_id": 1277842582,
+     "sha256": "a59c972e9aea1b7336e56d9ca2d4ae0f10155361d9d37f595e64701199a448ab",
+     "url": "https://en.wikipedia.org/wiki/2010_Barcelona_Open_Banco_Sabadell"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barcelona Open Banco Sabadell Barcelona, SpainATP World Tour 500Clay (red) – €1,550,000 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 658263,
+     "revision_id": 1273376639,
+     "sha256": "f80ed52c0fe1b2caacd365ef762e93f37081c70188b5f251cdac55bad5f940a8",
+     "url": "https://en.wikipedia.org/wiki/2010_Barcelona_Open_Banco_Sabadell_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-04-24..2010-05-02 differ from canonical 2010-04-25..2010-05-02; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-05-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-04-25",
+   "main_year_weeks": [
+    [
+     2010,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_2010_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Italian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-04-24",
+     "2010-05-02"
+    ],
+    "main_article": {
+     "bytes": 293700,
+     "revision_id": 1378445241,
+     "sha256": "4079552567c3d14e6c4f022f45d5c009ccc636fe13558f8050ed8b4f01906629",
+     "url": "https://en.wikipedia.org/wiki/2010_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Internazionali BNL d'Italia Rome, ItalyATP World Tour Masters 1000Clay (red) – €2,227,500 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 644271,
+     "revision_id": 1373212823,
+     "sha256": "c1430e7cef9e4c49818b803255318d7e2b2d61570cdcd59373f06b6191f7b619",
+     "url": "https://en.wikipedia.org/wiki/2010_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-05-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-05-02",
+   "main_year_weeks": [
+    [
+     2010,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2010_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_BMW_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-05-02",
+     "2010-05-09"
+    ],
+    "main_article": {
+     "bytes": 163795,
+     "revision_id": 1318696128,
+     "sha256": "8766adcddc51d25df32db374ac1e1542247a7888c6539d22e9c4bbcb4e97ec53",
+     "url": "https://en.wikipedia.org/wiki/2010_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW Open Munich, GermanyATP World Tour 250Clay (red) – €398,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 310684,
+     "revision_id": 1120659993,
+     "sha256": "24bd844458117377d2164d4bbc75e6ffbee9f687ed295fda81c537d7a38521bc",
+     "url": "https://en.wikipedia.org/wiki/2010_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The first four seeds gets a first-round bye.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-05-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-05-03",
+   "main_year_weeks": [
+    [
+     2010,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2010_belgrade_2012",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "belgrade_2012",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Serbia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-05-03",
+     "2010-05-09"
+    ],
+    "main_article": {
+     "bytes": 158228,
+     "revision_id": 1345462413,
+     "sha256": "f340f8eefc768093438f8219da01843c478d40025fdefb99f9ec340c30c471be",
+     "url": "https://en.wikipedia.org/wiki/2010_Serbia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Serbia Open powered by Telekom Srbija Belgrade, SerbiaATP World Tour 250Clay (red) – €373,200 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 292734,
+     "revision_id": 1146573506,
+     "sha256": "d394bd568ba9dbfa1342cdebf511fadb169fcbd9ab94477da49d616045b4da98",
+     "url": "https://en.wikipedia.org/wiki/2010_Serbia_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-05-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-05-03",
+   "main_year_weeks": [
+    [
+     2010,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2010_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Estoril_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-05-03",
+     "2010-05-09"
+    ],
+    "main_article": {
+     "bytes": 223671,
+     "revision_id": 1327288839,
+     "sha256": "519b837271a7d3721a2da4df7048a248b91d2dd898257d9622af37e8e3e16971",
+     "url": "https://en.wikipedia.org/wiki/2010_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril Open Oeiras, PortugalATP World Tour 250Clay (red) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 292243,
+     "revision_id": 1180125128,
+     "sha256": "ed307b3dd6c25080933c6ebf5a21ae94827e08e0b58e3ba286d0a573ad56ecbe",
+     "url": "https://en.wikipedia.org/wiki/2010_Estoril_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-05-07..2010-05-16 differ from canonical 2010-05-09..2010-05-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-05-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-05-09",
+   "main_year_weeks": [
+    [
+     2010,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_2010_madrid",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "madrid",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Mutua_Madrileña_Madrid_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-05-07",
+     "2010-05-16"
+    ],
+    "main_article": {
+     "bytes": 278735,
+     "revision_id": 1327361059,
+     "sha256": "96deda399a955a9ae87a35c6622914ef36f5e243e4053ffdac4dacc7dca6a3b9",
+     "url": "https://en.wikipedia.org/wiki/2010_Mutua_Madrile%C3%B1a_Madrid_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mutua Madrileña Madrid Open Madrid, SpainATP World Tour Masters 1000Clay (red) – €2,835,000 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 649979,
+     "revision_id": 1353507033,
+     "sha256": "c3e499fe9dd0e55eb0aa8023af6a6fef0d72516acdcfea59ea991e04b8b53c7c",
+     "url": "https://en.wikipedia.org/wiki/2010_Mutua_Madrile%C3%B1a_Madrid_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-05-17..2010-05-22 differ from canonical 2010-05-16..2010-05-22; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-05-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-05-16",
+   "main_year_weeks": [
+    [
+     2010,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_2010_lyon_old",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "lyon_old",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Open_de_Nice_Côte_d'Azur",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-05-17",
+     "2010-05-22"
+    ],
+    "main_article": {
+     "bytes": 162302,
+     "revision_id": 1359379785,
+     "sha256": "52e54225df96709a74c42159cec034113b62da20375057b35936896ab410bd91",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_de_Nice_C%C3%B4te_d'Azur"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Open de Nice Côte d'Azur Nice, FranceATP World Tour 250Clay (red) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 299734,
+     "revision_id": 1364696572,
+     "sha256": "433905177c34cfa97e9437574f44905f7078d0963997071be1277eaafebe42b7",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_de_Nice_C%C3%B4te_d'Azur_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-06-05..2010-06-13 differ from canonical 2010-06-07..2010-06-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-06-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-06-07",
+   "main_year_weeks": [
+    [
+     2010,
+     23
+    ]
+   ],
+   "occurrence_id": "atp_2010_halle",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    23
+   ],
+   "run_weeks_offset_37": [
+    39
+   ],
+   "series_id": "halle",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Gerry_Weber_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-06-05",
+     "2010-06-13"
+    ],
+    "main_article": {
+     "bytes": 167346,
+     "revision_id": 1319823159,
+     "sha256": "a6d94f7a16441e6179e1f61b0983db0706d74c3178b093473ab50663850f9290",
+     "url": "https://en.wikipedia.org/wiki/2010_Gerry_Weber_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Gerry Weber Open Halle, GermanyATP World Tour 250Grass – €663,750 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 332770,
+     "revision_id": 1360141540,
+     "sha256": "455b763b0d3f0c0ac12110bd43e7cfdf98aea60cf56ba620f9f0b1ae256737fe",
+     "url": "https://en.wikipedia.org/wiki/2010_Gerry_Weber_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-06-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-06-07",
+   "main_year_weeks": [
+    [
+     2010,
+     23
+    ]
+   ],
+   "occurrence_id": "atp_2010_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    23
+   ],
+   "run_weeks_offset_37": [
+    39
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Aegon_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-06-07",
+     "2010-06-13"
+    ],
+    "main_article": {
+     "bytes": 181435,
+     "revision_id": 1276266053,
+     "sha256": "193c2e04fa13177830bd3bbcca67ade094f8e5179962825bdfc8ec8a25657834",
+     "url": "https://en.wikipedia.org/wiki/2010_Aegon_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Aegon Championships London, United KingdomATP World Tour 250Grass – €627,700 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 484445,
+     "revision_id": 1359974706,
+     "sha256": "046d4196b9bcf78a25e31d599deeffe291f6581061da98ac059d20e6f737217d",
+     "url": "https://en.wikipedia.org/wiki/2010_Aegon_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-06-12..2010-06-19 differ from canonical 2010-06-13..2010-06-19; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-06-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-06-13",
+   "main_year_weeks": [
+    [
+     2010,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2010_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Aegon_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-06-12",
+     "2010-06-19"
+    ],
+    "main_article": {
+     "bytes": 236760,
+     "revision_id": 1365148055,
+     "sha256": "94da849e39d7f3f79113bffe940779429c9321e77d5bd27a515a21a70dd49031",
+     "url": "https://en.wikipedia.org/wiki/2010_Aegon_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Aegon International Eastbourne, United KingdomATP World Tour 250Grass – €405,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 319486,
+     "revision_id": 1360300456,
+     "sha256": "d9630ae38aa11c4a08f8f55faa8e7ad2736b67121855d006d2fbc15ddf788919",
+     "url": "https://en.wikipedia.org/wiki/2010_Aegon_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-06-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-06-13",
+   "main_year_weeks": [
+    [
+     2010,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2010_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_UNICEF_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-06-13",
+     "2010-06-19"
+    ],
+    "main_article": {
+     "bytes": 223857,
+     "revision_id": 1160595836,
+     "sha256": "d6883941cdbd64c8ad7cb0da0ec6cd85eee7b09094a09445502ebafdd0f37678",
+     "url": "https://en.wikipedia.org/wiki/2010_UNICEF_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "UNICEF Open 's-Hertogenbosch, NetherlandsATP World Tour 250Grass – €398,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 292431,
+     "revision_id": 1160595756,
+     "sha256": "412277c2e437ccde011c7175b6edd16c5402a9940b32db7b40f5ca5964c06221",
+     "url": "https://en.wikipedia.org/wiki/2010_UNICEF_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-07-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-05",
+   "main_year_weeks": [
+    [
+     2010,
+     27
+    ]
+   ],
+   "occurrence_id": "atp_2010_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    27
+   ],
+   "run_weeks_offset_37": [
+    43
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Campbell's_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-05",
+     "2010-07-11"
+    ],
+    "main_article": {
+     "bytes": 164841,
+     "revision_id": 1378186742,
+     "sha256": "f68b9a3dd346399373f0b44cbb86504e1d70f2fefe5659931de449d8d187075f",
+     "url": "https://en.wikipedia.org/wiki/2010_Campbell's_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campbell's Hall of Fame Tennis Championships Newport, United StatesATP World Tour 250Grass – $442,500 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 324586,
+     "revision_id": 1364214235,
+     "sha256": "657cf983d57b9886c753ba5b2a8fa5c20bcc5370fd94190b11cdfd67d3426851",
+     "url": "https://en.wikipedia.org/wiki/2010_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-07-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-12",
+   "main_year_weeks": [
+    [
+     2010,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_2010_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-12",
+     "2010-07-18"
+    ],
+    "main_article": {
+     "bytes": 228968,
+     "revision_id": 1320042179,
+     "sha256": "2a5abc3aa9895beb07f24a05ffc6308b1b22a1e8637ca8a67cb3f2329eb527c0",
+     "url": "https://en.wikipedia.org/wiki/2010_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "SkiStar Swedish Open Båstad, SwedenATP World Tour 250Clay (red) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 289448,
+     "revision_id": 1352153543,
+     "sha256": "81488332f9383bbae2d31fa19a654c8915f3884f7f4e2bab48754ea20eeceafb",
+     "url": "https://en.wikipedia.org/wiki/2010_Swedish_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-07-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-12",
+   "main_year_weeks": [
+    [
+     2010,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_2010_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_MercedesCup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-12",
+     "2010-07-18"
+    ],
+    "main_article": {
+     "bytes": 163716,
+     "revision_id": 1370041679,
+     "sha256": "6b21e92e8bc767bff995d67803caa6c0d80eadaea08e82f69e93da8d6a01eec1",
+     "url": "https://en.wikipedia.org/wiki/2010_MercedesCup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "MercedesCup Stuttgart, GermanyATP World Tour 250Clay (red) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 296318,
+     "revision_id": 1346246363,
+     "sha256": "49e8164579a0d42891a80c5c1b30ea83615f1dbddf7d8fae57664738851ac9b8",
+     "url": "https://en.wikipedia.org/wiki/2010_MercedesCup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-07-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-19",
+   "main_year_weeks": [
+    [
+     2010,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2010_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Atlanta_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-19",
+     "2010-07-25"
+    ],
+    "main_article": {
+     "bytes": 170413,
+     "revision_id": 1272784249,
+     "sha256": "289aac006a8f794a0114c80ca8745803072885a2b5c391fe0e288d8fa467f050",
+     "url": "https://en.wikipedia.org/wiki/2010_Atlanta_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Atlanta Tennis Championships Atlanta, United StatesATP World Tour 250Hard – $531,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 294319,
+     "revision_id": 1301790310,
+     "sha256": "bd0366d5ef1c38f58e7a310cfd96abd1ef5b4c38efe38c8bf9ec9cfbb2b98612",
+     "url": "https://en.wikipedia.org/wiki/2010_Atlanta_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-07-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-19",
+   "main_year_weeks": [
+    [
+     2010,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2010_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_International_German_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-19",
+     "2010-07-25"
+    ],
+    "main_article": {
+     "bytes": 191154,
+     "revision_id": 1351858417,
+     "sha256": "30055d993f6596e6a622ad407971f146f904d70db3c8ccfb43b73f4495e39a47",
+     "url": "https://en.wikipedia.org/wiki/2010_International_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "International German Open Hamburg, GermanyATP World Tour 500Clay (red) – €1,000,000 – 48S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 573777,
+     "revision_id": 1357070549,
+     "sha256": "199671a61d0351688adc865f1e4514e042e28bf3b29df251778b8682206acf44",
+     "url": "https://en.wikipedia.org/wiki/2010_International_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-08-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-25",
+   "main_year_weeks": [
+    [
+     2010,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2010_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Allianz_Suisse_Open_Gstaad",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-25",
+     "2010-08-01"
+    ],
+    "main_article": {
+     "bytes": 158241,
+     "revision_id": 1361578437,
+     "sha256": "6d33c9fc404ae06019c93c6ab6665527fc9b4e2473030d404939949f8eb78b9e",
+     "url": "https://en.wikipedia.org/wiki/2010_Allianz_Suisse_Open_Gstaad"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Allianz Suisse Open Gstaad Gstaad, SwitzerlandATP World Tour 250Clay (red) – €398,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 311532,
+     "revision_id": 1361576733,
+     "sha256": "411b0fe1f456bdece0db314684145053a5df02c77f501ba7e772d478da514c0f",
+     "url": "https://en.wikipedia.org/wiki/2010_Allianz_Suisse_Open_Gstaad_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-08-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-26",
+   "main_year_weeks": [
+    [
+     2010,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2010_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Farmers_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-26",
+     "2010-08-01"
+    ],
+    "main_article": {
+     "bytes": 196676,
+     "revision_id": 1272784382,
+     "sha256": "85ab872a13cf20b4c395a533ab641213dc73643df9ca61e3d08530352f7dfe21",
+     "url": "https://en.wikipedia.org/wiki/2010_Farmers_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Farmers Classic Los Angeles, United StatesATP World Tour 250Hard – $619,500 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 299023,
+     "revision_id": 1272784398,
+     "sha256": "2a8ae2300bb2d4f09b5dde3b304ebf7283a553f3766d960b63a4f4ac4d757015",
+     "url": "https://en.wikipedia.org/wiki/2010_Farmers_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-08-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-07-26",
+   "main_year_weeks": [
+    [
+     2010,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2010_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_ATP_Studena_Croatia_Open_Umag",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-07-26",
+     "2010-08-01"
+    ],
+    "main_article": {
+     "bytes": 153202,
+     "revision_id": 1308797741,
+     "sha256": "60d6a978bc1550d19fa0c169ed77bfb2d29d615378f528c8b1daff2fc961187f",
+     "url": "https://en.wikipedia.org/wiki/2010_ATP_Studena_Croatia_Open_Umag"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP Studena Croatia Open Umag Umag, CroatiaATP World Tour 250Clay (red) – €398,250 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 290449,
+     "revision_id": 1364571681,
+     "sha256": "743e16d5f6f8d30b44e5868e02f954a253086728941c161186248805c8cc7aaa",
+     "url": "https://en.wikipedia.org/wiki/2010_ATP_Studena_Croatia_Open_Umag_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-08-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-08-01",
+   "main_year_weeks": [
+    [
+     2010,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2010_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Legg_Mason_Tennis_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-08-01",
+     "2010-08-08"
+    ],
+    "main_article": {
+     "bytes": 196775,
+     "revision_id": 1324355828,
+     "sha256": "09d466a2da73cb38fd762b839a0366042152a63621f7c893181b7207ecad965a",
+     "url": "https://en.wikipedia.org/wiki/2010_Legg_Mason_Tennis_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Legg Mason Tennis Classic Washington, D.C., United StatesATP World Tour 500Hard – $1,165,500 – 48S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 583500,
+     "revision_id": 1314771216,
+     "sha256": "df74de792fb8df1682decd920586ca9baba317beb1c95a197791a8df1602746a",
+     "url": "https://en.wikipedia.org/wiki/2010_Legg_Mason_Tennis_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-08-07..2010-08-15 differ from canonical 2010-08-09..2010-08-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-08-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-08-09",
+   "main_year_weeks": [
+    [
+     2010,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_2010_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Rogers_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-08-07",
+     "2010-08-15"
+    ],
+    "main_article": {
+     "bytes": 312224,
+     "revision_id": 1344300753,
+     "sha256": "ec47870b150d067dce2d16ff0e6fd753eb20f8163e13fccb62046b985f22cb8e",
+     "url": "https://en.wikipedia.org/wiki/2010_Rogers_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Rogers Cup Toronto, CanadaATP World Tour Masters 1000Hard – $2,430,000 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 486470,
+     "revision_id": 1272784646,
+     "sha256": "36f46f79c528ac0059bfc25679b8e717cd89d9981847b5c8d96215064d2d3cb3",
+     "url": "https://en.wikipedia.org/wiki/2010_Rogers_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-08-14..2010-08-22 differ from canonical 2010-08-15..2010-08-22; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-08-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-08-15",
+   "main_year_weeks": [
+    [
+     2010,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_2010_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Western_&_Southern_Financial_Group_Masters_and_Women's_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-08-14",
+     "2010-08-22"
+    ],
+    "main_article": {
+     "bytes": 298650,
+     "revision_id": 1381805465,
+     "sha256": "4d2ebaeedeba13aed602ccea7bc9f7995c9e8428d7945ab1fcce098c08a64969",
+     "url": "https://en.wikipedia.org/wiki/2010_Western_%26_Southern_Financial_Group_Masters_and_Women's_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Western & Southern Financial Group Masters Mason, United StatesATP World Tour Masters 1000Hard – $2,430,000 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 640177,
+     "revision_id": 1369529116,
+     "sha256": "769a01960916459c4d9c525f7ff104745a3628bd5b12a3e1df0047dbb89c13db",
+     "url": "https://en.wikipedia.org/wiki/2010_Western_%26_Southern_Financial_Group_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-08-23..2010-08-28 differ from canonical 2010-08-22..2010-08-28; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-08-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-08-22",
+   "main_year_weeks": [
+    [
+     2010,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_2010_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Pilot_Pen_Tennis",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-08-23",
+     "2010-08-28"
+    ],
+    "main_article": {
+     "bytes": 270872,
+     "revision_id": 1375257772,
+     "sha256": "78f9bf1bc6533f00e8df60bf2d843d8b02c452dd11e4a83d2a5e18babb294833",
+     "url": "https://en.wikipedia.org/wiki/2010_Pilot_Pen_Tennis"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Pilot Pen Tennis New Haven, United StatesATP World Tour 250Hard – $663,750 – 48S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 439018,
+     "revision_id": 1272784570,
+     "sha256": "5260d695b8a26b42293f7fe8c06d6c4524e954326043a7ea11c5673823d6a415",
+     "url": "https://en.wikipedia.org/wiki/2010_Pilot_Pen_Tennis_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-09-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-09-20",
+   "main_year_weeks": [
+    [
+     2010,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_2010_belgrade_clay_2021",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "belgrade_clay_2021",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_BCR_Open_Romania",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-09-20",
+     "2010-09-26"
+    ],
+    "main_article": {
+     "bytes": 156437,
+     "revision_id": 1256969795,
+     "sha256": "51b428c44e010a3a94162b9558ff4bf61b424fa327d609e939f5a038f4648381",
+     "url": "https://en.wikipedia.org/wiki/2010_BCR_Open_Romania"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "BCR Open Romania Bucharest, RomaniaATP World Tour 250Clay (red) – €368,450 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 477749,
+     "revision_id": 1313760261,
+     "sha256": "87abf2c0fb96f81cfed116b0cbfdecad0a4b8219fdc187fe904c98d22caee12e",
+     "url": "https://en.wikipedia.org/wiki/2010_BCR_Open_Romania_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The first four seeds received a bye to the first round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-09-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-09-20",
+   "main_year_weeks": [
+    [
+     2010,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_2010_metz",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "metz",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Open_de_Moselle",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-09-20",
+     "2010-09-26"
+    ],
+    "main_article": {
+     "bytes": 159924,
+     "revision_id": 1328476453,
+     "sha256": "c77f1e7e087127ecac3ab438a1414261a75f2b98faab9fc75b0c9353d379c37a",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_de_Moselle"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Open de Moselle Metz, FranceATP World Tour 250Hard (i) – €398,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 289157,
+     "revision_id": 1154082583,
+     "sha256": "220f7858c85511e094b35be40f09427ba3471439f50bcc8787e3dbec8c5a5300",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_de_Moselle_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-09-27",
+   "main_year_weeks": [
+    [
+     2010,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2010_bangkok_2013",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "bangkok_2013",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_PTT_Thailand_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-09-27",
+     "2010-10-03"
+    ],
+    "main_article": {
+     "bytes": 154285,
+     "revision_id": 1276572723,
+     "sha256": "aadae528fab904daa4c279b88dbfa8a09a10e0272e726093314dd8f6245d6dd2",
+     "url": "https://en.wikipedia.org/wiki/2010_PTT_Thailand_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "PTT Thailand Open Bangkok, ThailandATP World Tour 250Hard (i) – $551,000 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 303352,
+     "revision_id": 1364814834,
+     "sha256": "620e40be3df7db70f99c1f4506620ae07fdb55110536beeb0240975a0d5c8c59",
+     "url": "https://en.wikipedia.org/wiki/2010_PTT_Thailand_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-09-27",
+   "main_year_weeks": [
+    [
+     2010,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2010_chengdu",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "chengdu",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Proton_Malaysian_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-09-27",
+     "2010-10-03"
+    ],
+    "main_article": {
+     "bytes": 158328,
+     "revision_id": 1351495492,
+     "sha256": "871ebd972d6347abdd9621e5dc6bb2945f9c92673dd37566533ed57c85ef76e5",
+     "url": "https://en.wikipedia.org/wiki/2010_Proton_Malaysian_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Proton Malaysian Open Kuala Lumpur, MalaysiaATP World Tour 250Hard (i) – $850,000 – 28S/17S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 296128,
+     "revision_id": 1204531031,
+     "sha256": "fddabbc25336ce2586db1d6b567650631bde427a5f4fc6861f4785be3cecf8ea",
+     "url": "https://en.wikipedia.org/wiki/2010_Proton_Malaysian_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-10-01..2010-10-11 differ from canonical 2010-10-04..2010-10-10; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-04",
+   "main_year_weeks": [
+    [
+     2010,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2010_beijing",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "beijing",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_China_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-10-01",
+     "2010-10-11"
+    ],
+    "main_article": {
+     "bytes": 255695,
+     "revision_id": 1327362703,
+     "sha256": "aa152e56e8566075fc1abcb678b55160a04929c9726c14a61990aeac713d4553",
+     "url": "https://en.wikipedia.org/wiki/2010_China_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "China Open Beijing, People's Republic of ChinaATP World Tour 500Hard – $2,100,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 406410,
+     "revision_id": 1120661219,
+     "sha256": "0f78e12479736902413c535ed8ccda7a1317cd5c56adc68d47c5fd7d426b0c95",
+     "url": "https://en.wikipedia.org/wiki/2010_China_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-04",
+   "main_year_weeks": [
+    [
+     2010,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2010_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Rakuten_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-10-04",
+     "2010-10-10"
+    ],
+    "main_article": {
+     "bytes": 177010,
+     "revision_id": 1381698523,
+     "sha256": "b8b3a026547b99ab07de893c43381e168f24b96f649c11a7ac8045c83277db51",
+     "url": "https://en.wikipedia.org/wiki/2010_Rakuten_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rakuten Japan Open Tennis Championships Tokyo, JapanATP World Tour 500Hard – $1,100,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 408397,
+     "revision_id": 1120661162,
+     "sha256": "5483357d5a299ea34a4bbfeeaec58622f3b1252ff5b1766dd31dd78c8393e5bf",
+     "url": "https://en.wikipedia.org/wiki/2010_Rakuten_Japan_Open_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-10-09..2010-10-17 differ from canonical 2010-10-10..2010-10-17; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-10",
+   "main_year_weeks": [
+    [
+     2010,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_2010_shanghai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "shanghai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Shanghai_Rolex_Masters_1000",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-10-09",
+     "2010-10-17"
+    ],
+    "main_article": {
+     "bytes": 183323,
+     "revision_id": 1352232134,
+     "sha256": "94f7802a0785ef05f99d1f6ab9757b2f1aeeeb677e54a7564997bad821c1fdb7",
+     "url": "https://en.wikipedia.org/wiki/2010_Shanghai_Rolex_Masters_1000"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Shanghai Rolex Masters Shanghai, People's Republic of ChinaATP World Tour Masters 1000Hard – $3,240,000 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 652638,
+     "revision_id": 1326076193,
+     "sha256": "0a3b4d36ac9d0674f16da4dd3b19edb5db4cd5408537c14c7e95f8ce8a804bae",
+     "url": "https://en.wikipedia.org/wiki/2010_Shanghai_Rolex_Masters_1000_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-10-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-18",
+   "main_year_weeks": [
+    [
+     2010,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2010_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-10-18",
+     "2010-10-24"
+    ],
+    "main_article": {
+     "bytes": 221169,
+     "revision_id": 1327362827,
+     "sha256": "b07654783dbfd53e34810d31d6342dbcfe7833b3821b23233838bd2e88e3a9de",
+     "url": "https://en.wikipedia.org/wiki/2010_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin Cup Moscow, RussiaATP World Tour 250Hard (i) – $1,000,000 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 293220,
+     "revision_id": 1206064683,
+     "sha256": "c9218fc5f4d0852fa93d7ff106144ed7551f0fc608454271c37fa0fd7b0440bc",
+     "url": "https://en.wikipedia.org/wiki/2010_Kremlin_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-10-16..2010-10-24 differ from canonical 2010-10-18..2010-10-24; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-18",
+   "main_year_weeks": [
+    [
+     2010,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2010_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_If_Stockholm_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-10-16",
+     "2010-10-24"
+    ],
+    "main_article": {
+     "bytes": 169912,
+     "revision_id": 1165962999,
+     "sha256": "1ee9b9ff07301ae7faaa64e7eaeb4707e03fbe7d25b2e89032f789bd732274a9",
+     "url": "https://en.wikipedia.org/wiki/2010_If_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "If Stockholm Open Stockholm, SwedenATP World Tour 250Hard (i) – €531,000 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 299518,
+     "revision_id": 1364557607,
+     "sha256": "814e4498aafced10948b4d095fcbab264ddb2cdccf8115c6d83d3dcae4deefb0",
+     "url": "https://en.wikipedia.org/wiki/2010_If_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-31",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-25",
+   "main_year_weeks": [
+    [
+     2010,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2010_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Open_Sud_de_France",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-10-25",
+     "2010-10-31"
+    ],
+    "main_article": {
+     "bytes": 165621,
+     "revision_id": 1272344058,
+     "sha256": "f0b1bca93aa0eb749706b47a635a6d3ae13ee967b2621dd14f9ec0eff3df7d0d",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_Sud_de_France"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Open Sud de France Montpellier, FranceATP World Tour 250Hard (i) – €575,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 488035,
+     "revision_id": 1361130702,
+     "sha256": "b253f614556b661651bb5fbefff8ea3e8cffbf20995d398604976b283ccf645a",
+     "url": "https://en.wikipedia.org/wiki/2010_Open_Sud_de_France_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-31",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-25",
+   "main_year_weeks": [
+    [
+     2010,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2010_st_petersburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "st_petersburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_St._Petersburg_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-10-25",
+     "2010-10-31"
+    ],
+    "main_article": {
+     "bytes": 152744,
+     "revision_id": 1280800825,
+     "sha256": "a1fea2884746b89bfe59a2bf8ff7083698b135c2b59dafa483d27c92f3d6a17b",
+     "url": "https://en.wikipedia.org/wiki/2010_St._Petersburg_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "St. Petersburg Open Saint Petersburg, RussiaATP World Tour 250Hard (i) – $663,750 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 311065,
+     "revision_id": 1314252401,
+     "sha256": "a9567a9fffb0354fb40183453789f960b13509882eeff8d3a4dea4b21dc28afc",
+     "url": "https://en.wikipedia.org/wiki/2010_St._Petersburg_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-10-23..2010-10-31 differ from canonical 2010-10-25..2010-10-31; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-10-31",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-25",
+   "main_year_weeks": [
+    [
+     2010,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2010_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Bank_Austria-TennisTrophy",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-10-23",
+     "2010-10-31"
+    ],
+    "main_article": {
+     "bytes": 169261,
+     "revision_id": 1351879825,
+     "sha256": "b0896b3f9460683d3ec176106ce19b0fa17b9625145e2025d06602154cfda5ba",
+     "url": "https://en.wikipedia.org/wiki/2010_Bank_Austria-TennisTrophy"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Bank Austria-TennisTrophy Vienna, AustriaATP World Tour 250Hard (i) – €575,250 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 290531,
+     "revision_id": 1351879916,
+     "sha256": "f5cc247d0d7312cb09deee0c3883a49be553585760a45975a721cba6c6ea3958",
+     "url": "https://en.wikipedia.org/wiki/2010_Bank_Austria-TennisTrophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-10-31..2010-11-06 differ from canonical 2010-10-31..2010-11-07; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-11-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-10-31",
+   "main_year_weeks": [
+    [
+     2010,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_2010_brussels",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "brussels",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Valencia_Open_500",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-10-31",
+     "2010-11-06"
+    ],
+    "main_article": {
+     "bytes": 161214,
+     "revision_id": 1288739951,
+     "sha256": "40ca4f8db1df430255d3fb1fff88d341448f077ae80345b30a0980c093e21daa",
+     "url": "https://en.wikipedia.org/wiki/2010_Valencia_Open_500"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Valencia Open 500 Valencia, SpainATP World Tour 500Hard (i) – €1,357,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 420580,
+     "revision_id": 1346233860,
+     "sha256": "592816c33f636847d6d0dd78479b1b64a084e39ed62a6809ea3f9aad2a9b7c9a",
+     "url": "https://en.wikipedia.org/wiki/2010_Valencia_Open_500_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-11-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-11-01",
+   "main_year_weeks": [
+    [
+     2010,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_2010_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_Davidoff_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-11-01",
+     "2010-11-07"
+    ],
+    "main_article": {
+     "bytes": 169702,
+     "revision_id": 1182857250,
+     "sha256": "1dfd7077854fd2cc3effdfe713d5fe3d8f9e2fb056a49ccc83e310630bc04b2a",
+     "url": "https://en.wikipedia.org/wiki/2010_Davidoff_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Davidoff Swiss IndoorsBasel, SwitzerlandATP World Tour 500Hard (i) – €1,225,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 418288,
+     "revision_id": 1201988179,
+     "sha256": "73ac08bde167c64f77394d2836ed48a668e4e253aaa57e37bd0972fb8c5088c3",
+     "url": "https://en.wikipedia.org/wiki/2010_Davidoff_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2010-11-06..2010-11-14 differ from canonical 2010-11-07..2010-11-14; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2010-11-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-11-07",
+   "main_year_weeks": [
+    [
+     2010,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_2010_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_BNP_Paribas_Masters",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2010-11-06",
+     "2010-11-14"
+    ],
+    "main_article": {
+     "bytes": 202906,
+     "revision_id": 1352669374,
+     "sha256": "1de95fe21288bb90cc7c16c63d60765529aa32093540633062c6d826a4994635",
+     "url": "https://en.wikipedia.org/wiki/2010_BNP_Paribas_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BNP Paribas Masters Paris, FranceATP World Tour Masters 1000Hard (i) – €2,227,500 – 48S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 582982,
+     "revision_id": 1210243956,
+     "sha256": "d0446a2599128bac29991056946106ad9b74c358498352dfb8c80266e7521192",
+     "url": "https://en.wikipedia.org/wiki/2010_BNP_Paribas_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 8,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 8,
+    "main_rounds": 3,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2010-11-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2010",
+   "main_start_date": "2010-11-21",
+   "main_year_weeks": [
+    [
+     2010,
+     47
+    ]
+   ],
+   "occurrence_id": "atp_2010_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    47
+   ],
+   "run_weeks_offset_37": [
+    11
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2010_ATP_World_Tour_Finals",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2010-11-21",
+     "2010-11-28"
+    ],
+    "main_article": {
+     "bytes": 751421,
+     "revision_id": 1386442694,
+     "sha256": "1e2822875868962477d771d712fda980ce1c6aa16aca8c12a969fccb63da5ef9",
+     "url": "https://en.wikipedia.org/wiki/2010_ATP_World_Tour_Finals"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barclays ATP World Tour Finals London, United KingdomATP World Tour FinalsHard (i) – £2,227,500 – 8S/8D (RR)Singles – Doubles",
+    "singles_article": {
+     "bytes": 174421,
+     "revision_id": 1387474858,
+     "sha256": "1d28976bbfe753606928f6eaec63ac322577436f46509a51b421567137c08b40",
+     "url": "https://en.wikipedia.org/wiki/2010_ATP_World_Tour_Finals_%E2%80%93_Singles"
+    }
+   }
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 2234320,
+  "revision_id": 1369900623,
+  "role": "secondary_source",
+  "sha256": "678f6826544ee0ff222f1565ee1275a80c264e55a989f81ebcf0739c20914535",
+  "url": "https://en.wikipedia.org/wiki/2010_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

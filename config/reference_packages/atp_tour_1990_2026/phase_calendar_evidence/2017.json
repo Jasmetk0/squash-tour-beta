@@ -1,0 +1,4950 @@
+{
+ "atp_season_year": 2017,
+ "counts": {
+  "occurrences": 64,
+  "wikipedia_dates_agree": 54,
+  "wikipedia_dates_differ": 10,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-01-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-01-01",
+   "main_year_weeks": [
+    [
+     2017,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2017_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week",
+    "cross_iso_year"
+   ],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Brisbane_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-01-01",
+     "2017-01-08"
+    ],
+    "main_article": {
+     "bytes": 306633,
+     "revision_id": 1387830233,
+     "sha256": "61db67e3319df6892ab9a4a16f4254a13d41b3f8c7e51bc0a28ad3dac6d8e258",
+     "url": "https://en.wikipedia.org/wiki/2017_Brisbane_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brisbane International Brisbane, AustraliaATP World Tour 250Hard – $495,630 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 400008,
+     "revision_id": 1386097679,
+     "sha256": "ae53028930f7777aa5e2de053757976e988254a632383665fc2a583c92133ac2",
+     "url": "https://en.wikipedia.org/wiki/2017_Brisbane_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-01-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-01-02",
+   "main_year_weeks": [
+    [
+     2017,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2017_doha",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "doha",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Qatar_ExxonMobil_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-01-02",
+     "2017-01-07"
+    ],
+    "main_article": {
+     "bytes": 191190,
+     "revision_id": 1210879552,
+     "sha256": "e27538668be71facc949379b84f2de920ada6366a7c94836f6ef08b2129df6bb",
+     "url": "https://en.wikipedia.org/wiki/2017_Qatar_ExxonMobil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar Open Doha, QatarATP World Tour 250Hard – $1,334,270 – 32S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 422438,
+     "revision_id": 1362925689,
+     "sha256": "4c7e1c0d7a697491308135508e1879fea8c4fbb36237b9ab89ff71c1184f7083",
+     "url": "https://en.wikipedia.org/wiki/2017_Qatar_ExxonMobil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-01-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-01-02",
+   "main_year_weeks": [
+    [
+     2017,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2017_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Aircel_Chennai_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-01-02",
+     "2017-01-08"
+    ],
+    "main_article": {
+     "bytes": 193660,
+     "revision_id": 1184939895,
+     "sha256": "8a33045cb5130044d161878a8a92fe798ef96b02ead1e85ecac798110e21a8a5",
+     "url": "https://en.wikipedia.org/wiki/2017_Aircel_Chennai_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Chennai Open Chennai, IndiaATP World Tour 250Hard – $505,730 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 382148,
+     "revision_id": 1184944098,
+     "sha256": "4ade374851edfa881c9f11867d9f8fa9331dbe5692bb1728c3a2e7b5cea1dea5",
+     "url": "https://en.wikipedia.org/wiki/2017_Aircel_Chennai_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-01-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-01-08",
+   "main_year_weeks": [
+    [
+     2017,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2017_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Apia_International_Sydney",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-01-08",
+     "2017-01-14"
+    ],
+    "main_article": {
+     "bytes": 316213,
+     "revision_id": 1386101801,
+     "sha256": "70ce9c3c2748f4612f392ce61376ec82c6f840ca0205c07c7179a6e4b2cfb531",
+     "url": "https://en.wikipedia.org/wiki/2017_Apia_International_Sydney"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Sydney International Sydney, AustraliaATP World Tour 250Hard – $495,630 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 389040,
+     "revision_id": 1162672707,
+     "sha256": "9f43e005bb2778611431656f576ff2ba5494b2bf54b1270497c7619a25a0e1df",
+     "url": "https://en.wikipedia.org/wiki/2017_Apia_International_Sydney_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-01-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-01-09",
+   "main_year_weeks": [
+    [
+     2017,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2017_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_ASB_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-01-09",
+     "2017-01-14"
+    ],
+    "main_article": {
+     "bytes": 323866,
+     "revision_id": 1362062845,
+     "sha256": "fd9bfd4447ec88b806d106c4ed0f266336abd6026dea1fc2e398d1bd0bd9f9e1",
+     "url": "https://en.wikipedia.org/wiki/2017_ASB_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Auckland Open Auckland, New Zealand ATP World Tour 250Hard – $508,360 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 396343,
+     "revision_id": 1197835206,
+     "sha256": "f91e61967e215b177e85c8e5ef09a0202a1b8ec11296f79dc6dd8d56fd2cf16d",
+     "url": "https://en.wikipedia.org/wiki/2017_ASB_Classic_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-06",
+   "main_year_weeks": [
+    [
+     2017,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2017_cordoba",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "cordoba",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Ecuador_Open_Quito",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-06",
+     "2017-02-12"
+    ],
+    "main_article": {
+     "bytes": 194019,
+     "revision_id": 1366548905,
+     "sha256": "d2436ac5c6493662be5e83537ad14dae84efcdcd569c2ef1f66a2adbbc10413c",
+     "url": "https://en.wikipedia.org/wiki/2017_Ecuador_Open_Quito"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Ecuador Open Quito, EcuadorATP World Tour 250Clay (red) – $540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 391365,
+     "revision_id": 1091323642,
+     "sha256": "941f3b019a66669a25314fd58a39eefa38a934ba601c07eec8f0e61407f4369c",
+     "url": "https://en.wikipedia.org/wiki/2017_Ecuador_Open_Quito_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-06",
+   "main_year_weeks": [
+    [
+     2017,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2017_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Open_Sud_de_France",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-06",
+     "2017-02-12"
+    ],
+    "main_article": {
+     "bytes": 210357,
+     "revision_id": 1252826285,
+     "sha256": "333955878566876479ade98cd6bf57d9e7817c7bde03cb98827e0eb1be989da0",
+     "url": "https://en.wikipedia.org/wiki/2017_Open_Sud_de_France"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Open Sud de France Montpellier, FranceATP World Tour 250Hard (i) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 393752,
+     "revision_id": 1366647557,
+     "sha256": "4e6b6e8f5d1552695b622e42c83bdfd17446500eb6552b7d2b91d6e295f25251",
+     "url": "https://en.wikipedia.org/wiki/2017_Open_Sud_de_France_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-02-05..2017-02-12 differ from canonical 2017-02-06..2017-02-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-06",
+   "main_year_weeks": [
+    [
+     2017,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2017_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Garanti_Koza_Sofia_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-02-05",
+     "2017-02-12"
+    ],
+    "main_article": {
+     "bytes": 207079,
+     "revision_id": 1295462486,
+     "sha256": "fad597d4bc0726ec84e824a1053653fd32c5a7bbf76af0c6da82e27639a04b25",
+     "url": "https://en.wikipedia.org/wiki/2017_Garanti_Koza_Sofia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Sofia Open Sofia, BulgariaATP World Tour 250Hard (i) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 400532,
+     "revision_id": 1366648487,
+     "sha256": "620918a433596475d24039b2ee899c1d096dfbd8365b57010ca3945b75c0bce1",
+     "url": "https://en.wikipedia.org/wiki/2017_Garanti_Koza_Sofia_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-13",
+   "main_year_weeks": [
+    [
+     2017,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2017_buenos_aires",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "buenos_aires",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Argentina_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-13",
+     "2017-02-19"
+    ],
+    "main_article": {
+     "bytes": 192557,
+     "revision_id": 1190415974,
+     "sha256": "027750deb8cddcfb3cf48fe3326c3c57838e14fd96ca7b0876d29affa3113ef4",
+     "url": "https://en.wikipedia.org/wiki/2017_Argentina_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Argentina Open Buenos Aires, ArgentinaATP World Tour 250Clay (red) – $624,340 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 393121,
+     "revision_id": 1362305757,
+     "sha256": "3dd8469fea9e788ee4f15015da8e2db84ea5dd838c0d9382a4e51f685986bbea",
+     "url": "https://en.wikipedia.org/wiki/2017_Argentina_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-13",
+   "main_year_weeks": [
+    [
+     2017,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2017_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Memphis_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-13",
+     "2017-02-19"
+    ],
+    "main_article": {
+     "bytes": 204027,
+     "revision_id": 1272788808,
+     "sha256": "014f9e71edee8ef164d132025ad0e8a43d991c23628f2032335b1688329c70c5",
+     "url": "https://en.wikipedia.org/wiki/2017_Memphis_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Memphis Open Memphis, United StatesATP World Tour 250Hard (i) – $720,410 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 398169,
+     "revision_id": 1364442285,
+     "sha256": "aedfcda489a0f97668cd4a12cad92169212926385b654affe22d68c259fb6597",
+     "url": "https://en.wikipedia.org/wiki/2017_Memphis_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-13",
+   "main_year_weeks": [
+    [
+     2017,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2017_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-13",
+     "2017-02-19"
+    ],
+    "main_article": {
+     "bytes": 217239,
+     "revision_id": 1363654259,
+     "sha256": "02e44730042b54163a5fb17692af70fd71b66d23f01bf1a5a106ee9115a29657",
+     "url": "https://en.wikipedia.org/wiki/2017_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rotterdam Open Rotterdam, NetherlandsATP World Tour 500Hard (i) – €1,854,365 – 32S/16Q/16D/4Q Singles – Doubles",
+    "singles_article": {
+     "bytes": 417133,
+     "revision_id": 1361428322,
+     "sha256": "f2bb8cf61ae3fcf287778a847b263b632c91443aeeab894ce38af82204f6a0ef",
+     "url": "https://en.wikipedia.org/wiki/2017_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-20",
+   "main_year_weeks": [
+    [
+     2017,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2017_delray_beach",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "delray_beach",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Delray_Beach_International_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-20",
+     "2017-02-26"
+    ],
+    "main_article": {
+     "bytes": 195021,
+     "revision_id": 1359600912,
+     "sha256": "b2f20e1aac13eb637ebfd1700999d2bb6ea924a9cc58d2631736e34dae4ee6a5",
+     "url": "https://en.wikipedia.org/wiki/2017_Delray_Beach_International_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Delray Beach Open Delray Beach, United StatesATP World Tour 250Hard – $599,345 – 32S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 420384,
+     "revision_id": 1364245986,
+     "sha256": "9a01b99814a54e6fc359d7920e9ab1b753c8b7f7dd9f506944e4c6c31a92e65b",
+     "url": "https://en.wikipedia.org/wiki/2017_Delray_Beach_International_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-20",
+   "main_year_weeks": [
+    [
+     2017,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2017_lyon",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "lyon",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Open_13",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-20",
+     "2017-02-26"
+    ],
+    "main_article": {
+     "bytes": 201741,
+     "revision_id": 1372145461,
+     "sha256": "296089e58e235a0bb0169f175a16b3e87fef2eaa4bb0611a4a9bdc1734e2ed3c",
+     "url": "https://en.wikipedia.org/wiki/2017_Open_13"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Open 13 Marseille, FranceATP World Tour 250Hard (i) – €691,850 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 383162,
+     "revision_id": 1092382268,
+     "sha256": "3cded5be947336b2940f7d950a58c40763c5478b2694d090e95c9485a506861f",
+     "url": "https://en.wikipedia.org/wiki/2017_Open_13_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-02-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-20",
+   "main_year_weeks": [
+    [
+     2017,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2017_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Rio_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-20",
+     "2017-02-26"
+    ],
+    "main_article": {
+     "bytes": 193093,
+     "revision_id": 1306455123,
+     "sha256": "63e26aecf488ca22f9f7b93e9a1ef3ce46e69359f17a33d85ebe76fcd593d76e",
+     "url": "https://en.wikipedia.org/wiki/2017_Rio_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rio Open Rio de Janeiro, BrazilATP World Tour 500Clay (red) – $1,603,940 – 32S/16Q/16D/4Q Singles – Doubles",
+    "singles_article": {
+     "bytes": 417231,
+     "revision_id": 1363417997,
+     "sha256": "f1020e6ab9c9eee79d16af9d9bb0e1c3335330b6d97c2e7970524d8356f4673a",
+     "url": "https://en.wikipedia.org/wiki/2017_Rio_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-03-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-27",
+   "main_year_weeks": [
+    [
+     2017,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2017_acapulco",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "acapulco",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Mexican_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-27",
+     "2017-03-04"
+    ],
+    "main_article": {
+     "bytes": 323733,
+     "revision_id": 1330465867,
+     "sha256": "eab24b9fccbaceb8b293d658c707aa0f727f908ec8a6aedec2556b6045f4b0bd",
+     "url": "https://en.wikipedia.org/wiki/2017_Mexican_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mexican Open Acapulco, MexicoATP World Tour 500Hard – $1,633,690 – 32S/16Q/16D/4Q Singles – Doubles",
+    "singles_article": {
+     "bytes": 420113,
+     "revision_id": 1365437729,
+     "sha256": "5c540e012011fb50427448abefccab5ba592c1098fcf17a3f46287c12bff6fe0",
+     "url": "https://en.wikipedia.org/wiki/2017_Abierto_Mexicano_Telcel_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-03-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-27",
+   "main_year_weeks": [
+    [
+     2017,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2017_dubai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "dubai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Dubai_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-27",
+     "2017-03-04"
+    ],
+    "main_article": {
+     "bytes": 352250,
+     "revision_id": 1366190557,
+     "sha256": "fd586206a358fc2996ac9ca6a3c28507f1b038d1b6a6e7c3f72ab2bd96129ea8",
+     "url": "https://en.wikipedia.org/wiki/2017_Dubai_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Dubai Tennis Championships Dubai, United Arab EmiratesATP World Tour 500Hard – $2,858,530 – 32S/16Q/16D/4Q Singles – Doubles",
+    "singles_article": {
+     "bytes": 426011,
+     "revision_id": 1365420316,
+     "sha256": "bc3a5ab018a1c8bf9fa88edb337580188282873e961d1f4f9f8b57cf0acad7d6",
+     "url": "https://en.wikipedia.org/wiki/2017_Dubai_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-03-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-02-27",
+   "main_year_weeks": [
+    [
+     2017,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2017_sao_paulo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week",
+    "single_week_majority_precedes_finish_week",
+    "monday_finish_majority_in_prior_iso_week",
+    "non_weekend_finish"
+   ],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "sao_paulo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Brasil_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-02-27",
+     "2017-03-06"
+    ],
+    "main_article": {
+     "bytes": 173905,
+     "revision_id": 1334505286,
+     "sha256": "56c83b09284a90906de3815ff447ce219817075f654eaabb1dfe3c0a172a3cb8",
+     "url": "https://en.wikipedia.org/wiki/2017_Brasil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brasil Open São Paulo, BrazilATP World Tour 250Clay (red) – $520,285 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 383299,
+     "revision_id": 1334510495,
+     "sha256": "1025d8c71e595ec03e0060757797da10d97fa44198ecffdb61fee1b85c4c5659",
+     "url": "https://en.wikipedia.org/wiki/2017_Brasil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-03-06..2017-03-19 differ from canonical 2017-03-09..2017-03-19; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": 48,
+    "qualifying_rounds_derived": 2,
+    "seeds": 32,
+    "wild_cards": 5
+   },
+   "main_end_date": "2017-03-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-03-09",
+   "main_year_weeks": [
+    [
+     2017,
+     10
+    ],
+    [
+     2017,
+     11
+    ]
+   ],
+   "occurrence_id": "atp_2017_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10,
+    11
+   ],
+   "run_weeks_offset_37": [
+    26,
+    27
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_BNP_Paribas_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-03-06",
+     "2017-03-19"
+    ],
+    "main_article": {
+     "bytes": 561675,
+     "revision_id": 1293739560,
+     "sha256": "b1e088f851dbf8369e720ebf196053d090f8b4abd71ba85a3596c05ae8842810",
+     "url": "https://en.wikipedia.org/wiki/2017_BNP_Paribas_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Indian Wells Masters Indian Wells, United StatesATP World Tour Masters 1000Hard – $6,993,450 – 96S/48Q/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 999381,
+     "revision_id": 1365790674,
+     "sha256": "2bd015dccce2113914a68ffcd5e131b57891c3b9a87f38ea54b1ba04e0a29048",
+     "url": "https://en.wikipedia.org/wiki/2017_BNP_Paribas_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-03-20..2017-04-02 differ from canonical 2017-03-22..2017-04-02; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": 48,
+    "qualifying_rounds_derived": 2,
+    "seeds": 32,
+    "wild_cards": 5
+   },
+   "main_end_date": "2017-04-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-03-22",
+   "main_year_weeks": [
+    [
+     2017,
+     12
+    ],
+    [
+     2017,
+     13
+    ]
+   ],
+   "occurrence_id": "atp_2017_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12,
+    13
+   ],
+   "run_weeks_offset_37": [
+    28,
+    29
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Miami_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-03-20",
+     "2017-04-02"
+    ],
+    "main_article": {
+     "bytes": 575411,
+     "revision_id": 1345994733,
+     "sha256": "cf1fe06e19a05f4a5253852d0a6ee1ebcce4080b41d829bce67d6dd405502017",
+     "url": "https://en.wikipedia.org/wiki/2017_Miami_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Miami Open Key Biscayne, United StatesATP World Tour Masters 1000Hard – $6,993,450 – 96S/48Q/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 994757,
+     "revision_id": 1305354043,
+     "sha256": "6a8a6cacb57c3a108211d05df4a88a8c4580a6c6ab170cf963d1888a03b6b657",
+     "url": "https://en.wikipedia.org/wiki/2017_Miami_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-04-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-04-10",
+   "main_year_weeks": [
+    [
+     2017,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_2017_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_U.S._Men's_Clay_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-04-10",
+     "2017-04-16"
+    ],
+    "main_article": {
+     "bytes": 211860,
+     "revision_id": 1366019066,
+     "sha256": "0741f7588c43b5b9e042ce8d213de8e611568b8824e2e70be48ec36c7d4f61a2",
+     "url": "https://en.wikipedia.org/wiki/2017_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court Championships Houston, United StatesATP World Tour 250Clay (maroon) – $600,345 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 388028,
+     "revision_id": 1346292566,
+     "sha256": "680f21be1f13062ea4cfdab53bef42efa75c368524e5705a394a052662e31162",
+     "url": "https://en.wikipedia.org/wiki/2017_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-04-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-04-10",
+   "main_year_weeks": [
+    [
+     2017,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_2017_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Grand_Prix_Hassan_II",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-04-10",
+     "2017-04-16"
+    ],
+    "main_article": {
+     "bytes": 198276,
+     "revision_id": 1334806708,
+     "sha256": "8f2259447e9a1384635a082f14180b843491ad654d47ca2f99db05f14e001e5b",
+     "url": "https://en.wikipedia.org/wiki/2017_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan II Marrakesh, MoroccoATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 384919,
+     "revision_id": 1334799180,
+     "sha256": "4394271b41ace91b5f5700bf8c0e4faa76a9d32ffbc9405c24260871f90d90d5",
+     "url": "https://en.wikipedia.org/wiki/2017_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-04-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-04-16",
+   "main_year_weeks": [
+    [
+     2017,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_2017_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Monte-Carlo_Rolex_Masters",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-04-16",
+     "2017-04-23"
+    ],
+    "main_article": {
+     "bytes": 278010,
+     "revision_id": 1174889690,
+     "sha256": "51b60bfacec966f19fc27f7b225d974205be356728fc3a601571f81a415d00ec",
+     "url": "https://en.wikipedia.org/wiki/2017_Monte-Carlo_Rolex_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte-Carlo Masters Roquebrune-Cap-Martin, FranceATP World Tour Masters 1000Clay (red) – €4,273,775 – 56S/28Q/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 636958,
+     "revision_id": 1099422139,
+     "sha256": "c6eaad9b5e4de81f461add434693eed29dca47f8e4a05a74c9f442fc7421b8b1",
+     "url": "https://en.wikipedia.org/wiki/2017_Monte-Carlo_Rolex_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": 24,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 5
+   },
+   "main_end_date": "2017-04-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-04-24",
+   "main_year_weeks": [
+    [
+     2017,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_2017_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Barcelona_Open_Banco_Sabadell",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-04-24",
+     "2017-04-30"
+    ],
+    "main_article": {
+     "bytes": 228168,
+     "revision_id": 1321115425,
+     "sha256": "c2a71921827ed695e94a089247566aabf414ec844940fd5736817aca76fe4af5",
+     "url": "https://en.wikipedia.org/wiki/2017_Barcelona_Open_Banco_Sabadell"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barcelona Open Barcelona, SpainATP World Tour 500Clay (red) – €2,604,340 – 48S/24Q/16D/4Q Singles – Doubles",
+    "singles_article": {
+     "bytes": 575327,
+     "revision_id": 1315372451,
+     "sha256": "4b9c917156fd9155c1ba52bee3c68f0c1793f25c7b6c5673c1b101c861f79b21",
+     "url": "https://en.wikipedia.org/wiki/2017_Barcelona_Open_Banco_Sabadell_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "2017-04-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-04-24",
+   "main_year_weeks": [
+    [
+     2017,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_2017_belgrade_clay_2021",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "belgrade_clay_2021",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Gazprom_Hungarian_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-04-24",
+     "2017-04-30"
+    ],
+    "main_article": {
+     "bytes": 190187,
+     "revision_id": 1091323593,
+     "sha256": "caf3abe1cf04cbf3dd53b01025c754cbdae262f3add93e55b6ab5322e03a2e9c",
+     "url": "https://en.wikipedia.org/wiki/2017_Gazprom_Hungarian_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Hungarian Open Budapest, HungaryATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 387889,
+     "revision_id": 1091648089,
+     "sha256": "a393f25bfacaeeefbd7aaac9ab028b698c8af9e0698f0da166a975770c8918db",
+     "url": "https://en.wikipedia.org/wiki/2017_Gazprom_Hungarian_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-04-29..2017-05-07 differ from canonical 2017-05-01..2017-05-07; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-05-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-01",
+   "main_year_weeks": [
+    [
+     2017,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2017_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Estoril_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-04-29",
+     "2017-05-07"
+    ],
+    "main_article": {
+     "bytes": 187639,
+     "revision_id": 1174889657,
+     "sha256": "271d603ad29ecd57d598fd2e26f8141b9cc67fbfb8d0450ae4855ad84baa949a",
+     "url": "https://en.wikipedia.org/wiki/2017_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril Open Cascais, PortugalATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 383600,
+     "revision_id": 1363339516,
+     "sha256": "4edb2a7c229d08d7a55781ac8a80ff1a9880b79c15a29276f77905ca8f4811fa",
+     "url": "https://en.wikipedia.org/wiki/2017_Estoril_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-05-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-01",
+   "main_year_weeks": [
+    [
+     2017,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2017_istanbul_2018",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "istanbul_2018",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Istanbul_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-05-01",
+     "2017-05-07"
+    ],
+    "main_article": {
+     "bytes": 175534,
+     "revision_id": 1183468380,
+     "sha256": "5ec76855b0ce1a42f98def78e5c04d8e6ab3932d2c988b327560f74d50cf4dff",
+     "url": "https://en.wikipedia.org/wiki/2017_Istanbul_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Istanbul Open Istanbul, TurkeyATP World Tour 250Clay (red) – €497,255 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 388377,
+     "revision_id": 1187630371,
+     "sha256": "dc364e50301d3f62857edfb04d27e5e6e7e67606794ad00f4db7cd54487baff2",
+     "url": "https://en.wikipedia.org/wiki/2017_Istanbul_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-05-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-01",
+   "main_year_weeks": [
+    [
+     2017,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2017_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_BMW_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-05-01",
+     "2017-05-07"
+    ],
+    "main_article": {
+     "bytes": 191121,
+     "revision_id": 1318694227,
+     "sha256": "879133a9b64f0129b26a8f529b19de9a0ca387e173ee3869caf9933ff49e3483",
+     "url": "https://en.wikipedia.org/wiki/2017_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Bavarian Championships Munich, GermanyATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 376454,
+     "revision_id": 1318692414,
+     "sha256": "f09e7785da944f3c2354b8f2c19b789e1836acc4036012d7ba874dad39b8cb71",
+     "url": "https://en.wikipedia.org/wiki/2017_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-05-05..2017-05-14 differ from canonical 2017-05-07..2017-05-14; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-05-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-07",
+   "main_year_weeks": [
+    [
+     2017,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_2017_madrid",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "madrid",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Mutua_Madrid_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-05-05",
+     "2017-05-14"
+    ],
+    "main_article": {
+     "bytes": 433187,
+     "revision_id": 1298678178,
+     "sha256": "9d842d138788a5edc86384af7d50b58950bdec77c67faa272587c3a74dd1aac1",
+     "url": "https://en.wikipedia.org/wiki/2017_Mutua_Madrid_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Madrid Open Madrid, SpainATP World Tour Masters 1000Clay (red) – €5,439,250 – 56S/28Q/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 639042,
+     "revision_id": 1099425657,
+     "sha256": "9e54b69ffe12cb37079ef482f998ee490b77d814f4d5cd075e483d5a19d3a8f9",
+     "url": "https://en.wikipedia.org/wiki/2017_Mutua_Madrid_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-05-15..2017-05-21 differ from canonical 2017-05-14..2017-05-21; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-05-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-14",
+   "main_year_weeks": [
+    [
+     2017,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_2017_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Italian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-05-15",
+     "2017-05-21"
+    ],
+    "main_article": {
+     "bytes": 445261,
+     "revision_id": 1315855365,
+     "sha256": "007c2ed9747a8a7efdc93c33f103f747b74327a1bd9869ba5b55823a7d0670ed",
+     "url": "https://en.wikipedia.org/wiki/2017_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Italian Open Rome, ItalyATP World Tour Masters 1000Clay (red) – €4,273,775 – 56S/28Q/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 649802,
+     "revision_id": 1289412985,
+     "sha256": "60d2accb2e4fcec1147d8c7eb1e16585f3f7547771253822ec2b1df6b2026efb",
+     "url": "https://en.wikipedia.org/wiki/2017_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-05-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-21",
+   "main_year_weeks": [
+    [
+     2017,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_2017_geneva",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "geneva",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Geneva_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-05-21",
+     "2017-05-27"
+    ],
+    "main_article": {
+     "bytes": 203534,
+     "revision_id": 1372156204,
+     "sha256": "58c0791acda1954233697955bc9f1e438a77894e8e09b54b1cd8ca86f67ea04b",
+     "url": "https://en.wikipedia.org/wiki/2017_Geneva_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Geneva Open Geneva, SwitzerlandATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 392792,
+     "revision_id": 1161078066,
+     "sha256": "f18adc41adf0a37cc8f4b45819a572c73a27cdd58cfb9b51571c93d6e288d91d",
+     "url": "https://en.wikipedia.org/wiki/2017_Geneva_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-05-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-05-21",
+   "main_year_weeks": [
+    [
+     2017,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_2017_lyon_old",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "lyon_old",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Lyon_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-05-21",
+     "2017-05-27"
+    ],
+    "main_article": {
+     "bytes": 198311,
+     "revision_id": 1174665663,
+     "sha256": "39c4b255afc9491f21531fa326702feac8cab14615829a58c0c1d977e1b0f6fd",
+     "url": "https://en.wikipedia.org/wiki/2017_Lyon_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Lyon Open Lyon, FranceATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 391811,
+     "revision_id": 1091648678,
+     "sha256": "3f4f332f2be76170c375bfd78f54b29b603ad6d9f5be2dcd6ff3ab9022e6b88b",
+     "url": "https://en.wikipedia.org/wiki/2017_Lyon_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-06-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-12",
+   "main_year_weeks": [
+    [
+     2017,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2017_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Ricoh_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-06-12",
+     "2017-06-18"
+    ],
+    "main_article": {
+     "bytes": 291970,
+     "revision_id": 1076189555,
+     "sha256": "c329e3916da2df1e9585efd5d3ae4d9d3d7001a7dbc36a94ece342453e004a3a",
+     "url": "https://en.wikipedia.org/wiki/2017_Ricoh_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rosmalen Grass Court Championships 's-Hertogenbosch, NetherlandsATP World Tour 250Grass – €660,375 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 397304,
+     "revision_id": 1307766848,
+     "sha256": "498cb126be92d3fca04cea5994312edef8352e1553e496e2f46466f18f6c47c5",
+     "url": "https://en.wikipedia.org/wiki/2017_Ricoh_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-06-12..2017-06-19 differ from canonical 2017-06-12..2017-06-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-06-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-12",
+   "main_year_weeks": [
+    [
+     2017,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2017_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_MercedesCup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-06-12",
+     "2017-06-19"
+    ],
+    "main_article": {
+     "bytes": 197965,
+     "revision_id": 1373782830,
+     "sha256": "44d3726f9d0d26b05eafb411327241200304ac49a62158548d6c993c96c496bb",
+     "url": "https://en.wikipedia.org/wiki/2017_MercedesCup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "MercedesCup Stuttgart, GermanyATP World Tour 250Grass – €630,785 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 397131,
+     "revision_id": 1346246769,
+     "sha256": "fe85e2ad1828d1f4c6d4f6d8891543dbe4521f0d7c631ec1672ab6b8d86fb6b2",
+     "url": "https://en.wikipedia.org/wiki/2017_MercedesCup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-06-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-19",
+   "main_year_weeks": [
+    [
+     2017,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_2017_halle",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "halle",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Gerry_Weber_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-06-19",
+     "2017-06-25"
+    ],
+    "main_article": {
+     "bytes": 204149,
+     "revision_id": 1319824187,
+     "sha256": "c499c37f715027659327d4f4b7f3a2be0e953b361c1e5f840eb9d467a2668ac4",
+     "url": "https://en.wikipedia.org/wiki/2017_Gerry_Weber_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Halle Open Halle, GermanyATP World Tour 500Grass – €1,966,095 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 416983,
+     "revision_id": 1360042506,
+     "sha256": "866375b81dea2b644bc321c2339ff906d1bf00e2af11c2f16fc381d823a99c96",
+     "url": "https://en.wikipedia.org/wiki/2017_Gerry_Weber_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-06-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-19",
+   "main_year_weeks": [
+    [
+     2017,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_2017_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Aegon_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-06-19",
+     "2017-06-25"
+    ],
+    "main_article": {
+     "bytes": 230134,
+     "revision_id": 1329590404,
+     "sha256": "8f72e8ade450ed4f79f7beb4e8ef78b83bd77763734b959aee6297946ff74141",
+     "url": "https://en.wikipedia.org/wiki/2017_Aegon_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Queen's Club Championships London, United KingdomATP World Tour 500Grass – €1,966,095 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 427854,
+     "revision_id": 1359647814,
+     "sha256": "c227f56716ba90a3684cbc1d76fe2a8ab149dc5f375bca27b7cc224bed8f5420",
+     "url": "https://en.wikipedia.org/wiki/2017_Aegon_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-25",
+   "main_year_weeks": [
+    [
+     2017,
+     26
+    ]
+   ],
+   "occurrence_id": "atp_2017_antalya_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    26
+   ],
+   "run_weeks_offset_37": [
+    42
+   ],
+   "series_id": "antalya_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Antalya_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-06-25",
+     "2017-07-01"
+    ],
+    "main_article": {
+     "bytes": 183905,
+     "revision_id": 1076189855,
+     "sha256": "9901178ea5445e5780feecef7ade34e5671b689742a4fb34213d8ed0b062dc2c",
+     "url": "https://en.wikipedia.org/wiki/2017_Antalya_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Antalya Open Antalya, TurkeyATP World Tour 250Grass – $497,255 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 392706,
+     "revision_id": 1091649157,
+     "sha256": "b469cfbf3d7741e8f42057b53563ab20a8da92f642821ed0d1018d6a3d0396a0",
+     "url": "https://en.wikipedia.org/wiki/2017_Antalya_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-06-26",
+   "main_year_weeks": [
+    [
+     2017,
+     26
+    ]
+   ],
+   "occurrence_id": "atp_2017_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    26
+   ],
+   "run_weeks_offset_37": [
+    42
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Aegon_International_Eastbourne",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-06-26",
+     "2017-07-01"
+    ],
+    "main_article": {
+     "bytes": 371077,
+     "revision_id": 1373645029,
+     "sha256": "0c9245c8d87e06c0835050419d0f3ff783754f42017acdbe810fd7d82a85adb5",
+     "url": "https://en.wikipedia.org/wiki/2017_Aegon_International_Eastbourne"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Eastbourne International Eastbourne, United KingdomATP World Tour 250Grass – €693,910 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 399213,
+     "revision_id": 1360114682,
+     "sha256": "69ff0dd2e8d7bf52b0ba195fb4a69e1dd57e9c1853bedde17e1a909a0d25e488",
+     "url": "https://en.wikipedia.org/wiki/2017_Aegon_International_Eastbourne_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-17",
+   "main_year_weeks": [
+    [
+     2017,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2017_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-17",
+     "2017-07-23"
+    ],
+    "main_article": {
+     "bytes": 334391,
+     "revision_id": 1320042202,
+     "sha256": "a17c67adff3520ee420ae69b4b2969a91fc4515429ad7575ba225c54fc17c81e",
+     "url": "https://en.wikipedia.org/wiki/2017_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swedish Open Båstad, SwedenATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 392022,
+     "revision_id": 1359969292,
+     "sha256": "f5886f41301cd3662692bd1f1a1cbd3e9a74865149405c78e7b0128573705218",
+     "url": "https://en.wikipedia.org/wiki/2017_Swedish_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-17",
+   "main_year_weeks": [
+    [
+     2017,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2017_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-17",
+     "2017-07-23"
+    ],
+    "main_article": {
+     "bytes": 212871,
+     "revision_id": 1272788737,
+     "sha256": "0a1e17d5b98a5c9c8d33c9c5d914148309b262b0cc8c3048ef03c38b0a7482f6",
+     "url": "https://en.wikipedia.org/wiki/2017_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hall of Fame Tennis Championships Newport, United StatesATP World Tour 250Grass – $600,345 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 405813,
+     "revision_id": 1364096326,
+     "sha256": "986bdfa86d24e7fab85fd4cba5d419e209748ca9ec666ba7bc1c82c676fe3305",
+     "url": "https://en.wikipedia.org/wiki/2017_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-17",
+   "main_year_weeks": [
+    [
+     2017,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2017_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Croatia_Open_Umag",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-17",
+     "2017-07-23"
+    ],
+    "main_article": {
+     "bytes": 190512,
+     "revision_id": 1308806855,
+     "sha256": "41f7eada450c1da53ac2ff8b54cfd168b6cdacbacd5d55a4377b9e66e48540f4",
+     "url": "https://en.wikipedia.org/wiki/2017_Croatia_Open_Umag"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Croatia Open Umag, CroatiaATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 398936,
+     "revision_id": 1361521703,
+     "sha256": "2ce3805d6adfcd076ed636632fc0d575f6ad2a87cb055f93c6c6bb6a3fe4fb84",
+     "url": "https://en.wikipedia.org/wiki/2017_Croatia_Open_Umag_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-24",
+   "main_year_weeks": [
+    [
+     2017,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2017_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_BB&T_Atlanta_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-24",
+     "2017-07-30"
+    ],
+    "main_article": {
+     "bytes": 210279,
+     "revision_id": 1272788617,
+     "sha256": "d7dc80a7a4ca04547c5d0d5c8c7bdfb698a91f36eedb852256b908bc3524e4ef",
+     "url": "https://en.wikipedia.org/wiki/2017_BB%26T_Atlanta_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Atlanta Open Atlanta, United StatesATP World Tour 250Hard – $720,410 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 395891,
+     "revision_id": 1272788628,
+     "sha256": "2ac82b67effde3e277728e6856f0a1cd9c18b29c5b4f7e7fc60df0a5f5916609",
+     "url": "https://en.wikipedia.org/wiki/2017_BB%26T_Atlanta_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-24",
+   "main_year_weeks": [
+    [
+     2017,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2017_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Swiss_Open_Gstaad",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-24",
+     "2017-07-30"
+    ],
+    "main_article": {
+     "bytes": 185273,
+     "revision_id": 1361589774,
+     "sha256": "b042283a326eb26d400ab43ee2788ff4e9fb8b3a67f5b5d4f41d71b0952b333f",
+     "url": "https://en.wikipedia.org/wiki/2017_Swiss_Open_Gstaad"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swiss Open Gstaad, SwitzerlandATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 384521,
+     "revision_id": 1361589985,
+     "sha256": "1e74883e7a92ee9df1a45f764eb6cdf2ddfe7e93d4d73992896d83b22cbd7758",
+     "url": "https://en.wikipedia.org/wiki/2017_Swiss_Open_Gstaad_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-07-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-24",
+   "main_year_weeks": [
+    [
+     2017,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2017_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_German_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-24",
+     "2017-07-30"
+    ],
+    "main_article": {
+     "bytes": 225540,
+     "revision_id": 1351863163,
+     "sha256": "774109640ecba8353c45f98955d50f1a24930d9514eb4b92753c80166281ab95",
+     "url": "https://en.wikipedia.org/wiki/2017_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "German Open Hamburg, GermanyATP World Tour 500Clay (red) – €1,629,375 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 406709,
+     "revision_id": 1367095075,
+     "sha256": "a3ba3f6bb65c501f356c4cf06df705b8b5fe536abe7491854a98d118d4c98c42",
+     "url": "https://en.wikipedia.org/wiki/2017_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-07-31..2017-08-06 differ from canonical 2017-07-31..2017-08-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-08-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-31",
+   "main_year_weeks": [
+    [
+     2017,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2017_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Generali_Open_Kitzbühel",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-07-31",
+     "2017-08-06"
+    ],
+    "main_article": {
+     "bytes": 198639,
+     "revision_id": 1032517240,
+     "sha256": "cfc2453ea61354224dc41ee1926afad1476cb65099c788a7e21d60ac7e5e1988",
+     "url": "https://en.wikipedia.org/wiki/2017_Generali_Open_Kitzb%C3%BChel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Austrian Open Kitzbühel Kitzbühel, AustriaATP World Tour 250Clay (red) – €540,310 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 405225,
+     "revision_id": 1379937845,
+     "sha256": "97e8ad7adc0bcf620ff282f81b5a3467639e01f256f34aeb2c74887d69f78040",
+     "url": "https://en.wikipedia.org/wiki/2017_Generali_Open_Kitzb%C3%BChel_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-07-31..2017-08-06 differ from canonical 2017-07-31..2017-08-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-08-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-31",
+   "main_year_weeks": [
+    [
+     2017,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2017_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Los_Cabos_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-07-31",
+     "2017-08-06"
+    ],
+    "main_article": {
+     "bytes": 187256,
+     "revision_id": 1367315442,
+     "sha256": "a9384c6d07e3e9b240bad48d81d8528753e7ac8b73b4e552d2a83dec4efbaf22",
+     "url": "https://en.wikipedia.org/wiki/2017_Los_Cabos_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Los Cabos Open Cabo San Lucas, MexicoATP World Tour 250Hard – $727,995 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 403200,
+     "revision_id": 1300121972,
+     "sha256": "188350ab9413ce4d1f981184404bbc47af0fb81101d85b5d222f2a0ae6ee8543",
+     "url": "https://en.wikipedia.org/wiki/2017_Los_Cabos_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 24,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2017-08-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-07-31",
+   "main_year_weeks": [
+    [
+     2017,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2017_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Citi_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-07-31",
+     "2017-08-06"
+    ],
+    "main_article": {
+     "bytes": 330756,
+     "revision_id": 1352671381,
+     "sha256": "9600c86e3b41922c6cadb0a2db0f304c1d5743cf44234501f5b39e0f270afd90",
+     "url": "https://en.wikipedia.org/wiki/2017_Citi_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Washington Open Washington, D.C., United StatesATP World Tour 500Hard – $2,002,460 – 48S/24Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 572269,
+     "revision_id": 1352671506,
+     "sha256": "a380d1d05bac0cecbe32c993e9d4287838f1a6ad3344abd5fa20e42739a38e7d",
+     "url": "https://en.wikipedia.org/wiki/2017_Citi_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-08-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-08-07",
+   "main_year_weeks": [
+    [
+     2017,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_2017_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Rogers_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-08-07",
+     "2017-08-13"
+    ],
+    "main_article": {
+     "bytes": 445316,
+     "revision_id": 1344300903,
+     "sha256": "e3d0487e6ff356919288b5bb3116e618062f974268749ab4c4582df7bf809f6d",
+     "url": "https://en.wikipedia.org/wiki/2017_Rogers_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Canadian Open Montreal, CanadaATP World Tour Masters 1000Hard – $4,662,300 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 659159,
+     "revision_id": 1272788935,
+     "sha256": "7c027a7376b59a4bd365720be2123fd07e921882c9d280c9ede878aa246d572b",
+     "url": "https://en.wikipedia.org/wiki/2017_Rogers_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2017-08-14..2017-08-20 differ from canonical 2017-08-13..2017-08-20; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 0,
+    "main_draw_players": 64,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-08-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-08-13",
+   "main_year_weeks": [
+    [
+     2017,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_2017_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Western_&_Southern_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2017-08-14",
+     "2017-08-20"
+    ],
+    "main_article": {
+     "bytes": 443701,
+     "revision_id": 1373877501,
+     "sha256": "abb2798d2d7f4b9f81c37a3c3843dcc81d68ac791f686d650a24a5c85704a713",
+     "url": "https://en.wikipedia.org/wiki/2017_Western_%26_Southern_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Cincinnati Masters Mason, United StatesATP World Tour Masters 1000Hard – $4,973,120 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 660696,
+     "revision_id": 1353814758,
+     "sha256": "6ab3e6d34288ba5ecf71da0522ad7257801918c9efb6ab6a5d6d9a5444b9c28a",
+     "url": "https://en.wikipedia.org/wiki/2017_Western_%26_Southern_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-08-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-08-20",
+   "main_year_weeks": [
+    [
+     2017,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_2017_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Winston-Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-08-20",
+     "2017-08-26"
+    ],
+    "main_article": {
+     "bytes": 235498,
+     "revision_id": 1297363765,
+     "sha256": "066c0a4c48a9f4df81f4b1bc5de2331f51df6bb82764e6713375ff87e05a4c7a",
+     "url": "https://en.wikipedia.org/wiki/2017_Winston-Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Winston-Salem Open Winston-Salem, United States ATP World Tour 250Hard – $748,960 – 48S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 544621,
+     "revision_id": 1366558906,
+     "sha256": "b22021a6e06fece82a6fad67bd97f06b5d0e2bb1da1151e81538d3ab305e4644",
+     "url": "https://en.wikipedia.org/wiki/2017_Winston-Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-09-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-09-18",
+   "main_year_weeks": [
+    [
+     2017,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_2017_metz",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "metz",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Moselle_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-09-18",
+     "2017-09-24"
+    ],
+    "main_article": {
+     "bytes": 192545,
+     "revision_id": 1386831490,
+     "sha256": "298c8454b940af1c6c03d91460f6c12623cf19f7f9aaf4dfd92a284329234e15",
+     "url": "https://en.wikipedia.org/wiki/2017_Moselle_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Moselle Open Metz, FranceATP World Tour 250Hard (i) – €540,310 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 405706,
+     "revision_id": 1315410094,
+     "sha256": "aa63a254ef2e7f169a0c67bb7890bf6eaebc60f5d1afc6e1da6c0a6d0e9461ec",
+     "url": "https://en.wikipedia.org/wiki/2017_Moselle_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-09-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-09-18",
+   "main_year_weeks": [
+    [
+     2017,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_2017_st_petersburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "st_petersburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_St._Petersburg_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-09-18",
+     "2017-09-24"
+    ],
+    "main_article": {
+     "bytes": 191706,
+     "revision_id": 1164165548,
+     "sha256": "6f0b623323d34e6c2e5b64026291f873f1da51e50874f48ce3a37e8517bcf19a",
+     "url": "https://en.wikipedia.org/wiki/2017_St._Petersburg_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "St. Petersburg Open St. Petersburg, RussiaATP World Tour 250Hard (i) – $1,064,715 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 392944,
+     "revision_id": 1321806909,
+     "sha256": "80d68e49f435fa0cc10cf7109a15223b1119bf23e08f5a7b582af593b01f46ce",
+     "url": "https://en.wikipedia.org/wiki/2017_St._Petersburg_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-09-25",
+   "main_year_weeks": [
+    [
+     2017,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2017_chengdu",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "chengdu",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Chengdu_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-09-25",
+     "2017-10-01"
+    ],
+    "main_article": {
+     "bytes": 174443,
+     "revision_id": 1091650549,
+     "sha256": "d5cc72f6e1e68e47438481dcf1c076b2d86b423f08185722081f866bbc6f7ceb",
+     "url": "https://en.wikipedia.org/wiki/2017_Chengdu_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Chengdu Open Chengdu, ChinaATP World Tour 250Hard – $1,138,910 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 390815,
+     "revision_id": 1315410081,
+     "sha256": "4fc211a3a2fb136d199bc7dd85297307fed9ca36ccaed48e7072a44bdd74f803",
+     "url": "https://en.wikipedia.org/wiki/2017_Chengdu_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-09-25",
+   "main_year_weeks": [
+    [
+     2017,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2017_shenzhen_2018",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "shenzhen_2018",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_ATP_Shenzhen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-09-25",
+     "2017-10-01"
+    ],
+    "main_article": {
+     "bytes": 195281,
+     "revision_id": 1301608771,
+     "sha256": "e3c4d2a88def15ca61d8c38f8e09724ccaea05db8690d62eaff1f0a2a17712ac",
+     "url": "https://en.wikipedia.org/wiki/2017_ATP_Shenzhen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Shenzhen Open Shenzhen, ChinaATP World Tour 250Hard – $731,680 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 400043,
+     "revision_id": 1315410065,
+     "sha256": "637f7f3dabd23e55c1834f15063104c7e1f8a9fe569d2d7a5f56a50e54fe4070",
+     "url": "https://en.wikipedia.org/wiki/2017_ATP_Shenzhen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 16,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2017-10-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-02",
+   "main_year_weeks": [
+    [
+     2017,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2017_beijing",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "beijing",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_China_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-02",
+     "2017-10-08"
+    ],
+    "main_article": {
+     "bytes": 397612,
+     "revision_id": 1179077073,
+     "sha256": "56c8757158fbdd3b50a6bc9925baabd57761038edd3f5766f0427a46e5005905",
+     "url": "https://en.wikipedia.org/wiki/2017_China_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "China OpenBeijing, ChinaATP World Tour 500Hard – $4,280,460 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 414116,
+     "revision_id": 1383809159,
+     "sha256": "f31a4a0100da39a1d4f1311c2001c0ccf411a6414ae0175a353b4379a0263256",
+     "url": "https://en.wikipedia.org/wiki/2017_China_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 16,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2017-10-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-02",
+   "main_year_weeks": [
+    [
+     2017,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2017_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Rakuten_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-02",
+     "2017-10-08"
+    ],
+    "main_article": {
+     "bytes": 210286,
+     "revision_id": 1377222270,
+     "sha256": "3dacb514fc443af4da5743c8fdf0c37f7aca6f8557bae6d5ee3f9e61873cc6f9",
+     "url": "https://en.wikipedia.org/wiki/2017_Rakuten_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Japan Open Tokyo, JapanATP World Tour 500Hard – $1,706,175 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 407956,
+     "revision_id": 1074387313,
+     "sha256": "ffe34e524f97ab6d291ac7361ad2f19e7b704e0cfcea4ca6decdae164eb2651a",
+     "url": "https://en.wikipedia.org/wiki/2017_Rakuten_Japan_Open_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2017-10-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-08",
+   "main_year_weeks": [
+    [
+     2017,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_2017_shanghai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "shanghai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Shanghai_Rolex_Masters",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-08",
+     "2017-10-15"
+    ],
+    "main_article": {
+     "bytes": 274780,
+     "revision_id": 1247463405,
+     "sha256": "d656675354785a9572cc51562312b999d409069d91580a5a5b888c196e9f621b",
+     "url": "https://en.wikipedia.org/wiki/2017_Shanghai_Rolex_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Shanghai Masters Shanghai, ChinaATP World Tour Masters 1000Hard – $6,216,400 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 638670,
+     "revision_id": 1247471508,
+     "sha256": "45f1ac289b8e0110a75f8991ebe5fc1f98438f38d193c5a793dba5beada5767e",
+     "url": "https://en.wikipedia.org/wiki/2017_Shanghai_Rolex_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-16",
+   "main_year_weeks": [
+    [
+     2017,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2017_brussels",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "brussels",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_European_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-16",
+     "2017-10-22"
+    ],
+    "main_article": {
+     "bytes": 192501,
+     "revision_id": 1339454961,
+     "sha256": "eb0e46856f4fa6b700b87dbbf0c6ef3a3d07991d1a2a6fb2dbac39140daf783c",
+     "url": "https://en.wikipedia.org/wiki/2017_European_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "European OpenAntwerp, BelgiumATP World Tour 250Hard (i) – €660,375 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 385155,
+     "revision_id": 1091651234,
+     "sha256": "648a970b04444128b766a8b0117dcac209d3a91ffd6086e3beb37b8c04e61249",
+     "url": "https://en.wikipedia.org/wiki/2017_European_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-16",
+   "main_year_weeks": [
+    [
+     2017,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2017_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-16",
+     "2017-10-22"
+    ],
+    "main_article": {
+     "bytes": 290410,
+     "revision_id": 1367394002,
+     "sha256": "d601ee1a33b2e083b90844e61292b4f8e8d47102251051e8e5d5068c4e0aa388",
+     "url": "https://en.wikipedia.org/wiki/2017_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin Cup Moscow, RussiaATP World Tour 250Hard (i) – $823,600 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 389504,
+     "revision_id": 1177962415,
+     "sha256": "1af9f7a58f21d8e27a97c64517e63fa52a46137e216463786e2755da012c1e2d",
+     "url": "https://en.wikipedia.org/wiki/2017_Kremlin_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-16",
+   "main_year_weeks": [
+    [
+     2017,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2017_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Stockholm_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-16",
+     "2017-10-22"
+    ],
+    "main_article": {
+     "bytes": 200234,
+     "revision_id": 1183068164,
+     "sha256": "fe43d01638d906f53bfbe684908b9de45339fec27221e13f67771416e41def91",
+     "url": "https://en.wikipedia.org/wiki/2017_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm Open Stockholm, SwedenATP World Tour 250Hard (i) – €660,375 – 28S/16Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 394075,
+     "revision_id": 1364412207,
+     "sha256": "711fd42f93f66a35b196f999e867de34e9f08f300fb6de6e05ca7fab7a0858f0",
+     "url": "https://en.wikipedia.org/wiki/2017_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-23",
+   "main_year_weeks": [
+    [
+     2017,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2017_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-23",
+     "2017-10-29"
+    ],
+    "main_article": {
+     "bytes": 218534,
+     "revision_id": 1182846473,
+     "sha256": "96ca8c4085244a260ec5f5a72b8d4985d7baf8c9e999b5193bf166ca22f48680",
+     "url": "https://en.wikipedia.org/wiki/2017_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swiss Indoors Basel, SwitzerlandATP World Tour 500Hard (i) – €2,291,860 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 414118,
+     "revision_id": 1182846155,
+     "sha256": "ac9b1bde441a38893c8604b65216de945b8b1dc69a6fed49fe2bd8b9583094e6",
+     "url": "https://en.wikipedia.org/wiki/2017_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 16,
+    "qualifying_rounds_derived": 2,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-10-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-23",
+   "main_year_weeks": [
+    [
+     2017,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2017_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Erste_Bank_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-23",
+     "2017-10-29"
+    ],
+    "main_article": {
+     "bytes": 212277,
+     "revision_id": 1351878087,
+     "sha256": "7c6dba25f5ce31d3680b677d5a58f83f17fc11ab978a67ef13abf1b5d7b0f2ae",
+     "url": "https://en.wikipedia.org/wiki/2017_Erste_Bank_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Vienna Open Vienna, AustriaATP World Tour 500Hard (i) – €2,621,850 – 32S/16Q/16D/4QSingles – Doubles",
+    "singles_article": {
+     "bytes": 411015,
+     "revision_id": 1351878183,
+     "sha256": "88f364a318251933a0655b0fdd3e4bb7bcb4f59cd5eb8ac067c558cfd5fd196e",
+     "url": "https://en.wikipedia.org/wiki/2017_Erste_Bank_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": 24,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2017-11-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-10-30",
+   "main_year_weeks": [
+    [
+     2017,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_2017_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Rolex_Paris_Masters",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-10-30",
+     "2017-11-05"
+    ],
+    "main_article": {
+     "bytes": 276968,
+     "revision_id": 1289048981,
+     "sha256": "838d907b4357654f39daea3d1490465213ea220e7c6d1436176d87e25015748f",
+     "url": "https://en.wikipedia.org/wiki/2017_Rolex_Paris_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris Masters Paris, FranceATP World Tour Masters 1000Hard (i) – €4,273,775 – 48S/24Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 588203,
+     "revision_id": 1377517606,
+     "sha256": "6cf7ba050f0e29adc8fe1f2c43a1ad83056ad6ad027b8c0e1ca8e23d797b35f1",
+     "url": "https://en.wikipedia.org/wiki/2017_Rolex_Paris_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "next_gen_finals",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 8,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 8,
+    "main_rounds": 3,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2017-11-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-11-07",
+   "main_year_weeks": [
+    [
+     2017,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_2017_next_gen_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "next_gen_atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_Next_Generation_ATP_Finals",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-11-07",
+     "2017-11-11"
+    ],
+    "main_article": {
+     "bytes": 258342,
+     "revision_id": 1384676920,
+     "sha256": "0b4ba1d075f31f979d81e6a3a28a1681f197a2a51b9df907226f39573e31b155",
+     "url": "https://en.wikipedia.org/wiki/2017_Next_Generation_ATP_Finals"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Next Gen ATP Finals Milan, ItalyNext Generation ATP Finals Hard (i) – $1,275,000 – 8S (RR) Singles",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 8,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 8,
+    "main_rounds": 3,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2017-11-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2017",
+   "main_start_date": "2017-11-12",
+   "main_year_weeks": [
+    [
+     2017,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_2017_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2017_ATP_Finals",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2017-11-12",
+     "2017-11-19"
+    ],
+    "main_article": {
+     "bytes": 459827,
+     "revision_id": 1345218978,
+     "sha256": "4f874bb4ca45d006f38b0d5015a18c53caf8da749281cdab098dae4192190bba",
+     "url": "https://en.wikipedia.org/wiki/2017_ATP_Finals"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP Finals London, United KingdomATP FinalsHard (i) – $8,000,000 – 8S/8D (RR)Singles – Doubles",
+    "singles_article": {
+     "bytes": 233003,
+     "revision_id": 1386597076,
+     "sha256": "9a2928f1aadaafef364cae964127919c2e0d79f65ce1ad419863e7ed9caaf833",
+     "url": "https://en.wikipedia.org/wiki/2017_ATP_Finals_%E2%80%93_Singles"
+    }
+   }
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 1999784,
+  "revision_id": 1376520381,
+  "role": "secondary_source",
+  "sha256": "bce96f8a60276ef9ce74a8823771cd65c116ed16140cf6dbe4870ec17adef4ee",
+  "url": "https://en.wikipedia.org/wiki/2017_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

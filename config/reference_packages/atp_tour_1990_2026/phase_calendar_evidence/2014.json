@@ -1,0 +1,4545 @@
+{
+ "atp_season_year": 2014,
+ "counts": {
+  "occurrences": 60,
+  "wikipedia_dates_agree": 41,
+  "wikipedia_dates_differ": 13,
+  "wikipedia_dates_not_parsed": 2
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "2014-01-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2013-12-29",
+   "main_year_weeks": [
+    [
+     2014,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2014_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week",
+    "cross_iso_year"
+   ],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Brisbane_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2013-12-29",
+     "2014-01-05"
+    ],
+    "main_article": {
+     "bytes": 325169,
+     "revision_id": 1387854878,
+     "sha256": "0db65e4029f3995e806f33acb0bf6d23d1525b31ce6af975d03bb4fae6e48894",
+     "url": "https://en.wikipedia.org/wiki/2014_Brisbane_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brisbane International Brisbane, AustraliaATP World Tour 250 Hard – $511,825 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 507507,
+     "revision_id": 1386097472,
+     "sha256": "4b8bec7d57c98900951eda13da2925d3964e96c79c78572cd4b707b9160335da",
+     "url": "https://en.wikipedia.org/wiki/2014_Brisbane_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2013-12-30..2014-01-05 differ from canonical 2013-12-30..2014-01-04; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-01-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2013-12-30",
+   "main_year_weeks": [
+    [
+     2014,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2014_doha",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "doha",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Qatar_ExxonMobil_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2013-12-30",
+     "2014-01-05"
+    ],
+    "main_article": {
+     "bytes": 195851,
+     "revision_id": 1210879375,
+     "sha256": "b15f35200bd11ecd6393603cf65221a831585dd296e02bf6697fa21ed1504fa8",
+     "url": "https://en.wikipedia.org/wiki/2014_Qatar_ExxonMobil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar ExxonMobil Open Doha, QatarATP World Tour 250Hard – $1,195,500 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 510364,
+     "revision_id": 1380487342,
+     "sha256": "ace575e0089e7412fcedf2588647ee96d60d9deaccf47c2f68b2f5a96c3ec909",
+     "url": "https://en.wikipedia.org/wiki/2014_Qatar_ExxonMobil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-01-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2013-12-30",
+   "main_year_weeks": [
+    [
+     2014,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_2014_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Aircel_Chennai_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2013-12-30",
+     "2014-01-05"
+    ],
+    "main_article": {
+     "bytes": 211058,
+     "revision_id": 1373820613,
+     "sha256": "ce408e08737fb8adcb8340ee4ea5ba38fe7888869332be58d418676794797821",
+     "url": "https://en.wikipedia.org/wiki/2014_Aircel_Chennai_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Aircel Chennai Open Chennai, IndiaATP World Tour 250Hard – $459,140 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 482398,
+     "revision_id": 1184944469,
+     "sha256": "0cde9afa32a7358d3ce2fd0a8e3f9c24f3149cb6081f27e8308eb5e5084d1f1d",
+     "url": "https://en.wikipedia.org/wiki/2014_Aircel_Chennai_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-01-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-01-06",
+   "main_year_weeks": [
+    [
+     2014,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2014_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Heineken_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-01-06",
+     "2014-01-11"
+    ],
+    "main_article": {
+     "bytes": 211144,
+     "revision_id": 1223391827,
+     "sha256": "03afcbd0a95fc0d971700c2111e4a6ce37a867e48f4dd650c7e1764a93dcd8b8",
+     "url": "https://en.wikipedia.org/wiki/2014_Heineken_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Heineken Open Auckland, New ZealandATP World Tour 250Hard – $514,345 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 434877,
+     "revision_id": 1292129249,
+     "sha256": "f94f11413aad4457e14654b1944e03afa21fc868ec3fd24cbddddfc7d3509fab",
+     "url": "https://en.wikipedia.org/wiki/2014_Heineken_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-01-05..2014-01-11 differ from canonical 2014-01-06..2014-01-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-01-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-01-06",
+   "main_year_weeks": [
+    [
+     2014,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_2014_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Apia_International_Sydney",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-01-05",
+     "2014-01-11"
+    ],
+    "main_article": {
+     "bytes": 319093,
+     "revision_id": 1386101327,
+     "sha256": "dc6b52716eece94a6b0312a5820d0f49ea59dc74167fff7244d05ef73ab73b54",
+     "url": "https://en.wikipedia.org/wiki/2014_Apia_International_Sydney"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Apia International Sydney Sydney, AustraliaATP World Tour 250Hard – $511,825 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 489318,
+     "revision_id": 1317176461,
+     "sha256": "f8ea22aa5848b6cf401aee4b1d0a07acae795cbd8eb0dfbd2c71fe9f504ca160",
+     "url": "https://en.wikipedia.org/wiki/2014_Apia_International_Sydney_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2014-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-03",
+   "main_year_weeks": [
+    [
+     2014,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2014_cordoba",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "cordoba",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-03",
+   "main_year_weeks": [
+    [
+     2014,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2014_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Open_Sud_de_France",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-03",
+     "2014-02-09"
+    ],
+    "main_article": {
+     "bytes": 201406,
+     "revision_id": 1252825239,
+     "sha256": "0ecc12b03d74db9d80448afec822aa8818d548bf21bbc6372cd5b6922165d02f",
+     "url": "https://en.wikipedia.org/wiki/2014_Open_Sud_de_France"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Open Sud de France Montpellier, FranceATP World Tour 250Hard (i) – €485,760 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 481922,
+     "revision_id": 1361876045,
+     "sha256": "03c7d184ccd356183fd03c49fb1b52e13ce34ad7fba6943100c149bad7b8ffc6",
+     "url": "https://en.wikipedia.org/wiki/2014_Open_Sud_de_France_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2014-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-03",
+   "main_year_weeks": [
+    [
+     2014,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_2014_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-02-08..2014-02-16 differ from canonical 2014-02-10..2014-02-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-02-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-10",
+   "main_year_weeks": [
+    [
+     2014,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2014_buenos_aires",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "buenos_aires",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Copa_Claro",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-02-08",
+     "2014-02-16"
+    ],
+    "main_article": {
+     "bytes": 187683,
+     "revision_id": 1079468652,
+     "sha256": "67d1bebe436c280cabcb79b69e29d94c77641984bc9254c15c18017a258acda2",
+     "url": "https://en.wikipedia.org/wiki/2014_Copa_Claro"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copa Claro Buenos Aires, ArgentinaATP World Tour 250Clay (red) – $567,760 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 521893,
+     "revision_id": 1362000369,
+     "sha256": "c7b56e48c36273d2227a80c66d43ca924857d70b643d102f5186a7eb47ed7666",
+     "url": "https://en.wikipedia.org/wiki/2014_Copa_Claro_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-02-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-10",
+   "main_year_weeks": [
+    [
+     2014,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2014_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_U.S._National_Indoor_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-10",
+     "2014-02-16"
+    ],
+    "main_article": {
+     "bytes": 191945,
+     "revision_id": 1272787371,
+     "sha256": "1db4df7f931eb89c3f5725704da8c71402a1ffe887fe721cf2fd6c9323fb3318",
+     "url": "https://en.wikipedia.org/wiki/2014_U.S._National_Indoor_Tennis_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "U.S. National Indoor Tennis Championships Memphis, United StatesATP World Tour 250Hard (i) – $647,675 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 486013,
+     "revision_id": 1352668213,
+     "sha256": "fae8428dac7f4b200901970fd3b9f445769ef42ca0fdf337bbf0084c49f367de",
+     "url": "https://en.wikipedia.org/wiki/2014_U.S._National_Indoor_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 4
+   },
+   "main_end_date": "2014-02-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-10",
+   "main_year_weeks": [
+    [
+     2014,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_2014_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-10",
+     "2014-02-16"
+    ],
+    "main_article": {
+     "bytes": 215518,
+     "revision_id": 1371798528,
+     "sha256": "ea0684952924d53d2838fc8c00c556e082a25c572670c41bc14efe1b06204efe",
+     "url": "https://en.wikipedia.org/wiki/2014_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN AMRO World Tennis Tournament Rotterdam, NetherlandsATP World Tour 500Hard (i) – €1,575,875 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 420806,
+     "revision_id": 1361427911,
+     "sha256": "1b7c64497e9af57ec7c39e3124fcdae52dd4d7c284386e6d0d3fdfc37806e615",
+     "url": "https://en.wikipedia.org/wiki/2014_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-02-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-17",
+   "main_year_weeks": [
+    [
+     2014,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2014_delray_beach",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "delray_beach",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Delray_Beach_International_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-17",
+     "2014-02-23"
+    ],
+    "main_article": {
+     "bytes": 202507,
+     "revision_id": 1352668201,
+     "sha256": "22dfabdd0d795ee9e3d479ac8e32957c07c58292e1864a1c29b9b1a309e7c4cd",
+     "url": "https://en.wikipedia.org/wiki/2014_Delray_Beach_International_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Delray Beach International Tennis Championships Delray Beach, United StatesATP World Tour 250Hard – $539,730 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 445312,
+     "revision_id": 1364399335,
+     "sha256": "88ebd96a11138fa90e4e5f5588f9dd072a3bcd0c2b80d78092df6e78a16ec47b",
+     "url": "https://en.wikipedia.org/wiki/2014_Delray_Beach_International_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-02-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-17",
+   "main_year_weeks": [
+    [
+     2014,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2014_lyon",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "lyon",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Open_13",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-17",
+     "2014-02-23"
+    ],
+    "main_article": {
+     "bytes": 195157,
+     "revision_id": 1365953230,
+     "sha256": "e2426898c463ba1b651830df1d0b763d09172e0e1722a34f7caf59a10fc878d2",
+     "url": "https://en.wikipedia.org/wiki/2014_Open_13"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Open 13 Marseille, FranceATP World Tour 250Hard (i) – €621,560 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 500920,
+     "revision_id": 1364214185,
+     "sha256": "5743382b31ab3e5bf9620f5444965fc548652e50ee50e6a3ff9c6e6d8c3301ed",
+     "url": "https://en.wikipedia.org/wiki/2014_Open_13_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-02-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-17",
+   "main_year_weeks": [
+    [
+     2014,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_2014_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Rio_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-17",
+     "2014-02-23"
+    ],
+    "main_article": {
+     "bytes": 296004,
+     "revision_id": 1211073245,
+     "sha256": "6046dacfbe68fa177b9790f8194f73f9c150352f027e0fd54343b409f5a3ba0d",
+     "url": "https://en.wikipedia.org/wiki/2014_Rio_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rio Open Rio de Janeiro, BrazilATP World Tour 500Clay (red) – $1,454,365 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 425462,
+     "revision_id": 1363414218,
+     "sha256": "716a603712c8b58aebd063061c3b587b95a05d5efeb1f1822b7e188dd8fa62e6",
+     "url": "https://en.wikipedia.org/wiki/2014_Rio_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-24",
+   "main_year_weeks": [
+    [
+     2014,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2014_acapulco",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "acapulco",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Abierto_Mexicano_Telcel",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-24",
+     "2014-03-01"
+    ],
+    "main_article": {
+     "bytes": 317398,
+     "revision_id": 1154341601,
+     "sha256": "1f9996cbdb9c68d31f732e3479acb2cee6a60da5b5dbe17c7ba5228b4cccd3f9",
+     "url": "https://en.wikipedia.org/wiki/2014_Abierto_Mexicano_Telcel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Abierto Mexicano Telcel Acapulco, MexicoATP World Tour 500Hard – $1,454,365 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 420570,
+     "revision_id": 1365436447,
+     "sha256": "026eec6b97ad868f9f0187a0f9b81df51aea8b76dcdb2094789d3930e4b3914f",
+     "url": "https://en.wikipedia.org/wiki/2014_Abierto_Mexicano_Telcel_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-24",
+   "main_year_weeks": [
+    [
+     2014,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2014_dubai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "dubai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Dubai_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-24",
+     "2014-03-01"
+    ],
+    "main_article": {
+     "bytes": 307254,
+     "revision_id": 1334674745,
+     "sha256": "51cd264fef6e7f908f383373c7b973c07a8163873272ae083cc977e537bbd9cd",
+     "url": "https://en.wikipedia.org/wiki/2014_Dubai_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Dubai Tennis Championships Dubai, United Arab EmiratesATP World Tour 500Hard – $2,359,935 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 422289,
+     "revision_id": 1365288510,
+     "sha256": "ad7a25a390c88200805ae717193e1ccca9d0d4ac8f5bd3412317ae9a6cca6fc6",
+     "url": "https://en.wikipedia.org/wiki/2014_Dubai_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-03-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-02-24",
+   "main_year_weeks": [
+    [
+     2014,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_2014_sao_paulo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "sao_paulo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Brasil_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-02-24",
+     "2014-03-02"
+    ],
+    "main_article": {
+     "bytes": 173763,
+     "revision_id": 1334519857,
+     "sha256": "0ad8d0275377a20d5700be675fafc0528d3b1aeb9612f9b88958c474453ae06d",
+     "url": "https://en.wikipedia.org/wiki/2014_Brasil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Brasil Open São Paulo, BrazilATP World Tour 250Clay (red) (i) – $539,730 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 445791,
+     "revision_id": 1341183928,
+     "sha256": "6278102d08720e4108ad80d44aaf59306f46c2561938bc4e300add51b11b2c18",
+     "url": "https://en.wikipedia.org/wiki/2014_Brasil_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-03-03..2014-03-16 differ from canonical 2014-03-06..2014-03-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 32,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-03-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-03-06",
+   "main_year_weeks": [
+    [
+     2014,
+     10
+    ],
+    [
+     2014,
+     11
+    ]
+   ],
+   "occurrence_id": "atp_2014_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10,
+    11
+   ],
+   "run_weeks_offset_37": [
+    26,
+    27
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_BNP_Paribas_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-03-03",
+     "2014-03-16"
+    ],
+    "main_article": {
+     "bytes": 632339,
+     "revision_id": 1272786958,
+     "sha256": "baf4c0ef311c7cb2e52f07be84a3a07bd402de85d23edaaa42c6e61ae5cb8405",
+     "url": "https://en.wikipedia.org/wiki/2014_BNP_Paribas_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BNP Paribas Open Indian Wells, United StatesATP World Tour Masters 1000Hard – $5,081,880 – 96S/32DSingles – Doubles",
+    "singles_article": {
+     "bytes": 1049715,
+     "revision_id": 1365789188,
+     "sha256": "0ba0d91165ba68cf08780a561b4c617963cd0c747d2adb346c9e9ca436300e1f",
+     "url": "https://en.wikipedia.org/wiki/2014_BNP_Paribas_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-03-17..2014-03-30 differ from canonical 2014-03-19..2014-03-30; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": 12,
+    "qualifying_draw_size": null,
+    "seeds": 32,
+    "wild_cards": 5
+   },
+   "main_end_date": "2014-03-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-03-19",
+   "main_year_weeks": [
+    [
+     2014,
+     12
+    ],
+    [
+     2014,
+     13
+    ]
+   ],
+   "occurrence_id": "atp_2014_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12,
+    13
+   ],
+   "run_weeks_offset_37": [
+    28,
+    29
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Sony_Open_Tennis",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-03-17",
+     "2014-03-30"
+    ],
+    "main_article": {
+     "bytes": 553612,
+     "revision_id": 1372083807,
+     "sha256": "a90bda20dd44fbbe5c12d754b0b0f059c19b1f24c585189f2157c11afaa22486",
+     "url": "https://en.wikipedia.org/wiki/2014_Sony_Open_Tennis"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Sony Open Tennis Key Biscayne, United StatesATP World Tour Masters 1000Hard – $4,562,245 – 96S/32DSingles – Doubles",
+    "singles_article": {
+     "bytes": 1011239,
+     "revision_id": 1317627419,
+     "sha256": "78186d0e522dd6918551a691e646a755b0e9627d632a80a06707270d3a8dbe76",
+     "url": "https://en.wikipedia.org/wiki/2014_Sony_Open_Tennis_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-04-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-07",
+   "main_year_weeks": [
+    [
+     2014,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_2014_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_U.S._Men's_Clay_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-04-07",
+     "2014-04-13"
+    ],
+    "main_article": {
+     "bytes": 203988,
+     "revision_id": 1365960539,
+     "sha256": "e237dad48af7aa60c028427b99178a3b825980569c5d1e4f3e7a8107fc372fc2",
+     "url": "https://en.wikipedia.org/wiki/2014_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court Championships Houston, United StatesATP World Tour 250Clay (maroon) – $539,730 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 488231,
+     "revision_id": 1352576195,
+     "sha256": "6fc19faf7eb093e7c4920c59569e2fedd930211042ab862511e465d52458a985",
+     "url": "https://en.wikipedia.org/wiki/2014_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-04-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-07",
+   "main_year_weeks": [
+    [
+     2014,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_2014_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Grand_Prix_Hassan_II",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-04-07",
+     "2014-04-13"
+    ],
+    "main_article": {
+     "bytes": 197346,
+     "revision_id": 1335024427,
+     "sha256": "aa7aaff6c996224a0017f318f12438bc54080e42d42c555fda593e90520aa5cc",
+     "url": "https://en.wikipedia.org/wiki/2014_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan II Casablanca, MoroccoATP World Tour 250Clay (red) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 488881,
+     "revision_id": 1150037411,
+     "sha256": "6e3ed61ffa2569585b2976bac336ccc4591d16f21fe89df92306e65b7b8b7ca1",
+     "url": "https://en.wikipedia.org/wiki/2014_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-04-12..2014-04-20 differ from canonical 2014-04-13..2014-04-20; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": 7,
+    "qualifying_draw_size": 28,
+    "qualifying_rounds_derived": 2,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-04-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-13",
+   "main_year_weeks": [
+    [
+     2014,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_2014_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Monte-Carlo_Masters",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-04-12",
+     "2014-04-20"
+    ],
+    "main_article": {
+     "bytes": 277144,
+     "revision_id": 1321498022,
+     "sha256": "cede5587001d48f6c36cf6037c47e4d162a878f80bdfae99cacddfd517cc6053",
+     "url": "https://en.wikipedia.org/wiki/2014_Monte-Carlo_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte-Carlo Rolex Masters Roquebrune-Cap-Martin, FranceATP World Tour Masters 1000Clay (red) – €2,884,675 – 56S/28Q/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 666171,
+     "revision_id": 1188591572,
+     "sha256": "9458cce5e3a431c4a0e76bb7038a8248233c1883f9c35cbbb7206c067485da86",
+     "url": "https://en.wikipedia.org/wiki/2014_Monte-Carlo_Rolex_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 4
+   },
+   "main_end_date": "2014-04-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-21",
+   "main_year_weeks": [
+    [
+     2014,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_2014_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Barcelona_Open_Banc_Sabadell",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-04-21",
+     "2014-04-27"
+    ],
+    "main_article": {
+     "bytes": 237968,
+     "revision_id": 1177468473,
+     "sha256": "921796498161939e3f4eef548bfc72de3afb9167fccbc636692afead15b41004",
+     "url": "https://en.wikipedia.org/wiki/2014_Barcelona_Open_Banc_Sabadell"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barcelona Open BancSabadell Barcelona, SpainATP World Tour 500Clay (red) – €2,127,035 – 48S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 575872,
+     "revision_id": 1149511057,
+     "sha256": "233502a718aac226a35fcd4c94ecb6df827d8fcd13a922a434358d21205f2dcb",
+     "url": "https://en.wikipedia.org/wiki/2014_Barcelona_Open_Banc_Sabadell_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-04-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-21",
+   "main_year_weeks": [
+    [
+     2014,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_2014_belgrade_clay_2021",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "belgrade_clay_2021",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_BRD_Năstase_Țiriac_Trophy",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-04-21",
+     "2014-04-27"
+    ],
+    "main_article": {
+     "bytes": 199964,
+     "revision_id": 1288569684,
+     "sha256": "b27fdb7b37f90e69cb4b3557c32db4885727463986411d525bc6407aaf1e7d95",
+     "url": "https://en.wikipedia.org/wiki/2014_BRD_N%C4%83stase_%C8%9Airiac_Trophy"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "BRD Năstase Țiriac Trophy Bucharest, RomaniaATP World Tour 250Clay (red) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 490215,
+     "revision_id": 1347226011,
+     "sha256": "b3db08f3944bc598f88874373e9919e94b0d6626bf535e6e6dd2e3262b030bae",
+     "url": "https://en.wikipedia.org/wiki/2014_BRD_N%C4%83stase_%C8%9Airiac_Trophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-05-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-28",
+   "main_year_weeks": [
+    [
+     2014,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2014_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds",
+    "secondary_date_cross_check"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Portugal_Open",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 301975,
+     "revision_id": 1295442088,
+     "sha256": "7d8a6a9a392dcc76e7bd6e24542e5213ade35fabf36deb51b0c0ac18ee27f9f6",
+     "url": "https://en.wikipedia.org/wiki/2014_Portugal_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Portugal Open Oeiras, PortugalATP World Tour 250Clay (red) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 489448,
+     "revision_id": 1148007452,
+     "sha256": "55fe9ce0f1f689968ede0855a2d6be686f4141697bba9a2cb6f2529442c09118",
+     "url": "https://en.wikipedia.org/wiki/2014_Portugal_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-05-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-04-28",
+   "main_year_weeks": [
+    [
+     2014,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_2014_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "secondary_date_cross_check"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_BMW_Open",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 203087,
+     "revision_id": 1318694138,
+     "sha256": "ff7257cc6dbb12ddf2c0fcf43bc95f6902515aadff399833f09485325cd270ab",
+     "url": "https://en.wikipedia.org/wiki/2014_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW Open Munich, GermanyATP World Tour 250Clay (red) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 489785,
+     "revision_id": 1358823662,
+     "sha256": "c739c217b58fc6a6e1e6d1f09f0bee87ae3295fe13994a41699d2a865c12dac8",
+     "url": "https://en.wikipedia.org/wiki/2014_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-05-03..2014-05-11 differ from canonical 2014-05-04..2014-05-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-05-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-05-04",
+   "main_year_weeks": [
+    [
+     2014,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_2014_madrid",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "madrid",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Mutua_Madrid_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-05-03",
+     "2014-05-11"
+    ],
+    "main_article": {
+     "bytes": 376302,
+     "revision_id": 1330452532,
+     "sha256": "71a57c1fc39b0680b3ca9c5607ca0ccfa252c1471f31fa56e77d51fd8a216b24",
+     "url": "https://en.wikipedia.org/wiki/2014_Mutua_Madrid_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mutua Madrid Open Madrid, SpainATP World Tour Masters 1000Clay (red) – €3,671,405 – 56S/28Q/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 651868,
+     "revision_id": 1365354838,
+     "sha256": "ad1caac8624ebc1eeda3a72e4333f2c15a928dbd4bee4d3248d6c8eef0900b5f",
+     "url": "https://en.wikipedia.org/wiki/2014_Mutua_Madrid_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-05-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-05-11",
+   "main_year_weeks": [
+    [
+     2014,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_2014_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Italian_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-05-11",
+     "2014-05-18"
+    ],
+    "main_article": {
+     "bytes": 409908,
+     "revision_id": 1371951545,
+     "sha256": "29007d5de9186f0fc8d00d9495d055431e22c441d5ad0ddf315fdf7b2f950ddb",
+     "url": "https://en.wikipedia.org/wiki/2014_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Internazionali BNL d'Italia Rome, ItalyATP World Tour Masters 1000Clay (red) – €2,884,675 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 647963,
+     "revision_id": 1354224029,
+     "sha256": "0b2ee92b139db78f4619fc86b103947b07265204f970c10b0f524fef0b0c716a",
+     "url": "https://en.wikipedia.org/wiki/2014_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2014-05-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-05-18",
+   "main_year_weeks": [
+    [
+     2014,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_2014_geneva",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "geneva",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "2014-05-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-05-18",
+   "main_year_weeks": [
+    [
+     2014,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_2014_lyon_old",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "lyon_old",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-06-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-06-09",
+   "main_year_weeks": [
+    [
+     2014,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2014_halle",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "halle",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Gerry_Weber_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-06-09",
+     "2014-06-15"
+    ],
+    "main_article": {
+     "bytes": 212953,
+     "revision_id": 1319823786,
+     "sha256": "3d0acf1226406bf10a31a18e128e42ce1b1ac28ab8122a88add1a0e8d831dfc0",
+     "url": "https://en.wikipedia.org/wiki/2014_Gerry_Weber_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Gerry Weber Open Halle, GermanyATP World Tour 250Grass – €809,600 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 449524,
+     "revision_id": 1360888365,
+     "sha256": "aff31a3e5a66717ad619db5d57ed09444e1d9cff38a389f4eb1f0988fb3b9af0",
+     "url": "https://en.wikipedia.org/wiki/2014_Gerry_Weber_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-06-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-06-09",
+   "main_year_weeks": [
+    [
+     2014,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_2014_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Aegon_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-06-09",
+     "2014-06-15"
+    ],
+    "main_article": {
+     "bytes": 238763,
+     "revision_id": 1329589960,
+     "sha256": "0d4441d2147e8a9b5093515ad21bb1bbcde93eb1f6ff1eea96a3a45872b01cd6",
+     "url": "https://en.wikipedia.org/wiki/2014_Aegon_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Aegon Championships London, United KingdomATP World Tour 250Grass – €809,600 – 56S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 662382,
+     "revision_id": 1359709425,
+     "sha256": "342558ed5caef45274ac098dd96509313619b6cb84ad0552675c4f3bdf9d99c3",
+     "url": "https://en.wikipedia.org/wiki/2014_Aegon_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-06-15",
+   "main_year_weeks": [
+    [
+     2014,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_2014_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Topshelf_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-06-15",
+     "2014-06-21"
+    ],
+    "main_article": {
+     "bytes": 308970,
+     "revision_id": 1367493044,
+     "sha256": "f8ff4c63cb56d750c23fe1508aa1d3853dac8fb8e49e3509f86d4dfac0119b7a",
+     "url": "https://en.wikipedia.org/wiki/2014_Topshelf_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Topshelf Open 's-Hertogenbosch, NetherlandsATP World Tour 250Grass – €485,760 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 460262,
+     "revision_id": 1100842403,
+     "sha256": "31beb2b82e17104d48f98f9e7a3e62566353d4485ff647e1eafb3a463f1e36a7",
+     "url": "https://en.wikipedia.org/wiki/2014_Topshelf_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-06-16",
+   "main_year_weeks": [
+    [
+     2014,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_2014_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Aegon_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-06-16",
+     "2014-06-21"
+    ],
+    "main_article": {
+     "bytes": 317618,
+     "revision_id": 1365149119,
+     "sha256": "1de3272e00f7836df5dc53947b178e56042ec8d68cd1a2c5309a5df3a8e09aa5",
+     "url": "https://en.wikipedia.org/wiki/2014_Aegon_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Aegon International Eastbourne, United KingdomATP World Tour 250Grass – €485,760 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 457528,
+     "revision_id": 1360300662,
+     "sha256": "bfddba11168d71465f09ac205b44aa37fe0ffa7f67e579ba5bf283fc56746386",
+     "url": "https://en.wikipedia.org/wiki/2014_Aegon_International_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-07-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-07",
+   "main_year_weeks": [
+    [
+     2014,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_2014_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-07",
+     "2014-07-13"
+    ],
+    "main_article": {
+     "bytes": 317999,
+     "revision_id": 1320042189,
+     "sha256": "e5de78688b9d05191b2e186805f82f2edc89bf2415471645efcb17a003e70f41",
+     "url": "https://en.wikipedia.org/wiki/2014_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swedish Open Båstad, SwedenATP World Tour 250Clay (red) – €485,760 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 486498,
+     "revision_id": 1164992067,
+     "sha256": "3281466b6282432a67c1363139b2b839abe28da31a98dca2b3642c27fd3beb69",
+     "url": "https://en.wikipedia.org/wiki/2014_Swedish_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-07-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-07",
+   "main_year_weeks": [
+    [
+     2014,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_2014_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-07",
+     "2014-07-13"
+    ],
+    "main_article": {
+     "bytes": 190845,
+     "revision_id": 1272787168,
+     "sha256": "736f583b69e58e8b8e60a00da01cc42027481a4c443781f52804622aacb0cd92",
+     "url": "https://en.wikipedia.org/wiki/2014_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hall of Fame Tennis Championships Newport, United StatesATP World Tour 250Grass – $539,730 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 430224,
+     "revision_id": 1364095680,
+     "sha256": "d0a6260e380a094ae25324a6123ca2f22a542406ba3e378054907f775e79cda2",
+     "url": "https://en.wikipedia.org/wiki/2014_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-07-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-07",
+   "main_year_weeks": [
+    [
+     2014,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_2014_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_MercedesCup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-07",
+     "2014-07-13"
+    ],
+    "main_article": {
+     "bytes": 193114,
+     "revision_id": 1346248818,
+     "sha256": "7b49fa1be1153d93b6caf0a6ca13c11223fcd25632818fde5be3e3b21bf248b4",
+     "url": "https://en.wikipedia.org/wiki/2014_MercedesCup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "MercedesCup Stuttgart, GermanyATP World Tour 250Clay (red) – €426,605 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 501705,
+     "revision_id": 1346246584,
+     "sha256": "eb3aac0b19cff186c9686a43ebc10c66cad4f516c2b93668404dd3b43ff355c9",
+     "url": "https://en.wikipedia.org/wiki/2014_MercedesCup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-07-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-14",
+   "main_year_weeks": [
+    [
+     2014,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2014_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_International_German_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-14",
+     "2014-07-20"
+    ],
+    "main_article": {
+     "bytes": 242921,
+     "revision_id": 1351861128,
+     "sha256": "4252ff0450cdb460f72eb3f7c4c195a424dc9beca18072fa0d804f6e9610f043",
+     "url": "https://en.wikipedia.org/wiki/2014_International_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "International German Open Hamburg, GermanyATP World Tour 500Clay (red) – €1,322,150 – 48S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 588756,
+     "revision_id": 1351861342,
+     "sha256": "4f69b772a3cc7f2764aa86c93340d314a10afd0295b295cba032f1eb45d85b8b",
+     "url": "https://en.wikipedia.org/wiki/2014_International_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-07-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-14",
+   "main_year_weeks": [
+    [
+     2014,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_2014_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Claro_Open_Colombia",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-14",
+     "2014-07-20"
+    ],
+    "main_article": {
+     "bytes": 187507,
+     "revision_id": 1085791091,
+     "sha256": "7b04af8fd46103d6470c8b5103c9fe27c4a0bd75aa6e7b26cae1164dacba4d7e",
+     "url": "https://en.wikipedia.org/wiki/2014_Claro_Open_Colombia"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Claro Open Colombia Bogotá, ColombiaATP World Tour 250Hard – $755,625 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 437954,
+     "revision_id": 1100842471,
+     "sha256": "490317b50107a5c2bba85b6c62e12981dc75639254211cd3c177c56dcb1d89e6",
+     "url": "https://en.wikipedia.org/wiki/2014_Claro_Open_Colombia_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-07-19..2014-07-27 differ from canonical 2014-07-21..2014-07-27; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-07-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-21",
+   "main_year_weeks": [
+    [
+     2014,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2014_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_BB&T_Atlanta_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-07-19",
+     "2014-07-27"
+    ],
+    "main_article": {
+     "bytes": 196216,
+     "revision_id": 1349871544,
+     "sha256": "f5b667d02d703b79ccc1886d1b46340a6181427c80e044988dbe69f069da1201",
+     "url": "https://en.wikipedia.org/wiki/2014_BB%26T_Atlanta_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BB&T Atlanta Open Atlanta, United StatesATP World Tour 250Hard – $647,675 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 435048,
+     "revision_id": 1365009594,
+     "sha256": "9586a660358ecc39ea0e16338a569a181ed660119ae1c857bd6e2561a82e57c5",
+     "url": "https://en.wikipedia.org/wiki/2014_BB%26T_Atlanta_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-07-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-21",
+   "main_year_weeks": [
+    [
+     2014,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2014_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Crédit_Agricole_Suisse_Open_Gstaad",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-21",
+     "2014-07-27"
+    ],
+    "main_article": {
+     "bytes": 187132,
+     "revision_id": 1361583380,
+     "sha256": "0339b964586ba7b4506c838d925a5cb746060c6c26be8a2aa56ac0a86378ff10",
+     "url": "https://en.wikipedia.org/wiki/2014_Cr%C3%A9dit_Agricole_Suisse_Open_Gstaad"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Crédit Agricole Suisse Open Gstaad Gstaad, SwitzerlandATP World Tour 250Clay (red) – €485,760 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 478882,
+     "revision_id": 1361592537,
+     "sha256": "462de71b1d2a9b29839933e857df448e09d37e09c009163e93b94bc65103d8bf",
+     "url": "https://en.wikipedia.org/wiki/2014_Cr%C3%A9dit_Agricole_Suisse_Open_Gstaad_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-07-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-21",
+   "main_year_weeks": [
+    [
+     2014,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_2014_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_ATP_Vegeta_Croatia_Open_Umag",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-21",
+     "2014-07-27"
+    ],
+    "main_article": {
+     "bytes": 185187,
+     "revision_id": 1308803620,
+     "sha256": "896e552e33a80bb044fbd865a3957bd13d2a9cf42e37394135394e89cf9a24e3",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_Vegeta_Croatia_Open_Umag"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP Vegeta Croatia Open Umag Umag, CroatiaATP World Tour 250Clay (red) – €485,760 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 477626,
+     "revision_id": 1364571543,
+     "sha256": "edd2a8eb5bae6d1dc055ac87ff55202a58f82cd6ae7347557e37d97e1d168863",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_Vegeta_Croatia_Open_Umag_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-08-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-27",
+   "main_year_weeks": [
+    [
+     2014,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2014_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Bet-at-home_Cup_Kitzbühel",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-07-27",
+     "2014-08-02"
+    ],
+    "main_article": {
+     "bytes": 192519,
+     "revision_id": 1032517596,
+     "sha256": "e36ed17d12c201bc4476204fdce9310ee199410516835657d8c1638609a60535",
+     "url": "https://en.wikipedia.org/wiki/2014_Bet-at-home_Cup_Kitzb%C3%BChel"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "bet-at-home Cup Kitzbühel, AustriaATP World Tour 250Clay (red) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 476332,
+     "revision_id": 1346262318,
+     "sha256": "2d5dc210e647b52c7c28d21778886cf1f93557af2faf365fe0f2de0d9f50d17d",
+     "url": "https://en.wikipedia.org/wiki/2014_Bet-at-home_Cup_Kitzb%C3%BChel_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-07-26..2014-08-03 differ from canonical 2014-07-28..2014-08-03; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-08-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-07-28",
+   "main_year_weeks": [
+    [
+     2014,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_2014_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Citi_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-07-26",
+     "2014-08-03"
+    ],
+    "main_article": {
+     "bytes": 344076,
+     "revision_id": 1351717276,
+     "sha256": "5a03252deb2a2e078fc59818974dd88b57e0490f7ad0ab5cc4f21b2278724373",
+     "url": "https://en.wikipedia.org/wiki/2014_Citi_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Citi Open Washington, D.C., United StatesATP World Tour 500Hard – $1,654,295 – 48S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 594680,
+     "revision_id": 1352668453,
+     "sha256": "3b53db9b95538a83b1ed487dc6cf656ee5230931d8831ce5fa3953251671f628",
+     "url": "https://en.wikipedia.org/wiki/2014_Citi_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-08-02..2014-08-10 differ from canonical 2014-08-04..2014-08-10; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-08-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-08-04",
+   "main_year_weeks": [
+    [
+     2014,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_2014_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Rogers_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-08-02",
+     "2014-08-10"
+    ],
+    "main_article": {
+     "bytes": 411209,
+     "revision_id": 1344300832,
+     "sha256": "a10d27ffdcad5d91d8f08846c3d528136550946ea2fd98b93761de4bd3699a51",
+     "url": "https://en.wikipedia.org/wiki/2014_Rogers_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Rogers Cup Toronto, CanadaATP World Tour Masters 1000Hard – $3,146,920 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 655894,
+     "revision_id": 1101422667,
+     "sha256": "5bce898bfbc67c30190f816d12f7d1cc6322794b374b122abacb5a9e5a0a9bc1",
+     "url": "https://en.wikipedia.org/wiki/2014_Rogers_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-08-11..2014-08-17 differ from canonical 2014-08-10..2014-08-17; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-08-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-08-10",
+   "main_year_weeks": [
+    [
+     2014,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_2014_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Western_&_Southern_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-08-11",
+     "2014-08-17"
+    ],
+    "main_article": {
+     "bytes": 400776,
+     "revision_id": 1381805673,
+     "sha256": "271700d10e8b90546ec74a10e8319e06c4bdc7a527d7c4e53308064f22ad78df",
+     "url": "https://en.wikipedia.org/wiki/2014_Western_%26_Southern_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Western & Southern Open Mason, United StatesATP World Tour Masters 1000Hard – $3,356,715 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 647548,
+     "revision_id": 1324232818,
+     "sha256": "9cffc8434bdb9632acb1a5bcb23fe35e277b2a79cafd6aaec010d9c5cdc072f3",
+     "url": "https://en.wikipedia.org/wiki/2014_Western_%26_Southern_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 27,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-08-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-08-17",
+   "main_year_weeks": [
+    [
+     2014,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_2014_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Winston-Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-08-17",
+     "2014-08-23"
+    ],
+    "main_article": {
+     "bytes": 218803,
+     "revision_id": 1272787451,
+     "sha256": "a84236c5c3565579a491b262f62d1027d1e7f111bc0e4b613396bf30d1cf5ca0",
+     "url": "https://en.wikipedia.org/wiki/2014_Winston-Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Winston-Salem Open Winston-Salem, United States ATP World Tour 250Hard – $683,705 – 48S/27Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 583624,
+     "revision_id": 1352668507,
+     "sha256": "b2783556d493f08b17390c8c0607b55a85d07a6126f31419a3204288ead5cd48",
+     "url": "https://en.wikipedia.org/wiki/2014_Winston-Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-09-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-09-15",
+   "main_year_weeks": [
+    [
+     2014,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_2014_metz",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "metz",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Moselle_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-09-15",
+     "2014-09-21"
+    ],
+    "main_article": {
+     "bytes": 200496,
+     "revision_id": 1386831444,
+     "sha256": "f24a236704af630694d64564f0841e11c88322b4f9272f61cdfeff96667bc0f9",
+     "url": "https://en.wikipedia.org/wiki/2014_Moselle_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Moselle Open Metz, FranceATP World Tour 250Hard (i) – €485,760 – 28S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 461667,
+     "revision_id": 1158217450,
+     "sha256": "118875841c8389f6c10d473922f6c4b6c70ea89e30cf360973154a240c160da5",
+     "url": "https://en.wikipedia.org/wiki/2014_Moselle_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-09-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-09-22",
+   "main_year_weeks": [
+    [
+     2014,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2014_chengdu",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "chengdu",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Malaysian_Open,_Kuala_Lumpur",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-09-22",
+     "2014-09-28"
+    ],
+    "main_article": {
+     "bytes": 187016,
+     "revision_id": 1351495513,
+     "sha256": "cf00bbde14c9297ce10bafeb23ea9e827d9a24cc977530bd84080fae02429caf",
+     "url": "https://en.wikipedia.org/wiki/2014_Malaysian_Open,_Kuala_Lumpur"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Malaysian Open Kuala Lumpur, MalaysiaATP World Tour 250Hard (i) – $1,022,255 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 409518,
+     "revision_id": 1147590256,
+     "sha256": "22099989404e5a6bb57efc30e124a2bfa9740acc429f95fb7b4ca2ce4c9dd832",
+     "url": "https://en.wikipedia.org/wiki/2014_Malaysian_Open,_Kuala_Lumpur_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-09-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-09-22",
+   "main_year_weeks": [
+    [
+     2014,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_2014_shenzhen_2018",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "shenzhen_2018",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_ATP_Shenzhen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-09-22",
+     "2014-09-28"
+    ],
+    "main_article": {
+     "bytes": 187944,
+     "revision_id": 1231423251,
+     "sha256": "272c72e5ae7c25c400230480d3f39474c932abce86e40cf35c626abdd13b8ce8",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_Shenzhen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP Shenzhen Open Shenzhen, ChinaATP World Tour 250Hard – $655,955 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 406631,
+     "revision_id": 1123211883,
+     "sha256": "817e048c65fda530f7f44a78e17392427b2bc25a89096ff428b06b07f2f3579b",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_Shenzhen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-09-27..2014-10-05 differ from canonical 2014-09-29..2014-10-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-09-29",
+   "main_year_weeks": [
+    [
+     2014,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2014_beijing",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "beijing",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_China_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-09-27",
+     "2014-10-05"
+    ],
+    "main_article": {
+     "bytes": 364018,
+     "revision_id": 1187290881,
+     "sha256": "3b2b7f60d566feed8120cc0d5958065e5a7dd6a2c5a82808f3693005d4e7aa9d",
+     "url": "https://en.wikipedia.org/wiki/2014_China_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "China Open Beijing, ChinaATP World Tour 500Hard – $3,755,065 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 409916,
+     "revision_id": 1113092333,
+     "sha256": "da135ecac9b0e4cf8646c3ab6992a155365a4d3740d80c6d4912113d43b1659a",
+     "url": "https://en.wikipedia.org/wiki/2014_China_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-09-29",
+   "main_year_weeks": [
+    [
+     2014,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_2014_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Rakuten_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-09-29",
+     "2014-10-05"
+    ],
+    "main_article": {
+     "bytes": 212894,
+     "revision_id": 1173375702,
+     "sha256": "1cff790b9f1c559600b9a34abd420fc8a7202e21f01bc1afd586e6c4d39332dd",
+     "url": "https://en.wikipedia.org/wiki/2014_Rakuten_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rakuten Japan Open Tennis Championships Tokyo, JapanATP World Tour 500Hard – $1,373,420 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 410325,
+     "revision_id": 1074373193,
+     "sha256": "e5dfe1120805920dabe9e96e8d57a3c2eaa2254dee48a0f58b88e27e9f9cd494",
+     "url": "https://en.wikipedia.org/wiki/2014_Rakuten_Japan_Open_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": 28,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-05",
+   "main_year_weeks": [
+    [
+     2014,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_2014_shanghai",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "shanghai",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Shanghai_Rolex_Masters",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-05",
+     "2014-10-12"
+    ],
+    "main_article": {
+     "bytes": 245699,
+     "revision_id": 1247463509,
+     "sha256": "47cdbd9bf8da2c3d71b5cbbc5bbb6be11aac7d7e8de348b88a93f1d59bfaffbe",
+     "url": "https://en.wikipedia.org/wiki/2014_Shanghai_Rolex_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Shanghai Rolex Masters Shanghai, ChinaATP World Tour Masters 1000Hard – $4,195,895 – 56S/28Q/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 645227,
+     "revision_id": 1247475265,
+     "sha256": "2d2a3628594cc88dcc21e099c7a47606bfe005082074be38f95016c323395f45",
+     "url": "https://en.wikipedia.org/wiki/2014_Shanghai_Rolex_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The first four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-10-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-13",
+   "main_year_weeks": [
+    [
+     2014,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2014_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-13",
+     "2014-10-19"
+    ],
+    "main_article": {
+     "bytes": 312217,
+     "revision_id": 1282212273,
+     "sha256": "0a6cd99a318876292b2d6def7b94d20119bc69cf1883dd08543d2304ebe81246",
+     "url": "https://en.wikipedia.org/wiki/2014_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin CupMoscow, RussiaATP World Tour 250Hard (i) – $855,490 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 481923,
+     "revision_id": 1184109870,
+     "sha256": "87b92f75a2ed01545d77ddff866dc5a9a8c15b90bba92e5bd40c84ce603ceb9e",
+     "url": "https://en.wikipedia.org/wiki/2014_Kremlin_Cup_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-13",
+   "main_year_weeks": [
+    [
+     2014,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2014_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Stockholm_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-13",
+     "2014-10-19"
+    ],
+    "main_article": {
+     "bytes": 191076,
+     "revision_id": 1076105475,
+     "sha256": "f639b7f1282654431796c4cc2375e90a28e3d93aa8d37d036325410735641072",
+     "url": "https://en.wikipedia.org/wiki/2014_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm Open Stockholm, SwedenATP World Tour 250Hard (i) – €593,705 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 490690,
+     "revision_id": 1364550167,
+     "sha256": "4f7edc6116996b5a911624305e8f8ef51f37346891a46183129bd5a8ca71c9a2",
+     "url": "https://en.wikipedia.org/wiki/2014_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_250",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-13",
+   "main_year_weeks": [
+    [
+     2014,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_2014_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Erste_Bank_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-13",
+     "2014-10-19"
+    ],
+    "main_article": {
+     "bytes": 195829,
+     "revision_id": 1351878809,
+     "sha256": "0ebe629cef4114ebfeae2a24a66798a3327b1a04cb5d543255e6429410249fed",
+     "url": "https://en.wikipedia.org/wiki/2014_Erste_Bank_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Erste Bank Open Vienna, AustriaATP World Tour 250Hard (i) – €593,705 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 479815,
+     "revision_id": 1351878887,
+     "sha256": "558def3bc0f3f43a3612106d3904748289f2016513f82d329a529832c319cb10",
+     "url": "https://en.wikipedia.org/wiki/2014_Erste_Bank_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-10-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-20",
+   "main_year_weeks": [
+    [
+     2014,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2014_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-20",
+     "2014-10-26"
+    ],
+    "main_article": {
+     "bytes": 207750,
+     "revision_id": 1182848883,
+     "sha256": "9cb99d17cae9c93f20065da28e3234c00587c628cd414909436522e0237bc224",
+     "url": "https://en.wikipedia.org/wiki/2014_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swiss Indoors Basel, SwitzerlandATP World Tour 500Hard (i) – €1,915,060 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 415149,
+     "revision_id": 1182848223,
+     "sha256": "ebbb070da50cee02e1495d546d7d32a8a603385de1d6c23ccadbedd60f065b0d",
+     "url": "https://en.wikipedia.org/wiki/2014_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_500",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-10-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-20",
+   "main_year_weeks": [
+    [
+     2014,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_2014_brussels",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "brussels",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_Valencia_Open_500",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-10-20",
+     "2014-10-26"
+    ],
+    "main_article": {
+     "bytes": 205193,
+     "revision_id": 1335124497,
+     "sha256": "5ef5030157756a4a27fa3c0ffb6b1610854e70e815239e7167c5d68b52c255f8",
+     "url": "https://en.wikipedia.org/wiki/2014_Valencia_Open_500"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Valencia Open 500 Valencia, SpainATP World Tour 500Hard (i) – €2,204,230 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 407431,
+     "revision_id": 1323051405,
+     "sha256": "144ef1acdf0aa12b2abfcc5ab741ed199f112e6d39fd4eddc248167f078dbc62",
+     "url": "https://en.wikipedia.org/wiki/2014_Valencia_Open_500_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_masters_1000",
+   "conflicts": [
+    "Wikipedia infobox dates 2014-10-28..2014-11-02 differ from canonical 2014-10-27..2014-11-02; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 3
+   },
+   "main_end_date": "2014-11-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-10-27",
+   "main_year_weeks": [
+    [
+     2014,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_2014_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_BNP_Paribas_Masters",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2014-10-28",
+     "2014-11-02"
+    ],
+    "main_article": {
+     "bytes": 251187,
+     "revision_id": 1289048416,
+     "sha256": "bbf2cfd1ec63fa2834da51517f5abeadeb225f7ec9fb0e689c3007b91b8178ea",
+     "url": "https://en.wikipedia.org/wiki/2014_BNP_Paribas_Masters"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BNP Paribas Masters Paris, FranceATP World Tour Masters 1000Hard (i) – €2,884,675 – 48S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 580422,
+     "revision_id": 1163549367,
+     "sha256": "5d94502a0a44b780c27280fb139529716885c7342d8a176e4900f6aa668241c5",
+     "url": "https://en.wikipedia.org/wiki/2014_BNP_Paribas_Masters_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 8,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 8,
+    "main_rounds": 3,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "2014-11-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2014",
+   "main_start_date": "2014-11-09",
+   "main_year_weeks": [
+    [
+     2014,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_2014_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [
+    "compressed_boundary_iso_week"
+   ],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "2014_ATP_World_Tour_Finals",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2014-11-09",
+     "2014-11-16"
+    ],
+    "main_article": {
+     "bytes": 713959,
+     "revision_id": 1381972276,
+     "sha256": "f064728711097ce7ed40c347cd884a76ffc1b339ac96d8ddf7ce3e8e9f0b4804",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_World_Tour_Finals"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP World Tour Finals London, United KingdomATP World Tour FinalsHard (i) – $6,000,000 – 8S/8D (RR)Singles – Doubles",
+    "singles_article": {
+     "bytes": 192643,
+     "revision_id": 1223659449,
+     "sha256": "124ab988fc675e78540e4ae3b793316cada5e2cf328235cb3a00ee0009f5bd6c",
+     "url": "https://en.wikipedia.org/wiki/2014_ATP_World_Tour_Finals_%E2%80%93_Singles"
+    }
+   }
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 2097648,
+  "revision_id": 1323969624,
+  "role": "secondary_source",
+  "sha256": "5110f3790444c556c797b33a1d03ec5527002fb8d8b265d39f8aa82166676100",
+  "url": "https://en.wikipedia.org/wiki/2014_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

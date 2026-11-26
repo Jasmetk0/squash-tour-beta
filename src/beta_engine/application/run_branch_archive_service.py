@@ -9,7 +9,7 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from beta_engine.domain.run_branch_archive import Archive, decode, digest, encode, fail
+from beta_engine.domain.run_branch_archive import Archive, CustomEnvelope, decode, digest, encode, fail
 from beta_engine.infrastructure.db.run_branch_archive import (
     RunBranchArchiveReceiptModel,
     collect_archive,
@@ -75,6 +75,10 @@ def inventory(archive):
         "format": archive.envelope.format,
         "minimum_engine": archive.envelope.minimum_engine,
         "scope": archive.envelope.scope,
+        **(
+            {"selected_branch_ids": archive.envelope.selected_branch_ids}
+            if isinstance(archive.envelope, CustomEnvelope) else {}
+        ),
         "run_id": archive.run.run_id,
         "display_name": archive.run.display_name,
         "selected_branch_id": archive.envelope.selected_branch_id,
@@ -182,12 +186,12 @@ def _guard_review(session, archive, expected):
 class RunBranchArchiveService:
     repository: object
 
-    def export_preview(self, *, run_id, branch_id, full_run=False):
+    def export_preview(self, *, run_id, branch_id, full_run=False, custom_branch_ids=()):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             raw = collect_archive(
                 self.repository, session, run_id=run_id, branch_id=branch_id,
-                full_run=full_run,
+                full_run=full_run, custom_branch_ids=custom_branch_ids,
             )
         archive = Archive(raw)
         # Prove the archive can stand alone; source-DB verification alone is not
@@ -197,7 +201,7 @@ class RunBranchArchiveService:
 
     def export(
         self, *, run_id, branch_id, expected_head_revision_id, expected_archive_digest,
-        full_run=False,
+        full_run=False, custom_branch_ids=(),
     ):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
@@ -207,7 +211,7 @@ class RunBranchArchiveService:
                 run_id=run_id,
                 branch_id=branch_id,
                 expected_head=expected_head_revision_id,
-                full_run=full_run,
+                full_run=full_run, custom_branch_ids=custom_branch_ids,
             )
         if digest(raw) != expected_archive_digest:
             fail(

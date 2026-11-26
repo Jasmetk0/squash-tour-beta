@@ -22,7 +22,7 @@ permissions:
   contents: read
 
 jobs:
-  read-only-import:
+  reviewed-restore:
     name: Real Chromium / cold SQLite / reviewed restore and restart
     runs-on: ubuntu-latest
     timeout-minutes: 13
@@ -50,9 +50,15 @@ jobs:
         run: |
           timeout --signal=TERM --kill-after=10s 10m \
             python web/acceptance/saved_branch_archive_import_browser.py --root work/archive-import-preview-browser
+      - name: Cold restore a custom Branch selection in Chromium
+        run: |
+          timeout --signal=TERM --kill-after=10s 5m \
+            python web/acceptance/saved_branch_archive_import_browser.py --custom --root work/archive-import-custom-browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: saved-branch-import-preview-${{ github.run_id }}
-          path: work/archive-import-preview-browser/*
+          path: |
+            work/archive-import-preview-browser/*
+            work/archive-import-custom-browser/*
           retention-days: 14

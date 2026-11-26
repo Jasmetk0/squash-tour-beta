@@ -3,6 +3,10 @@ export const savedBranchArchiveText = {
   cs: {
     title: 'Export uložené Branch', description: 'Přenosný soubor vybrané Saved Branch se závislostmi a dosažitelnou historií.',
     scope: 'Rozsah exportu', branchMode: 'Vybraná větev', fullRunMode: 'Celý uložený Run',
+    customMode: 'Vlastní výběr větví',
+    customDescription: 'Zahrne aktuální větev a označené větve. Povinné závislosti a společná uložená historie se přidají automaticky.',
+    customBranches: 'Další větve k exportu', customLoading: 'Načítám uložené větve…',
+    customEmpty: 'V tomto Runu nejsou další větve dostupné pro výběr.',
     fullRunDescription: 'Zahrne všechny větve a jejich uloženou historii. Neuložené změny nebo nepodporovaná uložená data v kterékoliv větvi zastaví export.',
     context: 'Vybraná Branch', head: 'Poslední Saved HEAD', noHead: 'Chybí',
     draft: 'Working Draft (volba Viewer Branch)', unknownDraft: 'Stav draftu nelze ověřit.',
@@ -30,6 +34,10 @@ export const savedBranchArchiveText = {
   en: {
     title: 'Export Saved Branch', description: 'Portable selected Saved Branch with dependencies and reachable history.',
     scope: 'Export scope', branchMode: 'Selected Branch', fullRunMode: 'Entire Saved Run',
+    customMode: 'Custom Branch selection',
+    customDescription: 'Includes the current Branch and the chosen Branches. Required dependencies and shared Saved history are included automatically.',
+    customBranches: 'Additional Branches to export', customLoading: 'Loading Saved Branches…',
+    customEmpty: 'This Run has no additional Branches available for selection.',
     fullRunDescription: 'Includes every Branch and its Saved history. Unsaved changes or unsupported data in any Branch block the export.',
     context: 'Selected Branch', head: 'Latest Saved HEAD', noHead: 'Missing',
     draft: 'Working Draft (Viewer Branch selection)', unknownDraft: 'Draft status could not be verified.',

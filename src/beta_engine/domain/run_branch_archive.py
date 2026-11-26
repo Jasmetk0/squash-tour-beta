@@ -21,6 +21,10 @@ FULL_RUN_FORMAT = "run_full_archive.v1"
 FULL_RUN_MINIMUM_ENGINE = "engine+full-run-archive.v1"
 BRANCH_SCOPE = "custom_selected_saved_branch_with_dependency_history"
 FULL_RUN_SCOPE = "full_saved_run"
+CUSTOM_FORMAT = "run_custom_archive.v1"
+CUSTOM_SCOPE = "custom_saved_branches"
+CUSTOM_MINIMUM_ENGINE = "engine+custom-run-archive.v1"
+MAX_CUSTOM_BRANCHES = 128
 FULL_RUN_OMITTED_AREAS = (
     "recovery_drafts",
     "working_changes",
@@ -296,6 +300,14 @@ class FullRunEnvelope(ArchiveSelection):
     branch_ids: list[ID]
 
 
+class CustomEnvelope(ArchiveSelection):
+    format: Literal["run_custom_archive.v1"]
+    engine_capability: Literal["run_custom_archive.v1"]
+    minimum_engine: Literal["engine+custom-run-archive.v1"]
+    scope: Literal["custom_saved_branches"]
+    selected_branch_ids: list[ID] = Field(min_length=2, max_length=MAX_CUSTOM_BRANCHES)
+
+
 class Archive:
     """Decoded, integrity-checked envelope; production validation still required."""
 
@@ -306,18 +318,14 @@ class Archive:
                 f"Archive exceeds this operation's {MAX_ARCHIVE_BYTES}-byte parser budget",
             )
         value = decode(raw)
-        if not isinstance(value, dict) or value.get("format") not in (
-            FORMAT, FULL_RUN_FORMAT
-        ):
+        formats = {FORMAT: Envelope, FULL_RUN_FORMAT: FullRunEnvelope, CUSTOM_FORMAT: CustomEnvelope}
+        archive_format = value.get("format") if isinstance(value, dict) else None
+        if not isinstance(archive_format, str) or archive_format not in formats:
             fail(
                 "unsupported_archive_version",
-                f"Requires {FORMAT} or {FULL_RUN_FORMAT}; unknown versions cannot be downgraded",
+                "Unsupported Saved archive format; unknown versions cannot be downgraded",
             )
-        self.envelope = (
-            FullRunEnvelope.model_validate(value)
-            if value["format"] == FULL_RUN_FORMAT
-            else Envelope.model_validate(value)
-        )
+        self.envelope = formats[archive_format].model_validate(value)
         self.raw_digest, self.size = digest(raw), len(raw)
         if [p.name for p in self.envelope.parts] != list(PART_NAMES):
             fail(
@@ -372,12 +380,18 @@ class Archive:
         if len({b.display_name for b in self.branches}) != len(branches):
             fail("duplicate_branch_name", "Branch names must be unique in the Run")
         selected = branches.get(self.envelope.selected_branch_id)
+        requested = (
+            self.envelope.selected_branch_ids
+            if isinstance(self.envelope, CustomEnvelope)
+            else [self.envelope.selected_branch_id]
+        )
         if (
             selected is None
             or selected.saved_head_revision_id
             != self.envelope.selected_head_revision_id
             or [b.branch_id for b in self.branches if b.role == "selected"]
-            != [selected.branch_id]
+            != requested
+            or selected.branch_id not in requested
             or self.run.viewer_branch_id not in branches
         ):
             fail(
@@ -403,7 +417,7 @@ class Archive:
                 fail("invalid_manifest", "Full archive must include its entire declared Branch roster")
         elif any(b.role == "included" for b in self.branches):
             fail("invalid_manifest", "Branch archive only accepts selected and dependency Branches")
-        reached, branch_paths = set(), {}
+        reached = set()
         for branch in self.branches:
             if (
                 branch.forked_from_branch_id is not None
@@ -411,7 +425,7 @@ class Archive:
             ):
                 fail("missing_owner", "Fork source Branch context is missing")
             seen, current = set(), branch.saved_head_revision_id
-            while current is not None:
+            while current is not None and current not in reached:
                 if current in seen:
                     fail("lineage_cycle", "Saved lineage contains a cycle")
                 seen.add(current)
@@ -441,7 +455,6 @@ class Archive:
                     )
                 current = revision.parent_revision_id
             reached.update(seen)
-            branch_paths[branch.branch_id] = seen
         # The Branch graph is also acyclic, even when a Branch currently shares
         # another owner's HEAD and therefore has no own revision rows yet.
         for branch in self.branches:
@@ -460,40 +473,51 @@ class Archive:
                 "Original Saved authority for the Run/Viewer choice is absent",
             )
         needed = {
-            self.envelope.selected_branch_id,
+            *requested,
             self.run.viewer_branch_id,
             activation.branch_id,
         }
         if full_run:
             needed.update(branches)
-        previous = set()
-        while needed != previous:
-            previous = set(needed)
-            for bid in previous:
-                branch = branches[bid]
-                if branch.forked_from_branch_id:
-                    needed.add(branch.forked_from_branch_id)
-                for rid in branch_paths[bid]:
-                    revision = revisions[rid]
-                    payload = decode(revision.payload_json)
-                    needed.add(revision.branch_id)
-                    needed.add(payload["run"]["viewer_branch_id"])
-                    baseline = (
-                        payload["content"].get("native_fork_baseline", {}).get("state")
-                    )
-                    if baseline:
-                        needed.add(baseline["selected_source_branch_id"])
-            active_revisions = set().union(*(branch_paths[bid] for bid in previous))
-            needed.update(
-                c.viewer_branch_id
-                for c in self.checkpoints
-                if c.restore_saved_revision_id in active_revisions
+        # Each included dependency is expanded once. Shared history must not
+        # trigger another decode for every fork or every closure iteration.
+        checkpoint_viewers = {}
+        for checkpoint in self.checkpoints:
+            checkpoint_viewers.setdefault(checkpoint.restore_saved_revision_id, set()).add(
+                checkpoint.viewer_branch_id
             )
-            if not needed <= branches.keys():
+        pending = sorted(needed, reverse=True)
+        processed_revisions = set()
+        while pending:
+            bid = pending.pop()
+            branch = branches.get(bid)
+            if branch is None:
                 fail(
                     "missing_owner",
                     "A required historical owner/Viewer/source context is missing",
                 )
+            dependencies = set()
+            if branch.forked_from_branch_id:
+                dependencies.add(branch.forked_from_branch_id)
+            rid = branch.saved_head_revision_id
+            while rid is not None and rid not in processed_revisions:
+                processed_revisions.add(rid)
+                revision = revisions[rid]  # HEAD and full parent chain were validated above
+                payload = decode(revision.payload_json)
+                dependencies.add(revision.branch_id)
+                dependencies.add(payload["run"].get("viewer_branch_id"))
+                baseline = payload["content"].get("native_fork_baseline", {}).get("state")
+                if baseline:
+                    dependencies.add(baseline["selected_source_branch_id"])
+                dependencies.update(checkpoint_viewers.get(rid, ()))
+                rid = revision.parent_revision_id
+            if not dependencies <= branches.keys():
+                fail(
+                    "missing_owner",
+                    "A required historical owner/Viewer/source context is missing",
+                )
+            pending.extend(sorted(dependencies - needed, reverse=True))
+            needed.update(dependencies)
         if needed != branches.keys():
             fail(
                 "unrelated_branch",
@@ -550,10 +574,6 @@ class Archive:
                 or saved_revision_checkpoint_content_hash(**values) != row.content_hash
             ):
                 fail("invalid_checkpoint", "Checkpoint hash or dependencies failed")
-        for revision in self.revisions:
-            payload = decode(revision.payload_json)
-            if payload["run"].get("viewer_branch_id") not in branches:
-                fail("missing_viewer", "Historical Saved Viewer context is absent")
         if [a.audit_event_id for a in self.audits] != sorted(
             a.audit_event_id for a in self.audits
         ) or [c.checkpoint_id for c in self.checkpoints] != sorted(
@@ -583,6 +603,7 @@ def pack(
     selected_head_revision_id,
     omitted_branch_ids,
     full_run=False,
+    custom_branch_ids=(),
 ):
     values = (run, branches, revisions, audits, checkpoints, allocator)
     parts = []
@@ -615,5 +636,13 @@ def pack(
             scope=FULL_RUN_SCOPE,
             branch_ids=[branch["branch_id"] for branch in branches],
             omitted_areas=list(FULL_RUN_OMITTED_AREAS),
+        )
+    elif custom_branch_ids:
+        envelope.update(
+            format=CUSTOM_FORMAT,
+            engine_capability=CUSTOM_FORMAT,
+            minimum_engine=CUSTOM_MINIMUM_ENGINE,
+            scope=CUSTOM_SCOPE,
+            selected_branch_ids=list(custom_branch_ids),
         )
     return encode(envelope)

@@ -224,7 +224,8 @@ def _check_full_archive_size(session, run_id):
 
 
 def collect_archive(
-    repository, session, *, run_id, branch_id, expected_head=None, full_run=False
+    repository, session, *, run_id, branch_id, expected_head=None, full_run=False,
+    custom_branch_ids=()
 ):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
     run = session.get(RunContainerModel, run_id)
@@ -258,9 +259,13 @@ def collect_archive(
         _check_full_archive_size(session, run_id)
     branches, anchors, rows, payloads, checked = {}, {}, {}, {}, set()
     pending = []
+    scoped_owners = {branch_id: selected}
 
     def anchor(bid, revision_id=None):
-        owner = _scope_branch(session, run_id, bid)
+        owner = scoped_owners.get(bid)
+        if owner is None:
+            owner = _scope_branch(session, run_id, bid)
+            scoped_owners[bid] = owner
         rid = revision_id or owner.saved_head_revision_id
         row = session.get(BranchSavedRevisionModel, rid)
         if row is None or row.run_id != run_id:
@@ -276,7 +281,9 @@ def collect_archive(
             branches[bid], anchors[bid] = owner, rid
             pending.append((bid, rid))
 
-    anchor(branch_id)
+    requested = set(custom_branch_ids) if custom_branch_ids else {branch_id}
+    for bid in sorted(requested):
+        anchor(bid)
     anchor(run.official_branch_id)
     # The Viewer choice may have been Saved by a third editing Branch. Preserve
     # that actual immutable witness as a dependency instead of inventing a new
@@ -300,6 +307,7 @@ def collect_archive(
         key=lambda b: (
             b.branch_id != branch_id,
             b.branch_id != run.official_branch_id,
+            bool(custom_branch_ids) and b.branch_id not in requested,
             b.branch_id,
         )
     )
@@ -315,7 +323,8 @@ def collect_archive(
             projection.get(k) == v for k, v in expected_run.items()
         ) and projection.get("run_calendar") == metadata.get("run_calendar"):
             activation_revision_id = witness.revision_id
-            anchor(candidate.branch_id, witness.revision_id)
+            witness_owner = witness.branch_id if custom_branch_ids else candidate.branch_id
+            anchor(witness_owner, witness.revision_id)
             break
     if activation_revision_id is None:
         fail(
@@ -323,7 +332,10 @@ def collect_archive(
             "No current Saved Branch witnesses the actual Run calendar/name/Viewer choice",
         )
 
+    payload_chars = 0
+
     def drain_pending():
+        nonlocal payload_chars
         while pending:
             bid, rid = pending.pop()
             key = bid, rid
@@ -335,7 +347,7 @@ def collect_archive(
             # lineage. Only the selected historical prefix goes into the archive.
             lineage = repository._validated_branch_revision_lineage_in_session(
                 session=session, branch=owner,
-                payload_revision_ids=frozenset() if full_run else None,
+                payload_revision_ids=frozenset() if full_run or custom_branch_ids else None,
             )
             members = {r.revision_id: r for r in lineage}
             if rid not in members:
@@ -353,6 +365,10 @@ def collect_archive(
                     )
                 row = session.get(BranchSavedRevisionModel, current)
                 if current not in rows:
+                    if custom_branch_ids:
+                        payload_chars += len(row.payload_json)
+                        if payload_chars > MAX_ARCHIVE_BYTES:
+                            fail("archive_request_too_large", "Selected history exceeds the archive size budget")
                     rows[current] = RevisionSpec.model_validate(
                         _row_values(row, RevisionSpec)
                     )
@@ -410,7 +426,7 @@ def collect_archive(
                 forked_from_saved_revision_id=branch.forked_from_saved_revision_id,
                 saved_head_revision_id=rid,
                 metadata_json=branch.metadata_json,
-                role="selected" if bid == branch_id else other_role,
+                role="selected" if bid in requested else other_role,
             ).model_dump()
         )
     revision_ids = set(rows)
@@ -486,6 +502,7 @@ def collect_archive(
         selected_head_revision_id=selected.saved_head_revision_id,
         omitted_branch_ids=omitted,
         full_run=full_run,
+        custom_branch_ids=custom_branch_ids,
     )
     return raw
 

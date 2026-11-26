@@ -1,0 +1,5560 @@
+{
+ "atp_season_year": 1991,
+ "counts": {
+  "occurrences": 76,
+  "wikipedia_dates_agree": 42,
+  "wikipedia_dates_differ": 24,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-01-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1990-12-31",
+   "main_year_weeks": [
+    [
+     1991,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1991_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Australian_Men's_Hardcourt_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1990-12-31",
+     "1991-01-06"
+    ],
+    "main_article": {
+     "bytes": 158300,
+     "revision_id": 1341098430,
+     "sha256": "6c3119181d869a41a10a4dcc8512d4083e6fa54b0dd3870704f746c4dba202a2",
+     "url": "https://en.wikipedia.org/wiki/1991_Australian_Men's_Hardcourt_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Australian Men's Hardcourt Championships Adelaide, Australia ATP World Series Hard – $150,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 332648,
+     "revision_id": 1221433680,
+     "sha256": "25c7c0030bc0091b5a9faeea617e452bf6eefd6a56467a8456205dd11dd071c3",
+     "url": "https://en.wikipedia.org/wiki/1991_Australian_Men's_Hardcourt_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-01-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1990-12-31",
+   "main_year_weeks": [
+    [
+     1991,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1991_wellington_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "wellington_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_BP_National_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1990-12-31",
+     "1991-01-06"
+    ],
+    "main_article": {
+     "bytes": 147696,
+     "revision_id": 1372149113,
+     "sha256": "fd83e48668d44337b426dc4f30fc4ca528a7858ac7bf6e5f39406cadba59842e",
+     "url": "https://en.wikipedia.org/wiki/1991_BP_National_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BP National Championships Wellington, New Zealand ATP World Series Hard – $150,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-01-07..1991-01-14 differ from canonical 1991-01-07..1991-01-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1991-01-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-01-07",
+   "main_year_weeks": [
+    [
+     1991,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1991_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Benson_&_Hedges_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-01-07",
+     "1991-01-14"
+    ],
+    "main_article": {
+     "bytes": 156802,
+     "revision_id": 1277541422,
+     "sha256": "9a2efa132c1ac909e534b31a3564670232ea243f17430e49c529899619998567",
+     "url": "https://en.wikipedia.org/wiki/1991_Benson_%26_Hedges_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Benson & Hedges Open Auckland, New Zealand ATP World Series Hard – $150,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 313809,
+     "revision_id": 1300789949,
+     "sha256": "bb839490bc6d72dcf6247ac287795e2e242bdd505664e80685843e26b5377055",
+     "url": "https://en.wikipedia.org/wiki/1991_Benson_and_Hedges_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-01-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-01-07",
+   "main_year_weeks": [
+    [
+     1991,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1991_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Holden_NSW_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-01-07",
+     "1991-01-13"
+    ],
+    "main_article": {
+     "bytes": 214081,
+     "revision_id": 1343217669,
+     "sha256": "2f02340e8aeada997b8c85637ccc8a295aaf2228c6062ede8e64a7ce90490560",
+     "url": "https://en.wikipedia.org/wiki/1991_Holden_NSW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Holden NSW Open Sydney, Australia ATP World Series Hard – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327894,
+     "revision_id": 1342268082,
+     "sha256": "0cb0f20c1c0430c1220dc8e047939202d4dfc57d167e97a78a84d0e5d0739bd5",
+     "url": "https://en.wikipedia.org/wiki/1991_Holden_NSW_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-02-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-04",
+   "main_year_weeks": [
+    [
+     1991,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1991_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-02-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-04",
+   "main_year_weeks": [
+    [
+     1991,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1991_maceio_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "maceio_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Muratti_Time_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-02-04",
+     "1991-02-10"
+    ],
+    "main_article": {
+     "bytes": 159208,
+     "revision_id": 1361731094,
+     "sha256": "5fd7809b9f74ce2f7a3c5ad0799649a0d79507091cb9f3d3addfe1cc7809c91d",
+     "url": "https://en.wikipedia.org/wiki/1991_Muratti_Time_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Muratti Time Indoor Milan, Italy ATP World Series Carpet (i) – $540,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331042,
+     "revision_id": 1361731142,
+     "sha256": "125b07315fea82c092564969cee8b0c7a97a168ca3f2dfd288f3880f8c392b89",
+     "url": "https://en.wikipedia.org/wiki/1991_Muratti_Time_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-02-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-04",
+   "main_year_weeks": [
+    [
+     1991,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1991_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-02-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-11",
+   "main_year_weeks": [
+    [
+     1991,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1991_brussels_championship_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "brussels_championship_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Donnay_Indoor_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-02-11",
+     "1991-02-17"
+    ],
+    "main_article": {
+     "bytes": 148201,
+     "revision_id": 1378068777,
+     "sha256": "b20e64ce0b2e13a30c98fb17eedd6197f9074b5d070f0884026e12d7f2e42622",
+     "url": "https://en.wikipedia.org/wiki/1991_Donnay_Indoor_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Donnay Indoor Championships Brussels, Belgium ATP Championship Series Carpet (i) – $465,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331247,
+     "revision_id": 1221567677,
+     "sha256": "090fc9f63d0b5746b4f9605ab3e5eb41e1ba563c38a7317a53c3662e1991c722",
+     "url": "https://en.wikipedia.org/wiki/1991_Donnay_Indoor_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-02-11..1991-02-18 differ from canonical 1991-02-11..1991-02-17; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-02-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-11",
+   "main_year_weeks": [
+    [
+     1991,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1991_philadelphia_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "philadelphia_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Ebel_U.S._Pro_Indoor",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-02-11",
+     "1991-02-18"
+    ],
+    "main_article": {
+     "bytes": 152981,
+     "revision_id": 1221557253,
+     "sha256": "b59e096ed0794eeaf79736b32c4c33da6f5a95ef5706c94c4775caa4df6bd522",
+     "url": "https://en.wikipedia.org/wiki/1991_Ebel_U.S._Pro_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Ebel U.S. Pro Indoor Philadelphia, PA, US ATP Championship Series Carpet (i) – $825,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 432353,
+     "revision_id": 1311957463,
+     "sha256": "356e14baf9c6cdd121c35bba7860a7de32e98a6e54e2f9da657367a03e8e5294",
+     "url": "https://en.wikipedia.org/wiki/1991_U.S._Pro_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds receive a bye into the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-02-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-18",
+   "main_year_weeks": [
+    [
+     1991,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1991_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Volvo_Tennis_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-02-18",
+     "1991-02-24"
+    ],
+    "main_article": {
+     "bytes": 159093,
+     "revision_id": 1383097436,
+     "sha256": "f9bc783d50e9be6b413aee2d1f4c6842e0ecb79962b5e47138a4947a2f65cadd",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_Tennis_Indoor"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Volvo Tennis Indoor Memphis, TN, US ATP Championship Series Hard (i) – $600,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 455910,
+     "revision_id": 1311960824,
+     "sha256": "734312ab3a5af606face5c3b6aedd9697da64d9492070aded9c2da2d445629dc",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_Tennis_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-02-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-18",
+   "main_year_weeks": [
+    [
+     1991,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1991_stuttgart_indoor_feb_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "stuttgart_indoor_feb_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Eurocard_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-02-18",
+     "1991-02-24"
+    ],
+    "main_article": {
+     "bytes": 150318,
+     "revision_id": 1319817445,
+     "sha256": "2aca8a1c03c07a9d1dc0bae350eb7202650eff988b387eff7ffeeec209da74dd",
+     "url": "https://en.wikipedia.org/wiki/1991_Eurocard_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Eurocard Open Stuttgart, Germany ATP Championship Series Carpet (i) – $825,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-03-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-25",
+   "main_year_weeks": [
+    [
+     1991,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1991_chicago_1991",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "chicago_1991",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-03-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-02-25",
+   "main_year_weeks": [
+    [
+     1991,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1991_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_ABN_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-02-25",
+     "1991-03-03"
+    ],
+    "main_article": {
+     "bytes": 161551,
+     "revision_id": 1361712993,
+     "sha256": "904c624571559381297cf09ee83d9580c1bb6df3fb2263cce0eb4139242972fb",
+     "url": "https://en.wikipedia.org/wiki/1991_ABN_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN World Tennis Tournament Rotterdam, Netherlands ATP World Series Carpet (i) – $450,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 337278,
+     "revision_id": 1361713065,
+     "sha256": "39e485f5e11878cfc4edda796f4a73577e9b883cba694aed2178f1b4934f816c",
+     "url": "https://en.wikipedia.org/wiki/1991_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-03-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-03-04",
+   "main_year_weeks": [
+    [
+     1991,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1991_copenhagen_2003",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "copenhagen_2003",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Copenhagen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-03-04",
+     "1991-03-10"
+    ],
+    "main_article": {
+     "bytes": 157268,
+     "revision_id": 1321628559,
+     "sha256": "c8d48289f9034d3045d76d519fdd01e32d7af67194eb30a371a223dff6ae5bf5",
+     "url": "https://en.wikipedia.org/wiki/1991_Copenhagen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copenhagen Open Copenhagen, Denmark ATP World Series Carpet (i) – $125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330036,
+     "revision_id": 1276264495,
+     "sha256": "a160578a67dfe8f0de1040ac19f9f5440279a91f5264483b78202fbe6d54218c",
+     "url": "https://en.wikipedia.org/wiki/1991_Copenhagen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-03-02..1991-03-16 differ from canonical 1991-03-04..1991-03-10; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds receive a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-03-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-03-04",
+   "main_year_weeks": [
+    [
+     1991,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1991_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Newsweek_Champions_Cup_and_the_Virginia_Slims_of_Palm_Springs",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-03-02",
+     "1991-03-16"
+    ],
+    "main_article": {
+     "bytes": 212588,
+     "revision_id": 1190511951,
+     "sha256": "81501659bb34702a4ca8fcdb417005e8b584a80360a327c6adc9d1ee01c4a2d8",
+     "url": "https://en.wikipedia.org/wiki/1991_Newsweek_Champions_Cup_and_the_Virginia_Slims_of_Palm_Springs"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Newsweek Champions Cup Indian Wells, CA, US ATP Championship Series, Single-Week Hard – $750,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 488042,
+     "revision_id": 1311956204,
+     "sha256": "bcec3811ff13aa27240dfce6d6df314c768e9f8a331171e352ecfdce506e0429",
+     "url": "https://en.wikipedia.org/wiki/1991_Newsweek_Champions_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-03-11..1991-03-25 differ from canonical 1991-03-15..1991-03-24; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 128,
+    "bye_statement": null,
+    "byes_derived": 32,
+    "main_draw_players": 96,
+    "main_rounds": 7,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-03-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-03-15",
+   "main_year_weeks": [
+    [
+     1991,
+     11
+    ],
+    [
+     1991,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1991_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11,
+    12
+   ],
+   "run_weeks_offset_37": [
+    27,
+    28
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Lipton_International_Players_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-03-11",
+     "1991-03-25"
+    ],
+    "main_article": {
+     "bytes": 204501,
+     "revision_id": 1345996230,
+     "sha256": "316dc3294654e4e2e210e46949eed4a578f529f87c46dd84d56edc2167cdceb2",
+     "url": "https://en.wikipedia.org/wiki/1991_Lipton_International_Players_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Lipton International Players Championships Key Biscayne, FL, US ATP Championship Series, Single-Week Hard – $1,200,000 – 96S/48D Singles – Doubles",
+    "singles_article": {
+     "bytes": 730427,
+     "revision_id": 1311957643,
+     "sha256": "89d5ce258aa4ae6d2569d3fdae388dd047870c33b05fbe2e74b295ae82674de3",
+     "url": "https://en.wikipedia.org/wiki/1991_Lipton_International_Players_Championships_%E2%80%93_Men's_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-04-01..1991-04-08 differ from canonical 1991-04-01..1991-04-07; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-01",
+   "main_year_weeks": [
+    [
+     1991,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1991_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Estoril_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-04-01",
+     "1991-04-08"
+    ],
+    "main_article": {
+     "bytes": 155973,
+     "revision_id": 1361653516,
+     "sha256": "2e3df64d6339c0c1baed4a38556a793fd3d92ba164d919ec6e246d93da80e485",
+     "url": "https://en.wikipedia.org/wiki/1991_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril Open Oeiras, Portugal ATP World Series Clay – $337,500 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326731,
+     "revision_id": 1311954053,
+     "sha256": "eae46cba7bbd7a02aaf774f4602e7a00ec6c6f72a28d0b40b021b19e2b196cf5",
+     "url": "https://en.wikipedia.org/wiki/1991_Estoril_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-01",
+   "main_year_weeks": [
+    [
+     1991,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1991_hong_kong_salem_2002",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "hong_kong_salem_2002",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-01",
+     "1991-04-07"
+    ],
+    "main_article": {
+     "bytes": 150901,
+     "revision_id": 1266758309,
+     "sha256": "b68607dfebf80c952d53e593cf42ac48cc4a32eb0c8e702626e8c37b2050305e",
+     "url": "https://en.wikipedia.org/wiki/1991_Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Salem Open Hong Kong, Hong Kong ATP World Series Hard – $234,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 333262,
+     "revision_id": 1264691089,
+     "sha256": "d81f33e68375c01ea676b2dab484b0aeafb6d5a727fad4a5cbaa54f49af17ea3",
+     "url": "https://en.wikipedia.org/wiki/1991_Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-07",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-01",
+   "main_year_weeks": [
+    [
+     1991,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1991_orlando_1991",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "orlando_1991",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Prudential-Bache_Securities_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-01",
+     "1991-04-07"
+    ],
+    "main_article": {
+     "bytes": 156039,
+     "revision_id": 1272778485,
+     "sha256": "e5c7a923fd10a5725ff3ee49f13c80399d0bd3e7c1e108421a50ba8aca0c6ee5",
+     "url": "https://en.wikipedia.org/wiki/1991_Prudential-Bache_Securities_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Prudential-Bache Securities Classic Orlando, FL, US ATP World Series Hard – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 336338,
+     "revision_id": 1172365855,
+     "sha256": "f02f504049e89e2e6cbdba8185091d6ba09f40d0c7eaea8f0f2894d175545e75",
+     "url": "https://en.wikipedia.org/wiki/1991_Prudential-Bache_Securities_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-08",
+   "main_year_weeks": [
+    [
+     1991,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1991_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Torneo_Godó",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-08",
+     "1991-04-14"
+    ],
+    "main_article": {
+     "bytes": 162989,
+     "revision_id": 1225390619,
+     "sha256": "b1fe01e9386e1ab1ced1fa8d06e26d1c6443eb9fd7298b4a87f865839dc88d12",
+     "url": "https://en.wikipedia.org/wiki/1991_Torneo_God%C3%B3"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Trofeo Conde de Godó Barcelona, Spain ATP Championship Series Clay – $510,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 493475,
+     "revision_id": 1311959767,
+     "sha256": "180f79939198beaf2bee6dfc7526b42796710b6087350aa33af58491c2a8d8a4",
+     "url": "https://en.wikipedia.org/wiki/1991_Torneo_God%C3%B3_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-08",
+   "main_year_weeks": [
+    [
+     1991,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1991_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Suntory_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-08",
+     "1991-04-14"
+    ],
+    "main_article": {
+     "bytes": 215112,
+     "revision_id": 1345656576,
+     "sha256": "ecda19f905758db02f6cb5eaaa90b8d7fef6aec186990cbd3ade2d224fe5d256",
+     "url": "https://en.wikipedia.org/wiki/1991_Suntory_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Suntory Japan Open Tennis Championships Tokyo, Japan ATP Championship Series Hard – $825,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 495530,
+     "revision_id": 1358162556,
+     "sha256": "22f001ff3c1730c4d303d07646e720ec5dff568ac70390486d97e721da3911dd",
+     "url": "https://en.wikipedia.org/wiki/1991_Suntory_Japan_Open_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-15",
+   "main_year_weeks": [
+    [
+     1991,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1991_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Philips_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-15",
+     "1991-04-21"
+    ],
+    "main_article": {
+     "bytes": 150220,
+     "revision_id": 1221588225,
+     "sha256": "13206c6d130c8bb2e17b6957b751f8db7a963675777ca4d750d6cd7ea463f505",
+     "url": "https://en.wikipedia.org/wiki/1991_Philips_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Philips Open Nice, France ATP World Series Clay – $225,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-04-15..1991-04-22 differ from canonical 1991-04-15..1991-04-21; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-15",
+   "main_year_weeks": [
+    [
+     1991,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1991_seoul_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "seoul_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_KAL_Cup_Korea_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-04-15",
+     "1991-04-22"
+    ],
+    "main_article": {
+     "bytes": 146373,
+     "revision_id": 1221588788,
+     "sha256": "8a8f08cd9c4fe3fe103ac6b1a5c36c8f258f74dc7af23af4ae4055fe6a8234c3",
+     "url": "https://en.wikipedia.org/wiki/1991_KAL_Cup_Korea_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "KAL Cup Korea Open Seoul, South Korea ATP World Series Hard – $140,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330243,
+     "revision_id": 1221589052,
+     "sha256": "daad7974197bd93e5a2b6056b7f0868094b2491ee2f678d2e3a8fc566ec03203",
+     "url": "https://en.wikipedia.org/wiki/1991_KAL_Cup_Korea_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-22",
+   "main_year_weeks": [
+    [
+     1991,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1991_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Monte_Carlo_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-22",
+     "1991-04-28"
+    ],
+    "main_article": {
+     "bytes": 185993,
+     "revision_id": 1221589926,
+     "sha256": "773a4503c19ebcaf74918671af7666e9152e05fd3ebcb84e26d3eeb23b9bf1d9",
+     "url": "https://en.wikipedia.org/wiki/1991_Monte_Carlo_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte Carlo Open Roquebrune-Cap-Martin, France ATP Championship Series, Single-Week Clay – $750,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 492452,
+     "revision_id": 1221590004,
+     "sha256": "c425810cbec5622f8b6b9d387b47ef2705d3c16bfa45ed2f7bd0aab4f156bcb8",
+     "url": "https://en.wikipedia.org/wiki/1991_Monte_Carlo_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-04-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-22",
+   "main_year_weeks": [
+    [
+     1991,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1991_singapore_march_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "singapore_march_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Epson_Singapore_Super_Tennis",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-22",
+     "1991-04-28"
+    ],
+    "main_article": {
+     "bytes": 150598,
+     "revision_id": 1189277343,
+     "sha256": "bfb751deed3a677607694845cd97c5e635e67caa92dc90fdcdeed4c3f5254ad5",
+     "url": "https://en.wikipedia.org/wiki/1991_Epson_Singapore_Super_Tennis"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Epson Singapore Super Tennis Singapore, Singapore ATP World Series Hard – $215,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-05-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-29",
+   "main_year_weeks": [
+    [
+     1991,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1991_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-29",
+   "main_year_weeks": [
+    [
+     1991,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1991_madrid_clay_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "madrid_clay_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Trofeo_Villa_de_Madrid",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-04-29",
+     "1991-05-05"
+    ],
+    "main_article": {
+     "bytes": 147330,
+     "revision_id": 1373338176,
+     "sha256": "b8fe10f82ddc7c9a803c6a8e983aff0b4accf574e0462342cfdb9cb59fb6f256",
+     "url": "https://en.wikipedia.org/wiki/1991_Trofeo_Villa_de_Madrid"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Trofeo Villa de Madrid Madrid, Spain ATP World Series Clay – $450,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326673,
+     "revision_id": 1324871545,
+     "sha256": "7ed31f35b9bd2e0354f134e041cf76eafd5d6cdbafef411aa9b513cde0eb13a2",
+     "url": "https://en.wikipedia.org/wiki/1991_Trofeo_Villa_de_Madrid_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-04-29..1991-05-06 differ from canonical 1991-04-29..1991-05-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-04-29",
+   "main_year_weeks": [
+    [
+     1991,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1991_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_BMW_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-04-29",
+     "1991-05-06"
+    ],
+    "main_article": {
+     "bytes": 155439,
+     "revision_id": 1340289314,
+     "sha256": "1ab4f7f59a90241e1393bc542d29f1685a7138a8443d2432ce51e95f3bf63bb9",
+     "url": "https://en.wikipedia.org/wiki/1991_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW Open Munich, Germany ATP World Series Clay – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331176,
+     "revision_id": 1221595189,
+     "sha256": "fcb59cb1959cdbdcafbaab3e6e22ebfb3004fb41c891bc133254cc4b53038499",
+     "url": "https://en.wikipedia.org/wiki/1991_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-05-06..1991-05-13 differ from canonical 1991-05-06..1991-05-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-05-06",
+   "main_year_weeks": [
+    [
+     1991,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1991_birmingham_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "birmingham_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_U.S._Men's_Clay_Court_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-05-06",
+     "1991-05-13"
+    ],
+    "main_article": {
+     "bytes": 161785,
+     "revision_id": 1320288031,
+     "sha256": "3e10eb28283f2cc8f0d3a2cbb5d6feb8c2f2d00707b85f24ac6a6862277acd3b",
+     "url": "https://en.wikipedia.org/wiki/1991_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court Championships Charlotte, NC, US ATP World Series Clay – $215,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 314746,
+     "revision_id": 1346293657,
+     "sha256": "2901936735c222793b4c234f3678e6fc0c80c3292e663fabcda3c8a835462b71",
+     "url": "https://en.wikipedia.org/wiki/1991_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-05-06..1991-05-13 differ from canonical 1991-05-06..1991-05-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-05-06",
+   "main_year_weeks": [
+    [
+     1991,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1991_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_ATP_German_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-05-06",
+     "1991-05-13"
+    ],
+    "main_article": {
+     "bytes": 158263,
+     "revision_id": 1373337384,
+     "sha256": "3aa1e50a1eb61608a59e62d1bb69bc75f41cb7bdcce86d66a31726681217e1cc",
+     "url": "https://en.wikipedia.org/wiki/1991_ATP_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "German Open Hamburg, Germany ATP Championship Series, Single-Week Clay – $750,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 491892,
+     "revision_id": 1311956801,
+     "sha256": "5489254a04eb08cd380b654a6a0834cacf214b99f469e627b3e98496d5da5f3c",
+     "url": "https://en.wikipedia.org/wiki/1991_ATP_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-05-13..1991-05-20 differ from canonical 1991-05-13..1991-05-19; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 64,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-05-13",
+   "main_year_weeks": [
+    [
+     1991,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1991_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Italian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-05-13",
+     "1991-05-20"
+    ],
+    "main_article": {
+     "bytes": 214693,
+     "revision_id": 1315900179,
+     "sha256": "bd0ad251390e95ecbf50a3052aefabdaa1ba81fc0648fa0073553c5ed69ff74c",
+     "url": "https://en.wikipedia.org/wiki/1991_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Italian Open Rome, Italy ATP Championship Series, Single-Week Clay – $1,002,000 – 64S/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 536155,
+     "revision_id": 1387848965,
+     "sha256": "7d909b2eb8ef51fee74239f21195f2271671707d1fef99d89bf42bb038b886d9",
+     "url": "https://en.wikipedia.org/wiki/1991_Italian_Open_%E2%80%93_Men's_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-05-13",
+   "main_year_weeks": [
+    [
+     1991,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1991_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Yugoslav_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-05-13",
+     "1991-05-19"
+    ],
+    "main_article": {
+     "bytes": 151431,
+     "revision_id": 1273790916,
+     "sha256": "e6ce18418d1e8a360ff03e526d01acde391b678013a7d9275c20a4b4332210f1",
+     "url": "https://en.wikipedia.org/wiki/1991_Yugoslav_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Yugoslav Open Umag, Yugoslavia ATP World Series Clay – $215,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331243,
+     "revision_id": 1374758273,
+     "sha256": "ac8a93cbfc89d7d7f36323fe0a363b2914dfae3a2cdc8c5216657f61ee33da35",
+     "url": "https://en.wikipedia.org/wiki/1991_Yugoslav_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-05-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-05-20",
+   "main_year_weeks": [
+    [
+     1991,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_1991_bologna_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "bologna_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Internazionali_Cassa_di_Risparmio",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-05-20",
+     "1991-05-26"
+    ],
+    "main_article": {
+     "bytes": 148468,
+     "revision_id": 1374678762,
+     "sha256": "8a8999829469c6c37c332739d7af93eb4b433bc84de6e37b02e52d3b5836fdfd",
+     "url": "https://en.wikipedia.org/wiki/1991_Internazionali_Cassa_di_Risparmio"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Internazionali Cassa di Risparmio Bologna, Italy ATP World Series Clay – $225,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-06-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-06-10",
+   "main_year_weeks": [
+    [
+     1991,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1991_florence_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "florence_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Torneo_Internazionale_Città_di_Firenze",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-06-10",
+     "1991-06-16"
+    ],
+    "main_article": {
+     "bytes": 146680,
+     "revision_id": 1361669790,
+     "sha256": "266cd077da9b65b9b0e7c060f9c0bece4ba3778abf8724eb2bd096223f229a76",
+     "url": "https://en.wikipedia.org/wiki/1991_Torneo_Internazionale_Citt%C3%A0_di_Firenze"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Torneo Internazionale Città di Firenze Florence, Italy ATP World Series Clay – $225,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-06-10..1991-06-17 differ from canonical 1991-06-10..1991-06-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-06-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-06-10",
+   "main_year_weeks": [
+    [
+     1991,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1991_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Stella_Artois_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-06-10",
+     "1991-06-17"
+    ],
+    "main_article": {
+     "bytes": 159714,
+     "revision_id": 1276262796,
+     "sha256": "b1d462813154dc7c5b8a413a595badb8ab3b1f7c9971db273a98e6f2bfa6e005",
+     "url": "https://en.wikipedia.org/wiki/1991_Stella_Artois_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stella Artois Championships London, Great Britain ATP World Series Grass – $450,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 473078,
+     "revision_id": 1306919294,
+     "sha256": "8cdc0d7671f46c1c21f06802169fa93fd51103c0f0c3c1d39a2b06d2f8b4d986",
+     "url": "https://en.wikipedia.org/wiki/1991_Stella_Artois_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-06-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-06-10",
+   "main_year_weeks": [
+    [
+     1991,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1991_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Rosmalen_Grass_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-06-10",
+     "1991-06-16"
+    ],
+    "main_article": {
+     "bytes": 151666,
+     "revision_id": 1221603056,
+     "sha256": "0cc998380fa4f09c92436d0aa0601ebfaffbbb863dd745e47126b0cfd5081d22",
+     "url": "https://en.wikipedia.org/wiki/1991_Rosmalen_Grass_Court_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Continental Grass Court Championships Rosmalen, Netherlands ATP World Series Grass – $225,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-06-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-06-17",
+   "main_year_weeks": [
+    [
+     1991,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1991_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-06-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-06-17",
+   "main_year_weeks": [
+    [
+     1991,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1991_poertschach_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "poertschach_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-08",
+   "main_year_weeks": [
+    [
+     1991,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1991_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-08",
+     "1991-07-14"
+    ],
+    "main_article": {
+     "bytes": 161492,
+     "revision_id": 1294640753,
+     "sha256": "2a1a150295b93be9d8db7fca0c820dac2de95c3c6bba2c87965b3369367c4390",
+     "url": "https://en.wikipedia.org/wiki/1991_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swedish Open Båstad, Sweden ATP World Series Clay – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331825,
+     "revision_id": 1311960423,
+     "sha256": "2dd4718854be442314509c9f69e5fa52fdf8f1cac8f555f5e3f4247025bc8c57",
+     "url": "https://en.wikipedia.org/wiki/1991_Swedish_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-08",
+   "main_year_weeks": [
+    [
+     1991,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1991_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Rado_Swiss_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-08",
+     "1991-07-14"
+    ],
+    "main_article": {
+     "bytes": 157901,
+     "revision_id": 1361554033,
+     "sha256": "892cb232cd7df90b56bc431d97bb2b5d2e532e8802450b50d152659bc69b8d77",
+     "url": "https://en.wikipedia.org/wiki/1991_Rado_Swiss_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rado Swiss Open Gstaad, Switzerland ATP World Series Clay – $275,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 329767,
+     "revision_id": 1356971072,
+     "sha256": "a8626580107a79f5dd26f9458d86ce2f02b4227d307ce8b1af76b2ac32cd5712",
+     "url": "https://en.wikipedia.org/wiki/1991_Rado_Swiss_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-08",
+   "main_year_weeks": [
+    [
+     1991,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1991_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Miller_Lite_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-08",
+     "1991-07-14"
+    ],
+    "main_article": {
+     "bytes": 161568,
+     "revision_id": 1332808270,
+     "sha256": "ea4789148b0925850449fa3ff2168d5ccd1a64ee630c52bcff558eda4fc050a4",
+     "url": "https://en.wikipedia.org/wiki/1991_Miller_Lite_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Miller Lite Hall of Fame Championships Newport, RI, US ATP World Series Grass – $150,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 334245,
+     "revision_id": 1331750920,
+     "sha256": "b251044f8a79bb39938a5867055c42a8bfa1c1d8de25c157f2b42af25171841c",
+     "url": "https://en.wikipedia.org/wiki/1991_Miller_Lite_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-15",
+   "main_year_weeks": [
+    [
+     1991,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1991_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Mercedes_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-15",
+     "1991-07-21"
+    ],
+    "main_article": {
+     "bytes": 154875,
+     "revision_id": 1367229705,
+     "sha256": "6b25680059a8b737113ea53c422b9ef6ab1a75c17c572f06b67e710d2d3a9c80",
+     "url": "https://en.wikipedia.org/wiki/1991_Mercedes_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mercedes Cup Stuttgart, Germany ATP Championship Series Clay – $825,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 451459,
+     "revision_id": 1346244042,
+     "sha256": "0268dd87bbd93bc6bc932faf83ffe64c9a52cccbab0f00b382e76dc3b6b69384",
+     "url": "https://en.wikipedia.org/wiki/1991_Mercedes_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-15",
+   "main_year_weeks": [
+    [
+     1991,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1991_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Sovran_Bank_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-15",
+     "1991-07-21"
+    ],
+    "main_article": {
+     "bytes": 159106,
+     "revision_id": 1324355523,
+     "sha256": "515038391b06be0e97f8e2c12450e6acf2853329b2bc71eb596a62b245c33302",
+     "url": "https://en.wikipedia.org/wiki/1991_Sovran_Bank_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Sovran Bank Classic Washington, D.C., US ATP Championship Series Hard – $465,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 491805,
+     "revision_id": 1328927411,
+     "sha256": "68e2136c0a58dd4d6fd9d4b24850e1625e45c17eda5176a648fdcade0fcdf27a",
+     "url": "https://en.wikipedia.org/wiki/1991_Sovran_Bank_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-22",
+   "main_year_weeks": [
+    [
+     1991,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1991_belgrade_2012",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "belgrade_2012",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Dutch_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-22",
+     "1991-07-28"
+    ],
+    "main_article": {
+     "bytes": 151795,
+     "revision_id": 1372150573,
+     "sha256": "a979ea2951bf2f49edc0ec89b7a644de0a6a8b3ab3d44575a7eaaddb757998c8",
+     "url": "https://en.wikipedia.org/wiki/1991_Dutch_Open_(tennis)"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Dutch Open Hilversum, Netherlands ATP World Series Clay – $215,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330763,
+     "revision_id": 1311954602,
+     "sha256": "9a3500fe470e7b346a1f2164b6641e2d46c9c5dd4c1b039d2d8c64feaaee69ad",
+     "url": "https://en.wikipedia.org/wiki/1991_Dutch_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-07-28",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-22",
+   "main_year_weeks": [
+    [
+     1991,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1991_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Player's_Canadian_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-22",
+     "1991-07-28"
+    ],
+    "main_article": {
+     "bytes": 213808,
+     "revision_id": 1344300398,
+     "sha256": "f3b6e4e87023c102c6f7bbbb75bfd92a283cd0086cb1a466434a21a49d2db6d3",
+     "url": "https://en.wikipedia.org/wiki/1991_Player's_Canadian_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Player's Canadian Open Montreal, Quebec, Canada ATP Championship Series, Single-Week Hard – $930,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 463524,
+     "revision_id": 1276264329,
+     "sha256": "76c765a5e1142db0645e81a726dc200fd3cd77b8cebefa3cb364a71fdfdcd6dc",
+     "url": "https://en.wikipedia.org/wiki/1991_Canadian_Open_%E2%80%93_Men's_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-29",
+   "main_year_weeks": [
+    [
+     1991,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1991_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Philips_Austrian_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-29",
+     "1991-08-04"
+    ],
+    "main_article": {
+     "bytes": 157040,
+     "revision_id": 1311960412,
+     "sha256": "c5ea4f11dc62da941614c69701258157cb8a9e4702a1d35bc8be1544f099c9d8",
+     "url": "https://en.wikipedia.org/wiki/1991_Philips_Austrian_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Philips Austrian Open Kitzbühel, Austria ATP World Series Clay – $337,500 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 450005,
+     "revision_id": 1346249851,
+     "sha256": "013a4b94369ae7a79549522f084e1dc703b6fe71ea0684ed6db275000bfbca8b",
+     "url": "https://en.wikipedia.org/wiki/1991_Philips_Austrian_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-29",
+   "main_year_weeks": [
+    [
+     1991,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1991_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Volvo_Tennis/Los_Angeles",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-29",
+     "1991-08-04"
+    ],
+    "main_article": {
+     "bytes": 177125,
+     "revision_id": 1221614199,
+     "sha256": "fa9fe8377ec67ffb841d868f68f3c47981fb76550863f20938422d2756a633ea",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_Tennis%2FLos_Angeles"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Volvo Tennis/Los Angeles Los Angeles, CA, US ATP World Series Hard – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 283212,
+     "revision_id": 1387849020,
+     "sha256": "e6169fb44bc5f2e33209254896f1531589c2c5da119659c64177fb04fd9f674b",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_Tennis%2FLos_Angeles_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-07-29",
+   "main_year_weeks": [
+    [
+     1991,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1991_san_marino_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "san_marino_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Campionati_Internazionali_di_San_Marino",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-07-29",
+     "1991-08-04"
+    ],
+    "main_article": {
+     "bytes": 154644,
+     "revision_id": 1229964380,
+     "sha256": "9e440fa163e7988f15970f8329427a3a53d2ba8a88fc148a4eb06f7b5e463e21",
+     "url": "https://en.wikipedia.org/wiki/1991_Campionati_Internazionali_di_San_Marino"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di San Marino San Marino, San Marino ATP World Series Clay – $250,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330521,
+     "revision_id": 1221611713,
+     "sha256": "b215139e04870f740b80326da18ae27708f4a3a9dd7012c14d490f0709d65a75",
+     "url": "https://en.wikipedia.org/wiki/1991_Campionati_Internazionali_di_San_Marino_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-05",
+   "main_year_weeks": [
+    [
+     1991,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1991_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Thriftway_ATP_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-08-05",
+     "1991-08-11"
+    ],
+    "main_article": {
+     "bytes": 161139,
+     "revision_id": 1381804593,
+     "sha256": "955f5c28c951d85bc3907a57f4712b07813e3ac0d39841353da5f82cee72bb53",
+     "url": "https://en.wikipedia.org/wiki/1991_Thriftway_ATP_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Thriftway ATP Championships Mason, OH, US ATP Championship Series, Single-Week Hard – $1,020,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 498785,
+     "revision_id": 1272778497,
+     "sha256": "49ac7a8dc5d5383e2ac23682537d7388ff8b7c94055b98c7b517ed4cfd2aa998",
+     "url": "https://en.wikipedia.org/wiki/1991_Thriftway_ATP_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-05",
+   "main_year_weeks": [
+    [
+     1991,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1991_prague_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "prague_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Czechoslovak_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-08-05",
+     "1991-08-11"
+    ],
+    "main_article": {
+     "bytes": 148696,
+     "revision_id": 1369492753,
+     "sha256": "226dd010692fb30811f2f286dc083912567d9a44285ad0733f890d17be3599d4",
+     "url": "https://en.wikipedia.org/wiki/1991_Czechoslovak_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Czechoslovak Open Prague, Czechoslovakia ATP World Series Clay – $305,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 329603,
+     "revision_id": 1221642045,
+     "sha256": "bf1fd27ce183b907eca85e86821f62390f62ada0747320231c9c62bab1adecd5",
+     "url": "https://en.wikipedia.org/wiki/1991_Czechoslovak_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-12",
+   "main_year_weeks": [
+    [
+     1991,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1991_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_GTE_U.S._Men's_Hard_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-08-12",
+     "1991-08-18"
+    ],
+    "main_article": {
+     "bytes": 159378,
+     "revision_id": 1221615590,
+     "sha256": "ced9650139453c4b522200b88c3fb768194c2ef5e17bd4ee2d42b38ec5cfb7c5",
+     "url": "https://en.wikipedia.org/wiki/1991_GTE_U.S._Men's_Hard_Court_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "GTE U.S. Men's Hard Court Championships Indianapolis, IN, US ATP Championship Series Hard – $825,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 502450,
+     "revision_id": 1360316829,
+     "sha256": "da47002ac1e359c5dda04b951c3e4193829ba1ef68059a0fe56950bbb7b0b022",
+     "url": "https://en.wikipedia.org/wiki/1991_GTE_U.S._Men's_Hard_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-08-12..1991-08-19 differ from canonical 1991-08-12..1991-08-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-12",
+   "main_year_weeks": [
+    [
+     1991,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1991_new_haven_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "new_haven_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Volvo_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-08-12",
+     "1991-08-19"
+    ],
+    "main_article": {
+     "bytes": 152075,
+     "revision_id": 1361735726,
+     "sha256": "d8ec9b7ff38d1c5536b4c0e402785ab9afd1925c26257d51342751f383df9eee",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Volvo International New Haven, CT, US ATP Championship Series Hard – $825,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 471735,
+     "revision_id": 1272778564,
+     "sha256": "4e871e3c6863666cfdb0672d6db387c8295efb4492d7b1bc44cbb6f9a6117262",
+     "url": "https://en.wikipedia.org/wiki/1991_Volvo_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-08-19..1991-08-26 differ from canonical 1991-08-19..1991-08-25; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-19",
+   "main_year_weeks": [
+    [
+     1991,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1991_schenectady_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "schenectady_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_OTB_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-08-19",
+     "1991-08-26"
+    ],
+    "main_article": {
+     "bytes": 203701,
+     "revision_id": 1221617537,
+     "sha256": "93a773731a11cf2a287fbdd59582e19a6af38a6c320289d05ee7d8bd6ec3c766",
+     "url": "https://en.wikipedia.org/wiki/1991_OTB_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "OTB International Schenectady, NY, US ATP World Series Hard – $125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331470,
+     "revision_id": 1375420248,
+     "sha256": "7dd0d42d920a73b041e7c1b1a83f810a99224572c137ad198dbc3ad78da6c981",
+     "url": "https://en.wikipedia.org/wiki/1991_OTB_International_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-08-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-08-19",
+   "main_year_weeks": [
+    [
+     1991,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1991_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Norstar_Bank_Hamlet_Challenge_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-08-19",
+     "1991-08-25"
+    ],
+    "main_article": {
+     "bytes": 162397,
+     "revision_id": 1272778462,
+     "sha256": "243914dfec1a4fdbad2c70b7f345b61e1dfe5572f9601112a2e721b0c8eac3b1",
+     "url": "https://en.wikipedia.org/wiki/1991_Norstar_Bank_Hamlet_Challenge_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Norstar Bank Hamlet Challenge Cup Long Island, NY, US ATP World Series Hard – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 335421,
+     "revision_id": 1272778475,
+     "sha256": "4fbad2d26b952f8e9de1b7fc2e365a9b612572a8e007451f7bf86695c623c835",
+     "url": "https://en.wikipedia.org/wiki/1991_Norstar_Bank_Hamlet_Challenge_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-09-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-09",
+   "main_year_weeks": [
+    [
+     1991,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1991_bordeaux_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "bordeaux_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Grand_Prix_Passing_Shot",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-09-09",
+     "1991-09-15"
+    ],
+    "main_article": {
+     "bytes": 146719,
+     "revision_id": 1221617666,
+     "sha256": "f56beb900d6f260ef4c8e0d268f1632dfd6f17573e4e5d387a105d3ce8dbece7",
+     "url": "https://en.wikipedia.org/wiki/1991_Grand_Prix_Passing_Shot"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Passing Shot Bordeaux, France ATP World Series Hard – $270,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-09-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-09",
+   "main_year_weeks": [
+    [
+     1991,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1991_brasilia_1991",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "brasilia_1991",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-09-09..1991-09-16 differ from canonical 1991-09-09..1991-09-15; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-09-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-09",
+   "main_year_weeks": [
+    [
+     1991,
+     37
+    ]
+   ],
+   "occurrence_id": "atp_1991_cologne_1992_clay",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    37
+   ],
+   "run_weeks_offset_37": [
+    1
+   ],
+   "series_id": "cologne_1992_clay",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Geneva_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-09-09",
+     "1991-09-16"
+    ],
+    "main_article": {
+     "bytes": 149062,
+     "revision_id": 1372154521,
+     "sha256": "6ffb57be2611f6c2b8c24726a7eb95e8ff3e507a5cdbf0a53d8f10f149b2e696",
+     "url": "https://en.wikipedia.org/wiki/1991_Geneva_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Barclay Open Geneva, Switzerland ATP World Series Clay – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328962,
+     "revision_id": 1221618111,
+     "sha256": "264e79b8e01231a8cfef797d86ab597ec6b777806f045f5ce085be9650984bad",
+     "url": "https://en.wikipedia.org/wiki/1991_Geneva_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-09-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-23",
+   "main_year_weeks": [
+    [
+     1991,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_1991_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-09-23",
+     "1991-09-29"
+    ],
+    "main_article": {
+     "bytes": 155813,
+     "revision_id": 1374257128,
+     "sha256": "1926e3fc6045613ad176a991da43c9404bb1bd566b75be11939d5af061ed1176",
+     "url": "https://en.wikipedia.org/wiki/1991_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swiss Indoors Basel, Switzerland ATP World Series Hard (i) – $675,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 334799,
+     "revision_id": 1311961224,
+     "sha256": "2f5e240a5e59c32a70078c25f2521d5016b5a4116daa6f47699744bfd665f2b1",
+     "url": "https://en.wikipedia.org/wiki/1991_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-09-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-23",
+   "main_year_weeks": [
+    [
+     1991,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_1991_brisbane_autumn_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "brisbane_autumn_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Campionati_Internazionali_di_Sicilia",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-09-23",
+     "1991-09-29"
+    ],
+    "main_article": {
+     "bytes": 152821,
+     "revision_id": 1355740258,
+     "sha256": "b8cffa86a265ff68f7aaa1073b91be8bc96c7a451ff38bae49a31cf47b3164a5",
+     "url": "https://en.wikipedia.org/wiki/1991_Campionati_Internazionali_di_Sicilia"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di Sicilia Palermo, Italy ATP World Series Clay – $270,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326334,
+     "revision_id": 1355796836,
+     "sha256": "ba49d27e81b725cf04efc30eccd8bdcf5931c9bf63c4727519808d0d4188dd36",
+     "url": "https://en.wikipedia.org/wiki/1991_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-09-29",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-23",
+   "main_year_weeks": [
+    [
+     1991,
+     39
+    ]
+   ],
+   "occurrence_id": "atp_1991_palermo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    39
+   ],
+   "run_weeks_offset_37": [
+    3
+   ],
+   "series_id": "palermo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-09-30..1991-10-07 differ from canonical 1991-09-30..1991-10-06; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-30",
+   "main_year_weeks": [
+    [
+     1991,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1991_athens_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "athens_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Athens_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-09-30",
+     "1991-10-07"
+    ],
+    "main_article": {
+     "bytes": 146728,
+     "revision_id": 1221729186,
+     "sha256": "54d6a19626aa900ada8b0e59da8002e36cc3eeea173bab99edf01f7ad2ac383d",
+     "url": "https://en.wikipedia.org/wiki/1991_Athens_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Athens Open Athens, Greece ATP World Series Clay – $125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327095,
+     "revision_id": 1221721981,
+     "sha256": "2e8851d84b29c3784724c286339ca2dc835a36a32c220c305ff53618a1402323",
+     "url": "https://en.wikipedia.org/wiki/1991_Athens_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-09-30..1991-10-07 differ from canonical 1991-09-30..1991-10-06; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-30",
+   "main_year_weeks": [
+    [
+     1991,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1991_sydney_indoor_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "sydney_indoor_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Australian_Indoor_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-09-30",
+     "1991-10-07"
+    ],
+    "main_article": {
+     "bytes": 157138,
+     "revision_id": 1221714706,
+     "sha256": "356c76253b13cdfba0873bbd244f5a5d04e20af7767fe4a41902b952d9a069a6",
+     "url": "https://en.wikipedia.org/wiki/1991_Australian_Indoor_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Australian Indoor Championships Sydney, Australia ATP Championship Series Hard (i) – $750,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 433965,
+     "revision_id": 1221714765,
+     "sha256": "c86550bf2be9a7e584370d6d5ee3b673aa3b19ab84e03a110e03b2412dea315f",
+     "url": "https://en.wikipedia.org/wiki/1991_Australian_Indoor_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-06",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-09-30",
+   "main_year_weeks": [
+    [
+     1991,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1991_toulouse_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "toulouse_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Grand_Prix_de_Tennis_de_Toulouse",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-09-30",
+     "1991-10-06"
+    ],
+    "main_article": {
+     "bytes": 150981,
+     "revision_id": 1374490221,
+     "sha256": "8732a9a5c4382701db45bb675d19db7984c90ca579ba9b93c06e1102d892d6db",
+     "url": "https://en.wikipedia.org/wiki/1991_Grand_Prix_de_Tennis_de_Toulouse"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de Toulouse Toulouse, France ATP World Series Hard (i) – $260,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326271,
+     "revision_id": 1311958429,
+     "sha256": "2f93ade13275da7b21bbbe1e70f7ac8a3f1ad35fd88d0cdce1389fe5b3e7ed4b",
+     "url": "https://en.wikipedia.org/wiki/1991_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-08..1991-10-14 differ from canonical 1991-10-07..1991-10-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-07",
+   "main_year_weeks": [
+    [
+     1991,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1991_berlin_1991",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "berlin_1991",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Tokyo_Indoor",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-08",
+     "1991-10-14"
+    ],
+    "main_article": {
+     "bytes": 146565,
+     "revision_id": 1291911753,
+     "sha256": "d50d543d47fab545ee2ce0bc8820275f4fb09dabbb9c7a657cc6b31f91870c48",
+     "url": "https://en.wikipedia.org/wiki/1991_Tokyo_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Seiko Super Tennis Tournament Tokyo, Japan ATP Championship Series Carpet (i) – $750,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 430147,
+     "revision_id": 1221728219,
+     "sha256": "619c12391ac69e1d6f5671318a35bc4e0d007159dea374c66d4427e1d6547e86",
+     "url": "https://en.wikipedia.org/wiki/1991_Tokyo_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-07..1991-10-14 differ from canonical 1991-10-07..1991-10-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-07",
+   "main_year_weeks": [
+    [
+     1991,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1991_tel_aviv_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "tel_aviv_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Riklis_Classic",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-07",
+     "1991-10-14"
+    ],
+    "main_article": {
+     "bytes": 156570,
+     "revision_id": 1221746185,
+     "sha256": "ff9f5831d2181d0f15f2b325fe4bcb14456b5072ae5ec52b0f8fba271c92aed5",
+     "url": "https://en.wikipedia.org/wiki/1991_Riklis_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Riklis Classic Tel Aviv, Israel ATP World Series Hard – $125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330773,
+     "revision_id": 1276264683,
+     "sha256": "ebed487aad10de8889c70f6bb0b3f06fd6341e2bc299ee102191201e4f07d4ed",
+     "url": "https://en.wikipedia.org/wiki/1991_Riklis_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-08..1991-10-15 differ from canonical 1991-10-07..1991-10-13; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-13",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-07",
+   "main_year_weeks": [
+    [
+     1991,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1991_tokyo_indoor_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "tokyo_indoor_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Holsten_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-08",
+     "1991-10-15"
+    ],
+    "main_article": {
+     "bytes": 150864,
+     "revision_id": 1343651336,
+     "sha256": "f5896b2d0cc26ac2c43a54b03d0bd8c5fd41152bd47feb0c2754d20178745593",
+     "url": "https://en.wikipedia.org/wiki/1991_Holsten_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Holsten International Berlin, Germany ATP World Series Carpet (i) – $260,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326533,
+     "revision_id": 1319963679,
+     "sha256": "a6c6691d741109ac484acf24724061d2ee6b452bd2ef9963a0a06e336a93cf48",
+     "url": "https://en.wikipedia.org/wiki/1991_Holsten_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-14..1991-10-21 differ from canonical 1991-10-14..1991-10-20; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-14",
+   "main_year_weeks": [
+    [
+     1991,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1991_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Grand_Prix_de_Tennis_de_Lyon",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-14",
+     "1991-10-21"
+    ],
+    "main_article": {
+     "bytes": 154967,
+     "revision_id": 1374490535,
+     "sha256": "f4804e6e7fda3dd0c393064480df9fe1e6e9d50091b1b437400f15ee5581cd36",
+     "url": "https://en.wikipedia.org/wiki/1991_Grand_Prix_de_Tennis_de_Lyon"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de Lyon Lyon, France ATP World Series Carpet (i) – $450,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330567,
+     "revision_id": 1311957169,
+     "sha256": "bf036a8c18193b42eebe262a145ff35e08e205b72226d5ed0f355c1a7f767010",
+     "url": "https://en.wikipedia.org/wiki/1991_Grand_Prix_de_Tennis_de_Lyon_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-14..1991-10-21 differ from canonical 1991-10-14..1991-10-20; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-14",
+   "main_year_weeks": [
+    [
+     1991,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1991_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_CA-TennisTrophy",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-14",
+     "1991-10-21"
+    ],
+    "main_article": {
+     "bytes": 155281,
+     "revision_id": 1372146403,
+     "sha256": "bdc44b620d40180ab63cca9a3b9ac221c3b802763e04b6341d5f9200210e635e",
+     "url": "https://en.wikipedia.org/wiki/1991_CA-TennisTrophy"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "CA-TennisTrophy Vienna, Austria ATP World Series Carpet (i) – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331136,
+     "revision_id": 1222207317,
+     "sha256": "3883270455af3603a8e00f7ec32f2792f946701aada3aa8c0d09b56cf9b8932a",
+     "url": "https://en.wikipedia.org/wiki/1991_CA-TennisTrophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-21..1991-10-28 differ from canonical 1991-10-21..1991-10-27; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-21",
+   "main_year_weeks": [
+    [
+     1991,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1991_guaruja_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "guaruja_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Bliss_Cup",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-21",
+     "1991-10-28"
+    ],
+    "main_article": {
+     "bytes": 147645,
+     "revision_id": 1221532679,
+     "sha256": "02c679736e9283ef1a0660f94701026b5a5325237cbe4cc7cc7e753c5865a953",
+     "url": "https://en.wikipedia.org/wiki/1991_Bliss_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Bliss Cup Guarujá, Brazil ATP World Series Hard – $125,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328953,
+     "revision_id": 1222208854,
+     "sha256": "5fc5563acf38f64a38cdb755322f69981c16deeb42055555c9a8cddfb195fa5d",
+     "url": "https://en.wikipedia.org/wiki/1991_Bliss_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-21..1991-10-28 differ from canonical 1991-10-21..1991-10-27; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-10-27",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-21",
+   "main_year_weeks": [
+    [
+     1991,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1991_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Stockholm_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-21",
+     "1991-10-28"
+    ],
+    "main_article": {
+     "bytes": 164734,
+     "revision_id": 1374490595,
+     "sha256": "adf3c540278014edd08fd86b8b3d185b68ffdfc17da0dbd3f1a5586a7865ab26",
+     "url": "https://en.wikipedia.org/wiki/1991_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm Open Stockholm, Sweden ATP Championship Series, Single-Week Carpet (i) – $840,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 453042,
+     "revision_id": 1276264954,
+     "sha256": "0e4540af02616596af4a11436d7bf6ab0f9a4b1850f482abf451ace159d5d749",
+     "url": "https://en.wikipedia.org/wiki/1991_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-11-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-28",
+   "main_year_weeks": [
+    [
+     1991,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1991_buzios_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "buzios_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Kolynos_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-10-28",
+     "1991-11-03"
+    ],
+    "main_article": {
+     "bytes": 140774,
+     "revision_id": 1340667546,
+     "sha256": "ec7a9eca1ba5530c09b75a5735c1b66fe338b5133ec888b9d682186517e4cc0e",
+     "url": "https://en.wikipedia.org/wiki/1991_Kolynos_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kolynos Cup Búzios, Brazil ATP World Series Hard – $147,500 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 325542,
+     "revision_id": 1339712151,
+     "sha256": "cb4968958233174e583edd7998ea00ff2a8e293b2dd220e9762b967c393c7819",
+     "url": "https://en.wikipedia.org/wiki/1991_Kolynos_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-10-28..1991-11-04 differ from canonical 1991-10-28..1991-11-03; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-11-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-10-28",
+   "main_year_weeks": [
+    [
+     1991,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1991_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Paris_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-10-28",
+     "1991-11-04"
+    ],
+    "main_article": {
+     "bytes": 160277,
+     "revision_id": 1289037231,
+     "sha256": "2e62fa9f9ab3276272da2d851f5c60e563109852ebacd57afbb126d16f1fe359",
+     "url": "https://en.wikipedia.org/wiki/1991_Paris_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris Open Paris, France ATP Championship Series, Single-Week Carpet (i) – $1,650,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 455216,
+     "revision_id": 1222221025,
+     "sha256": "9e528b3070f61fb3ef7cd0177f3554e0fa6488a11dd3aa8b656e3857e92ca7cf",
+     "url": "https://en.wikipedia.org/wiki/1991_Paris_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-11-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-11-04",
+   "main_year_weeks": [
+    [
+     1991,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1991_birmingham_indoor_1991",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "birmingham_indoor_1991",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 2
+   },
+   "main_end_date": "1991-11-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-11-04",
+   "main_year_weeks": [
+    [
+     1991,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1991_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-11-04",
+     "1991-11-10"
+    ],
+    "main_article": {
+     "bytes": 149381,
+     "revision_id": 1374256772,
+     "sha256": "dc3f2a4c6d3379585cce962b74a2a909ef502b36a46cb388912444c0f2be8580",
+     "url": "https://en.wikipedia.org/wiki/1991_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Bayer Kremlin Cup Moscow, Soviet Union ATP World Series Carpet (i) – $297,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 325581,
+     "revision_id": 1177966029,
+     "sha256": "df8c24da790b08051382238f217764acfeab29d16ab36ea932ebe5c69fb15e27",
+     "url": "https://en.wikipedia.org/wiki/1991_Kremlin_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1991-11-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-11-04",
+   "main_year_weeks": [
+    [
+     1991,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1991_sao_paulo_1993",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "sao_paulo_1993",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1991_Banespa_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-11-04",
+     "1991-11-10"
+    ],
+    "main_article": {
+     "bytes": 146791,
+     "revision_id": 1375270931,
+     "sha256": "bbdbd5b0294402b1433ba0bf5aef004bdb074689aa06fb51db099323c8ef71d6",
+     "url": "https://en.wikipedia.org/wiki/1991_Banespa_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Banespa Open São Paulo, Brazil ATP World Series Hard – $225,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1991-11-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1991",
+   "main_start_date": "1991-11-12",
+   "main_year_weeks": [
+    [
+     1991,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1991_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 1607334,
+  "revision_id": 1357844880,
+  "role": "secondary_source",
+  "sha256": "dad338d7563679f65aebae815c981cfcdc49fc7e7f87901fb9000bcd0c005837",
+  "url": "https://en.wikipedia.org/wiki/1991_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

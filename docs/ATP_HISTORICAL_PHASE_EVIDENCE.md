@@ -58,3 +58,45 @@ are offline.
    Preview → Confirm → explicit Save → reopen in a new process.
 2. Repeat this batch for 2018, 2017 and so on, after checking that the previous
    year's boundaries are written down and no other Draft covers them.
+
+## Extension to 1991–2018
+
+The same pipeline produced `phase_calendar_evidence/<year>.json` for 1991–2018.
+1990 belongs to #1891, 2020–2025 to #1898, and 2026 is provisional. Matching a
+canonical Series to a Wikipedia article uses name tokens plus a start date within
+four days. A remaining pair that is the only one in its week is matched by date
+alone and marked `date_only_unique_lineage`. Everything else stays unmatched and
+records a conflict; no pairing is guessed. Older seasons have weaker coverage
+(2000 matched only 22 of 65), so their format fields are mostly open.
+
+| Year | Occurrences | Dates agree | Dates differ | No Wikipedia match | Matched by date only |
+|---|---|---|---|---|---|
+| 2019 | 63 | 46 | 17 | 0 | 0 |
+| 2018 | 64 | 54 | 10 | 0 | 5 |
+| 2017 | 64 | 54 | 10 | 0 | 5 |
+| 2016 | 62 | 48 | 14 | 0 | 7 |
+| 2015 | 62 | 46 | 13 | 3 | 8 |
+| 2014 | 60 | 41 | 13 | 6 | 10 |
+| 2013 | 61 | 30 | 23 | 8 | 9 |
+| 2012 | 61 | 32 | 24 | 5 | 8 |
+| 2011 | 61 | 29 | 28 | 4 | 8 |
+| 2010 | 61 | 38 | 19 | 4 | 10 |
+| 2009 | 61 | 25 | 31 | 5 | 12 |
+| 2008 | 61 | 34 | 17 | 10 | 11 |
+| 2007 | 62 | 28 | 26 | 8 | 9 |
+| 2006 | 63 | 31 | 21 | 11 | 7 |
+| 2005 | 63 | 30 | 21 | 12 | 11 |
+| 2004 | 63 | 38 | 16 | 9 | 11 |
+| 2003 | 63 | 53 | 3 | 7 | 9 |
+| 2002 | 62 | 47 | 5 | 10 | 9 |
+| 2001 | 65 | 54 | 6 | 5 | 14 |
+| 2000 | 65 | 12 | 10 | 43 | 1 |
+| 1999 | 66 | 35 | 24 | 7 | 18 |
+| 1998 | 74 | 34 | 19 | 21 | 17 |
+| 1997 | 75 | 37 | 15 | 23 | 17 |
+| 1996 | 78 | 66 | 3 | 9 | 14 |
+| 1995 | 80 | 34 | 39 | 7 | 11 |
+| 1994 | 85 | 29 | 43 | 13 | 12 |
+| 1993 | 84 | 39 | 27 | 18 | 9 |
+| 1992 | 78 | 43 | 22 | 13 | 8 |
+| 1991 | 76 | 42 | 24 | 10 | 10 |

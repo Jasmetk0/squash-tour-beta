@@ -6,7 +6,7 @@
   "occurrences": 2407,
   "published_profiles": 4,
   "years": 37,
-  "years_with_phase_calendar_evidence": 28
+  "years_with_phase_calendar_evidence": 29
  },
  "years": [
   {
@@ -35,7 +35,7 @@
    "historical_evidence_files": [],
    "not_held_memberships": 0,
    "occurrences": 76,
-   "phase_calendar_evidence_file": false,
+   "phase_calendar_evidence_file": true,
    "published_profiles": [],
    "status": "verified_results_archive",
    "week_review_flags": {},

@@ -63,7 +63,10 @@
     "main_entrant_crosschecked_rows": 75,
     "advertised_qualification_window_rows": 1,
     "targeted_import_candidates_reviewed_rows": 3,
-    "partial_actual_qualification_play_evidence_rows": 1
+    "partial_actual_qualification_play_evidence_rows": 1,
+    "contemporary_printed_main_draw_evidence_rows": 1,
+    "contemporary_qualification_completion_evidence_rows": 2,
+    "contemporary_qualification_completion_evidence_note": "Includes one New Haven three-win path and Barcelona explicitly qualified entrant before Main; neither establishes event-wide exact dates or full draw. Older partial_actual_qualification_play_evidence_rows counts specific reported Q match count evidence only."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -1800,7 +1803,7 @@
       "plan_status": "not_tested",
       "played_and_reopened_status": "not_tested",
       "historical_evidence": {
-        "historical_name": "ABN AMRO World Tennis Tournament",
+        "historical_name": "ABN World Tennis Tournament",
         "host_city": "Rotterdam",
         "country": "NLD",
         "category_label": "ATP World Series",
@@ -1814,7 +1817,9 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_ABN_World_Tennis_Tournament_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/ABN_AMRO_World_Tennis_Tournament_1990",
-          "https://www.abnamro-open.nl/over-ons/historie/de-jaren-90/1990"
+          "https://www.abnamro-open.nl/over-ons/historie/de-jaren-90/1990",
+          "https://www.abnamro.com/en/news/abn-amro-world-tennis-tournament-becomes-abn-amro-open",
+          "https://rjb.x-cago.com/GARJB/1991/12/19911231/GARJB-19911231-0019/story.pdf"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1826,7 +1831,7 @@
         "reported_financial_commitment_usd": 500000,
         "financial_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
         "point_table_status": "unresolved_exact_prize_band_and_full_historical_awards",
-        "identity_note": "Historical city/name reconciled with the existing Series host history.",
+        "identity_note": "Historical city and 1990 ABN name reconciled with Series host history; ABN AMRO name followed the 1991 merger.",
         "remaining": [
           "Obtain original Q draw, dates and exact feeder structure; distinguish reported draw size from actual participants.",
           "Verify 1990 financial band and exact point and bonus rules using primary evidence.",
@@ -1878,6 +1883,21 @@
           "reported_total_prize_money_usd": 500000,
           "reported_seed_of_champion": 1,
           "scope": "Official organizer retrospectively labels $500k total prize money, matching the secondary commitment rather than its $450k prize figure; preserve both meanings and do not certify ranking band. No Q draw or dates."
+        },
+        "historical_name_previous": "ABN AMRO World Tennis Tournament",
+        "historical_name_evidence": {
+          "status": "sponsor_history_and_municipal_chronicle_crosscheck",
+          "source_urls": [
+            "https://www.abnamro.com/en/news/abn-amro-world-tennis-tournament-becomes-abn-amro-open",
+            "https://rjb.x-cago.com/GARJB/1991/12/19911231/GARJB-19911231-0019/story.pdf"
+          ],
+          "sponsor_name_change_year": 1991,
+          "chronicle_reported_name": "ABN Wereld Tennis Toernooi",
+          "chronicle_reported_start_date": "1990-02-26",
+          "chronicle_reported_end_date": "1990-03-04",
+          "chronicle_printed_page": 31,
+          "chronicle_pdf_render_status": "text_accessible_screenshot_failed_502",
+          "scope": "Official sponsor says ABN AMRO name adopted after 1991 merger; 1990 municipal chronicle text uses ABN name and confirms date range. Retain modern organizer's retrospective title separately; stable Series ID unchanged. No Q date or draw established."
         }
       }
     },
@@ -2694,7 +2714,10 @@
           "https://de.wikipedia.org/wiki/Torneo_God%C3%B3_1990",
           "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
           "https://en.wikipedia.org/wiki/1990_Torneo_God%C3%B3",
-          "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_134.pdf"
+          "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_134.pdf",
+          "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
+          "https://elpais.com/diario/1990/04/10/deportes/639698413_850215.html?outputType=amp",
+          "https://www.museuolimpicbcn.cat/es/fondos/fondo-rctb-1899/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2717,7 +2740,7 @@
           "annual_summary_entrants": 32,
           "event_specific_entrants": 56,
           "english_event_summary_draw": 64,
-          "interpretation": "56 entrants plus 8 BYEs in 64 positions; source disagreement retained"
+          "interpretation": "56 entrants plus 8 BYEs in 64 positions, now independently confirmed by the contemporary printed Main draw of April 9; competing historical source numbers retained."
         },
         "point_candidate_comparison": {
           "status": "exact_reported_band_and_bracket_size_candidate",
@@ -2780,13 +2803,13 @@
           "status": "qualification_source_search_attempted_unresolved",
           "reviewed_on": "2026-11-25",
           "qualification_draw_status": "not_obtained",
-          "qualification_dates_status": "not_obtained",
+          "qualification_dates_status": "contemporary_completion_before_main_exact_q_dates_not_verified",
           "point_rule_status": "secondary_not_primary_verified",
           "source_access": {
             "source_url": "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
             "outcome": "official_edition_dates_and_seed_list_not_explicit_Q_sheet"
           },
-          "remaining": "Obtain qualifying feeder graph and dated phase evidence; exact historical points and compatible source contract remain unresolved."
+          "remaining": "Original Q sheet and dated feeder sections remain missing; original printed Main draw and one completed qualifier independently confirmed."
         },
         "entry_policy": {
           "reserved_main_qualifier_spots": null,
@@ -2801,6 +2824,72 @@
           "reviewed_on": "2026-11-26",
           "reported_qualifier_reached": "quarterfinal",
           "scope": "Contemporary newspaper scan in the official club archive confirms a qualifier reached Main quarterfinal. Does not establish Q match count, dates, field or full feeder graph. No scores/identities imported."
+        },
+        "contemporary_main_draw_evidence": {
+          "status": "contemporary_printed_main_draw_visually_checked",
+          "source_url": "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
+          "published_on": "1990-04-09",
+          "printed_page": 47,
+          "pdf_page_index": 0,
+          "pdf_sha256": null,
+          "main_entrants": 56,
+          "main_bracket_slots": 64,
+          "main_byes": 8,
+          "main_seeds": 16,
+          "seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            9,
+            10,
+            11,
+            12,
+            13,
+            14,
+            15,
+            16
+          ],
+          "bye_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "reported_first_main_day": "1990-04-09",
+          "reported_first_main_day_start_local": "12:00",
+          "scope": "Full printed singles Main bracket visually inspected. All 16 numbered seeds including seed 8, and eight top seed BYEs, resolve the nominal geometry independently of modern draw transcription. The newspaper does not label every entry method; no Q/WC reserved policy or original qualification sheet. No PDF bytes/hash obtained, no player identities or scores committed."
+        },
+        "contemporary_qualification_completion_evidence": {
+          "status": "one_qualifier_confirmed_before_main_not_dated_full_q_draw",
+          "source_url": "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
+          "published_on": "1990-04-09",
+          "printed_page": 47,
+          "pdf_page_index": 0,
+          "minimum_confirmed_qualifiers": 1,
+          "qualifying_completed_before": "1990-04-09",
+          "scope": "First-day article explicitly describes a player as qualified in the previous days; separate later newspaper confirms another qualifier reached the quarterfinal. No explicit first/last Q day, match count or field size; the official overall edition window April 7–15 cannot alone establish Q dates."
+        },
+        "independent_main_opening_evidence": {
+          "source_url": "https://elpais.com/diario/1990/04/10/deportes/639698413_850215.html?outputType=amp",
+          "published_on": "1990-04-10",
+          "reported_main_start_date": "1990-04-09",
+          "scope": "Contemporary report independently confirms first main day; also publishes ATP ranking points on April 10, not per-event awards."
+        },
+        "archive_acquisition_lead": {
+          "status": "collection_verified_specific_items_not_inspected",
+          "source_url": "https://www.museuolimpicbcn.cat/es/fondos/fondo-rctb-1899/",
+          "repository": "Centre d’Estudis Olímpics i de l’Esport Joan Antoni Samaranch, Barcelona",
+          "collection": "RCTB-1899 documentary and bibliographic collection",
+          "scope": "Museum confirms custody of the club's documentary collection and offers research access by contact. Request actual qualifying sheet and programme for the 1990 edition; no item-level catalogue or qualifying document verified, no request sent."
         }
       }
     },
@@ -10893,6 +10982,15 @@
               "security_tests_passed": 24,
               "scope": "Exact prior HEAD log shows complete Saved test-only ATP package -> sourced Edition -> 15 real matches -> Official Ranking -> Save/cold reopen; does not certify historical rules or publish profile."
             }
+          },
+          "latest_verified_triage_ci": {
+            "head": "219acf080effe380a841f8fd52e35054ec665130",
+            "workflow_run_id": 45775932348,
+            "job_id": 139759529446,
+            "conclusion": "success",
+            "selected_tests_passed": 33,
+            "security_tests_passed": 24,
+            "scope": "Exact previous HEAD, log explicitly lists saved-source Frankfurt integration test passing, plus application triage tests. Not validation of subsequent evidence changes."
           }
         }
       }

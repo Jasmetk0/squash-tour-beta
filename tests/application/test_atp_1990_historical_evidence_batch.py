@@ -945,3 +945,42 @@ def test_frankfurt_verified_test_only_import_and_historical_ranking_cutoff_remai
     assert cutoff["singles_race_introduced_year"] == 2000
     assert batch["historical_points_evidence"]["year_end_snapshot_lead"]["ranking_date"] == "1990-12-24"
     assert batch["historical_points_evidence"]["qualifying_loss_points"] is None
+
+
+def test_barcelona_contemporary_main_draw_resolves_geometry_not_qualification_dates(batch):
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "barcelona")
+    e = r["historical_evidence"]
+    main = e["contemporary_main_draw_evidence"]
+    assert main["source_url"] in e["source_urls"]
+    assert main["pdf_sha256"] is None
+    for field in ("main_entrants", "main_bracket_slots", "main_byes", "main_seeds"):
+        assert main[field] == e[field]
+    assert main["seed_ranks"] == list(range(1, 17))
+    assert main["bye_seed_ranks"] == e["bye_seed_ranks"] == list(range(1, 9))
+    assert 8 not in e["organiser_event_window_evidence"]["listed_seed_numbers"]
+    assert main["reported_first_main_day"] == r["original_start_date"]
+    assert e["independent_main_opening_evidence"]["reported_main_start_date"] == r["original_start_date"]
+    q = e["contemporary_qualification_completion_evidence"]
+    assert q["qualifying_completed_before"] == r["original_start_date"]
+    assert q["minimum_confirmed_qualifiers"] == 1
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert batch["summary"]["contemporary_printed_main_draw_evidence_rows"] == 1
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 2
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+
+
+def test_rotterdam_historical_name_is_not_modern_sponsor_name(batch):
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "rotterdam")
+    e = r["historical_evidence"]
+    source = e["historical_name_evidence"]
+    assert r["occurrence_id"] == "atp_1990_rotterdam"
+    assert e["historical_name"] == "ABN World Tennis Tournament"
+    assert e["historical_name_previous"] == "ABN AMRO World Tennis Tournament"
+    assert source["sponsor_name_change_year"] == 1991
+    assert source["chronicle_reported_start_date"] == r["original_start_date"]
+    assert source["chronicle_reported_end_date"] == r["original_end_date"]
+    assert all(url in e["source_urls"] for url in source["source_urls"])
+    assert e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert r["profile_status"] == "not_in_published_sporting_source"

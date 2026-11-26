@@ -12,6 +12,9 @@ from beta_engine.application.atp_historical_calendar_adapter import (
     ATPHistoricalCalendarAdapter, CALENDAR_SETUP_ID,
 )
 from beta_engine.application.atp_reference_package_adapter import ATP_SOURCE
+from beta_engine.application.atp_sporting_package_adapter import (
+    KNOCKOUT_KIND_V2, SPORTING_PACKAGE_ID, build_atp_sporting_package,
+)
 from beta_engine.domain.run_packages import PackageType
 from test_simulation_api import ApiServer, _request
 
@@ -26,7 +29,12 @@ def test_reference_calendar_setup_has_frozen_sporting_profiles_without_auto_edit
     assert [child.package_type for child in doc.children] == [
         PackageType.CATEGORY, PackageType.SERIES, PackageType.CALENDAR, PackageType.CATEGORY
     ]
-    assert [len(child.entities) for child in doc.children] == [11, 164, 2444, 6]
+    assert [len(child.entities) for child in doc.children[:3]] == [11, 164, 2444]
+    assert doc.children[3] == build_atp_sporting_package()
+    assert any(
+        entity.source_entity_id == "atp_2025_dallas" and entity.entity_kind == KNOCKOUT_KIND_V2
+        for entity in doc.children[3].entities
+    )
     assert len(doc.children[2].entities) == 37 + doc.children[2].provenance["dated_occurrences"]
     cal = doc.children[2]
     assert all(e.scope == "tennis.atp_tour.calendar.reference.1990_2026"
@@ -60,6 +68,18 @@ def test_adapter_fails_closed_on_stale_calendar_snapshot(tmp_path: Path):
 
 def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: Path):
     uri = f"sqlite:///{tmp_path / 'atp-calendar-ref.db'}"
+    sporting = build_atp_sporting_package()
+    expected_profiles = {
+        entity.source_entity_id: (entity.entity_kind, entity.payload)
+        for entity in sporting.entities
+    }
+
+    def assert_installed_profiles(entities):
+        profiles = [e for e in entities if e["source_package_id"] == SPORTING_PACKAGE_ID]
+        assert len(profiles) == len(expected_profiles)
+        assert {
+            e["source_entity_id"]: (e["entity_kind"], e["payload"]) for e in profiles
+        } == expected_profiles
     with ApiServer(database_url=uri) as server:
         status, run = _request(
             "POST", server.base_url + "/run-containers",
@@ -82,7 +102,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         assert local_status == 200 and catalog == global_catalog
         expected_calendar_size = catalog["children"][2]["entity_count"]
         assert expected_calendar_size == 2444
-        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size, 6]
+        assert [c["entity_count"] for c in catalog["children"]] == [11, 164, expected_calendar_size, len(expected_profiles)]
         assert catalog["dated_years"] == list(range(1990, 2027))
         assert catalog["undated_years"] == []
         assert _request("GET", base)[1]["state"] is None
@@ -91,7 +111,7 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
             "POST", base + "/source-atp-reference-calendar/preview", {}
         )
         assert status == 200, preview
-        assert len(preview["additions"]) == 11 + 164 + expected_calendar_size + 6
+        assert len(preview["additions"]) == 11 + 164 + expected_calendar_size + len(expected_profiles)
         assert not preview["invalid"] and not preview["conflicts"]
         assert "document" not in preview  # avoid transmitting all historical JSON
         assert preview["document_identity"]["source_fingerprint"] == catalog["source_fingerprint"]
@@ -115,7 +135,8 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         )
         assert status == 200, applied
         assert applied["draft_version"] == 1
-        assert len(applied["state"]["entities"]) == 11 + 164 + expected_calendar_size + 6
+        assert len(applied["state"]["entities"]) == 11 + 164 + expected_calendar_size + len(expected_profiles)
+        assert_installed_profiles(applied["state"]["entities"])
         assert {e["entity_kind"] for e in applied["state"]["entities"] if
                 e["source_package_id"] == "atp_tour_1990_2026_calendar"} == {
                     "tennis.calendar.coverage.reference.v1",
@@ -141,7 +162,8 @@ def test_source_calendar_preview_confirm_save_reopen_and_idempotence(tmp_path: P
         )
         state_status, persisted = _request("GET", base)
         assert state_status == 200
-        assert len(persisted["state"]["entities"]) == 11 + 164 + expected_calendar_size + 6
+        assert len(persisted["state"]["entities"]) == 11 + 164 + expected_calendar_size + len(expected_profiles)
+        assert_installed_profiles(persisted["state"]["entities"])
         assert _request(
             "GET", reopened.base_url +
             "/admin/reference-packages/atp-tour-1990-2026-calendar"

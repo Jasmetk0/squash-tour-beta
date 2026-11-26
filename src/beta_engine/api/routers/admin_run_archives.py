@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field
@@ -18,6 +18,10 @@ class ExportSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     run_id: str = Field(min_length=1, max_length=128)
     branch_id: str = Field(min_length=1, max_length=128)
+    mode: Literal["branch", "full_run"] = "branch"
+
+    def export_arguments(self):
+        return {**self.model_dump(exclude={"mode"}), "full_run": self.mode == "full_run"}
 
 
 class ExportRequest(ExportSelection):
@@ -51,7 +55,7 @@ def export_preview(
 ):
     try:
         return RunBranchArchiveService(runtime.repository).export_preview(
-            **payload.model_dump()
+            **payload.export_arguments()
         )
     except (ValueError, TypeError, KeyError) as exc:
         _error(exc)
@@ -62,12 +66,13 @@ def export(
     payload: ExportRequest, runtime: Annotated[ApiRuntime, Depends(get_runtime)]
 ):
     try:
-        raw = RunBranchArchiveService(runtime.repository).export(**payload.model_dump())
+        raw = RunBranchArchiveService(runtime.repository).export(**payload.export_arguments())
+        filename = "full-run-v1.sqbranch" if payload.mode == "full_run" else "saved-branch-v1.sqbranch"
         return Response(
             raw,
             media_type="application/vnd.squash.saved-branch+json",
             headers={
-                "Content-Disposition": 'attachment; filename="saved-branch-v1.sqbranch"'
+                "Content-Disposition": f'attachment; filename="{filename}"'
             },
         )
     except (ValueError, TypeError, KeyError) as exc:

@@ -2213,7 +2213,8 @@
           "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships",
           "https://www.itftennis.com/en/tournament/brussels/bel/1990/m-csd-bel-01a-1990/draws-and-results/",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://de.wikipedia.org/wiki/Donnay_Indoor_Championships_1990"
+          "https://de.wikipedia.org/wiki/Donnay_Indoor_Championships_1990",
+          "https://www.latimes.com/archives/la-xpm-1990-02-14-sp-859-story.html"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -2330,6 +2331,23 @@
           "complete_q_graph": null,
           "reserved_advancement_places": null,
           "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
+        },
+        "contemporary_qualification_path_followup_2026_11_26": {
+          "status": "partial_contemporary_report_not_complete_qualification_evidence",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-02-14-sp-859-story.html",
+          "published_on": "1990-02-14",
+          "access": "full_html_read",
+          "observed_path": "qualifier_reached_main",
+          "minimum_successful_qualifiers_reported": 1,
+          "minimum_lucky_losers_reported": 0,
+          "minimum_qualification_wild_cards_reported": null,
+          "replaced_seed_rank": null,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_entry_policy": null,
+          "scope": "Contemporary report explicitly identifies a successful qualifier in men's Main opening round. Does not identify full Q rounds or dates."
         }
       }
     },
@@ -2570,7 +2588,8 @@
           "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://www.stevegtennis.com/draw-results/atp/Philadelphia/1990"
+          "https://www.stevegtennis.com/draw-results/atp/Philadelphia/1990",
+          "https://www.latimes.com/archives/la-xpm-1990-02-27-sp-1559-story.html"
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
@@ -2706,6 +2725,24 @@
             0,
             1
           ]
+        },
+        "contemporary_qualification_path_followup_2026_11_26": {
+          "status": "partial_contemporary_report_not_complete_qualification_evidence",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-02-27-sp-1559-story.html",
+          "published_on": "1990-02-27",
+          "access": "full_html_read",
+          "observed_path": "qualifier_reached_main_semifinal",
+          "minimum_successful_qualifiers_reported": 1,
+          "minimum_lucky_losers_reported": 0,
+          "minimum_qualification_wild_cards_reported": null,
+          "replaced_seed_rank": null,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_entry_policy": null,
+          "scope": "1990 semifinalist explicitly identified as qualifier. Same article's three Q wins and Q wild card refer to a 1988 debut, not the 1990 edition; exclude from current-year geometry.",
+          "excluded_other_edition_year": 1988
         }
       }
     },
@@ -13000,7 +13037,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.upi.com/amp/Archives/1990/09/28/John-McEnroe-serving-out-the-match-with-two-disputed/7442654494400/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -13103,6 +13141,23 @@
             "stored_candidate_reference": "base_points_500k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "contemporary_qualification_path_followup_2026_11_26": {
+          "status": "partial_contemporary_report_not_complete_qualification_evidence",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://www.upi.com/amp/Archives/1990/09/28/John-McEnroe-serving-out-the-match-with-two-disputed/7442654494400/",
+          "published_on": "1990-09-28",
+          "access": "indexed_text_read_direct_access_403",
+          "observed_path": "qualification_wild_card_reached_main",
+          "minimum_successful_qualifiers_reported": 1,
+          "minimum_lucky_losers_reported": 0,
+          "minimum_qualification_wild_cards_reported": 1,
+          "replaced_seed_rank": null,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_entry_policy": null,
+          "scope": "Indexed contemporary UPI report explicitly distinguishes a wild card into Q from later successful Main qualification; this is not a Main WC or an extra reserved Q slot. Full direct article access blocked."
         }
       }
     },
@@ -13176,7 +13231,8 @@
           "https://www.ultimatetennisstatistics.com/tournamentEvent?extId=326&name=Brisbane&season=1990",
           "https://en.wikipedia.org/wiki/1990_Queensland_Open",
           "https://www.upi.com/amp/Archives/1990/09/30/Gilbert-wins-Queensland-open/6817654667200/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.latimes.com/archives/la-xpm-1990-09-27-sp-1604-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -13284,6 +13340,23 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "contemporary_qualification_path_followup_2026_11_26": {
+          "status": "partial_contemporary_report_not_complete_qualification_evidence",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-09-27-sp-1604-story.html",
+          "published_on": "1990-09-27",
+          "access": "full_html_read",
+          "observed_path": "lucky_loser_replaced_absent_seed",
+          "minimum_successful_qualifiers_reported": 0,
+          "minimum_lucky_losers_reported": 1,
+          "minimum_qualification_wild_cards_reported": null,
+          "replaced_seed_rank": 7,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_entry_policy": null,
+          "scope": "Report documents a Q loss and Main entry after the seventh seed failed to arrive during a domestic aircraft refuelling strike. Applies to Queensland Open in September, not Adelaide in January or Basel in preceding paragraph. Does not specify LL priority or exact Q dates."
         }
       }
     },
@@ -16218,7 +16291,8 @@
           "https://www.latimes.com/archives/la-xpm-1990-08-15-sp-837-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-06-11-sp-314-story.html",
           "https://en.wikipedia.org/wiki/1990_Diet_Pepsi_Championships_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.caymancompass.com/1990/11/07/sampras-looks-for-aging"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -16340,6 +16414,24 @@
           "prior_financial_commitment_usd": 500000,
           "workbook_prize_money_usd": 297000,
           "scope": "Keep original evidence and numeric comparison baseline; distinguish prize from commitment, not certified points class. No original Q sheet."
+        },
+        "contemporary_qualification_path_followup_2026_11_26": {
+          "status": "partial_contemporary_report_not_complete_qualification_evidence",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://www.caymancompass.com/1990/11/07/sampras-looks-for-aging",
+          "published_on": "1990-11-07",
+          "access": "indexed_text_read_direct_access_403",
+          "observed_path": "lucky_loser_replaced_injured_entrant",
+          "minimum_successful_qualifiers_reported": 0,
+          "minimum_lucky_losers_reported": 1,
+          "minimum_qualification_wild_cards_reported": null,
+          "replaced_seed_rank": null,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_entry_policy": null,
+          "scope": "Indexed contemporary report describes Q loss followed by late replacement of injured Main entrant and opening match Monday. Source does not establish exact qualifying date or general LL priority. Direct full-text access blocked; secondary Wembley match record corroborates event and opening date, not replacement mechanism.",
+          "secondary_main_match_crosscheck_url": "https://tennis.esp.br/en/tournaments/wembley-3?tour=ATP&year=1990"
         }
       }
     },

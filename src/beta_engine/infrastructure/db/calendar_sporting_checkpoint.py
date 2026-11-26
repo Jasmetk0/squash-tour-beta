@@ -195,16 +195,79 @@ def _read_checkpoint_columns(session: Session, *, run_id, branch_id):
     ).one_or_none()
 
 
-def read_checkpoint_for_save(session: Session, *, run_id, branch_id, repository):
-    """Capture one strictly validated read for use within this Save transaction."""
-    row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
+class PreparedSaveCheckpoint:
+    """A private strict decode of exact live row bytes, made BEFORE the writer lock.
+
+    It is not authority, a proof or a cache entry. Only the Save coordinator
+    that prepared it holds a reference, and ``read_checkpoint_for_save`` takes
+    it at most once. It is used only if the writer transaction then reads the
+    same Run/Branch row with byte-identical payload and the same fingerprint
+    column; anything else discards it and takes the original strict decode.
+    Every other Save gate (draft, HEAD, ancestry, origins, replay, physical
+    post-insert checks) is unchanged and independent of where this came from.
+    """
+
+    __slots__ = ('run_id', 'branch_id', 'fingerprint', 'payload_digest', '_state')
+
+    def __init__(self, *, run_id, branch_id, state, fingerprint, payload_digest):
+        self.run_id, self.branch_id = run_id, branch_id
+        self.fingerprint, self.payload_digest = fingerprint, payload_digest
+        self._state = state
+
+    def take(self, *, run_id, branch_id, fingerprint, payload_digest):
+        """The private value if it decodes exactly these bytes; consumed either way."""
+        state, self._state = self._state, None
+        if (state is None
+                or type(self.run_id) is not str or type(self.branch_id) is not str
+                or (self.run_id, self.branch_id) != (run_id, branch_id)
+                or (state.run_id, state.branch_id) != (run_id, branch_id)
+                or type(self.fingerprint) is not str or self.fingerprint != fingerprint
+                or type(self.payload_digest) is not bytes or self.payload_digest != payload_digest):
+            return None
+        return state
+
+
+def prepare_checkpoint_for_save(session_factory, *, run_id, branch_id, repository):
+    """Read and privately decode the live row in an ordinary read snapshot.
+
+    Runs before ``BEGIN IMMEDIATE`` so the defensive copy (cache hit) or the
+    strict parse (cache miss) does not extend the SQLite writer lock. A
+    concurrent commit simply makes the later byte comparison fail.
+    """
+    from sqlalchemy import text
+
+    with session_factory() as session:
+        session.execute(text('BEGIN'))
+        row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
     if row is None:
         return None
     raw, fingerprint = row
-    state = _decode_checkpoint_row(raw, fingerprint,
-        run_id=run_id, branch_id=branch_id, repository=repository)
-    return _SaveCheckpointRead(session.get_transaction(), state, fingerprint,
-                               hashlib.sha256(raw.encode('utf-8')).digest())
+    try:
+        state = _decode_checkpoint_row(raw, fingerprint,
+            run_id=run_id, branch_id=branch_id, repository=repository)
+    except (TypeError, ValueError):
+        # The writer transaction decodes the actual row again and reports it.
+        return None
+    return PreparedSaveCheckpoint(run_id=run_id, branch_id=branch_id, state=state,
+        fingerprint=fingerprint, payload_digest=hashlib.sha256(raw.encode('utf-8')).digest())
+
+
+def read_checkpoint_for_save(session: Session, *, run_id, branch_id, repository, prepared=None):
+    """Capture one strictly validated read for use within this Save transaction."""
+    row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
+    if row is None:
+        if prepared is not None:
+            prepared.take(run_id=None, branch_id=None, fingerprint=None, payload_digest=None)
+        return None
+    raw, fingerprint = row
+    digest = hashlib.sha256(raw.encode('utf-8')).digest()
+    state = (prepared.take(run_id=run_id, branch_id=branch_id, fingerprint=fingerprint,
+                           payload_digest=digest)
+             if prepared is not None else None)
+    if state is None:
+        state = _decode_checkpoint_row(raw, fingerprint,
+            run_id=run_id, branch_id=branch_id, repository=repository)
+    return _SaveCheckpointRead(session.get_transaction(), state, fingerprint, digest)
 
 
 def _checkpoint_for_capture(session, *, run_id, branch_id, repository, previous_read):

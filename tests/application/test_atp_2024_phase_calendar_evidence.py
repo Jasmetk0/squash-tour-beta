@@ -255,3 +255,65 @@ def test_queens_2024_same_entrant_can_win_two_physical_rounds_same_day(phase_evi
     assert evidence["basis"] == "national_federation_report_of_two_wins_same_day_not_exact_match_start_timestamps"
     assert evidence["date"] in [e["date"] for e in row["qualifying_date_evidence"]]
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_week", "category"),
+    [
+        ("umag", ["2024-07-20","2024-07-21"], [29], 30, "atp_250"),
+        ("atlanta", ["2024-07-20","2024-07-21"], [29], 30, "atp_250"),
+        ("kitzbuhel", ["2024-07-20","2024-07-21"], [29], 30, "atp_250"),
+        ("washington", ["2024-07-27","2024-07-28"], [30], 31, "atp_500"),
+        ("canadian_open", ["2024-08-04","2024-08-05","2024-08-06"], [31,32], 32, "atp_masters_1000"),
+        ("cincinnati", ["2024-08-11","2024-08-12"], [32,33], 33, "atp_masters_1000"),
+        ("winston_salem", ["2024-08-17","2024-08-18"], [33], 34, "atp_250"),
+        ("chengdu", ["2024-09-17","2024-09-18"], [38], 38, "atp_250"),
+    ],
+)
+def test_july_september_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_week, category):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["category_id"] == category
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2024, main_week]]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in sorted(set(q_weeks + [main_week])):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        season_index, season_week = (0, week + 16) if week <= 36 else (1, week - 36)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(
+            season_index, season_week, 2024, week
+        )
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "main_week"),
+    [("umag", 29, 30), ("canadian_open", 32, 32), ("cincinnati", 33, 33), ("winston_salem", 33, 34)],
+)
+def test_july_august_2024_actual_main_opening_overlap(phase_evidence, series, opening_week, main_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2024, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2024, main_week]]
+
+
+@pytest.mark.parametrize(
+    ("series", "finish_week"),
+    [("canadian_open", 33), ("cincinnati", 34), ("chengdu", 39)],
+)
+def test_2024_source_finish_not_clamped_to_majority_week(phase_evidence, series, finish_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["source_finish_iso_week"] == [2024, finish_week]
+    assert list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2]) == row["source_finish_iso_week"]
+    assert row["source_finish_iso_week"] not in row["main_year_weeks"]
+
+
+def test_cincinnati_2024_geometry_not_copied_from_2025(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "cincinnati")
+    evidence = row["qualifying_geometry_evidence"]
+    assert (evidence["physical_rounds"], evidence["qualifier_places"]) == (2, 7)
+    assert evidence["status"] == "published_event_description_not_full_profile"
+    assert phase_evidence["sporting_schedule_installed"] is False

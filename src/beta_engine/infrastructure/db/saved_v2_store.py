@@ -216,13 +216,15 @@ def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, veri
                               on_value_node=on_value_node, derived=derived)
 
 
-def authenticated_nodes(fetch, *, run_id, root, verified=None):
+def authenticated_nodes(fetch, *, run_id, root, verified=None, _authenticated_subtrees=None):
     """Fetch every node reachable from ``root`` and authenticate its ACTUAL body.
 
     Each body returned by ``fetch`` (rows of this Run only) must hash to its own
     digest; a missing, foreign or changed node raises. ``verified`` has the
     meaning described in ``materialize``. Returns {digest: parsed node}; a node
     whose subtree has a derived value of the same snapshot is not descended.
+    The private digest-only path can also omit subtrees already authenticated
+    in this snapshot. Callers that need parsed nodes never use that option.
     """
     derived = getattr(verified, "derived", None)
     nodes, pending = {}, [root]
@@ -230,6 +232,8 @@ def authenticated_nodes(fetch, *, run_id, root, verified=None):
         batch, following = [], []
         for digest in dict.fromkeys(pending):
             if digest in nodes:
+                continue
+            if _authenticated_subtrees is not None and digest in _authenticated_subtrees:
                 continue
             known = verified.get(digest) if verified is not None else None
             if known is not None:
@@ -258,10 +262,14 @@ def authenticated_nodes(fetch, *, run_id, root, verified=None):
         if len(nodes) > MAX_NODES:
             raise SavedV2IntegrityError("v2 node graph is too large")
         pending = following
+    if _authenticated_subtrees and len(nodes) + len(_authenticated_subtrees) > MAX_NODES:
+        # The union includes unrelated nodes. Use the ordinary count if this
+        # conservative bound cannot establish that the root fits the limit.
+        return authenticated_nodes(fetch, run_id=run_id, root=root, verified=verified)
     return nodes
 
 
-def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
+def _measure_nodes(nodes, root, expected_chars, derived=None):
     # Sizes and piece counts bottom-up with cycle and depth detection (iterative
     # post-order). A node with a derived value of this snapshot is a closed leaf.
     sizes, counts, state = {}, {}, {}
@@ -301,6 +309,11 @@ def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
         order.append(digest)
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
+    return sizes, order
+
+
+def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
+    sizes, order = _measure_nodes(nodes, root, expected_chars, derived)
     if on_value_node is None:
         # Flatten bottom-up (children before parents in ``order``), reusing the
         # flattened tuples of this snapshot; join once at C speed.
@@ -439,17 +452,26 @@ class KnownValueIndex:
     def add(self, run_id, digest, text, start, end):
         if end - start < THRESHOLD:
             return
-        key = (run_id, digest)
-        with self._lock:
-            if key in self._entries:
-                self._entries.move_to_end(key)
-                return
+        if self._touch_value(run_id, digest):
+            return
         prefix = text[start:start + INDEX_PREFIX]
         tail = text[end - INDEX_TAIL:end]
         sha = hashlib.sha256(text[start:end].encode("utf-8")).digest()
+        self._remember_value(run_id, digest, prefix, end - start, tail, sha)
+
+    def _touch_value(self, run_id, digest):
+        key = (run_id, digest)
         with self._lock:
-            self._entries[key] = (prefix, end - start, tail, sha)
-            self._by_prefix.setdefault((run_id, prefix), {})[digest] = (end - start, tail, sha)
+            if key not in self._entries:
+                return False
+            self._entries.move_to_end(key)
+            return True
+
+    def _remember_value(self, run_id, digest, prefix, length, tail, sha):
+        key = (run_id, digest)
+        with self._lock:
+            self._entries[key] = (prefix, length, tail, sha)
+            self._by_prefix.setdefault((run_id, prefix), {})[digest] = (length, tail, sha)
             while len(self._entries) > self._max:
                 (old_run, old_digest), (old_prefix, *_rest) = self._entries.popitem(last=False)
                 bucket = self._by_prefix.get((old_run, old_prefix))
@@ -494,6 +516,53 @@ class KnownValueIndex:
 
 
 KNOWN = KnownValueIndex()
+
+
+def _iter_node_pieces(nodes, root):
+    stack = [(root, 0)]
+    while stack:
+        digest, position = stack.pop()
+        _, children, pieces = nodes[digest]
+        piece = pieces[position]
+        if piece:
+            yield piece
+        if position < len(children):
+            stack.append((digest, position + 1))
+            stack.append((children[position], 0))
+
+
+def warm_value_index(dbapi_connection, run_id, stored, *, index):
+    """Authenticate the actual parent and index exact values without joining its text.
+
+    This is a writer hint only. It cannot replace the new revision's exact
+    post-insert verification. Each value's size, prefix, suffix and UTF-8 hash
+    are computed from its ordered verified fragments.
+    """
+    envelope = stored_envelope(dbapi_connection, run_id, stored)
+    if envelope is None:
+        return
+    root, chars = envelope
+    nodes = authenticated_nodes(connection_fetch(dbapi_connection), run_id=run_id, root=root)
+    sizes, _ = _measure_nodes(nodes, root, chars)
+    seen, pending = set(), [root]
+    while pending:
+        digest = pending.pop()
+        if digest in seen:
+            continue
+        seen.add(digest)
+        kind, children, _ = nodes[digest]
+        if kind == "v" and sizes[digest] >= THRESHOLD and not index._touch_value(run_id, digest):
+            prefix = tail = ""
+            sha = hashlib.sha256()
+            for piece in _iter_node_pieces(nodes, digest):
+                remaining = INDEX_PREFIX - len(prefix)
+                if remaining:
+                    prefix += piece[:remaining]
+                tail = (tail + piece[-INDEX_TAIL:])[-INDEX_TAIL:]
+                sha.update(piece.encode("utf-8"))
+            index._remember_value(run_id, digest, prefix, sizes[digest], tail, sha.digest())
+        pending.extend(reversed(children))
+    index.remember_root(run_id, root)
 
 
 # --------------------------------------------------------------------------- encoder
@@ -734,7 +803,7 @@ class SnapshotCache:
     request.
     """
 
-    __slots__ = ("key", "formats", "nodes", "node_chars", "derived", "texts", "chars")
+    __slots__ = ("key", "formats", "nodes", "node_chars", "derived", "authenticated_subtrees", "texts", "chars")
 
     def __init__(self, key):
         self.key = key
@@ -742,6 +811,7 @@ class SnapshotCache:
         self.nodes = {}               # (run_id, digest) -> parsed verified node
         self.node_chars = 0
         self.derived = {}             # (run_id, digest) -> (size, flattened pieces)
+        self.authenticated_subtrees = {}  # run_id -> digests of completely authenticated subtrees
         self.texts = OrderedDict()    # (run_id, root, chars) -> text
         self.chars = 0
 
@@ -769,6 +839,18 @@ class SnapshotCache:
         while self.chars > SNAPSHOT_TEXT_CHARS and self.texts:
             _, old = self.texts.popitem(last=False)
             self.chars -= len(old)
+
+    def remember_authenticated_subtrees(self, run_id, nodes):
+        size = 96  # digest text and set entry, under the same budget
+        if not nodes or self.node_chars + size > SNAPSHOT_NODE_CHARS:
+            return
+        complete = self.authenticated_subtrees.setdefault(run_id, set())
+        for digest in nodes:
+            if self.node_chars + size > SNAPSHOT_NODE_CHARS:
+                break
+            if digest not in complete:
+                complete.add(digest)
+                self.node_chars += size
 
 
 GUARD_TRIGGERS = tuple(
@@ -1006,7 +1088,8 @@ def stored_text_sha256(dbapi_connection, run_id, stored, *, state=None):
     Returns a digest only when this process already hashed the text of the same
     (Run, root, size) AND every node reachable from that root is present in
     this Run now, in this connection's current snapshot, with a body that hashes
-    to its digest (re-fetched; shared with the snapshot's verified node cache).
+    to its digest (re-fetched in this snapshot). Overlapping immutable subtrees
+    already authenticated in this exact snapshot need only one traversal.
     None means: materialize and hash the text the ordinary way.
     """
     envelope = stored_envelope(dbapi_connection, run_id, stored, state=state)
@@ -1018,8 +1101,13 @@ def stored_text_sha256(dbapi_connection, run_id, stored, *, state=None):
         return None
     cache = snapshot_cache(dbapi_connection, state)
     try:
-        authenticated_nodes(connection_fetch(dbapi_connection), run_id=run_id, root=root,
-                            verified=_RunView(cache, run_id) if cache is not None else None)
+        nodes = authenticated_nodes(
+            connection_fetch(dbapi_connection), run_id=run_id, root=root,
+            verified=_RunView(cache, run_id) if cache is not None else None,
+            _authenticated_subtrees=cache.authenticated_subtrees.get(run_id) if cache is not None else None,
+        )
+        if cache is not None:
+            cache.remember_authenticated_subtrees(run_id, nodes)
     except Exception:
         bump_snapshot(state)
         raise

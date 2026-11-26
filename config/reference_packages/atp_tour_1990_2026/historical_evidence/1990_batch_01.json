@@ -22204,13 +22204,13 @@
     "status": "secondary_label_count_reconciliation_not_certified_entry_policy",
     "reviewed_on": "2026-11-26",
     "dataset_source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
-    "scope": "All 21 prior-versus-dataset WC differences examined. Matching count differences support a source-specific hypothesis that seeded WC tags are omitted; without identity-level paired source verification this does not establish the cause or a historical reserved-entry rule. No prior labels, canonical occurrences, raw player identities, Q fields, triage or published profiles changed.",
+    "scope": "All 21 prior-versus-dataset WC differences examined. Matching count differences support a source-specific hypothesis that seeded WC tags are omitted; without identity-level paired source verification this does not establish the cause or a historical reserved-entry rule. No prior labels, canonical occurrences, raw player identities, Q fields, triage or published profiles changed. Identity correction: the historical ID atp_1990_hong_kong maps to Nice, not the distinct Hong Kong edition the following week.",
     "summary": {
       "discrepant_rows": 21,
-      "count_difference_matches_seeded_wc_omission_hypothesis": 18,
+      "count_difference_matches_seeded_wc_omission_hypothesis": 19,
       "existing_evidence_count_matches": 15,
-      "new_draw_recount_count_matches": 3,
-      "unresolved": 3
+      "new_draw_recount_count_matches": 4,
+      "unresolved": 2
     },
     "rows": [
       {
@@ -22271,15 +22271,17 @@
       },
       {
         "occurrence_id": "atp_1990_hong_kong",
-        "source_url": "https://de.wikipedia.org/wiki/Salem_Open_1990",
-        "source_basis": "unresolved_main_draw_recount",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
+        "source_basis": "new_initial_main_draw_recount",
         "prior_observed_wc": 3,
         "dataset_observed_wc": 2,
         "prior_minus_dataset": 1,
-        "source_observed_seeded_wc_count": 0,
-        "source_observed_seeded_wc_ranks": [],
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          1
+        ],
         "dataset_observed_seeded_wc_count": 0,
-        "status": "unresolved_count_difference",
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis",
         "source_q_by_half": [
           2,
           2
@@ -22287,7 +22289,16 @@
         "source_wc_by_half": [
           2,
           1
-        ]
+        ],
+        "source_revision": "1311959203",
+        "identity_correction": {
+          "actual_host_city": "Nice",
+          "actual_main_start_date": "1990-04-16",
+          "distinct_occurrence_id": "atp_1990_hong_kong_salem_2002",
+          "distinct_main_start_date": "1990-04-23",
+          "rejected_previous_source_url": "https://de.wikipedia.org/wiki/Salem_Open_1990",
+          "scope": "The canonical historical series ID is not the city. Earlier audit cited the next week's Hong Kong event in error. Nice first-round positions independently recounted; one WC also seed 1. Count difference supports the omission hypothesis, not certified entry policy."
+        }
       },
       {
         "occurrence_id": "atp_1990_monte_carlo",

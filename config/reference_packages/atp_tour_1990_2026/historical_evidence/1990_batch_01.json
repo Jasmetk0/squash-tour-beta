@@ -2744,7 +2744,8 @@
           "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_134.pdf",
           "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
           "https://elpais.com/diario/1990/04/10/deportes/639698413_850215.html?outputType=amp",
-          "https://www.museuolimpicbcn.cat/es/fondos/fondo-rctb-1899/"
+          "https://www.museuolimpicbcn.cat/es/fondos/fondo-rctb-1899/",
+          "https://www.lavanguardia.com/deportes/tenis/20190427/461870770107/historias-godo-primavera-1990-andres-gomez.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2933,6 +2934,27 @@
             "actual Q field",
             "reserved advancement places"
           ]
+        },
+        "category_history_followup": {
+          "source_url": "https://www.lavanguardia.com/deportes/tenis/20190427/461870770107/historias-godo-primavera-1990-andres-gomez.html",
+          "published_on": "2019-04-27",
+          "source_type": "retrospective_organizer_interview",
+          "reported_application_label": "ATP Championships Series Double Week",
+          "official_organizer_source_url": "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
+          "official_organizer_category_label": "Championships Series",
+          "status": "application_label_not_proof_of_effective_category",
+          "scope": "Organizer retrospective discusses application to a Double Week category, not a certified granted classification; official edition history confirms generic Championship Series. Retain canonical Category and actual Main W15, no two-week assumption."
+        },
+        "qualification_archive_attempts_2026_11_26": {
+          "status": "no_new_qualifying_sheet",
+          "attempted_urls": [
+            "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_74.pdf",
+            "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_84.pdf",
+            "https://hemeroteca.lavanguardia.com/preview/1990/04/08/",
+            "https://hemeroteca.lavanguardia.com/preview/1990/04/07/"
+          ],
+          "scope": "Guessed document paths/issue navigation unavailable; do not treat failed access as absence of newspaper coverage. Direct byte download of known April 9 PDF failed DNS.",
+          "pdf_sha256": null
         }
       }
     },
@@ -7150,7 +7172,8 @@
           "https://www.stevegtennis.com/draw-results/atp/New%20Haven/1990",
           "https://openerarankings.com/RankingRules1990",
           "https://www.latimes.com/archives/la-xpm-1990-08-16-sp-979-story.html",
-          "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/"
+          "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/",
+          "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7409,6 +7432,11 @@
           ],
           "actual_qualification_dates": null,
           "pdf_sha256": null
+        },
+        "venue_history_followup": {
+          "source_url": "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php",
+          "source_type": "retrospective_local_press",
+          "scope": "Local report identifies 1991 as first edition in new stadium and describes long rain delay during 1990 final. Qualifying disqualification discussed in same article belongs to 1994, not 1990. No new Q dates or field inferred."
         }
       }
     },
@@ -10655,7 +10683,11 @@
           "https://github.com/Tennismylife/TML-Rankings-Database",
           "https://atp-rankings.ishanjha.com/api-docs",
           "https://www.itftennis.com/media/2213/atp-and-wta-points.pdf",
-          "https://www.scribd.com/doc/82086774/1990-ATP-Year-End-Rankings"
+          "https://www.scribd.com/doc/82086774/1990-ATP-Year-End-Rankings",
+          "https://ultimatetennisstatistics.com/rankingsTable?date=29-10-1990&rankType=RANK",
+          "https://collections2.swco.ttu.edu/bitstream/handle/20.500.12255/295087/Big_Spring_Herald_1990_11_06.pdf?isAllowed=y&sequence=1",
+          "https://www.ultimatetennisstatistics.com/rankingsTable?date=26-11-1990&rankType=RANK",
+          "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10831,6 +10863,53 @@
               "hypothetical_gross_gap_excess": 25,
               "scope": "AP reported the leader had secured year-end No. 1 after group play. The hypothetical 250 gross swing exceeds the reported pre-event gap by 25; simple gross addition therefore cannot establish the historical ranking result. Best14 replacement, expiry, ranking inclusion and other timing or reporting differences remain unresolved. This is not disproof or certification of the candidate award table. No historical identities, match scores or rankings imported.",
               "year_end_cutoff_crosscheck": "Official ITF retrospective says November Championships cutoff began in 1991; 1990 remained calendar-year issue based. A third-party Dec 24 report gives anonymous top-two gap 361, not a Nov 19 delta. The 225 pre-event gap and 250 hypothetical gross swing do not certify points."
+            },
+            "extended_ranking_snapshot_research": {
+              "status": "partial_ranking_snapshots_not_event_award_verification",
+              "reviewed_on": "2026-11-26",
+              "snapshots": [
+                {
+                  "date": "1990-10-29",
+                  "source_url": "https://ultimatetennisstatistics.com/rankingsTable?date=29-10-1990&rankType=RANK",
+                  "source_type": "retrospective_secondary",
+                  "top_two_gap": 147
+                },
+                {
+                  "date": "1990-11-04",
+                  "source_url": "https://collections2.swco.ttu.edu/bitstream/handle/20.500.12255/295087/Big_Spring_Herald_1990_11_06.pdf?isAllowed=y&sequence=1",
+                  "published_on": "1990-11-06",
+                  "source_type": "contemporary_newspaper_scan_indexed_ocr_unverified",
+                  "printed_page": null,
+                  "pdf_page_index": null,
+                  "pdf_sha256": null,
+                  "ocr_candidate_top_two_gap": 321,
+                  "scope": "ATP Tour Points headed Through Nov. 4; indexed OCR has possible digit errors. Page render returned HTML rather than scan; do not treat OCR candidate as verified."
+                },
+                {
+                  "date": "1990-11-12",
+                  "source_url": "https://www.latimes.com/archives/la-xpm-1990-11-12-sp-3456-story.html",
+                  "source_type": "contemporary_wire_report",
+                  "top_two_gap": 225
+                },
+                {
+                  "date": "1990-11-26",
+                  "source_url": "https://www.ultimatetennisstatistics.com/rankingsTable?date=26-11-1990&rankType=RANK",
+                  "source_type": "retrospective_secondary",
+                  "top_two_gap": 361,
+                  "scope": "Top two points change column is dash. Do not synthesize Nov. 19 values from it; date-specific snapshot not obtained."
+                }
+              ],
+              "official_comparison": {
+                "date": "1990-11-26",
+                "source_url": "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000",
+                "scope": "Official ATP table confirms ordering but displays no numerical Official Points for first two; does not independently certify UTS totals."
+              },
+              "missing_exact_weekly_snapshots": [
+                "1990-11-12",
+                "1990-11-19"
+              ],
+              "primary_award_table": null,
+              "scope": "Anonymous gaps only, not imported players or ranking history. Different dates include other tournaments and replacement/expiry effects; neither ranking differences nor OCR can certify tournament awards."
             }
           },
           "proposed_adaptation": {

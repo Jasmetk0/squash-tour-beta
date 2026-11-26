@@ -76,6 +76,78 @@
       "notes": "Final Main PDF. Q source is entry list, not complete draw."
     },
     {
+      "occurrence_id": "atp_2024_grand_slam_roland_garros",
+      "source_review": "Main both pages visually reviewed, first-round label snapshot 2024-06-04; Q PDF located but visual access blocked",
+      "main": {
+        "url": "https://rg-organisation.fft.fr/sites/default/files/2024-06/Mens_Singles_20240604225512.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "report_stage": "after_first_round_not_final",
+        "draw_capacity": 128,
+        "entrants": 128,
+        "seeds": 32,
+        "byes": 0,
+        "slots": {
+          "wild_card": [
+            2,
+            28,
+            36,
+            70,
+            90,
+            99,
+            117,
+            125
+          ],
+          "qualifier": [
+            11,
+            23,
+            29,
+            31,
+            46,
+            53,
+            55,
+            61,
+            84,
+            86,
+            94,
+            98,
+            103,
+            106,
+            110,
+            119
+          ],
+          "lucky_loser": [
+            12,
+            43,
+            95
+          ]
+        },
+        "unmarked": 101
+      },
+      "qualification": {
+        "url": "https://rg-organisation.fft.fr/sites/default/files/2024-05/Mens_Qualifying_20240520220332.pdf",
+        "pages": null,
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrant_target": 128,
+        "qualifier_spots": 16,
+        "rounds": 3,
+        "review": "Original Q draw snapshot 20 May with partial first-round results; indexed text available, both screenshots failed due federation maintenance redirect. No final Q marker count claimed."
+      },
+      "nominal": {
+        "main_wc": 8,
+        "main_other_places": 104,
+        "main_matches": 127,
+        "q_matches": 112,
+        "total_bracket_nodes": 239,
+        "unique_field_without_replacements": 240
+      },
+      "notes": "Main source report dated 4 June 2024; later round results incomplete. Separate from actual tournament match count."
+    },
+    {
       "occurrence_id": "atp_2024_grand_slam_us_open",
       "source_review": "all_two_main_pdf_pages_visual_review; Q PDF pages visual where available",
       "main": {

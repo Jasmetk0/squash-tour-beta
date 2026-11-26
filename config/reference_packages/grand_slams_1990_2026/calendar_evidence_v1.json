@@ -2863,85 +2863,541 @@
       "year": 2002,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2002_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "main": {
+        "start": "2002-01-14",
+        "end": "2002-01-27",
+        "iso_weeks": [
+          {
+            "year": 2002,
+            "week": 3
+          },
+          {
+            "year": 2002,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2002,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2001,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2001,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2002,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2002_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "main": {
+        "start": "2002-05-27",
+        "end": "2002-06-09",
+        "iso_weeks": [
+          {
+            "year": 2002,
+            "week": 22
+          },
+          {
+            "year": 2002,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2002,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2001,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2001,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2002,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2002_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "main": {
+        "start": "2002-06-24",
+        "end": "2002-07-07",
+        "iso_weeks": [
+          {
+            "year": 2002,
+            "week": 26
+          },
+          {
+            "year": 2002,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2002,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2001,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2001,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2002,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2002_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "main": {
+        "start": "2002-08-26",
+        "end": "2002-09-08",
+        "iso_weeks": [
+          {
+            "year": 2002,
+            "week": 35
+          },
+          {
+            "year": 2002,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2002,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2001,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2001,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2002",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2003,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2003_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "main": {
+        "start": "2003-01-13",
+        "end": "2003-01-26",
+        "iso_weeks": [
+          {
+            "year": 2003,
+            "week": 3
+          },
+          {
+            "year": 2003,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2003,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2002,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2003,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2003_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "main": {
+        "start": "2003-05-26",
+        "end": "2003-06-08",
+        "iso_weeks": [
+          {
+            "year": 2003,
+            "week": 22
+          },
+          {
+            "year": 2003,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2003,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2002,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2003,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2003_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "main": {
+        "start": "2003-06-23",
+        "end": "2003-07-06",
+        "iso_weeks": [
+          {
+            "year": 2003,
+            "week": 26
+          },
+          {
+            "year": 2003,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2003,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2002,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2003,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2003_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "main": {
+        "start": "2003-08-25",
+        "end": "2003-09-07",
+        "iso_weeks": [
+          {
+            "year": 2003,
+            "week": 35
+          },
+          {
+            "year": 2003,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2003,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2002,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2002,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2003",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2004,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2004_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "main": {
+        "start": "2004-01-19",
+        "end": "2004-02-01",
+        "iso_weeks": [
+          {
+            "year": 2004,
+            "week": 4
+          },
+          {
+            "year": 2004,
+            "week": 5
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2004,
+              "season_week": 4
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 5
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2003,
+              "season_week": 20
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 21
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2004,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2004_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "main": {
+        "start": "2004-05-24",
+        "end": "2004-06-06",
+        "iso_weeks": [
+          {
+            "year": 2004,
+            "week": 22
+          },
+          {
+            "year": 2004,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2004,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2003,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2004,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2004_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "main": {
+        "start": "2004-06-21",
+        "end": "2004-07-04",
+        "iso_weeks": [
+          {
+            "year": 2004,
+            "week": 26
+          },
+          {
+            "year": 2004,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2004,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2003,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2003,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2004,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2004_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "main": {
+        "start": "2004-08-30",
+        "end": "2004-09-12",
+        "iso_weeks": [
+          {
+            "year": 2004,
+            "week": 36
+          },
+          {
+            "year": 2004,
+            "week": 37
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2004,
+              "season_week": 36
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 37
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2003,
+              "season_week": 52
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 1
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2004",
+      "date_evidence": "ATP archive indexed result text; direct page access not confirmed"
     },
     {
       "year": 2005,

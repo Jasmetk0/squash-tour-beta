@@ -282,9 +282,11 @@
           ]
         }
       },
-      "qualification_evidence": "published_window_pending_dated_results",
+      "qualification_evidence": "observed_endpoints",
       "qualification_sources": [
-        "https://www.atptour.com/en/news/wimbledon-2024-history-draw-schedule"
+        "https://www.atptour.com/en/news/wimbledon-2024-history-draw-schedule",
+        "https://www.atptour.com/en/news/wimbledon-2024-qualifying-monday",
+        "https://www.atptour.com/en/news/wimbledon-qualifying-2024-thursday"
       ],
       "sporting_profile_status": "not_imported",
       "schedule_status": "not_previewed"
@@ -599,10 +601,11 @@
           ]
         }
       },
-      "qualification_evidence": "published_window_pending_dated_results",
+      "qualification_evidence": "observed_endpoints",
       "qualification_sources": [
         "https://www.atptour.com/en/news/wimbledon-2025-history-draw-schedule",
-        "https://www.wimbledon.com/en_GB/tickets/Qualifying_Terms_and_Conditions_of_Sale"
+        "https://www.wimbledon.com/en_GB/scores/2025/schedule/pdf/schedulePDF1.pdf",
+        "https://www.atptour.com/en/news/wimbledon-2025-qualifying-results"
       ],
       "sporting_profile_status": "not_imported",
       "schedule_status": "not_previewed"

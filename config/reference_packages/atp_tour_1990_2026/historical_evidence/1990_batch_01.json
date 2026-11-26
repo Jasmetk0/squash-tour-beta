@@ -5859,44 +5859,44 @@
           "coordinate_system": "one_based_64_slot_main_bracket_including_byes_top_to_bottom",
           "source_wc_positions": {
             "english_draw": [
-              21,
-              24,
+              27,
+              30,
               43,
-              52
+              54
             ],
             "french_list": [
-              21,
-              24,
+              27,
+              30,
               43,
-              52
+              54
             ],
             "tennistemple_draw": [
               6,
-              21,
-              24,
+              27,
+              30,
               43,
-              52
+              54
             ],
             "secondary_csv": [
               6,
-              21,
-              24,
+              27,
+              30,
               43,
-              52
+              54
             ]
           },
           "common_wc_positions": [
-            21,
-            24,
+            27,
+            30,
             43,
-            52
+            54
           ],
           "conflicting_positions": [
             6
           ],
           "extra_wc_seeded": false,
           "third_party_five_wc_is_primary_verified": false,
-          "scope": "Four common WC labels and one unseeded disputed slot (first section, second contested first-round match). TennisTemple recount corrects earlier four-WC transcription; CSV agrees with its five. English detailed draw leaves this slot unmarked and French invitation list excludes it. Source independence unverified; no historical identities, actual qualification dates or reserved WC policy inferred."
+          "scope": "Four common WC labels and one unseeded disputed slot (first section, second contested first-round match). TennisTemple recount corrects earlier four-WC transcription; CSV agrees with its five. English detailed draw leaves this slot unmarked and French invitation list excludes it. Source independence unverified; no historical identities, actual qualification dates or reserved WC policy inferred. Coordinates include eight bye slots and follow all four 16-position sections."
         }
       }
     },

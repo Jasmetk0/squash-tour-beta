@@ -832,3 +832,45 @@ def test_frankfurt_candidate_award_reconciliation_uses_production_composition(ba
     assert r["historical_evidence"]["reported_prize_money"] == 2020000
     assert c["contemporary_financial_crosscheck"]["reported_event_purse_usd"] == 2000000
     assert r["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_new_haven_partial_qualification_evidence_does_not_certify_dates_or_geometry(batch):
+    from beta_engine.domain.tournaments.atp_knockout_profile import ATPQualificationDateEvidence
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "new_haven_1998")
+    e = r["historical_evidence"]
+    c = e["targeted_import_research"]
+    actual = c["actual_qualification_partial_evidence"]
+    advertised = e["advertised_qualification_window"]
+    assert actual["reported_qualifier_match_wins"] == 3
+    assert actual["inferred_weekend_start_date"] == advertised["start_date"]
+    assert actual["inferred_weekend_end_date"] == advertised["end_date"]
+    assert e["qualification_start_date"] is e["qualification_end_date"] is e["qualification_entrants"] is None
+    assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert batch["summary"]["partial_actual_qualification_play_evidence_rows"] == 1
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+    handoff = c["work_handoff"]
+    with pytest.raises(ValueError, match=handoff["date_validation_error"]):
+        ATPQualificationDateEvidence.model_validate_json(json.dumps({
+            "start_date": advertised["start_date"],
+            "end_date": advertised["end_date"],
+            "source_urls": [actual["source_url"]],
+            "published_dates": [actual["published_on"]],
+        }))
+    probe = handoff["conditional_geometry_probe"]
+    assumptions = probe["assumptions"]
+    # Deliberately hypothetical: never import these values or infer them from
+    # a single three-win path or observed Main entry labels.
+    main, sections = build_knockout_bracket_parts(
+        event_id=r["occurrence_id"], **assumptions)
+    assert main.source_main_entrants == 56
+    assert len(sections) == probe["expected_section_count"] == 7
+    assert all(s.source_entrant_count == probe["expected_section_entrants"] == 8
+               and s.bracket_capacity.bit_length() - 1 == probe["expected_q_rounds"] == 3
+               for s in sections)
+    with pytest.raises(ValueError, match=probe["alternative_error"]):
+        build_knockout_bracket_parts(event_id=r["occurrence_id"], **{
+            **assumptions, "qualification_entrants": probe["alternative_hypothetical_q_entrants"]})
+    assert r["profile_status"] == "not_in_published_sporting_source"

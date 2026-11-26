@@ -62,7 +62,8 @@
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75,
     "advertised_qualification_window_rows": 1,
-    "targeted_import_candidates_reviewed_rows": 3
+    "targeted_import_candidates_reviewed_rows": 3,
+    "partial_actual_qualification_play_evidence_rows": 1
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -6978,7 +6979,9 @@
           "https://www.world.tennis/en/tournament/new-haven/usa/1990/m-csd-usa-03a-1990/draws-and-results/",
           "https://matchstat.com/tennis/tournaments/m/New%20Haven/1990/",
           "https://www.stevegtennis.com/draw-results/atp/New%20Haven/1990",
-          "https://openerarankings.com/RankingRules1990"
+          "https://openerarankings.com/RankingRules1990",
+          "https://www.latimes.com/archives/la-xpm-1990-08-16-sp-979-story.html",
+          "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7077,13 +7080,13 @@
           "status": "qualification_source_search_attempted_unresolved",
           "reviewed_on": "2026-11-25",
           "qualification_draw_status": "not_obtained",
-          "qualification_dates_status": "advertised_window_reported_actual_dates_not_verified",
+          "qualification_dates_status": "advertised_window_with_contemporary_partial_play_corroboration_actual_dates_not_verified",
           "point_rule_status": "secondary_not_primary_verified",
           "source_access": {
             "source_url": "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
             "outcome": "advertised_qualification_dates_found_actual_draw_not_obtained"
           },
-          "remaining": "Obtain original poster scan, contemporary results or dated qualifying draw; do not populate certified actual Q dates from auction description. Full qualification graph and exact points unknown."
+          "remaining": "Obtain original dated full Q draw, original poster and actual publication date; one successful qualifier's three weekend wins now corroborate advertised window, not exact event-wide actual dates."
         },
         "itf_event_window_evidence": {
           "source_url": "https://www.world.tennis/en/tournament/new-haven/usa/1990/m-csd-usa-03a-1990/draws-and-results/",
@@ -7095,7 +7098,7 @@
           "scope": "Official ITF event metadata verifies Main window and prize, not ATP ranking class, qualification window or Q draw; grade is ITF displayed value, not mapped to ATP category."
         },
         "targeted_import_research": {
-          "status": "blocked_candidate_advertised_q_window_only",
+          "status": "blocked_candidate_partial_actual_q_play_corroboration",
           "reviewed_on": "2026-11-25",
           "source_attempts": [
             {
@@ -7135,10 +7138,55 @@
             "note": "Exact secondary $1m/64 row; actual 56 entrants, bracket 64. Source tier/band meaning and actual qualifying feeder policy unresolved."
           },
           "remaining": [
-            "Original dated qualifying sheet or contemporary qualifying results",
-            "Actual Q entrant count and feeder geometry; 7 observed Q is not reserved rule",
-            "Primary financial classification and full points policy"
-          ]
+            "Original dated qualifying sheet and complete feeder sections",
+            "Actual qualification dates and source publication date; observed weekend path is only partial corroboration",
+            "Exact financial classification and full historical points, including Q-loss awards",
+            "Work coordination for retrospective provenance and potentially unequal Q sections"
+          ],
+          "actual_qualification_partial_evidence": {
+            "status": "contemporary_report_confirms_one_qualifier_path_not_full_draw",
+            "reviewed_on": "2026-11-26",
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-16-sp-979-story.html",
+            "published_on": "1990-08-16",
+            "corroborating_report_url": "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/",
+            "corroborating_report_published_on": "1990-08-17",
+            "reported_qualifier_match_wins": 3,
+            "reported_play_period": "previous weekend",
+            "inferred_weekend_start_date": "1990-08-11",
+            "inferred_weekend_end_date": "1990-08-12",
+            "scope": "Contemporary report confirms one successful qualifier won three weekend matches. Same story in another outlet is not independent reporting. Inferred weekend agrees with auction description of advertised dates; neither establishes actual tournament-wide Q start/end, full field, all sections or all rounds. No historical player IDs or scores imported."
+          },
+          "main_entry_crosscheck": {
+            "source_url": "https://www.stevegtennis.com/draw-results/atp/New%20Haven/1990",
+            "source_access": "indexed draw text including first-round labels",
+            "observed_main_qualifiers": 7,
+            "observed_main_wild_cards": 6,
+            "scope": "Cross-checks existing secondary Main count; title mentions qualifying but visible records are Main matches. No qualification graph."
+          },
+          "work_handoff": {
+            "source_model": "src/beta_engine/domain/tournaments/atp_knockout_profile.py",
+            "geometry_source": "src/beta_engine/domain/tournaments/fax_reference_bracket_topology.py",
+            "source_model_checked_at": "75aa3688a035a29f42a66d23bbf53fb010d32912",
+            "date_validator": "ATPQualificationDateEvidence.validate_window",
+            "date_validation_error": "Qualification evidence requires dated HTTPS source pages published before play",
+            "scope": "Current date evidence contract rejects retrospective article published Aug 16 for inferred Aug 11–12 and auction listing dated 2025. Do not backdate web pages or claim poster publication day. Work to decide how separately sourced historical retrospective evidence can be represented without weakening contemporary v2 evidence.",
+            "conditional_geometry_probe": {
+              "status": "hypothetical_contract_probe_not_source_evidence",
+              "assumptions": {
+                "main_entrants": 56,
+                "byes": 8,
+                "wild_cards": 6,
+                "qualifier_spots": 7,
+                "qualification_entrants": 56
+              },
+              "expected_section_count": 7,
+              "expected_section_entrants": 8,
+              "expected_q_rounds": 3,
+              "alternative_hypothetical_q_entrants": 64,
+              "alternative_error": "Original Qualification entrants are not divisible into equal Q sections",
+              "scope": "56 Q entrants is a test-only hypothesis, not a source-derived value; actual Q count, feeder sizes and reserved advancers unknown. A single three-match path cannot establish equal feeder sizes. A hypothetical 64 Q entrants and 7 reserved places would fail current equal-section contract; do not coerce to 56 or 8 reserved."
+            }
+          }
         }
       }
     },
@@ -10381,7 +10429,9 @@
           "https://www.latimes.com/archives/la-xpm-1990-11-12-sp-3456-story.html",
           "https://www.washingtonpost.com/archive/sports/1990/11/19/agassi-overwhelms-edberg-for-atp-title/9b9d3dd5-a4ba-4d46-bac3-6939b98640ee/",
           "https://openerarankings.com/About",
-          "https://datahub.io/core/atp-world-tour-tennis-data"
+          "https://datahub.io/core/atp-world-tour-tennis-data",
+          "https://github.com/Tennismylife/TML-Rankings-Database",
+          "https://atp-rankings.ishanjha.com/api-docs"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10516,6 +10566,33 @@
                 }
               ],
               "scope": "Even actual weekly ranking deltas are net changes, not necessarily tournament awards: Best14 replacement, expiry and other changes must be accounted for. No snapshot values imported or inferred."
+            },
+            "ranking_snapshot_followup": {
+              "reviewed_on": "2026-11-26",
+              "status": "alternate_archives_identified_no_weekly_points_obtained",
+              "source_attempts": [
+                {
+                  "url": "https://github.com/Tennismylife/TML-Rankings-Database",
+                  "outcome": "README accessible; describes missing official 1990–1996 point data filled from Ultimate Tennis Statistics; archive folders inaccessible through web"
+                },
+                {
+                  "url": "https://atp-rankings.ishanjha.com/api/week/1990-11-12",
+                  "outcome": "not_accessible"
+                },
+                {
+                  "url": "https://atp-rankings.ishanjha.com/api/week/1990-11-19",
+                  "outcome": "not_accessible"
+                },
+                {
+                  "url": "https://www.ultimatetennisstatistics.com/rankingsTable?rankType=RANK&date=1990-11-12",
+                  "outcome": "not_accessible"
+                },
+                {
+                  "url": "https://www.ultimatetennisstatistics.com/rankingsTable?rankType=RANK&date=1990-11-19",
+                  "outcome": "not_accessible"
+                }
+              ],
+              "scope": "TML's documentation explicitly describes UTS supplementation, so the two cannot be assumed independent. No event point award certified from totals."
             }
           },
           "proposed_adaptation": {
@@ -10645,6 +10722,15 @@
             "focused_earth_validation": "skipped",
             "earth_realism_audit": "skipped",
             "scope": "Previous exact HEAD group compatibility test included in pr_critical suite. Not validation of this new commit, not actual Run or both W52 audits."
+          },
+          "latest_verified_ci": {
+            "head": "75aa3688a035a29f42a66d23bbf53fb010d32912",
+            "workflow_run_id": 45711350038,
+            "conclusion": "success",
+            "backend_pr_critical": "success",
+            "focused_earth_validation": "skipped",
+            "earth_realism_audit": "skipped",
+            "scope": "Prior exact HEAD includes anonymous production award-composition test; not actual Saved run."
           }
         }
       }
@@ -10726,7 +10812,7 @@
       },
       {
         "occurrence_id": "atp_1990_new_haven_1998",
-        "reason": "Advertised Q dates and official Main dates/purse, actual Q graph and ranking rules missing."
+        "reason": "Advertised Q dates plus contemporary evidence of one three-win weekend path; official Main dates/purse, full Q graph and ranking rules missing."
       },
       {
         "occurrence_id": "atp_1990_dallas",

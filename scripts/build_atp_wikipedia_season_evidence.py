@@ -169,9 +169,9 @@ def build(year: int, raw_dir: Path) -> dict:
         if re.search(EXCLUDED_RE, text) or re.search(EXCLUDED_RE, first[:600]):
             continue
         base = r'href="https://en\.wikipedia\.org/wiki/(' + str(year) + "_"
-        main = re.search(base + r'[^"#]*?)"', first)
-        sing = re.findall(base + r"""[^"#]*?(?:_Singles|_singles|Men%27s_singles)[^"#]*?)\"""", first)
-        sing += re.findall(base + r"""[^"#]*?_–_(?:Men's_)?[Ss]ingles)\"""", first)
+        main = re.search(base + r'[^"#?]*?)"', first)
+        sing = re.findall(base + r"""[^"#?]*?(?:_Singles|_singles|Men%27s_singles)[^"#?]*?)\"""", first)
+        sing += re.findall(base + r"""[^"#?]*?_–_(?:Men's_)?[Ss]ingles)\"""", first)
         if not main:
             continue
         rows.append({"schedule_text": text[:160], "main": main.group(1) if main else None,
@@ -181,7 +181,10 @@ def build(year: int, raw_dir: Path) -> dict:
         if not r["main"]:
             continue
         item = {"schedule_text": r["schedule_text"], "wikipedia_main": r["main"]}
-        raw, url = fetch(wiki_url(r["main"]), raw_dir)
+        try:
+            raw, url = fetch(wiki_url(r["main"]), raw_dir)
+        except RuntimeError:
+            continue  # article does not exist
         txt = to_text(raw)
         item["main_source"] = {"url": url, "revision_id": revision(raw), "sha256": hashlib.sha256(raw).hexdigest(),
                                 "bytes": len(raw)}
@@ -191,10 +194,14 @@ def build(year: int, raw_dir: Path) -> dict:
         item["schedule_main_capacity"] = int(sf.group(1)) if sf else None
         item["schedule_qualifying_draw"] = int(sf.group(2)) if sf and sf.group(2) else None
         if r["singles"]:
-            raw, url = fetch(wiki_url(r["singles"]), raw_dir)
-            item["singles_source"] = {"url": url, "revision_id": revision(raw),
-                                       "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
-            item["singles"] = parse_singles(to_text(raw))
+            try:
+                raw, url = fetch(wiki_url(r["singles"]), raw_dir)
+            except RuntimeError:
+                raw = None
+            if raw is not None:
+                item["singles_source"] = {"url": url, "revision_id": revision(raw),
+                                          "sha256": hashlib.sha256(raw).hexdigest(), "bytes": len(raw)}
+                item["singles"] = parse_singles(to_text(raw))
         events.append(item)
     return {"season_source": {"url": season_url, "revision_id": revision(season_raw),
                               "sha256": hashlib.sha256(season_raw).hexdigest(), "bytes": len(season_raw)},

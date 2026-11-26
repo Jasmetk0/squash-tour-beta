@@ -39,6 +39,7 @@ def test_sporting_catalog_uses_saved_profiles_and_retains_outside_horizon_source
         entries = {entry["profile"]["occurrence_id"]: entry for entry in catalog["entries"]}
         assert set(entries) == {
             "atp_2025_atp_finals", "atp_2025_dallas", "atp_2025_next_gen_atp_finals", "atp_2025_rotterdam",
+            "atp_2025_munich", "atp_2025_vienna",
         }
         assert [e["profile"]["played_group_win_points"] for e in catalog["entries"] if e["execution_supported"]] == [200, 0]
         assert all(e["calendar_projection"]["outside_year_weeks"] for e in catalog["entries"])

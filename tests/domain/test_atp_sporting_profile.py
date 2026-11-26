@@ -51,4 +51,6 @@ def test_source_order_and_fingerprints_are_reproducible():
         "atp_2025_next_gen_atp_finals": SPORTING_KIND,
         "atp_2025_rotterdam": KNOCKOUT_KIND_V2,
         "atp_2025_dallas": KNOCKOUT_KIND_V2,
+        "atp_2025_munich": KNOCKOUT_KIND_V2,
+        "atp_2025_vienna": KNOCKOUT_KIND_V2,
     }.items() <= entity_kinds.items()

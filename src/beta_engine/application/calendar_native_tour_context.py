@@ -39,6 +39,27 @@ def _verified_health_head(payload):
     )
 
 
+def working_proof_signature(revision, payload):
+    """Key of a completed independent replay of this EXACT live payload."""
+    return (revision.saved_head_revision_id, canonical_hash(payload))
+
+
+def remember_working_proof(repository, signature):
+    """Record a completed replay of the complete actual payload ``signature``.
+
+    Only a caller that has just independently verified every component of
+    that payload in this transaction may call this (the post-command context;
+    Save then reuses it only for byte-identical captured input).
+    """
+    with repository._revision_validation_lock:
+        cache = getattr(repository, "_global_working_proofs", None)
+        if cache is None:
+            cache = repository._global_working_proofs = {}
+        cache[signature] = True
+        while len(cache) > 8:
+            cache.pop(next(iter(cache)))
+
+
 def native_working_context(
     session, *, revision, checkpoint, saved, state, signed, evidence, repository=None,
     _verified_payload_out=None,
@@ -98,7 +119,7 @@ def native_working_context(
     cache = None
     signature = None
     if repository is not None and checkpoint.schema_version == "calendar_sporting_checkpoint.v13":
-        signature = (revision.saved_head_revision_id, canonical_hash(payload))
+        signature = working_proof_signature(revision, payload)
         with repository._revision_validation_lock:
             cache = getattr(repository, "_global_working_proofs", None)
             if cache is None:
@@ -133,10 +154,7 @@ def native_working_context(
             "Live native owner differs from its complete component history"
         )
     if cache is not None:
-        with repository._revision_validation_lock:
-            cache[signature] = True
-            while len(cache) > 8:
-                cache.pop(next(iter(cache)))
+        remember_working_proof(repository, signature)
     if checkpoint.schema_version == 'calendar_sporting_checkpoint.v13':
         # saved_checkpoint just independently verified all actual Health and
         # lifecycle histories plus the coupled checkpoint/Tour successor.

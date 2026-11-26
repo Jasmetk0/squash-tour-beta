@@ -417,7 +417,7 @@ class Archive:
                 fail("invalid_manifest", "Full archive must include its entire declared Branch roster")
         elif any(b.role == "included" for b in self.branches):
             fail("invalid_manifest", "Branch archive only accepts selected and dependency Branches")
-        reached, branch_paths = set(), {}
+        reached = set()
         for branch in self.branches:
             if (
                 branch.forked_from_branch_id is not None
@@ -425,7 +425,7 @@ class Archive:
             ):
                 fail("missing_owner", "Fork source Branch context is missing")
             seen, current = set(), branch.saved_head_revision_id
-            while current is not None:
+            while current is not None and current not in reached:
                 if current in seen:
                     fail("lineage_cycle", "Saved lineage contains a cycle")
                 seen.add(current)
@@ -455,7 +455,6 @@ class Archive:
                     )
                 current = revision.parent_revision_id
             reached.update(seen)
-            branch_paths[branch.branch_id] = seen
         # The Branch graph is also acyclic, even when a Branch currently shares
         # another owner's HEAD and therefore has no own revision rows yet.
         for branch in self.branches:
@@ -480,34 +479,45 @@ class Archive:
         }
         if full_run:
             needed.update(branches)
-        previous = set()
-        while needed != previous:
-            previous = set(needed)
-            for bid in previous:
-                branch = branches[bid]
-                if branch.forked_from_branch_id:
-                    needed.add(branch.forked_from_branch_id)
-                for rid in branch_paths[bid]:
-                    revision = revisions[rid]
-                    payload = decode(revision.payload_json)
-                    needed.add(revision.branch_id)
-                    needed.add(payload["run"]["viewer_branch_id"])
-                    baseline = (
-                        payload["content"].get("native_fork_baseline", {}).get("state")
-                    )
-                    if baseline:
-                        needed.add(baseline["selected_source_branch_id"])
-            active_revisions = set().union(*(branch_paths[bid] for bid in previous))
-            needed.update(
-                c.viewer_branch_id
-                for c in self.checkpoints
-                if c.restore_saved_revision_id in active_revisions
+        # Each included dependency is expanded once. Shared history must not
+        # trigger another decode for every fork or every closure iteration.
+        checkpoint_viewers = {}
+        for checkpoint in self.checkpoints:
+            checkpoint_viewers.setdefault(checkpoint.restore_saved_revision_id, set()).add(
+                checkpoint.viewer_branch_id
             )
-            if not needed <= branches.keys():
+        pending = sorted(needed, reverse=True)
+        processed_revisions = set()
+        while pending:
+            bid = pending.pop()
+            branch = branches.get(bid)
+            if branch is None:
                 fail(
                     "missing_owner",
                     "A required historical owner/Viewer/source context is missing",
                 )
+            dependencies = set()
+            if branch.forked_from_branch_id:
+                dependencies.add(branch.forked_from_branch_id)
+            rid = branch.saved_head_revision_id
+            while rid is not None and rid not in processed_revisions:
+                processed_revisions.add(rid)
+                revision = revisions[rid]  # HEAD and full parent chain were validated above
+                payload = decode(revision.payload_json)
+                dependencies.add(revision.branch_id)
+                dependencies.add(payload["run"].get("viewer_branch_id"))
+                baseline = payload["content"].get("native_fork_baseline", {}).get("state")
+                if baseline:
+                    dependencies.add(baseline["selected_source_branch_id"])
+                dependencies.update(checkpoint_viewers.get(rid, ()))
+                rid = revision.parent_revision_id
+            if not dependencies <= branches.keys():
+                fail(
+                    "missing_owner",
+                    "A required historical owner/Viewer/source context is missing",
+                )
+            pending.extend(sorted(dependencies - needed, reverse=True))
+            needed.update(dependencies)
         if needed != branches.keys():
             fail(
                 "unrelated_branch",
@@ -564,10 +574,6 @@ class Archive:
                 or saved_revision_checkpoint_content_hash(**values) != row.content_hash
             ):
                 fail("invalid_checkpoint", "Checkpoint hash or dependencies failed")
-        for revision in self.revisions:
-            payload = decode(revision.payload_json)
-            if payload["run"].get("viewer_branch_id") not in branches:
-                fail("missing_viewer", "Historical Saved Viewer context is absent")
         if [a.audit_event_id for a in self.audits] != sorted(
             a.audit_event_id for a in self.audits
         ) or [c.checkpoint_id for c in self.checkpoints] != sorted(

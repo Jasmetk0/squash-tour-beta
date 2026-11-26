@@ -2508,18 +2508,37 @@ def test_all_wild_card_discrepancies_preserve_observations_not_entry_policy(batc
         assert all(v is None for v in e["entry_policy"].values())
         assert r["profile_status"] == "not_in_published_sporting_source"
         assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
-    assert counts == {"existing_initial_main_draw_evidence": 15, "new_initial_main_draw_recount": 3}
-    assert unresolved == {"rio_carpet_1990", "hong_kong", "monte_carlo"}
+    assert counts == {"existing_initial_main_draw_evidence": 15, "new_initial_main_draw_recount": 4}
+    assert unresolved == {"rio_carpet_1990", "monte_carlo"}
     assert audit["summary"] == {
         "discrepant_rows": 21,
-        "count_difference_matches_seeded_wc_omission_hypothesis": 18,
+        "count_difference_matches_seeded_wc_omission_hypothesis": 19,
         "existing_evidence_count_matches": 15,
-        "new_draw_recount_count_matches": 3,
-        "unresolved": 3,
+        "new_draw_recount_count_matches": 4,
+        "unresolved": 2,
     }
     recounted = {occurrences[a["occurrence_id"]]["series_id"]: a["source_observed_seeded_wc_ranks"]
                  for a in audit["rows"] if a["source_basis"] == "new_initial_main_draw_recount"}
-    assert recounted == {"umag": [5], "bordeaux_1995": [2], "basel": [2]}
+    assert recounted == {"umag": [5], "bordeaux_1995": [2], "basel": [2], "hong_kong": [1]}
+
+
+    # Canonical series ID is not necessarily the historical venue. Bind the
+    # source to the actual dated occurrence, not to the modern series label.
+    nice = occurrences["atp_1990_hong_kong"]
+    hong_kong = occurrences["atp_1990_hong_kong_salem_2002"]
+    corrected = next(a for a in audit["rows"] if a["occurrence_id"] == nice["occurrence_id"])
+    identity = corrected["identity_correction"]
+    assert nice["historical_evidence"]["host_city"] == identity["actual_host_city"] == "Nice"
+    assert nice["original_start_date"] == identity["actual_main_start_date"] == "1990-04-16"
+    assert hong_kong["historical_evidence"]["host_city"] == "Hong Kong"
+    assert hong_kong["occurrence_id"] == identity["distinct_occurrence_id"]
+    assert hong_kong["original_start_date"] == identity["distinct_main_start_date"] == "1990-04-23"
+    assert corrected["source_url"] == nice["historical_evidence"]["main_draw_source"]
+    assert corrected["source_url"] in nice["historical_evidence"]["source_urls"]
+    assert identity["rejected_previous_source_url"] in hong_kong["historical_evidence"]["source_urls"]
+    assert identity["rejected_previous_source_url"] not in nice["historical_evidence"]["source_urls"]
+    assert mismatches[nice["occurrence_id"]]["dataset_name"] == "Nice"
+    assert hong_kong["occurrence_id"] not in mismatches
 
 
 @pytest.mark.parametrize("series,week,season,offset_week,kind,q,ll,qwc,seed,access", [

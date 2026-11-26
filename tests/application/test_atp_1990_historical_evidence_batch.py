@@ -966,7 +966,7 @@ def test_barcelona_contemporary_main_draw_resolves_geometry_not_qualification_da
     assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
     assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert batch["summary"]["contemporary_printed_main_draw_evidence_rows"] == 1
-    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 2
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 3
     assert batch["summary"]["verified_qualification_date_rows"] == 0
     assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
 
@@ -1115,3 +1115,57 @@ def test_historical_singles_finish_and_itf_money_are_not_inferred_qualification(
         assert evidence["qualification_start_date"] is None
         assert evidence["qualification_end_date"] is None
         assert evidence["entry_policy"]["reserved_main_qualifier_spots"] is None
+
+
+def test_orlando_and_estoril_contemporary_reports_do_not_certify_q_fields(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    orlando = rows["orlando_1991"]
+    e = orlando["historical_evidence"]
+    press = e["contemporary_main_financial_evidence"]
+    assert press["visual_status"] == "page_render_checked"
+    assert press["printed_page"] == "1B" and press["pdf_page_index"] == 6
+    assert press["reported_top_seeds"] == e["main_seeds"] == 8
+    assert press["reported_event_amount_usd"] == e["reported_financial_commitment_usd"] == 250000
+    assert e["reported_prize_money"] == 225000
+    assert press["reported_first_prize_usd"] == 32400
+    assert press["pdf_sha256"] is None
+    q = e["contemporary_qualification_completion_evidence"]
+    assert q["minimum_confirmed_qualifiers"] == 1
+    assert q["reported_qualifier_reached"] == "semifinal"
+    draw = e["secondary_main_draw_crosscheck"]
+    assert (draw["main_entrants"], draw["observed_main_qualifiers"], draw["observed_main_wild_cards"]) == (32, 4, 3)
+    assert e["qualification_archive_lead"]["status"] == "archive_and_main_issue_obtained_qualifying_issues_not_obtained"
+    estoril = rows["estoril"]
+    e = estoril["historical_evidence"]
+    press = e["contemporary_main_opening_evidence"]
+    assert press["printed_page"] == 54 and press["pdf_page_index"] == 0
+    assert press["reported_main_start_date"] == estoril["original_start_date"]
+    assert press["reported_first_day_singles_matches"] == 4
+    assert press["reported_event_amount_usd"] == 76000
+    assert e["reported_prize_money"] == 225000
+    assert e["reported_financial_commitment_usd"] == 250000
+    challenger = e["distinct_challenger_archive_evidence"]
+    assert challenger["reported_start_date"] < estoril["original_start_date"]
+    assert challenger["reported_end_date"] == estoril["original_end_date"]
+    for row in (orlando, estoril):
+        e = row["historical_evidence"]
+        assert row["category_id"] == "atp_world_series"
+        assert row["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": 14}]
+        assert row["run_positions_offset_37_start_1989"] == [{"season_index": 0, "season_week": 30}]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert e["point_candidate_comparison"]["source_rule_certified"] is False
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == 3
+
+
+def test_latest_frankfurt_ci_is_test_only_prior_head_evidence(batch):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    research = row["historical_evidence"]["targeted_import_research"]
+    ci = research["latest_verified_followup_ci"]
+    assert ci["head"] == "035ffcab2c6e2b0e3f317fb7ea52423605ed6846"
+    assert ci["conclusion"] == "success"
+    assert ci["selected_tests_passed"] == 121
+    assert ci["security_tests_passed"] == 24
+    assert research["saved_source_execution_probe"]["points_certified"] is False
+    assert row["profile_status"] == "not_in_published_sporting_source"

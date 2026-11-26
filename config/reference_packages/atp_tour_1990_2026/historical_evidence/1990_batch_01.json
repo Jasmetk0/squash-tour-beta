@@ -29,11 +29,11 @@
     "plan_verified": 0,
     "played_and_reopened": 0,
     "reported_main_geometry_rows": 75,
-    "reported_qualification_size_rows": 38,
+    "reported_qualification_size_rows": 39,
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 73,
+    "reported_seed_count_rows": 74,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,8 +44,8 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 70,
-    "reported_main_wild_card_count_rows": 70,
+    "reported_main_qualifier_count_rows": 74,
+    "reported_main_wild_card_count_rows": 73,
     "main_draw_disagreement_rows": 15,
     "second_pass_review_attempted_rows": 75,
     "second_pass_main_field_crosscheck_rows": 75,
@@ -3678,10 +3678,11 @@
           "https://www.world.tennis/en/tournament/lipton-key-biscayne/usa/1990/m-css-usa-02a-1990/draws-and-results/",
           "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Lipton_International_Players_Championships_1990/Herren"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 48,
         "qualification_entrants": null,
         "reported_main_qualifiers": 12,
         "reported_main_wild_cards": 2,
@@ -3827,6 +3828,20 @@
             "workbook_qualifier_award": null,
             "source_rule_certified": false
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Lipton_International_Players_Championships_1990/Herren",
+        "miami_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "source_url": "https://de.wikipedia.org/wiki/Lipton_International_Players_Championships_1990/Herren",
+          "reported_main": 96,
+          "reported_singles_q": 48,
+          "reported_doubles": 48,
+          "reported_doubles_q": 8,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "Men's edition header 96E/48Q/48D/8DQ explicitly distinguishes singles and doubles. The date span March16–25 is Main, not Q. Dataset corroborates 96 Main, 12 Q, 2 WC, 95 Main rows, 32 seeds."
         }
       }
     },
@@ -5536,7 +5551,8 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://de.wikipedia.org/wiki/Monte_Carlo_Open_1990"
+          "https://de.wikipedia.org/wiki/Monte_Carlo_Open_1990",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 48,
@@ -5657,6 +5673,17 @@
           "complete_q_graph": null,
           "reserved_advancement_places": null,
           "scope": "Edition-specific men's singles header reports Q draw size; no Q match rows or actual phase dates. Main label counts are distinct observations. Conditional geometry is a hypothesis, not a reconstruction of actual Q sections or reserved Main spots."
+        },
+        "dataset_geometry_conflict_followup_2026_11_26": {
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-410",
+          "reported_main_q_labels": 7,
+          "reported_main_wc_labels": 5,
+          "prior_main_q_labels": 6,
+          "prior_main_wc_labels": 4,
+          "reported_q_size": 48,
+          "alternative_equal_section_remainder": 6,
+          "scope": "Main-only dataset does not establish actual Q size, dates or reserved places. Queen's and Stockholm conflicts persist; Monte Carlo existing Q48/6 hypothesis is source-specific, while dataset Q7 conflicts with it. Do not replace prior source values or promote a profile."
         }
       }
     },
@@ -7774,7 +7801,8 @@
           "https://en.wikipedia.org/wiki/1990_Stella_Artois_Championships_%E2%80%93_Singles",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://de.wikipedia.org/wiki/Stella_Artois_Championships_1990",
-          "https://www.lta.org.uk/fan-zone/international/hsbc-championships/history/"
+          "https://www.lta.org.uk/fan-zone/international/hsbc-championships/history/",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -7912,6 +7940,17 @@
             "attempted_url": "https://www.lta.org.uk/49bd87/siteassets/events/cinch/media/1990.pdf",
             "outcome": "not_accessible"
           }
+        },
+        "dataset_geometry_conflict_followup_2026_11_26": {
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-311",
+          "reported_main_q_labels": 7,
+          "reported_main_wc_labels": 4,
+          "prior_main_q_labels": 7,
+          "prior_main_wc_labels": 4,
+          "reported_q_size": 32,
+          "alternative_equal_section_remainder": 4,
+          "scope": "Main-only dataset does not establish actual Q size, dates or reserved places. Queen's and Stockholm conflicts persist; Monte Carlo existing Q48/6 hypothesis is source-specific, while dataset Q7 conflicts with it. Do not replace prior source values or promote a profile."
         }
       }
     },
@@ -8352,12 +8391,13 @@
           "https://en.wikipedia.org/wiki/1990_IP_Cup",
           "https://www.world.tennis/en/tournament/genoa/ita/1990/m-wsf-ita-04a-1990/draws-and-results/",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://it.wikipedia.org/wiki/ATP_Genova_1990_-_Singolare"
+          "https://it.wikipedia.org/wiki/ATP_Genova_1990_-_Singolare",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
+        "reported_main_qualifiers": 4,
         "reported_main_wild_cards": null,
         "qualification_start_date": null,
         "qualification_end_date": null,
@@ -8470,7 +8510,29 @@
             8
           ],
           "scope": "Italian edition-specific singles draw lists eight seeds and 32 Main positions, but entry labels are omitted. Missing Q/WC annotations are not zero, and no Q capacity inferred from generic series page."
-        }
+        },
+        "dataset_main_entry_followup_2026_11_26": {
+          "status": "secondary_match_file_observations_not_reserved_entry_policy",
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-306",
+          "source_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "observed_qualifier_labels": 4,
+          "observed_wild_card_labels": 0,
+          "observed_lucky_loser_labels": 1,
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "retained_wild_card_unknown": true,
+          "scope": "Distinct player IDs deduplicated across all Main match rows; only anonymous aggregates retained. No WC tag in Genoa is not proof of zero awarded wild cards. Sao Paulo source has no LL label despite previous event article explicitly reporting seeded LL; retain both, do not infer LL rule."
+        },
+        "observed_lucky_losers": 1
       }
     },
     {
@@ -11951,13 +12013,14 @@
           "https://sanmarinotennisopen.com/albo-d-oro/",
           "https://sanmarinotennisopen.com/tabelloni/",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://it.wikipedia.org/wiki/Internazionali_di_Tennis_di_San_Marino_1990_-_Singolare"
+          "https://it.wikipedia.org/wiki/Internazionali_di_Tennis_di_San_Marino_1990_-_Singolare",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 2,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -12056,7 +12119,29 @@
             8
           ],
           "scope": "Italian edition-specific singles draw lists eight seeds and 32 Main positions, but entry labels are omitted. Missing Q/WC annotations are not zero, and no Q capacity inferred from generic series page."
-        }
+        },
+        "dataset_main_entry_followup_2026_11_26": {
+          "status": "secondary_match_file_observations_not_reserved_entry_policy",
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-475",
+          "source_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "observed_qualifier_labels": 4,
+          "observed_wild_card_labels": 2,
+          "observed_lucky_loser_labels": 1,
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "retained_wild_card_unknown": false,
+          "scope": "Distinct player IDs deduplicated across all Main match rows; only anonymous aggregates retained. No WC tag in Genoa is not proof of zero awarded wild cards. Sao Paulo source has no LL label despite previous event article explicitly reporting seeded LL; retain both, do not infer LL rule."
+        },
+        "observed_lucky_losers": 1
       }
     },
     {
@@ -13791,13 +13876,14 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 260000,
@@ -13896,6 +13982,27 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "dataset_main_entry_followup_2026_11_26": {
+          "status": "secondary_match_file_observations_not_reserved_entry_policy",
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-327",
+          "source_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "observed_qualifier_labels": 4,
+          "observed_wild_card_labels": 3,
+          "observed_lucky_loser_labels": 0,
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "retained_wild_card_unknown": false,
+          "scope": "Distinct player IDs deduplicated across all Main match rows; only anonymous aggregates retained. No WC tag in Genoa is not proof of zero awarded wild cards. Sao Paulo source has no LL label despite previous event article explicitly reporting seeded LL; retain both, do not infer LL rule."
         }
       }
     },
@@ -14931,20 +15038,21 @@
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "candidate_field_not_certified_full_draw",
-        "main_seeds": null,
+        "main_seeds": 8,
         "main_draw_source": null,
         "event_source": "https://en.wikipedia.org/wiki/1990_Philips_Open_S%C3%A3o_Paulo",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Philips_Open_S%C3%A3o_Paulo",
           "https://www.stevegtennis.com/draw-results/atp/Sao%20Paulo/1990",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 125000,
@@ -15042,6 +15150,27 @@
             "stored_candidate_reference": "base_points_150k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "dataset_main_entry_followup_2026_11_26": {
+          "status": "secondary_match_file_observations_not_reserved_entry_policy",
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-237",
+          "source_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "observed_qualifier_labels": 4,
+          "observed_wild_card_labels": 3,
+          "observed_lucky_loser_labels": 0,
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "retained_wild_card_unknown": false,
+          "scope": "Distinct player IDs deduplicated across all Main match rows; only anonymous aggregates retained. No WC tag in Genoa is not proof of zero awarded wild cards. Sao Paulo source has no LL label despite previous event article explicitly reporting seeded LL; retain both, do not infer LL rule."
         }
       }
     },
@@ -15118,7 +15247,8 @@
           "https://www.atptour.com/en/scores/archive/stockholm/429/1990/draws?matchtype=singles",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://www.upi.com/amp/Archives/1990/10/28/Becker-takes-Stockholm-title/9601657086400/",
-          "https://de.wikipedia.org/wiki/Stockholm_Open_1990"
+          "https://de.wikipedia.org/wiki/Stockholm_Open_1990",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -15311,6 +15441,17 @@
             "scope": "Reject the hypothetical equal-section combination. The real historical Q graph is not known, so this is not proof of an actual runtime blocker. Do not round Q size, replace observed labels with an invented reserved count, or revise Main geometry.",
             "source_body_main": 48
           }
+        },
+        "dataset_geometry_conflict_followup_2026_11_26": {
+          "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "dataset_tourney_id": "1990-429",
+          "reported_main_q_labels": 6,
+          "reported_main_wc_labels": 3,
+          "prior_main_q_labels": 6,
+          "prior_main_wc_labels": 4,
+          "reported_q_size": 28,
+          "alternative_equal_section_remainder": 4,
+          "scope": "Main-only dataset does not establish actual Q size, dates or reserved places. Queen's and Stockholm conflicts persist; Monte Carlo existing Q48/6 hypothesis is source-specific, while dataset Q7 conflicts with it. Do not replace prior source values or promote a profile."
         }
       }
     },
@@ -17129,15 +17270,15 @@
     "status": "diagnostic_only_not_source_certification_or_publication",
     "reviewed_on": "2026-11-26",
     "source_model_head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
-    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 38 reported Q-size rows have observed entry labels; 36 equal-section hypotheses constructible and two source conflicts explicitly blocked; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
+    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 39 reported Q-size rows have observed entry labels; 37 equal-section hypotheses constructible and two source conflicts explicitly blocked; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
     "counts": {
-      "reported_q_size": 38,
-      "conditional_geometry": 36,
-      "conditional_geometry_and_band": 23,
+      "reported_q_size": 39,
+      "conditional_geometry": 37,
+      "conditional_geometry_and_band": 24,
       "geometry_without_exact_band": 13,
       "blocked_source_geometry_conflict": 2,
       "missing_main_entry_labels": 0,
-      "no_reported_q_size": 36
+      "no_reported_q_size": 35
     },
     "rows": [
       {
@@ -17438,6 +17579,26 @@
           "entrants_per_section": 8,
           "bracket_slots_per_section": 8,
           "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_miami",
+        "reported_q_size": 48,
+        "observed_q": 12,
+        "observed_wc": 2,
+        "nominal_main_seeds": 32,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 96,
+          "main_byes": 32,
+          "qualification_entrants": 48,
+          "qualifier_spots": 12,
+          "wild_cards": 2,
+          "sections": 12,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 131
         }
       },
       {
@@ -17887,6 +18048,4011 @@
     "followup": "Toronto Indoor, Philadelphia and Memphis initial entry labels completed, conditional equal-section geometry now constructible for all 13 reported Q-size candidates. Actual Q and reserved-policy evidence remains absent.",
     "april_may_followup": "Four additional edition-specific 32Q headers and complete Main labels; 17 conditional cases in total. Madrid LL and Singapore SE are not additional feeder places; Bologna seeded WC counts once. No actual qualifying graph.",
     "additional_header_followup": "Six edition-specific Q-size headers; additional equal-section shapes Q16/4, Q48/6, Q28/7, Q32/8. Hamburg LL in BYE position and Rome LL/SE not added to assumed feeder places; actual Q graph absent.",
-    "remaining_header_followup": "15 edition-specific reported Q sizes: 13 additional conditional geometries, 2 blocked source combinations (Queen's Club 32/7; Stockholm 28/6 and Main header/body mismatch). No actual Q graph or guaranteed places inferred."
+    "remaining_header_followup": "15 edition-specific reported Q sizes: 13 additional conditional geometries, 2 blocked source combinations (Queen's Club 32/7; Stockholm 28/6 and Main header/body mismatch). No actual Q graph or guaranteed places inferred.",
+    "dataset_followup": "Miami Q48/12 adds a conditional 12×4 shape, not actual Q. Monte Carlo alternate dataset Q7 vs prior Q6 is explicitly flagged; prior conditional geometry remains source-specific, not certified."
+  },
+  "secondary_match_dataset_reconciliation_2026_11_26": {
+    "status": "anonymous_secondary_crosscheck_not_historical_source_certification",
+    "reviewed_on": "2026-11-26",
+    "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+    "source_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+    "matching_mirror_url": "https://github.com/azhou5849/tennis-atp-sackmann-data/blob/main/atp_matches_1990.csv",
+    "matching_mirror_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+    "source_rows": 3681,
+    "source_tournament_groups": 162,
+    "scope": "Explicit edition-ID mapping plus exact civil Main start date and distinct entrant/match count. No identities, raw match results, ranking points or CSV copies imported. Mirrors have same Git blob and are not independent; source labels may omit entry methods (including seeded WC/LL/SE). Prior counts preserved when already present; unknown Genoa WC stays null. Source is secondary; do not infer actual Q from Main.",
+    "qualification_file_inventory": {
+      "source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_qual_chall_1990.csv",
+      "source_git_blob_sha1": "e67ffea2df04a0123a8325149077f2cdae4014f8",
+      "matching_mirror_repository": "https://github.com/azhou5849/tennis-atp-sackmann-data",
+      "matching_mirror_git_blob_sha1": "e67ffea2df04a0123a8325149077f2cdae4014f8",
+      "total_rows": 2233,
+      "level_counts": {
+        "C": 2233
+      },
+      "round_counts": {
+        "R32": 1136,
+        "R16": 568,
+        "QF": 284,
+        "SF": 142,
+        "F": 71,
+        "R64": 32
+      },
+      "tour_level_qualifying_rows": 0,
+      "scope": "Read entire file, all rows level C and none Q1/Q2/Q3. This particular 1990 mirror file is Challenger Main only, not proof that qualifying was not played or that no other archives exist."
+    },
+    "summary": {
+      "mapped_occurrences": 75,
+      "main_entrant_agree": 75,
+      "main_date_agree": 75,
+      "draw_size_agree": 75,
+      "knockout_match_count_agree": 74,
+      "existing_q_agree": 69,
+      "existing_q_disagree": 1,
+      "existing_q_unknown": 4,
+      "existing_wc_agree": 49,
+      "existing_wc_disagree": 21,
+      "existing_wc_unknown": 4,
+      "existing_nominal_seed_count_matches_observed_seed_count": 60,
+      "existing_nominal_seed_count_differs_observed_seed_count": 13,
+      "existing_nominal_seed_count_unknown": 1
+    },
+    "rows": [
+      {
+        "occurrence_id": "atp_1990_brisbane",
+        "dataset_tourney_id": "1990-339",
+        "dataset_name": "Adelaide",
+        "dataset_start_date": "1990-01-01",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_wellington_1992",
+        "dataset_tourney_id": "1990-354",
+        "dataset_name": "Wellington",
+        "dataset_start_date": "1990-01-01",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 3,
+          "unmarked": 25,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_auckland",
+        "dataset_tourney_id": "1990-301",
+        "dataset_name": "Auckland",
+        "dataset_start_date": "1990-01-08",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 3,
+          "unmarked": 25,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_sydney_2019",
+        "dataset_tourney_id": "1990-338",
+        "dataset_name": "Sydney Outdoor",
+        "dataset_start_date": "1990-01-08",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "WC": 2,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_dallas",
+        "dataset_tourney_id": "1990-424",
+        "dataset_name": "San Francisco",
+        "dataset_start_date": "1990-02-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_maceio_1992",
+        "dataset_tourney_id": "1990-201",
+        "dataset_name": "Guaruja",
+        "dataset_start_date": "1990-02-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "LL": 1,
+          "unmarked": 24,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          7
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_sofia",
+        "dataset_tourney_id": "1990-408",
+        "dataset_name": "Milan",
+        "dataset_start_date": "1990-02-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_brussels_championship_1992",
+        "dataset_tourney_id": "1990-406",
+        "dataset_name": "Brussels",
+        "dataset_start_date": "1990-02-12",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_toronto_indoor_1990",
+        "dataset_tourney_id": "1990-302",
+        "dataset_name": "Toronto Indoor",
+        "dataset_start_date": "1990-02-12",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 44,
+          "Q": 7,
+          "WC": 5
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_philadelphia_1998",
+        "dataset_tourney_id": "1990-401",
+        "dataset_name": "Philadelphia",
+        "dataset_start_date": "1990-02-19",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 38,
+          "Q": 6,
+          "WC": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_stuttgart_indoor_feb_1995",
+        "dataset_tourney_id": "1990-357",
+        "dataset_name": "Stuttgart Indoor",
+        "dataset_start_date": "1990-02-19",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_rio",
+        "dataset_tourney_id": "1990-402",
+        "dataset_name": "Memphis",
+        "dataset_start_date": "1990-02-26",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 3,
+          "unmarked": 39,
+          "Q": 6
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_rotterdam",
+        "dataset_tourney_id": "1990-407",
+        "dataset_name": "Rotterdam",
+        "dataset_start_date": "1990-02-26",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_indian_wells",
+        "dataset_tourney_id": "1990-404",
+        "dataset_name": "Indian Wells Masters",
+        "dataset_start_date": "1990-03-05",
+        "dataset_level": "M",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 44,
+          "Q": 7,
+          "WC": 4,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_marrakech",
+        "dataset_tourney_id": "1990-360",
+        "dataset_name": "Casablanca",
+        "dataset_start_date": "1990-03-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_miami",
+        "dataset_tourney_id": "1990-403",
+        "dataset_name": "Miami Masters",
+        "dataset_start_date": "1990-03-16",
+        "dataset_level": "M",
+        "reported_draw_size": 96,
+        "distinct_main_entrants": 96,
+        "match_rows": 95,
+        "round_counts": {
+          "R128": 32,
+          "R64": 32,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 82,
+          "Q": 12,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16,
+          17,
+          18,
+          19,
+          20,
+          21,
+          22,
+          23,
+          24,
+          25,
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 32,
+          "reported_main_qualifiers": 12,
+          "reported_main_wild_cards": 2
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_estoril",
+        "dataset_tourney_id": "1990-468",
+        "dataset_name": "Estoril",
+        "dataset_start_date": "1990-04-02",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 2
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_orlando_1991",
+        "dataset_tourney_id": "1990-409",
+        "dataset_name": "Orlando",
+        "dataset_start_date": "1990-04-02",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_rio_carpet_1990",
+        "dataset_tourney_id": "1990-215",
+        "dataset_name": "Rio de Janeiro",
+        "dataset_start_date": "1990-04-02",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_barcelona",
+        "dataset_tourney_id": "1990-425",
+        "dataset_name": "Barcelona",
+        "dataset_start_date": "1990-04-09",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 44,
+          "WC": 5,
+          "Q": 7
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_tokyo",
+        "dataset_tourney_id": "1990-329",
+        "dataset_name": "Tokyo Outdoor",
+        "dataset_start_date": "1990-04-09",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 42,
+          "Q": 7,
+          "LL": 2,
+          "WC": 5
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_hong_kong",
+        "dataset_tourney_id": "1990-305",
+        "dataset_name": "Nice",
+        "dataset_start_date": "1990-04-16",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_seoul_1996",
+        "dataset_tourney_id": "1990-434",
+        "dataset_name": "Seoul",
+        "dataset_start_date": "1990-04-16",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_hong_kong_salem_2002",
+        "dataset_tourney_id": "1990-336",
+        "dataset_name": "Hong Kong",
+        "dataset_start_date": "1990-04-23",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 3,
+          "Q": 4,
+          "unmarked": 25
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_monte_carlo",
+        "dataset_tourney_id": "1990-410",
+        "dataset_name": "Monte Carlo Masters",
+        "dataset_start_date": "1990-04-23",
+        "dataset_level": "M",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 43,
+          "LL": 1,
+          "WC": 5,
+          "Q": 7
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "differs",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_madrid_clay_1994",
+        "dataset_tourney_id": "1990-309",
+        "dataset_name": "Madrid",
+        "dataset_start_date": "1990-04-30",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 24,
+          "Q": 4,
+          "LL": 1,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_munich",
+        "dataset_tourney_id": "1990-308",
+        "dataset_name": "Munich",
+        "dataset_start_date": "1990-04-30",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_singapore_march_1992",
+        "dataset_tourney_id": "1990-456",
+        "dataset_name": "Singapore",
+        "dataset_start_date": "1990-04-30",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_birmingham_1994",
+        "dataset_tourney_id": "1990-436",
+        "dataset_name": "Kiawah Island",
+        "dataset_start_date": "1990-05-07",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 2,
+          "unmarked": 26,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_hamburg",
+        "dataset_tourney_id": "1990-414",
+        "dataset_name": "Hamburg Masters",
+        "dataset_start_date": "1990-05-07",
+        "dataset_level": "M",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 42,
+          "Q": 7,
+          "WC": 5,
+          "LL": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          9,
+          10,
+          11,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_rome",
+        "dataset_tourney_id": "1990-416",
+        "dataset_name": "Rome Masters",
+        "dataset_start_date": "1990-05-14",
+        "dataset_level": "M",
+        "reported_draw_size": 64,
+        "distinct_main_entrants": 64,
+        "match_rows": 63,
+        "round_counts": {
+          "R64": 32,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 49,
+          "WC": 5,
+          "LL": 2,
+          "Q": 8
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 8,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_umag",
+        "dataset_tourney_id": "1990-439",
+        "dataset_name": "Umag",
+        "dataset_start_date": "1990-05-14",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "WC": 2,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_bologna_1998",
+        "dataset_tourney_id": "1990-312",
+        "dataset_name": "Bologna",
+        "dataset_start_date": "1990-05-21",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_florence_1994",
+        "dataset_tourney_id": "1990-310",
+        "dataset_name": "Florence",
+        "dataset_start_date": "1990-06-11",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 27,
+          "Q": 4,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_queens_club",
+        "dataset_tourney_id": "1990-311",
+        "dataset_name": "Queen's Club",
+        "dataset_start_date": "1990-06-11",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 45,
+          "Q": 7,
+          "WC": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_s_hertogenbosch",
+        "dataset_tourney_id": "1990-440",
+        "dataset_name": "Rosmalen",
+        "dataset_start_date": "1990-06-11",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "LL": 1,
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 2
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_eastbourne",
+        "dataset_tourney_id": "1990-741",
+        "dataset_name": "Manchester",
+        "dataset_start_date": "1990-06-18",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "Q": 4,
+          "unmarked": 26,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_poertschach_2008",
+        "dataset_tourney_id": "1990-306",
+        "dataset_name": "Genova",
+        "dataset_start_date": "1990-06-18",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 27,
+          "Q": 4,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": null,
+          "reported_main_wild_cards": null
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "previously_unknown",
+          "wc_labels": "previously_unknown",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_bastad",
+        "dataset_tourney_id": "1990-316",
+        "dataset_name": "Bastad",
+        "dataset_start_date": "1990-07-09",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "Q": 4,
+          "unmarked": 25,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_gstaad",
+        "dataset_tourney_id": "1990-314",
+        "dataset_name": "Gstaad",
+        "dataset_start_date": "1990-07-09",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_newport",
+        "dataset_tourney_id": "1990-315",
+        "dataset_name": "Newport",
+        "dataset_start_date": "1990-07-09",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 27,
+          "Q": 4,
+          "WC": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 1
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_stuttgart",
+        "dataset_tourney_id": "1990-321",
+        "dataset_name": "Stuttgart Outdoor",
+        "dataset_start_date": "1990-07-16",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 40,
+          "Q": 5,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 5,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_washington",
+        "dataset_tourney_id": "1990-418",
+        "dataset_name": "Washington",
+        "dataset_start_date": "1990-07-16",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 45,
+          "WC": 4,
+          "Q": 7
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_belgrade_2012",
+        "dataset_tourney_id": "1990-317",
+        "dataset_name": "Hilversum",
+        "dataset_start_date": "1990-07-23",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 2,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 2
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_canadian_open",
+        "dataset_tourney_id": "1990-421",
+        "dataset_name": "Canada Masters",
+        "dataset_start_date": "1990-07-23",
+        "dataset_level": "M",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 44,
+          "Q": 7,
+          "WC": 5
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_kitzbuhel",
+        "dataset_tourney_id": "1990-319",
+        "dataset_name": "Kitzbuhel",
+        "dataset_start_date": "1990-07-30",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 39,
+          "Q": 6,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_los_cabos",
+        "dataset_tourney_id": "1990-423",
+        "dataset_name": "Los Angeles",
+        "dataset_start_date": "1990-07-30",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_san_remo_1990",
+        "dataset_tourney_id": "1990-366",
+        "dataset_name": "San Remo",
+        "dataset_start_date": "1990-07-30",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_cincinnati",
+        "dataset_tourney_id": "1990-422",
+        "dataset_name": "Cincinnati Masters",
+        "dataset_start_date": "1990-08-06",
+        "dataset_level": "M",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 45,
+          "WC": 4,
+          "Q": 7
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_prague_1999",
+        "dataset_tourney_id": "1990-379",
+        "dataset_name": "Prague",
+        "dataset_start_date": "1990-08-06",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_atlanta",
+        "dataset_tourney_id": "1990-419",
+        "dataset_name": "Indianapolis",
+        "dataset_start_date": "1990-08-13",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 43,
+          "WC": 5,
+          "Q": 7,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 5
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_new_haven_1998",
+        "dataset_tourney_id": "1990-420",
+        "dataset_name": "New Haven",
+        "dataset_start_date": "1990-08-13",
+        "dataset_level": "A",
+        "reported_draw_size": 56,
+        "distinct_main_entrants": 56,
+        "match_rows": 55,
+        "round_counts": {
+          "R64": 24,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 5,
+          "unmarked": 44,
+          "Q": 7
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 7,
+          "reported_main_wild_cards": 6
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_san_marino_2000",
+        "dataset_tourney_id": "1990-475",
+        "dataset_name": "San Marino",
+        "dataset_start_date": "1990-08-20",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 2,
+          "Q": 4,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": null,
+          "reported_main_wild_cards": null
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "previously_unknown",
+          "wc_labels": "previously_unknown",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_schenectady_1994",
+        "dataset_tourney_id": "1990-224",
+        "dataset_name": "Schenectady",
+        "dataset_start_date": "1990-08-20",
+        "dataset_level": "A",
+        "reported_draw_size": 28,
+        "distinct_main_entrants": 28,
+        "match_rows": 27,
+        "round_counts": {
+          "R32": 12,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "Q": 4,
+          "unmarked": 20,
+          "WC": 3,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_winston_salem",
+        "dataset_tourney_id": "1990-441",
+        "dataset_name": "Long Island",
+        "dataset_start_date": "1990-08-20",
+        "dataset_level": "A",
+        "reported_draw_size": 28,
+        "distinct_main_entrants": 28,
+        "match_rows": 27,
+        "round_counts": {
+          "R32": 12,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 22,
+          "WC": 2,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_bordeaux_1995",
+        "dataset_tourney_id": "1990-323",
+        "dataset_name": "Bordeaux",
+        "dataset_start_date": "1990-09-10",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "WC": 2,
+          "unmarked": 26,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_cologne_1992_clay",
+        "dataset_tourney_id": "1990-322",
+        "dataset_name": "Geneva",
+        "dataset_start_date": "1990-09-10",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_basel",
+        "dataset_tourney_id": "1990-328",
+        "dataset_name": "Basel",
+        "dataset_start_date": "1990-09-24",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "WC": 2,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_brisbane_autumn_1992",
+        "dataset_tourney_id": "1990-326",
+        "dataset_name": "Brisbane",
+        "dataset_start_date": "1990-09-24",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "Q": 4,
+          "WC": 3,
+          "unmarked": 24,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_palermo",
+        "dataset_tourney_id": "1990-325",
+        "dataset_name": "Palermo",
+        "dataset_start_date": "1990-09-24",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 27,
+          "WC": 1,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          3,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 1
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_athens_1994",
+        "dataset_tourney_id": "1990-367",
+        "dataset_name": "Athens",
+        "dataset_start_date": "1990-10-01",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 3,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 3,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_sydney_indoor_1994",
+        "dataset_tourney_id": "1990-427",
+        "dataset_name": "Sydney Indoor",
+        "dataset_start_date": "1990-10-01",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 38,
+          "WC": 4,
+          "Q": 6
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          12,
+          13,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_toulouse_2000",
+        "dataset_tourney_id": "1990-327",
+        "dataset_name": "Toulouse",
+        "dataset_start_date": "1990-10-01",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": null,
+          "reported_main_wild_cards": null
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "previously_unknown",
+          "wc_labels": "previously_unknown",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_berlin_1991",
+        "dataset_tourney_id": "1990-348",
+        "dataset_name": "Berlin",
+        "dataset_start_date": "1990-10-08",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 23,
+          "Q": 4,
+          "WC": 3,
+          "LL": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_tel_aviv_1996",
+        "dataset_tourney_id": "1990-330",
+        "dataset_name": "Tel Aviv",
+        "dataset_start_date": "1990-10-08",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 24,
+          "Q": 4,
+          "LL": 1,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "differs"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_tokyo_indoor_1995",
+        "dataset_tourney_id": "1990-428",
+        "dataset_name": "Tokyo Indoor",
+        "dataset_start_date": "1990-10-08",
+        "dataset_level": "A",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 38,
+          "Q": 6,
+          "WC": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_montpellier",
+        "dataset_tourney_id": "1990-375",
+        "dataset_name": "Lyon",
+        "dataset_start_date": "1990-10-15",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 24,
+          "Q": 4,
+          "WC": 3,
+          "LL": 1
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_vienna",
+        "dataset_tourney_id": "1990-337",
+        "dataset_name": "Vienna",
+        "dataset_start_date": "1990-10-15",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_sao_paulo_1993",
+        "dataset_tourney_id": "1990-237",
+        "dataset_name": "Sao Paulo",
+        "dataset_start_date": "1990-10-22",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "WC": 3,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": null,
+          "reported_main_qualifiers": null,
+          "reported_main_wild_cards": null
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "previously_unknown",
+          "wc_labels": "previously_unknown",
+          "nominal_seed_count_vs_observed": "previously_unknown"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_stockholm",
+        "dataset_tourney_id": "1990-429",
+        "dataset_name": "Stockholm Masters",
+        "dataset_start_date": "1990-10-22",
+        "dataset_level": "M",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 36,
+          "LL": 3,
+          "Q": 6,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "differs",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_paris_masters",
+        "dataset_tourney_id": "1990-352",
+        "dataset_name": "Paris Masters",
+        "dataset_start_date": "1990-10-29",
+        "dataset_level": "M",
+        "reported_draw_size": 48,
+        "distinct_main_entrants": 48,
+        "match_rows": 47,
+        "round_counts": {
+          "R64": 16,
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "Q": 6,
+          "unmarked": 38,
+          "WC": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 16,
+          "reported_main_qualifiers": 6,
+          "reported_main_wild_cards": 4
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_itaparica_1990",
+        "dataset_tourney_id": "1990-240",
+        "dataset_name": "Itaparica",
+        "dataset_start_date": "1990-11-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 26,
+          "Q": 4,
+          "WC": 2
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 2
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_moscow",
+        "dataset_tourney_id": "1990-438",
+        "dataset_name": "Moscow",
+        "dataset_start_date": "1990-11-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 25,
+          "Q": 4,
+          "WC": 3
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_wembley_1990",
+        "dataset_tourney_id": "1990-430",
+        "dataset_name": "Wembley",
+        "dataset_start_date": "1990-11-05",
+        "dataset_level": "A",
+        "reported_draw_size": 32,
+        "distinct_main_entrants": 32,
+        "match_rows": 31,
+        "round_counts": {
+          "R32": 16,
+          "R16": 8,
+          "QF": 4,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 23,
+          "WC": 3,
+          "LL": 2,
+          "Q": 4
+        },
+        "observed_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": 8,
+          "reported_main_qualifiers": 4,
+          "reported_main_wild_cards": 3
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "agrees",
+          "wc_labels": "agrees",
+          "nominal_seed_count_vs_observed": "agrees"
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_atp_finals",
+        "dataset_tourney_id": "1990-605",
+        "dataset_name": "Tour Finals",
+        "dataset_start_date": "1990-11-12",
+        "dataset_level": "F",
+        "reported_draw_size": 8,
+        "distinct_main_entrants": 8,
+        "match_rows": 15,
+        "round_counts": {
+          "RR": 12,
+          "SF": 2,
+          "F": 1
+        },
+        "entry_label_counts": {
+          "unmarked": 8
+        },
+        "observed_seed_ranks": [],
+        "observed_seeded_wc_ranks": [],
+        "observed_seeded_ll_ranks": [],
+        "entry_conflicts_across_rows": 0,
+        "seed_conflicts_across_rows": 0,
+        "previous_evidence": {
+          "main_seeds": null,
+          "reported_main_qualifiers": null,
+          "reported_main_wild_cards": null
+        },
+        "comparison": {
+          "main_entrants_agree": true,
+          "main_start_date_agree": true,
+          "reported_draw_size_agree": true,
+          "match_count_agree": true,
+          "q_labels": "not_applicable",
+          "wc_labels": "not_applicable",
+          "nominal_seed_count_vs_observed": "not_applicable"
+        }
+      }
+    ]
   }
 }

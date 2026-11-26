@@ -984,3 +984,56 @@ def test_rotterdam_historical_name_is_not_modern_sponsor_name(batch):
     assert all(url in e["source_urls"] for url in source["source_urls"])
     assert e["qualification_start_date"] is e["qualification_end_date"] is None
     assert r["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_frankfurt_1990_followup_keeps_primary_rule_and_adaptation_approval_separate(batch):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    evidence = row["historical_evidence"]
+    review = evidence["targeted_source_followup_2026_11_26"]
+    assert review["source_year"] == 1990
+    assert review["primary_exact_table_verified"] is False
+    table = review["secondary_table"]
+    assert table["group_win"] == 50
+    assert table["semifinal_win_component"] == 100
+    assert table["final_win_increment"] == 150
+    assert table["champion_knockout_total"] == 100 + 150
+    assert table["undefeated_champion"] == 3 * 50 + 250 == 400
+    assert table["next_year_undefeated_champion"] == 480
+    decision = review["work_decision"]
+    assert decision["status"] == "pending_work_and_owner_approval"
+    assert decision["publication_allowed"] is False
+    assert "historical Best 14 inclusion/replacement" in decision["excluded_unapproved_rules"]
+    assert batch["historical_points_evidence"]["ranking_inclusion_source_disagreement"]["primary_rule_page"] is None
+    assert evidence["targeted_import_research"]["saved_source_execution_probe"]["points_certified"] is False
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert row["plan_status"] == row["played_and_reopened_status"] == "not_tested"
+
+
+def test_targeted_qualification_followup_preserves_unknowns_and_calendar(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    for series, week, shifted in (("dallas", 6, 22), ("barcelona", 15, 31),
+                                   ("new_haven_1998", 33, 49)):
+        row = rows[series]
+        evidence = row["historical_evidence"]
+        review = evidence["targeted_source_followup_2026_11_26"]
+        assert review["status"] == "qualification_draw_not_obtained"
+        assert review["pdf_sha256"] is None
+        assert len(review["missing"]) == 3
+        assert evidence["qualification_entrants"] is None
+        assert evidence["qualification_start_date"] is None
+        assert evidence["qualification_end_date"] is None
+        assert evidence["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert row["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": week}]
+        assert row["run_positions_offset_37_start_1989"] == [{"season_index": 0, "season_week": shifted}]
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    sf = rows["dallas"]["historical_evidence"]["targeted_source_followup_2026_11_26"]
+    assert sf["observed_main_matches"] == sf["observed_main_entrants"] - 1 == 31
+    assert (sf["observed_main_qualifiers"], sf["observed_main_wild_cards"]) == (4, 3)
+    barcelona = rows["barcelona"]["historical_evidence"]["targeted_source_followup_2026_11_26"]
+    assert barcelona["printed_page"] == 47 and barcelona["visually_rechecked"]
+    haven = rows["new_haven_1998"]["historical_evidence"]["targeted_source_followup_2026_11_26"]
+    assert haven["advertised_start_date"] == "1990-08-11"
+    assert haven["advertised_end_date"] == "1990-08-12"
+    assert haven["actual_qualification_dates"] is None
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0

@@ -182,11 +182,12 @@ def _guard_review(session, archive, expected):
 class RunBranchArchiveService:
     repository: object
 
-    def export_preview(self, *, run_id, branch_id):
+    def export_preview(self, *, run_id, branch_id, full_run=False):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
             raw = collect_archive(
-                self.repository, session, run_id=run_id, branch_id=branch_id
+                self.repository, session, run_id=run_id, branch_id=branch_id,
+                full_run=full_run,
             )
         archive = Archive(raw)
         # Prove the archive can stand alone; source-DB verification alone is not
@@ -195,7 +196,8 @@ class RunBranchArchiveService:
         return inventory(archive)
 
     def export(
-        self, *, run_id, branch_id, expected_head_revision_id, expected_archive_digest
+        self, *, run_id, branch_id, expected_head_revision_id, expected_archive_digest,
+        full_run=False,
     ):
         with self.repository._session_factory() as session:
             session.execute(text("BEGIN"))
@@ -205,6 +207,7 @@ class RunBranchArchiveService:
                 run_id=run_id,
                 branch_id=branch_id,
                 expected_head=expected_head_revision_id,
+                full_run=full_run,
             )
         if digest(raw) != expected_archive_digest:
             fail(

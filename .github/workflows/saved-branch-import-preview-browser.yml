@@ -1,4 +1,4 @@
-name: Saved Branch Import Preview Browser
+name: Saved Run Archive Restore Browser
 
 on:
   pull_request:
@@ -23,11 +23,12 @@ permissions:
 
 jobs:
   read-only-import:
-    name: Real Chromium / cold SQLite / read-only import collision review
+    name: Real Chromium / cold SQLite / reviewed restore and restart
     runs-on: ubuntu-latest
     timeout-minutes: 13
     env:
       PYTHONPATH: ${{ github.workspace }}/src
+      BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -45,7 +46,7 @@ jobs:
             -r .github/requirements/saved-branch-browser.lock.txt
       - run: npm --prefix web ci --ignore-scripts
       - run: python -m playwright install --with-deps chromium
-      - name: Real source Save, independent import preview, tampering, collision and restart
+      - name: Real source Save, collision review, confirmed restore and restart
         run: |
           timeout --signal=TERM --kill-after=10s 10m \
             python web/acceptance/saved_branch_archive_import_browser.py --root work/archive-import-preview-browser

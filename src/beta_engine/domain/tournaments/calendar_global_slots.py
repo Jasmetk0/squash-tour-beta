@@ -7,6 +7,7 @@ that ledger, never a second mutable result store. Old executors retain old seeds
 from contextlib import contextmanager
 from contextvars import ContextVar
 import hashlib
+import threading
 import json
 from types import SimpleNamespace
 from typing import Literal
@@ -228,6 +229,7 @@ def _incremental_checkpoint_fingerprint(value, scope):
     result = hashes[-1].copy()
     result.update(entry['suffix'])
     fingerprint = result.hexdigest()
+    _remember_appendable_checkpoint(fingerprint, hashes[-1], entry['suffix'], len(value.events))
     if auxiliary is not None and len(auxiliary) == len(hashes):
         equivalent_value = auxiliary[-1].copy()
         equivalent_value.update(entry['auxiliary_suffix'])
@@ -235,6 +237,110 @@ def _incremental_checkpoint_fingerprint(value, scope):
         values[fingerprint] = equivalent_value.digest()
         while len(values) > 128:
             values.pop(next(iter(values)))
+    return fingerprint
+
+
+# Canonical-JSON hash states of whole v13 checkpoints, addressed by their own
+# SHA-256 digest: ``digest -> (state after the last event, suffix, events)``.
+# A state is recorded only right after its digest was computed from the actual
+# encoded bytes, so it is a pure function of that content (SHA-256 collision
+# resistance), like the digest itself. It is never a proof, never decides
+# acceptance and never replaces a fingerprint that a caller does not already
+# hold; it only lets a successor that APPENDS one event to such a checkpoint
+# hash the new event instead of re-encoding the complete history.
+_APPENDABLE_CHECKPOINTS = {}
+_APPENDABLE_CHECKPOINTS_LOCK = threading.Lock()
+MAX_APPENDABLE_CHECKPOINTS = 64
+
+
+def _canonical_bytes(body):
+    return json.dumps(body, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode()
+
+
+def _appendable_checkpoint_shape(value):
+    # Exactly the shape whose canonical JSON _incremental_checkpoint_fingerprint
+    # composes as {...root fields, "events":[e1,...,en], run_id, schema_version}.
+    return (
+        type(value) is GlobalCompetitionCheckpoint
+        and set(type(value).model_fields) == {'schema_version', 'run_id', 'branch_id', 'competition_root', 'events'}
+        and not type(value).model_computed_fields
+        and not type(value).__pydantic_decorators__.model_serializers
+        and not type(value).__pydantic_decorators__.field_serializers
+        and type(value.events) is tuple and len(value.events) <= 4096
+        and all(type(x) is str for x in (value.run_id, value.branch_id, value.schema_version))
+        and all(type(event) in (GlobalSlot, CalendarNativeSportingWeek, CalendarFollowupKnockout)
+                for event in value.events)
+    )
+
+
+def _checkpoint_suffix(value):
+    # Fields sorting after "events": run_id and schema_version (both str).
+    return (b']' + b',' + _canonical_bytes('run_id') + b':' + _canonical_bytes(value.run_id)
+            + b',' + _canonical_bytes('schema_version') + b':' + _canonical_bytes(value.schema_version) + b'}')
+
+
+def _remember_appendable_checkpoint(fingerprint, state, suffix, event_count):
+    with _APPENDABLE_CHECKPOINTS_LOCK:
+        _APPENDABLE_CHECKPOINTS.pop(fingerprint, None)
+        _APPENDABLE_CHECKPOINTS[fingerprint] = (state.copy(), suffix, event_count)
+        while len(_APPENDABLE_CHECKPOINTS) > MAX_APPENDABLE_CHECKPOINTS:
+            _APPENDABLE_CHECKPOINTS.pop(next(iter(_APPENDABLE_CHECKPOINTS)))
+
+
+def _appendable_state(fingerprint, event_count, suffix):
+    with _APPENDABLE_CHECKPOINTS_LOCK:
+        known = _APPENDABLE_CHECKPOINTS.get(fingerprint)
+        if known is None or known[1] != suffix or known[2] != event_count:
+            return None
+        return known[0].copy()
+
+
+def appended_checkpoint_fingerprint(previous, successor):
+    """``successor.fingerprint`` for ``previous`` plus exactly one new event.
+
+    The result is the SAME canonical hash as the full computation. The prefix
+    hash state is reused only when it is recorded under ``previous``'s digest;
+    otherwise ``previous`` is encoded once here and the resulting digest must
+    equal ``previous.fingerprint`` before anything is reused or recorded. Any
+    other shape, root, scope or event relation takes the ordinary full path.
+    Inside a private replay scope the result is primed for ``successor``.
+    """
+    scope = _replay_projections.get()
+    if (
+        scope is None
+        or scope.get('collect_checkpoint_value_hashes', False)
+        or not _appendable_checkpoint_shape(previous)
+        or not _appendable_checkpoint_shape(successor)
+        or successor.competition_root is not previous.competition_root
+        or (successor.run_id, successor.branch_id, successor.schema_version)
+        != (previous.run_id, previous.branch_id, previous.schema_version)
+        or len(successor.events) != len(previous.events) + 1
+        or any(a is not b for a, b in zip(previous.events, successor.events))
+    ):
+        return successor.fingerprint
+    expected = previous.fingerprint
+    suffix = _checkpoint_suffix(previous)
+    state = _appendable_state(expected, len(previous.events), suffix)
+    if state is None:
+        body = previous.model_dump(mode='json', exclude={'events'})
+        if set(body) != {'schema_version', 'run_id', 'branch_id', 'competition_root'}:
+            return successor.fingerprint
+        before = [_canonical_bytes(k) + b':' + _canonical_bytes(body[k]) for k in sorted(body) if k < 'events']
+        state = hashlib.sha256(b'{' + b','.join(before) + (b',' if before else b'') + b'"events":[')
+        for index, event in enumerate(previous.events):
+            state.update((b',' if index else b'') + _canonical_bytes(event.model_dump(mode='json')))
+        check = state.copy()
+        check.update(suffix)
+        if check.hexdigest() != expected:
+            # Never extend a digest that this content does not actually have.
+            return successor.fingerprint
+        _remember_appendable_checkpoint(expected, state, suffix, len(previous.events))
+    state.update((b',' if previous.events else b'') + _canonical_bytes(successor.events[-1].model_dump(mode='json')))
+    result = state.copy()
+    result.update(suffix)
+    fingerprint = result.hexdigest()
+    _remember_appendable_checkpoint(fingerprint, state, suffix, len(successor.events))
+    _prime_private_fingerprint(successor, fingerprint)
     return fingerprint
 
 

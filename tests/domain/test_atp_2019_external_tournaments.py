@@ -6,6 +6,8 @@ import pytest
 from scripts.audit_atp_2019_external_tournaments import read_pinned, compare_2019
 from scripts.audit_atp_2019_research import ROOT, load
 
+pytestmark = pytest.mark.pr_critical
+
 
 def test_exact_bytes_or_reject(tmp_path):
     path = tmp_path / "sample.csv"

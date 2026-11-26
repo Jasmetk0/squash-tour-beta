@@ -75,3 +75,38 @@ def test_contemporary_post_start_results_not_preplay_publication():
             "source_urls": ["https://topsport.bg/tennis/vsichki-rezultati-ot-sofia-open-2019.html"],
             "published_dates": ["2019-02-04"],
         }))
+
+CANDIDATES = json.loads((ROOT / "research_2019/profile_candidates.json").read_text(
+    encoding="utf-8"))["candidates"]
+
+
+@pytest.mark.parametrize("candidate", CANDIDATES, ids=lambda c: c["occurrence_id"])
+def test_preplay_sources_pass_real_date_validator_but_unhashed_profile_is_rejected(candidate):
+    from beta_engine.domain.tournaments.atp_knockout_profile import ATPKnockoutProfile
+
+    p = candidate["profile"]
+    evidence = ATPQualificationDateEvidence.model_validate_json(json.dumps(p["qualification_date_evidence"]))
+    row = ROWS[p["occurrence_id"]]
+    assert evidence.start_date == row["q_start"]
+    assert evidence.end_date == row["q_end"]
+    projected = project_qualification_window(RunCalendar(52, 1, 2019, 1),
+                                             SimpleNamespace(qualification_date_evidence=evidence))
+    expected = [5] if p["occurrence_id"].endswith("cordoba") else [5, 6]
+    assert [w["year_week"] for w in projected["iso_year_weeks"]] == expected
+    assert not projected["sporting_execution_ready"]
+    assert p["source_pdf_sha256"] == {}
+    with pytest.raises(ValueError, match="exact PDF evidence hashes"):
+        ATPKnockoutProfile.model_validate_json(json.dumps(p))
+
+
+def test_historical_points_and_geometry_not_modernized():
+    for candidate in CANDIDATES:
+        p = candidate["profile"]
+        assert p["main_points"] == dict(champion=250, finalist=150, semifinal=90,
+                                        quarterfinal=45, round_of_16=20, round_of_32=0)
+        assert p["qualification_points"] == dict(qualifier=12, round_2_loss=6, round_1_loss=0)
+    cordoba, sofia = (ROWS["atp_2019_" + key] for key in ("cordoba", "sofia"))
+    assert cordoba["draw_discrepancies"][0]["status"] == "conflict"
+    assert cordoba["geometry"]["q_wc"] == 2
+    assert sofia["main_bye_positions"] == [2, 10, 23, 31]
+    assert sofia["qualification_geometry_detail"]["main_walkover_count"] == 1

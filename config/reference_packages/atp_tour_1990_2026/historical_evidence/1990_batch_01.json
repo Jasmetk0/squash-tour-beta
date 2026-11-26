@@ -44,8 +44,8 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 59,
-    "reported_main_wild_card_count_rows": 59,
+    "reported_main_qualifier_count_rows": 62,
+    "reported_main_wild_card_count_rows": 62,
     "main_draw_disagreement_rows": 15,
     "second_pass_review_attempted_rows": 75,
     "second_pass_main_field_crosscheck_rows": 75,
@@ -2173,12 +2173,14 @@
           "https://en.wikipedia.org/wiki/1990_SkyDome_World_Tennis_Tournament_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/SkyDome_World_Tennis_Tournament_1990",
           "https://www.itftennis.com/en/tournament/toronto-indoor/can/1990/m-csd-can-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://en.tennistemple.com/competitions/toronto-1986/draw",
+          "https://www.stevegtennis.com/draw-results/atp/Toronto/1990"
         ],
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 7,
+        "reported_main_wild_cards": 5,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 1005000,
@@ -2282,6 +2284,25 @@
           "prior_financial_commitment_usd": 1200000,
           "workbook_prize_money_usd": 1050000,
           "scope": "Keep original evidence and numeric comparison baseline; distinguish prize from commitment, not certified points class. No original Q sheet."
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.tennistemple.com/competitions/toronto-1986/draw",
+          "corroborating_main_draw_url": "https://www.stevegtennis.com/draw-results/atp/Toronto/1990",
+          "observed_qualifiers": 7,
+          "observed_wild_cards": 5,
+          "reviewed_on": "2026-11-26",
+          "scope": "Full initial bracket has 7 Q and 5 WC, eight seed BYEs. TennisTemple header ends Feb19 rather than ATP Feb18; existing canonical window retained. Distinct from July Canadian Open. Count each initial entrant once; no actual Q dates, entrants or reserved place rules inferred."
         }
       }
     },
@@ -2336,12 +2357,13 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.stevegtennis.com/draw-results/atp/Philadelphia/1990"
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 6,
+        "reported_main_wild_cards": 4,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 825000,
@@ -2433,6 +2455,45 @@
             "workbook_qualifier_award": null,
             "source_rule_certified": false
           }
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
+          "corroborating_main_draw_url": "https://www.stevegtennis.com/draw-results/atp/Philadelphia/1990",
+          "observed_qualifiers": 6,
+          "observed_wild_cards": 4,
+          "reviewed_on": "2026-11-26",
+          "scope": "All four initial-entry sections inspected: Q counts 2/0/2/2; WC counts 0/3/0/1. All 16 seeds receive BYEs. Count each initial entrant once; no actual Q dates, entrants or reserved place rules inferred.",
+          "qualifier_counts_by_section": [
+            2,
+            0,
+            2,
+            2
+          ],
+          "wild_card_counts_by_section": [
+            0,
+            3,
+            0,
+            1
+          ]
         }
       }
     },
@@ -2656,12 +2717,14 @@
           "https://en.wikipedia.org/wiki/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles",
           "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Volvo_U.S._National_Indoor_1990",
           "https://www.itftennis.com/en/tournament/memphis/usa/1990/m-wsf-usa-02a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://da.tennistemple.com/competitions/memphis/1990/draw",
+          "https://gabrielggr.us.to/content/content/wikipedia_en_all_maxi_2024-01/A/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles"
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 6,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -2735,6 +2798,33 @@
             "stored_candidate_reference": "world_series_64_candidate_rows:250000",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "bye_seed_ranks": [
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+          11,
+          12,
+          13,
+          14,
+          15,
+          16
+        ],
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://da.tennistemple.com/competitions/memphis/1990/draw",
+          "corroborating_main_draw_url": "https://gabrielggr.us.to/content/content/wikipedia_en_all_maxi_2024-01/A/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles",
+          "observed_qualifiers": 6,
+          "observed_wild_cards": 3,
+          "reviewed_on": "2026-11-26",
+          "scope": "Full initial bracket has six Q and three WC. All 16 seeds receive BYEs. Source shows an incomplete first-round score in one pairing; no score imported. Historic host Memphis, not Rio de Janeiro. Count each initial entrant once; no actual Q dates, entrants or reserved place rules inferred."
         }
       }
     },
@@ -9323,6 +9413,13 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "historical_date_contract_followup": {
+          "source_model": "src/beta_engine/domain/tournaments/atp_knockout_profile.py",
+          "source_model_checked_at": "b4b2ba435e93f0953f363b9159ac8157cb5bce25",
+          "source_status": "announced_regular_q_window_not_actual_event_dates",
+          "expected_structural_date_validator_result": "accepts_dated_https_announcement_shape_only",
+          "scope": "The existing date validator checks date ordering, HTTPS and publication no later than start; passing does not prove actual play or grant profile authority. The July 20 report announces July 28–29, not the actual complete regular Q window. Do not populate qualification_date_evidence, Q graph or reserved places."
         }
       }
     },
@@ -15493,19 +15590,19 @@
         "reason": "Reported Q32 and observed Q4, no actual Q date/graph and exact awards."
       }
     ],
-    "next_research": "Frankfurt owner/Work decision on documented candidate adaptation and ranking policy; New Haven Yale archive; San Francisco and other eight conditional geometry+band candidates; original 1990 ATP guide and complete dated qualifying evidence."
+    "next_research": "Frankfurt owner/Work explicit adaptation decision and shared catalog; New Haven Yale archive; San Francisco and all 13 conditional geometry candidates (including newly resolved Main labels for Toronto Indoor, Philadelphia and Memphis). Obtain original qualification sheets, dated primary regulation and provenance before publication."
   },
   "knockout_candidate_triage": {
     "status": "diagnostic_only_not_source_certification_or_publication",
     "reviewed_on": "2026-11-26",
     "source_model_head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
-    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. Do not populate certified fields or create a sporting profile. All 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy.",
+    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 13 reported Q-size rows now have observed entry labels; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
     "counts": {
       "reported_q_size": 13,
-      "conditional_geometry": 10,
-      "conditional_geometry_and_band": 8,
-      "geometry_without_exact_band": 2,
-      "missing_main_entry_labels": 3,
+      "conditional_geometry": 13,
+      "conditional_geometry_and_band": 10,
+      "geometry_without_exact_band": 3,
+      "missing_main_entry_labels": 0,
       "no_reported_q_size": 61
     },
     "rows": [
@@ -15592,32 +15689,62 @@
       {
         "occurrence_id": "atp_1990_toronto_indoor_1990",
         "reported_q_size": 28,
-        "observed_q": null,
-        "observed_wc": null,
+        "observed_q": 7,
+        "observed_wc": 5,
         "nominal_main_seeds": 16,
         "exact_secondary_band_candidate": false,
-        "triage_status": "missing_main_entry_labels",
-        "conditional_geometry": null
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
       },
       {
         "occurrence_id": "atp_1990_philadelphia_1998",
         "reported_q_size": 24,
-        "observed_q": null,
-        "observed_wc": null,
+        "observed_q": 6,
+        "observed_wc": 4,
         "nominal_main_seeds": 16,
         "exact_secondary_band_candidate": true,
-        "triage_status": "missing_main_entry_labels",
-        "conditional_geometry": null
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 48,
+          "main_byes": 16,
+          "qualification_entrants": 24,
+          "qualifier_spots": 6,
+          "wild_cards": 4,
+          "sections": 6,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 65
+        }
       },
       {
         "occurrence_id": "atp_1990_rio",
         "reported_q_size": 24,
-        "observed_q": null,
-        "observed_wc": null,
+        "observed_q": 6,
+        "observed_wc": 3,
         "nominal_main_seeds": 16,
         "exact_secondary_band_candidate": true,
-        "triage_status": "missing_main_entry_labels",
-        "conditional_geometry": null
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 48,
+          "main_byes": 16,
+          "qualification_entrants": 24,
+          "qualifier_spots": 6,
+          "wild_cards": 3,
+          "sections": 6,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 65
+        }
       },
       {
         "occurrence_id": "atp_1990_rotterdam",
@@ -15739,6 +15866,8 @@
           "potential_matches": 76
         }
       }
-    ]
+    ],
+    "followup_source_model_head": "b4b2ba435e93f0953f363b9159ac8157cb5bce25",
+    "followup": "Toronto Indoor, Philadelphia and Memphis initial entry labels completed, conditional equal-section geometry now constructible for all 13 reported Q-size candidates. Actual Q and reserved-policy evidence remains absent."
   }
 }

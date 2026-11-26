@@ -1,0 +1,182 @@
+{
+  "schema": "atp_2019_february_secondary_evidence.v1",
+  "status": "blocked_not_installed",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_buenos_aires",
+      "atp_id": "506",
+      "main_start": "2019-02-11",
+      "main_end": "2019-02-17",
+      "observed_q_dates": [
+        "2019-02-09",
+        "2019-02-10"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_seeds": 8,
+        "main_wc": 3,
+        "main_q_markers": 4,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_spots": 4,
+        "q_byes": 0,
+        "q_seeds": 8,
+        "q_wc": 2,
+        "main_ll_markers": 0,
+        "q_alt_markers": null
+      },
+      "qualifier_winners_in_main": 4,
+      "main_expected_matches": 27,
+      "q_expected_matches": 12,
+      "main_first_day_matches": null,
+      "observed_overlap": false,
+      "qualification_date_status": "actual_results_corrobated_not_complete_preplay_evidence",
+      "points_status": "Main 250/150/90/45/20/0 confirmed by secondary event table; Q table only season category evidence, exact original Q table missing",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/wiki/2019_Argentina_Open_%E2%80%93_Singles",
+          "role": "Secondary final Main/Q draw, Q16, 8 seeds, 2 WC; four Q winners in Main; one Q retirement",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.tenisportal.cz/buenos-aires/2019/atp-muzi/?phase=qualification",
+          "role": "12 Q match rows on Feb9/10 and Main points",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.primeraedicion.com.ar/nota/100082010/argentina-open-ya-estan-todos-los-clasificados-al-cuadro-principal/",
+          "role": "Feb10 contemporary Telam report confirms Q finish before Feb11 Main",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.lanacion.com.ar/deportes/tenis/argentina-open-cuadro-principal-seis-argentinos-despedida-nid2218874/",
+          "role": "Feb9 report and embedded organizer announcement confirm Main start Feb11; 3 Main WC and prequalification distinct",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.batravelguide.com/2019/02/atp-buenos-aires-argentina-open-2019.html",
+          "role": "Indexed schedule lists Feb9/10 qualifying; full page 429 and publication day not established",
+          "access": "indexed only",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "unavailable_originals": [
+        "https://www.protennislive.com/posting/2019/506/mds.pdf",
+        "https://www.protennislive.com/posting/2019/506/qs.pdf"
+      ],
+      "gaps": [
+        "Original PDFs inaccessible, no exact hashes",
+        "Preplay source with explicit full Q dates and publication date before or on Q start not established",
+        "Q point table exact event evidence missing",
+        "No import or native play"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_dallas",
+      "atp_id": "424",
+      "historic_host": "New York (Uniondale)",
+      "main_start": "2019-02-11",
+      "main_end": "2019-02-17",
+      "observed_q_dates": [
+        "2019-02-10",
+        "2019-02-11"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_seeds": 8,
+        "main_wc": 3,
+        "main_q_markers": 4,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_spots": 4,
+        "q_byes": 0,
+        "q_seeds": 8,
+        "q_wc": 2,
+        "main_ll_markers": 1,
+        "q_alt_markers": 2
+      },
+      "qualifier_winners_in_main": 4,
+      "main_expected_matches": 27,
+      "q_expected_matches": 12,
+      "main_first_day_matches": 3,
+      "observed_overlap": true,
+      "qualification_date_status": "actual_results_corrobated_not_complete_preplay_evidence",
+      "points_status": "2019 ATP250 32-slot table is category-level evidence only, original event points not acquired",
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/w/index.php?title=2019_New_York_Open_%E2%80%93_Singles&oldid=1184639520",
+          "role": "Pinned secondary final draw, four Q and one LL; second seed also WC; Q16",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://tennisatlantic.com/2019/02/11/popcorn-match-monday-newyorkopen-with-qualifying-finals-and-a-taste-of-main-draw/",
+          "role": "Contemporary Feb11 report lists 8 actual Feb10 Q1, four scheduled Q finals and three Main singles matches Feb11",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://ru.tennistemple.com/competitions/dallas/2019/orderofplay/2019-02-11",
+          "role": "Four Q2 results and three Main singles R1 on Feb11",
+          "access": "indexed daily results",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://pt.tennistemple.com/competitions/dallas/2019/orderofplay/2019-02-10",
+          "role": "Eight Q1 results Feb10",
+          "access": "indexed daily results",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://thefanverdict.com/index.php/2019/02/07/tennis-rising-and-established-stars-set-to-hit-long-island/",
+          "role": "Feb7 publication explicitly says Q starts Sunday Feb10; Feb9 expo/exhibition, not ATP qualification; does not specify Q end",
+          "access": "page text reviewed",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.world.tennis/en/tournament/new-york-open/usa/2019/m-250-usa-01a-2019/draws-and-results/",
+          "role": "ITF Main Feb11–17",
+          "access": "indexed archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "unavailable_originals": [
+        "https://www.protennislive.com/posting/2019/424/mds.pdf",
+        "https://www.protennislive.com/posting/2019/424/qs.pdf"
+      ],
+      "gaps": [
+        "Original PDFs inaccessible, no exact hashes",
+        "Feb7 establishes Q start only; Feb11 evidence post-start, cannot satisfy v2 full-window publication rule",
+        "Q2/Main R1 overlap W07; scheduling and LL/seeded WC semantics must be reviewed",
+        "No import or native play"
+      ]
+    }
+  ]
+}

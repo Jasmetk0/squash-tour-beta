@@ -96,3 +96,33 @@ def test_modern_phase_dates_and_native_positions(
     assert shifted.calendar_to_season(2025, main_week) == RunCalendarPosition(
         0, shifted_main, 2025, main_week
     )
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_week", "main_week"),
+    [
+        ("dallas", ["2025-02-01", "2025-02-02"], 5, 6),
+        ("rotterdam", ["2025-02-01", "2025-02-02"], 5, 6),
+        ("buenos_aires", ["2025-02-08", "2025-02-09"], 6, 7),
+        ("delray_beach", ["2025-02-08", "2025-02-09"], 6, 7),
+    ],
+)
+def test_adjacent_week_phase_dates_and_native_positions(
+    phase_evidence, series, q_dates, q_week, main_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert q_dates[-1] < row["main_start_date"]
+    assert row["observed_qualifying_iso_weeks"] == [[2025, q_week]]
+    assert row["main_year_weeks"] == [[2025, main_week]]
+    assert main_week == q_week + 1
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in (q_week, main_week):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(
+            0, week, 2025, week
+        )
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(
+            0, week + 16, 2025, week
+        )

@@ -195,6 +195,154 @@
         "note": "Dated results show qualifying finals and Main singles on January 27. The original overlap is not equivalent to placing all qualifying in W04."
       },
       "follow_up": "Review split qualifying across W04/W05 and Q-before-Main slot ordering in W05; verify geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2025_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-03",
+      "main_end_date": "2025-02-09",
+      "main_year_weeks": [
+        [
+          2025,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-01",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/01-02-2025"
+        },
+        {
+          "date": "2025-02-02",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/02-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.dallasopen.com/en/media/news/dallas-2025-history-draw-schedule",
+        "note": "The tournament's published qualifying program agrees with the dated ATP men's singles results. Main dates and phase weeks match the existing Dallas sporting profile."
+      },
+      "follow_up": "Reference evidence only; existing Dallas profile and native execution acceptance remain owned by #1894. No profile, schedule or runtime changes."
+    },
+    {
+      "occurrence_id": "atp_2025_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-03",
+      "main_end_date": "2025-02-09",
+      "main_year_weeks": [
+        [
+          2025,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-01",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/rotterdam/2025/orderofplay/2025-02-01"
+        },
+        {
+          "date": "2025-02-02",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/02-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/rotterdam-2025-history-draw-schedule",
+        "note": "Official ATP qualifying program and dated first-round/final results agree. Both Q days precede the Main start."
+      },
+      "follow_up": "Adjacent Q W05 to Main W06. Existing sporting profile geometry must remain unchanged until coordinated phase verification is published."
+    },
+    {
+      "occurrence_id": "atp_2025_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2025-02-10",
+      "main_end_date": "2025-02-16",
+      "main_year_weeks": [
+        [
+          2025,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-08",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/08-02-2025"
+        },
+        {
+          "date": "2025-02-09",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/09-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/09-02-2025",
+        "note": "ATP men's singles qualifying finals are recorded on February 9, before the canonical Main opening."
+      },
+      "follow_up": "Adjacent Q W06 to Main W07; coordinate geometry, point awards and profile publication with Work."
+    },
+    {
+      "occurrence_id": "atp_2025_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2025-02-10",
+      "main_end_date": "2025-02-16",
+      "main_year_weeks": [
+        [
+          2025,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-08",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/08-02-2025"
+        },
+        {
+          "date": "2025-02-09",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/09-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.delraybeachopen.com/en/tournament/news/2025-day-2-daily-notebook",
+        "note": "The tournament's February 8 notebook and dated first-round/final results distinguish men's ATP qualifying from the opening-weekend Legends event."
+      },
+      "follow_up": "Adjacent Q W06 to Main W07; coordinate geometry, point awards and profile publication with Work."
     }
   ]
 }

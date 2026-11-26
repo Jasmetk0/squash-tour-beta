@@ -280,3 +280,56 @@ def test_hamburg_2023_q_date_disagreement_retained_without_extra_play(phase_evid
     assert row["source_disagreement"]["source_url"] != row["source_confirmation"]["source_url"]
     assert row["additional_qualifying_first_round_source_url"]
     assert row["additional_qualifying_source_url"]
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("umag", ["2023-07-22","2023-07-23"], [29], [30]),
+        ("kitzbuhel", ["2023-07-29","2023-07-30"], [30], [31]),
+        ("los_cabos", ["2023-07-29","2023-07-30"], [30], [31]),
+        ("washington", ["2023-07-29","2023-07-30"], [30], [31]),
+        ("canadian_open", ["2023-08-05","2023-08-06"], [31], [32]),
+        ("cincinnati", ["2023-08-12","2023-08-13"], [32], [33]),
+        ("winston_salem", ["2023-08-19","2023-08-20"], [33], [34]),
+        ("chengdu", ["2023-09-19","2023-09-20"], [38], [38]),
+    ],
+)
+def test_late_summer_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        expected = RunCalendarPosition(0, week + 16, 2023, week) if week < 37 else RunCalendarPosition(1, week - 36, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == expected
+
+
+@pytest.mark.parametrize("series", ["canadian_open", "cincinnati"])
+def test_2023_north_american_masters_qualifying_capacity(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    evidence = row["qualifying_capacity_evidence"]
+    assert evidence["qualifying_rounds"] == 2
+    assert evidence["qualifier_places"] == 7
+    assert evidence["source_url"]
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "mapped_week"),
+    [("cincinnati", 32, 33), ("winston_salem", 33, 34), ("chengdu", 38, 38)],
+)
+def test_late_summer_2023_opening_overlaps_qualifying(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2023, opening_week]
+    assert row["main_year_weeks"] == [[2023, mapped_week]]
+
+
+def test_chengdu_2023_source_finish_is_not_main_projection(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "chengdu")
+    assert row["source_finish_iso_week"] == [2023, 39]
+    assert row["source_finish_iso_week"] == list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2])
+    assert row["source_finish_iso_week"] not in row["main_year_weeks"]

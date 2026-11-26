@@ -382,6 +382,334 @@
         "note": "Eight Q1 results Feb 5 including one retirement with played score, four scored Q finals Feb 6; Main begins Feb 7."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_250",
+      "main_start_date": "2022-02-07",
+      "main_end_date": "2022-02-13",
+      "main_year_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2022"
+        },
+        {
+          "date": "2022-02-07",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/07-02-2022"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          5
+        ],
+        [
+          2022,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/07-02-2022",
+        "note": "Eight scored Q1 results Feb 6; four Q finals and a scored Main singles match Feb 7."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-02-07",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/07-02-2022",
+        "observed_iso_week": [
+          2022,
+          6
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2022-02-07",
+      "main_end_date": "2022-02-13",
+      "main_year_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-05",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/05-02-2022"
+        },
+        {
+          "date": "2022-02-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2022"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2022",
+        "note": "Eight scored Q1 results Feb 5 and four scored Q finals Feb 6."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2022-02-14",
+      "main_end_date": "2022-02-20",
+      "main_year_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/delray-beach/2022/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2022-02-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/delray-beach/2022/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/delray-beach/2022/atp-men/?phase=qualification",
+        "note": "Dated Q1 Feb 12 and four Q finals Feb 13 including two retirements with played scores; these are not completed full-length matches."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_doha",
+      "series_id": "doha",
+      "category_id": "atp_250",
+      "main_start_date": "2022-02-14",
+      "main_end_date": "2022-02-19",
+      "main_year_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2022/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2022-02-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2022/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/doha/2022/atp-men/?phase=qualification",
+        "note": "Eight scored Q1 and four scored Q finals Feb 12–13."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2022-02-14",
+      "main_end_date": "2022-02-20",
+      "main_year_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-13",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/13-02-2022"
+        },
+        {
+          "date": "2022-02-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-02-2022"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          6
+        ],
+        [
+          2022,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-02-2022",
+        "note": "Eight scored Q1 Feb 13 and four Q finals plus three scored Main singles Feb 14. Historical host Marseille, not Lyon."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-02-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-02-2022",
+        "observed_iso_week": [
+          2022,
+          7
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_event_id": 496,
+        "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+        "note": "ATP confirms Marseille relocation to Lyon from 2026; separate from historical Lyon clay Series."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_rio",
+      "series_id": "rio",
+      "category_id": "atp_500",
+      "main_start_date": "2022-02-14",
+      "main_end_date": "2022-02-20",
+      "main_year_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2022/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2022-02-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2022/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2022/atp-men/?phase=qualification",
+        "note": "Dated men's Q1 and four Q finals Feb 12–13; Main starts Feb 14."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2022-02-21",
+      "main_end_date": "2022-02-26",
+      "main_year_weeks": [
+        [
+          2022,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-19",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2022/"
+        },
+        {
+          "date": "2022-02-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2022/",
+        "note": "Local event-date scores list eight Q1 Feb 19 and four Q finals Feb 20. Do not shift to overseas calendar dates."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2022-02-21",
+      "main_end_date": "2022-02-26",
+      "main_year_weeks": [
+        [
+          2022,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-19",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/19-02-2022"
+        },
+        {
+          "date": "2022-02-20",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/20-02-2022"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/20-02-2022",
+        "note": "Eight men's singles Q1 and four finals Feb 19–20; keep distinct from women's event and doubles."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
     }
   ]
 }

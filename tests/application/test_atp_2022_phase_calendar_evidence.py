@@ -90,3 +90,44 @@ def test_2022_pune_retains_hong_kong_identity(phase_evidence):
     assert row["occurrence_id"] == "atp_2022_hong_kong"
     assert row["historical_identity_evidence"]["actual_host"] == "Pune, India"
     assert phase_evidence["sporting_schedule_installed"] is False
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("dallas", ["2022-02-06","2022-02-07"], [[2022,5],[2022,6]], [[2022,6]]),
+        ("rotterdam", ["2022-02-05","2022-02-06"], [[2022,5]], [[2022,6]]),
+        ("delray_beach", ["2022-02-12","2022-02-13"], [[2022,6]], [[2022,7]]),
+        ("doha", ["2022-02-12","2022-02-13"], [[2022,6]], [[2022,7]]),
+        ("lyon", ["2022-02-13","2022-02-14"], [[2022,6],[2022,7]], [[2022,7]]),
+        ("rio", ["2022-02-12","2022-02-13"], [[2022,6]], [[2022,7]]),
+        ("acapulco", ["2022-02-19","2022-02-20"], [[2022,7]], [[2022,8]]),
+        ("dubai", ["2022-02-19","2022-02-20"], [[2022,7]], [[2022,8]]),
+    ],
+)
+def test_february_2022_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    january = RunCalendar.earth_default(start_year=2022, season_count=2)
+    shifted = RunCalendar(52, 37, 2021, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(0, week + 16, year, week)
+
+
+@pytest.mark.parametrize("series", ["dallas", "lyon"])
+def test_february_2022_actual_opening_on_final_qualifying_date(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert opening["status"] == "played"
+
+
+def test_2022_marseille_retains_lyon_series_identity(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "lyon")
+    assert row["occurrence_id"] == "atp_2022_lyon"
+    assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+    assert row["historical_identity_evidence"]["source_event_id"] == 496
+    assert phase_evidence["sporting_schedule_installed"] is False

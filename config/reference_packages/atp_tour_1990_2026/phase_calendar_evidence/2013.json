@@ -4,7 +4,7 @@
   "occurrences": 61,
   "wikipedia_dates_agree": 30,
   "wikipedia_dates_differ": 23,
-  "wikipedia_dates_not_parsed": 0
+  "wikipedia_dates_not_parsed": 2
  },
  "occurrences": [
   {
@@ -1751,9 +1751,18 @@
   },
   {
    "category_id": "atp_250",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": 32,
+    "seeds": null,
+    "wild_cards": null
+   },
    "main_end_date": "2013-05-05",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
    "main_start_date": "2013-04-29",
@@ -1767,7 +1776,11 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds",
+    "secondary_date_cross_check"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -1791,13 +1804,42 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2013_Portugal_Open",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 288957,
+     "revision_id": 1371594298,
+     "sha256": "eac20e5971a92c7a4f2bbd32643e3a8b1ff2ac6f9fcc25df99036b57058f6e0b",
+     "url": "https://en.wikipedia.org/wiki/2013_Portugal_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Portugal OpenOeiras, PortugalATP World Tour 250Clay (red) – €467,800 – 28S/32Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 481868,
+     "revision_id": 1158217454,
+     "sha256": "c9ce0cf05cf42acf929ffc14aa6f5bf3b1ef1e07aa8dbde683e0e1a8cc47c1ba",
+     "url": "https://en.wikipedia.org/wiki/2013_Portugal_Open_%E2%80%93_Men's_singles"
+    }
+   }
   },
   {
    "category_id": "atp_250",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds receive a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": 32,
+    "qualifying_rounds_derived": 3,
+    "seeds": 8,
+    "wild_cards": 3
+   },
    "main_end_date": "2013-05-05",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2013",
    "main_start_date": "2013-04-29",
@@ -1811,7 +1853,8 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "secondary_date_cross_check"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -1835,7 +1878,26 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2013_BMW_Open",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 186798,
+     "revision_id": 1318694122,
+     "sha256": "702369dd52e8d98948c22b7097e9a1ca1035adf4faaee8d88a1252c2c32e8295",
+     "url": "https://en.wikipedia.org/wiki/2013_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW OpenMunich, GermanyATP World Tour 250Clay (red) – €467,800 – 28S/32Q/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 479395,
+     "revision_id": 1082529225,
+     "sha256": "8e3bac78eb8544ab0918feb7b61363b27eea4f2ce22e9164c4d9d5f054fe2b7f",
+     "url": "https://en.wikipedia.org/wiki/2013_BMW_Open_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_masters_1000",

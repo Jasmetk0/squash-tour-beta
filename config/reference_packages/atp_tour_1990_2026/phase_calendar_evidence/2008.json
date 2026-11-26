@@ -2,7 +2,7 @@
  "atp_season_year": 2008,
  "counts": {
   "occurrences": 61,
-  "wikipedia_dates_agree": 34,
+  "wikipedia_dates_agree": 35,
   "wikipedia_dates_differ": 17,
   "wikipedia_dates_not_parsed": 0
  },
@@ -4388,9 +4388,15 @@
   },
   {
    "category_id": "atp_finals",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bye_statement": null,
+    "main_draw_players": null,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
    "main_end_date": "2008-11-16",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2008",
    "main_start_date": "2008-11-09",
@@ -4404,7 +4410,10 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -4430,7 +4439,29 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2008_Tennis_Masters_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2008-11-09",
+     "2008-11-16"
+    ],
+    "main_article": {
+     "bytes": 780170,
+     "revision_id": 1387826541,
+     "sha256": "a4bd76e4ebb040a02ed5284464929ed5aa12f39aa83b00a34ea0281bca0ec573",
+     "url": "https://en.wikipedia.org/wiki/2008_Tennis_Masters_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Tennis Masters Cup Shanghai, ChinaTennis Masters Cup$4,450,000 – hard (i)Singles – Doubles",
+    "singles_article": {
+     "bytes": 181116,
+     "revision_id": 1305158067,
+     "sha256": "aa0818ae638de21df8abd633c93d84efac1ad87f05f4277565debe0cf7dca6a8",
+     "url": "https://en.wikipedia.org/wiki/2008_Tennis_Masters_Cup_%E2%80%93_Singles"
+    }
+   }
   }
  ],
  "retrieved_at": "2026-11-26",

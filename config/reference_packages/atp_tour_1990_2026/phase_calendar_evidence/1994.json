@@ -3,7 +3,7 @@
  "counts": {
   "occurrences": 85,
   "wikipedia_dates_agree": 29,
-  "wikipedia_dates_differ": 43,
+  "wikipedia_dates_differ": 44,
   "wikipedia_dates_not_parsed": 0
  },
  "occurrences": [
@@ -5879,8 +5879,19 @@
   {
    "category_id": "atp_championship_single_week",
    "conflicts": [
-    "no matching English Wikipedia event article found"
+    "Wikipedia infobox dates 1994-10-31..1994-11-07 differ from canonical 1994-10-31..1994-11-06; canonical (ATP archive) retained"
    ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": 6,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": 4
+   },
    "main_end_date": "1994-11-06",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1994",
    "main_start_date": "1994-10-31",
@@ -5918,7 +5929,29 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "1994_Paris_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1994-10-31",
+     "1994-11-07"
+    ],
+    "main_article": {
+     "bytes": 162679,
+     "revision_id": 1289037519,
+     "sha256": "9da43e456b22281c60abb38d81b0c4ff4384394b7aa57d02801742ec1d8d365c",
+     "url": "https://en.wikipedia.org/wiki/1994_Paris_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris Open Paris, FranceATP Championship Series, Single-WeekCarpet (i) – $2,000,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 453549,
+     "revision_id": 1289625673,
+     "sha256": "e399d5eb75a2d3d281c1e98b8fb7c72fd9794781bf0eda769943aa446727c2b2",
+     "url": "https://en.wikipedia.org/wiki/1994_Paris_Open_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_world_series",

@@ -2,7 +2,7 @@
  "atp_season_year": 2015,
  "counts": {
   "occurrences": 62,
-  "wikipedia_dates_agree": 46,
+  "wikipedia_dates_agree": 47,
   "wikipedia_dates_differ": 13,
   "wikipedia_dates_not_parsed": 0
  },
@@ -163,9 +163,18 @@
   },
   {
    "category_id": "atp_250",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": "The top four seeds received a bye into the second round.",
+    "byes_derived": 4,
+    "main_draw_players": 28,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
    "main_end_date": "2015-01-11",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2015",
    "main_start_date": "2015-01-05",
@@ -203,7 +212,29 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2015_Aircel_Chennai_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "2015-01-05",
+     "2015-01-11"
+    ],
+    "main_article": {
+     "bytes": 204382,
+     "revision_id": 1367627371,
+     "sha256": "491f07ff8dd0d3e33e7d65d562ffecfa889b6942f017e1d30213c775ff069245",
+     "url": "https://en.wikipedia.org/wiki/2015_Aircel_Chennai_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Chennai Open Chennai, IndiaATP World Tour 250Hard – $458,400 – 28S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 484667,
+     "revision_id": 1304379695,
+     "sha256": "932ffbcf932257b10a28c578c288c03f5ae99c3a9e01b4a12a76893aa52bc8dc",
+     "url": "https://en.wikipedia.org/wiki/2015_Aircel_Chennai_Open_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_250",

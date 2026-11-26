@@ -2,7 +2,7 @@
  "atp_season_year": 1993,
  "counts": {
   "occurrences": 84,
-  "wikipedia_dates_agree": 39,
+  "wikipedia_dates_agree": 40,
   "wikipedia_dates_differ": 27,
   "wikipedia_dates_not_parsed": 0
  },
@@ -5047,9 +5047,18 @@
   },
   {
    "category_id": "atp_championship_series",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
    "main_end_date": "1993-10-17",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1993",
    "main_start_date": "1993-10-11",
@@ -5063,7 +5072,9 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -5087,7 +5098,29 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "1993_Tokyo_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1993-10-11",
+     "1993-10-17"
+    ],
+    "main_article": {
+     "bytes": 146878,
+     "revision_id": 1374403797,
+     "sha256": "95a058636953d572d4d7c1e9860fa9939b31f6c211ce15a8cec1b90fac148af3",
+     "url": "https://en.wikipedia.org/wiki/1993_Tokyo_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tokyo Indoor Tokyo, JapanATP Championship SeriesCarpet (i) – $875,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 425540,
+     "revision_id": 1374403951,
+     "sha256": "d9d86ec3dc659f7af6ab52129d9b509cba980ae883e4febc8e537386ef8c652b",
+     "url": "https://en.wikipedia.org/wiki/1993_Tokyo_Indoor_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_world_series",

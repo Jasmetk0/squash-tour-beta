@@ -4,7 +4,7 @@
   "occurrences": 62,
   "wikipedia_dates_agree": 28,
   "wikipedia_dates_differ": 26,
-  "wikipedia_dates_not_parsed": 0
+  "wikipedia_dates_not_parsed": 1
  },
  "occurrences": [
   {
@@ -54,8 +54,19 @@
   {
    "category_id": "atp_international_series",
    "conflicts": [
-    "no matching English Wikipedia event article found"
+    "Wikipedia infobox dates 2007-01-01..2007-01-06 differ from canonical 2007-01-01..2007-01-07; canonical (ATP archive) retained"
    ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
    "main_end_date": "2007-01-07",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
    "main_start_date": "2007-01-01",
@@ -93,7 +104,29 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2007_Qatar_ExxonMobil_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "2007-01-01",
+     "2007-01-06"
+    ],
+    "main_article": {
+     "bytes": 141388,
+     "revision_id": 1368987213,
+     "sha256": "5ce2e51230b77e89cd38c3576eb01736e0c45eeea94011e199c8b498bc90a70d",
+     "url": "https://en.wikipedia.org/wiki/2007_Qatar_ExxonMobil_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Qatar Open Doha, QatarInternational Series$1,000,000 – hard – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 312907,
+     "revision_id": 1225446839,
+     "sha256": "82386df4d2a95efadb046f43dbd441ca75c4d36beca7413594a1f2a10d329cff",
+     "url": "https://en.wikipedia.org/wiki/2007_Qatar_ExxonMobil_Open_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_international_series",
@@ -2516,9 +2549,18 @@
   },
   {
    "category_id": "atp_international_series",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
    "main_end_date": "2007-07-15",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
    "main_start_date": "2007-07-09",
@@ -2532,7 +2574,10 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "secondary_date_cross_check"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -2556,7 +2601,26 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2007_Campbell's_Hall_of_Fame_Championships",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 140535,
+     "revision_id": 1378186717,
+     "sha256": "235b005abb823c0efe1dbd6771ee8a2e1d08e6c3b6c996dea8cb90ed051d7d58",
+     "url": "https://en.wikipedia.org/wiki/2007_Campbell's_Hall_of_Fame_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Hall of Fame Tennis Championships Newport, Rhode Island, United StatesInternational SeriesGrass – $416,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 320270,
+     "revision_id": 1364189033,
+     "sha256": "f2085795c595c4185331cd5755225793e233ddaf0778b216ad4747f9b71c22a1",
+     "url": "https://en.wikipedia.org/wiki/2007_Campbell's_Hall_of_Fame_Tennis_Championships_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_international_series",
@@ -4517,19 +4581,8 @@
   {
    "category_id": "atp_finals",
    "conflicts": [
-    "Wikipedia infobox dates 2007-11-11..2007-11-18 differ from canonical 2007-11-12..2007-11-18; canonical (ATP archive) retained"
+    "no matching English Wikipedia event article found"
    ],
-   "format_evidence": {
-    "bracket_capacity": 8,
-    "bye_statement": null,
-    "byes_derived": 0,
-    "main_draw_players": 8,
-    "main_rounds": 3,
-    "qualifier_places": null,
-    "qualifying_draw_size": null,
-    "seeds": null,
-    "wild_cards": null
-   },
    "main_end_date": "2007-11-18",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2007",
    "main_start_date": "2007-11-12",
@@ -4543,10 +4596,7 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes",
-    "qualifier_places",
-    "wild_cards",
-    "seeds"
+    "qualifying_pdf_hashes"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -4570,29 +4620,7 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": {
-    "article": "2007_Tennis_Masters_Cup",
-    "date_status": "differs",
-    "infobox_dates": [
-     "2007-11-11",
-     "2007-11-18"
-    ],
-    "main_article": {
-     "bytes": 232191,
-     "revision_id": 1331776011,
-     "sha256": "8ed99e64789eda97670729be6921caf49661694d093ad89f590c9949c9075e5b",
-     "url": "https://en.wikipedia.org/wiki/2007_Tennis_Masters_Cup"
-    },
-    "match_method": "date_only_unique_lineage",
-    "role": "secondary_source",
-    "schedule_row": "Tennis Masters Cup Shanghai, ChinaTennis Masters CupHard (i) – $4,450,000 – 8S/8D (RR)Singles – Doubles",
-    "singles_article": {
-     "bytes": 181504,
-     "revision_id": 1305145689,
-     "sha256": "593bdfb587bece340f2b72e59754c00917d6899297a8f0994a7a75291438ecaa",
-     "url": "https://en.wikipedia.org/wiki/2007_Tennis_Masters_Cup_%E2%80%93_Singles"
-    }
-   }
+   "wikipedia_cross_check": null
   }
  ],
  "retrieved_at": "2026-11-26",

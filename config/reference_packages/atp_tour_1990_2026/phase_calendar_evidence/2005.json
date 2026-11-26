@@ -4,7 +4,7 @@
   "occurrences": 63,
   "wikipedia_dates_agree": 30,
   "wikipedia_dates_differ": 21,
-  "wikipedia_dates_not_parsed": 0
+  "wikipedia_dates_not_parsed": 1
  },
  "occurrences": [
   {
@@ -3486,9 +3486,18 @@
   },
   {
    "category_id": "atp_international_series",
-   "conflicts": [
-    "no matching English Wikipedia event article found"
-   ],
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
    "main_end_date": "2005-10-02",
    "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2005",
    "main_start_date": "2005-09-26",
@@ -3502,7 +3511,10 @@
    "open_fields": [
     "qualifying_dates",
     "point_table",
-    "qualifying_pdf_hashes"
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "secondary_date_cross_check"
    ],
    "points": {
     "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
@@ -3526,7 +3538,26 @@
     "published_profile": "none",
     "verified_schedule": "not_verified"
    },
-   "wikipedia_cross_check": null
+   "wikipedia_cross_check": {
+    "article": "2005_Ho_Chi_Minh_City_Open",
+    "date_status": "not_machine_parsed",
+    "infobox_dates": null,
+    "main_article": {
+     "bytes": 135187,
+     "revision_id": 1311389213,
+     "sha256": "36d01365a6449856a426b2861b5ed06d97e775773285f1d0a1a12660b4f10a4d",
+     "url": "https://en.wikipedia.org/wiki/2005_Ho_Chi_Minh_City_Open"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Vietnam Open Ho Chi Minh City, VietnamATP International SeriesCarpet (i) – $380,000 Singles – Doubles",
+    "singles_article": {
+     "bytes": 315323,
+     "revision_id": 1284787421,
+     "sha256": "512749db139d5e1e593d318fd3ee4dcf1b6fe4ccd0adf279e6e29dfdc2f0a83e",
+     "url": "https://en.wikipedia.org/wiki/2005_Ho_Chi_Minh_City_Open_%E2%80%93_Singles"
+    }
+   }
   },
   {
    "category_id": "atp_international_series",

@@ -1,0 +1,387 @@
+{
+  "atp_season_year": 2022,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2022_adelaide",
+      "series_id": "adelaide",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-03",
+      "main_end_date": "2022-01-09",
+      "main_year_weeks": [
+        [
+          2022,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-02",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/adelaide/2022/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2022-01-03",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/adelaide/2022/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          52
+        ],
+        [
+          2022,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/adelaide/2022/atp-muzi/?phase=qualification",
+        "note": "Four scored Q finals Jan 3 after Q1 Jan 2; Main singles also scored Jan 3."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection. January-start Run excludes 2021 W52 qualifying day.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-03",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/adelaide/2022/atp-men/",
+        "observed_iso_week": [
+          2022,
+          1
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_melbourne_2022",
+      "series_id": "melbourne_2022",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-04",
+      "main_end_date": "2022-01-09",
+      "main_year_weeks": [
+        [
+          2022,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-03",
+          "status": "played",
+          "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/03/hijikata-scores-a-career-best-victory-at-melbourne-summer-set"
+        },
+        {
+          "date": "2022-01-04",
+          "status": "played",
+          "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/04/hijikata-scores-first-top-100-win-to-qualify-at-melbourne-summer-set"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/04/hijikata-scores-first-top-100-win-to-qualify-at-melbourne-summer-set",
+        "note": "Tennis Australia confirms actual Q1 Jan 3 and final round Jan 4. Dated Main results show four scored singles Jan 4."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-04",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/melbourne-summer-set-1/2022/atp-men/",
+        "observed_iso_week": [
+          2022,
+          1
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_adelaide_2",
+      "series_id": "adelaide_2",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-10",
+      "main_end_date": "2022-01-15",
+      "main_year_weeks": [
+        [
+          2022,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-09",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/adelaide-2/2022/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2022-01-10",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/adelaide-2/2022/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          1
+        ],
+        [
+          2022,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/adelaide-2/2022/atp-muzi/?phase=qualification",
+        "note": "Dated men's Q1 Jan 9 and four finals Jan 10; four scored Main singles Jan 10."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-10",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/adelaide-2/2022/atp-men/",
+        "observed_iso_week": [
+          2022,
+          2
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_sydney_2022",
+      "series_id": "sydney_2022",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-10",
+      "main_end_date": "2022-01-15",
+      "main_year_weeks": [
+        [
+          2022,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-09",
+          "status": "played",
+          "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/09/oconnell-one-step-closer-to-qualifying-at-sydney-tennis-classic"
+        },
+        {
+          "date": "2022-01-10",
+          "status": "played",
+          "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/10/jordan-thompson-off-to-a-winning-start-at-sydney-tennis-classic"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          1
+        ],
+        [
+          2022,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/10/jordan-thompson-off-to-a-winning-start-at-sydney-tennis-classic",
+        "note": "Tennis Australia reports actual Q1 Jan 9 and Q final plus Main singles Jan 10, despite an earlier program describing qualifying Jan 9 only."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-10",
+        "status": "played",
+        "source_url": "https://www.tennis.com.au/fan-zone/news/2022/01/10/jordan-thompson-off-to-a-winning-start-at-sydney-tennis-classic",
+        "observed_iso_week": [
+          2022,
+          2
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://www.tennis.com.au/nsw/news/2021/12/29/nick-kyrgios-receives-sydney-tennis-classic-wildcard",
+        "note": "Advance program lists qualifying January 9; actual local federation reports establish men's Q play on January 10 as well."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_cordoba",
+      "series_id": "cordoba",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-31",
+      "main_end_date": "2022-02-06",
+      "main_year_weeks": [
+        [
+          2022,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-29",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-cordoba-2022/"
+        },
+        {
+          "date": "2022-01-30",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-cordoba-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          4
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-cordoba-2022/",
+        "note": "Eight scored Q1 Jan 29 and four Q finals Jan 30; Main starts Jan 31."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-31",
+      "main_end_date": "2022-02-06",
+      "main_year_weeks": [
+        [
+          2022,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-30",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/pune/2022/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2022-01-31",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/pune/2022/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          4
+        ],
+        [
+          2022,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/pune/2022/atp-men/?phase=qualification",
+        "note": "Dated men's Q1 Jan 30 and four Q finals Jan 31; scored Main singles also Jan 31. Pune host, not Hong Kong."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-31",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/pune/2022/atp-men/",
+        "observed_iso_week": [
+          2022,
+          5
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Pune, India",
+        "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024",
+        "host_source_url": "https://www.tennisexplorer.com/pune/2022/atp-men/?phase=qualification",
+        "note": "ATP confirms Pune event relocation to Hong Kong in 2024; preserve canonical Series identity."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2022-01-31",
+      "main_end_date": "2022-02-06",
+      "main_year_weeks": [
+        [
+          2022,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-01-30",
+          "status": "played",
+          "source_url": "https://novy.tenisportal.cz/montpellier/2022/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2022-01-31",
+          "status": "played",
+          "source_url": "https://novy.tenisportal.cz/montpellier/2022/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          4
+        ],
+        [
+          2022,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://novy.tenisportal.cz/montpellier/2022/atp-muzi/?phase=qualification",
+        "note": "Dated Q1 Jan 30 and four scored Q finals Jan 31, alongside scored Main singles."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2022-01-31",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/montpellier/2022/atp-men/",
+        "observed_iso_week": [
+          2022,
+          5
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2022-02-07",
+      "main_end_date": "2022-02-13",
+      "main_year_weeks": [
+        [
+          2022,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-02-05",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2022/"
+        },
+        {
+          "date": "2022-02-06",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2022/",
+        "note": "Eight Q1 results Feb 5 including one retirement with played score, four scored Q finals Feb 6; Main begins Feb 7."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    }
+  ]
+}

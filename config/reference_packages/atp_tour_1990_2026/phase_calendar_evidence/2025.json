@@ -2075,6 +2075,342 @@
           42
         ]
       }
+    },
+    {
+      "occurrence_id": "atp_2025_stockholm",
+      "series_id": "stockholm",
+      "category_id": "atp_250",
+      "main_start_date": "2025-10-13",
+      "main_end_date": "2025-10-19",
+      "main_year_weeks": [
+        [
+          2025,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-11",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-10-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          41
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/stockholm/2025/atp-men/?phase=qualification",
+        "note": "Dated men's singles results show first-round matches on October 11 and four qualifying finals on October 12."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately before coordinated profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_basel",
+      "series_id": "basel",
+      "category_id": "atp_500",
+      "main_start_date": "2025-10-20",
+      "main_end_date": "2025-10-26",
+      "main_year_weeks": [
+        [
+          2025,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-10-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/basel/2025/atp-men/?phase=qualification",
+        "note": "Dated men's singles results show first-round matches on October 18 and four qualifying finals on October 19."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately before coordinated profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_500",
+      "main_start_date": "2025-10-20",
+      "main_end_date": "2025-10-26",
+      "main_year_weeks": [
+        [
+          2025,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/vienna/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-10-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/vienna/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/vienna/2025/atp-men/?phase=qualification",
+        "note": "Dated men's singles results show eight Q1 results and four Q finals on successive days. #1886 owns the separate profile work."
+      },
+      "follow_up": "Adjacent Q W42/Main W43. Coordinate with #1886; do not edit existing draft profile."
+    },
+    {
+      "occurrence_id": "atp_2025_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-10-27",
+      "main_end_date": "2025-11-02",
+      "main_year_weeks": [
+        [
+          2025,
+          44
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-25",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/25-10-2025"
+        },
+        {
+          "date": "2025-10-26",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/26-10-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          43
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/26-10-2025",
+        "note": "Official tournament announcement schedules October 25–26 qualifying; both dated result lists confirm actual play."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately before coordinated profile publication.",
+      "schedule_confirmation": {
+        "source_url": "https://www.rolexparismasters.com/en/news/article/2025-edition-wild-cards-vacherot-rinderknech-main-draw-qualifying-rounds-wheelchair",
+        "note": "Published October 25–26 schedule agrees with dated results."
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_belgrade",
+      "series_id": "belgrade",
+      "category_id": "atp_250",
+      "main_start_date": "2025-11-02",
+      "main_end_date": "2025-11-08",
+      "main_year_weeks": [
+        [
+          2025,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-11-01",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/athens/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/athens/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/athens-metz-2025-sunday",
+        "note": "The ATP 250 moved from Belgrade to Athens for 2025. Dated Athens Q results establish two rounds; ATP Sunday report confirms actual Main singles on November 2, in W44 before mapped W45."
+      },
+      "follow_up": "Review actual Q/Main overlap in W44 despite adjacent projected labels; verify geometry and points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2025-11-02",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/athens-metz-2025-sunday",
+        "observed_iso_week": [
+          2025,
+          44
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Athens, Greece",
+        "source_event_id": 5100,
+        "source_url": "https://www.atptour.com/en/news/belgrade-athens-announcement-august-2025",
+        "note": "ATP explicitly announced the 2025 relocation; preserve the canonical belgrade Series identity."
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_metz",
+      "series_id": "metz",
+      "category_id": "atp_250",
+      "main_start_date": "2025-11-02",
+      "main_end_date": "2025-11-08",
+      "main_year_weeks": [
+        [
+          2025,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-11-01",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/athens-metz-2025-sunday",
+        "note": "Dated Q results show Q1 November 1 and four finals November 2. ATP Sunday report and dated Main results confirm two actual Main singles on November 2, in W44 before mapped W45."
+      },
+      "follow_up": "Review actual Q/Main overlap in W44 despite adjacent projected labels; verify geometry and points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2025-11-02",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/athens-metz-2025-sunday",
+        "observed_iso_week": [
+          2025,
+          44
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2025-11-09",
+      "main_end_date": "2025-11-16",
+      "main_year_weeks": [
+        [
+          2025,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_race_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/en/rankings/rankings-faq",
+        "format_source_url": "https://www.atptour.com/en/news/nitto-atp-finals-2025-history-draw-schedule",
+        "note": "Eight-player field selected through season Race and applicable Grand Slam exception/alternate rules, not an on-site knockout qualification draw. Actual Sunday November 9 opening in W45 precedes majority mapped W46."
+      },
+      "main_opening_play_evidence": {
+        "date": "2025-11-09",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/09-11-2025",
+        "observed_iso_week": [
+          2025,
+          45
+        ]
+      },
+      "follow_up": "Preserve actual opening W45 and mapped W46; existing group profile does not establish automatic Race eligibility or sporting round allocation."
+    },
+    {
+      "occurrence_id": "atp_2025_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2025-12-17",
+      "main_end_date": "2025-12-21",
+      "main_year_weeks": [
+        [
+          2025,
+          51
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race",
+        "field_size": 8,
+        "source_url": "https://www.nextgenatpfinals.com/en/news/pif-live-race-to-jeddah-update-july-2025",
+        "format_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-2025-history-draw-schedule",
+        "note": "Eight-player 20-and-under Race-selected field, with withdrawals/replacements handled separately; no on-site knockout qualification draw. Do not infer all direct-acceptance/alternate policy details from this summary."
+      },
+      "main_opening_play_evidence": {
+        "date": "2025-12-17",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/basavareddy-prizmic-blockx-engel-next-gen-atp-finals-2025-wednesday",
+        "observed_iso_week": [
+          2025,
+          51
+        ]
+      },
+      "follow_up": "Existing group profile does not establish automatic age/Race eligibility or native execution; no qualifying phase should be fabricated."
     }
-  ]
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 57,
+    "recorded_occurrences": 57,
+    "occurrences_with_observed_qualifying_play": 55,
+    "no_onsite_qualifying_occurrences": 2,
+    "occurrences_with_scheduled_only_day_evidence": 1,
+    "qualifying_overlaps_projected_main_week": 20,
+    "observed_main_opening_outside_projection": 9,
+    "source_finish_outside_projection": 4,
+    "three_week_main_review_only": 2,
+    "qualifying_before_january_run_start": 2,
+    "sporting_schedule_installed": false,
+    "remaining_evidence_gaps": [
+      "Adelaide Jan 5: original order of play establishes scheduling, not unambiguous local match completion; verify a date-specific completed result source.",
+      "Individual event sources and actual round allocation require review before publishing sporting profiles.",
+      "No automatic Race or age eligibility, native execution, ranking closure, or Save/reopen certified by this evidence file."
+    ]
+  }
 }

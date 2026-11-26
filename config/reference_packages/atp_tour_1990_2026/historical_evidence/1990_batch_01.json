@@ -1421,7 +1421,10 @@
           "https://www.latimes.com/archives/la-xpm-1990-02-18-sp-1580-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html",
           "https://en.tennistemple.com/competitions/san-jose/1990/draw",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://sfpl.libanswers.com/faq/149559",
+          "https://sfpl.org/locations/main-library/general-collections/genealogy-resources-library",
+          "https://news.google.com/newspapers?dq=agassi+volvo+san+francisco&hl=en&id=afVKAAAAIBAJ&pg=7038,852805&sjid=DiMNAAAAIBAJ"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1646,6 +1649,39 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "targeted_archive_followup_2026_11_26": {
+          "status": "archive_routes_identified_actual_qualification_unresolved",
+          "reviewed_on": "2026-11-26",
+          "sources": [
+            {
+              "url": "https://sfpl.libanswers.com/faq/149559",
+              "date": null,
+              "page": null,
+              "claim": "San Francisco Chronicle microfilm 1869–2021 and NewsBank historical access; request sports pages February 3–6, 1990."
+            },
+            {
+              "url": "https://sfpl.org/locations/main-library/general-collections/genealogy-resources-library",
+              "date": null,
+              "page": null,
+              "claim": "San Francisco Examiner historical ProQuest archive covers 1990; target February 3–6 sports pages."
+            },
+            {
+              "url": "https://news.google.com/newspapers?dq=agassi+volvo+san+francisco&hl=en&id=afVKAAAAIBAJ&pg=7038,852805&sjid=DiMNAAAAIBAJ",
+              "date": "1990-02-06",
+              "page": null,
+              "claim": "Press-Courier archive issue identified; scan/article text not accessible in browser result, so not used as match evidence."
+            }
+          ],
+          "actual_qualification": null,
+          "full_qualifying_draw": null,
+          "reserved_main_places": null,
+          "search_window": {
+            "start": "1990-02-03",
+            "end": "1990-02-06",
+            "purpose": "archive search dates only, not qualifying dates"
+          },
+          "next_request": "Retrieve Chronicle and Examiner sports pages February 3–6; identify actual qualifying days, every round and number of guaranteed Main places."
         }
       }
     },
@@ -9246,7 +9282,11 @@
           "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
           "https://www.latimes.com/archives/la-xpm-1994-08-07-sp-24589-story.html",
           "https://www.itftennis.com/en/tournament/los-angeles/usa/1990/m-wsf-usa-05a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.lapl.org/digital-library/los-angeles-times-historical-archives-proquest",
+          "https://guides.library.ucla.edu/library-special-collections/ucla-university-history/admin-reference-daily-bruin",
+          "https://www.latimes.com/archives/la-xpm-1993-07-25-sp-16888-story.html",
+          "https://www.latimes.com/archives/la-xpm-1989-09-18-sp-41-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9420,6 +9460,70 @@
           "source_status": "announced_regular_q_window_not_actual_event_dates",
           "expected_structural_date_validator_result": "accepts_dated_https_announcement_shape_only",
           "scope": "The existing date validator checks date ordering, HTTPS and publication no later than start; passing does not prove actual play or grant profile authority. The July 20 report announces July 28–29, not the actual complete regular Q window. Do not populate qualification_date_evidence, Q graph or reserved places."
+        },
+        "targeted_archive_followup_2026_11_26": {
+          "status": "archive_routes_identified_actual_qualification_unresolved",
+          "reviewed_on": "2026-11-26",
+          "sources": [
+            {
+              "url": "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html",
+              "date": "1990-07-20",
+              "page": null,
+              "claim": "Prequalifying draw of 32 with 16 seeded places and 16 contested places; two advance to regular qualifying, not directly to Main. July 28–29 advertised regular qualifying."
+            },
+            {
+              "url": "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html",
+              "date": "1990-07-31",
+              "page": null,
+              "claim": "Reports opening Main play July 30; not full qualifying results."
+            },
+            {
+              "url": "https://www.lapl.org/digital-library/los-angeles-times-historical-archives-proquest",
+              "date": null,
+              "page": null,
+              "claim": "Historical LA Times database covers 1990; target full sports pages July 28–30."
+            },
+            {
+              "url": "https://guides.library.ucla.edu/library-special-collections/ucla-university-history/admin-reference-daily-bruin",
+              "date": null,
+              "page": null,
+              "claim": "Daily Bruin microfilm reel 130 covers June 25–August 30, 1990; target July 30 issue, contents not inspected."
+            },
+            {
+              "url": "https://www.latimes.com/archives/la-xpm-1993-07-25-sp-16888-story.html",
+              "date": "1993-07-25",
+              "page": null,
+              "claim": "Adjacent edition states four Main qualifying spots and one prequalifier berth; not transferable to 1990."
+            },
+            {
+              "url": "https://www.latimes.com/archives/la-xpm-1989-09-18-sp-41-story.html",
+              "date": "1989-09-18",
+              "page": null,
+              "claim": "Adjacent edition reports four qualifiers; not a 1990 reserved-place rule."
+            }
+          ],
+          "prequalifying": {
+            "reported_draw": 32,
+            "reported_advances_to_regular_qualification": 2,
+            "advances_to_main": null
+          },
+          "advertised_qualification": {
+            "start": "1990-07-28",
+            "end": "1990-07-29",
+            "calendar_year_week": 30,
+            "offset_1": {
+              "season_index": 0,
+              "season_week": 30
+            },
+            "offset_37": {
+              "season_index": 0,
+              "season_week": 46
+            }
+          },
+          "actual_qualification": null,
+          "full_qualifying_draw": null,
+          "reserved_main_places": null,
+          "next_request": "Inspect July 28–30 Los Angeles Times sports pages and July 30 Daily Bruin reel 130; separate preliminary and regular draws, obtain round dates and explicit advancement rule."
         }
       }
     },
@@ -10270,7 +10374,10 @@
           "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/",
           "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php",
           "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-1012-story.html",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://as13dev-new.library.yale.edu/2814.pdf",
+          "https://guides.library.yale.edu/newhaven/newspapers",
+          "https://nhfpl.org/how-do-i/research/local-history/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10595,6 +10702,61 @@
             "workbook_qualifier_award": null,
             "source_rule_certified": false
           }
+        },
+        "targeted_archive_followup_2026_11_26": {
+          "status": "archive_inventory_verified_contents_not_accessed",
+          "reviewed_on": "2026-11-26",
+          "sources": [
+            {
+              "url": "https://as13dev-new.library.yale.edu/2814.pdf",
+              "date": null,
+              "page": 38,
+              "claim": "Finding aid RU 507, accession 2006-A-242, box 11 folder 411 Volvo International press releases (1990). Screenshot PDF index 37 shows printed page 38; inventory only, not folder contents."
+            },
+            {
+              "url": "https://guides.library.yale.edu/newhaven/newspapers",
+              "date": null,
+              "page": null,
+              "claim": "New Haven Register Access World News from 1988, Hartford Courant historical database includes 1990."
+            },
+            {
+              "url": "https://nhfpl.org/how-do-i/research/local-history/",
+              "date": null,
+              "page": null,
+              "claim": "New Haven Register microfilm 1871–2019 and limited article lookup service; request sports pages August 11–13, 1990."
+            }
+          ],
+          "archive": {
+            "collection": "RU 507",
+            "accession": "2006-A-242",
+            "box": 11,
+            "folder": 411,
+            "title": "Volvo International press releases",
+            "year": 1990,
+            "adjacent_folders": "412–417, Volvo-Tennis Foundation of Connecticut",
+            "finding_aid_pdf_page_index": 37,
+            "printed_page": 38,
+            "folder_contents_accessed": false,
+            "pdf_sha256": null,
+            "pdf_hash_reason": "Rendered finding aid page consulted; no PDF bytes downloaded."
+          },
+          "advertised_qualification": {
+            "start": "1990-08-11",
+            "end": "1990-08-12",
+            "calendar_year_week": 32,
+            "offset_1": {
+              "season_index": 0,
+              "season_week": 32
+            },
+            "offset_37": {
+              "season_index": 0,
+              "season_week": 48
+            }
+          },
+          "actual_qualification": null,
+          "full_qualifying_draw": null,
+          "reserved_main_places": null,
+          "next_request": "Request folder 411 press releases, daily results and draws dated August 11–13; also check August 11–13 New Haven Register sports pages. Prior evidence of one three-win path is not a full draw."
         }
       }
     },
@@ -14884,7 +15046,10 @@
           "https://www.ultimatetennisstatistics.com/rankingsTable?date=26-11-1990&rankType=RANK",
           "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000",
           "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+          "https://www.latimes.com/archives/la-xpm-1990-11-17-sp-4014-story.html",
+          "https://www.washingtonpost.com/archive/sports/1990/11/15/its-edberg-over-agassi-in-thriller/bd794149-54b5-4c06-9dd7-c38df8d95157/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -15474,6 +15639,77 @@
           "champion_knockout_component": null,
           "source_rule_certified": false,
           "scope": "Matches prior secondary undefeated champion maximum, not independent confirmation of all phase awards. Workbook View does not supply a Finals phase matrix. No rule or profile approved."
+        },
+        "targeted_archive_followup_2026_11_26": {
+          "status": "owner_decision_required_no_publication",
+          "reviewed_on": "2026-11-26",
+          "primary_rule_verified": false,
+          "sources": [
+            {
+              "url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+              "date": null,
+              "page": null,
+              "claim": "Official retrospective: 1990 best 14 results over 52 weeks; not the edition-specific award schedule or Finals inclusion rule."
+            },
+            {
+              "url": "https://openerarankings.com/RankingRules1990",
+              "date": null,
+              "page": null,
+              "claim": "Secondary reconstruction, separates Finals awards from general ranking rules and describes special counting until Monday after last regular calendar tournament; neither historical inclusion nor expiry independently established by primary rule."
+            },
+            {
+              "url": "https://www.latimes.com/archives/la-xpm-1990-11-17-sp-4014-story.html",
+              "date": "1990-11-17",
+              "page": null,
+              "claim": "Contemporary AP account reports year-end number one clinched after group play; does not state award schedule."
+            },
+            {
+              "url": "https://www.washingtonpost.com/archive/sports/1990/11/15/its-edberg-over-agassi-in-thriller/bd794149-54b5-4c06-9dd7-c38df8d95157/",
+              "date": "1990-11-15",
+              "page": null,
+              "claim": "Contemporary report during group play still describes ranking race; not a numeric award table."
+            },
+            {
+              "url": "https://www.washingtonpost.com/archive/sports/1990/11/19/agassi-overwhelms-edberg-for-atp-title/9b9d3dd5-a4ba-4d46-bac3-6939b98640ee/",
+              "date": "1990-11-19",
+              "page": null,
+              "claim": "Retrospective match report describes clinching through reaching final, differing in timing from November 17 AP; cannot infer inclusion or point deltas from press accounts."
+            }
+          ],
+          "decision": {
+            "status": "pending_owner_approval",
+            "publication_allowed": false,
+            "proposed_label": "Squash adaptation based on secondary reconstruction; historical ATP rule not verified",
+            "played_group_win": 50,
+            "semifinal_win_increment": 100,
+            "final_win_increment": 150,
+            "champion_knockout_total": 250,
+            "finalist_knockout_total": 100,
+            "semifinal_loser_knockout_total": 0,
+            "maximum": 400,
+            "completed_15_match_award_sum": 950,
+            "workbook_maximum_only": 400,
+            "workbook_phase_breakdown": null,
+            "ranking_inclusion": "Separate owner/Work decision; proposed use of configured Run ranking, not a claim about historical Best 14 replacement, additional slot or expiry.",
+            "historical_best_14": "General ranking policy corroborated; no edition-specific inclusion proof.",
+            "historical_finals_inclusion_verified": false,
+            "rank_dependent_bonus": "not introduced",
+            "walkover_awards": "not inferred as played wins",
+            "next_primary_item": "1990 ATP Tour Player Guide or contemporary ATP ranking regulations: request exact Finals point table, Best 14 treatment and year-end inclusion/expiry clauses."
+          },
+          "actual_competition": {
+            "start": "1990-11-13",
+            "end": "1990-11-18",
+            "calendar_year_week": 46,
+            "offset_1": {
+              "season_index": 0,
+              "season_week": 46
+            },
+            "offset_37": {
+              "season_index": 1,
+              "season_week": 10
+            }
+          }
         }
       }
     }

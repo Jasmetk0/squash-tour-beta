@@ -458,7 +458,120 @@
       "qualifier_award": null,
       "bye_loss_rule": null,
       "primary_rule_page": null,
-      "coverage_note": "Only eight explicitly inspected occurrence mappings recorded in this pass. Main draw column B denotes reported active field in these rows, not necessarily bracket capacity. Column M W ATP is separate from column D W; do not treat M as base points or automatically infer an official bonus formula."
+      "coverage_note": "All 75 in-scope 1990 occurrences now mapped to 74 View knockout rows and one Week-by-week Finals maximum. Four Slam rows excluded (outside this package); no source-based rule approval. Stored candidate comparison limited to numeric arrays already recorded in this evidence batch; no new inferred bands.",
+      "season_crosscheck": {
+        "status": "all_occurrences_mapped_secondary_not_certified",
+        "mapped_occurrences": 75,
+        "knockout_rows": 74,
+        "finals_maximum_rows": 1,
+        "excluded_view_rows": [
+          2,
+          3,
+          4,
+          5
+        ],
+        "excluded_week_by_week_rows": [
+          7,
+          37,
+          43,
+          61
+        ],
+        "knockout_field_and_prize_agree_rows": 68,
+        "reported_field_disagreement_series": [
+          "kitzbuhel",
+          "schenectady_1994"
+        ],
+        "reported_prize_disagreement_series": [
+          "sofia",
+          "toronto_indoor_1990",
+          "moscow",
+          "wembley_1990"
+        ],
+        "main_stage_count_disagreement_series": [
+          "kitzbuhel"
+        ],
+        "stored_main_candidate_exact_match_series": [
+          "brisbane",
+          "wellington_1992",
+          "auckland",
+          "dallas",
+          "maceio_1992",
+          "rio",
+          "rotterdam",
+          "marrakech",
+          "estoril",
+          "orlando_1991",
+          "rio_carpet_1990",
+          "hong_kong",
+          "munich",
+          "singapore_march_1992",
+          "bologna_1998",
+          "florence_1994",
+          "queens_club",
+          "s_hertogenbosch",
+          "eastbourne",
+          "poertschach_2008",
+          "bastad",
+          "los_cabos",
+          "san_remo_1990",
+          "san_marino_2000",
+          "schenectady_1994",
+          "winston_salem",
+          "cologne_1992_clay",
+          "basel",
+          "brisbane_autumn_1992",
+          "athens_1994",
+          "tel_aviv_1996",
+          "montpellier",
+          "vienna",
+          "sao_paulo_1993",
+          "itaparica_1990",
+          "moscow"
+        ],
+        "stored_main_candidate_disagreement_series": [
+          "wembley_1990"
+        ],
+        "stored_main_candidate_not_compared_series": [
+          "sydney_2019",
+          "sofia",
+          "brussels_championship_1992",
+          "toronto_indoor_1990",
+          "philadelphia_1998",
+          "stuttgart_indoor_feb_1995",
+          "indian_wells",
+          "miami",
+          "barcelona",
+          "tokyo",
+          "seoul_1996",
+          "hong_kong_salem_2002",
+          "monte_carlo",
+          "madrid_clay_1994",
+          "birmingham_1994",
+          "hamburg",
+          "rome",
+          "umag",
+          "gstaad",
+          "newport",
+          "stuttgart",
+          "washington",
+          "belgrade_2012",
+          "canadian_open",
+          "kitzbuhel",
+          "cincinnati",
+          "prague_1999",
+          "atlanta",
+          "new_haven_1998",
+          "bordeaux_1995",
+          "palermo",
+          "sydney_indoor_1994",
+          "toulouse_2000",
+          "berlin_1991",
+          "tokyo_indoor_1995",
+          "stockholm",
+          "paris_masters"
+        ],
+        "scope": "Field/prize disagreements are reported source differences, not proof of correction. Compare base values only where a full numeric candidate was previously stored; remaining rows not counted as matches. Source rows explicitly mapped by historical host/edition, not Series ID text."
+      }
     }
   },
   "finals_alternate_window": {
@@ -583,6 +696,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 70,
+          "reported_name": "Adelaide",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B4",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -692,6 +840,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 79,
+          "reported_name": "Wellington",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B3",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -796,6 +979,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 72,
+          "reported_name": "Auckland",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B6",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -882,7 +1100,8 @@
           "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
           "https://en.wikipedia.org/wiki/1990_Holden_NSW_Open",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
-          "https://www.latimes.com/archives/la-xpm-1990-01-10-sp-418-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-01-10-sp-418-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "second_pass_review": {
           "status": "qualification_source_search_attempted_unresolved",
@@ -910,6 +1129,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 66,
+          "reported_name": "Sydney Outdoor",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 150000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B5",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 150000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1185,7 +1439,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1240,7 +1505,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Chevrolet_Classic_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990",
-          "https://www.itftennis.com/en/tournament/guaruja/bra/1990/m-wsf-bra-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/guaruja/bra/1990/m-wsf-bra-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1300,6 +1566,41 @@
           "surface": "outdoor hard",
           "grade_as_displayed": "3.5",
           "scope": "Corroborates historical city, original event window, surface and reported prize money. The reported $150000 financial commitment is separate and not certified ranking class; ITF grade is not ATP category. No original qualifying sheet obtained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 74,
+          "reported_name": "Guaruja",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B8",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1354,7 +1655,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Stella_Artois_Indoor_%E2%80%93_Singles",
           "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Stella_Artois_Italian_Indoors_1990",
-          "https://www.itftennis.com/en/tournament/milan/ita/1990/m-wsf-ita-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/milan/ita/1990/m-wsf-ita-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1405,6 +1707,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 30,
+          "reported_name": "Milan",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 450000,
+          "base_main_points": {
+            "champion": 133,
+            "finalist": 100,
+            "semifinal": 67,
+            "quarterfinal": 34,
+            "round_of_16": 17,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B9",
+          "week_by_week_champion_points": 133,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": false,
+            "prior_reported_prize_money_usd": 540000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "Workbook Milan prize USD450000 differs from existing USD540000 prize/USD600000 commitment; historical Milan host mapped without changing Series."
+          }
         }
       }
     },
@@ -1459,7 +1796,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships",
-          "https://www.itftennis.com/en/tournament/brussels/bel/1990/m-csd-bel-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/brussels/bel/1990/m-csd-bel-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
@@ -1507,6 +1845,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 24,
+          "reported_name": "Brussels",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 465000,
+          "base_main_points": {
+            "champion": 180,
+            "finalist": 135,
+            "semifinal": 90,
+            "quarterfinal": 45,
+            "round_of_16": 23,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B11",
+          "week_by_week_champion_points": 180,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 465000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1561,7 +1934,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_SkyDome_World_Tennis_Tournament_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/SkyDome_World_Tennis_Tournament_1990",
-          "https://www.itftennis.com/en/tournament/toronto-indoor/can/1990/m-csd-can-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/toronto-indoor/can/1990/m-csd-can-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 28,
         "qualification_entrants": null,
@@ -1601,6 +1975,42 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 10,
+          "reported_name": "Toronto Indoor",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 1050000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B12",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": false,
+            "prior_reported_prize_money_usd": 1005000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "Workbook USD1050000 differs from prior USD1005000; February Toronto distinct from July Canada."
+          }
         }
       }
     },
@@ -1654,7 +2064,8 @@
         "event_source": "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Ebel_U.S._Pro_Indoor_%E2%80%93_Singles",
-          "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990"
+          "https://de.wikipedia.org/wiki/U.S._Pro_Indoor_1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
@@ -1698,6 +2109,42 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 16,
+          "reported_name": "Philadelphia",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B14",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1837,7 +2284,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -1892,7 +2350,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Volvo_U.S._National_Indoor_%E2%80%93_Singles",
           "https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Volvo_U.S._National_Indoor_1990",
-          "https://www.itftennis.com/en/tournament/memphis/usa/1990/m-wsf-usa-02a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/memphis/usa/1990/m-wsf-usa-02a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 24,
         "qualification_entrants": null,
@@ -1935,6 +2394,42 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 62,
+          "reported_name": "Memphis",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 7,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B16",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "world_series_64_candidate_rows:250000",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2094,7 +2589,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 450000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_500k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2279,7 +2785,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 750000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2333,7 +2850,8 @@
         "event_source": "https://www.itftennis.com/en/tournament/casablanca/mar/1990/m-wsd-mar-01a-1990/draws-and-results/",
         "source_urls": [
           "https://en.tennistemple.com/competitions/marrakech/1990/draw",
-          "https://www.itftennis.com/en/tournament/casablanca/mar/1990/m-wsd-mar-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/casablanca/mar/1990/m-wsd-mar-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -2387,6 +2905,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 73,
+          "reported_name": "Casablanca",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B17",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2454,7 +3007,8 @@
           "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles",
           "https://www.world.tennis/en/tournament/lipton-key-biscayne/usa/1990/m-css-usa-02a-1990/draws-and-results/",
           "https://en.wikipedia.org/wiki/1990_Lipton_International_Players_Championships",
-          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles"
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Lipton_International_Players_Championships_%E2%80%93_Men%27s_singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -2555,6 +3109,43 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 7,
+          "reported_name": "Miami",
+          "reported_main_entrants": 96,
+          "reported_prize_money_usd": 1200000,
+          "base_main_points": {
+            "champion": 265,
+            "finalist": 199,
+            "semifinal": 133,
+            "quarterfinal": 67,
+            "round_of_16": 34,
+            "round_of_32": 17,
+            "round_of_64": 9,
+            "round_of_128": 1
+          },
+          "week_by_week_champion_cell": "B19",
+          "week_by_week_champion_points": 265,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 96,
+            "prior_main_bracket_slots": 128,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 1200000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2611,7 +3202,8 @@
           "https://de.wikipedia.org/wiki/Estoril_Open_1990",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Estoril_Open_%E2%80%93_Men%27s_singles",
           "https://hemeroteca-paginas.mundodeportivo.com/EMD01/HEM/1990/04/03/MD19900403-054.pdf",
-          "https://www.atptour.com/en/scores/results-archive?tournamentType=ch&year=1990"
+          "https://www.atptour.com/en/scores/results-archive?tournamentType=ch&year=1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -2696,6 +3288,41 @@
           "reported_start_date": "1990-03-26",
           "reported_end_date": "1990-04-08",
           "scope": "Separate ATP Challenger archive entry overlaps the men's ATP Tour event. Its dates are not the ATP Tour qualifying window. Keep Challenger outside scope and canonical W14 Main unchanged."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 44,
+          "reported_name": "Estoril",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B20",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2754,7 +3381,8 @@
           "https://richesmi.cah.ucf.edu/sanford_herald/files/original/373e30ee54823f3e3eaa12299355e541.pdf",
           "https://www.latimes.com/archives/la-xpm-1990-04-08-sp-1562-story.html",
           "https://www.stevegtennis.com/draw-results/atp/Orlando/1990",
-          "https://richesmi.cah.ucf.edu/sanford_herald/"
+          "https://richesmi.cah.ucf.edu/sanford_herald/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -2859,6 +3487,41 @@
             "1990-04-03"
           ],
           "scope": "University of Central Florida RICHES maintains the digitized local paper. 1990 collection lists 239 issues; the exact early-April issue search URLs were inaccessible and no Q sheet was found. Do not assume every date has a surviving issue."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 53,
+          "reported_name": "Orlando ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B22",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -2914,7 +3577,8 @@
           "https://en.wikipedia.org/wiki/1990_Banespa_Open_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/Banespa_Open_1990",
           "https://en.wikipedia.org/wiki/1990_Banespa_Open",
-          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles"
+          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -2978,6 +3642,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 54,
+          "reported_name": "Rio De Janeiro",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B21",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3273,7 +3972,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 375000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3327,7 +4037,8 @@
         "event_source": "https://de.wikipedia.org/wiki/ATP_Tour_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Suntory_Japan_Open_Tennis_Championships_%E2%80%93_Men%27s_singles",
-          "https://de.wikipedia.org/wiki/ATP_Tour_1990"
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3376,6 +4087,42 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 15,
+          "reported_name": "Tokyo Outdoor",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B24",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3447,7 +4194,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
-          "https://www.latimes.com/archives/la-xpm-1990-04-20-sp-1653-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-04-20-sp-1653-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3501,6 +4249,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 52,
+          "reported_name": "Nice",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B25",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3572,7 +4355,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
-          "https://www.itftennis.com/en/tournament/seoul/kor/1990/m-wsf-kor-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/seoul/kor/1990/m-wsf-kor-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3626,6 +4410,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 69,
+          "reported_name": "Seoul ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 140000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B26",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 140000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3696,7 +4515,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open"
+          "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3742,6 +4562,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 64,
+          "reported_name": "Hong Kong ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 185000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B28",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 185000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3812,7 +4667,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3861,6 +4717,42 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 21,
+          "reported_name": "Monte Carlo ",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 750000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B27",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 750000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -3931,7 +4823,8 @@
         "event_source": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -3976,6 +4869,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 35,
+          "reported_name": "Madrid",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 279000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B31",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 279000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4048,7 +4976,8 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_BMW_Open_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_BMW_Open",
-          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles"
+          "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4113,6 +5042,41 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 51,
+          "reported_name": "Munich",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B29",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4186,7 +5150,8 @@
           "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis",
           "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
           "https://eresources.nlb.gov.sg/newspapers/digitised/issue/straitstimes19900430-1",
-          "https://eresources.nlb.gov.sg/newspapers/digitised/article/straitstimes19900430-1.2.61.3"
+          "https://eresources.nlb.gov.sg/newspapers/digitised/article/straitstimes19900430-1.2.61.3",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4252,6 +5217,41 @@
           "end_date": "1990-05-06",
           "prize_money_usd": 225000,
           "scope": "Official event metadata; does not prove ranking class, Q phase or full financial commitment."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 58,
+          "reported_name": "Singapore",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B30",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4323,7 +5323,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships"
+          "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4379,7 +5380,42 @@
           "note": "32 Main entrants, eight seeds; seed 8 also labelled WC.",
           "observed_seeded_wild_cards": 1
         },
-        "observed_seeded_wild_card": true
+        "observed_seeded_wild_card": true,
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 63,
+          "reported_name": "Kiawah Island",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 197000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B33",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 197000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
+        }
       }
     },
     {
@@ -4450,7 +5486,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_ATP_German_Open"
+          "https://en.wikipedia.org/wiki/1990_ATP_German_Open",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4515,6 +5552,42 @@
           "source_url": "https://en.wikipedia.org/wiki/1990_ATP_German_Open_%E2%80%93_Singles",
           "scope": "56 Main / 64 slots / 8 BYEs; source states top-eight seed BYE rule but lists seeds 8 and 12 withdrawn and shows LL in a bye position; actual final seed assignment not certified.",
           "observed_lucky_loser_in_bye_position": true
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 19,
+          "reported_name": "Hamburg",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 750000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B32",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 750000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4585,7 +5658,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles"
+          "https://en.wikipedia.org/wiki/1990_Italian_Open_%E2%80%93_Men%27s_singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4636,6 +5710,42 @@
           "scope": "64 Main and 16 nominal seeds; first-round rows explicitly show Q, WC, LL and SE; do not infer their total counts or guaranteed allocations from partial review.",
           "observed_special_exempt_present": true,
           "observed_lucky_loser_present": true
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 9,
+          "reported_name": "Rome",
+          "reported_main_entrants": 64,
+          "reported_prize_money_usd": 1005000,
+          "base_main_points": {
+            "champion": 250,
+            "finalist": 188,
+            "semifinal": 125,
+            "quarterfinal": 63,
+            "round_of_16": 32,
+            "round_of_32": 16,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B34",
+          "week_by_week_champion_points": 250,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 64,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 1005000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4706,7 +5816,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4760,6 +5871,41 @@
           "reviewed_on": "2026-11-25",
           "scope": "Initial Main entrants counted once, seed and entry method independent; no Q feeder rule inferred.",
           "note": "Secondary draw explicitly reports 32 entrants, 8 seeds, 4Q and 3WC."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 68,
+          "reported_name": "Umag",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 147500,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B35",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 147500,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4831,7 +5977,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
-          "https://en.wikipedia.org/wiki/1990_Muratti-Time_Internazionali_di_Tennis"
+          "https://en.wikipedia.org/wiki/1990_Muratti-Time_Internazionali_di_Tennis",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -4885,6 +6032,41 @@
             "outcome": "secondary_main_draw_seed_list_available_no_q_sheet"
           },
           "remaining": "Eight seed ranks listed. Actual Q draw, dates, feeder rules, Q/WC count and primary point class remain unknown."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 42,
+          "reported_name": "Bologna",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B36",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -4956,7 +6138,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze"
+          "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5028,6 +6211,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Main entry labels confirmed in secondary draw; actual Q entrants, draw, dates, feeder rules and primary point class remain unknown."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 45,
+          "reported_name": "Florence ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B40",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5100,7 +6318,8 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2000",
           "https://www.tennis.esp.br/en/tournaments/queen-s-club?tour=ATP&year=1990",
-          "https://en.wikipedia.org/wiki/1990_Stella_Artois_Championships_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Stella_Artois_Championships_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5167,6 +6386,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "No original Q draw, dates, feeder rules or primary point class; 7 observed Q does not establish reserved allocation."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 27,
+          "reported_name": "Queen's",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 450000,
+          "base_main_points": {
+            "champion": 133,
+            "finalist": 100,
+            "semifinal": 67,
+            "quarterfinal": 34,
+            "round_of_16": 17,
+            "round_of_32": 9,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B39",
+          "week_by_week_champion_points": 133,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 450000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "world_series_64_candidate_rows:500000",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5238,7 +6493,8 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships"
+          "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5303,6 +6559,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Complete Q sheet and dates not found; modern Rosmalen schedule is not evidence for 1990."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 55,
+          "reported_name": "Rosmalen",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B38",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5373,7 +6664,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5443,6 +6735,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Main labels establish observed entry methods, not allocation or qualifying dates. Referenced World of Tennis 1991 pp. 114, 133 not obtained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 50,
+          "reported_name": "Manchester",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B41",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5514,7 +6841,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_IP_Cup",
-          "https://www.world.tennis/en/tournament/genoa/ita/1990/m-wsf-ita-04a-1990/draws-and-results/"
+          "https://www.world.tennis/en/tournament/genoa/ita/1990/m-wsf-ita-04a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5581,6 +6909,41 @@
             "outcome": "official_event_metadata_no_drawsheet"
           },
           "remaining": "ITF metadata confirms outdoor clay against annual grass; actual Main seeds, Q/WC labels, Q sheet, dates and points remain unknown."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 47,
+          "reported_name": "Genova",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B42",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5651,7 +7014,8 @@
         "event_source": "https://en.tennistemple.com/competitions/bastad/1990/draw",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.tennistemple.com/competitions/bastad/1990/draw"
+          "https://en.tennistemple.com/competitions/bastad/1990/draw",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5724,6 +7088,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "No actual Q graph or dates; absence of seed 5 not proof of substitution policy."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 41,
+          "reported_name": "Bastad",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B45",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5797,7 +7196,8 @@
           "https://en.tennistemple.com/competitions/gstaad/1990/draw",
           "https://www.itftennis.com/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=M&matchTypeCode=S&tournamentId=1010004773",
           "https://www.world.tennis/en/tournament/gstaad/sui/1990/m-wsf-sui-01a-1990/draws-and-results/",
-          "https://www.latimes.com/archives/la-xpm-1990-07-14-sp-71-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-07-14-sp-71-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -5871,6 +7271,41 @@
               "outcome": "inaccessible_candidate_url_not_a_verified_draw_link"
             }
           ]
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 36,
+          "reported_name": "Gstaad",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 275000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B44",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 275000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -5943,7 +7378,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.tennistemple.com/competitions/newport/1990",
           "https://en.tennistemple.com/competitions/newport/1990/draw",
-          "https://www.upi.com/Archives/1990/07/15/Aldrich-wins-Hall-of-Fame-tennis-tourney/3985648014400/"
+          "https://www.upi.com/Archives/1990/07/15/Aldrich-wins-Hall-of-Fame-tennis-tourney/3985648014400/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6003,6 +7439,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Actual Q dates, entrant graph, reserved wild cards and ranking class unknown; no inference from current tournament calendar."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 65,
+          "reported_name": "Newport",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 150000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B46",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 150000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -6075,7 +7546,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Mercedes_Cup_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Mercedes_Cup",
-          "https://en.tennistemple.com/competition/stuttgart-1990/2844/draw"
+          "https://en.tennistemple.com/competition/stuttgart-1990/2844/draw",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6151,6 +7623,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "No actual Q graph, phase dates or ranking class; modern ATP 250 label does not define 1990 Championship Series."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 17,
+          "reported_name": "Stuttgart Outdoor",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B47",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -6224,7 +7732,8 @@
           "https://hu.tennistemple.com/competitions/washington/1990/draw",
           "https://www.washingtonpost.com/archive/sports/1990/07/16/field-is-deep-they-have-come-to-sovran/90d9d9aa-7b80-459c-aa0c-f4fd51f53d90/",
           "https://www.washingtonpost.com/archive/sports/1990/07/15/at-crossroads-in-search-of-open-territory/7930a323-3a78-4c2c-8b8e-44c9baf36e19/",
-          "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6303,6 +7812,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Historical category and name confirmed by press; Q sheet and dates missing. $450k reported commitment has no exact secondary point row; no interpolation or automatic $550k substitution."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 25,
+          "reported_name": "Washington",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 420000,
+          "base_main_points": {
+            "champion": 180,
+            "finalist": 135,
+            "semifinal": 90,
+            "quarterfinal": 45,
+            "round_of_16": 23,
+            "round_of_32": 12,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B48",
+          "week_by_week_champion_points": 180,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 420000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -6374,7 +7919,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Dutch_Open_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_Dutch_Open_%28tennis%29"
+          "https://en.wikipedia.org/wiki/1990_Dutch_Open_%28tennis%29",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6428,6 +7974,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Actual qualifying entrants, phase dates and financial commitment missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 61,
+          "reported_name": "Hilversum",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 215000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B50",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 215000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -6499,7 +8080,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
-          "https://www.itftennis.com/en/tournament/canadian-open/can/1990/m-css-can-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/canadian-open/can/1990/m-css-can-01a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6581,6 +8163,42 @@
               "outcome": "redirect_unavailable"
             }
           ]
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 11,
+          "reported_name": "Canada",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 930000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B49",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 930000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -6653,7 +8271,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://goatstats.tennis/tournament/1990-319",
           "https://www.generaliopen.com/de/Sieger/",
-          "https://www.stevegtennis.com/draw-results/atp/Kitzbuhel/1990"
+          "https://www.stevegtennis.com/draw-results/atp/Kitzbuhel/1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6705,6 +8324,41 @@
             "outcome": "secondary_match_count_available_no_q_sheet"
           },
           "remaining": "Source states 47 recorded matches, 64-slot draw; no complete seed/BYE placement, Q/WC counts, Q sheet, dates or financial commitment."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 32,
+          "reported_name": "Kitzbuhel",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 337500,
+          "base_main_points": {
+            "champion": 115,
+            "finalist": 87,
+            "semifinal": 58,
+            "quarterfinal": 29,
+            "round_of_16": 15,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B51",
+          "week_by_week_champion_points": 115,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": false,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 337500,
+            "main_stage_count_matches_working_bracket": false,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "Workbook 32 conflicts with working 48 and secondary 47 Main matches; do not install its six-stage table into 64-slot geometry."
+          }
         }
       }
     },
@@ -6938,7 +8592,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7011,7 +8676,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Sanremo_Open_%E2%80%93_Singles",
           "https://kiwix.drnathanhutchins.com/content/wikipedia_en_all_maxi_2026-02/1990_Sanremo_Open_%E2%80%93_Singles",
-          "https://it.wikipedia.org/wiki/Sanremo_Open_1990_-_Singolare"
+          "https://it.wikipedia.org/wiki/Sanremo_Open_1990_-_Singolare",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7074,6 +8740,41 @@
           "reviewed_on": "2026-11-25",
           "scope": "Count initial Main entrants once, including seed BYE positions; not reserved policy.",
           "note": "Prior Main draw summary corroborated by indexed mirror; full mirror not accessed in this pass."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 57,
+          "reported_name": "San Remo",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B52",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7144,7 +8845,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7224,6 +8926,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Full Main transcription inspected. Original Q sheet, dates and financial commitment still missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 8,
+          "reported_name": "Cincinnati",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 1020000,
+          "base_main_points": {
+            "champion": 250,
+            "finalist": 188,
+            "semifinal": 125,
+            "quarterfinal": 63,
+            "round_of_16": 32,
+            "round_of_32": 16,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B54",
+          "week_by_week_champion_points": 250,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 1020000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7297,7 +9035,8 @@
           "https://www.ultimatetennisstatistics.com/tournamentEvent?tournamentEventId=2016",
           "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/",
           "https://tennis.esp.br/en/tournaments/prague?tour=ATP&year=1990",
-          "https://web.kurzy.cz/wiki/Czechoslovak_Open_1990"
+          "https://web.kurzy.cz/wiki/Czechoslovak_Open_1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7348,6 +9087,41 @@
             "outcome": "indexed_event_dates_drawsheet_unavailable_redirect_failed"
           },
           "remaining": "ITF index shows dates/country but drawsheet unavailable; no verified seeds, Q/WC, financial commitment or actual Q dates."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 67,
+          "reported_name": "Prague",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 148400,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B55",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 148400,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7420,7 +9194,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_GTE_U.S._Men%27s_Hard_Court_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_GTE_U.S._Men%27s_Hard_Court_Championships",
-          "https://www.latimes.com/archives/la-xpm-1990-08-13-sp-684-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-08-13-sp-684-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7503,6 +9278,42 @@
             "outcome": "contemporary_main_entry_and_bye_evidence_no_q_sheet"
           },
           "remaining": "No qualifying draw or actual dates; actual WC grants now independently confirmed, reserved policy remains unknown."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 13,
+          "reported_name": "Indianapolis ",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B56",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7882,7 +9693,18 @@
           "qualifier_award": null,
           "qualifying_loss_points": null,
           "source_rule_certified": false,
-          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 56,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 825000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -7955,7 +9777,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://www.itftennis.com/en/tournament/san-marino/smr/1990/m-wsf-smr-01a-1990/draws-and-results/",
           "https://sanmarinotennisopen.com/albo-d-oro/",
-          "https://sanmarinotennisopen.com/tabelloni/"
+          "https://sanmarinotennisopen.com/tabelloni/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8009,6 +9832,41 @@
             "outcome": "indexed_event_dates_drawsheet_unavailable_redirect_failed"
           },
           "remaining": "Organizer roll of honour confirms 1990 occurrence; current tabelloni page does not supply 1990 Q sheets. Seeds, entry labels, dates and class still missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 75,
+          "reported_name": "San Marino ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B60",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8080,7 +9938,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_OTB_International_Open",
-          "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles"
+          "https://en.wikipedia.org/wiki/1990_OTB_International_Open_%E2%80%93_Men%27s_singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8156,6 +10015,41 @@
             "outcome": "prior_secondary_main_evidence_retained"
           },
           "remaining": "Existing second-pass correction retained; men's 28/32 with four BYEs, 4Q/3WC/1LL distinct from combined event. No original Q sheet or actual dates obtained in this pass."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 77,
+          "reported_name": "Schenectady",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B59",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": false,
+            "prior_main_entrants": 28,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "Workbook 32 matches annual capacity rather than event-specific men's 28; preserve 4 BYEs and unresolved field interpretation."
+          }
         }
       }
     },
@@ -8227,7 +10121,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Norstar_Bank_Hamlet_Challenge_Cup_%E2%80%93_Singles",
-          "https://olps.co.za/kiwix/content/wikipedia_en_all_maxi_2024-01/A/1990_Norstar_Bank_Hamlet_Challenge_Cup"
+          "https://olps.co.za/kiwix/content/wikipedia_en_all_maxi_2024-01/A/1990_Norstar_Bank_Hamlet_Challenge_Cup",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8294,6 +10189,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Actual Q graph/dates and point class unknown; cited World of Tennis 1991 pp. 115, 134 not obtained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 60,
+          "reported_name": "Long Island",
+          "reported_main_entrants": 28,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B58",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 28,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8365,7 +10295,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot_%E2%80%93_Singles",
-          "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot"
+          "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8424,6 +10355,41 @@
             "outcome": "secondary_main_draw_summary_available_no_q_sheet"
           },
           "remaining": "Actual Q participants, dates and financial commitment missing. Annual 28 conflict retained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 37,
+          "reported_name": "Bordeaux",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 270000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B62",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 270000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8495,7 +10461,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Geneva_Open_%E2%80%93_Singles",
-          "https://www.latimes.com/archives/la-xpm-1990-09-11-sp-435-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-09-11-sp-435-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8568,6 +10535,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Source cites World of Tennis 1991 pp.115,135; original yearbook and Q draw not obtained. Do not identify with modern Geneva licence."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 46,
+          "reported_name": "Geneva",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B63",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8638,7 +10640,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8706,6 +10709,41 @@
             "outcome": "secondary_main_draw_summary_available_no_q_sheet"
           },
           "remaining": "Original Q graph, dates and exact ranking class not obtained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 28,
+          "reported_name": "Basel",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 450000,
+          "base_main_points": {
+            "champion": 133,
+            "finalist": 100,
+            "semifinal": 67,
+            "quarterfinal": 34,
+            "round_of_16": 17,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B65",
+          "week_by_week_champion_points": 133,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 450000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_500k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8778,7 +10816,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://www.ultimatetennisstatistics.com/tournamentEvent?extId=326&name=Brisbane&season=1990",
           "https://en.wikipedia.org/wiki/1990_Queensland_Open",
-          "https://www.upi.com/amp/Archives/1990/09/30/Gilbert-wins-Queensland-open/6817654667200/"
+          "https://www.upi.com/amp/Archives/1990/09/30/Gilbert-wins-Queensland-open/6817654667200/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8851,6 +10890,41 @@
             "outcome": "secondary_main_draw_available_prior_counts_retained"
           },
           "remaining": "Prior rain-delay and conflicting purse report retained; UPI link now inaccessible. No actual Q graph/dates or financial classification."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 43,
+          "reported_name": "Brisbane",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B66",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -8921,7 +10995,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8980,6 +11055,41 @@
             "outcome": "secondary_main_draw_summary_available_no_q_sheet"
           },
           "remaining": "Original Q graph, dates and financial commitment missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 38,
+          "reported_name": "Palermo",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 270000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B64",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 270000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9052,7 +11162,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Athens_Open_%E2%80%93_Singles",
           "https://www.itftennis.com/en/tournament/athens/gre/1990/m-wsd-gre-01a-1990/draws-and-results/",
-          "https://tennis-db.com/tournaments/sackmann_atp%3Ab66aa1333c5a842d4c8ce98b5f629667833cabee1212556349c8c46af825d81e/athens"
+          "https://tennis-db.com/tournaments/sackmann_atp%3Ab66aa1333c5a842d4c8ce98b5f629667833cabee1212556349c8c46af825d81e/athens",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9122,6 +11233,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Three observed Q and one LL cannot establish number of reserved Q places. World of Tennis 1991 pp.115,136 referenced but not inspected."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 71,
+          "reported_name": "Athens",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B68",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9195,7 +11341,8 @@
           "https://library.futurelabz.dev/content/wikipedia_en_all_maxi_2026-02/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
           "https://www.latimes.com/archives/la-xpm-1990-10-02-sp-1894-story.html",
           "https://en.wikipedia.org/wiki/1990_Australian_Indoor_Championships_%E2%80%93_Singles",
-          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2029"
+          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2029",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9283,6 +11430,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "All sixteen seed BYEs explicit; UTS indexed KO48/48 corroborates active field. Original Q graph, dates and exact ranking class missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 22,
+          "reported_name": "Sydney Indoor",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 750000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B69",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 750000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9353,7 +11536,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9407,6 +11591,41 @@
         "main_entry_label_partial_evidence": {
           "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles",
           "scope": "Main draw transcription omits entry-method labels; unknown is not zero."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 40,
+          "reported_name": "Toulouse",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 260000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B67",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 260000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9479,7 +11698,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://stats.tennismylife.org/tournaments/ostrava/1990",
           "https://www.world.tennis/en/tournament/berlin/ger/1990/m-wsd-ger-01a-1990/draws-and-results/",
-          "https://www.stevegtennis.com/draw-results/atp/Berlin/1990"
+          "https://www.stevegtennis.com/draw-results/atp/Berlin/1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9537,6 +11757,41 @@
             "outcome": "official_event_metadata_no_drawsheet"
           },
           "remaining": "SteveGtennis full draw returned 403; seed/Q/WC counts, Q graph, dates, financial commitment not established."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 39,
+          "reported_name": "Berlin",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 260000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B72",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 260000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9610,7 +11865,8 @@
           "https://en.wikipedia.org/wiki/1990_Riklis_Classic_%E2%80%93_Singles",
           "https://www.itftennis.com/en/tournament/tel-aviv/isr/1990/m-wsd-isr-01a-1990/draws-and-results/",
           "https://tennis.esp.br/torneios/tel-aviv?ano=1990&circuito=ATP",
-          "https://www.washingtonpost.com/archive/sports/1990/10/09/tennis/e42e1321-4a58-4361-a5d5-3bab46fbfa38/"
+          "https://www.washingtonpost.com/archive/sports/1990/10/09/tennis/e42e1321-4a58-4361-a5d5-3bab46fbfa38/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9683,6 +11939,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Nominal 8 seeds, actual seed 7 absent; do not infer which withdrawal the LL replaced. Original Q graph, dates and ranking class unresolved."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 78,
+          "reported_name": "Tel Aviv ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B71",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9756,7 +12047,8 @@
           "https://www.latimes.com/archives/la-xpm-1990-10-08-sp-1755-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-10-11-sp-3215-story.html",
           "https://en.wikipedia.org/wiki/1990_Tokyo_Indoor_%E2%80%93_Singles",
-          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2033"
+          "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2033",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9844,6 +12136,42 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "UTS indexed KO48/48 corroborates field. Original Q graph/dates and ranking class missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 23,
+          "reported_name": "Tokyo Indoor",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 750000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B70",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 750000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -9914,7 +12242,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Lyon_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Lyon_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Grand_Prix_de_Tennis_de_Lyon_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9985,6 +12314,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Original Q graph/dates, exact ranking class missing. Canonical/alternate date distinction retained."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 29,
+          "reported_name": "Lyon",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 450000,
+          "base_main_points": {
+            "champion": 133,
+            "finalist": 100,
+            "semifinal": 67,
+            "quarterfinal": 34,
+            "round_of_16": 17,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B74",
+          "week_by_week_champion_points": 133,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 450000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_500k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10055,7 +12419,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_CA-TennisTrophy_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_CA-TennisTrophy_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_CA-TennisTrophy_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10128,6 +12493,41 @@
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
           "remaining": "Original Q graph/dates and ranking class missing."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 59,
+          "reported_name": "Vienna ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B73",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10199,7 +12599,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Philips_Open_S%C3%A3o_Paulo",
-          "https://www.stevegtennis.com/draw-results/atp/Sao%20Paulo/1990"
+          "https://www.stevegtennis.com/draw-results/atp/Sao%20Paulo/1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10268,6 +12669,41 @@
             "outcome": "secondary_event_summary_available_no_drawsheet"
           },
           "remaining": "SteveGtennis returned 403; nominal seed count, exact Q/WC/LL totals, Q graph/dates and ranking class unknown. Similarly named Nice event must not supply labels."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 76,
+          "reported_name": "Sao Paulo",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 125000,
+          "base_main_points": {
+            "champion": 90,
+            "finalist": 68,
+            "semifinal": 45,
+            "quarterfinal": 23,
+            "round_of_16": 12,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B76",
+          "week_by_week_champion_points": 90,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 125000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_150k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10341,7 +12777,8 @@
           "https://en.wikipedia.org/wiki/1990_Stockholm_Open_%E2%80%93_Singles",
           "https://www.stockholmopen.se/en/tournament/draw-archive",
           "https://en.wikipedia.org/wiki/1990_Stockholm_Open",
-          "https://www.atptour.com/en/scores/archive/stockholm/429/1990/draws?matchtype=singles"
+          "https://www.atptour.com/en/scores/archive/stockholm/429/1990/draws?matchtype=singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10432,6 +12869,42 @@
             "outcome": "secondary_main_draw_read_official_atp_link_http_403"
           },
           "remaining": "Organizer archive lists historical draw; linked ATP page blocked. Original Q sheet, dates and awards unverified."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 12,
+          "reported_name": "Stockholm",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 840000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B75",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 840000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10503,7 +12976,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Paris_Open_%E2%80%93_Singles",
-          "https://www.lequipe.fr/Tennis/open-de-paris/epreuve-simple-messieurs/annee-1990/page-tableau-tournoi"
+          "https://www.lequipe.fr/Tennis/open-de-paris/epreuve-simple-messieurs/annee-1990/page-tableau-tournoi",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10587,6 +13061,42 @@
             "outcome": "secondary_main_draw_read"
           },
           "remaining": "Original Q sheet, dates and exact financial class unverified."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 6,
+          "reported_name": "Paris",
+          "reported_main_entrants": 48,
+          "reported_prize_money_usd": 1650000,
+          "base_main_points": {
+            "champion": 300,
+            "finalist": 225,
+            "semifinal": 150,
+            "quarterfinal": 75,
+            "round_of_16": 38,
+            "round_of_32": 19,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B77",
+          "week_by_week_champion_points": 300,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 48,
+            "prior_main_bracket_slots": 64,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 1650000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
+            "stored_candidate_reference": null,
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10658,7 +13168,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://www.ultimatetennisstatistics.com/tournamentEvent?tournamentEventId=2039",
-          "https://newikis.com/en/1990_Citibank_Open"
+          "https://newikis.com/en/1990_Citibank_Open",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10731,6 +13242,41 @@
             "outcome": "secondary_main_draw_read"
           },
           "remaining": "Original Q sheet, dates and awards unverified."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 48,
+          "reported_name": "Itaparica ",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B80",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": true,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
         }
       }
     },
@@ -10801,7 +13347,8 @@
         "event_source": "https://en.wikipedia.org/wiki/1990_Kremlin_Cup_%E2%80%93_Singles",
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
-          "https://en.wikipedia.org/wiki/1990_Kremlin_Cup_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Kremlin_Cup_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10864,6 +13411,41 @@
             "outcome": "secondary_main_draw_summary_read"
           },
           "remaining": "Original Q sheet, dates and awards unverified."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 33,
+          "reported_name": "Moscow",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 297000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B79",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": false,
+            "prior_reported_prize_money_usd": 225000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "all_main_stage_values_agree",
+            "stored_candidate_reference": "base_points_250k_32_candidate",
+            "scope": "Workbook USD297000 differs from prior USD225000; both point tables can agree without certifying the financial class."
+          }
         }
       }
     },
@@ -10939,7 +13521,8 @@
           "https://www.itftennis.com/en/tournament/wembley/gbr/1990/m-wsf-gbr-03a-1990/draws-and-results/",
           "https://www.latimes.com/archives/la-xpm-1990-08-15-sp-837-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-06-11-sp-314-story.html",
-          "https://en.wikipedia.org/wiki/1990_Diet_Pepsi_Championships_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Diet_Pepsi_Championships_%E2%80%93_Singles",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -11015,6 +13598,41 @@
             "outcome": "secondary_full_draw_read_with_internal_infobox_conflict"
           },
           "remaining": "Primary main/Q draw and licence continuity unverified; 32 remains working field."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 34,
+          "reported_name": "Wembley",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 297000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B78",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not approved squash policy. Week-by-week value is same workbook, not independent. Blank stages and unlisted Q awards are not zero.",
+          "comparison_to_prior_evidence": {
+            "reported_field_matches": true,
+            "prior_main_entrants": 32,
+            "prior_main_bracket_slots": 32,
+            "reported_prize_matches": false,
+            "prior_reported_prize_money_usd": 450000,
+            "main_stage_count_matches_working_bracket": true,
+            "stored_candidate_comparison_status": "main_stage_values_or_count_differ",
+            "stored_candidate_reference": "base_points_500k_32_candidate",
+            "scope": "Workbook prize USD297000 and Main points differ from existing USD450000 prize/USD500000 commitment candidate; prior expanded draw 32 retained. No nearest-band interpolation."
+          }
         }
       }
     },
@@ -11641,6 +14259,15 @@
             "selected_tests_passed": 127,
             "security_tests_passed": 24,
             "scope": "Exact previous HEAD backend PR critical log explicitly includes Frankfurt test-only Saved import/play/awards/Save/reopen. Separate World Package job skipped; backend log reports 24 additional checks passed. Both W52 CLI audits not evidenced; no publication or points certification."
+          },
+          "verified_ci_after_workbook_first_pass": {
+            "head": "a9154b049175967cfc2cceeecb9d7bc71c732c79",
+            "workflow_run_id": 45791705618,
+            "job_id": 139812225896,
+            "conclusion": "success",
+            "selected_tests_passed": 129,
+            "security_tests_passed": 24,
+            "scope": "Previous exact HEAD backend log includes test-only Frankfurt Saved execution. W52 CLI audits not evidenced."
           }
         },
         "targeted_source_followup_2026_11_26": {

@@ -2469,3 +2469,54 @@ def test_monte_carlo_header_draw_and_withdrawal_do_not_certify_q_policy(batch):
     assert item["conditional_geometry"]["qualifier_spots"] == 6  # source-specific hypothesis only
     assert row["profile_status"] == "not_in_published_sporting_source"
     assert row["plan_status"] == row["played_and_reopened_status"] == "not_tested"
+
+
+def test_all_wild_card_discrepancies_preserve_observations_not_entry_policy(batch):
+    audit = batch["wild_card_label_discrepancy_audit_2026_11_26"]
+    assert audit["status"] == "secondary_label_count_reconciliation_not_certified_entry_policy"
+    source = batch["secondary_match_dataset_reconciliation_2026_11_26"]
+    mismatches = {a["occurrence_id"]: a for a in source["rows"]
+                  if a["comparison"]["wc_labels"] == "differs"}
+    occurrences = {r["occurrence_id"]: r for r in batch["occurrences"]}
+    assert len(audit["rows"]) == len(mismatches) == 21
+    assert {r["occurrence_id"] for r in audit["rows"]} == set(mismatches)
+    counts = Counter()
+    unresolved = set()
+    for a in audit["rows"]:
+        key = a["occurrence_id"]
+        m = mismatches[key]
+        r = occurrences[key]
+        e = r["historical_evidence"]
+        assert a["prior_observed_wc"] == m["previous_evidence"]["reported_main_wild_cards"] == e["reported_main_wild_cards"]
+        assert a["dataset_observed_wc"] == m["entry_label_counts"].get("WC", 0)
+        assert a["prior_minus_dataset"] == a["prior_observed_wc"] - a["dataset_observed_wc"]
+        assert a["dataset_observed_seeded_wc_count"] == len(m["observed_seeded_wc_ranks"]) == 0
+        ranks = a["source_observed_seeded_wc_ranks"]
+        if ranks is not None:
+            assert len(ranks) == a["source_observed_seeded_wc_count"]
+            assert len(set(ranks)) == len(ranks)
+        if a["status"] == "count_difference_matches_seeded_wc_omission_hypothesis":
+            assert a["prior_minus_dataset"] == a["source_observed_seeded_wc_count"] > 0
+            counts[a["source_basis"]] += 1
+        else:
+            assert a["status"] == "unresolved_count_difference"
+            unresolved.add(r["series_id"])
+        if "source_q_by_half" in a:
+            assert sum(a["source_q_by_half"]) == e["reported_main_qualifiers"]
+            assert sum(a["source_wc_by_half"]) == e["reported_main_wild_cards"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert all(v is None for v in e["entry_policy"].values())
+        assert r["profile_status"] == "not_in_published_sporting_source"
+        assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
+    assert counts == {"existing_initial_main_draw_evidence": 15, "new_initial_main_draw_recount": 3}
+    assert unresolved == {"rio_carpet_1990", "hong_kong", "monte_carlo"}
+    assert audit["summary"] == {
+        "discrepant_rows": 21,
+        "count_difference_matches_seeded_wc_omission_hypothesis": 18,
+        "existing_evidence_count_matches": 15,
+        "new_draw_recount_count_matches": 3,
+        "unresolved": 3,
+    }
+    recounted = {occurrences[a["occurrence_id"]]["series_id"]: a["source_observed_seeded_wc_ranks"]
+                 for a in audit["rows"] if a["source_basis"] == "new_initial_main_draw_recount"}
+    assert recounted == {"umag": [5], "bordeaux_1995": [2], "basel": [2]}

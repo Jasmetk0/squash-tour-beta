@@ -2,8 +2,10 @@
 
 ## Kompletní průběžná specifikace a registr rozhodnutí
 
-**Verze dokumentu:** 89
-**Aktualizováno:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil hratelný víceletý ATP Run, export dat v první pre-alphě, odklady pokročilých funkcí a měření na slabším Windows PC. Aktuální podmínky vydání shrnují 31.3 a 31.41.
+**Verze dokumentu:** 90
+**Aktualizováno:** 26. 11. 2026 – vlastník v řídicím Work chatu rozšířil ATP Earth o mužskou dvouhru všech čtyř Grand Slamů od roku 1990 a jejich odehrání ve dvou W52 sezonách při akceptaci první pre-alphy. Viz 4.12 a 31.41.
+
+**Historická aktualizace v89:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil hratelný víceletý ATP Run, export dat v první pre-alphě, odklady pokročilých funkcí a měření na slabším Windows PC. Podmínky vydání shrnují 31.3 a 31.41.
 
 **Historická aktualizace v88:** 21. 11. 2026 – vlastník v řídicím Work chatu schválil 25 úplných referenčních FAX sezon jako povinnou dlouhodobou akceptaci první pre-alphy. Celý 50sezonní rozsah slouží k rozšířenému ověření. Podrobnosti v 31.3, 31.28 a 31.37.
 
@@ -873,6 +875,16 @@ Po importu dostane entita vlastní stabilní číselné ID uvnitř Runu a zdrojo
 **[ROZHODNUTO]** Při převzetí novější Package verze lze přijmout pouze bezpečně vybranou část změn. Engine znovu ověří všechny její závislosti. Potřebuje-li vybraná změna nevybraná data, preview ukáže vazbu a všechny proveditelné možnosti, například doplnit závislý objekt, ponechat platné `Unresolved`, zachovat starou vazbu nebo operaci zrušit. Nic se nesmí přidat ani změnit potichu.
 
 ---
+
+## 4.12 ATP Earth a Grand Slamy — rozhodnutí v90 (26. 11. 2026)
+
+**[ROZHODNUTO v90 – OBSAH]** Plný ATP Earth Run zahrnuje mužskou dvouhru ATP Tour a čtyř Grand Slamů: Australian Open, Roland Garros, Wimbledon a US Open. Historický rozsah Grand Slamů začíná rokem 1990 a pokračuje po doložené ročníky ve stejném časovém rozsahu jako ATP Earth. Zrušený ročník se eviduje jako nekonaný. Neúplný nebo budoucí ročník se označí podle stavu zdrojů. Challenger, ITF nižší okruh, olympijské a týmové soutěže, čtyřhra a samostatný Grand Slam Cup jsou mimo tuto skladbu.
+
+**[TECHNICKÝ NÁVRH v90]** Oddělený verzovaný zdroj Grand Slamů používá existující Category, Series a Calendar dokumenty a sportovní profily. Plná předvolba ATP Earth nabídne ATP Tour a Grand Slamy v témže průchodu zakládání Runu. Složený Setup může připnout listové dokumenty obou zdrojů přímo. Oddělená provenience, stabilní identity, explicitní import a zmrazení verzí se řídí 4.1, 4.7–4.9 a 4.11. Stávající ATP Tour zdroj pokrývá svůj dosavadní rozsah a jeho uložené kopie se novým zdrojem nemění.
+
+**[ROZHODNUTO v90 – HISTORICKÉ PODKLADY]** Podklady každého ročníku zachovávají původní data a průběh kvalifikace a hlavní soutěže, formát, velikost losů, nasazení, body a doložené změny pravidel. Zdrojový ročník, původní fáze a termíny se zachovávají vedle odvozené projekce do W52 a skutečného offsetu Runu. U překryvů, posunů, hranice sezony nebo nekompatibilního formátu musí být náhrada nebo blokace výslovně vidět v náhledu podle 6.8 a 6.11.
+
+**[ROZHODNUTO v90 – SIMULACE]** Grand Slamy používají společné squashové přihlášky, los, Match Engine, Simulation Slots, Official Ranking, historii a Save. Hráče, výsledky a kariéry vytváří engine. Dobová pravidla tenisu se vedou se zdrojem. Jakékoli sportovní pravidlo, které současný squashový model neumí vyjádřit, potřebuje výslovně doloženou a odsouhlasenou adaptaci. Zobrazení historického termínu ani import profilu samy o sobě nedokládají hratelnost.
 
 # 5. Země, populace a generování talentu
 
@@ -5879,7 +5891,7 @@ Pre-alpha zde znamená první funkční end-to-end verzi s akceptačními průch
 
 ## 31.3 Rozsah a definice hotové pre-alpha
 
-1. **PAQ-001 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA0][PRODUCT] – Hlavní end-to-end průchod?** Editovatelná kopie verzované FAX šablony v Adminu dokončí sezonu, save/load a Season Transition. Samostatný Run z ATP balíčků dokončí dvě celé 52týdenní sezony a otevře třetí podle 31.41. Nejméně jeden automatizovaný akceptační průchod dokončí prvních 25 referenčních FAX sezon podle 31.28. Chráněný Official Run se k testu neupravuje.
+1. **PAQ-001 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA0][PRODUCT] – Hlavní end-to-end průchod?** Editovatelná kopie verzované FAX šablony v Adminu dokončí sezonu, save/load a Season Transition. Samostatný Run z ATP Tour a Grand Slam balíčků dokončí dvě celé 52týdenní sezony a otevře třetí podle 31.41. Nejméně jeden automatizovaný akceptační průchod dokončí prvních 25 referenčních FAX sezon podle 31.28. Chráněný Official Run se k testu neupravuje.
 2. **PAQ-002 [RESOLVED v50][PA0][PRODUCT] – Které moduly musí být skutečně funkční a které smějí být pouze viditelný stub?** Odpověď: funkční musí být Runs/Packages, hráči/development/AI, čas/transitions, turnaje, entries, losy, Match Engine, minimální Match Reconstruction, rankingy a bezpečný save/load. Forecast/Future Locks/Markets, hluboký trénink, detailní Awards/Records/Rivalries a pokročilé edge cases pre-alpha neblokují. **Upřesnění v89:** základní historické přehledy, export dat a odklady vedlejších funkcí stanoví 31.41.
 3. **PAQ-003 [RESOLVED v50][PA0][PRODUCT] – Jaké operace musí umět částečně sestavený Run bez globálního Start gate?** Odpověď (v Adminu): druhý povinný akceptační průchod vytvoří prázdný Run, ručně přidá dva hráče a jeden zápas a bezpečně jej odsimuluje bez kalendáře; chybějící data smějí blokovat jen operaci, která je potřebuje.
 4. **PAQ-004 [RESOLVED v50; UPŘESNĚNO v72/v88/v89][PA0][PRODUCT] – Pre-alpha dokončena?** Povinné uživatelské průchody (FAX sezona/transition, dvě ATP sezony a prázdný Run) opakovaně projdou včetně save/load bez pádu, poškozené historie či ruční opravy databáze. Součástí vydání je nejméně jeden automatizovaný průchod 25 úplnými FAX sezonami podle 31.28 a ověření exportu podle 31.41. Správné operation-scoped zablokování nevalidní operace není selhání testu. Výsledek gate musí být doložen skutečným během.
@@ -6392,13 +6404,13 @@ Aktuální rozsah kariérních a sezonních přehledů pro první vydání urču
 
 **[STATUS]** Přesné prahy, kriteriální formule, katalogy a layout se doladí při testování. Základní potvrzené chování se znovu nerozhoduje po jednotlivých filtrech. Zachovává se všech 157 PAQ identit a historické registry; tato dílčí konsolidace neprohlašuje kompletní vyřešení širokých technických/kalibračních položek. Implementace/audit jsou výhradně v 35.42 a navazující evidenci.
 
-## 31.41 Rozsah první hratelné pre-alphy — rozhodnutí v89 (21. 11. 2026)
+## 31.41 Rozsah první hratelné pre-alphy — rozhodnutí v89 a upřesnění ATP ve v90
 
 **[ROZHODNUTO PRO PRVNÍ PRE-ALPHA]** Tato část určuje požadavky na první vydání v dotčených oblastech. Aktualizuje termíny dříve potvrzených funkcí v 31.25–31.28 a 31.39–31.40. Odložené funkce zůstávají součástí cílového produktu a existující implementace se může zachovat.
 
 ### Hratelné průchody
 
-- **ATP, Earth s 52 týdny.** V běžném průchodu v Adminu založit Run a při jeho vytváření vybrat a importovat kompatibilní ATP balíčky. V jednom Runu podle jejich skutečných dat odehrát dvě celé sezony, uzavřít oba ročníky a otevřít Week 1 třetí sezony. Po prvním přechodu provést explicitní Save, zavřít aplikaci, znovu ji spustit a pokračovat. Ověřit návaznost skutečného kalendáře, turnajů, rankingu a kariérní historie i zobrazení obou dokončených sezon. Příprava musí projít uživatelskou cestou s balíčky.
+- **ATP, Earth s 52 týdny [upřesněno v90].** V běžném průchodu v Adminu založit Run a při jeho vytváření vybrat a importovat kompatibilní ATP Tour i Grand Slam balíčky podle 4.12. Zvolit dva po sobě jdoucí doložené ročníky, ve kterých se konaly všechny čtyři Grand Slamy. V jednom Runu podle jejich skutečných dat odehrát dvě celé sezony včetně všech čtyř Grand Slamů v každé sezoně, uzavřít oba ročníky a otevřít Week 1 třetí sezony. U všech osmi Grand Slam Editions ověřit přihlášky, kvalifikaci, hlavní los, skutečně odehrané squashové zápasy, publikaci bodů a historii. Po prvním přechodu provést explicitní Save, zavřít aplikaci, znovu ji spustit a pokračovat. Ověřit návaznost kalendáře, turnajů, rankingu a kariérní historie i zobrazení obou dokončených sezon. Příprava musí projít uživatelskou cestou s balíčky.
 - **FAX, referenčních 61 týdnů.** Kopie verzované FAX šablony v Adminu zvládne celou sezonu, Save/reopen a Season Transition. Dlouhodobý automatizovaný průchod zahrnuje 25 celých sezon v měřítku podle 31.28. Prodloužené ověření může využít celý 50sezonní referenční rozsah.
 - **Prázdný Run.** V Adminu přidat dva hráče, bezpečně odsimulovat samostatný zápas bez kalendáře a ověřit uložení. Trvá determinismus, izolace Runu a branche, obnova uložených stavů, neměnnost historie a skutečná účinnost manuálního Save podle kapitol 7, 8 a 31.
 

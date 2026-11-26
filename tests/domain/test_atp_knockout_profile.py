@@ -13,11 +13,20 @@ def profile(series_id="rotterdam"):
     return parse_sporting_profile(entity.payload)
 
 
-@pytest.mark.parametrize(("series_id", "wild_cards"), [("rotterdam", 4), ("dallas", 3)])
-def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series_id, wild_cards):
+@pytest.mark.parametrize(("series_id", "wild_cards", "q_start", "q_end"), [
+    ("rotterdam", 4, "2025-02-01", "2025-02-02"),
+    ("dallas", 3, "2025-02-01", "2025-02-02"),
+    ("munich", 3, "2025-04-12", "2025-04-13"),
+    ("vienna", 3, "2025-10-18", "2025-10-19"),
+])
+def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series_id, wild_cards, q_start, q_end):
     p = profile(series_id)
     g = p.geometry()
     assert p.main_entrants == 32 and p.qualification_entrants == 16
+    assert p.qualifier_spots == 4 and p.seeds_count == 8 and p.byes == 0
+    assert p.main_points == {'champion': 500, 'finalist': 330, 'semifinal': 200,
+                             'quarterfinal': 100, 'round_of_16': 50, 'round_of_32': 0}
+    assert p.qualification_points == {'qualifier': 25, 'round_2_loss': 13, 'round_1_loss': 0}
     assert g['main']['direct_main_slots'] == 28 - wild_cards
     assert g['main']['wild_card_slots'] == wild_cards
     assert len(g['main']['nodes']) == 31
@@ -32,8 +41,8 @@ def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series
     assert p.qualification_points['round_2_loss'] == 13
     assert g['sporting_execution_ready'] is False
     assert p.qualification_date_status == 'verified'
-    assert p.qualification_date_evidence.start_date == '2025-02-01'
-    assert p.qualification_date_evidence.end_date == '2025-02-02'
+    assert p.qualification_date_evidence.start_date == q_start
+    assert p.qualification_date_evidence.end_date == q_end
     assert profile(series_id).geometry() == g
 
 

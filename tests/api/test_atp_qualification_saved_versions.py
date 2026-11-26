@@ -12,15 +12,16 @@ from tests.api.test_saved_revision_history_api import ApiServer, _request
 pytestmark = pytest.mark.pr_critical
 
 
-@pytest.mark.parametrize('verified',[False,True],ids=['historical-v1','sourced-v2'])
-def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(tmp_path,monkeypatch,verified):
+@pytest.mark.parametrize('version',[2,4,5],ids=['historical-v1','dallas-source-v4','new-source-v5'])
+def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(tmp_path,monkeypatch,version):
+    verified = version >= 4
     database=f"sqlite:///{tmp_path/'qualification.db'}"
     document=ATPHistoricalCalendarAdapter().build_document()
-    if not verified:
-        legacy=Path(__file__).parents[1]/'fixtures/atp/squash_sporting_profiles_source_v2.json'
+    if version < 5:
+        legacy=Path(__file__).parents[1]/f'fixtures/atp/squash_sporting_profiles_source_v{version}.json'
         (tmp_path/'squash_sporting_profiles_v1.json').write_bytes(legacy.read_bytes())
         old=build_atp_sporting_package(tmp_path)
-        document=document.model_copy(update={'source_version':3,'children':(*document.children[:-1],old)})
+        document=document.model_copy(update={'source_version':version+1,'children':(*document.children[:-1],old)})
     with ApiServer(database_url=database) as server:
         r,b=_make_run(server,name='Saved phase chronology',start=2025,count=2)
         root=server.base_url+f'/admin/runs/{r}/branches/{b}'
@@ -42,6 +43,8 @@ def test_saved_date_knowledge_survives_current_default_changes_and_cold_restart(
         code,catalog=_request('GET',root+'/calendar-tour/atp-source-editions');assert code==200,catalog
         entries = {entry["profile"]["occurrence_id"]: entry for entry in catalog["entries"]}
         assert ("atp_2025_dallas" in entries) is verified
+        assert ("atp_2025_munich" in entries) is (version == 5)
+        assert ("atp_2025_vienna" in entries) is (version == 5)
         if verified:
             dallas = entries["atp_2025_dallas"]
             assert dallas["qualification_calendar_projection"]["run_ordinals"] == [4]

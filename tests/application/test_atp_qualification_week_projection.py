@@ -35,7 +35,7 @@ def test_old_profile_and_package_fingerprints_remain_exact(tmp_path):
     assert parsed.qualification_date_status == 'not_verified'
     assert project_qualification_window(RunCalendar.earth_default(), parsed) is None
     # New server defaults cannot silently upgrade this old saved payload.
-    assert build_atp_sporting_package().source_version == 4
+    assert build_atp_sporting_package().source_version == 5
     assert parsed.schema_version.endswith('.v1') and 'qualification_date_evidence' not in entity.payload
 
 
@@ -105,3 +105,18 @@ def test_invalid_or_later_published_date_evidence_is_rejected(damage):
     raw['qualification_date_evidence'].update(damage)
     with pytest.raises(ValueError):
         ATPKnockoutProfile.model_validate_json(json.dumps(raw))
+
+
+def test_dallas_source_v4_payloads_and_entity_fingerprints_are_unchanged(tmp_path):
+    old_source = LEGACY.with_name("squash_sporting_profiles_source_v4.json")
+    (tmp_path / "squash_sporting_profiles_v1.json").write_bytes(old_source.read_bytes())
+    old = build_atp_sporting_package(tmp_path)
+    current = build_atp_sporting_package()
+    assert old.source_version == 4 and current.source_version == 5
+    assert old.source_fingerprint != current.source_fingerprint
+    old_by_id = {e.source_entity_id: e for e in old.entities}
+    current_by_id = {e.source_entity_id: e for e in current.entities}
+    assert set(current_by_id) - set(old_by_id) == {"atp_2025_munich", "atp_2025_vienna"}
+    for key, entity in old_by_id.items():
+        assert current_by_id[key].payload == entity.payload
+        assert current_by_id[key].fingerprint == entity.fingerprint

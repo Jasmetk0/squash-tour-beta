@@ -168,3 +168,39 @@ def test_part_integrity_and_closed_manifest(minimal):
     with pytest.raises(ArchiveError) as error:
         Archive(encode(value))
     assert error.value.code == "invalid_part_integrity"
+
+
+def test_custom_shared_lineage_decodes_each_saved_payload_once_for_dependencies(minimal, monkeypatch):
+    from beta_engine.domain import run_branch_archive
+
+    shared = minimal["branches"][0]
+    branches = [
+        {
+            **shared,
+            "branch_id": f"fork-{index}",
+            "display_name": f"Fork {index}",
+            "forked_from_branch_id": "branch",
+            "forked_from_saved_revision_id": "root",
+            "role": "selected",
+        }
+        for index in range(30)
+    ]
+    shared["role"] = "dependency"
+    minimal["branches"].extend(branches)
+    minimal["selected_branch_id"] = "fork-0"
+    minimal["custom_branch_ids"] = sorted(branch["branch_id"] for branch in branches)
+    minimal["branches"].sort(key=lambda branch: branch["branch_id"])
+
+    saved_payload = minimal["revisions"][0]["payload_json"]
+    decoded = 0
+
+    def counting_decode(raw):
+        nonlocal decoded
+        if raw == saved_payload:
+            decoded += 1
+        return decode(raw)
+
+    monkeypatch.setattr(run_branch_archive, "decode", counting_decode)
+    archive = Archive(pack(**minimal))
+    assert len(archive.branches) == 31 and len(archive.revisions) == 1
+    assert decoded == 2  # One authority check and one closure read.

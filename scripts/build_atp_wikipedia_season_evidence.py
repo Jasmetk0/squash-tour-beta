@@ -29,6 +29,9 @@ from pathlib import Path
 MONTHS = {m: i for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], 1)}
 TIER_RE = r"ATP (?:World )?Tour (?:250|500|Masters)|ATP (?:World Tour )?Finals|Next Generation"
+# Events outside the ATP Tour main-tour scope; also dropped later by matching to canonical Series.
+EXCLUDED_RE = (r"Australian Open|French Open|Wimbledon|US Open|Davis Cup|Hopman Cup|Laver Cup|Fed Cup|"
+               r"Olympic|World Team Cup|Grand Slam Cup|Challenger|Hopman|United Cup|ATP Cup")
 CATEGORY_WORDS = (
     ("ATP Tour Masters 1000", "atp_masters_1000"), ("ATP Tour 500", "atp_500"),
     ("ATP Tour 250", "atp_250"), ("Next Generation ATP Finals", "next_gen_finals"),
@@ -159,7 +162,9 @@ def build(year: int, raw_dir: Path) -> dict:
         label = html.unescape(re.sub(r"<[^>]+>", "", cells[0][2])).strip()
         first = cells[1][2] if re.match(r"^\d{1,2} [A-Z][a-z]{2}", label) and len(cells) > 1 else cells[0][2]
         text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", first))).strip()
-        if len(text) < 40 or not re.search(TIER_RE, text):
+        if len(text) < 40 or not (re.search(TIER_RE, text) or re.search(r"(Hard|Clay|Grass|Carpet)", text)):
+            continue
+        if re.search(EXCLUDED_RE, text) or re.search(EXCLUDED_RE, first[:600]):
             continue
         base = r'href="https://en\.wikipedia\.org/wiki/(' + str(year) + "_"
         main = re.search(base + r'[^"#]*?)"', first)

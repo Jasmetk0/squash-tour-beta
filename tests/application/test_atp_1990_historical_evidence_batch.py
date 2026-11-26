@@ -1564,3 +1564,108 @@ def test_full_season_workbook_ci_is_prior_head_not_publication_approval(batch):
     assert ci["selected_tests_passed"] == 131
     assert ci["security_tests_passed"] == 24
     assert research["saved_source_execution_probe"]["points_certified"] is False
+
+
+def test_remaining_1990_numeric_hypotheses_do_not_promote_financial_classes(batch):
+    rules = batch["historical_points_evidence"]
+    book = rules["edition_specific_workbook_crosscheck"]
+    stages = list(book["main_stage_columns"].values())
+    baseline = book["season_crosscheck"]
+    targeted = book["targeted_rule_followup"]
+    alternative = book["alternative_numeric_followup"]
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    earlier = set(baseline["stored_main_candidate_exact_match_series"] +
+                  baseline["stored_main_candidate_disagreement_series"] +
+                  targeted["additional_agree_series"] +
+                  targeted["additional_disagreement_series"])
+    remaining = set(rows) - {"atp_finals"} - earlier
+    assert len(earlier) == 50 and len(remaining) == 24
+    agree, disagree = set(), set()
+    for series, row in rows.items():
+        e = row["historical_evidence"]
+        workbook = e["edition_specific_base_points_crosscheck"]
+        candidate = workbook.get("alternative_numeric_rule_comparison")
+        if series not in remaining:
+            assert candidate is None
+            continue
+        assert candidate is not None
+        assert candidate["selection_basis"] == "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class"
+        assert candidate["prior_reported_financial_commitment_usd"] == e["reported_financial_commitment_usd"]
+        assert workbook["comparison_to_prior_evidence"]["stored_candidate_reference"] is None
+        assert candidate["source_rule_certified"] is False
+        assert candidate["workbook_qualifier_award"] is None
+        assert workbook["qualifying_loss_points"] is None
+        assert candidate["md"] == e["main_bracket_slots"]
+        assert candidate["source_tier"] == ("WORLD SERIES" if row["category_id"] == "atp_world_series" else "CHAMP SERIES")
+        ref = candidate["stored_table_reference"]
+        band, md = candidate["hypothetical_band_usd"], candidate["md"]
+        if ref.startswith("world_series_64_candidate_rows:"):
+            table = next(t for t in rules["world_series_64_candidate_rows"] if t["band_usd"] == band)
+            assert md == 64
+        elif ref.startswith("base_points_"):
+            assert ref == f"base_points_{band // 1000}k_32_candidate"
+            assert md == 32
+            table = {"main": [rules[ref][s] for s in stages[:6]], "qualifier": rules[ref]["qualifier"]}
+        else:
+            assert ref in ("champ_series_1990_targeted_secondary_rows", "additional_champ_series_1990_hypothesis_rows")
+            assert rules[ref]["iteration"] == 1990
+            table = next(t for t in rules[ref]["rows"] if (t["band_usd"], t["md"]) == (band, md))
+        assert len(table["main"]) == md.bit_length()
+        values = workbook["base_main_points"]
+        assert values["champion"] == table["main"][0]
+        expected = []
+        for i, stage in enumerate(stages[:max(len(values), len(table["main"]))]):
+            a = values.get(stage)
+            b = table["main"][i] if i < len(table["main"]) else None
+            if a != b:
+                expected.append({"stage": stage, "workbook": a, "rule_row": b})
+        assert candidate["differences"] == expected
+        assert candidate["secondary_qualifier_award_candidate"] == table["qualifier"]
+        if expected:
+            assert candidate["status"] == "main_stage_values_or_count_differ"
+            disagree.add(series)
+        else:
+            assert candidate["status"] == "all_main_stage_values_agree"
+            agree.add(series)
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    assert agree == set(alternative["agree_series"])
+    assert disagree == set(alternative["disagreement_series"]) == {
+        "kitzbuhel", "toronto_indoor_1990", "canadian_open", "stockholm", "paris_masters"}
+    assert (len(agree), len(disagree)) == (19, 5)
+    assert agree | disagree == remaining
+    assert alternative["compared_knockout_rows"] == 24
+    assert alternative["exact_label_comparison_count_unchanged"] == 50
+    assert alternative["remaining_without_exact_label_numeric_comparison"] == 24
+    assert alternative["total_knockout_numeric_comparison_coverage"] == 74
+    assert batch["summary"]["published_sporting_profiles"] == 0
+
+
+def test_additional_event_amounts_and_commitment_leads_preserve_evidence_boundaries(batch):
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    amounts = {"kitzbuhel": 375000, "washington": 550000, "stockholm": 1100000,
+               "paris_masters": 2000000, "moscow": 330000}
+    for series, amount in amounts.items():
+        e = rows[series]["historical_evidence"]
+        source = e["additional_contemporary_financial_crosscheck"]
+        assert source["reported_event_amount_usd"] == amount
+        assert source["source_url"] in e["source_urls"]
+        assert e["reported_prize_money"] != amount
+    for series, amount in {"canadian_open": 1200000, "cincinnati": 1300000,
+                           "stockholm": 1100000, "paris_masters": 2000000}.items():
+        e = rows[series]["historical_evidence"]
+        lead = e["additional_reported_commitment_lead"]
+        assert lead["reported_financial_commitment_usd"] == amount
+        assert lead["prior_reported_financial_commitment_usd"] == e["reported_financial_commitment_usd"] is None
+        assert lead["source_url"] in e["source_urls"]
+    m = rows["moscow"]["historical_evidence"]["additional_contemporary_financial_crosscheck"]
+    assert m["reported_singles_champion_prize_usd"] == 42800
+    assert m["reported_singles_finalist_prize_usd"] == 25200
+    k = rows["kitzbuhel"]["historical_evidence"]["edition_specific_base_points_crosscheck"]
+    assert k["alternative_numeric_rule_comparison"]["differences"] == [
+        {"stage": "round_of_32", "workbook": 1, "rule_row": 8},
+        {"stage": "round_of_64", "workbook": None, "rule_row": 1},
+    ]
+    ci = rows["atp_finals"]["historical_evidence"]["targeted_import_research"]["verified_ci_after_championship_followup"]
+    assert ci["head"] == "7aaa8e43f01c18ac9892a4d2f7c9810742090a67"
+    assert ci["selected_tests_passed"] == 134 and ci["security_tests_passed"] == 24
+    assert ci["conclusion"] == "success"

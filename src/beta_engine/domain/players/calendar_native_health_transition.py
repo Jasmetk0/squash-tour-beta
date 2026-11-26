@@ -22,6 +22,7 @@ from beta_engine.domain.players.calendar_lifecycle import (
 from beta_engine.domain.players.calendar_prospect_birth import (
     CalendarProspectBirthEvent, CalendarTourLifecycleIntakeState,
 )
+from beta_engine.domain.players.health import PlayerHealthProfile
 from beta_engine.domain.rankings.official import FrozenInput
 from beta_engine.domain.replay_scope import already_checked, identity_value, remember_checked
 from beta_engine.domain.run_packages import canonical_hash
@@ -99,6 +100,21 @@ NativeLifecycle = (
 )
 
 
+def _copy_health_profile(profile: PlayerHealthProfile) -> CalendarHealthProfile:
+    """Keep each carried profile detached, using strict validation on both paths."""
+    if (
+        type(profile) in (PlayerHealthProfile, CalendarHealthProfile)
+        and profile.records == ()
+        and profile.permanent_consequences == ()
+    ):
+        # With no records or consequences, the only input is the scalar player
+        # ID. Construct the same Calendar profile without encoding empty JSON.
+        return CalendarHealthProfile(
+            player_id=profile.player_id, records=(), permanent_consequences=(),
+        )
+    return CalendarHealthProfile.model_validate_json(profile.model_dump_json())
+
+
 def advance_native_health_week(
     *,
     previous_health: NativeHealthPredecessor,
@@ -162,10 +178,7 @@ def advance_native_health_week(
         or set(old_ids) & set(births)
     ):
         raise ValueError("Native v3 Health rejects missing or unsourced newcomers")
-    by_id = {
-        p.player_id: CalendarHealthProfile.model_validate_json(p.model_dump_json())
-        for p in previous_health.players
-    }
+    by_id = {p.player_id: _copy_health_profile(p) for p in previous_health.players}
     for pid in births:
         by_id[pid] = CalendarHealthProfile(player_id=pid)
     origin = (

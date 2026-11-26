@@ -597,6 +597,42 @@
         "combined_disagreement_rows": 12,
         "remaining_without_exact_label_numeric_comparison": 24,
         "scope": "Historical baseline season_crosscheck census retained. All 13 previously un-compared exact-label Championship candidates now compared; eleven R16 differences (workbook 30 vs rule row 29). Combined totals include the earlier 37 directly compared World Series rows; no assumed nearest bands or Q certification."
+      },
+      "alternative_numeric_followup": {
+        "status": "all_remaining_workbook_rows_compared_as_unverified_numeric_hypotheses",
+        "compared_knockout_rows": 24,
+        "agree_series": [
+          "sydney_2019",
+          "seoul_1996",
+          "hong_kong_salem_2002",
+          "birmingham_1994",
+          "umag",
+          "newport",
+          "prague_1999",
+          "madrid_clay_1994",
+          "gstaad",
+          "belgrade_2012",
+          "bordeaux_1995",
+          "palermo",
+          "toulouse_2000",
+          "berlin_1991",
+          "sofia",
+          "brussels_championship_1992",
+          "washington",
+          "rome",
+          "cincinnati"
+        ],
+        "disagreement_series": [
+          "kitzbuhel",
+          "toronto_indoor_1990",
+          "canadian_open",
+          "stockholm",
+          "paris_masters"
+        ],
+        "exact_label_comparison_count_unchanged": 50,
+        "remaining_without_exact_label_numeric_comparison": 24,
+        "total_knockout_numeric_comparison_coverage": 74,
+        "scope": "19 matches and five differences among the 24 alternative title/geometry-based hypotheses. They are deliberately excluded from the exact-label comparison's 38/12 census. All 74 knockout tables have some comparison, but 24 still lack an exact financial-class mapping."
       }
     },
     "champ_series_1990_targeted_secondary_rows": {
@@ -664,6 +700,57 @@
       ],
       "qualification_loss_points": null,
       "scope": "Only four directly relevant rows from explicitly headed Iteration 1 (1990) indexed text; direct page requests returned 503. Later iterations not used. MD and commitment mapping remain hypotheses; Q awards in this secondary source are not official or approved. Do not copy workbook R16=30 into the 1990 rule table R16=29 or infer which is correct."
+    },
+    "additional_champ_series_1990_hypothesis_rows": {
+      "source_url": "https://openerarankings.com/RankingRules1990",
+      "iteration": 1990,
+      "access_status": "indexed_rows_read_direct_page_503",
+      "status": "secondary_numeric_hypotheses_not_certified",
+      "rows": [
+        {
+          "band_usd": 500000,
+          "md": 32,
+          "main": [
+            180,
+            135,
+            90,
+            45,
+            23,
+            1
+          ],
+          "qualifier": 11
+        },
+        {
+          "band_usd": 1250000,
+          "md": 64,
+          "main": [
+            250,
+            188,
+            125,
+            63,
+            32,
+            16,
+            1
+          ],
+          "qualifier": 8
+        },
+        {
+          "band_usd": 2000000,
+          "md": 64,
+          "main": [
+            300,
+            225,
+            150,
+            75,
+            39,
+            19,
+            1
+          ],
+          "qualifier": 9
+        }
+      ],
+      "qualification_loss_points": null,
+      "scope": "Additional indexed rows from the same first-iteration block as the previously captured 1990 rules. Later iteration rows not used. Numeric pattern comparison only; not a new source of edition-specific financial classes."
     }
   },
   "finals_alternate_window": {
@@ -1255,6 +1342,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 175000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -1833,6 +1936,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "Workbook Milan prize USD450000 differs from existing USD540000 prize/USD600000 commitment; historical Milan host mapped without changing Series."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 500000,
+            "md": 32,
+            "stored_table_reference": "base_points_500k_32_candidate",
+            "prior_reported_financial_commitment_usd": 600000,
+            "secondary_qualifier_award_candidate": 8,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         },
         "workbook_conflict_followup": {
@@ -1982,6 +2101,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 500000,
+            "md": 32,
+            "stored_table_reference": "additional_champ_series_1990_hypothesis_rows",
+            "prior_reported_financial_commitment_usd": 600000,
+            "secondary_qualifier_award_candidate": 11,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -2113,6 +2248,28 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "Workbook USD1050000 differs from prior USD1005000; February Toronto distinct from July Canada."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "main_stage_values_or_count_differ",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 1000000,
+            "md": 64,
+            "stored_table_reference": "champ_series_1990_targeted_secondary_rows",
+            "prior_reported_financial_commitment_usd": 1200000,
+            "secondary_qualifier_award_candidate": 7,
+            "workbook_qualifier_award": null,
+            "differences": [
+              {
+                "stage": "round_of_16",
+                "workbook": 30,
+                "rule_row": 29
+              }
+            ],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         },
         "workbook_conflict_followup": {
@@ -4648,6 +4805,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 165000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -4800,6 +4973,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 210000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -5124,6 +5313,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": 310000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -5635,6 +5840,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 230000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -5983,6 +6204,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 1250000,
+            "md": 64,
+            "stored_table_reference": "additional_champ_series_1990_hypothesis_rows",
+            "prior_reported_financial_commitment_usd": 1280000,
+            "secondary_qualifier_award_candidate": 8,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -6143,6 +6380,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 175000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -7543,6 +7796,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": 300000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -7711,6 +7980,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": 175000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -7988,7 +8273,8 @@
           "https://www.washingtonpost.com/archive/sports/1990/07/16/field-is-deep-they-have-come-to-sovran/90d9d9aa-7b80-459c-aa0c-f4fd51f53d90/",
           "https://www.washingtonpost.com/archive/sports/1990/07/15/at-crossroads-in-search-of-open-territory/7930a323-3a78-4c2c-8b8e-44c9baf36e19/",
           "https://en.wikipedia.org/wiki/1990_Sovran_Bank_Classic_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.upi.com/Archives/1990/07/22/Agassi-wins-Sovran-Bank-Classic/7375648619200/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8102,7 +8388,30 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 500000,
+            "md": 64,
+            "stored_table_reference": "champ_series_1990_targeted_secondary_rows",
+            "prior_reported_financial_commitment_usd": 450000,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "additional_contemporary_financial_crosscheck": {
+          "source_url": "https://www.upi.com/Archives/1990/07/22/Agassi-wins-Sovran-Bank-Classic/7375648619200/",
+          "published_on": "1990-07-22",
+          "source_type": "contemporary_final_report_event_amount",
+          "reported_event_amount_usd": 550000,
+          "scope": "Confirms amount also reported by contemporary Washington Post. Prior prize 420000 and commitment 450000 not overwritten; no proof of 500000 rule band."
         }
       }
     },
@@ -8263,6 +8572,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -8336,7 +8661,8 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Canadian_Open_%E2%80%93_Men%27s_singles",
           "https://www.itftennis.com/en/tournament/canadian-open/can/1990/m-css-can-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Canadian_Open_1990_(Tennis)/Herren"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8453,7 +8779,36 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "main_stage_values_or_count_differ",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 1000000,
+            "md": 64,
+            "stored_table_reference": "champ_series_1990_targeted_secondary_rows",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 7,
+            "workbook_qualifier_award": null,
+            "differences": [
+              {
+                "stage": "round_of_16",
+                "workbook": 30,
+                "rule_row": 29
+              }
+            ],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "additional_reported_commitment_lead": {
+          "source_url": "https://de.wikipedia.org/wiki/Canadian_Open_1990_(Tennis)/Herren",
+          "source_type": "secondary_event_article",
+          "reported_financial_commitment_usd": 1200000,
+          "prior_reported_financial_commitment_usd": null,
+          "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
         }
       }
     },
@@ -8528,7 +8883,8 @@
           "https://www.generaliopen.com/de/Sieger/",
           "https://www.stevegtennis.com/draw-results/atp/Kitzbuhel/1990",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://en.wikipedia.org/wiki/1990_Philips_Austrian_Open_%E2%80%93_Singles"
+          "https://en.wikipedia.org/wiki/1990_Philips_Austrian_Open_%E2%80%93_Singles",
+          "https://taz.de/Tennis-mitten-im-Skiparadies/%211757375/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -8614,6 +8970,33 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "Workbook 32 conflicts with working 48 and secondary 47 Main matches; do not install its six-stage table into 64-slot geometry."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "main_stage_values_or_count_differ",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 375000,
+            "md": 64,
+            "stored_table_reference": "world_series_64_candidate_rows:375000",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 4,
+            "workbook_qualifier_award": null,
+            "differences": [
+              {
+                "stage": "round_of_32",
+                "workbook": 1,
+                "rule_row": 8
+              },
+              {
+                "stage": "round_of_64",
+                "workbook": null,
+                "rule_row": 1
+              }
+            ],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         },
         "workbook_conflict_followup": {
@@ -8688,6 +9071,13 @@
           "observed_special_exempts": 1,
           "reviewed_on": "2026-11-26",
           "scope": "All four initial-entry sections checked; no reserved policy or Q field inferred."
+        },
+        "additional_contemporary_financial_crosscheck": {
+          "source_url": "https://taz.de/Tennis-mitten-im-Skiparadies/%211757375/",
+          "published_on": "1990-08-03",
+          "source_type": "contemporary_article_event_amount",
+          "reported_event_amount_usd": 375000,
+          "scope": "Article identifies Head Cup sponsor anniversary and event amount; actual prize 337500 remains separate. Working 48/64 geometry retained."
         }
       }
     },
@@ -9175,7 +9565,8 @@
         "source_urls": [
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -9290,7 +9681,30 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 1250000,
+            "md": 64,
+            "stored_table_reference": "additional_champ_series_1990_hypothesis_rows",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 8,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "additional_reported_commitment_lead": {
+          "source_url": "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990",
+          "source_type": "secondary_event_article",
+          "reported_financial_commitment_usd": 1300000,
+          "prior_reported_financial_commitment_usd": null,
+          "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
         }
       }
     },
@@ -9450,6 +9864,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 150000,
+            "md": 32,
+            "stored_table_reference": "base_points_150k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -10768,6 +11198,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -11468,6 +11914,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -12021,6 +12483,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -12187,6 +12665,22 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "all_main_stage_values_agree",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "WORLD SERIES",
+            "hypothetical_band_usd": 250000,
+            "md": 32,
+            "stored_table_reference": "base_points_250k_32_candidate",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 6,
+            "workbook_qualifier_award": null,
+            "differences": [],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
         }
       }
@@ -13191,7 +13685,9 @@
           "https://www.stockholmopen.se/en/tournament/draw-archive",
           "https://en.wikipedia.org/wiki/1990_Stockholm_Open",
           "https://www.atptour.com/en/scores/archive/stockholm/429/1990/draws?matchtype=singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.upi.com/amp/Archives/1990/10/28/Becker-takes-Stockholm-title/9601657086400/",
+          "https://de.wikipedia.org/wiki/Stockholm_Open_1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -13317,7 +13813,43 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "main_stage_values_or_count_differ",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 1000000,
+            "md": 64,
+            "stored_table_reference": "champ_series_1990_targeted_secondary_rows",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 7,
+            "workbook_qualifier_award": null,
+            "differences": [
+              {
+                "stage": "round_of_16",
+                "workbook": 30,
+                "rule_row": 29
+              }
+            ],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "additional_contemporary_financial_crosscheck": {
+          "source_url": "https://www.upi.com/amp/Archives/1990/10/28/Becker-takes-Stockholm-title/9601657086400/",
+          "published_on": "1990-10-28",
+          "source_type": "contemporary_final_report_event_amount",
+          "reported_event_amount_usd": 1100000,
+          "scope": "Supports October 28 final and separately reported event amount; 840000 prize remains separate."
+        },
+        "additional_reported_commitment_lead": {
+          "source_url": "https://de.wikipedia.org/wiki/Stockholm_Open_1990",
+          "source_type": "secondary_event_article",
+          "reported_financial_commitment_usd": 1100000,
+          "prior_reported_financial_commitment_usd": null,
+          "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
         }
       }
     },
@@ -13390,7 +13922,9 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Paris_Open_%E2%80%93_Singles",
           "https://www.lequipe.fr/Tennis/open-de-paris/epreuve-simple-messieurs/annee-1990/page-tableau-tournoi",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.upi.com/amp/Archives/1990/11/04/Leg-injury-forces-Becker-to-retire-Paris-final/3155657694800/",
+          "https://de.wikipedia.org/wiki/Paris_Open_1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -13509,7 +14043,43 @@
             "stored_candidate_comparison_status": "not_compared_no_stored_exact_candidate_table",
             "stored_candidate_reference": null,
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          },
+          "alternative_numeric_rule_comparison": {
+            "status": "main_stage_values_or_count_differ",
+            "selection_basis": "same_historical_tier_working_bracket_and_workbook_champion_points_not_financial_class",
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "iteration": 1990,
+            "source_tier": "CHAMP SERIES",
+            "hypothetical_band_usd": 2000000,
+            "md": 64,
+            "stored_table_reference": "additional_champ_series_1990_hypothesis_rows",
+            "prior_reported_financial_commitment_usd": null,
+            "secondary_qualifier_award_candidate": 9,
+            "workbook_qualifier_award": null,
+            "differences": [
+              {
+                "stage": "round_of_16",
+                "workbook": 38,
+                "rule_row": 39
+              }
+            ],
+            "source_rule_certified": false,
+            "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "additional_contemporary_financial_crosscheck": {
+          "source_url": "https://www.upi.com/amp/Archives/1990/11/04/Leg-injury-forces-Becker-to-retire-Paris-final/3155657694800/",
+          "published_on": "1990-11-04",
+          "source_type": "contemporary_final_report_event_amount",
+          "reported_event_amount_usd": 2000000,
+          "scope": "Supports November 4 final and separately reported event amount; 1650000 prize remains separate."
+        },
+        "additional_reported_commitment_lead": {
+          "source_url": "https://de.wikipedia.org/wiki/Paris_Open_1990",
+          "source_type": "secondary_event_article",
+          "reported_financial_commitment_usd": 2000000,
+          "prior_reported_financial_commitment_usd": null,
+          "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
         }
       }
     },
@@ -13764,7 +14334,8 @@
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://www.itftennis.com/en/tournament/moscow/urs/1990/m-wsf-urs-01a-1990/draws-and-results/",
           "https://www.caymancompass.com/1990/09/07/kremlin-cup",
-          "https://2021.kremlincup.ru/en/about/1990/"
+          "https://2021.kremlincup.ru/en/about/1990/",
+          "https://www.upi.com/Archives/1990/11/11/Cherkasov-wins-Kremlin-Cup/9404658299600/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -13889,6 +14460,15 @@
             "reported_end_date": "1990-10-11",
             "scope": "Organizer agrees on amount but states October; contemporary November announcement and ATP calendar retained, do not move dates. Do not assert 330k is an officially certified commitment."
           }
+        },
+        "additional_contemporary_financial_crosscheck": {
+          "source_url": "https://www.upi.com/Archives/1990/11/11/Cherkasov-wins-Kremlin-Cup/9404658299600/",
+          "published_on": "1990-11-11",
+          "source_type": "contemporary_final_report_event_amount",
+          "reported_event_amount_usd": 330000,
+          "scope": "Confirms November final, event amount 330000, champion prize 42800 and runner-up 25200; not a certified ranking band.",
+          "reported_singles_champion_prize_usd": 42800,
+          "reported_singles_finalist_prize_usd": 25200
         }
       }
     },
@@ -14731,6 +15311,15 @@
             "selected_tests_passed": 131,
             "security_tests_passed": 24,
             "scope": "Exact previous HEAD CI includes actual test-only Saved Frankfurt import/play/points/Save/reopen. No both W52 CLI audit commands evidenced."
+          },
+          "verified_ci_after_championship_followup": {
+            "head": "7aaa8e43f01c18ac9892a4d2f7c9810742090a67",
+            "workflow_run_id": 45797883486,
+            "job_id": 139833383588,
+            "conclusion": "success",
+            "selected_tests_passed": 134,
+            "security_tests_passed": 24,
+            "scope": "Prior exact HEAD test-only Frankfurt Saved execution passed; both W52 CLI audits not evidenced."
           }
         },
         "targeted_source_followup_2026_11_26": {

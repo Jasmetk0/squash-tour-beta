@@ -1714,6 +1714,367 @@
         "note": "August 6 evening report confirms completed qualifying final that a European date feed labels August 7."
       },
       "main_projection_review_only": true
+    },
+    {
+      "occurrence_id": "atp_2025_winston_salem",
+      "series_id": "winston_salem",
+      "category_id": "atp_250",
+      "main_start_date": "2025-08-17",
+      "main_end_date": "2025-08-23",
+      "main_year_weeks": [
+        [
+          2025,
+          34
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-08-16",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/winston-salem/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-08-17",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/winston-salem/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          33
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.winstonsalemopen.com/en/media/news/carreno-busta-nishioka-winston-salem-2025-sunday",
+        "note": "Organizer confirms Sunday Main singles and two days of qualifying; observed Main opening is W33, before canonical W34."
+      },
+      "follow_up": "Review actual Q/Main overlap and feeder ordering; do not infer all Main rounds occur after all qualifying matches.",
+      "main_opening_play_evidence": {
+        "date": "2025-08-17",
+        "status": "played",
+        "source_url": "https://www.winstonsalemopen.com/en/media/news/carreno-busta-nishioka-winston-salem-2025-sunday",
+        "observed_iso_week": [
+          2025,
+          33
+        ]
+      },
+      "additional_qualifying_source_url": "https://www.winstonsalemopen.com/en/media/news/qualifying-roundup"
+    },
+    {
+      "occurrence_id": "atp_2025_chengdu",
+      "series_id": "chengdu",
+      "category_id": "atp_250",
+      "main_start_date": "2025-09-17",
+      "main_end_date": "2025-09-23",
+      "main_year_weeks": [
+        [
+          2025,
+          38
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-09-16",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/chengdu/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-09-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/chengdu/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          38
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/chengdu/2025/atp-men/?phase=main",
+        "note": "Eight first-round results on Sep 16 and four finals on Sep 17. Four scored Main singles on Sep 17; no evidence of qualifying play Sep 15 in full result list."
+      },
+      "follow_up": "Review actual Q/Main overlap and feeder ordering; do not infer all Main rounds occur after all qualifying matches.",
+      "main_opening_play_evidence": {
+        "date": "2025-09-17",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/chengdu/2025/atp-men/?phase=main",
+        "observed_iso_week": [
+          2025,
+          38
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://www.rte.ie/sport/results/tennis/results/2025/",
+        "note": "Aggregate qualifying window starts Sep 15; full dated match results start Sep 16. Sep 15 remains unverified as a played day."
+      },
+      "source_finish_iso_week": [
+        2025,
+        39
+      ]
+    },
+    {
+      "occurrence_id": "atp_2025_hangzhou",
+      "series_id": "hangzhou",
+      "category_id": "atp_250",
+      "main_start_date": "2025-09-17",
+      "main_end_date": "2025-09-23",
+      "main_year_weeks": [
+        [
+          2025,
+          38
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-09-16",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-09-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          38
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2025/atp-men/?phase=main",
+        "note": "Four qualifying finals and two scored Main singles on Sep 17; preceding day first round."
+      },
+      "follow_up": "Review actual Q/Main overlap and feeder ordering; do not infer all Main rounds occur after all qualifying matches.",
+      "main_opening_play_evidence": {
+        "date": "2025-09-17",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2025/atp-men/?phase=main",
+        "observed_iso_week": [
+          2025,
+          38
+        ]
+      },
+      "source_finish_iso_week": [
+        2025,
+        39
+      ]
+    },
+    {
+      "occurrence_id": "atp_2025_tokyo",
+      "series_id": "tokyo",
+      "category_id": "atp_500",
+      "main_start_date": "2025-09-24",
+      "main_end_date": "2025-09-30",
+      "main_year_weeks": [
+        [
+          2025,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-09-22",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/tokyo-japan-open/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-09-23",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/tokyo-japan-open/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/tokyo-japan-open/2025/atp-men/?phase=qualification",
+        "note": "Dated qualifying finals Sep 23 and first round Sep 22. Main finishes Sep 30 in W40, outside its majority projection W39."
+      },
+      "follow_up": "Review same-week Q/Main ordering and source finish in W40 before choosing result closure.",
+      "source_finish_iso_week": [
+        2025,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2025_beijing",
+      "series_id": "beijing",
+      "category_id": "atp_500",
+      "main_start_date": "2025-09-25",
+      "main_end_date": "2025-10-01",
+      "main_year_weeks": [
+        [
+          2025,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-09-23",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-09-24",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/beijing/2025/atp-men/?phase=qualification",
+        "note": "Men's Q1 Sep 23 and four Q finals Sep 24, including one retirement. Main finishes Oct 1 in W40, outside its majority projection W39. Do not use women's qualifying dates."
+      },
+      "follow_up": "Review same-week Q/Main ordering and source finish in W40 before choosing result closure.",
+      "source_finish_iso_week": [
+        2025,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2025_shanghai",
+      "series_id": "shanghai",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-10-01",
+      "main_end_date": "2025-10-12",
+      "main_year_weeks": [
+        [
+          2025,
+          40
+        ],
+        [
+          2025,
+          41
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-09-29",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-09-30",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          40
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.rte.ie/sport/results/tennis/shanghai-rolex-masters-qualification-men/895654/results/",
+        "note": "Dated Q1 Sep 29 and Q finals Sep 30; both precede Oct 1 Main opening within W40."
+      },
+      "follow_up": "Review sourced round allocation across W40/W41 and same-week Q before Main."
+    },
+    {
+      "occurrence_id": "atp_2025_almaty",
+      "series_id": "almaty",
+      "category_id": "atp_250",
+      "main_start_date": "2025-10-13",
+      "main_end_date": "2025-10-19",
+      "main_year_weeks": [
+        [
+          2025,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-11",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/almaty/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-10-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/almaty/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          41
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/almaty/2025/atp-men/?phase=qualification",
+        "note": "Eight first-round qualifying results Oct 11 and four finals Oct 12."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points before coordinated profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_brussels",
+      "series_id": "brussels",
+      "category_id": "atp_250",
+      "main_start_date": "2025-10-13",
+      "main_end_date": "2025-10-19",
+      "main_year_weeks": [
+        [
+          2025,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-10-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/brussels/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/brussels/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          41
+        ],
+        [
+          2025,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/brussels/2025/atp-men/?phase=main",
+        "note": "Eight Q first-round results Oct 12 and four finals Oct 13; scored Main singles Oct 13 establish same-day overlap."
+      },
+      "follow_up": "Review actual Q/Main overlap and feeder ordering; do not infer all Main rounds occur after all qualifying matches.",
+      "main_opening_play_evidence": {
+        "date": "2025-10-13",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/brussels/2025/atp-men/?phase=main",
+        "observed_iso_week": [
+          2025,
+          42
+        ]
+      }
     }
   ]
 }

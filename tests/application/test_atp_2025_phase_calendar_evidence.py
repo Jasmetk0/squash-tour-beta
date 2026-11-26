@@ -298,3 +298,48 @@ def test_summer_masters_qualifying_geometry_not_inferred_from_duration(
     assert len(row["qualifying_date_evidence"]) == 2
     assert row["main_projection_review_only"] is True
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks", "opening_week", "finish_week"),
+    [
+        ("winston_salem", ["2025-08-16", "2025-08-17"], [33], [34], 33, None),
+        ("chengdu", ["2025-09-16", "2025-09-17"], [38], [38], 38, 39),
+        ("hangzhou", ["2025-09-16", "2025-09-17"], [38], [38], 38, 39),
+        ("tokyo", ["2025-09-22", "2025-09-23"], [39], [39], None, 40),
+        ("beijing", ["2025-09-23", "2025-09-24"], [39], [39], None, 40),
+        ("shanghai", ["2025-09-29", "2025-09-30"], [40], [40, 41], None, None),
+        ("almaty", ["2025-10-11", "2025-10-12"], [41], [42], None, None),
+        ("brussels", ["2025-10-12", "2025-10-13"], [41, 42], [42], 42, None),
+    ],
+)
+def test_late_summer_autumn_phase_positions_across_shifted_season_boundary(
+    phase_evidence, series, q_dates, q_weeks, main_weeks, opening_week, finish_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2025, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2025, w] for w in main_weeks]
+    assert (q_dates[-1] == row["main_start_date"]) == (opening_week is not None)
+    if opening_week is not None:
+        opening = row["main_opening_play_evidence"]
+        assert opening["status"] == "played"
+        assert opening["date"] == row["main_start_date"]
+        assert opening["observed_iso_week"] == [2025, opening_week]
+        assert date.fromisoformat(opening["date"]).isocalendar()[:2] == (2025, opening_week)
+    if finish_week is not None:
+        assert row["source_finish_iso_week"] == [2025, finish_week]
+        assert date.fromisoformat(row["main_end_date"]).isocalendar()[:2] == (2025, finish_week)
+        assert finish_week not in main_weeks
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in sorted(set(q_weeks + main_weeks + ([finish_week] if finish_week else []))):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
+        season_index, season_week = (0, week + 16) if week <= 36 else (1, week - 36)
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(
+            season_index, season_week, 2025, week
+        )
+
+    assert shifted.calendar_to_season(2025, 36) == RunCalendarPosition(0, 52, 2025, 36)
+    assert shifted.calendar_to_season(2025, 37) == RunCalendarPosition(1, 1, 2025, 37)

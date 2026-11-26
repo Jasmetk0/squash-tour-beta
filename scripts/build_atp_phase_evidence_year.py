@@ -113,9 +113,10 @@ def match_events(year: int, canonical: list[dict], wp_events: list[dict], series
 
     def start_gap(ev: dict, cev: dict) -> int | None:
         d = ev["wikipedia_dates"]
-        if not d:
+        start = d[0] if d else ev.get("schedule_week_start")
+        if not start:
             return None
-        return abs((dt.date.fromisoformat(d[0]) - dt.date.fromisoformat(cev["start_date"])).days)
+        return abs((dt.date.fromisoformat(start) - dt.date.fromisoformat(cev["start_date"])).days)
 
     for cev in sorted(canonical, key=lambda x: x["start_date"]):
         sid = cev["series_id"]

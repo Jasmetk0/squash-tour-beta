@@ -166,11 +166,20 @@ def build(year: int, raw_dir: Path) -> dict:
     start = _schedule_start(season)
     seg = season[start:start + 2_500_000]
     rows = []
+    week_start: str | None = None
+    seen_later_month = False
     for tr in re.findall(r"<tr.*?</tr>", seg, flags=re.DOTALL):
         cells = re.findall(r"<t([dh])([^>]*)>(.*?)</t[dh]>", tr, flags=re.DOTALL)
         if not cells:
             continue
         label = html.unescape(re.sub(r"<[^>]+>", "", cells[0][2])).strip()
+        wk = re.match(r"^(\d{1,2}) (" + "|".join(m[:3] for m in MONTHS) + ")", label)
+        if wk:
+            mon = next(i for m, i in MONTHS.items() if m.startswith(wk.group(2)))
+            if mon != 12:
+                seen_later_month = True
+            wy = year - 1 if (mon == 12 and not seen_later_month) else year
+            week_start = dt.date(wy, mon, int(wk.group(1))).isoformat()
         first = cells[1][2] if re.match(r"^\d{1,2} [A-Z][a-z]{2}", label) and len(cells) > 1 else cells[0][2]
         text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", first))).strip()
         if len(text) < 20:
@@ -183,13 +192,14 @@ def build(year: int, raw_dir: Path) -> dict:
         sing += re.findall(base + r"""[^"#?]*?_–_(?:Men's_)?[Ss]ingles)\"""", first)
         if not main:
             continue
-        rows.append({"schedule_text": text[:160], "main": main.group(1) if main else None,
+        rows.append({"schedule_week_start": week_start, "schedule_text": text[:160], "main": main.group(1) if main else None,
                      "singles": sing[0] if sing else None, "schedule_format": re.search(r"(\d+)S(?:/(\d+)Q)?", text)})
     events = []
     for r in rows:
         if not r["main"]:
             continue
-        item = {"schedule_text": r["schedule_text"], "wikipedia_main": r["main"]}
+        item = {"schedule_text": r["schedule_text"], "wikipedia_main": r["main"],
+                "schedule_week_start": r["schedule_week_start"]}
         try:
             raw, url = fetch(wiki_url(r["main"]), raw_dir)
         except RuntimeError:

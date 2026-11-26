@@ -1192,6 +1192,412 @@
           18
         ]
       }
+    },
+    {
+      "occurrence_id": "atp_2021_geneva",
+      "series_id": "geneva",
+      "category_id": "atp_250",
+      "main_start_date": "2021-05-16",
+      "main_end_date": "2021-05-22",
+      "main_year_weeks": [
+        [
+          2021,
+          20
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-05-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-ginebra-2021/"
+        },
+        {
+          "date": "2021-05-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-ginebra-2021/"
+        },
+        {
+          "date": "2021-05-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-ginebra-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          19
+        ],
+        [
+          2021,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-ginebra-2021/",
+        "note": "First-round play May 15 and 16, interrupted final-round scores May 16 and further finals May 17. Source lists inconsistent McDonald final opponent; no match-level reconstruction asserted. Main scored singles May 17, corroborated by TennisExplorer."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.tennisexplorer.com/geneva/2021/atp-men/",
+        "note": "Four Q-marked Main entrants corroborate four places; dated results show two physical rounds. Not a match-level reconstruction."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-05-17",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/geneva/2021/atp-men/",
+        "observed_iso_week": [
+          2021,
+          20
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://www.tennisexplorer.com/geneva/2021/atp-men/",
+        "note": "Canonical published event opens May 16; first scored Main singles May 17 in both dated sources. Retain interrupted May 16 qualifying scores and May 17 finals; exact start/resumption chronology and conflicting McDonald final listing require further source review."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_lyon_old",
+      "series_id": "lyon_old",
+      "category_id": "atp_250",
+      "main_start_date": "2021-05-17",
+      "main_end_date": "2021-05-23",
+      "main_year_weeks": [
+        [
+          2021,
+          20
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-05-16",
+          "status": "played",
+          "source_url": "https://www.gamesetpredict.com/fr/tournoi/open-parc-2021-atp/"
+        },
+        {
+          "date": "2021-05-17",
+          "status": "played",
+          "source_url": "https://www.gamesetpredict.com/fr/tournoi/open-parc-2021-atp/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          19
+        ],
+        [
+          2021,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/open-parc-2021-atp/",
+        "note": "Eight Q1 May 16, four final-round scores and four scored Main singles May 17. Distinct from Marseille."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/open-parc-2021-atp/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-05-17",
+        "status": "played",
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/open-parc-2021-atp/",
+        "observed_iso_week": [
+          2021,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_belgrade_2_2021",
+      "series_id": "belgrade_2_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-05-23",
+      "main_end_date": "2021-05-29",
+      "main_year_weeks": [
+        [
+          2021,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-05-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-belgrado-dos-2021/"
+        },
+        {
+          "date": "2021-05-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-belgrado-dos-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-belgrado-dos-2021/",
+        "note": "Eight Q1 May 22; four Q finals and three Main scores May 23. Separate occurrence from April Serbia Open."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-belgrado-dos-2021/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-05-23",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-belgrado-dos-2021/",
+        "observed_iso_week": [
+          2021,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_parma_2021",
+      "series_id": "parma_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-05-23",
+      "main_end_date": "2021-05-29",
+      "main_year_weeks": [
+        [
+          2021,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-05-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-parma-2021/"
+        },
+        {
+          "date": "2021-05-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-parma-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-parma-2021/",
+        "note": "Eight Q1 May 22 (one retirement with score); four Q finals and two scored Main singles May 23."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-parma-2021/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-05-23",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-parma-2021/",
+        "observed_iso_week": [
+          2021,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_stuttgart",
+      "series_id": "stuttgart",
+      "category_id": "atp_250",
+      "main_start_date": "2021-06-08",
+      "main_end_date": "2021-06-13",
+      "main_year_weeks": [
+        [
+          2021,
+          23
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-06-07",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stuttgart/2021/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2021-06-08",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stuttgart/2021/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/stuttgart/2021/atp-men/?phase=qualification",
+        "note": "Eight Q1 June 7 including one partial-score result, four scored finals June 8."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.tennisexplorer.com/stuttgart/2021/atp-men/?phase=qualification",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_halle",
+      "series_id": "halle",
+      "category_id": "atp_500",
+      "main_start_date": "2021-06-14",
+      "main_end_date": "2021-06-20",
+      "main_year_weeks": [
+        [
+          2021,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-06-12",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-halle-2021/"
+        },
+        {
+          "date": "2021-06-13",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-halle-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-halle-2021/",
+        "note": "Twelve Q1 June 12 including two scored retirements; six qualifying finals June 13."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 6,
+        "source_url": "https://canaltenis.com/resultados-atp-halle-2021/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_queens_club",
+      "series_id": "queens_club",
+      "category_id": "atp_500",
+      "main_start_date": "2021-06-14",
+      "main_end_date": "2021-06-20",
+      "main_year_weeks": [
+        [
+          2021,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-06-12",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-queens-2021/"
+        },
+        {
+          "date": "2021-06-13",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-queens-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-queens-2021/",
+        "note": "Eight Q1 and four Q finals June 12–13."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-queens-2021/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_mallorca",
+      "series_id": "mallorca",
+      "category_id": "atp_250",
+      "main_start_date": "2021-06-20",
+      "main_end_date": "2021-06-26",
+      "main_year_weeks": [
+        [
+          2021,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-06-19",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mallorca-2021/"
+        },
+        {
+          "date": "2021-06-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mallorca-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-mallorca-2021/",
+        "note": "Eight Q1 June 19; four final scores and two scored Main singles June 20."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-mallorca-2021/",
+        "note": "Dated qualifying draw supports two rounds and final-round places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-06-20",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-mallorca-2021/",
+        "observed_iso_week": [
+          2021,
+          24
+        ]
+      }
     }
   ]
 }

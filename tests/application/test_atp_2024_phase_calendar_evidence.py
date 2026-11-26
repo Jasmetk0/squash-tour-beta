@@ -57,6 +57,14 @@ def test_phase_evidence_binds_to_canonical_2024_memberships_and_main_dates(phase
         ("cordoba", ["2024-02-03","2024-02-04"], [[2024,5]], 6, "atp_250"),
         ("dallas", ["2024-02-04","2024-02-05"], [[2024,5],[2024,6]], 6, "atp_250"),
         ("lyon", ["2024-02-04","2024-02-05"], [[2024,5],[2024,6]], 6, "atp_250"),
+        ("buenos_aires", ["2024-02-10","2024-02-11"], [[2024,6]], 7, "atp_250"),
+        ("delray_beach", ["2024-02-10","2024-02-11","2024-02-12"], [[2024,6],[2024,7]], 7, "atp_250"),
+        ("rotterdam", ["2024-02-10","2024-02-11"], [[2024,6]], 7, "atp_500"),
+        ("doha", ["2024-02-17","2024-02-18"], [[2024,7]], 8, "atp_250"),
+        ("los_cabos", ["2024-02-17","2024-02-18"], [[2024,7]], 8, "atp_250"),
+        ("rio", ["2024-02-17","2024-02-18"], [[2024,7]], 8, "atp_500"),
+        ("acapulco", ["2024-02-24","2024-02-25"], [[2024,8]], 9, "atp_500"),
+        ("dubai", ["2024-02-24","2024-02-25"], [[2024,8]], 9, "atp_500"),
     ],
 )
 def test_initial_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_week, category):
@@ -80,3 +88,21 @@ def test_brisbane_and_hong_kong_cross_year_opening_not_clamped(phase_evidence):
     assert rows["hong_kong"]["main_opening_play_evidence"]["observed_iso_week"] == [2024, 1]
     assert rows["lyon"]["historical_identity_evidence"]["actual_host"] == "Marseille, France"
     assert rows["dallas"]["category_id"] == "atp_250"
+
+
+@pytest.mark.parametrize("series", ["dallas", "delray_beach"])
+def test_february_2024_q_finals_and_scored_main_opening_overlap(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["status"] == "played"
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert opening["observed_iso_week"] in row["main_year_weeks"]
+
+
+def test_los_cabos_2024_published_capacity_not_a_sporting_profile(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "los_cabos")
+    evidence = row["draw_capacity_evidence"]
+    assert (evidence["main_places"], evidence["qualifier_places"]) == (28, 4)
+    assert evidence["status"] == "published_event_description_not_full_profile"
+    assert phase_evidence["sporting_schedule_installed"] is False

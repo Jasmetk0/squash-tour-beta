@@ -2449,7 +2449,8 @@ def test_monte_carlo_header_draw_and_withdrawal_do_not_certify_q_policy(batch):
                for source in (en, fr, tt, contemporary))
     assert en["header_q"] == a["retained_historical_header_q"] == e["reported_main_qualifiers"] == 6
     assert en["initial_position_q"] == fr["listed_qualifiers"] == tt["initial_position_q"] == a["secondary_csv_q"] == 7
-    assert en["initial_position_wc"] == fr["listed_wild_cards"] == tt["initial_position_wc"] == e["reported_main_wild_cards"] == 4
+    assert en["initial_position_wc"] == fr["listed_wild_cards"] == e["reported_main_wild_cards"] == 4
+    assert tt["initial_position_wc"] == a["secondary_csv_wc"] == 5
     assert a["secondary_csv_wc"] == 5
     assert en["initial_position_ll"] == tt["initial_position_ll"] == a["secondary_csv_ll"] == 1
     assert en["nominal_seeds"] == e["main_seeds"] == 16
@@ -2582,3 +2583,51 @@ def test_contemporary_qualification_paths_are_partial_edition_specific_evidence(
     assert all(v is None for v in e["entry_policy"].values())
     assert r["profile_status"] == "not_in_published_sporting_source"
     assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
+
+
+@pytest.mark.parametrize("series,city,day,slots,common,disputed", [
+    ("rio_carpet_1990", "Rio de Janeiro", "1990-04-02", 32, [2, 21], [31, 32]),
+    ("monte_carlo", "Monte Carlo", "1990-04-23", 64, [27, 30, 43, 54], [6]),
+])
+def test_remaining_wc_conflicts_are_localized_but_not_certified(
+    batch, series, city, day, slots, common, disputed
+):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    a = e["wild_card_position_crosscheck_2026_11_26"]
+    assert e["host_city"] == city and row["original_start_date"] == day
+    assert e["main_bracket_slots"] == slots
+    assert a["status"] == "source_specific_labels_localized_not_certified"
+    assert set(a["source_urls"]) <= set(e["source_urls"])
+    assert a["dataset_git_blob_sha1"] == "d6fb69a7a1fdb48862f124cfbe979ea14352ad66"
+    sets = [set(p) for p in a["source_wc_positions"].values()]
+    assert all(len(p) == len(set(p)) and all(1 <= i <= slots for i in p)
+               for p in a["source_wc_positions"].values())
+    assert set.intersection(*sets) == set(a["common_wc_positions"]) == set(common)
+    assert set.union(*sets) - set.intersection(*sets) == set(a["conflicting_positions"]) == set(disputed)
+    audit = next(r for r in batch["wild_card_label_discrepancy_audit_2026_11_26"]["rows"]
+                 if r["occurrence_id"] == row["occurrence_id"])
+    assert audit["followup_disputed_initial_positions"] == disputed
+    assert audit["status"] == "unresolved_count_difference"
+    assert audit["followup_status"] == "localized_but_source_conflict_unresolved"
+    dataset = next(r for r in batch["secondary_match_dataset_reconciliation_2026_11_26"]["rows"]
+                   if r["occurrence_id"] == row["occurrence_id"])
+    assert a["dataset_tourney_id"] == dataset["dataset_tourney_id"]
+    assert len(a["source_wc_positions"]["secondary_csv"]) == dataset["entry_label_counts"]["WC"]
+    assert len(a["source_wc_positions"]["english_draw"]) == e["reported_main_wild_cards"]
+    if series == "rio_carpet_1990":
+        assert a["source_wc_positions"]["english_draw"] == [2, 21, 31]
+        assert a["source_wc_positions"]["german_draw"] == [2, 21, 32]
+        assert a["german_seeded_wc_rank"] == 2 and a["english_seeded_wc_count"] == 0
+        assert all(p == [4, 11, 23, 28] for p in a["source_q_positions"].values())
+        assert a["third_wc_policy"] is None
+        assert a["official_itf_event_metadata"]["surface_label"] == "Carpet - O"
+        assert a["official_itf_event_metadata"]["draw_access"] == "drawsheets_could_not_be_loaded"
+    else:
+        assert a["source_wc_positions"]["tennistemple_draw"] == a["source_wc_positions"]["secondary_csv"] == [6, 27, 30, 43, 54]
+        assert a["source_wc_positions"]["english_draw"] == a["source_wc_positions"]["french_list"] == common
+        assert a["third_party_five_wc_is_primary_verified"] is False
+    assert all(v is None for v in e["entry_policy"].values())
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert row["plan_status"] == row["played_and_reopened_status"] == "not_tested"

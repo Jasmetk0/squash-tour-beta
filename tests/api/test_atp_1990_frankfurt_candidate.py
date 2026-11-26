@@ -1,32 +1,33 @@
-"""Isolated historical candidate exercise; never a published ATP profile.
+"""Saved test-only ATP candidate -> real native HTTP/SQLite execution.
 
-Use the genuine native HTTP/SQLite group path, not a fake historical import,
-and derive expected awards from actual simulated results, not 1990 scores.
+Never publish the candidate or import historical player identities/results.
+Only the source document provider is substituted while copying the fixture.
 """
 import json
 
 import pytest
 
+from beta_engine.application.atp_historical_calendar_adapter import ATPHistoricalCalendarAdapter
 from beta_engine.application.atp_sporting_package_adapter import (
     build_atp_sporting_package,
     parse_sporting_profile,
 )
 from beta_engine.domain.calendar.run_calendar import RunCalendar
-from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
-from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour, setup
-from tests.api.test_saved_revision_history_api import ApiServer
+from tests.api.test_atp_next_gen_edition import _preview_request, _save_atp_source
+from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour, setup, tour_url
+from tests.api.test_saved_revision_history_api import ApiServer, _request
 from tests.application.test_atp_1990_historical_evidence_batch import ROOT
 
 pytestmark = pytest.mark.pr_critical
 
 
-def test_frankfurt_candidate_native_matches_ranking_and_cold_reopen(tmp_path):
+def test_frankfurt_candidate_saved_source_matches_ranking_and_cold_reopen(tmp_path, monkeypatch):
     batch = json.loads((ROOT / "historical_evidence" / "1990_batch_01.json").read_text(encoding="utf-8"))
     row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
     evidence = row["historical_evidence"]["targeted_import_research"]
     proposed = evidence["proposed_adaptation"]
-    probe = evidence["native_execution_probe"]
+    probe = evidence["saved_source_execution_probe"]
     assert evidence["points_evidence"]["primary_exact_table_verified"] is False
     assert probe["points_certified"] is False
     assert row["profile_status"] == "not_in_published_sporting_source"
@@ -55,22 +56,73 @@ def test_frankfurt_candidate_native_matches_ranking_and_cold_reopen(tmp_path):
         "season_index": pos.season_index, "season_week": pos.season_week,
         "calendar_year": pos.calendar_year, "year_week": pos.year_week,
     }
-    week = RunWeekPosition(calendar=clock, season_index=0, week=4)
-    announcement = RunWeekPosition(calendar=clock, season_index=0, week=3)
-    edition_id = probe["probe_edition_id"]
-    create_id = "create-historical-probe"
-    edition = candidate.build_edition(
-        run_id="run", branch_id="branch", command_id=create_id,
-        week=week, announcement_week=announcement, start_slot=1, seed=891,
-    )
-    # Use an explicitly different ID and name for manual configuration. It
-    # cannot be confused with the absent historical source catalog occurrence.
-    data = {**edition.model_dump(mode="json"), "edition_id": edition_id,
-            "name": "Uncertified Frankfurt candidate runtime probe"}
+    edition_id = row["occurrence_id"]
+    assert edition_id == probe["occurrence_id"]
+    # Produce a canonical child using the real adapter against a temporary
+    # source file. Existing published profiles stay byte-for-byte unchanged.
+    raw = json.loads((ROOT / "squash_sporting_profiles_v1.json").read_text(encoding="utf-8"))
+    raw["source_version"] += 1
+    raw["profiles"].append(candidate.model_dump(mode="json"))
+    (tmp_path / "squash_sporting_profiles_v1.json").write_text(
+        json.dumps(raw), encoding="utf-8")
+    sporting = build_atp_sporting_package(tmp_path)
+    assert {e.source_entity_id for e in sporting.entities} == {
+        *(e.source_entity_id for e in catalog.entities), edition_id}
+    assert {e.source_entity_id: e.payload for e in sporting.entities
+            if e.source_entity_id != edition_id} == {
+                e.source_entity_id: e.payload for e in catalog.entities}
+    original = ATPHistoricalCalendarAdapter().build_document()
+    assert original.children[-1].source_fingerprint == catalog.source_fingerprint
+    document = original.model_copy(update={
+        "source_version": original.source_version + 1,
+        "children": (*original.children[:-1], sporting),
+    })
+
     db = f"sqlite:///{tmp_path / 'frankfurt-candidate.db'}"
     with ApiServer(database_url=db) as server:
         repo, _ = setup(server, clock, count=8)
-        execute(server, command(inspect(server), "create-edition", name=create_id, data=data))
+        url = tour_url(server) + f"/atp-source-editions/{edition_id}/preview"
+        before_copy = _preview_request(inspect(server))
+        before_copy["command_id"] = "import-historical-candidate"
+        before_copy["audit_reason"] = "Test-only uncertified Frankfurt candidate"
+        code, error = _request("POST", url, before_copy)
+        assert code == 409, error
+        assert "ATP sporting profiles Package" in error["detail"]["message"]
+        with monkeypatch.context() as copying:
+            copying.setattr(ATPHistoricalCalendarAdapter, "build_document", lambda self: document)
+            _save_atp_source(server)
+        # Real production default restored immediately after copy.
+        assert ATPHistoricalCalendarAdapter().build_document().source_fingerprint == original.source_fingerprint
+        code, error = _request("POST", url, before_copy)
+        assert code == 409, error
+        assert "source changed" in error["detail"]["message"]
+        code, saved_catalog = _request("GET", tour_url(server) + "/atp-source-editions")
+        assert code == 200, saved_catalog
+        entry = next(e for e in saved_catalog["entries"] if e["profile"]["occurrence_id"] == edition_id)
+        assert entry["profile"] == candidate.model_dump(mode="json")
+        assert entry["execution_supported"] is True and not entry["execution_blockers"]
+        assert entry["calendar_projection"]["run_weeks"][0]["season_week"] == 4
+        before = inspect(server)
+        request = {**_preview_request(before), "command_id": before_copy["command_id"],
+                   "audit_reason": before_copy["audit_reason"]}
+        code, review = _request("POST", url, request)
+        assert code == 200, review
+        assert inspect(server) == before
+        edition = review["command"]["data"]
+        assert edition["edition_id"] == edition_id
+        assert edition["week"]["week"] == 4 and edition["announcement_week"]["week"] == 3
+        assert edition["main_entrant_count"] == 8
+        assert edition["ranked"] is True
+        assert edition["point_table"] == candidate.knockout_stage_points
+        assert edition["group_configuration"]["played_group_win_points"] == candidate.played_group_win_points
+        assert f"ATP profile {edition_id} {entry['profile_fingerprint']}" in review["command"]["audit_reason"]
+        code, result = _request("POST", tour_url(server) + "/execute", {
+            "command": review["command"],
+            "expected_preview_fingerprint": review["preview_fingerprint"],
+            "explicit_confirmation": True,
+        })
+        assert code == 201, result
+        assert not inspect(server)["saved"]
         save_tour(server)
         for target in (3, 4):
             execute(server, command(inspect(server), "transition", name=f"frankfurt-week-{target}"))
@@ -126,10 +178,18 @@ def test_frankfurt_candidate_native_matches_ranking_and_cold_reopen(tmp_path):
         assert all(len(r["counted_results"]) <= 1 for r in ranking["rows"])
         saved_evidence = finished["edition_evidence"][edition_id]
         saved_head = finished["saved_head_revision_id"]
-    with ApiServer(database_url=db) as restarted:
-        reopened = inspect(restarted)
-        assert reopened["saved"] and reopened["saved_head_revision_id"] == saved_head
-        assert reopened["edition_evidence"][edition_id] == saved_evidence
-        assert reopened["state"]["rankings"][-1] == ranking
+    def unavailable(*args, **kwargs):
+        raise AssertionError("Saved source must not consult current defaults")
+
+    with monkeypatch.context() as isolated:
+        isolated.setattr(ATPHistoricalCalendarAdapter, "build_document", unavailable)
+        with ApiServer(database_url=db) as restarted:
+            reopened = inspect(restarted)
+            code, restored_catalog = _request("GET", tour_url(restarted) + "/atp-source-editions")
+            assert code == 200, restored_catalog
+            assert restored_catalog["entries"] == saved_catalog["entries"]
+            assert reopened["saved"] and reopened["saved_head_revision_id"] == saved_head
+            assert reopened["edition_evidence"][edition_id] == saved_evidence
+            assert reopened["state"]["rankings"][-1] == ranking
     # The immutable source catalog is still exactly the original source.
     assert build_atp_sporting_package().source_fingerprint == catalog.source_fingerprint

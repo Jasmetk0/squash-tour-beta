@@ -7186,6 +7186,39 @@
               "alternative_error": "Original Qualification entrants are not divisible into equal Q sections",
               "scope": "56 Q entrants is a test-only hypothesis, not a source-derived value; actual Q count, feeder sizes and reserved advancers unknown. A single three-match path cannot establish equal feeder sizes. A hypothetical 64 Q entrants and 7 reserved places would fail current equal-section contract; do not coerce to 56 or 8 reserved."
             }
+          },
+          "archive_acquisition_lead": {
+            "reviewed_on": "2026-11-26",
+            "status": "finding_aid_verified_folder_contents_not_inspected",
+            "source_url": "https://as13dev-new.library.yale.edu/2814.pdf",
+            "repository": "Yale University Library, Manuscripts and Archives",
+            "collection": "Department of Athletics, Yale University records RU 507",
+            "accession": "2006-A-242",
+            "printed_page": 38,
+            "box": 11,
+            "folders": [
+              {
+                "folder": "411",
+                "title": "Volvo International press releases",
+                "dates": "1990"
+              },
+              {
+                "folder": "412-417",
+                "title": "Volvo-Tennis Foundation of Connecticut",
+                "dates": "1989-1992"
+              }
+            ],
+            "contact": "beinecke.library@yale.edu",
+            "requested_evidence": "Original dated qualifying draw, entry list, complete feeder sections, round schedule and tournament program/press releases for August 11-19, 1990; source publication dates and any financial classification.",
+            "scope": "Visually checked official finding-aid page. No archive item obtained, no request sent, no primary qualifying fields or publication dates verified."
+          },
+          "contemporary_pre_event_financial_crosscheck": {
+            "source_url": "https://www.upi.com/Archives/1990/03/24/Chang-to-play-in-Volvo-tennis-tournament/6800638254800/",
+            "published_on": "1990-03-24",
+            "advertised_main_start_date": "1990-08-13",
+            "advertised_main_end_date": "1990-08-19",
+            "reported_commitment_usd": 1000000,
+            "scope": "Contemporary pre-event report confirms advertised main window, $1m event and temporary Yale stadium. Not actual qualification dates or exact payout/financial classification."
           }
         }
       }
@@ -10593,6 +10626,19 @@
                 }
               ],
               "scope": "TML's documentation explicitly describes UTS supplementation, so the two cannot be assumed independent. No event point award certified from totals."
+            },
+            "contemporary_ranking_reconciliation": {
+              "reviewed_on": "2026-11-26",
+              "status": "gross_delta_not_sufficient_to_reconstruct_historical_rankings",
+              "before_source_url": "https://www.latimes.com/archives/la-xpm-1990-11-12-sp-3456-story.html",
+              "round_robin_source_url": "https://www.washingtonpost.com/archive/sports/1990/11/17/edberg-clinches-no-1-spot/29ea38ae-268c-418b-b034-19edb3bc8173/",
+              "reported_pre_event_gap": 225,
+              "leader_group_wins": 3,
+              "candidate_leader_semifinal_loss_total": 150,
+              "candidate_challenger_maximum": 400,
+              "hypothetical_gross_swing": 250,
+              "hypothetical_gross_gap_excess": 25,
+              "scope": "AP reported the leader had secured year-end No. 1 after group play. The hypothetical 250 gross swing exceeds the reported pre-event gap by 25; simple gross addition therefore cannot establish the historical ranking result. Best14 replacement, expiry, ranking inclusion and other timing or reporting differences remain unresolved. This is not disproof or certification of the candidate award table. No historical identities, match scores or rankings imported."
             }
           },
           "proposed_adaptation": {
@@ -10733,7 +10779,7 @@
             "scope": "Prior exact HEAD includes anonymous production award-composition test; not actual Saved run."
           },
           "native_execution_probe": {
-            "status": "test_authored_execution_not_yet_verified",
+            "status": "passed_isolated_manual_configuration_not_sourced_import",
             "reviewed_on": "2026-11-26",
             "test_path": "tests/api/test_atp_1990_frankfurt_candidate.py",
             "reference_test_path": "tests/api/test_atp_next_gen_edition.py",
@@ -10752,6 +10798,37 @@
               "calendar_year": 1990,
               "year_week": 46
             },
+            "expected_match_counts": {
+              "groups": 12,
+              "knockout": 3,
+              "total": 15
+            },
+            "expected_total_candidate_points": 950,
+            "expected_max_individual_candidate_points": 400,
+            "points_certified": false,
+            "verified_ci": {
+              "head": "88c4002959a4cfef816267ca9120ba7130f685b4",
+              "workflow_run_id": 45774137678,
+              "job_id": 139753943394,
+              "conclusion": "success",
+              "test_call_seconds": 159.33,
+              "selected_tests_passed": 31,
+              "security_tests_passed": 24,
+              "scope": "Exact previous HEAD; real manually configured native Edition, 15 matches, per-player points and cold reopen. Not published source or historical points certification."
+            }
+          },
+          "saved_source_execution_probe": {
+            "status": "test_authored_execution_not_yet_verified",
+            "reviewed_on": "2026-11-26",
+            "test_path": "tests/api/test_atp_1990_frankfurt_candidate.py",
+            "scope": "Test-only temporary sporting child with one additional candidate and unchanged modern profiles; real Setup preview/confirm/Save and real sourced Edition preview/execute/Save, genuine native match execution, point composition, official ranking and cold SQLite reopen. Adapter fixture is scoped only to copying the test document. No published sporting catalog change; not owner-approved import or historical certification.",
+            "calendar": {
+              "weeks_per_year": 52,
+              "season_start_year_week": 43,
+              "start_year": 1990,
+              "season_count": 2
+            },
+            "occurrence_id": "atp_1990_atp_finals",
             "expected_match_counts": {
               "groups": 12,
               "knockout": 3,

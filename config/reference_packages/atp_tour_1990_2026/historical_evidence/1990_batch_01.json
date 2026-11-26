@@ -65,8 +65,8 @@
     "targeted_import_candidates_reviewed_rows": 3,
     "partial_actual_qualification_play_evidence_rows": 1,
     "contemporary_printed_main_draw_evidence_rows": 1,
-    "contemporary_qualification_completion_evidence_rows": 2,
-    "contemporary_qualification_completion_evidence_note": "Includes one New Haven three-win path and Barcelona explicitly qualified entrant before Main; neither establishes event-wide exact dates or full draw. Older partial_actual_qualification_play_evidence_rows counts specific reported Q match count evidence only."
+    "contemporary_qualification_completion_evidence_rows": 3,
+    "contemporary_qualification_completion_evidence_note": "Includes New Haven three-win path, Barcelona explicitly qualified entrant before Main, and Orlando qualifier reported reaching Main semifinal. None establishes a full Q field/draw or exact event-wide dates. Older partial_actual_qualification_play_evidence_rows counts specific Q match-count evidence only."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -2404,7 +2404,9 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Estoril_Open_%E2%80%93_Men%27s_singles",
           "https://de.wikipedia.org/wiki/Estoril_Open_1990",
-          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Estoril_Open_%E2%80%93_Men%27s_singles"
+          "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Estoril_Open_%E2%80%93_Men%27s_singles",
+          "https://hemeroteca-paginas.mundodeportivo.com/EMD01/HEM/1990/04/03/MD19900403-054.pdf",
+          "https://www.atptour.com/en/scores/results-archive?tournamentType=ch&year=1990"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -2470,6 +2472,25 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "contemporary_main_opening_evidence": {
+          "source_url": "https://hemeroteca-paginas.mundodeportivo.com/EMD01/HEM/1990/04/03/MD19900403-054.pdf",
+          "source_type": "contemporary_press_scan",
+          "published_on": "1990-04-03",
+          "printed_page": 54,
+          "pdf_page_index": 0,
+          "visual_status": "page_render_checked",
+          "pdf_sha256": null,
+          "reported_main_start_date": "1990-04-02",
+          "reported_first_day_singles_matches": 4,
+          "reported_event_amount_usd": 76000,
+          "scope": "Printed report confirms the opening day and four men's singles Main matches; the printed USD76000 conflicts with secondary prize 225000/commitment 250000, and is preserved as reported rather than treated as an ATP class. Do not confuse Spanish clasificó para la segunda ronda (advanced in Main) with qualification."
+        },
+        "distinct_challenger_archive_evidence": {
+          "source_url": "https://www.atptour.com/en/scores/results-archive?tournamentType=ch&year=1990",
+          "reported_start_date": "1990-03-26",
+          "reported_end_date": "1990-04-08",
+          "scope": "Separate ATP Challenger archive entry overlaps the men's ATP Tour event. Its dates are not the ATP Tour qualifying window. Keep Challenger outside scope and canonical W14 Main unchanged."
         }
       }
     },
@@ -2524,7 +2545,11 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles",
           "https://de.wikipedia.org/wiki/Prudential-Bache_Securities_Classic_1990",
-          "https://wiki.seekkey.tech/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles"
+          "https://wiki.seekkey.tech/wiki/1990_Prudential-Bache_Securities_Classic_%E2%80%93_Singles",
+          "https://richesmi.cah.ucf.edu/sanford_herald/files/original/373e30ee54823f3e3eaa12299355e541.pdf",
+          "https://www.latimes.com/archives/la-xpm-1990-04-08-sp-1562-story.html",
+          "https://www.stevegtennis.com/draw-results/atp/Orlando/1990",
+          "https://richesmi.cah.ucf.edu/sanford_herald/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -2587,6 +2612,48 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "contemporary_main_financial_evidence": {
+          "source_url": "https://richesmi.cah.ucf.edu/sanford_herald/files/original/373e30ee54823f3e3eaa12299355e541.pdf",
+          "source_type": "contemporary_local_press_scan",
+          "published_on": "1990-04-05",
+          "printed_page": "1B",
+          "pdf_page_index": 6,
+          "visual_status": "page_render_checked",
+          "pdf_sha256": null,
+          "pdf_byte_access": "direct_download_dns_failed",
+          "reported_event_amount_usd": 250000,
+          "reported_first_prize_usd": 32400,
+          "reported_top_seeds": 8,
+          "venue": "Heathrow Racquet Club, Lake Mary",
+          "scope": "Contemporary newspaper confirms event name, eight seeds, advertised event amount and winner prize; the secondary $225000 prize-money value and $250000 commitment remain separate. No exact ATP point-band or qualification certification."
+        },
+        "contemporary_qualification_completion_evidence": {
+          "status": "one_qualifier_confirmed_in_main_not_dated_full_q_draw",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-04-08-sp-1562-story.html",
+          "published_on": "1990-04-08",
+          "minimum_confirmed_qualifiers": 1,
+          "reported_qualifier_reached": "semifinal",
+          "scope": "Contemporary wire confirms at least one qualifier advanced to Main semifinal, independently of secondary draw labels. Does not establish the actual Q window, Q match count, Q field or reserved places."
+        },
+        "secondary_main_draw_crosscheck": {
+          "source_url": "https://www.stevegtennis.com/draw-results/atp/Orlando/1990",
+          "main_entrants": 32,
+          "observed_main_qualifiers": 4,
+          "observed_main_wild_cards": 3,
+          "scope": "Secondary draw shows 16 first-round pairs and entry labels. Generic qualifying heading does not supply qualification results; no independent reserved entry policy."
+        },
+        "qualification_archive_lead": {
+          "source_url": "https://richesmi.cah.ucf.edu/sanford_herald/",
+          "collection_url": "https://richesmi.cah.ucf.edu/sanford_herald/items/browse?collection=83&page=10&sort_field=added",
+          "status": "archive_and_main_issue_obtained_qualifying_issues_not_obtained",
+          "target_issue_dates": [
+            "1990-03-30",
+            "1990-04-01",
+            "1990-04-02",
+            "1990-04-03"
+          ],
+          "scope": "University of Central Florida RICHES maintains the digitized local paper. 1990 collection lists 239 issues; the exact early-April issue search URLs were inaccessible and no Q sheet was found. Do not assume every date has a surviving issue."
         }
       }
     },
@@ -11205,6 +11272,16 @@
             "selected_tests_passed": 33,
             "security_tests_passed": 24,
             "scope": "Exact previous HEAD, log explicitly lists saved-source Frankfurt integration test passing, plus application triage tests. Not validation of subsequent evidence changes."
+          },
+          "latest_verified_followup_ci": {
+            "head": "035ffcab2c6e2b0e3f317fb7ea52423605ed6846",
+            "workflow_run_id": 45780127103,
+            "job_id": 139774195541,
+            "conclusion": "success",
+            "selected_tests_passed": 121,
+            "security_tests_passed": 24,
+            "saved_candidate_test_call_seconds": 160.82,
+            "scope": "Backend PR critical log on exact previous HEAD explicitly includes Saved Frankfurt candidate and historical evidence file. Separate World Package job skipped; backend log reports 24 further passed. Both W52 CLI audits not evidenced by this run; no publication or point certification."
           }
         },
         "targeted_source_followup_2026_11_26": {

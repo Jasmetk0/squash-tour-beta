@@ -1498,8 +1498,8 @@ def test_workbook_conflict_followup_preserves_original_comparison_and_qualificat
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert row["profile_status"] == "not_in_published_sporting_source"
-    assert batch["summary"]["reported_seed_count_rows"] == 67
-    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 62
+    assert batch["summary"]["reported_seed_count_rows"] == 68
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 63
 
 
 def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
@@ -1873,3 +1873,69 @@ def test_new_haven_additional_partial_report_does_not_inflate_qualification_cove
     assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert row["profile_status"] == "not_in_published_sporting_source"
     assert batch["summary"]["verified_qualification_date_rows"] == 0
+
+
+def test_prague_original_programme_range_is_not_a_qualification_phase(batch):
+    from datetime import date, timedelta
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "prague_1999")
+    e = row["historical_evidence"]
+    a = e["prague_program_archive_followup_2026_11_26"]
+    museum = a["museum_inventory"]
+    assert (museum["carton"], museum["item"], museum["pdf_page_index"]) == (3, 126, 7)
+    assert museum["visual_verification"] is True
+    assert museum["pdf_sha256"] is museum["printed_page"] is None
+    assert a["bibliographic_record"]["publication_year"] == 1990
+    assert (e["main_seeds"], e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (8, 4, 3)
+    assert a["partial_label_crosscheck"]["observed_q_labels_in_one_main_pairing"] == 2
+    assert a["main_opening"]["reported_round"] == "R32"
+    assert a["main_opening"]["reported_date"] == row["original_start_date"] == "1990-08-06"
+    assert row["original_end_date"] == "1990-08-12"
+    w = a["program_event_window"]
+    start, end = date.fromisoformat(w["start_date"]), date.fromisoformat(w["end_date"])
+    assert start.isoformat() == "1990-08-04" and end.isoformat() == row["original_end_date"]
+    weeks = sorted({(start + timedelta(days=i)).isocalendar().week
+                    for i in range((end - start).days + 1)})
+    assert weeks == w["calendar_year_weeks"] == [31, 32]
+    for offset, clock in ((1, RunCalendar(52, 1, 1990, 2)), (37, RunCalendar(52, 37, 1989, 2))):
+        positions = [clock.calendar_to_season(1990, week) for week in weeks]
+        assert all(pos is not None for pos in positions)
+        assert w[f"offset_{offset}"] == [
+            {"season_index": pos.season_index, "season_week": pos.season_week}
+            for pos in positions]
+    assert row["mapped_year_weeks"] == [{"calendar_year": 1990, "year_week": 32}]
+    assert all(a[k] is None for k in ("actual_q_dates", "actual_q_entrants", "complete_q_draw", "reserved_main_places"))
+    assert e["qualification_size_secondary"] is e["qualification_entrants"] is None
+    assert e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert "advertised_qualification_window" not in e
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert all(a[key]["source_url"] in e["source_urls"] for key in (
+        "museum_inventory", "bibliographic_record", "main_opening",
+        "partial_label_crosscheck", "local_press_route"))
+
+
+def test_ranking_source_conflicts_are_not_approved_historical_policy(batch):
+    rules = batch["historical_points_evidence"]
+    a = rules["ranking_inclusion_source_disagreement"]["additional_source_review_2026_11_26"]
+    assert a["atp"]["reported_bonus_end_year"] == 1999
+    assert a["ao"]["reported_bonus_end_year"] == 1989
+    assert a["contemporary_bonus"]["published_on"] == "1992-01-31"
+    assert a["contemporary_bonus"]["reported_opponent_rank_max"] == 200
+    assert a["contemporary_bonus"]["printed_page"] == "4B"
+    assert a["contemporary_bonus"]["pdf_sha256"] is None
+    assert a["source_reconstruction"]["reported_mandatory_grand_slams"] == 4
+    assert a["ao"]["reported_grand_slams_mandatory_in_1990"] is False
+    assert a["itf_visual"]["reported_cutoff_change_year"] == 1991
+    assert a["itf_visual"]["pdf_page_index"] == 6
+    assert a["finals_primary_rule"] is a["qualifying_loss_points"] is None
+    assert a["product_policy_approved"] is False
+    assert rules["rank_dependent_bonus_awards"] is True
+    assert rules["qualifying_loss_points"] is None
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    f = row["historical_evidence"]["ranking_source_conflict_followup_2026_11_26"]
+    assert f["secondary_reported_opponent_bonus"] is False
+    assert f["secondary_reported_special_inclusion"] is True
+    assert f["primary_finals_bonus_rule"] is f["primary_finals_inclusion_rule"] is None
+    assert f["owner_approved"] is False
+    assert row["profile_status"] == "not_in_published_sporting_source"

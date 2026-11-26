@@ -207,12 +207,13 @@ class PreparedSaveCheckpoint:
     post-insert checks) is unchanged and independent of where this came from.
     """
 
-    __slots__ = ('run_id', 'branch_id', 'fingerprint', 'payload_digest', '_state')
+    __slots__ = ('run_id', 'branch_id', 'fingerprint', 'payload_digest', '_state', 'retained')
 
-    def __init__(self, *, run_id, branch_id, state, fingerprint, payload_digest):
+    def __init__(self, *, run_id, branch_id, state, fingerprint, payload_digest, retained=None):
         self.run_id, self.branch_id = run_id, branch_id
         self.fingerprint, self.payload_digest = fingerprint, payload_digest
         self._state = state
+        self.retained = retained
 
     def take(self, *, run_id, branch_id, fingerprint, payload_digest):
         """The private value if it decodes exactly these bytes; consumed either way."""
@@ -230,9 +231,11 @@ class PreparedSaveCheckpoint:
 def prepare_checkpoint_for_save(session_factory, *, run_id, branch_id, repository):
     """Read and privately decode the live row in an ordinary read snapshot.
 
-    Runs before ``BEGIN IMMEDIATE`` so the defensive copy (cache hit) or the
-    strict parse (cache miss) does not extend the SQLite writer lock. A
-    concurrent commit simply makes the later byte comparison fail.
+    Runs before ``BEGIN IMMEDIATE`` so the strict parse (cache miss) does not
+    extend the SQLite writer lock. On a cache hit the retained value is taken
+    rather than copied (``retained``); only a committed Save that used it
+    returns it to the live cache. A concurrent commit simply makes the later
+    byte comparison fail and the taken value is dropped.
     """
     from sqlalchemy import text
 
@@ -242,6 +245,18 @@ def prepare_checkpoint_for_save(session_factory, *, run_id, branch_id, repositor
     if row is None:
         return None
     raw, fingerprint = row
+    from beta_engine.infrastructure.db.native_fork_source_projection import take_live_calendar_component
+    # A retained strict decode of exactly these bytes becomes this Save's own
+    # value: no defensive copy is needed because nothing else can reach it.
+    taken = take_live_calendar_component(repository, run_id=run_id, branch_id=branch_id,
+        kind=COMPONENT_KEY, raw=raw)
+    if taken is not None:
+        key, entry = taken
+        state = entry[1]
+        if (state.run_id, state.branch_id, entry[2]) != (run_id, branch_id, fingerprint):
+            return None
+        return PreparedSaveCheckpoint(run_id=run_id, branch_id=branch_id, state=state,
+            fingerprint=fingerprint, payload_digest=key[3], retained=(key, entry))
     try:
         state = _decode_checkpoint_row(raw, fingerprint,
             run_id=run_id, branch_id=branch_id, repository=repository)

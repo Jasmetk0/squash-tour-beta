@@ -423,3 +423,45 @@ def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_
             while len(cache) > entry_limit or sum(item[0] for item in cache.values()) > byte_limit:
                 cache.pop(next(iter(cache)))
     return result
+
+
+def take_live_calendar_component(repository, *, run_id, branch_id, kind, raw):
+    """Remove and return the retained private decode of exactly ``raw``.
+
+    For the manual Save coordinator only, instead of a defensive copy. The
+    entry leaves the cache under its lock: no other request can copy or take
+    it while its single new owner uses it, and no reader ever sees it until
+    ``reinstall_live_calendar_component``. Concurrent readers of the same
+    bytes simply decode again. Returns ``(key, entry)`` or ``None``.
+    """
+    if repository is None:
+        return None
+    actual = raw.encode('utf-8')
+    if len(actual) > MAX_LIVE_COMPONENT_BYTES:
+        return None
+    key = (run_id, branch_id, kind, hashlib.sha256(actual).digest())
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_calendar_value_cache', None)
+        known = cache.pop(key, None) if cache else None
+    if known is None or len(known) < 4 or known[2] is None:
+        return None
+    return key, known
+
+
+def reinstall_live_calendar_component(repository, key, entry):
+    """Retain a taken value again, ONLY after its Save committed unchanged bytes.
+
+    The same model is then also owned by the global decode cache. Both caches
+    only ever return defensive copies, so neither exposes it. A value decoded
+    meanwhile by another reader is kept instead.
+    """
+    if repository is None:
+        return
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_calendar_value_cache', None)
+        if cache is None:
+            cache = repository._live_calendar_value_cache = {}
+        if key not in cache:
+            cache[key] = entry
+        while len(cache) > 4 or sum(item[0] for item in cache.values()) > MAX_LIVE_COMPONENT_BYTES:
+            cache.pop(next(iter(cache)))

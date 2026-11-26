@@ -9,6 +9,7 @@ Save gate. Compared databases use deterministic Saved/audit IDs.
 import json
 import os
 import sqlite3
+import sys
 from concurrent.futures import ThreadPoolExecutor
 from itertools import count
 from uuid import NAMESPACE_URL, uuid5
@@ -454,3 +455,63 @@ def test_fork_save_and_restore_keep_their_original_paths(tmp_path, prepared_slot
         save_tour(server)
         assert seen["used"] == 3
         assert target.view()["next_slot"]["remaining"] == 2
+
+
+def test_taken_live_value_is_uncopied_and_returns_only_after_commit(tmp_path, prepared_slots, monkeypatch):
+    from beta_engine.infrastructure.db import native_fork_source_projection as cache
+    from beta_engine.infrastructure.db import repositories
+
+    path = tmp_path / "taken-value.db"
+    copy_database(prepared_slots, path)
+    copies = []
+    copy = cache._copy_decoded_value
+
+    def counted(value, *args, **kwargs):
+        if getattr(value, "schema_version", None) == "calendar_sporting_checkpoint.v13":
+            copies.append(sys._getframe(1).f_code.co_name)
+        return copy(value, *args, **kwargs)
+
+    def retained(repository):
+        """Values retained for exactly the current live row bytes."""
+        import hashlib
+
+        with sqlite3.connect(path) as db:
+            (raw,) = db.execute("SELECT payload_json FROM calendar_player_sporting_checkpoints "
+                                "WHERE run_id='run' AND branch_id='branch'").fetchone()
+        key = ("run", "branch", "calendar_player_sporting_checkpoint",
+               hashlib.sha256(raw.encode("utf-8")).digest())
+        with repository._revision_validation_lock:
+            entry = getattr(repository, "_live_calendar_value_cache", {}).get(key)
+        return [] if entry is None else [entry[1]]
+
+    monkeypatch.setattr(cache, "_copy_decoded_value", counted)
+    seen = _observe(monkeypatch)
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        repository = server.app.state.runtime.repository
+        execute(server, command(inspect(server), "next-match", name="taken-rollback"))
+        view = inspect(server)
+        (before,) = retained(repository)
+        capture = repositories.capture_saved_calendar_match
+
+        def fail(*args, **kwargs):
+            capture(*args, **kwargs)
+            raise ValueError("Injected rollback after the taken value was captured")
+
+        with monkeypatch.context() as patch:
+            patch.setattr(repositories, "capture_saved_calendar_match", fail)
+            copies.clear()
+            assert _post_save(server, view)[0] == 409
+        # Taken without a copy, then dropped by the rolled-back Save.
+        assert seen["used"] == 1 and "decoded_live_calendar_component" not in copies
+        assert retained(repository) == [] and before is not None
+        inspect(server)  # an ordinary reader decodes the unchanged row again
+        (fresh,) = retained(repository)
+        copies.clear()
+        status, receipt = _post_save(server, view)
+        assert status == 201, receipt
+        assert seen["used"] == 2 and "decoded_live_calendar_component" not in copies
+        # The committed Save returned exactly its own value to the live cache.
+        assert [value is fresh for value in retained(repository)] == [True]
+        copies.clear()
+        execute(server, command(inspect(server), "next-match", name="taken-after-commit"))
+        assert "decoded_live_calendar_component" in copies  # readers still get copies

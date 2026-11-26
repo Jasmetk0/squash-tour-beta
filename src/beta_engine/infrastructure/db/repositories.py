@@ -6438,6 +6438,7 @@ class SimulationPersistenceRepository:
         committed_global_append = None
         origin_value_projections = {}
         prepared_checkpoint = None
+        reinstall_live = None
         if expected_calendar_tour_fingerprint is not None:
             from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
                 prepare_checkpoint_for_save,
@@ -6712,6 +6713,12 @@ class SimulationPersistenceRepository:
                     session, run_id=run_id, branch_id=branch_id, repository=self,
                     prepared=prepared_checkpoint,
                 )
+                # A value taken from the live decode cache returns there only
+                # after a successful commit, and only if this Save used it.
+                reinstall_live = (prepared_checkpoint.retained
+                    if prepared_checkpoint is not None and checkpoint_read is not None
+                    and prepared_checkpoint.retained is not None
+                    and checkpoint_read.state is prepared_checkpoint.retained[1][1] else None)
                 prepared_checkpoint = None
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
@@ -7228,6 +7235,19 @@ class SimulationPersistenceRepository:
                 retain_origin_projection_values,
             )
             retain_origin_projection_values(self, origin_value_projections)
+            if (
+                reinstall_live is not None
+                and verified_native_save_receipt.payload["content"]
+                .get(CALENDAR_SPORTING_COMPONENT_KEY, {}).get("fingerprint") == reinstall_live[1][2]
+            ):
+                # Committed Save only. The private value taken from the live
+                # decode cache was captured as exactly the fingerprint of the
+                # unchanged live row. Only then may it serve that row's bytes
+                # again; a rolled-back or declined Save simply drops it.
+                from beta_engine.infrastructure.db.native_fork_source_projection import (
+                    reinstall_live_calendar_component,
+                )
+                reinstall_live_calendar_component(self, *reinstall_live)
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None

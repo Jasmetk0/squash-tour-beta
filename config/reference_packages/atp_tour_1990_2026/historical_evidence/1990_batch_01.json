@@ -10377,7 +10377,9 @@
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://as13dev-new.library.yale.edu/2814.pdf",
           "https://guides.library.yale.edu/newhaven/newspapers",
-          "https://nhfpl.org/how-do-i/research/local-history/"
+          "https://nhfpl.org/how-do-i/research/local-history/",
+          "https://cdn.manchesterhistory.org/News/Manchester%20Evening%20Hearld_1990-08-18.pdf",
+          "https://www.atptour.com/es/players/-/c270/bio"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10757,6 +10759,45 @@
           "full_qualifying_draw": null,
           "reserved_main_places": null,
           "next_request": "Request folder 411 press releases, daily results and draws dated August 11–13; also check August 11–13 New Haven Register sports pages. Prior evidence of one three-win path is not a full draw."
+        },
+        "contemporary_source_integrity_followup_2026_11_26": {
+          "status": "additional_contemporary_partial_path_not_full_qualification",
+          "reviewed_on": "2026-11-26",
+          "source": {
+            "source_url": "https://cdn.manchesterhistory.org/News/Manchester%20Evening%20Hearld_1990-08-18.pdf",
+            "published_on": "1990-08-18",
+            "printed_page": null,
+            "scope": "Manchester Herald AP quarterfinal report repeats three qualifying weekend wins and quotes eight matches in seven days. The latter is not a complete singles qualification log or exact daily distribution. Indexed text inspected, PDF rendering failed.",
+            "source_type": "contemporary_newspaper_pdf_indexed_text",
+            "pdf_page_index": null,
+            "pdf_sha256": null,
+            "screen_status": "http_403",
+            "reported_q_wins": 3,
+            "reported_matches_in_seven_days": 8,
+            "reported_quarterfinal_day": "1990-08-17"
+          },
+          "additional_source": {
+            "source_url": "https://www.atptour.com/es/players/-/c270/bio",
+            "published_on": null,
+            "printed_page": null,
+            "scope": "Official ATP player biography explicitly identifies the same 1990 New Haven quarterfinalist as a qualifier; not a full qualifying draw."
+          },
+          "attempts": [
+            {
+              "source_url": "https://cdn.manchesterhistory.org/News/Manchester%20Evening%20Hearld_1990-08-11.pdf",
+              "outcome": "http_403_unverified_issue_contents"
+            },
+            {
+              "source_url": "https://cdn.manchesterhistory.org/News/Manchester%20Evening%20Hearld_1990-08-13.pdf",
+              "outcome": "http_403_unverified_issue_contents"
+            }
+          ],
+          "actual_qualification_start_date": null,
+          "actual_qualification_end_date": null,
+          "actual_qualification_entrants": null,
+          "full_qualifying_draw": null,
+          "reserved_main_places": null,
+          "scope": "Separate follow-up AP story, not independent reporter corroboration; same successful path as prior evidence, no additional verified qualifiers or event-wide actual dates."
         }
       }
     },
@@ -15049,7 +15090,12 @@
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
           "https://www.latimes.com/archives/la-xpm-1990-11-17-sp-4014-story.html",
-          "https://www.washingtonpost.com/archive/sports/1990/11/15/its-edberg-over-agassi-in-thriller/bd794149-54b5-4c06-9dd7-c38df8d95157/"
+          "https://www.washingtonpost.com/archive/sports/1990/11/15/its-edberg-over-agassi-in-thriller/bd794149-54b5-4c06-9dd7-c38df8d95157/",
+          "https://www.latimes.com/archives/la-xpm-1990-11-14-sp-3965-story.html",
+          "https://www.latimes.com/archives/la-xpm-1990-11-19-sp-3670-story.html",
+          "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
+          "https://www.the-independent.com/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html",
+          "https://www.caymancompass.com/1992/11/18/stars-want-tennis-shake-up"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -15710,6 +15756,67 @@
               "season_week": 10
             }
           }
+        },
+        "contemporary_source_integrity_followup_2026_11_26": {
+          "status": "contemporary_format_corroboration_not_numeric_rule_verification",
+          "reviewed_on": "2026-11-26",
+          "opening_report": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-11-14-sp-3965-story.html",
+            "published_on": "1990-11-14",
+            "printed_page": null,
+            "scope": "Contemporary report explicitly describes the Tuesday opening and three completed group matches, including two that the indexed later ATP PDF marks as retirements. No historical identities or scores imported.",
+            "actual_day": "1990-11-13",
+            "reported_completed_group_matches": 3,
+            "reported_retirements_in_those_matches": 0,
+            "calendar_year_week": 46
+          },
+          "semifinal_final_report": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-11-19-sp-3670-story.html",
+            "published_on": "1990-11-19",
+            "printed_page": null,
+            "scope": "Contemporary report identifies both crossover semifinal winners on Saturday and the four-set Sunday final, consistent with official heritage HTML, not contradictory indexed PDF rows. Prize money and ranking-clinch wording are not point awards.",
+            "semifinal_day": "1990-11-17",
+            "final_day": "1990-11-18",
+            "reported_semifinals": 2,
+            "reported_finals": 1
+          },
+          "source_extraction_crosscheck": {
+            "heritage_url": "https://www.nittoatpfinals.com/en/heritage/results-1970-1999",
+            "pdf_urls": [
+              "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
+              "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf"
+            ],
+            "prior_alternate_pdf_printed_page": 18,
+            "prior_alternate_pdf_page_index": 17,
+            "current_pdf_screen_attempts": "http_403",
+            "pdf_sha256": null,
+            "scope": "The existing evidence documents a prior visually checked alternate PDF agreeing with heritage HTML; current indexed extracts have contradictory rows. Do not treat text extraction errors as proven errors in original printed pages. Contemporary opening and final reports independently support heritage HTML. No retirement-based awards inferred."
+          },
+          "ranking_context": [
+            {
+              "source_url": "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
+              "published_on": "1989-08-31",
+              "printed_page": null,
+              "scope": "Contemporary ATP reform announcement says best 14 results count starting January 1990. It is not the Finals award or inclusion rule."
+            },
+            {
+              "source_url": "https://www.the-independent.com/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html",
+              "published_on": "1999-11-22",
+              "printed_page": null,
+              "scope": "Reports Best 14 over 52 weeks since 1990 and separates announced 2000 mandatory-event/Finals addition rules from prior ranking. Do not backport the 2000 extra Finals result into 1990."
+            },
+            {
+              "source_url": "https://www.caymancompass.com/1992/11/18/stars-want-tennis-shake-up",
+              "published_on": "1992-11-18",
+              "printed_page": null,
+              "scope": "Contemporary 1992 Frankfurt report confirms Best 14 in that season, not the exact 1990 Finals inclusion/expiry."
+            }
+          ],
+          "historical_finals_inclusion_verified": false,
+          "primary_numeric_rule_verified": false,
+          "owner_approval": false,
+          "publication_allowed": false,
+          "scope": "Three actual competition dates corroborated without changing canonical November 12–18 archive window; all lie in W46. Distinguish extraction, format, points and ranking inclusion."
         }
       }
     }

@@ -7,6 +7,8 @@ before invoking this verifier. Historical v2/v3 serialized bytes never change.
 """
 from __future__ import annotations
 
+from bisect import bisect_left
+from operator import attrgetter
 from typing import Literal
 
 from pydantic import Field, model_validator
@@ -185,7 +187,8 @@ def verify_calendar_native_birth_history(
     ):
         raise ValueError("Native replay requires an original calendar lifecycle and Signed Run source")
     first = states[0]
-    if first.week.ordinal != 0 or len(states) != states[-1].week.ordinal + 1:
+    last_ordinal = states[-1].week.ordinal
+    if first.week.ordinal != 0 or len(states) != last_ordinal + 1:
         raise ValueError("Native replay requires contiguous opening-to-current weekly states")
     if (
         type(source.fingerprint) is not str or len(source.fingerprint) != 64
@@ -202,6 +205,7 @@ def verify_calendar_native_birth_history(
     # The entries belong to prior ACTUAL submissions, not to birth identity.
     first_by_id = {}
     seen_applications = set()
+    player_id_key = attrgetter("player_id")
     for sub in submissions:
         if (
             sub.schema_version != "tournament_application_submission_authority.v2"
@@ -209,18 +213,23 @@ def verify_calendar_native_birth_history(
             or not isinstance(sub.submission_week, RunWeekPosition)
         ):
             raise ValueError("Native replay requires scoped, calendar-owned real Tour Entry evidence")
-        if sub.submission_week.ordinal > states[-1].week.ordinal:
+        submission_ordinal = sub.submission_week.ordinal
+        if submission_ordinal > last_ordinal:
             raise ValueError("Native replay contains a future Tour Entry outside owned history")
         if sub.application_id in seen_applications:
             raise ValueError("Native replay has a duplicate Tour application identity")
         seen_applications.add(sub.application_id)
         if not _compatible_calendar(first.week, sub.submission_week):
             raise ValueError("Native replay Tour Entry has an incompatible Run clock")
-        if sub.submission_week.ordinal < len(states):
-            current_population = {p.player_id: p for p in states[sub.submission_week.ordinal].players}
-            player = current_population.get(sub.player_id)
-            if player is None or player.status != "active" or player.age < 15:
-                raise ValueError("Native replay has Entry before birth or after retirement")
+        # Lifecycle models have canonical sorted, unique rosters. Seek the
+        # requested player in that week's roster without rebuilding an index.
+        players = states[submission_ordinal].players
+        index = bisect_left(players, sub.player_id, key=player_id_key)
+        if index == len(players) or players[index].player_id != sub.player_id:
+            raise ValueError("Native replay has Entry before birth or after retirement")
+        player = players[index]
+        if player.status != "active" or player.age < 15:
+            raise ValueError("Native replay has Entry before birth or after retirement")
         previous = first_by_id.get(sub.player_id)
         if previous is None or sub.decision_position < previous.decision_position:
             first_by_id[sub.player_id] = sub
@@ -269,17 +278,8 @@ def verify_calendar_native_birth_history(
         all_previous = current
     _remember_birth_steps(states, source, world_package_id, submissions, steps)
 
-    # Verify that signed entry receipts could not have been published before
-    # their player existed, INCLUDING earlier v3 steps without birth events.
-    for sub in submissions:
-        if sub.submission_week.ordinal < len(states):
-            sealed = next(
-                (s for s in states
-                 if s.week.ordinal == sub.submission_week.ordinal),
-                None,
-            )
-            if sealed is None or sub.player_id not in {p.player_id for p in sealed.players}:
-                raise ValueError("Native replay Tour Entry uses an unadmitted athlete")
+    # The exact replay above establishes that each roster checked by index
+    # belongs to that ordinal, including the previously verified prefix.
     return CalendarNativeBirthReplayProof(
         run_id=first.run_id, branch_id=first.branch_id,
         # Proofs bind the v1 snapshot effective at their own last week. Later

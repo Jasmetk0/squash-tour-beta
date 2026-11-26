@@ -135,6 +135,26 @@ def test_an_application_never_creates_entry_under_v87():
         advance_calendar_lifecycle(w2, week(3), (application("b", 1),), (decision("b", 2),))
 
 
+def test_v87_application_replay_preserves_owner_scope_and_exact_entry_weeks():
+    opening = bootstrap("turn_pro.v87")
+    prior = advance_calendar_lifecycle(
+        opening, week(2), turn_pro=(decision("a", 2), decision("b", 2)),
+    )
+    expected = advance_calendar_lifecycle(prior, week(3))
+    valid = (application("b", 2), application("a", 2), application("a", 2))
+    future_unknown = application("unknown", 3)
+    actual = advance_calendar_lifecycle(prior, week(3), (future_unknown, *valid))
+    assert actual.model_dump_json() == expected.model_dump_json()
+    assert actual.fingerprint == expected.fingerprint
+
+    with pytest.raises(ValueError, match="predates the player's Turn Pro week"):
+        advance_calendar_lifecycle(prior, week(3), (*valid, application("unknown", 2)))
+    with pytest.raises(ValueError, match="Foreign native lifecycle Entry authority"):
+        advance_calendar_lifecycle(
+            prior, week(3), (*valid, future_unknown.model_copy(update={"branch_id": "other"})),
+        )
+
+
 def test_entry_gate_is_a_no_op_for_history_and_strict_for_v87():
     legacy = bootstrap()
     require_professional_for_entry(legacy, "a", week(1))

@@ -1,0 +1,173 @@
+{
+  "schema": "atp_2019_unpublished_profile_candidates.v1",
+  "status": "blocked_do_not_install",
+  "notes": "Payloads deliberately omit all hashes. A candidate is not a validated profile. No hash may be inserted without obtaining and reviewing exact original documents. Source URLs are intended original PDF locations, not proof of access. Sofia preliminary Main PDF mirror supports geometry but not final qualifiers. The actual production adapter and source v6 remain unchanged.",
+  "candidates": [
+    {
+      "occurrence_id": "atp_2019_cordoba",
+      "blocked_on": [
+        "primary Main PDF not retrieved; Q PDF text only, original bytes unavailable",
+        "confirm February-effective rulebook edition (draw confirms Q and secondary Main points)",
+        "production Setup HTTP/SQLite not executed"
+      ],
+      "profile": {
+        "schema_version": "atp_squash_knockout_profile.v2",
+        "occurrence_id": "atp_2019_cordoba",
+        "category_id": "atp_250",
+        "name": "Córdoba Open 2019",
+        "source_start_date": "2019-02-04",
+        "source_end_date": "2019-02-10",
+        "source_urls": [
+          "https://www.protennislive.com/posting/2019/9158/mds.pdf",
+          "https://www.protennislive.com/posting/2019/9158/qs.pdf"
+        ],
+        "source_pdf_sha256": {},
+        "qualification_date_status": "verified",
+        "qualification_date_evidence": {
+          "start_date": "2019-02-02",
+          "end_date": "2019-02-03",
+          "source_urls": [
+            "https://viapais.com.ar/cordoba/834015-cordoba-open-asi-se-prepara-el-predio-del-kempes-para-recibir-al-atp-250/",
+            "https://viapais.com.ar/cordoba/815658-cordoba-open-cachin-y-diaz-acosta-las-wild-cards-de-qualy-del-atp-250/"
+          ],
+          "published_dates": [
+            "2019-01-30",
+            "2019-01-20"
+          ]
+        },
+        "entrant_selection": "admin_selected_no_automatic_race_or_age",
+        "main_entrants": 28,
+        "qualification_entrants": 16,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "seeds_count": 8,
+        "byes": 4,
+        "match_best_of": 5,
+        "ranked": true,
+        "main_points": {
+          "champion": 250,
+          "finalist": 150,
+          "semifinal": 90,
+          "quarterfinal": 45,
+          "round_of_16": 20,
+          "round_of_32": 0
+        },
+        "qualification_points": {
+          "qualifier": 12,
+          "round_2_loss": 6,
+          "round_1_loss": 0
+        }
+      }
+    },
+    {
+      "occurrence_id": "atp_2019_sofia",
+      "blocked_on": [
+        "original Main final/Q PDFs and exact byte hashes missing; preliminary Main PDF visual evidence obtained",
+        "Q qualification 12/6/0 still needs full original Q point table or February-effective rulebook; 6 corroborated by dated venue results",
+        "Q overlaps Main on 4 Feb; exact round scheduling review"
+      ],
+      "profile": {
+        "schema_version": "atp_squash_knockout_profile.v2",
+        "occurrence_id": "atp_2019_sofia",
+        "category_id": "atp_250",
+        "name": "Sofia Open 2019",
+        "source_start_date": "2019-02-04",
+        "source_end_date": "2019-02-10",
+        "source_urls": [
+          "https://www.protennislive.com/posting/2019/7434/mds.pdf",
+          "https://www.protennislive.com/posting/2019/7434/qs.pdf"
+        ],
+        "source_pdf_sha256": {},
+        "qualification_date_status": "verified",
+        "qualification_date_evidence": {
+          "start_date": "2019-02-03",
+          "end_date": "2019-02-04",
+          "source_urls": [
+            "https://www.tenniskafe.com/balgarski-tenis/predvaritelna-programa-na-sofia-open-2019/"
+          ],
+          "published_dates": [
+            "2018-12-15"
+          ]
+        },
+        "entrant_selection": "admin_selected_no_automatic_race_or_age",
+        "main_entrants": 28,
+        "qualification_entrants": 16,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "seeds_count": 8,
+        "byes": 4,
+        "match_best_of": 5,
+        "ranked": true,
+        "main_points": {
+          "champion": 250,
+          "finalist": 150,
+          "semifinal": 90,
+          "quarterfinal": 45,
+          "round_of_16": 20,
+          "round_of_32": 0
+        },
+        "qualification_points": {
+          "qualifier": 12,
+          "round_2_loss": 6,
+          "round_1_loss": 0
+        }
+      }
+    },
+    {
+      "occurrence_id": "atp_2019_delray_beach",
+      "blocked_on": [
+        "Original PDF bytes unavailable; visual and text review is not SHA-256 evidence",
+        "February-effective general additive Q ranking rule still needs exact source review; draw tables directly confirm both point tables",
+        "production Setup and native play not executed"
+      ],
+      "profile": {
+        "schema_version": "atp_squash_knockout_profile.v2",
+        "occurrence_id": "atp_2019_delray_beach",
+        "category_id": "atp_250",
+        "name": "Delray Beach Open 2019",
+        "source_start_date": "2019-02-18",
+        "source_end_date": "2019-02-24",
+        "source_urls": [
+          "https://www.protennislive.com/posting/2019/499/mds.pdf",
+          "https://www.protennislive.com/posting/2019/499/qs.pdf"
+        ],
+        "source_pdf_sha256": {},
+        "qualification_date_status": "verified",
+        "qualification_date_evidence": {
+          "start_date": "2019-02-16",
+          "end_date": "2019-02-17",
+          "source_urls": [
+            "https://www.ustaflorida.com/news/deadline-this-week-for-atp-delray-beach-survivor-pre-qualifying/",
+            "https://www.inflorida.com/news/delray-beach-open-by-vitacostcom-announces-2019-line-up/648"
+          ],
+          "published_dates": [
+            "2018-11-12",
+            "2019-01-02"
+          ]
+        },
+        "entrant_selection": "admin_selected_no_automatic_race_or_age",
+        "main_entrants": 32,
+        "qualification_entrants": 16,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "seeds_count": 8,
+        "byes": 0,
+        "match_best_of": 5,
+        "ranked": true,
+        "main_points": {
+          "champion": 250,
+          "finalist": 150,
+          "semifinal": 90,
+          "quarterfinal": 45,
+          "round_of_16": 20,
+          "round_of_32": 0
+        },
+        "qualification_points": {
+          "qualifier": 12,
+          "round_2_loss": 6,
+          "round_1_loss": 0
+        }
+      }
+    }
+  ]
+}

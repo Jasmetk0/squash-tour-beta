@@ -1,0 +1,192 @@
+{
+  "schema": "atp_2019_january_secondary_evidence.v1",
+  "status": "blocked_not_installed",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_sydney_2019",
+      "atp_id": "338",
+      "main_start": "2019-01-06",
+      "main_end": "2019-01-12",
+      "observed_q_dates": [
+        "2019-01-05",
+        "2019-01-06"
+      ],
+      "q_date_status": "secondary_actual_dates_with_duplicate_daily_rows",
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_actual_seed_markers": 7,
+        "main_nominal_seed_count": 8,
+        "main_wc": 3,
+        "main_q_markers": 4,
+        "main_ll_markers": 2,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_spots": 4,
+        "q_byes": 0,
+        "q_wc": 2,
+        "q_seed_markers": 8
+      },
+      "main_bye_slots": [
+        2,
+        10,
+        23,
+        31
+      ],
+      "main_q_slots": [
+        12,
+        14,
+        15,
+        27
+      ],
+      "main_ll_slots": [
+        4,
+        32
+      ],
+      "main_wc_slots": [
+        6,
+        18,
+        29
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "qualifier_winners_in_main": 4,
+      "points_status": "secondary Q12/6/0; category guide Main table, original draws not retrieved",
+      "sources": [
+        {
+          "url": "https://en.tennistemple.com/competitions/sydney/2019/draw",
+          "role": "secondary final Main; one LL occupies withdrawn seed position"
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/sydney/2019/draw-qualifications",
+          "role": "secondary Q full 16; four winners match Main"
+        },
+        {
+          "url": "https://fr.tennistemple.com/competitions/sydney/2019/orderofplay/2019-01-05",
+          "role": "mixed ATP/WTA results; eight men's Q1 unique pairings"
+        },
+        {
+          "url": "https://fr.tennistemple.com/competitions/sydney/2019/orderofplay/2019-01-06",
+          "role": "four men's Q2, two men's Main R1, several Q1 duplicate prior-day rows; do not sum duplicated rows or infer local completion timestamp"
+        },
+        {
+          "url": "https://www.atptour.com/-/media/files/media-guide/2020/2020-atp-media-guide-records-results-v3.pdf",
+          "role": "visual printed p165 confirms Jan6 start"
+        },
+        {
+          "url": "https://www.sportingnews.com/au/tennis/news/sydney-international-tennis-2019-draw-schedule-how-to-watch-live-at-sydney-olympic-park/149o201081oxj199mugc3ged6u",
+          "role": "contemporary schedule reports Jan6 Main/qualifying and Jan12 final; preplay date not established"
+        }
+      ],
+      "gaps": [
+        "original Main/Q PDF URLs returned inaccessible; no hashes",
+        "preplay Q source and local completion timing; observed days not full verified window",
+        "nominal vs actual seed replacement and LL semantics",
+        "Q2 overlaps Main on Jan6; both Main start and Q are ISO W01, Main finish W02"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_auckland",
+      "atp_id": "301",
+      "main_start": "2019-01-07",
+      "main_end": "2019-01-12",
+      "observed_q_dates": [
+        "2019-01-05",
+        "2019-01-06"
+      ],
+      "q_date_status": "secondary local dates; result times timezone-sensitive",
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_actual_seed_markers": 7,
+        "main_nominal_seed_count": null,
+        "main_wc": 3,
+        "main_q_markers": 4,
+        "main_ll_markers": 2,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_spots": 4,
+        "q_byes": 0,
+        "q_wc": 2,
+        "q_seed_markers": null
+      },
+      "main_bye_slots": [
+        2,
+        10,
+        23,
+        31
+      ],
+      "main_q_slots": [
+        20,
+        21,
+        26,
+        28
+      ],
+      "main_ll_slots": [
+        14,
+        25
+      ],
+      "main_wc_slots": [
+        5,
+        12,
+        15
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "qualifier_winners_in_main": 4,
+      "points_status": "secondary Q12/6/0; category guide Main table, original draws not retrieved",
+      "sources": [
+        {
+          "url": "https://en.tennistemple.com/competitions/auckland/2019/draw",
+          "role": "secondary final Main; seven visible seed markers including #9, nominal seed list not established"
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/auckland/2019/draw-qualifications",
+          "role": "secondary Q full 16, four winners match Main; alternate markers and seed #1 conflict with Czech results"
+        },
+        {
+          "url": "https://www.tenisportal.cz/auckland/2019/atp-muzi/?phase=qualification",
+          "role": "Q16 results, #1 marked in Czech source but ALT in TennisTemple; dates in CET-style listings cross Jan4/5 and Jan5/6, not asserted local times"
+        },
+        {
+          "url": "https://www.dewiki.de/Lexikon/ASB_Classic_2019%2FHerren",
+          "role": "secondary stated Q dates Jan5–6 and Main28"
+        },
+        {
+          "url": "https://www.hotcity.co.nz/events/asb-classic-tennis-2019",
+          "role": "city association lists ATP Jan7–12, distinguishes WTA week"
+        },
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "role": "indexed official result archive Jan7–12; full fetch 403"
+        },
+        {
+          "url": "https://www.world.tennis/en/tournament/auckland/nzl/2019/m-250-nzl-01a-2019/draws-and-results/",
+          "role": "ITF window Jan7–13, differs from ATP finish; no draw loaded"
+        }
+      ],
+      "gaps": [
+        "original Main/Q PDFs inaccessible; no hashes",
+        "dated preplay Q source and primary local daily program needed",
+        "Q seed marker #1 disputed between secondary sources; no invented count",
+        "ITF finish Jan13 vs ATP Jan12; retain canonical Jan12 pending actual final source",
+        "Seven visible Main seed numbers including #9; original nominal seed list and substitution history unresolved"
+      ],
+      "main_visible_seed_numbers": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        9
+      ]
+    }
+  ]
+}

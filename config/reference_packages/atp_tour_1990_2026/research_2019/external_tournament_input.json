@@ -1,0 +1,92 @@
+{
+  "schema": "atp_2019_external_tournament_input.v1",
+  "retrieved": "2026-11-26",
+  "source": {
+    "repo": "serve-and-volley/atp-world-tour-tennis-data",
+    "commit": "a92c6192c5e775df9d6be81d3ef978052b012cd9",
+    "path": "csv/1_tournaments/tournaments_2010-2019.csv",
+    "url": "https://github.com/serve-and-volley/atp-world-tour-tennis-data/blob/a92c6192c5e775df9d6be81d3ef978052b012cd9/csv/1_tournaments/tournaments_2010-2019.csv",
+    "git_blob_sha1": "932dc7042aaaa6d6b87cad8f8c7c57d07bac3ef6",
+    "sha256": "8f9ffbeaf169d88cee77874410cc524669f2e5a23d0da663a7b663ff62c9ef74",
+    "bytes": 266197,
+    "license": "README declares CC BY 4.0 for repository work; original ATP data rights not independently established; no raw CSV redistributed.",
+    "readme": "https://github.com/serve-and-volley/atp-world-tour-tennis-data/blob/a92c6192c5e775df9d6be81d3ef978052b012cd9/README.md",
+    "provenance": "Scraped ATP archive, not an independent primary source; tournament start and advertised draw size, not daily Q or actual entrants."
+  },
+  "observed_2019": {
+    "all": 68,
+    "in_scope": 63,
+    "by_type": {
+      "ATP 250": 39,
+      "ATP 500": 13,
+      "Masters 1000": 9,
+      "ATP Finals": 1,
+      "Next Gen Finals": 1,
+      "Grand Slam": 4,
+      "Laver Cup": 1
+    },
+    "excluded_ids": [
+      "580",
+      "520",
+      "540",
+      "560",
+      "9210"
+    ],
+    "matched_reviewed": [
+      {
+        "occurrence_id": "atp_2019_cordoba",
+        "atp_id": "9158",
+        "type": "ATP 250",
+        "start": "2019-02-04",
+        "advertised_main": 28
+      },
+      {
+        "occurrence_id": "atp_2019_montpellier",
+        "atp_id": "375",
+        "type": "ATP 250",
+        "start": "2019-02-04",
+        "advertised_main": 28
+      },
+      {
+        "occurrence_id": "atp_2019_sofia",
+        "atp_id": "7434",
+        "type": "ATP 250",
+        "start": "2019-02-04",
+        "advertised_main": 28
+      },
+      {
+        "occurrence_id": "atp_2019_rotterdam",
+        "atp_id": "407",
+        "type": "ATP 500",
+        "start": "2019-02-11",
+        "advertised_main": 32
+      }
+    ],
+    "remaining_identity_review": 59
+  },
+  "missing_local_inputs": [
+    {
+      "source": "serve-and-volley match scores 2010–2019",
+      "commit": "a92c6192c5e775df9d6be81d3ef978052b012cd9",
+      "path": "csv/2_match_scores/match_scores_2010-2019.csv",
+      "git_blob_sha1": "4c1e7f3849504aeff8e1f09ffd9740bb3ee6622e",
+      "bytes": 14444860,
+      "sha256": null
+    },
+    {
+      "source": "Aneeshers/tennis-sackmann-archive",
+      "commit": "83733587353df8a41f2fd4f516147d5aa83f5a8d",
+      "sha256": null
+    },
+    {
+      "source": "Tennismylife/ATP-Rankings-Tables",
+      "commit": "5db7baadf060f34491092f6f6709da694b94e9ae",
+      "sha256": null
+    },
+    {
+      "source": "https://stats.tennismylife.org/tennis-match-database",
+      "commit": null,
+      "sha256": null
+    }
+  ]
+}

@@ -1,0 +1,171 @@
+{
+  "schema": "atp_2019_points_source_evidence.v1",
+  "source": {
+    "url": "https://www.atptour.com/-/media/files/media-guide/2019/2019-atp-media-guide.pdf",
+    "printed_page": 176,
+    "accessed": "2026-11-26",
+    "raw_sha256": null,
+    "access": "extracted_text; screenshot 403; no binary bytes",
+    "role": "official season-opening media guide; not a complete rulebook; blanks preserved as null"
+  },
+  "columns": [
+    "winner",
+    "finalist",
+    "semifinal",
+    "quarterfinal",
+    "round_of_16",
+    "round_of_32",
+    "round_of_64",
+    "round_of_128",
+    "qualifier",
+    "q3",
+    "q2"
+  ],
+  "rows": {
+    "atp_250_draw_32": [
+      250,
+      150,
+      90,
+      45,
+      20,
+      null,
+      null,
+      null,
+      12,
+      null,
+      6
+    ],
+    "atp_250_draw_48": [
+      250,
+      150,
+      90,
+      45,
+      20,
+      10,
+      null,
+      null,
+      5,
+      null,
+      3
+    ],
+    "atp_500_draw_32": [
+      500,
+      300,
+      180,
+      90,
+      45,
+      null,
+      null,
+      null,
+      20,
+      null,
+      10
+    ],
+    "atp_500_draw_48": [
+      500,
+      300,
+      180,
+      90,
+      45,
+      20,
+      null,
+      null,
+      10,
+      null,
+      4
+    ],
+    "atp_masters_1000_draw_48_56": [
+      1000,
+      600,
+      360,
+      180,
+      90,
+      45,
+      10,
+      null,
+      25,
+      null,
+      16
+    ],
+    "atp_masters_1000_draw_96": [
+      1000,
+      600,
+      360,
+      180,
+      90,
+      45,
+      25,
+      10,
+      16,
+      null,
+      8
+    ]
+  },
+  "finals": {
+    "group_win": 200,
+    "semifinal_win": 400,
+    "final_win": 500,
+    "undefeated_champion": 1500
+  },
+  "open": [
+    "BYE first loss and additive Q rules effective at individual event dates require rulebook",
+    "Next Gen not ranked by inference from table absence; verify event rules",
+    "No production profile installed"
+  ],
+  "rulebook_followup": {
+    "url": "https://www.itftennis.com/media/2206/2019-atp-rule-book.pdf",
+    "printed_pages": [
+      217,
+      218
+    ],
+    "pdf_page_indices": [
+      216,
+      217
+    ],
+    "accessed": "2026-11-26",
+    "access": "Both page images visually inspected, extracted text crosschecked; raw bytes not acquired",
+    "raw_sha256": null,
+    "version_limit": "2019 full rulebook hosted by ITF; exact revision effective on each tournament date not independently established",
+    "rules": {
+      "bye_then_first_played_loss": "award first-round loser points, not second-round points",
+      "masters_wildcard_first_round_loss": 0,
+      "qualifier_points": "add qualifying points to Main points",
+      "atp250_500_first_round_loss": 0,
+      "masters_96_q2_loss": 8,
+      "masters_48_56_q2_loss": 16
+    },
+    "examples": [
+      {
+        "case": "Masters96 direct R1 loss",
+        "main": 10,
+        "q": 0,
+        "total": 10
+      },
+      {
+        "case": "Masters96 BYE then R2 loss",
+        "main": 10,
+        "q": 0,
+        "total": 10
+      },
+      {
+        "case": "Masters96 WC R1 loss",
+        "main": 0,
+        "q": 0,
+        "total": 0
+      },
+      {
+        "case": "Masters96 qualifier R1 loss",
+        "main": 10,
+        "q": 16,
+        "total": 26
+      },
+      {
+        "case": "ATP500 draw32 qualifier R1 loss",
+        "main": 0,
+        "q": 20,
+        "total": 20
+      }
+    ],
+    "note": "Examples describe published rules, not engine implementation. LL points and event revision remain separate reviews."
+  }
+}

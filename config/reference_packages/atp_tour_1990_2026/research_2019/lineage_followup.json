@@ -1,0 +1,203 @@
+{
+  "schema": "atp_2019_lineage_followup.v1",
+  "scope": "seven historical stable Series identity cases; source statements independently located, no production identity promotion or byte verification",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_hong_kong",
+      "atp_id": "891",
+      "host": "Pune",
+      "successor": "Hong Kong",
+      "relocation_year": 2024,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024",
+          "role": "ATP Board approval, Pune event moved to Hong Kong",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "role": "2019 occurrence archive",
+          "access": "indexed archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_dallas",
+      "atp_id": "424",
+      "host": "New York",
+      "successor": "Dallas",
+      "relocation_year": 2022,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/fritz-dallas-2025-preview",
+          "role": "ATP retrospectively confirms New York to Dallas 2022",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.world.tennis/en/tournament/new-york-open/usa/2019/m-250-usa-01a-2019/draws-and-results/",
+          "role": "2019 Uniondale event",
+          "access": "indexed ITF archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_lyon",
+      "atp_id": "496",
+      "host": "Marseille",
+      "successor": "Lyon",
+      "relocation_year": 2026,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+          "role": "ATP Board approval of Open 13 relocation from Marseille to Lyon",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "role": "separate February Marseille and May Lyon editions",
+          "access": "indexed archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_belgrade_clay_2021",
+      "atp_id": "7648",
+      "host": "Budapest",
+      "successor": "Belgrade",
+      "relocation_year": 2021,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/atp-2021-calendar-updates-new-",
+          "role": "ATP approved Hungarian Open relocation",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/tournaments/-/5053/overview",
+          "role": "ATP retrospective confirms Budapest to Belgrade",
+          "access": "indexed ATP page",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_hangzhou",
+      "atp_id": "9164",
+      "host": "Zhuhai",
+      "successor": "Hangzhou",
+      "relocation_year": 2024,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/to",
+          "role": "ATP relocation from Zhuhai beginning September 2024",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/news/zhuhai-championships-returns-2023",
+          "role": "ATP identifies inaugural 2019 edition",
+          "access": "indexed ATP article",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/news/hangzhou-press-conference-2024-june",
+          "role": "ATP confirms 2024 relocated tournament",
+          "access": "indexed ATP article",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_brussels",
+      "atp_id": "7485",
+      "host": "Antwerp",
+      "successor": "Brussels",
+      "relocation_year": 2025,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/news/antwerp-brussels-relocation-2025",
+          "role": "ATP reports move following nine Antwerp editions",
+          "access": "indexed ATP statement; full page HTTP 403",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://europeanopen.be/2025/01/29/european-open-moves-to-brussels/",
+          "role": "organizer reports tenth edition in Brussels",
+          "access": "indexed organizer announcement",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/tournaments/brussels/7485/overview",
+          "role": "ATP tournament ID and prior Antwerp editions since 2016",
+          "access": "indexed ATP page",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    },
+    {
+      "occurrence_id": "atp_2019_lyon_old",
+      "atp_id": "7694",
+      "host": "Lyon",
+      "successor": "Lyon clay (distinct from Marseille indoor)",
+      "relocation_year": null,
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/tournaments/lyon/7694/overview",
+          "role": "separate ATP tournament ID for Lyon clay",
+          "access": "indexed ATP archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "role": "2019 Lyon May 19–25 separate from February Marseille",
+          "access": "indexed archive",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.lequipe.fr/Tennis/Actualites/Un-nouveau-tournoi-atp-a-lyon-la-semaine-avant-roland-garros/748030",
+          "role": "2016 contemporary report Nice replaced by Lyon clay in 2017",
+          "access": "indexed secondary source",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "status": "lineage_supported_pending_full_source_review",
+      "profile_status": "not_installed"
+    }
+  ],
+  "remaining": "Full source pages often HTTP 403; preserve existing review states and canonical IDs. Lyon clay versus Marseille indoor distinction supported; older licence chain not fully certified."
+}

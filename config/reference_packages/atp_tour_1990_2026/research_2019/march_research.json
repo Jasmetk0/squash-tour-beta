@@ -1,0 +1,302 @@
+{
+  "schema": "atp_2019_march_research.v1",
+  "status": "research_only_no_profiles_installed",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_acapulco",
+      "atp_id": "807",
+      "category_id": "atp_500",
+      "main_start": "2019-02-25",
+      "main_end": "2019-03-02",
+      "observed_q_days": [
+        "2019-02-23",
+        "2019-02-24"
+      ],
+      "planned_q_window": null,
+      "actual_q_window_status": "local_start_and_finish_corrobated",
+      "geometry": {
+        "main_entrants": 32,
+        "main_capacity": 32,
+        "main_byes": 0,
+        "main_wc": 3,
+        "q_entrants": 16,
+        "q_spots": 4,
+        "section_entrants": 4,
+        "q_byes": 0
+      },
+      "q_round_nodes": [
+        8,
+        4
+      ],
+      "q_walkovers": 1,
+      "q_retirements": 1,
+      "q_seed_markers": 7,
+      "q_nominal_seeds": 8,
+      "q_wc": 3,
+      "q_alt": 2,
+      "main_seed_markers": 8,
+      "main_ll": 1,
+      "main_se": 1,
+      "qualifier_winners_in_main": 4,
+      "main_points_status": "secondary event table and rulebook corroborate",
+      "qualification_points": {
+        "qualifier": 20,
+        "round_2_loss": 10,
+        "round_1_loss": 0
+      },
+      "sources": [
+        {
+          "url": "https://www.protennislive.com/posting/2019/807/qs.pdf",
+          "role": "Final Q PDF: all 16 slots, exact Q points, two alternates, nominal seed 1 moved to Main, 7 final seed markers, WC slots 6/10/11, one Q retirement and one Q walkover",
+          "access": "extracted text; screenshot DisabledError",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/acapulco/2019/draw",
+          "role": "Main 32, 8 seeds, 3 WC, 4 Q, 1 LL, 1 SE",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://abiertomexicanodetenis.com/en/2019/02/25/qualies-are-over-but-the-drama-and-the-emotions-were-always/",
+          "role": "Organizer report datelined Feb24 confirms all four men's Q winners including walkover",
+          "access": "text reviewed",
+          "published": "2019-02-25",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://guerrero.quadratin.com.mx/todo-listo-para-el-abierto-mexicano-de-tenis-acapulco-2019/",
+          "role": "Contemporary local Feb23 report confirms qualification opens Saturday",
+          "access": "text reviewed/indexed",
+          "published": "2019-02-23",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.tenisportal.cz/acapulco/2019/atp-muzi/?phase=qualification",
+          "role": "Q result timestamps spill into Feb25 in display timezone; primary local dates prevail; mistakenly labels alternate as seed1",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Main original PDF inaccessible; Q raw bytes/hash and screenshot unavailable",
+        "Complete pre-play Q window source not established; organizer end report post-start",
+        "Exact event Main primary points table and LL rules outstanding",
+        "No production profile or native execution"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_indian_wells",
+      "atp_id": "404",
+      "category_id": "atp_masters_1000",
+      "main_start": "2019-03-07",
+      "main_end": "2019-03-17",
+      "observed_q_days": [
+        "2019-03-05",
+        "2019-03-06"
+      ],
+      "planned_q_window": null,
+      "actual_q_window_status": "secondary_dates_observed_not_certified_complete",
+      "geometry": {
+        "main_entrants": 96,
+        "main_capacity": 128,
+        "main_byes": 32,
+        "main_wc": 5,
+        "q_entrants": 48,
+        "q_spots": 12,
+        "section_entrants": 4,
+        "q_byes": 0
+      },
+      "q_round_nodes": [
+        24,
+        12
+      ],
+      "main_seed_markers": 32,
+      "main_ll": 3,
+      "q_nominal_seeds": 24,
+      "qualifier_winners_in_main": 12,
+      "sources": [
+        {
+          "url": "https://en.wikipedia.org/w/index.php?title=2019_BNP_Paribas_Open_%E2%80%93_Men%27s_singles&oldid=1365791486",
+          "role": "secondary final Main/Q bracket 96, 32 seeds, 5 WC, 12 four-player Q sections and three LL",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/indian-wells/2019/orderofplay/2019-03-05",
+          "role": "men's Q1 observed",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/indian-wells/2019/orderofplay/2019-03-06",
+          "role": "men's Q2 observed; WTA matches mixed in daily view",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.itftennis.com/media/2206/2019-atp-rule-book.pdf",
+          "role": "2019 rulebook 96 entrants and half-size Q; source category geometry and points, not event final field",
+          "access": "text and pp217–218 screenshots reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Original Main/Q PDFs not acquired",
+        "Dated complete preplay window and full local daily Q count not certified",
+        "Final Q WC/ALT counts not established",
+        "No production profile or native execution"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_miami",
+      "atp_id": "403",
+      "category_id": "atp_masters_1000",
+      "main_start": "2019-03-20",
+      "main_end": "2019-03-31",
+      "observed_q_days": [
+        "2019-03-18",
+        "2019-03-20"
+      ],
+      "planned_q_window": {
+        "start_date": "2019-03-18",
+        "end_date": "2019-03-19",
+        "source_urls": [
+          "https://www.miamiopen.com/announcements/2019-miami-open-player-field-released/"
+        ],
+        "published_dates": [
+          "2019-02-06"
+        ]
+      },
+      "actual_q_window_status": "official_cancellation_and_resumption_confirmed",
+      "cancelled_q_day": "2019-03-19",
+      "actual_q_window": {
+        "start_date": "2019-03-18",
+        "end_date": "2019-03-20"
+      },
+      "geometry": {
+        "main_entrants": 96,
+        "main_capacity": 128,
+        "main_byes": 32,
+        "main_wc": 5,
+        "q_entrants": 48,
+        "q_spots": 12,
+        "section_entrants": 4,
+        "q_byes": 0
+      },
+      "q_round_nodes": [
+        24,
+        12
+      ],
+      "main_seed_markers": 32,
+      "main_ll": 3,
+      "day1_media_notes_ll_estimate": 1,
+      "q_nominal_seeds": 24,
+      "qualifier_winners_in_main": 12,
+      "observed_q_walkover_count_min": 1,
+      "main_points": {
+        "champion": 1000,
+        "finalist": 600,
+        "semifinal": 360,
+        "quarterfinal": 180,
+        "round_of_16": 90,
+        "round_of_32": 45,
+        "round_of_64": 25,
+        "round_of_128": 10
+      },
+      "qualification_points": {
+        "qualifier": 16,
+        "round_2_loss": 8,
+        "round_1_loss": 0
+      },
+      "sources": [
+        {
+          "url": "https://www.miamiopen.com/announcements/2019-miami-open-player-field-released/",
+          "role": "Feb6 organizer announcement gives planned March18–19 Q and 12 spots, men's Main March20",
+          "access": "text reviewed",
+          "published": "2019-02-06",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.miamiopen.com/announcements/session-2-cancelled/",
+          "role": "March19 organizer cancels entire session because of weather",
+          "access": "text reviewed",
+          "published": "2019-03-19",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.miamiopen.com/latest-news/qualifying-recap-auger-aliassime-four-americans-into-main-draw/",
+          "role": "March20 organizer confirms Q2 resumed including one walkover; article is interim recap, not total Q count",
+          "access": "text reviewed",
+          "published": "2019-03-20",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/9ed2f279f88e4468b5ac9a4977669821.pdf",
+          "role": "ATP Day1 notes dated March20, qualifiers pending Wednesday, Main96, five WC, one LL provisional, exact Main points and BYE-loss exception",
+          "access": "extracted text; screenshot not available",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.protennislive.com/posting/2019/403/mds.pdf",
+          "role": "Final Main draw extracted text confirms three LL; do not use provisional Day1 count",
+          "access": "extracted text; both screenshots DisabledError",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.wikipedia.org/wiki/2019_Miami_Open_%E2%80%93_Men%27s_singles",
+          "role": "secondary final Main/Q bracket 12 qualifiers and 3 LL; Q48 in 12 four-player sections",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/miami/2019/orderofplay/2019-03-18",
+          "role": "Q1 results",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/miami/2019/orderofplay/2019-03-20",
+          "role": "Q2 and men's Main R1 overlap; Q walkover observed",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Q original PDF inaccessible; Main hash and screenshots absent",
+        "Q final WC/ALT counts and event-specific original Q points unavailable; Q points based on 2019 rulebook",
+        "Current v2 preplay evidence describes scheduled window but cannot honestly certify actual weather-delayed window; separate actual evidence contract requires Work review",
+        "No production profile or native execution"
+      ]
+    }
+  ]
+}

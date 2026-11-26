@@ -159,3 +159,53 @@ historical comparisons. The legacy giant Save timer stops when response
 headers arrive, whereas the short driver also reads and decodes the response.
 Use a separate reproduced week for CPU attribution and a retained database
 for cold-open or Restore profiling. Task Center polling needs its own scenario.
+
+## Shared-slot week at two history depths — 26 November 2026
+
+`scripts/profile_native_week_ab.py prepare --slot-depth 2|8` builds a W52 Run
+(16 players, Saved v2) with 2 or 8 fully played weeks, each one 8-player v2
+knockout (7 real MatchEngine matches through three global slots, confirmation,
+Week Transition, explicit Saves), then a Saved Draw for the measured week.
+Scenarios `slots-d2` / `slots-d8` play the identical measured week: three Next
+Slot, confirm-result and Week Transition, each Preview → Execute → GET → Save →
+GET. Only the history length differs; the sporting program is the same.
+
+Base `buuk e3ad295`, Linux 4 vCPU container, Python 3.11.18, one process at a
+time, `PYTHONHASHSEED=0`, fresh copies of one pinned fixture per depth:
+
+| depth | revisions before | matches before | week wall s | CPU s | peak RSS | max DB+WAL | HTTP calls |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| d2 | 25 | 14 | 116.8 | 115.3 | 1.35 GiB | 97 MB | 26 |
+| d8 | 67 | 56 | 361.5 | 360.3 | 2.97 GiB | 270 MB | 26 |
+
+| per slot (4 matches), s | Preview | Execute | Save |
+|---|---|---|---|
+| d2 | 1.3 / 1.4 / 1.6 | 9.3 / 8.8 / 9.4 | 5.8 / 4.9 / 5.2 |
+| d8 | 3.5 / 4.5 / 4.5 | 26.8 / 27.9 / 27.9 | 15.8 / 15.3 / 15.4 |
+
+SQLite text/BLOB fetched per week: 4.1 GB (d2) and 16.6 GB (d8). The cost grows
+roughly linearly with played history although every week has the same 7
+matches. MatchEngine is 1.7–2.1 % of request CPU (py-spy, 50 Hz).
+
+Inclusive request CPU (d8 partial run / d2): defensive deep copies of decoded
+Saved/live sources 21 % / 20 %; JSON encoding 34 % / 39 % (canonical hashes of
+whole checkpoints and payloads, `_value_identity` 7 %); post-write Execute
+verification 24 %; recomputing every completed tournament's awards and
+sporting fingerprint 7 %; competition replay 7 %; strict checkpoint parse 4–5 %.
+
+Two separable candidates were measured A–B–B–A and are **not** included:
+
+1. Skip the live-row canonical hash in `load_checkpoint` when its stored
+   fingerprint column already differs from the Saved value, and reuse the
+   component digest inside `native_working_context`: d2 normal 121.2 → 120.7 s,
+   retry 123.5 → 124.6 s — within noise.
+2. Reuse the operation's own private Saved-source copy in post-write Execute
+   verification after a type-exact pristine check: d2 (2 trials) normal median
+   115.5 → 115.7 s, CPU 114.4 → 115.0 s, peak RSS 1373 → 1339 MiB. The check
+   costs about as much as the skipped copy.
+
+The largest measured cost, the deep copies, overlaps the exact-type copy
+experiment #1825; the payload/checkpoint hashing and fetched Saved bytes
+overlap the Saved v2 work (#1875 and its predecessors). The next separable
+target is the O(history) post-write verification of Execute: it re-decodes,
+re-hashes and re-copies the complete live checkpoint after appending one slot.

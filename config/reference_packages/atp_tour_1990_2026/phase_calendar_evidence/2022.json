@@ -2448,6 +2448,305 @@
         "note": "Eight Q1 and four finals October 8–9."
       },
       "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_gijon_2022",
+      "series_id": "gijon_2022",
+      "category_id": "atp_250",
+      "main_start_date": "2022-10-10",
+      "main_end_date": "2022-10-16",
+      "main_year_weeks": [
+        [
+          2022,
+          41
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-08",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gijon-2022/"
+        },
+        {
+          "date": "2022-10-09",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gijon-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          40
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-gijon-2022/",
+        "note": "Dated Q1 and four finals October 8–9; one Q1 walkover not treated as played."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_brussels",
+      "series_id": "brussels",
+      "category_id": "atp_250",
+      "main_start_date": "2022-10-17",
+      "main_end_date": "2022-10-23",
+      "main_year_weeks": [
+        [
+          2022,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-amberes-2022/"
+        },
+        {
+          "date": "2022-10-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-amberes-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          41
+        ],
+        [
+          2022,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-amberes-2022/",
+        "note": "Eight Q1 October 16; four Q finals including retirement and scored Main matches October 17. Historical Antwerp event."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "main_opening_play_evidence": {
+        "date": "2022-10-17",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-amberes-2022/",
+        "observed_iso_week": [
+          2022,
+          42
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Antwerp, Belgium",
+        "source_url": "https://canaltenis.com/resultados-atp-amberes-2022/",
+        "note": "2022 Antwerp European Open, retained under canonical Brussels series identity."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_naples_2022",
+      "series_id": "naples_2022",
+      "category_id": "atp_250",
+      "main_start_date": "2022-10-17",
+      "main_end_date": "2022-10-23",
+      "main_year_weeks": [
+        [
+          2022,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-16",
+          "status": "played",
+          "source_url": "https://www.tennisitaliano.it/tennis-atp-250-napoli-ancora-problemi-posticipato-linizio-dei-match-di-qualificazione-54738/"
+        },
+        {
+          "date": "2022-10-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-napoles-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          41
+        ],
+        [
+          2022,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-napoles-2022/",
+        "note": "Italian report confirms qualifying relocated to Pozzuoli, actual Sunday October 16 play with two matches suspended until Monday; dated Q finals October 17. Canal Tenis heading October 15 conflicts with the confirmed Sunday play; retain actual 16–17. First scored Main results October 18."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "main_opening_play_evidence": {
+        "date": "2022-10-18",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-napoles-2022/",
+        "observed_iso_week": [
+          2022,
+          42
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://www.tennisitaliano.it/tennis-atp-250-napoli-ancora-problemi-posticipato-linizio-dei-match-di-qualificazione-54738/",
+        "note": "Actual Q1 on October 16 at Pozzuoli, rather than October 15 heading in Canal Tenis. Two suspended Q1 matches completed October 17; same day Q finals. Main archive opens October 17 but first scored Main matches are reported October 18. Retain canonical dates and separately observed play."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_stockholm",
+      "series_id": "stockholm",
+      "category_id": "atp_250",
+      "main_start_date": "2022-10-17",
+      "main_end_date": "2022-10-23",
+      "main_year_weeks": [
+        [
+          2022,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-15",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/stockholm/2022/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2022-10-16",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/stockholm/2022/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          41
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/stockholm/2022/atp-muzi/?phase=qualification",
+        "note": "Dated men's qualifying rounds October 15–16."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_basel",
+      "series_id": "basel",
+      "category_id": "atp_500",
+      "main_start_date": "2022-10-24",
+      "main_end_date": "2022-10-30",
+      "main_year_weeks": [
+        [
+          2022,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-basilea-2022/"
+        },
+        {
+          "date": "2022-10-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-basilea-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-basilea-2022/",
+        "note": "Eight Q1 and four finals October 22–23."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_500",
+      "main_start_date": "2022-10-24",
+      "main_end_date": "2022-10-30",
+      "main_year_weeks": [
+        [
+          2022,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-viena-2022/"
+        },
+        {
+          "date": "2022-10-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-viena-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-viena-2022/",
+        "note": "Eight Q1 and four finals October 22–23."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2022-10-31",
+      "main_end_date": "2022-11-06",
+      "main_year_weeks": [
+        [
+          2022,
+          44
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-10-29",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-masters-1000-paris-bercy-2022/"
+        },
+        {
+          "date": "2022-10-30",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-masters-1000-paris-bercy-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          43
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-masters-1000-paris-bercy-2022/",
+        "note": "Fourteen Q1 and seven finals October 29–30; one Q1 retirement."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "qualifier_capacity_evidence": {
+        "qualifier_places": 7,
+        "source_url": "https://canaltenis.com/resultados-atp-masters-1000-paris-bercy-2022/",
+        "note": "Seven dated final qualifying matches; not a published sporting profile."
+      }
     }
   ]
 }

@@ -340,3 +340,50 @@ def test_2022_astana_historical_identity(phase_evidence):
     row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "almaty")
     assert row["historical_identity_evidence"]["actual_host"] == "Astana, Kazakhstan"
     assert row["category_id"] == next(r["category_id"] for r in phase_evidence["occurrences"] if r["series_id"] == "tokyo")
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("gijon_2022", ["2022-10-08","2022-10-09"], [[2022,40]], [[2022,41]]),
+        ("brussels", ["2022-10-16","2022-10-17"], [[2022,41],[2022,42]], [[2022,42]]),
+        ("naples_2022", ["2022-10-16","2022-10-17"], [[2022,41],[2022,42]], [[2022,42]]),
+        ("stockholm", ["2022-10-15","2022-10-16"], [[2022,41]], [[2022,42]]),
+        ("basel", ["2022-10-22","2022-10-23"], [[2022,42]], [[2022,43]]),
+        ("vienna", ["2022-10-22","2022-10-23"], [[2022,42]], [[2022,43]]),
+        ("paris_masters", ["2022-10-29","2022-10-30"], [[2022,43]], [[2022,44]]),
+    ],
+)
+def test_late_autumn_2022_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    january = RunCalendar.earth_default(start_year=2022, season_count=2)
+    shifted = RunCalendar(52, 37, 2021, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(1, week - 36, year, week)
+
+
+def test_2022_naples_relocated_qualifying_and_delayed_main(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "naples_2022")
+    assert [e["date"] for e in row["qualifying_date_evidence"]] == ["2022-10-16", "2022-10-17"]
+    assert row["observed_qualifying_iso_weeks"] == [[2022, 41], [2022, 42]]
+    assert row["main_start_date"] == "2022-10-17"
+    assert row["main_opening_play_evidence"]["date"] == "2022-10-18"
+    assert row["main_year_weeks"] == [[2022, 42]]
+    assert "Pozzuoli" in row["source_confirmation"]["note"]
+    assert row["source_disagreement"]["source_url"]
+
+
+def test_2022_antwerp_historical_identity_and_overlap(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "brussels")
+    assert row["historical_identity_evidence"]["actual_host"] == "Antwerp, Belgium"
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] in row["main_year_weeks"]
+
+
+def test_2022_paris_masters_capacity_evidence(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "paris_masters")
+    assert row["qualifier_capacity_evidence"]["qualifier_places"] == 7
+    assert phase_evidence["sporting_schedule_installed"] is False

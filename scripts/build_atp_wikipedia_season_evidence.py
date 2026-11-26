@@ -147,12 +147,14 @@ def build(year: int, raw_dir: Path) -> dict:
             season_raw, _ = fetch(season_url, raw_dir)
         except RuntimeError:
             continue
-        if b'id="Schedule"' in season_raw:
+        if b'id="Schedule"' in season_raw or b'id="Calendar"' in season_raw:
             break
     if season_raw is None:
         raise RuntimeError(f"no season article for {year}")
     season = season_raw.decode("utf8")
     start = season.find('id="Schedule"')
+    if start < 0:
+        start = season.find('id="Calendar"')
     seg = season[start:start + 2_500_000]
     rows = []
     for tr in re.findall(r"<tr.*?</tr>", seg, flags=re.DOTALL):

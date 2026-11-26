@@ -1,0 +1,133 @@
+{
+  "schema_version": "grand_slam_import_candidate.v1",
+  "status": "blocked_pending_pdf_bytes_and_shared_contract",
+  "profile": {
+    "schema_version": "atp_squash_knockout_profile.v2",
+    "occurrence_id": "atp_2025_grand_slam_australian_open",
+    "category_id": "grand_slam",
+    "name": "Australian Open 2025",
+    "source_start_date": "2025-01-12",
+    "source_end_date": "2025-01-26",
+    "source_urls": [
+      "https://ausopen.com/articles/news/how-grand-slam-tournament-draws-are-made"
+    ],
+    "source_pdf_sha256": {},
+    "qualification_date_status": "verified",
+    "qualification_date_evidence": {
+      "start_date": "2025-01-06",
+      "end_date": "2025-01-09",
+      "source_urls": [
+        "https://ausopen.com/articles/news/australian-open-2025-qualifying-entry-lists-released",
+        "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park"
+      ]
+    },
+    "entrant_selection": "admin_selected_no_automatic_race_or_age",
+    "main_entrants": 128,
+    "qualification_entrants": 128,
+    "qualifier_spots": 16,
+    "wild_cards": 8,
+    "seeds_count": 32,
+    "byes": 0,
+    "match_best_of": 5,
+    "ranked": true,
+    "main_points": {
+      "champion": 2000,
+      "finalist": 1300,
+      "semifinal": 800,
+      "quarterfinal": 400,
+      "round_of_16": 200,
+      "round_of_32": 100,
+      "round_of_64": 50,
+      "round_of_128": 10
+    },
+    "qualification_points": {
+      "qualifier": 30,
+      "round_3_loss": 16,
+      "round_2_loss": 8,
+      "round_1_loss": 0
+    }
+  },
+  "notes": [
+    "Profile shape only, not a valid source payload: HTML evidence is not a PDF and exact PDF hashes are missing. Source publication dates must be verified before model validation; intentionally absent.",
+    "Main WC first-round losers receive zero, not 10; normal qualifiers receive additive Q points. Do not publish until the existing award policy is checked.",
+    "Q seeds and Q wild cards, lucky losers and complete original draws need edition-specific review. No simulated historical entrants/results are copied."
+  ],
+  "evidence": {
+    "geometry": [
+      "https://ausopen.com/articles/news/how-grand-slam-tournament-draws-are-made",
+      "https://ausopen.com/articles/news/full-field-australian-open-2025-entry-lists-released",
+      "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park"
+    ],
+    "qualification_closure": "https://ausopen.com/articles/news/ao-qualifying-habib-makes-history-fonseca-breaks-through",
+    "points": [
+      "https://www.atptour.com/en/news/2024-rankings-points-update",
+      "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf%7Ctitle%3D2025"
+    ],
+    "points_printed_page": 264,
+    "pdf_hash_status": "not_retrieved"
+  },
+  "expected_geometry": {
+    "main_matches": 127,
+    "qualification_sections": 16,
+    "qualification_section_entrants": 8,
+    "qualification_matches": 112,
+    "total_matches": 239,
+    "unique_field_players": 240
+  },
+  "expected_current_model_rejection": "After verified publication dates are supplied: Knockout sources require exact PDF evidence hashes",
+  "proposed_schedule": {
+    "status": "manual_proposal_not_native_preview",
+    "calendar": {
+      "schema_version": "run_calendar.v1",
+      "weeks_per_year": 52,
+      "season_start_year_week": 1,
+      "start_year": 2025,
+      "season_count": 2
+    },
+    "qualification": [
+      {
+        "week": 2,
+        "slot": 1
+      },
+      {
+        "week": 2,
+        "slot": 2
+      },
+      {
+        "week": 2,
+        "slot": 3
+      }
+    ],
+    "main": [
+      {
+        "week": 2,
+        "slot": 4
+      },
+      {
+        "week": 3,
+        "slot": 1
+      },
+      {
+        "week": 3,
+        "slot": 2
+      },
+      {
+        "week": 3,
+        "slot": 3
+      },
+      {
+        "week": 4,
+        "slot": 1
+      },
+      {
+        "week": 4,
+        "slot": 2
+      },
+      {
+        "week": 4,
+        "slot": 3
+      }
+    ],
+    "note": "Proposed seven Main and three Q round positions, not exact civil days or validated runtime slots; preserve Sunday opening in W02. Entry/announcement must precede Q."
+  }
+}

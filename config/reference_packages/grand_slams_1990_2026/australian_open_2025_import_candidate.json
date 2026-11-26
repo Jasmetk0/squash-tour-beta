@@ -9,7 +9,7 @@
     "source_start_date": "2025-01-12",
     "source_end_date": "2025-01-26",
     "source_urls": [
-      "https://ausopen.com/articles/news/how-grand-slam-tournament-draws-are-made"
+      "https://ausopen.com/sites/default/files/2026-11/draw_ms_2025-01-26_2235.pdf"
     ],
     "source_pdf_sha256": {},
     "qualification_date_status": "verified",
@@ -52,9 +52,9 @@
     }
   },
   "notes": [
-    "Profile shape only, not a valid source payload: HTML evidence is not a PDF and exact PDF hashes are missing. Both source publication dates verified on the organizer pages.",
+    "Final Main draw PDF reviewed on both pages; raw bytes unavailable (DNS), so exact SHA-256 is intentionally absent. Original Q draw available from ATP as HTML, not yet a verified PDF.",
     "Main WC first-round losers receive zero, not 10; normal qualifiers receive additive Q points. Do not publish until the existing award policy is checked.",
-    "Q seeds and Q wild cards, lucky losers and complete original draws need edition-specific review. No simulated historical entrants/results are copied."
+    "Official Main final draw confirms 16 qualifiers, 8 WC, 1 LL and 103 unmarked entries; planned allocation is 104 other places before replacement. Q seed/WC actual placement audit remains pending. No player identities are imported into simulation."
   ],
   "evidence": {
     "geometry": [
@@ -62,7 +62,9 @@
       "https://ausopen.com/articles/news/full-field-australian-open-2025-entry-lists-released",
       "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park",
       "https://ausopen.com/articles/news/australian-open-2025-seeds",
-      "https://www.world.tennis/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=Q&matchTypeCode=S&tournamentId=1100197703"
+      "https://www.world.tennis/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=Q&matchTypeCode=S&tournamentId=1100197703",
+      "https://ausopen.com/sites/default/files/2026-11/draw_ms_2025-01-26_2235.pdf",
+      "https://www.atptour.com/en/scores/archive/australian-open/580/2025/draws?matchtype=qualifiersingles"
     ],
     "qualification_closure": "https://ausopen.com/articles/news/ao-qualifying-habib-makes-history-fonseca-breaks-through",
     "points": [
@@ -70,8 +72,27 @@
       "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf%7Ctitle%3D2025"
     ],
     "points_printed_page": 264,
-    "pdf_hash_status": "not_retrieved",
-    "qualification_opening": "https://ausopen.com/articles/news/emerging-talents-stop-gasquet-evans-first-hurdle-ao-qualifying"
+    "pdf_hash_status": "official_main_pdf_readable_via_web_but_raw_bytes_dns_failure; official_Q_PDF_not_located",
+    "qualification_opening": "https://ausopen.com/articles/news/emerging-talents-stop-gasquet-evans-first-hurdle-ao-qualifying",
+    "official_main_pdf": {
+      "url": "https://ausopen.com/sites/default/files/2026-11/draw_ms_2025-01-26_2235.pdf",
+      "pages": [
+        1,
+        2
+      ],
+      "report_created": "2025-01-26 22:35 local",
+      "status": "both_pages_visually_reviewed_bytes_unavailable",
+      "sha256": null
+    },
+    "official_qualification_draw_html": "https://www.atptour.com/en/scores/archive/australian-open/580/2025/draws?matchtype=qualifiersingles",
+    "qualification_config": {
+      "planned_entrants": 128,
+      "planned_direct": 119,
+      "planned_wild_cards": 9,
+      "qualifier_spots": 16,
+      "source": "https://ausopen.com/articles/news/how-grand-slam-tournament-draws-are-made",
+      "actual_q_classification_count_status": "not_full_audit"
+    }
   },
   "expected_geometry": {
     "main_matches": 127,
@@ -79,7 +100,8 @@
     "qualification_section_entrants": 8,
     "qualification_matches": 112,
     "total_matches": 239,
-    "unique_field_players": 240
+    "unique_field_players": 240,
+    "unique_field_players_definition": "Nominal unique field with no Lucky Loser replacement; actual final unique count is 239 if the full Q field has 128 distinct players."
   },
   "expected_current_model_rejection": "Knockout sources require exact PDF evidence hashes",
   "proposed_schedule": {

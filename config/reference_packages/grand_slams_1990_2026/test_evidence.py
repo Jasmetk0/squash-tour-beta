@@ -83,3 +83,37 @@ def test_current_mapping_rejects_15_day_main():
         map_one(season_year=2025, series_id="grand_slam_australian_open",
                 start_date="2025-01-12", end_date="2025-01-26",
                 year_source_status="verified_results_archive")
+
+
+DRAW_EVIDENCE = json.loads((ROOT / "draw_evidence_v1.json").read_text())
+
+
+@pytest.mark.parametrize("edition", DRAW_EVIDENCE["editions"], ids=lambda e: e["occurrence_id"])
+def test_reviewed_draw_positions_and_replacements(edition):
+    main, q, nominal = edition["main"], edition["qualification"], edition["nominal"]
+    positions = [p for values in main["slots"].values() for p in values]
+    assert len(positions) == len(set(positions))
+    assert all(1 <= p <= main["draw_capacity"] for p in positions)
+    assert main["unmarked"] + len(positions) == main["entrants"] == 128
+    assert len(main["slots"]["qualifier"]) == q["qualifier_spots"] == 16
+    assert len(main["slots"]["wild_card"]) == nominal["main_wc"] == 8
+    assert main["seeds"] == 32 and main["byes"] == 0
+    assert nominal["main_other_places"] - main["unmarked"] == len(main["slots"]["lucky_loser"])
+    assert nominal["total_bracket_nodes"] == 239
+    assert nominal["unique_field_without_replacements"] == 240
+    assert main["sha256"] is None and q["sha256"] is None  # raw source bytes missing
+    if "observed_slots" in q:
+        q_positions = [p for values in q["observed_slots"].values() for p in values]
+        assert len(q_positions) == len(set(q_positions))
+        assert all(1 <= p <= q["draw_capacity"] for p in q_positions)
+        assert q["observed_unmarked"] + len(q_positions) == 128
+        assert q["seeds"] == 32 and q["byes"] == 0
+
+
+@pytest.mark.parametrize("year", [2024, 2025])
+def test_wimbledon_played_qualification_endpoints(year):
+    e = next(e for e in DATA["editions"] if
+             e["occurrence_id"] == f"atp_{year}_grand_slam_wimbledon")
+    assert e["qualification_evidence"] == "observed_endpoints"
+    assert len(e["qualification_sources"]) == 3
+    assert e["qualification"]["iso_weeks"] == [{"year": year, "week": 26}]

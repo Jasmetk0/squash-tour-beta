@@ -4311,7 +4311,9 @@
           "https://de.wikipedia.org/wiki/Banespa_Open_1990",
           "https://en.wikipedia.org/wiki/1990_Banespa_Open",
           "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "https://www.itftennis.com/en/tournament/rio-de-janeiro/bra/1990/m-wsf-bra-02a-1990/draws-and-results/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 32,
@@ -4410,6 +4412,75 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "wild_card_position_crosscheck_2026_11_26": {
+          "status": "source_specific_labels_localized_not_certified",
+          "source_urls": [
+            "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
+            "https://de.wikipedia.org/wiki/Banespa_Open_1990",
+            "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+            "https://www.itftennis.com/en/tournament/rio-de-janeiro/bra/1990/m-wsf-bra-02a-1990/draws-and-results/"
+          ],
+          "dataset_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "dataset_tourney_id": "1990-215",
+          "coordinate_system": "one_based_initial_32_slot_main_bracket_top_to_bottom",
+          "source_wc_positions": {
+            "english_draw": [
+              2,
+              21,
+              31
+            ],
+            "german_draw": [
+              2,
+              21,
+              32
+            ],
+            "secondary_csv": [
+              2,
+              21
+            ]
+          },
+          "source_q_positions": {
+            "english_draw": [
+              4,
+              11,
+              23,
+              28
+            ],
+            "german_draw": [
+              4,
+              11,
+              23,
+              28
+            ],
+            "secondary_csv": [
+              4,
+              11,
+              23,
+              28
+            ]
+          },
+          "common_wc_positions": [
+            2,
+            21
+          ],
+          "conflicting_positions": [
+            31,
+            32
+          ],
+          "german_seeded_wc_rank": 2,
+          "english_seeded_wc_count": 0,
+          "third_wc_policy": null,
+          "official_itf_event_metadata": {
+            "dates": [
+              "1990-04-02",
+              "1990-04-08"
+            ],
+            "surface_label": "Carpet - O",
+            "prize_money_usd": 225000,
+            "draw_access": "drawsheets_could_not_be_loaded"
+          },
+          "scope": "Paired initial positions by actual participants and first-round match order, then retained anonymous slot numbers only. German draw assigns the third WC to seed 2; English assigns it to the adjacent opponent, CSV tags neither. Counts alone cannot resolve the competing labels. Official ITF outdoor label corroborates one side of enclosure conflict but not entry labels or Q dates."
         }
       }
     },
@@ -5749,7 +5820,7 @@
           "tennistemple_draw": {
             "source_url": "https://fr.tennistemple.com/competitions/monte-carlo/1990/draw",
             "initial_position_q": 7,
-            "initial_position_wc": 4,
+            "initial_position_wc": 5,
             "initial_position_ll": 1,
             "q_in_missing_seed_bye_position": 1
           },
@@ -5773,7 +5844,59 @@
           "actual_q_dates": null,
           "reserved_advancement_places": null,
           "replacement_entry_mechanism": null,
-          "scope": "The English header and its own detailed draw disagree; French and TennisTemple observations corroborate seven Q labels and four WC labels, not the CSV's five WC. A Q-labelled entrant occupied the withdrawn seed's bye position; the contemporary report confirms late withdrawal without reseeding but does not establish the entrant's actual replacement mechanism. Independence of secondary sources is unverified. Preserve six-Q header as source-specific diagnostic only; neither six nor seven is certified reserved advancement. No change to prior triage or canonical data."
+          "scope": "English header and detailed draw disagree on Q. French and TennisTemple corroborate seven Q labels. English/French give four WC, TennisTemple and CSV five; previous TennisTemple four count was a transcription error, corrected after full initial-position recount. A Q-labelled entrant occupied the withdrawn seed's bye position; contemporary report confirms withdrawal without reseeding but not replacement mechanism. Independence of secondary sources unverified. Six-Q header remains a source-specific diagnostic; neither six nor seven certified reserved advancement. No change to prior triage or canonical data."
+        },
+        "wild_card_position_crosscheck_2026_11_26": {
+          "status": "source_specific_labels_localized_not_certified",
+          "source_urls": [
+            "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+            "https://fr.wikipedia.org/w/index.php?title=Tournoi_de_tennis_de_Monte-Carlo_(ATP_1990)&oldid=230539612",
+            "https://fr.tennistemple.com/competitions/monte-carlo/1990/draw",
+            "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
+          ],
+          "dataset_git_blob_sha1": "d6fb69a7a1fdb48862f124cfbe979ea14352ad66",
+          "dataset_tourney_id": "1990-410",
+          "coordinate_system": "one_based_64_slot_main_bracket_including_byes_top_to_bottom",
+          "source_wc_positions": {
+            "english_draw": [
+              21,
+              24,
+              43,
+              52
+            ],
+            "french_list": [
+              21,
+              24,
+              43,
+              52
+            ],
+            "tennistemple_draw": [
+              6,
+              21,
+              24,
+              43,
+              52
+            ],
+            "secondary_csv": [
+              6,
+              21,
+              24,
+              43,
+              52
+            ]
+          },
+          "common_wc_positions": [
+            21,
+            24,
+            43,
+            52
+          ],
+          "conflicting_positions": [
+            6
+          ],
+          "extra_wc_seeded": false,
+          "third_party_five_wc_is_primary_verified": false,
+          "scope": "Four common WC labels and one unseeded disputed slot (first section, second contested first-round match). TennisTemple recount corrects earlier four-WC transcription; CSV agrees with its five. English detailed draw leaves this slot unmarked and French invitation list excludes it. Source independence unverified; no historical identities, actual qualification dates or reserved WC policy inferred."
         }
       }
     },
@@ -22204,7 +22327,7 @@
     "status": "secondary_label_count_reconciliation_not_certified_entry_policy",
     "reviewed_on": "2026-11-26",
     "dataset_source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
-    "scope": "All 21 prior-versus-dataset WC differences examined. Matching count differences support a source-specific hypothesis that seeded WC tags are omitted; without identity-level paired source verification this does not establish the cause or a historical reserved-entry rule. No prior labels, canonical occurrences, raw player identities, Q fields, triage or published profiles changed. Identity correction: the historical ID atp_1990_hong_kong maps to Nice, not the distinct Hong Kong edition the following week.",
+    "scope": "All 21 prior-versus-dataset WC differences examined. Matching count differences support a source-specific hypothesis that seeded WC tags are omitted; without identity-level paired source verification this does not establish the cause or a historical reserved-entry rule. No prior labels, canonical occurrences, raw player identities, Q fields, triage or published profiles changed. Identity correction: the historical ID atp_1990_hong_kong maps to Nice, not the distinct Hong Kong edition the following week. Both remaining label discrepancies localized to anonymous bracket slots; no source priority inferred. Earlier TennisTemple four-WC transcription corrected.",
     "summary": {
       "discrepant_rows": 21,
       "count_difference_matches_seeded_wc_omission_hypothesis": 19,
@@ -22267,7 +22390,12 @@
         "source_wc_by_half": [
           1,
           2
-        ]
+        ],
+        "followup_disputed_initial_positions": [
+          31,
+          32
+        ],
+        "followup_status": "localized_but_source_conflict_unresolved"
       },
       {
         "occurrence_id": "atp_1990_hong_kong",
@@ -22310,7 +22438,11 @@
         "source_observed_seeded_wc_count": 0,
         "source_observed_seeded_wc_ranks": [],
         "dataset_observed_seeded_wc_count": 0,
-        "status": "unresolved_count_difference"
+        "status": "unresolved_count_difference",
+        "followup_disputed_initial_positions": [
+          6
+        ],
+        "followup_status": "localized_but_source_conflict_unresolved"
       },
       {
         "occurrence_id": "atp_1990_munich",

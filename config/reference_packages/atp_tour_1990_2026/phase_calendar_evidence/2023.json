@@ -1,0 +1,352 @@
+{
+  "atp_season_year": 2023,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2023_adelaide",
+      "series_id": "adelaide",
+      "category_id": "atp_250",
+      "main_start_date": "2023-01-01",
+      "main_end_date": "2023-01-08",
+      "main_year_weeks": [
+        [
+          2023,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-12-31",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/adelaide/2023/orderofplay/2022-12-31"
+        },
+        {
+          "date": "2023-01-01",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/01-01-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          52
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/01-01-2023",
+        "note": "Eight scored men's Q1 matches Dec 31 and Q finals Jan 1; scored Main singles also Jan 1, which remains ISO 2022 W52. January Run excludes observed Q and observed Main opening."
+      },
+      "follow_up": "January-start Run excludes prior ISO-year qualifying; review offset clock and any same-day phase ordering.",
+      "main_opening_play_evidence": {
+        "date": "2023-01-01",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/01-01-2023",
+        "observed_iso_week": [
+          2022,
+          52
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_250",
+      "main_start_date": "2023-01-02",
+      "main_end_date": "2023-01-07",
+      "main_year_weeks": [
+        [
+          2023,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-12-31",
+          "status": "played",
+          "source_url": "https://www.maharashtraopen.com/press-release/indias-bhambri-ramanathan-off-to-winning-starts-in-qualifiers-at-5th-tata-open-maharashtra"
+        },
+        {
+          "date": "2023-01-01",
+          "status": "played",
+          "source_url": "https://www.maharashtraopen.com/press-release/ramanathan-enters-main-draw-with-impressive-win-at-5th-tata-open-maharashtra"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          52
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.maharashtraopen.com/press-release/ramanathan-enters-main-draw-with-impressive-win-at-5th-tata-open-maharashtra",
+        "note": "Organizer confirms Saturday Q1 and Sunday Q final; 2023 host Pune, India. ATP Main begins Jan 2. Both Q dates are ISO 2022 W52."
+      },
+      "follow_up": "January-start Run excludes prior ISO-year qualifying; review offset clock and any same-day phase ordering.",
+      "historical_identity_evidence": {
+        "actual_host": "Pune, India",
+        "source_url": "https://www.atptour.com/en/news/hong-kong-atp-250-2024",
+        "host_source_url": "https://www.maharashtraopen.com/press-release/indias-bhambri-ramanathan-off-to-winning-starts-in-qualifiers-at-5th-tata-open-maharashtra",
+        "note": "Canonical reference documentation identifies the Pune-to-Hong Kong licence relocation from 2024. The ATP relocation URL returned 403 when reopened in this session; organizer independently confirms Pune host."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_adelaide_2",
+      "series_id": "adelaide_2",
+      "category_id": "atp_250",
+      "main_start_date": "2023-01-09",
+      "main_end_date": "2023-01-14",
+      "main_year_weeks": [
+        [
+          2023,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-01-08",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/08-01-2023"
+        },
+        {
+          "date": "2023-01-09",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/adelaide-2/2023/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          1
+        ],
+        [
+          2023,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/09-01-2023",
+        "note": "Eight Q1 results Jan 8 and four finals Jan 9; scored Main singles Jan 9. Separate occurrence from Adelaide 1, whose final was Jan 8."
+      },
+      "follow_up": "Review same-day Q/Main and feeder chronology; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2023-01-09",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/09-01-2023",
+        "observed_iso_week": [
+          2023,
+          2
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_auckland",
+      "series_id": "auckland",
+      "category_id": "atp_250",
+      "main_start_date": "2023-01-09",
+      "main_end_date": "2023-01-14",
+      "main_year_weeks": [
+        [
+          2023,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-01-07",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/07-01-2023"
+        },
+        {
+          "date": "2023-01-08",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/08-01-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/08-01-2023",
+        "note": "Dated results show qualifying on Jan 7–8. Overseas result list also labels one scored Main match Jan 8 despite canonical Jan 9 opening; tournament-day source has inconsistent postponed/time labels. Local date of that Main match and exact Q completion chronology require independent verification."
+      },
+      "follow_up": "Verify disputed Main opening local date and precise qualifying completion before sporting publication.",
+      "source_disagreement": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/08-01-2023",
+        "note": "Overseas daily result list labels scored Main singles Jan 8; canonical start Jan 9. Local start date not independently established; do not silently change Main dates."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_cordoba",
+      "series_id": "cordoba",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-06",
+      "main_end_date": "2023-02-12",
+      "main_year_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-04",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cordoba-2023/50313/orderofplay/2023-02-04"
+        },
+        {
+          "date": "2023-02-05",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cordoba-2023/50313/orderofplay/2023-02-05"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/cordoba-2023/50313/orderofplay/2023-02-05",
+        "note": "Dated Q1 and four Q finals Feb 4–5."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-06",
+      "main_end_date": "2023-02-12",
+      "main_year_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-05",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/05-02-2023"
+        },
+        {
+          "date": "2023-02-06",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/dallas/2023/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          5
+        ],
+        [
+          2023,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/dallas/2023/atp-muzi/?phase=qualification",
+        "note": "Local Sunday Q1 and Monday Q finals; two late Sunday Q1 timestamps appear Feb 6 in Czech feed. Main canonical opening Feb 6; scored singles that day still require independent confirmation."
+      },
+      "follow_up": "Review same-day Q/Main and feeder chronology; no sporting schedule installed."
+    },
+    {
+      "occurrence_id": "atp_2023_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-06",
+      "main_end_date": "2023-02-12",
+      "main_year_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-05",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/05-02-2023"
+        },
+        {
+          "date": "2023-02-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          5
+        ],
+        [
+          2023,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2023",
+        "note": "Four qualifying finals and two scored Main singles Feb 6."
+      },
+      "follow_up": "Review same-day Q/Main and feeder chronology; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2023-02-06",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-02-2023",
+        "observed_iso_week": [
+          2023,
+          6
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-13",
+      "main_end_date": "2023-02-19",
+      "main_year_weeks": [
+        [
+          2023,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-11",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/buenos-aires/2023/atp-muzi/?draw=1&phase=qualification"
+        },
+        {
+          "date": "2023-02-12",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/buenos-aires/2023/atp-muzi/?draw=1&phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/buenos-aires/2023/atp-muzi/?draw=1&phase=qualification",
+        "note": "Dated eight Q1 and four final qualifying records Feb 11–12."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    }
+  ]
+}

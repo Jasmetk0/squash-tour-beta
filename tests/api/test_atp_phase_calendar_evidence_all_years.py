@@ -8,7 +8,9 @@ from pathlib import Path
 
 import pytest
 
-from beta_engine.application.atp_earth_run_calendar_preview import preview_atp_earth_weeks_on_run
+from beta_engine.application.atp_earth_run_calendar_preview import (
+    preview_atp_earth_weeks_on_run,
+)
 from beta_engine.application.atp_earth_week_mapping import SOURCE_FILE, build_projection
 from beta_engine.domain.calendar.run_calendar import RunCalendar
 

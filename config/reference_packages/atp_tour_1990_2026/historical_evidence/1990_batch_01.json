@@ -22107,5 +22107,342 @@
         }
       }
     ]
+  },
+  "wild_card_label_discrepancy_audit_2026_11_26": {
+    "status": "secondary_label_count_reconciliation_not_certified_entry_policy",
+    "reviewed_on": "2026-11-26",
+    "dataset_source_url": "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+    "scope": "All 21 prior-versus-dataset WC differences examined. Matching count differences support a source-specific hypothesis that seeded WC tags are omitted; without identity-level paired source verification this does not establish the cause or a historical reserved-entry rule. No prior labels, canonical occurrences, raw player identities, Q fields, triage or published profiles changed.",
+    "summary": {
+      "discrepant_rows": 21,
+      "count_difference_matches_seeded_wc_omission_hypothesis": 18,
+      "existing_evidence_count_matches": 15,
+      "new_draw_recount_count_matches": 3,
+      "unresolved": 3
+    },
+    "rows": [
+      {
+        "occurrence_id": "atp_1990_sydney_2019",
+        "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Holden_NSW_Open_%E2%80%93_Men%27s_singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": null,
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_sofia",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Stella_Artois_Indoor_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": null,
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_indian_wells",
+        "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 5,
+        "dataset_observed_wc": 4,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": null,
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_rio_carpet_1990",
+        "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_Banespa_Open_%E2%80%93_Singles",
+        "source_basis": "unresolved_main_draw_recount",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 0,
+        "source_observed_seeded_wc_ranks": [],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "unresolved_count_difference",
+        "source_q_by_half": [
+          2,
+          2
+        ],
+        "source_wc_by_half": [
+          1,
+          2
+        ]
+      },
+      {
+        "occurrence_id": "atp_1990_hong_kong",
+        "source_url": "https://de.wikipedia.org/wiki/Salem_Open_1990",
+        "source_basis": "unresolved_main_draw_recount",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 0,
+        "source_observed_seeded_wc_ranks": [],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "unresolved_count_difference",
+        "source_q_by_half": [
+          2,
+          2
+        ],
+        "source_wc_by_half": [
+          2,
+          1
+        ]
+      },
+      {
+        "occurrence_id": "atp_1990_monte_carlo",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+        "source_basis": "unresolved_main_draw_recount",
+        "prior_observed_wc": 4,
+        "dataset_observed_wc": 5,
+        "prior_minus_dataset": -1,
+        "source_observed_seeded_wc_count": 0,
+        "source_observed_seeded_wc_ranks": [],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "unresolved_count_difference"
+      },
+      {
+        "occurrence_id": "atp_1990_munich",
+        "source_url": "https://cliffipedia.org/content/wikipedia_en_all_maxi_2025-08/1990_BMW_Open_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": null,
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_birmingham_1994",
+        "source_url": "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": null,
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_umag",
+        "source_url": "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Yugoslav_Open_%E2%80%93_Singles",
+        "source_basis": "new_initial_main_draw_recount",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          5
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis",
+        "source_q_by_half": [
+          2,
+          2
+        ],
+        "source_wc_by_half": [
+          2,
+          1
+        ]
+      },
+      {
+        "occurrence_id": "atp_1990_bologna_1998",
+        "source_url": "https://de.wikipedia.org/wiki/Bologna_Open_1990",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          6
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_florence_1994",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Torneo_Internazionale_Citt%C3%A0_di_Firenze_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 0,
+        "prior_minus_dataset": 3,
+        "source_observed_seeded_wc_count": 3,
+        "source_observed_seeded_wc_ranks": [
+          3,
+          6,
+          7
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_eastbourne",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Manchester_Open_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          2
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_kitzbuhel",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Philips_Austrian_Open_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 4,
+        "dataset_observed_wc": 3,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          2
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_cincinnati",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 5,
+        "dataset_observed_wc": 4,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          3
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_new_haven_1998",
+        "source_url": "https://wiki.ryanmichaelcurry.com/content/wikipedia_en_all_maxi_2025-08/1990_Volvo_International_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 6,
+        "dataset_observed_wc": 5,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          2
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_winston_salem",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Norstar_Bank_Hamlet_Challenge_Cup_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          6
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_bordeaux_1995",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Grand_Prix_Passing_Shot_%E2%80%93_Singles",
+        "source_basis": "new_initial_main_draw_recount",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          2
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis",
+        "source_revision": "1311960973",
+        "source_q_by_half": [
+          2,
+          2
+        ],
+        "source_wc_by_half": [
+          1,
+          2
+        ]
+      },
+      {
+        "occurrence_id": "atp_1990_cologne_1992_clay",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Geneva_Open_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          1
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_basel",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Swiss_Indoors_%E2%80%93_Singles",
+        "source_basis": "new_initial_main_draw_recount",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          2
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis",
+        "source_revision": "1221339518",
+        "source_q_by_half": [
+          3,
+          1
+        ],
+        "source_wc_by_half": [
+          2,
+          1
+        ]
+      },
+      {
+        "occurrence_id": "atp_1990_vienna",
+        "source_url": "https://en.wikipedia.org/wiki/1990_CA-TennisTrophy_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 3,
+        "dataset_observed_wc": 2,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          5
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      },
+      {
+        "occurrence_id": "atp_1990_stockholm",
+        "source_url": "https://en.wikipedia.org/wiki/1990_Stockholm_Open_%E2%80%93_Singles",
+        "source_basis": "existing_initial_main_draw_evidence",
+        "prior_observed_wc": 4,
+        "dataset_observed_wc": 3,
+        "prior_minus_dataset": 1,
+        "source_observed_seeded_wc_count": 1,
+        "source_observed_seeded_wc_ranks": [
+          3
+        ],
+        "dataset_observed_seeded_wc_count": 0,
+        "status": "count_difference_matches_seeded_wc_omission_hypothesis"
+      }
+    ]
   }
 }

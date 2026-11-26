@@ -371,9 +371,22 @@ class CalendarTourService:
         signed_life = decode_prevalidated_lifecycle(
             revision.saved_revision.payload, run_id=run_id, branch_id=branch_id
         )
+        live_life = self._live_lifecycle(session, run_id, branch_id)
+        expected_life = (
+            signed_life
+            if state is None or (state == signed and checkpoint == saved)
+            else live_life
+            if native
+            else _lifecycle_history(world, state.week, state)
+        )
+        self._verify_lifecycle_and_entry(session, run_id, branch_id, state, live_life, expected_life)
+        return context, state, signed
+
+    @staticmethod
+    def _live_lifecycle(session, run_id, branch_id):
         from beta_engine.infrastructure.db.models import PlayerLifecycleWeekStateModel
 
-        live_life = tuple(
+        return tuple(
             load_lifecycle_row(row, run_id, branch_id, row.week_ordinal)
             for row in session.scalars(
                 select(PlayerLifecycleWeekStateModel)
@@ -384,13 +397,9 @@ class CalendarTourService:
                 .order_by(PlayerLifecycleWeekStateModel.week_ordinal)
             )
         )
-        expected_life = (
-            signed_life
-            if state is None or (state == signed and checkpoint == saved)
-            else live_life
-            if native
-            else _lifecycle_history(world, state.week, state)
-        )
+
+    @staticmethod
+    def _verify_lifecycle_and_entry(session, run_id, branch_id, state, live_life, expected_life):
         if live_life != expected_life or (
             state and live_life[-1].fingerprint != state.lifecycle_fingerprint
         ):
@@ -410,7 +419,6 @@ class CalendarTourService:
                 raise ValueError(
                     "Tour submissions differ from production Entry authority"
                 )
-        return context, state, signed
 
     @with_paused_cyclic_gc
     def records(
@@ -1046,7 +1054,11 @@ class CalendarTourService:
             # Authenticate the live/signed owners even on exact retries.
             fingerprints = {}
             save_values = {} if include_inspection else None
-            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints, _save_values=save_values)
+            # One ordinary native next-slot may later verify only its appended
+            # increment against exactly this authenticated pre-write snapshot.
+            appended_slot = command.action == "next-slot"
+            pre_values = save_values if save_values is not None or not appended_slot else {}
+            loaded = self._context(session, run_id, branch_id, _fingerprints=fingerprints, _save_values=pre_values)
             _, current, _ = loaded
             if current:
                 for receipt in current.receipts:
@@ -1062,6 +1074,13 @@ class CalendarTourService:
                         return receipt.result
             from beta_engine.domain.tournaments.calendar_global_slots import global_replay_projection_scope, _prime_private_fingerprint
 
+            increment = None
+            if appended_slot:
+                from beta_engine.application.calendar_tour_appended_slot_verification import (
+                    begin_appended_slot,
+                )
+
+                increment = begin_appended_slot(session, loaded, fingerprints, pre_values)
             # The authenticated private inputs remain frozen through this
             # calculation. End the projection scope BEFORE independently reading
             # and verifying the actual coupled rows written below.
@@ -1078,6 +1097,7 @@ class CalendarTourService:
             post_context = self._verify_installed(
                 session, run_id, branch_id, successor,
                 _fingerprints=post_fingerprints, _save_values=save_values,
+                _increment=increment,
             )
             if include_inspection:
                 if post_context is None:
@@ -1125,17 +1145,32 @@ class CalendarTourService:
         _fault_injection_point("after_tour_write")
         return result, successor
 
-    def _verify_installed(self, session, run_id, branch_id, successor, *, _fingerprints=None, _save_values=None):
+    def _verify_installed(self, session, run_id, branch_id, successor, *, _fingerprints=None, _save_values=None,
+                          _increment=None):
         """Independently re-read and authenticate the coupled rows just written.
 
         Returns the post-write context, or None for legacy Tour schemas that
         never had this pre-commit replay. Rejects before the caller commits.
+        ``_increment`` is Execute's own authenticated pre-write snapshot of an
+        ordinary native next-slot; an unproven increment uses the full path.
         """
         if successor.schema_version not in {
             "calendar_tour_authority.v3",
             "calendar_tour_authority.v4", "calendar_tour_authority.v5",
         }:
             return None
+        if _increment is not None:
+            from beta_engine.application.calendar_tour_appended_slot_verification import (
+                verify_appended_slot,
+            )
+
+            post_context = verify_appended_slot(
+                self, session, run_id, branch_id, successor, _increment,
+                _fingerprints=_fingerprints, _save_values=_save_values,
+            )
+            if post_context is not None:
+                _fault_injection_point("after_native_replay")
+                return post_context
         # Reject any coupled-write discrepancy before this transaction
         # commits, not on the next inspection or eventual manual Save.
         post_context = self._context(session, run_id, branch_id, _fingerprints=_fingerprints, _save_values=_save_values)

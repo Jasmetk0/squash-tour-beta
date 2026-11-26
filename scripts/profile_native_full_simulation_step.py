@@ -41,15 +41,19 @@ from collections import defaultdict
 
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument("--root", type=Path, required=True)
-parser.add_argument("--clock", choices=("short", "w52", "w61", "w80", "global"), default="short",
-                    help="matrix clock, or 'global': W52 global-slot Tour v5 next-slot children")
+parser.add_argument("--clock", choices=("short", "w52", "w61", "w80", "global", "slots"), default="short",
+                    help="matrix clock, 'global': W52 global-slot Tour v5 next-slot children, or "
+                         "'slots': one measured week of a scripts/profile_native_week_ab.py slots-dN fixture")
+parser.add_argument("--slot-fixture", type=Path,
+                    help="for --clock slots: SQLite fixture from profile_native_week_ab.py prepare --slot-depth N")
+parser.add_argument("--slot-sha256", help="for --clock slots: required SHA-256 of --slot-fixture")
 parser.add_argument("--population", type=int, default=8, help="players for --clock global --prepare")
 parser.add_argument("--input", type=Path, help="fixture directory written by --prepare")
 parser.add_argument("--prepare", action="store_true", help="stop after writing the fixture")
 parser.add_argument("--label", default="")
 args = parser.parse_args()
 args.root.mkdir(parents=True, exist_ok=True)
-db = args.root / ("slot-worker.db" if args.clock == "global" else "matrix.db")
+db = args.root / ("slot-worker.db" if args.clock in {"global", "slots"} else "matrix.db")
 if db.exists() or (args.root / "start.db").exists():
     raise SystemExit("Use a fresh --root; existing SQLite files are never overwritten")
 
@@ -176,6 +180,17 @@ observe(native, "authenticate_children")
 observe(tasks.FullSimulationTaskWorker, "_finish", "task._finish")
 observe(tasks.FullSimulationTaskWorker, "_heartbeat", "task._heartbeat")
 observe(tasks, "inspect_tasks", "task.inspect_tasks(GET)")
+# Writer-transaction phases of a prepared child (read snapshot -> recheck ->
+# sporting write -> independent post-write verification).
+observe(native.NativeFullSimulationDriver, "_prepared_inputs_current", "driver._prepared_inputs_current")
+observe(CalendarTourService, "_install_prepared", "tour._install_prepared")
+observe(CalendarTourService, "_verify_installed", "tour._verify_installed")
+try:
+    import beta_engine.application.calendar_tour_appended_slot_verification as _appended
+except ImportError:
+    _appended = None
+if _appended is not None:
+    observe(_appended, "verify_appended_slot", "tour.verify_appended_slot(accepted_or_declined)")
 # Candidate-only driver phases (absent on the base tree): attempts, successful
 # prepared installs and the original complete path (incl. every fallback).
 for optional in ("_read_prepared_step", "_install_prepared_step", "_install_calendar_step",
@@ -287,12 +302,68 @@ if args.input:
     tour.create_edition = lambda *a, **kw: None
     fork_module.fork = lambda *a, **kw: {"branch_id": initial["branch"]}
 
-clock = None if args.clock == "global" else {
+clock = None if args.clock in {"global", "slots"} else {
     "short": RunCalendar(7, 5, 2030, 2),
     "w52": RunCalendar(52, 51, 2030, 2),
     "w61": RunCalendar(61, 37, 2000, 2),
     "w80": RunCalendar(80, 80, 2100, 2),
 }[args.clock]
+
+operator = []  # manual Save/confirm/restart requests between worker invocations
+
+
+def _timed_operator(label, call, *a, **kw):
+    wall, cpu = time.perf_counter(), time.process_time()
+    try:
+        return call(*a, **kw)
+    finally:
+        operator.append({"label": label, "wall_seconds": round(time.perf_counter() - wall, 3),
+                         "process_cpu_seconds": round(time.process_time() - cpu, 3), "rss_kib": _rss_kib()})
+
+
+def slot_week(root, fixture, expected_sha256):
+    """One measured W52 week of an existing slots-dN fixture through Task Center.
+
+    The worker selects every child itself (3 next-slot, then transition). Each
+    child stops at its manual Save; the result confirmation is the ordinary
+    reviewed operator command. Then the same database is reopened once.
+    """
+    from tests.api.test_calendar_tour_flow import command, execute, inspect, save_tour
+    from tests.api.test_saved_revision_history_api import ApiServer
+
+    if fixture is None or expected_sha256 is None:
+        raise SystemExit("--clock slots needs --slot-fixture and --slot-sha256")
+    if hashlib.sha256(fixture.read_bytes()).hexdigest() != expected_sha256:
+        raise SystemExit("Slot fixture SHA-256 differs")
+    backup(fixture, db)
+    with ApiServer(database_url=f"sqlite:///{db}") as server:
+        view = inspect(server)
+        week = view["state"]["week"]
+        edition = next(e["edition"]["edition_id"] for e in view["state"]["editions"]
+                       if not e["result_confirmed"] and e["draw"] is not None)
+        reviewed_command = case.reviewed(server, {"season_index": week["season_index"], "week": week["week"] + 1},
+                                         name="slot-week-worker")
+        task = case.start(server, reviewed_command)
+        for index in range(12):
+            if task["state"] == "target_reached":
+                break
+            checkpoint = task["checkpoint"]
+            if checkpoint == "native_result_review_required":
+                _timed_operator("confirm-result", execute, server,
+                                command(inspect(server), "confirm-result", name="slot-week:confirm", edition_id=edition))
+                _timed_operator("save", save_tour, server)
+            elif checkpoint == "native_manual_save_required":
+                _timed_operator("save", save_tour, server)
+            else:
+                raise AssertionError(task)
+            task = case.resume(server, task, f"slot-week:{index}")
+        assert task["state"] == "target_reached", task
+        scenario["final_inspection_sha256"] = hashlib.sha256(
+            json.dumps(inspect(server), sort_keys=True).encode()).hexdigest()
+    with ApiServer(database_url=f"sqlite:///{db}") as server:
+        reopened = _timed_operator("first_get_after_restart", inspect, server)
+        assert hashlib.sha256(json.dumps(reopened, sort_keys=True).encode()).hexdigest() == scenario["final_inspection_sha256"]
+
 
 source_tree = subprocess.check_output(["git", "rev-parse", "HEAD:src"], text=True).strip()
 dirty = bool(subprocess.run(["git", "diff", "--quiet", "HEAD", "--", "src"]).returncode)
@@ -301,8 +372,10 @@ sampler = threading.Thread(target=_sample_rss, args=(stop,), daemon=True)
 sampler.start()
 passed = False
 try:
-    if args.clock != "global":
+    if args.clock not in {"global", "slots"}:
         case.test_native_task_actual_match_points_all_weeks_and_real_season_rollover(args.root, clock)
+    elif args.clock == "slots":
+        slot_week(args.root, args.slot_fixture, args.slot_sha256)
     elif args.prepare:
         from tests.api.test_calendar_global_slots import ready
         from tests.api.test_saved_revision_history_api import ApiServer
@@ -398,6 +471,10 @@ report = {
     "worker_seconds": seconds,
     "other_threads": _plain(other),
     "history": _history(db, meta.get("branch", "branch")),
+    "operator_requests": operator,
+    "final_inspection_sha256": scenario.get("final_inspection_sha256"),
+    "db_bytes": db.stat().st_size,
+    "wal_bytes": db.with_name(db.name + "-wal").stat().st_size if db.with_name(db.name + "-wal").exists() else 0,
     "steps": [_plain(s) for s in steps],
 }
 (args.root / "report.json").write_text(json.dumps(report, indent=2))

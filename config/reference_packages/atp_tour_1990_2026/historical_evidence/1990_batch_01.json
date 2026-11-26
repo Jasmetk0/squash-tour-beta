@@ -29,7 +29,7 @@
     "plan_verified": 0,
     "played_and_reopened": 0,
     "reported_main_geometry_rows": 75,
-    "reported_qualification_size_rows": 23,
+    "reported_qualification_size_rows": 38,
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
@@ -1153,6 +1153,31 @@
             "stored_candidate_reference": "base_points_150k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "qualification_size_secondary": 32,
+        "qualification_size_source": "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_BP_National_Championships_%E2%80%93_Singles",
+          "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+        ],
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/BP_National_Championships_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": false,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": false
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -1291,6 +1316,39 @@
             "stored_candidate_comparison_status": "all_main_stage_values_agree",
             "stored_candidate_reference": "base_points_150k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
+        },
+        "qualification_size_secondary": 32,
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Benson_and_Hedges_Open_1990",
+        "source_urls": [
+          "https://en.wikipedia.org/wiki/1990_Benson_and_Hedges_Open_%E2%80%93_Singles",
+          "https://newikis.com/en/1990_Benson_and_Hedges_Open",
+          "https://de.wikipedia.org/wiki/ATP_Tour_1990",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Benson_and_Hedges_Open_1990",
+          "https://www.latimes.com/archives/la-xpm-1990-01-09-sp-412-story.html"
+        ],
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Benson_and_Hedges_Open_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": false,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": false
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "contemporary_partial_q_evidence": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-01-09-sp-412-story.html",
+            "published_on": "1990-01-09",
+            "printed_page": null,
+            "scope": "AP report identifies one qualifier in an opening Main round match, not Q round count, dates or graph."
           }
         }
       }
@@ -2154,9 +2212,10 @@
           "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Belgian_Indoor_Championships",
           "https://www.itftennis.com/en/tournament/brussels/bel/1990/m-csd-bel-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Donnay_Indoor_Championships_1990"
         ],
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -2253,6 +2312,24 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Donnay_Indoor_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Donnay_Indoor_Championships_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -3418,10 +3495,12 @@
         "source_urls": [
           "https://en.tennistemple.com/competitions/marrakech/1990/draw",
           "https://www.itftennis.com/en/tournament/casablanca/mar/1990/m-wsd-mar-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Grand_Prix_Hassan_II_1990",
+          "https://en.wikipedia.org/wiki/1990_Casablanca_Open"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -3506,6 +3585,30 @@
             "stored_candidate_comparison_status": "all_main_stage_values_agree",
             "stored_candidate_reference": "base_points_150k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Grand_Prix_Hassan_II_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Grand_Prix_Hassan_II_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "source_disagreements": {
+            "header_surface": "clay",
+            "body_surface": "hard",
+            "alternate_english_event_end_date": "1990-03-12",
+            "scope": "German header/body disagree on surface; English event article reports end one day later than canonical Main archive. Keep existing calendar and source distinction."
           }
         }
       }
@@ -4627,10 +4730,12 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Suntory_Japan_Open_Tennis_Championships_%E2%80%93_Men%27s_singles",
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Japan_Open_Tennis_Championships_1990",
+          "https://www.upi.com/Archives/1990/04/12/Lendl-and-Edberg-win-in-Tokyo/3605639892800/"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 28,
         "qualification_entrants": null,
         "reported_main_qualifiers": 7,
         "reported_main_wild_cards": 5,
@@ -4729,6 +4834,30 @@
             "workbook_qualifier_award": null,
             "source_rule_certified": false
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Japan_Open_Tennis_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Japan_Open_Tennis_Championships_1990",
+          "reported_header_main": 56,
+          "reported_header_q": 28,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "contemporary_partial_q_evidence": {
+            "source_url": "https://www.upi.com/Archives/1990/04/12/Lendl-and-Edberg-win-in-Tokyo/3605639892800/",
+            "published_on": "1990-04-12",
+            "printed_page": null,
+            "scope": "UPI explicitly identifies a qualifier playing in Main round three on April12; no Q results or actual dates."
+          }
         }
       }
     },
@@ -4801,10 +4930,11 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Philips_Open_%E2%80%93_Singles",
           "https://www.latimes.com/archives/la-xpm-1990-04-20-sp-1653-story.html",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Philips_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -4890,6 +5020,24 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Philips_Open_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Philips_Open_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -4962,10 +5110,11 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_KAL_Cup_Korea_Open_%E2%80%93_Singles",
           "https://www.itftennis.com/en/tournament/seoul/kor/1990/m-wsf-kor-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Seoul_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -5067,6 +5216,24 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Seoul_Open_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Seoul_Open_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -6245,10 +6412,11 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_U.S._Men%27s_Clay_Court_Championships",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/US_Men%E2%80%99s_Clay_Court_Championships_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -6351,6 +6519,29 @@
             "differences": [],
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
+          }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/US_Men%E2%80%99s_Clay_Court_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/US_Men%E2%80%99s_Clay_Court_Championships_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "source_disagreements": {
+            "header_financial_commitment_usd": 230000,
+            "body_financial_commitment_usd": 213000,
+            "scope": "Same source has differing commitment amounts; no exact ranking-class inference."
           }
         }
       }
@@ -6973,10 +7164,11 @@
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Yugoslav_Open_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Yugoslav_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 3,
@@ -7078,6 +7270,24 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Yugoslav_Open_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Yugoslav_Open_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -7562,10 +7772,12 @@
           "https://www.ultimatetennisstatistics.com/tournamentEvent?tab=results&tournamentEventId=2000",
           "https://www.tennis.esp.br/en/tournaments/queen-s-club?tour=ATP&year=1990",
           "https://en.wikipedia.org/wiki/1990_Stella_Artois_Championships_%E2%80%93_Singles",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Stella_Artois_Championships_1990",
+          "https://www.lta.org.uk/fan-zone/international/hsbc-championships/history/"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 7,
         "reported_main_wild_cards": 4,
@@ -7665,6 +7877,41 @@
             "stored_candidate_reference": "world_series_64_candidate_rows:500000",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Stella_Artois_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "secondary_header_conflict_not_a_conditional_geometry",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Stella_Artois_Championships_1990",
+          "reported_header_main": 56,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "conflict": {
+            "reason": "nondivisible_observed_q",
+            "reported_header_main": 56,
+            "working_main": 56,
+            "reported_header_q": 32,
+            "observed_main_q": 7,
+            "remainder": 4,
+            "conditional_equal_section_model_allowed": false,
+            "validator_error": "Original Qualification entrants are not divisible into equal Q sections",
+            "scope": "Reject the hypothetical equal-section combination. The real historical Q graph is not known, so this is not proof of an actual runtime blocker. Do not round Q size, replace observed labels with an invented reserved count, or revise Main geometry."
+          },
+          "archive_route": {
+            "source_url": "https://www.lta.org.uk/fan-zone/international/hsbc-championships/history/",
+            "scope": "Organizer roll of honour verifies edition, not qualifying. Guessed 1990.pdf path on LTA unavailable; no draw acquired.",
+            "attempted_url": "https://www.lta.org.uk/49bd87/siteassets/events/cinch/media/1990.pdf",
+            "outcome": "not_accessible"
+          }
         }
       }
     },
@@ -7737,10 +7984,11 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Rosmalen_Grass_Court_Championships",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Rosmalen_Grass_Court_Championships_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
         "reported_main_qualifiers": 4,
         "reported_main_wild_cards": 2,
@@ -7837,6 +8085,24 @@
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Rosmalen_Grass_Court_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Rosmalen_Grass_Court_Championships_1990",
+          "reported_header_main": 32,
+          "reported_header_q": 32,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -9434,7 +9700,7 @@
           "https://de.wikipedia.org/wiki/Canadian_Open_1990_(Tennis)/Herren"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 28,
         "qualification_entrants": null,
         "reported_main_qualifiers": 7,
         "reported_main_wild_cards": 5,
@@ -9578,6 +9844,24 @@
           "reported_financial_commitment_usd": 1200000,
           "prior_reported_financial_commitment_usd": null,
           "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Canadian_Open_1990_(Tennis)/Herren",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Canadian_Open_1990_(Tennis)/Herren",
+          "reported_header_main": 56,
+          "reported_header_q": 28,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -10410,10 +10694,11 @@
           "https://dewiki.de/Lexikon/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Thriftway_ATP_Championships_%E2%80%93_Singles",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
-          "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990"
+          "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990",
+          "https://cincinnatiopen.com/wp-content/uploads/2024/08/Compendium-2024-FINAL-Web-Version_compressed.pdf"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 28,
         "qualification_entrants": null,
         "reported_main_qualifiers": 7,
         "reported_main_wild_cards": 5,
@@ -10549,6 +10834,36 @@
           "reported_financial_commitment_usd": 1300000,
           "prior_reported_financial_commitment_usd": null,
           "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Thriftway_ATP_Championships_1990",
+          "reported_header_main": 56,
+          "reported_header_q": 28,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "organiser_qualification_partial_result": {
+            "source_url": "https://cincinnatiopen.com/wp-content/uploads/2024/08/Compendium-2024-FINAL-Web-Version_compressed.pdf",
+            "publication_year": 2024,
+            "printed_page": 257,
+            "pdf_page_index": null,
+            "access": "indexed_text_read_screenshot_content_too_large",
+            "pdf_sha256": null,
+            "reported_qualification_seed": 1,
+            "reported_loss_round": 1,
+            "reported_qualification_matches_minimum": 1,
+            "scope": "Organizer men's qualifying statistics explicitly list a 1990 first-round loss of the top Q seed. Retrospective record, not full draw, dates or advancement allocation; no historical identities or scores imported. Page 257 inferred from table of contents and right-page section, not visually verified."
+          }
         }
       }
     },
@@ -14806,7 +15121,7 @@
           "https://de.wikipedia.org/wiki/Stockholm_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 28,
         "qualification_entrants": null,
         "reported_main_qualifiers": 6,
         "reported_main_wild_cards": 4,
@@ -14966,6 +15281,36 @@
           "reported_financial_commitment_usd": 1100000,
           "prior_reported_financial_commitment_usd": null,
           "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Stockholm_Open_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "secondary_header_conflict_not_a_conditional_geometry",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Stockholm_Open_1990",
+          "reported_header_main": 56,
+          "reported_header_q": 28,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots.",
+          "conflict": {
+            "reason": "header_main_field_disagreement_and_nondivisible_observed_q",
+            "reported_header_main": 56,
+            "working_main": 48,
+            "reported_header_q": 28,
+            "observed_main_q": 6,
+            "remainder": 4,
+            "conditional_equal_section_model_allowed": false,
+            "validator_error": "Original Qualification entrants are not divisible into equal Q sections",
+            "scope": "Reject the hypothetical equal-section combination. The real historical Q graph is not known, so this is not proof of an actual runtime blocker. Do not round Q size, replace observed labels with an invented reserved count, or revise Main geometry.",
+            "source_body_main": 48
+          }
         }
       }
     },
@@ -15043,7 +15388,7 @@
           "https://de.wikipedia.org/wiki/Paris_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 24,
         "qualification_entrants": null,
         "reported_main_qualifiers": 6,
         "reported_main_wild_cards": 4,
@@ -15196,6 +15541,24 @@
           "reported_financial_commitment_usd": 2000000,
           "prior_reported_financial_commitment_usd": null,
           "scope": "New secondary lead only. Preserve previous census and exact-label comparison baseline; verify source classification/semantics before updating working commitment or comparing exact-label rows."
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Paris_Open_1990",
+        "remaining_q_header_followup_2026_11_26": {
+          "status": "edition_specific_secondary_qualification_size_only_not_actual_draw",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://de.wikipedia.org/wiki/Paris_Open_1990",
+          "reported_header_main": 48,
+          "reported_header_q": 24,
+          "prior_fields": {
+            "qualification_size_field_present": true,
+            "qualification_size_secondary": null,
+            "source_urls_field_present": true
+          },
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "complete_q_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "The edition-specific men's singles header reports a Q draw size; no Q match rows, phase dates or actual entrant count. Main entry labels are separate observations. Do not equate reported capacity with actual participants or observed Q labels with reserved spots."
         }
       }
     },
@@ -16766,18 +17129,59 @@
     "status": "diagnostic_only_not_source_certification_or_publication",
     "reviewed_on": "2026-11-26",
     "source_model_head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
-    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 23 reported Q-size rows now have observed entry labels; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
+    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 38 reported Q-size rows have observed entry labels; 36 equal-section hypotheses constructible and two source conflicts explicitly blocked; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
     "counts": {
-      "reported_q_size": 23,
-      "conditional_geometry": 23,
-      "conditional_geometry_and_band": 17,
-      "geometry_without_exact_band": 6,
+      "reported_q_size": 38,
+      "conditional_geometry": 36,
+      "conditional_geometry_and_band": 23,
+      "geometry_without_exact_band": 13,
+      "blocked_source_geometry_conflict": 2,
       "missing_main_entry_labels": 0,
-      "no_reported_q_size": 51
+      "no_reported_q_size": 36
     },
     "rows": [
       {
         "occurrence_id": "atp_1990_brisbane",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_wellington_1992",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_auckland",
         "reported_q_size": 32,
         "observed_q": 4,
         "observed_wc": 3,
@@ -16858,6 +17262,26 @@
       },
       {
         "occurrence_id": "atp_1990_sofia",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_brussels_championship_1992",
         "reported_q_size": 32,
         "observed_q": 4,
         "observed_wc": 3,
@@ -16997,6 +17421,26 @@
         }
       },
       {
+        "occurrence_id": "atp_1990_marrakech",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
         "occurrence_id": "atp_1990_estoril",
         "reported_q_size": 32,
         "observed_q": 4,
@@ -17074,6 +17518,66 @@
           "entrants_per_section": 4,
           "bracket_slots_per_section": 4,
           "potential_matches": 76
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_tokyo",
+        "reported_q_size": 28,
+        "observed_q": 7,
+        "observed_wc": 5,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_hong_kong",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_seoul_1996",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
         }
       },
       {
@@ -17177,6 +17681,26 @@
         }
       },
       {
+        "occurrence_id": "atp_1990_birmingham_1994",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
         "occurrence_id": "atp_1990_hamburg",
         "reported_q_size": 28,
         "observed_q": 7,
@@ -17217,6 +17741,26 @@
         }
       },
       {
+        "occurrence_id": "atp_1990_umag",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
         "occurrence_id": "atp_1990_bologna_1998",
         "reported_q_size": 32,
         "observed_q": 4,
@@ -17235,11 +17779,114 @@
           "bracket_slots_per_section": 8,
           "potential_matches": 59
         }
+      },
+      {
+        "occurrence_id": "atp_1990_queens_club",
+        "reported_q_size": 32,
+        "observed_q": 7,
+        "observed_wc": 4,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "blocked_source_geometry_conflict",
+        "conditional_geometry": null,
+        "geometry_conflict_reason": "nondivisible_observed_q"
+      },
+      {
+        "occurrence_id": "atp_1990_s_hertogenbosch",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 2,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 2,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_canadian_open",
+        "reported_q_size": 28,
+        "observed_q": 7,
+        "observed_wc": 5,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_cincinnati",
+        "reported_q_size": 28,
+        "observed_q": 7,
+        "observed_wc": 5,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_stockholm",
+        "reported_q_size": 28,
+        "observed_q": 6,
+        "observed_wc": 4,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "blocked_source_geometry_conflict",
+        "conditional_geometry": null,
+        "geometry_conflict_reason": "header_main_field_disagreement_and_nondivisible_observed_q"
+      },
+      {
+        "occurrence_id": "atp_1990_paris_masters",
+        "reported_q_size": 24,
+        "observed_q": 6,
+        "observed_wc": 4,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 48,
+          "main_byes": 16,
+          "qualification_entrants": 24,
+          "qualifier_spots": 6,
+          "wild_cards": 4,
+          "sections": 6,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 65
+        }
       }
     ],
     "followup_source_model_head": "b4b2ba435e93f0953f363b9159ac8157cb5bce25",
     "followup": "Toronto Indoor, Philadelphia and Memphis initial entry labels completed, conditional equal-section geometry now constructible for all 13 reported Q-size candidates. Actual Q and reserved-policy evidence remains absent.",
     "april_may_followup": "Four additional edition-specific 32Q headers and complete Main labels; 17 conditional cases in total. Madrid LL and Singapore SE are not additional feeder places; Bologna seeded WC counts once. No actual qualifying graph.",
-    "additional_header_followup": "Six edition-specific Q-size headers; additional equal-section shapes Q16/4, Q48/6, Q28/7, Q32/8. Hamburg LL in BYE position and Rome LL/SE not added to assumed feeder places; actual Q graph absent."
+    "additional_header_followup": "Six edition-specific Q-size headers; additional equal-section shapes Q16/4, Q48/6, Q28/7, Q32/8. Hamburg LL in BYE position and Rome LL/SE not added to assumed feeder places; actual Q graph absent.",
+    "remaining_header_followup": "15 edition-specific reported Q sizes: 13 additional conditional geometries, 2 blocked source combinations (Queen's Club 32/7; Stockholm 28/6 and Main header/body mismatch). No actual Q graph or guaranteed places inferred."
   }
 }

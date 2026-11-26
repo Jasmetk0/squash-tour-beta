@@ -82,3 +82,18 @@ def test_match_crosscheck_distinguishes_local_id_and_group_rounds():
     assert result["production_profiles_certified"] == 0
     with pytest.raises(ValueError, match="Unexpected Finals group structure"):
         compare_match_groups((header + body.replace(",15,F,", ",15,RR,")).encode(), cross, m)
+
+
+def test_four_date_correction_candidates_change_start_week_not_canonical():
+    from datetime import date
+    guide = load(RESEARCH / "official_finals_guide.json")
+    for conflict in guide["conflicts"]:
+        evidence = conflict["followup"]
+        a = date.fromisoformat(conflict["archive_start"]).isocalendar().week
+        b = date.fromisoformat(evidence["proposed_main_start"]).isocalendar().week
+        assert a == evidence["archive_start_iso_week"]
+        assert b == evidence["proposed_main_start_iso_week"] == a + 1
+        assert evidence["proposed_main_start"] == conflict["guide_start"]
+        assert evidence["canonical_changed"] is False
+        assert evidence["q_window_complete"] is False
+        assert evidence["sources"]

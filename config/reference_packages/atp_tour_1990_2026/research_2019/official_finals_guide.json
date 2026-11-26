@@ -85,30 +85,115 @@
       "occurrence_id": "atp_2019_newport",
       "archive_start": "2019-07-14",
       "guide_start": "2019-07-15",
-      "state": "date_conflict_needs_daily_mens_main_results"
+      "state": "supported_main_start_correction_candidate_pending_work_review",
+      "followup": {
+        "q_observed_days": [
+          "2019-07-14"
+        ],
+        "q_window_complete": false,
+        "proposed_main_start": "2019-07-15",
+        "main_start_support": "ATP contemporary preview and July 15 media notes label Main window July15–21, secondary individual Q1 result July14. USTA event dates July14–21 refer to whole event; exact full Q window still missing.",
+        "sources": [
+          "https://www.atptour.com/-/media/ec9599893840449b886cbf229f565c35.pdf",
+          "https://www.tennislive.net/atp/match/ramkumar-ramanathan-VS-yuichi-sugita/hall-of-fame-open-newport-2019/",
+          "https://www.usta.com/en/home/stay-current/newengland/hall-of-fame-open-2019.html"
+        ],
+        "archive_start_iso_week": 28,
+        "proposed_main_start_iso_week": 29,
+        "accessed": "2026-11-26",
+        "canonical_changed": false,
+        "pdf_access": "official media notes text read; screenshot HTTP403; original bytes absent"
+      }
     },
     {
       "occurrence_id": "atp_2019_washington",
       "archive_start": "2019-07-27",
       "guide_start": "2019-07-29",
-      "state": "date_conflict_needs_daily_mens_main_results"
+      "state": "supported_main_start_correction_candidate_pending_work_review",
+      "followup": {
+        "q_observed_days": [
+          "2019-07-27",
+          "2019-07-28"
+        ],
+        "q_window_complete": false,
+        "proposed_main_start": "2019-07-29",
+        "main_start_support": "ATP contemporary media notes explicitly label July29 Day1; men's Q result examples July27/28. Full Q field/days not yet reviewed.",
+        "sources": [
+          "https://www.atptour.com/-/media/c858b0cae9c041e9bc0a951eeae48bd1.pdf",
+          "https://umpiry.com/2019-07-27",
+          "https://www.tennislive.net/atp/match/donald-young-VS-peter-gojowczyk/citi-open-washington-2019/"
+        ],
+        "archive_start_iso_week": 30,
+        "proposed_main_start_iso_week": 31,
+        "accessed": "2026-11-26",
+        "canonical_changed": false,
+        "pdf_access": "official media notes text read; screenshot HTTP403; original bytes absent"
+      }
     },
     {
       "occurrence_id": "atp_2019_metz",
       "archive_start": "2019-09-15",
       "guide_start": "2019-09-16",
-      "state": "date_conflict_needs_daily_mens_main_results"
+      "state": "supported_main_start_correction_candidate_pending_work_review",
+      "followup": {
+        "q_observed_days": [
+          "2019-09-15",
+          "2019-09-16"
+        ],
+        "q_window_complete": false,
+        "proposed_main_start": "2019-09-16",
+        "main_start_support": "All dated secondary Q/Main results reviewed: 8 Q1 Sep15, 4 Q2 plus 3 Main R1 Sep16, 27 Main results total; independent secondary first-round date Sep16–18. Q result coverage is complete by count but original Q draw/preplay source missing.",
+        "observed_q_round_matches": [
+          8,
+          4
+        ],
+        "main_first_day_matches": 3,
+        "sources": [
+          "https://www.gamesetpredict.com/fr/tournoi/moselle-open-2019-atp/",
+          "https://en.as.com/resultados/tenis/atp_metz/2019/calendario/primera_ronda_a/"
+        ],
+        "archive_start_iso_week": 37,
+        "proposed_main_start_iso_week": 38,
+        "accessed": "2026-11-26",
+        "canonical_changed": false,
+        "pdf_access": "not acquired"
+      }
     },
     {
       "occurrence_id": "atp_2019_st_petersburg",
       "archive_start": "2019-09-15",
       "guide_start": "2019-09-16",
-      "state": "date_conflict_needs_daily_mens_main_results"
+      "state": "supported_main_start_correction_candidate_pending_work_review",
+      "followup": {
+        "q_observed_days": [
+          "2019-09-15",
+          "2019-09-16"
+        ],
+        "q_window_complete": false,
+        "proposed_main_start": "2019-09-16",
+        "main_start_support": "All dated secondary Q/Main results reviewed: 8 Q1 Sep15, 4 Q2 plus 2 Main R1 Sep16, 27 Main results total; regional Tennis Europe calendar Sep16–22 and local sports schedule confirm first Main day. Original Q draw/preplay source missing.",
+        "observed_q_round_matches": [
+          8,
+          4
+        ],
+        "main_first_day_matches": 2,
+        "sources": [
+          "https://www.gamesetpredict.com/tournament/st-petersburg-open-2019-atp/",
+          "https://www.tenniseurope.org/calendarevent/49649/St-Petersburg-Open",
+          "https://www.championat.com/tennis/_atp/tournament/22009/calendar/"
+        ],
+        "archive_start_iso_week": 37,
+        "proposed_main_start_iso_week": 38,
+        "accessed": "2026-11-26",
+        "canonical_changed": false,
+        "pdf_access": "not acquired"
+      }
     }
   ],
   "notes": [
     "Tokyo visually reads 30/09/19, extracted text incorrectly reads 03/10/19; do not trust the extraction.",
     "Brisbane, Doha, Pune are December 2018 starts with 2019 season identities.",
-    "Guide and archive disagreement retained; do not shift dates or overwrite canonical sources from this table alone."
+    "Guide and archive disagreement retained; do not shift dates or overwrite canonical sources from this table alone.",
+    "Follow-up evidence supports all four as Q-inclusive archive starts vs later Main starts. Proposed dates change W52 occupancy by one week at the start; keep canonical untouched pending Work review. Observed Q days do not certify complete v2 Q window."
   ]
 }

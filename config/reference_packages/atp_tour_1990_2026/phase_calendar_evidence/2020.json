@@ -1,0 +1,765 @@
+{
+  "atp_season_year": 2020,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2020_doha",
+      "series_id": "doha",
+      "category_id": "atp_250",
+      "main_start_date": "2020-01-06",
+      "main_end_date": "2020-01-11",
+      "main_year_weeks": [
+        [
+          2020,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-01-04",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/doha/2020/orderofplay/2020-01-04"
+        },
+        {
+          "date": "2020-01-05",
+          "status": "played",
+          "source_url": "https://fr.tennistemple.com/competitions/doha/2020/orderofplay/2020-01-05"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/doha/2020/orderofplay/2020-01-04",
+        "note": "Eight scored Q1 and four Q finals."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://fr.tennistemple.com/competitions/doha/2020/orderofplay/2020-01-05",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_adelaide",
+      "series_id": "adelaide",
+      "category_id": "atp_250",
+      "main_start_date": "2020-01-12",
+      "main_end_date": "2020-01-18",
+      "main_year_weeks": [
+        [
+          2020,
+          3
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-01-11",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/adelaide/2020/orderofplay/2020-01-11"
+        },
+        {
+          "date": "2020-01-12",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/adelaide/2020/orderofplay/2020-01-12"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/adelaide/2020/orderofplay/2020-01-11",
+        "note": "Eight men's Q1 and four men's Q finals; exclude women's matches from mixed order of play. Three scored men's Main matches January 12."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/adelaide/2020/orderofplay/2020-01-12",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review actual same-day Q/Main feeder ordering and full points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2020-01-12",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/adelaide/2020/orderofplay/2020-01-12",
+        "observed_iso_week": [
+          2020,
+          2
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2020_auckland",
+      "series_id": "auckland",
+      "category_id": "atp_250",
+      "main_start_date": "2020-01-13",
+      "main_end_date": "2020-01-18",
+      "main_year_weeks": [
+        [
+          2020,
+          3
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-01-11",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/auckland/2020/orderofplay/2020-01-11"
+        },
+        {
+          "date": "2020-01-12",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/auckland/2020/orderofplay/2020-01-12"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/auckland/2020/orderofplay/2020-01-11",
+        "note": "Six scored men's Q1 and four Q finals; two players enter in Q2. Mixed order of play includes women's event; dates follow daily headings, not UTC display times."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/auckland/2020/orderofplay/2020-01-12",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_cordoba",
+      "series_id": "cordoba",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-03",
+      "main_end_date": "2020-02-09",
+      "main_year_weeks": [
+        [
+          2020,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-01",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/cordoba/2020/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2020-02-02",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/cordoba/2020/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://noproxy.tennisexplorer.com/cordoba/2020/atp-men/?phase=qualification",
+        "note": "Eight Q1 and four Q finals including one partial score; no invented completion score."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://noproxy.tennisexplorer.com/cordoba/2020/atp-men/?phase=qualification",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-03",
+      "main_end_date": "2020-02-09",
+      "main_year_weeks": [
+        [
+          2020,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-01",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/pune/2020/orderofplay/2020-02-01"
+        },
+        {
+          "date": "2020-02-02",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/pune/2020/orderofplay/2020-02-02"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/pune/2020/orderofplay/2020-02-01",
+        "note": "Eight Q1 and four Q finals at Pune, India; preserve canonical hong_kong lineage."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/pune/2020/orderofplay/2020-02-02",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication.",
+      "historical_identity_evidence": {
+        "actual_host": "Pune, India",
+        "source_url": "https://en.tennistemple.com/competitions/pune/2020/orderofplay/2020-02-01",
+        "note": "Canonical stable Series ID retained; source host recorded independently."
+      }
+    },
+    {
+      "occurrence_id": "atp_2020_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-03",
+      "main_end_date": "2020-02-09",
+      "main_year_weeks": [
+        [
+          2020,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-02",
+          "status": "played",
+          "source_url": "https://www.les-sports.info/tennis-atp-250-montpellier-2020-epr102666.html"
+        },
+        {
+          "date": "2020-02-03",
+          "status": "played",
+          "source_url": "https://www.les-sports.info/tennis-atp-250-montpellier-2020-epr102666.html"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          5
+        ],
+        [
+          2020,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.les-sports.info/tennis-atp-250-montpellier-2020-epr102666.html",
+        "note": "Eight Q1 and four Q finals; two scored Main matches February 3, excluding byes."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.les-sports.info/tennis-atp-250-montpellier-2020-epr102666.html",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review actual same-day Q/Main feeder ordering and full points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2020-02-03",
+        "status": "played",
+        "source_url": "https://www.les-sports.info/tennis-atp-250-montpellier-2020-epr102666.html",
+        "observed_iso_week": [
+          2020,
+          6
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2020_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-10",
+      "main_end_date": "2020-02-16",
+      "main_year_weeks": [
+        [
+          2020,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-08",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/buenos-aires/2020/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2020-02-09",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/buenos-aires/2020/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/buenos-aires/2020/atp-muzi/?phase=qualification",
+        "note": "Eight Q1 and four Q finals."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.tenisportal.cz/buenos-aires/2020/atp-muzi/?phase=qualification",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-10",
+      "main_end_date": "2020-02-16",
+      "main_year_weeks": [
+        [
+          2020,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-09",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-09"
+        },
+        {
+          "date": "2020-02-10",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-10"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          6
+        ],
+        [
+          2020,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-09",
+        "note": "Eight Q1 including partial score, four Q finals; scored Main matches February 10. Actual host Long Island (New York Open), not Dallas."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-10",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review actual same-day Q/Main feeder ordering and full points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2020-02-10",
+        "status": "played",
+        "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-10",
+        "observed_iso_week": [
+          2020,
+          7
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Long Island, New York, USA",
+        "source_url": "https://pt.tennistemple.com/competitions/dallas/2020/orderofplay/2020-02-09",
+        "note": "Canonical stable Series ID retained; source host recorded independently."
+      }
+    },
+    {
+      "occurrence_id": "atp_2020_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2020-02-10",
+      "main_end_date": "2020-02-16",
+      "main_year_weeks": [
+        [
+          2020,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-08",
+          "status": "played",
+          "source_url": "https://www.the-sports.org/tennis-2020-atp-500-abn-amro-world-tennis-tournament-epr102669.html"
+        },
+        {
+          "date": "2020-02-09",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/rotterdam/2020/orderofplay/2020-02-09"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.the-sports.org/tennis-2020-atp-500-abn-amro-world-tennis-tournament-epr102669.html",
+        "note": "Dated Q1 and four scored Q finals."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/rotterdam/2020/orderofplay/2020-02-09",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-17",
+      "main_end_date": "2020-02-23",
+      "main_year_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-15",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/delray-beach/2020/orderofplay/2020-02-15"
+        },
+        {
+          "date": "2020-02-16",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/delray-beach/2020/orderofplay/2020-02-16"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/delray-beach/2020/orderofplay/2020-02-15",
+        "note": "Four scored qualifying finals; USTA Florida confirms 16-player qualifying field."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/delray-beach/2020/orderofplay/2020-02-16",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication.",
+      "additional_qualifying_source_url": "https://www.ustaflorida.com/news/gulbis-granted-wildcard-for-delray-beach-open-qualifying/"
+    },
+    {
+      "occurrence_id": "atp_2020_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-17",
+      "main_end_date": "2020-02-23",
+      "main_year_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-16",
+          "status": "played",
+          "source_url": "https://es.tennistemple.com/competitions/lyon/2020/orderofplay/2020-02-16"
+        },
+        {
+          "date": "2020-02-17",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/marseille-2020/4500/orderofplay/2020-02-17"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          7
+        ],
+        [
+          2020,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://es.tennistemple.com/competitions/lyon/2020/orderofplay/2020-02-16",
+        "note": "Four Q finals and three scored Main singles February 17; partial Q1 score retained only as play evidence."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/marseille-2020/4500/orderofplay/2020-02-17",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review actual same-day Q/Main feeder ordering and full points before publication.",
+      "main_opening_play_evidence": {
+        "date": "2020-02-17",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/marseille-2020/4500/orderofplay/2020-02-17",
+        "observed_iso_week": [
+          2020,
+          8
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_url": "https://es.tennistemple.com/competitions/lyon/2020/orderofplay/2020-02-16",
+        "note": "Canonical stable Series ID retained; actual host independent of Series."
+      }
+    },
+    {
+      "occurrence_id": "atp_2020_rio",
+      "series_id": "rio",
+      "category_id": "atp_500",
+      "main_start_date": "2020-02-17",
+      "main_end_date": "2020-02-23",
+      "main_year_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-15",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/rio-de-janeiro/2020/orderofplay/2020-02-15"
+        },
+        {
+          "date": "2020-02-16",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/rio-de-janeiro/2020/orderofplay/2020-02-16"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://pt.tennistemple.com/competitions/rio-de-janeiro/2020/orderofplay/2020-02-15",
+        "note": "Four Q finals; one Q1 partial score."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://pt.tennistemple.com/competitions/rio-de-janeiro/2020/orderofplay/2020-02-16",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2020-02-24",
+      "main_end_date": "2020-02-29",
+      "main_year_weeks": [
+        [
+          2020,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-22",
+          "status": "played",
+          "source_url": "https://es.tennistemple.com/competitions/acapulco/2020/orderofplay/2020-02-22"
+        },
+        {
+          "date": "2020-02-23",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/acapulco/2020/orderofplay/2020-02-23"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://es.tennistemple.com/competitions/acapulco/2020/orderofplay/2020-02-22",
+        "note": "Four men's Q finals, mixed ATP/WTA program; local daily headings rather than overnight European clock times."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://pt.tennistemple.com/competitions/acapulco/2020/orderofplay/2020-02-23",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2020-02-24",
+      "main_end_date": "2020-02-29",
+      "main_year_weeks": [
+        [
+          2020,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-22",
+          "status": "played",
+          "source_url": "https://pt.tennistemple.com/competitions/dubai/2020/orderofplay/2020-02-22"
+        },
+        {
+          "date": "2020-02-23",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/dubai/2020/orderofplay/2020-02-23"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://pt.tennistemple.com/competitions/dubai/2020/orderofplay/2020-02-22",
+        "note": "Four men's Q finals including partial score; women's final February 22 excluded."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/dubai/2020/orderofplay/2020-02-23",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_santiago",
+      "series_id": "santiago",
+      "category_id": "atp_250",
+      "main_start_date": "2020-02-24",
+      "main_end_date": "2020-03-01",
+      "main_year_weeks": [
+        [
+          2020,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-02-22",
+          "status": "played",
+          "source_url": "https://es.tennistemple.com/competitions/santiago-2020/4504/orderofplay/2020-02-22"
+        },
+        {
+          "date": "2020-02-23",
+          "status": "played",
+          "source_url": "https://es.tennistemple.com/competitions/santiago-2020/4504/orderofplay/2020-02-23"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://es.tennistemple.com/competitions/santiago-2020/4504/orderofplay/2020-02-22",
+        "note": "Four scored Q finals."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://es.tennistemple.com/competitions/santiago-2020/4504/orderofplay/2020-02-23",
+        "note": "Four qualifying finals in dated scores; not a full sporting profile."
+      },
+      "follow_up": "Review full draw geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2020_cincinnati",
+      "series_id": "cincinnati",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2020-08-22",
+      "main_end_date": "2020-08-29",
+      "main_year_weeks": [
+        [
+          2020,
+          35
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "qualifying_date_evidence": [
+        {
+          "date": "2020-08-20",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cincinnati/2020/orderofplay/2020-08-20"
+        },
+        {
+          "date": "2020-08-21",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cincinnati/2020/orderofplay/2020-08-21"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2020,
+          34
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/cincinnati/2020/orderofplay/2020-08-20",
+        "note": "Mixed ATP/WTA results establish actual qualifying play on both days. Contemporary tournament report confirms 48-player field and 12 berths; daily results list is incomplete for men's finals, not a complete draw reconstruction."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 12,
+        "source_url": "https://tennistourtalk.com/60422/past-champs-headline-western-southern-open-qualifying-field",
+        "note": "Contemporary report confirms 48 entrants and 12 berths; actual full draw allocation not certified."
+      },
+      "follow_up": "Review full draw geometry and points before publication.",
+      "historical_identity_evidence": {
+        "actual_host": "New York, USA",
+        "source_url": "https://tennistourtalk.com/60422/past-champs-headline-western-southern-open-qualifying-field",
+        "note": "Canonical stable Series ID retained; actual host independent of Series."
+      },
+      "additional_qualifying_source_url": "https://tennistourtalk.com/60422/past-champs-headline-western-southern-open-qualifying-field"
+    }
+  ]
+}

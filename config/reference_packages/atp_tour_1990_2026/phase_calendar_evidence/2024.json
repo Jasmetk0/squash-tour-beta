@@ -1,0 +1,2774 @@
+{
+  "atp_season_year": 2024,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2024_brisbane",
+      "series_id": "brisbane",
+      "category_id": "atp_250",
+      "main_start_date": "2023-12-31",
+      "main_end_date": "2024-01-07",
+      "main_year_weeks": [
+        [
+          2024,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-12-30",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/brisbane/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-12-31",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/brisbane/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          52
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/brisbane/2024/orderofplay/2023-12-31",
+        "note": "First-round and final Q scores on Dec 30/31; scored men's Main match on Dec 31. Both Q dates are outside January-start 2024 Run; observed Main opening is also in 2023 W52."
+      },
+      "follow_up": "January-start Run excludes observed prior-year Q; review offset clock and same-day phase ordering.",
+      "main_opening_play_evidence": {
+        "date": "2023-12-31",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/brisbane/2024/orderofplay/2023-12-31",
+        "observed_iso_week": [
+          2023,
+          52
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_250",
+      "main_start_date": "2024-01-01",
+      "main_end_date": "2024-01-07",
+      "main_year_weeks": [
+        [
+          2024,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-12-31",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hong-kong-2024/"
+        },
+        {
+          "date": "2024-01-01",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hong-kong-2024/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          52
+        ],
+        [
+          2024,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-hong-kong-2024/",
+        "note": "Eight Q1 results Dec 31, four Q finals and four scored Main singles Jan 1. January-start Run excludes Q1."
+      },
+      "follow_up": "January-start Run excludes observed prior-year Q; review offset clock and same-day phase ordering.",
+      "main_opening_play_evidence": {
+        "date": "2024-01-01",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-hong-kong-2024/",
+        "observed_iso_week": [
+          2024,
+          1
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_adelaide",
+      "series_id": "adelaide",
+      "category_id": "atp_250",
+      "main_start_date": "2024-01-08",
+      "main_end_date": "2024-01-13",
+      "main_year_weeks": [
+        [
+          2024,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-01-07",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/adelaide/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-01-08",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/adelaide/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          1
+        ],
+        [
+          2024,
+          2
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/adelaide/2024/atp-men/?phase=main",
+        "note": "Men's Q first-round results Jan 7 and four finals Jan 8; scored Main singles Jan 8. Separate men's play from Jan 6 women's qualifying."
+      },
+      "follow_up": "Review same-day Q and Main opening/feeder chronology; do not infer a playable schedule.",
+      "main_opening_play_evidence": {
+        "date": "2024-01-08",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/adelaide/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          2
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_auckland",
+      "series_id": "auckland",
+      "category_id": "atp_250",
+      "main_start_date": "2024-01-08",
+      "main_end_date": "2024-01-13",
+      "main_year_weeks": [
+        [
+          2024,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-01-06",
+          "status": "played",
+          "source_url": "https://www.mykhel.com/tennis/asb-classic-2024-mens-singles-scores-c10460/"
+        },
+        {
+          "date": "2024-01-07",
+          "status": "played",
+          "source_url": "https://www.mykhel.com/tennis/asb-classic-2024-mens-singles-scores-c10460/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.mykhel.com/tennis/asb-classic-2024-mens-singles-scores-c10460/",
+        "note": "Eight completed men's Q1 results Jan 6 and four finals Jan 7; Indian time timestamps convert to the same local New Zealand civil dates."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before publication."
+    },
+    {
+      "occurrence_id": "atp_2024_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2024-01-29",
+      "main_end_date": "2024-02-04",
+      "main_year_weeks": [
+        [
+          2024,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-01-28",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/montpellier/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-01-29",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/montpellier/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          4
+        ],
+        [
+          2024,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/montpellier/2024/atp-men/?phase=main",
+        "note": "Eight first-round Q results Jan 28 and four finals Jan 29; three scored Main matches Jan 29."
+      },
+      "follow_up": "Review same-day Q and Main opening/feeder chronology; do not infer a playable schedule.",
+      "main_opening_play_evidence": {
+        "date": "2024-01-29",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/montpellier/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          5
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_cordoba",
+      "series_id": "cordoba",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-05",
+      "main_end_date": "2024-02-11",
+      "main_year_weeks": [
+        [
+          2024,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-03",
+          "status": "played",
+          "source_url": "https://scangoal.com/tennis/league/atp-cordoba"
+        },
+        {
+          "date": "2024-02-04",
+          "status": "played",
+          "source_url": "https://scangoal.com/tennis/league/atp-cordoba"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          5
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://scangoal.com/tennis/league/atp-cordoba",
+        "note": "Eight Q1 results Feb 3 and four finals Feb 4 match official organizer's announced local weekend."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before publication.",
+      "schedule_confirmation": {
+        "source_url": "https://www.cordobaopen.com/articulo/1051/32834/bagnis-%E2%80%93-rodriguez-taverna-partido-destacado-en-la-primera-ronda-de-la-qualy",
+        "note": "Organizer advertised Feb 3–4 local qualifying, consistent with results."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_dallas",
+      "series_id": "dallas",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-05",
+      "main_end_date": "2024-02-11",
+      "main_year_weeks": [
+        [
+          2024,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-04",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/dallas/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-05",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/dallas/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          5
+        ],
+        [
+          2024,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/dallas/2024/atp-men/?phase=qualification",
+        "note": "Local Sunday Q1 and Monday Q finals; European timestamp for one Sunday evening Q1 appears early Monday. Scored Main singles on Feb 5 confirmed separately by Sky Sports (not BYEs). ATP250 in 2024, not ATP500."
+      },
+      "follow_up": "Review split Q and observed same-day Main opening in W06; no sporting schedule installed.",
+      "additional_qualifying_source_url": "https://www.skysports.com/tennis/scores-schedule/05-02-2024",
+      "main_opening_play_evidence": {
+        "date": "2024-02-05",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/05-02-2024",
+        "observed_iso_week": [
+          2024,
+          6
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-05",
+      "main_end_date": "2024-02-11",
+      "main_year_weeks": [
+        [
+          2024,
+          6
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-04",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/marseille/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-05",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/marseille/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          5
+        ],
+        [
+          2024,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/marseille/2024/atp-men/?phase=main",
+        "note": "Actual host Marseille, separate from Lyon clay event lyon_old. Dated Q1 Feb 4 and finals Feb 5, plus scored Main singles Feb 5."
+      },
+      "follow_up": "Review same-day Q and Main opening/feeder chronology; do not infer a playable schedule.",
+      "main_opening_play_evidence": {
+        "date": "2024-02-05",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/marseille/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          6
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_event_id": 496,
+        "source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+        "note": "Canonical stable ID lyon; independent lyon_old clay licence."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-12",
+      "main_end_date": "2024-02-18",
+      "main_year_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-10",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/buenos-aires/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-11",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/buenos-aires/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/buenos-aires/2024/atp-men/?phase=qualification",
+        "note": "Dated Q1 and four Q finals; one Q1 timestamp appears after midnight CET but corresponds to Feb 10 local (UTC-3)."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-12",
+      "main_end_date": "2024-02-18",
+      "main_year_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-10",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/delray-beach/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-11",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/delray-beach/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-12",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/12-02-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          6
+        ],
+        [
+          2024,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/12-02-2024",
+        "note": "Three qualifying finals dated Feb 11 and remaining final Feb 12; scored Main singles also Feb 12. Do not infer the cause or exact start/suspension history."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering across W06/W07.",
+      "main_opening_play_evidence": {
+        "date": "2024-02-12",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/delray-beach/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          7
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2024-02-12",
+      "main_end_date": "2024-02-18",
+      "main_year_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-10",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rotterdam/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-11",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rotterdam/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/rotterdam/2024/atp-men/?phase=qualification",
+        "note": "Dated men's singles Q1 and Q finals on successive days; exclude doubles qualifying."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_doha",
+      "series_id": "doha",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-19",
+      "main_end_date": "2024-02-24",
+      "main_year_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/doha/2024/atp-men/?phase=qualification",
+        "note": "Eight men's singles Q1 results and four finals, distinct from WTA qualifying. 2024 category ATP250."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_los_cabos",
+      "series_id": "los_cabos",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-19",
+      "main_end_date": "2024-02-24",
+      "main_year_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/los-cabos/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-18",
+          "status": "played",
+          "source_url": "https://loscabostennisopen.com/en/2024/02/18/cobolli-nava-holt-y-kovacevic-advance-to-the-main-draw/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://loscabostennisopen.com/en/2024/02/18/cobolli-nava-holt-y-kovacevic-advance-to-the-main-draw/",
+        "note": "Organizer announced local Saturday Feb 17 Q1 and reported all four qualifiers Sunday Feb 18. CET result timestamps show Feb 18/19, not the local event dates. Main draw has 28 places per organizer."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication.",
+      "schedule_confirmation": {
+        "source_url": "https://loscabostennisopen.com/en/2024/02/17/mifel-tennis-open-by-telcel-oppo-2024-opens-with-qualifiers/",
+        "note": "Local Q start Feb 17; 28-place Main and four qualifying tickets advertised."
+      },
+      "draw_capacity_evidence": {
+        "main_places": 28,
+        "qualifier_places": 4,
+        "source_url": "https://loscabostennisopen.com/en/2024/02/17/mifel-tennis-open-by-telcel-oppo-2024-opens-with-qualifiers/",
+        "status": "published_event_description_not_full_profile"
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_rio",
+      "series_id": "rio",
+      "category_id": "atp_500",
+      "main_start_date": "2024-02-19",
+      "main_end_date": "2024-02-25",
+      "main_year_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2024/atp-men/?phase=qualification",
+        "note": "Dated first-round and four qualifying final results; retirements with scores are play, not BYEs."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2024-02-26",
+      "main_end_date": "2024-03-02",
+      "main_year_weeks": [
+        [
+          2024,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2024/"
+        },
+        {
+          "date": "2024-02-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2024/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2024/",
+        "note": "Spanish-language dated results separate eight first-round matches Feb 24 and four finals Feb 25; official organizer confirms Saturday Q start. CET timestamps show Feb 25/26. Use local dates."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication.",
+      "schedule_confirmation": {
+        "source_url": "https://abiertomexicanodetenis.com/en/2024/02/24/the-abierto-mexicano-telcel-presented-by-hsbc-2024-kicks-off-with-the-qualy-round/",
+        "note": "Organizer confirms Feb 24 Q start and four qualifying tickets."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2024-02-26",
+      "main_end_date": "2024-03-02",
+      "main_year_weeks": [
+        [
+          2024,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-24",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/24-02-2024"
+        },
+        {
+          "date": "2024-02-25",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/25-02-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/25-02-2024",
+        "note": "Dated men's singles Q1 and Q final results on Feb 24/25; do not conflate with the WTA event."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_santiago",
+      "series_id": "santiago",
+      "category_id": "atp_250",
+      "main_start_date": "2024-02-26",
+      "main_end_date": "2024-03-03",
+      "main_year_weeks": [
+        [
+          2024,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-02-24",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/santiago/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-02-25",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/santiago/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/santiago/2024/atp-men/?phase=qualification",
+        "note": "Dated qualifying first-round and final results on February 24 and 25."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_indian_wells",
+      "series_id": "indian_wells",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-03-06",
+      "main_end_date": "2024-03-17",
+      "main_year_weeks": [
+        [
+          2024,
+          10
+        ],
+        [
+          2024,
+          11
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-03-04",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/indian-wells/2024/orderofplay/2024-03-04"
+        },
+        {
+          "date": "2024-03-05",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/indian-wells/2024/orderofplay/2024-03-05"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/indian-wells/2024/orderofplay/2024-03-05",
+        "note": "Men's Q1 and Q2 on March 4–5 tournament day lists; overseas result dates can differ. The ATP reports rain disrupting Main opening March 6, not an additional Q day."
+      },
+      "follow_up": "Review actual round allocation across both Main weeks and same-week Q; do not install a speculative schedule.",
+      "main_opening_play_evidence": {
+        "date": "2024-03-06",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/rain-indian-wells-2024-day-1-wednesday",
+        "observed_iso_week": [
+          2024,
+          10
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_miami",
+      "series_id": "miami",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-03-20",
+      "main_end_date": "2024-03-31",
+      "main_year_weeks": [
+        [
+          2024,
+          12
+        ],
+        [
+          2024,
+          13
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-03-18",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/18-03-2024"
+        },
+        {
+          "date": "2024-03-19",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/19-03-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          12
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/19-03-2024",
+        "note": "Dated men's singles qualifying first-round and final results before March 20 Main."
+      },
+      "follow_up": "Review actual round allocation across both Main weeks and same-week Q; do not install a speculative schedule."
+    },
+    {
+      "occurrence_id": "atp_2024_estoril",
+      "series_id": "estoril",
+      "category_id": "atp_250",
+      "main_start_date": "2024-04-01",
+      "main_end_date": "2024-04-07",
+      "main_year_weeks": [
+        [
+          2024,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-03-30",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/30-03-2024"
+        },
+        {
+          "date": "2024-03-31",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/31-03-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          13
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/31-03-2024",
+        "note": "Dated men's Q results on March 30–31; retain canonical Main April 1–7."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_houston",
+      "series_id": "houston",
+      "category_id": "atp_250",
+      "main_start_date": "2024-04-01",
+      "main_end_date": "2024-04-07",
+      "main_year_weeks": [
+        [
+          2024,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-03-30",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/houston/2024/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2024-03-31",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/houston/2024/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          13
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/houston/2024/atp-muzi/?phase=qualification",
+        "note": "Eight first-round and four final qualifying records, including a partial-score final. One European timestamp after midnight March 31 corresponds to local March 30; exact match completion/suspension history is not asserted."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_marrakech",
+      "series_id": "marrakech",
+      "category_id": "atp_250",
+      "main_start_date": "2024-04-01",
+      "main_end_date": "2024-04-07",
+      "main_year_weeks": [
+        [
+          2024,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-03-31",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-marrakech-2024/"
+        },
+        {
+          "date": "2024-04-01",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-marrakech-2024/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          13
+        ],
+        [
+          2024,
+          14
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-marrakech-2024/",
+        "note": "Dated eight Q1 matches March 31 and four Q finals plus three Main first-round results April 1."
+      },
+      "follow_up": "Review actual same-day Q/Main and feeder ordering; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-04-01",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-marrakech-2024/",
+        "observed_iso_week": [
+          2024,
+          14
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_monte_carlo",
+      "series_id": "monte_carlo",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-04-07",
+      "main_end_date": "2024-04-14",
+      "main_year_weeks": [
+        [
+          2024,
+          15
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-04-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-04-2024"
+        },
+        {
+          "date": "2024-04-07",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/monte-carlo/2024/orderofplay/2024-04-07"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          14
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/monte-carlo/2024/orderofplay/2024-04-07",
+        "note": "Seven scored Q finals and four scored Main singles April 7, in W14 outside the majority-week Main projection W15. Do not treat adjacent projected labels as proof of separate play."
+      },
+      "follow_up": "Review actual same-day Q/Main and feeder ordering; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-04-07",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/monte-carlo/2024/orderofplay/2024-04-07",
+        "observed_iso_week": [
+          2024,
+          14
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_barcelona",
+      "series_id": "barcelona",
+      "category_id": "atp_500",
+      "main_start_date": "2024-04-15",
+      "main_end_date": "2024-04-21",
+      "main_year_weeks": [
+        [
+          2024,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-04-13",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/barcelona/2024/orderofplay/2024-04-13"
+        },
+        {
+          "date": "2024-04-14",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/barcelona/2024/orderofplay/2024-04-14"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          15
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/barcelona/2024/orderofplay/2024-04-14",
+        "note": "Dated first-round and final Q results before April 15 Main."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_bucharest",
+      "series_id": "bucharest",
+      "category_id": "atp_250",
+      "main_start_date": "2024-04-15",
+      "main_end_date": "2024-04-21",
+      "main_year_weeks": [
+        [
+          2024,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-04-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/bucharest/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-04-15",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/bucharest/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          15
+        ],
+        [
+          2024,
+          16
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/bucharest/2024/atp-men/?phase=qualification",
+        "note": "Four Q finals and four scored Main singles April 15. Q1 on April 14 includes a partial-score result."
+      },
+      "follow_up": "Review actual same-day Q/Main and feeder ordering, including any compressed Sunday opening.",
+      "main_opening_play_evidence": {
+        "date": "2024-04-15",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/bucharest/2024/atp-men/",
+        "observed_iso_week": [
+          2024,
+          16
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_munich",
+      "series_id": "munich",
+      "category_id": "atp_250",
+      "main_start_date": "2024-04-15",
+      "main_end_date": "2024-04-21",
+      "main_year_weeks": [
+        [
+          2024,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-04-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/munich/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-04-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/munich/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          15
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/munich/2024/atp-men/?phase=qualification",
+        "note": "Dated Q1 and Q finals on successive days. Munich is ATP250 in 2024; 2025 category change must not be retroactive."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_madrid",
+      "series_id": "madrid",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-04-24",
+      "main_end_date": "2024-05-05",
+      "main_year_weeks": [
+        [
+          2024,
+          17
+        ],
+        [
+          2024,
+          18
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-04-22",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/22-04-2024"
+        },
+        {
+          "date": "2024-04-23",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/23-04-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          17
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-04-2024",
+        "note": "Dated men's singles Q1 and Q finals; exclude WTA qualifying. Main begins April 24."
+      },
+      "follow_up": "Review actual round allocation across both Main weeks and same-week Q."
+    },
+    {
+      "occurrence_id": "atp_2024_rome",
+      "series_id": "rome",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-05-08",
+      "main_end_date": "2024-05-19",
+      "main_year_weeks": [
+        [
+          2024,
+          19
+        ],
+        [
+          2024,
+          20
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-05-06",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/rome/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-05-07",
+          "status": "played",
+          "source_url": "https://noproxy.tennisexplorer.com/rome/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          19
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://noproxy.tennisexplorer.com/rome/2024/atp-men/?phase=qualification",
+        "note": "Dated men's singles Q1 and Q2 May 6 and 7; Main starts May 8."
+      },
+      "follow_up": "Review actual round allocation across both Main weeks and same-week Q."
+    },
+    {
+      "occurrence_id": "atp_2024_geneva",
+      "series_id": "geneva",
+      "category_id": "atp_250",
+      "main_start_date": "2024-05-19",
+      "main_end_date": "2024-05-25",
+      "main_year_weeks": [
+        [
+          2024,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-05-18",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-18"
+        },
+        {
+          "date": "2024-05-19",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-19"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-19",
+        "note": "Scored Q2 and two Main singles on Sunday May 19, in W20 outside majority Main W21."
+      },
+      "follow_up": "Review actual same-day Q/Main and feeder ordering, including any compressed Sunday opening.",
+      "main_opening_play_evidence": {
+        "date": "2024-05-19",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-19",
+        "observed_iso_week": [
+          2024,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_lyon_old",
+      "series_id": "lyon_old",
+      "category_id": "atp_250",
+      "main_start_date": "2024-05-19",
+      "main_end_date": "2024-05-25",
+      "main_year_weeks": [
+        [
+          2024,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-05-18",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-18"
+        },
+        {
+          "date": "2024-05-19",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-19"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-19",
+        "note": "Scored Q2 and two Main singles on Sunday May 19 in W20. This clay Lyon occurrence is lyon_old, distinct from Marseille's lyon licence."
+      },
+      "follow_up": "Review actual same-day Q/Main and feeder ordering, including any compressed Sunday opening.",
+      "main_opening_play_evidence": {
+        "date": "2024-05-19",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-19",
+        "observed_iso_week": [
+          2024,
+          20
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Lyon, France",
+        "source_url": "https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-18",
+        "note": "Separate clay tournament from the Marseille licence (lyon)."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_s_hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "category_id": "atp_250",
+      "main_start_date": "2024-06-10",
+      "main_end_date": "2024-06-16",
+      "main_year_weeks": [
+        [
+          2024,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-08",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/hertogenbosch/2024/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2024-06-09",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/hertogenbosch/2024/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/hertogenbosch/2024/atp-muzi/?phase=qualification",
+        "note": "Men's singles first-round and four final qualifying records on June 8 and 9."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_stuttgart",
+      "series_id": "stuttgart",
+      "category_id": "atp_250",
+      "main_start_date": "2024-06-10",
+      "main_end_date": "2024-06-16",
+      "main_year_weeks": [
+        [
+          2024,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-08",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stuttgart/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-06-09",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stuttgart/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/stuttgart/2024/atp-men/?phase=qualification",
+        "note": "Six Q1 scores on June 8; two Q1 and all four Q finals dated June 9. Two qualifying sections therefore have both rounds dated Sunday. Exact match suspension or start history is not established."
+      },
+      "follow_up": "Review two-round same-day results and match-start chronology; do not infer one round per day.",
+      "qualifying_round_date_evidence": {
+        "source_url": "https://www.tennisexplorer.com/stuttgart/2024/atp-men/?phase=qualification",
+        "basis": "dated_scored_result_records_not_start_completion_timestamps",
+        "rounds": [
+          {
+            "date": "2024-06-08",
+            "physical_round": 1,
+            "scored_matches": 6
+          },
+          {
+            "date": "2024-06-09",
+            "physical_round": 1,
+            "scored_matches": 2
+          },
+          {
+            "date": "2024-06-09",
+            "physical_round": 2,
+            "scored_matches": 4
+          }
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_halle",
+      "series_id": "halle",
+      "category_id": "atp_500",
+      "main_start_date": "2024-06-17",
+      "main_end_date": "2024-06-23",
+      "main_year_weeks": [
+        [
+          2024,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-halle-2024/"
+        },
+        {
+          "date": "2024-06-16",
+          "status": "played",
+          "source_url": "https://noproxy.tenisportal.cz/halle/2024/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://noproxy.tenisportal.cz/halle/2024/atp-muzi/?phase=qualification",
+        "note": "Dated men's singles qualifying first-round and final results June 15–16."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_queens_club",
+      "series_id": "queens_club",
+      "category_id": "atp_500",
+      "main_start_date": "2024-06-17",
+      "main_end_date": "2024-06-23",
+      "main_year_weeks": [
+        [
+          2024,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-15",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/15-06-2024"
+        },
+        {
+          "date": "2024-06-16",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/16-06-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/16-06-2024",
+        "note": "Dated Q results both days. Tennis Australia reports Popyrin won both qualifying matches Sunday June 16, so do not equate physical rounds with different dates; exact start/suspension history is not asserted."
+      },
+      "follow_up": "Review same-day results in distinct physical rounds; no assumption about start/suspension chronology.",
+      "qualifying_round_date_evidence": {
+        "date": "2024-06-16",
+        "physical_rounds": [
+          1,
+          2
+        ],
+        "same_entrant_two_wins": true,
+        "basis": "national_federation_report_of_two_wins_same_day_not_exact_match_start_timestamps",
+        "source_url": "https://www.tennis.com.au/fan-zone/news/2024/06/17/hijikata-popyrin-qualify-in-singles-at-prestigious-queens-club-tournament"
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_mallorca",
+      "series_id": "mallorca",
+      "category_id": "atp_250",
+      "main_start_date": "2024-06-23",
+      "main_end_date": "2024-06-29",
+      "main_year_weeks": [
+        [
+          2024,
+          26
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-22",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/mallorca/2024/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2024-06-23",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/23-06-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          25
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-06-2024",
+        "note": "Four qualifying finals and three scored men's Main singles June 23; BYEs excluded. Actual Main opening W25 is outside majority projection W26."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-06-23",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-06-2024",
+        "observed_iso_week": [
+          2024,
+          25
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_eastbourne",
+      "series_id": "eastbourne",
+      "category_id": "atp_250",
+      "main_start_date": "2024-06-24",
+      "main_end_date": "2024-06-29",
+      "main_year_weeks": [
+        [
+          2024,
+          26
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-06-22",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/22-06-2024"
+        },
+        {
+          "date": "2024-06-23",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/23-06-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          25
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-06-2024",
+        "note": "Dated men's singles Q1 and four Q finals, separate from WTA qualifying."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_bastad",
+      "series_id": "bastad",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-15",
+      "main_end_date": "2024-07-21",
+      "main_year_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/bastad/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-07-15",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          28
+        ],
+        [
+          2024,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024",
+        "note": "Eight qualifying first-round scores July 14, four Q finals July 15 and scored Main singles July 15, with BYEs excluded."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-07-15",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024",
+        "observed_iso_week": [
+          2024,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_gstaad",
+      "series_id": "gstaad",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-15",
+      "main_end_date": "2024-07-21",
+      "main_year_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/gstaad/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-07-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/gstaad/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/gstaad/2024/atp-men/?phase=qualification",
+        "note": "Eight first-round scores July 13 and four Q finals July 14."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_hamburg",
+      "series_id": "hamburg",
+      "category_id": "atp_500",
+      "main_start_date": "2024-07-15",
+      "main_end_date": "2024-07-21",
+      "main_year_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-13",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/13-07-2024"
+        },
+        {
+          "date": "2024-07-14",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/hamburk/2024/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/hamburk/2024/atp-muzi/?phase=qualification",
+        "note": "Dated men's Q1 and Q finals July 13–14. 2024 Main is in July W29, not May as in 2025."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_newport",
+      "series_id": "newport",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-15",
+      "main_end_date": "2024-07-21",
+      "main_year_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/newport/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-07-15",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          28
+        ],
+        [
+          2024,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024",
+        "note": "Eight first-round and four final qualifying results July 14–15. Scored Main singles July 15 confirm same-day overlap. Retain 2024 historical ATP250 occurrence."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-07-15",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/15-07-2024",
+        "observed_iso_week": [
+          2024,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_umag",
+      "series_id": "umag",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-21",
+      "main_end_date": "2024-07-27",
+      "main_year_weeks": [
+        [
+          2024,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/umag/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-07-21",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/umag/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/umag/2024/atp-men/?phase=qualification",
+        "note": "Eight first-round scores July 20 and four finals July 21. Scored Main singles July 21 in W29 before projected W30."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-07-21",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/21-07-2024",
+        "observed_iso_week": [
+          2024,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_atlanta",
+      "series_id": "atlanta",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-22",
+      "main_end_date": "2024-07-28",
+      "main_year_weeks": [
+        [
+          2024,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-20",
+          "status": "played",
+          "source_url": "https://www.infobetting.com/tennis/calendari/tabellone/atlanta/2024/cal-t-355-2-c-376-2024.htm"
+        },
+        {
+          "date": "2024-07-21",
+          "status": "played",
+          "source_url": "https://www.infobetting.com/tennis/calendari/tabellone/atlanta/2024/cal-t-355-2-c-376-2024.htm"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.infobetting.com/tennis/calendari/tabellone/atlanta/2024/cal-t-355-2-c-376-2024.htm",
+        "note": "Dated draw lists eight first-round and four final qualifying matches July 20–21."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_kitzbuhel",
+      "series_id": "kitzbuhel",
+      "category_id": "atp_250",
+      "main_start_date": "2024-07-22",
+      "main_end_date": "2024-07-27",
+      "main_year_weeks": [
+        [
+          2024,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2024/"
+        },
+        {
+          "date": "2024-07-21",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2024/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2024/",
+        "note": "Eight first-round qualifying scores July 20 and four finals July 21; one scored retirement is included. Main scores start July 22."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_washington",
+      "series_id": "washington",
+      "category_id": "atp_500",
+      "main_start_date": "2024-07-29",
+      "main_end_date": "2024-08-04",
+      "main_year_weeks": [
+        [
+          2024,
+          31
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-07-27",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/27-07-2024"
+        },
+        {
+          "date": "2024-07-28",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/28-07-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          30
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/28-07-2024",
+        "note": "Dated men's singles qualifying first-round and final scores; separate from WTA and doubles."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_canadian_open",
+      "series_id": "canadian_open",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-08-06",
+      "main_end_date": "2024-08-12",
+      "main_year_weeks": [
+        [
+          2024,
+          32
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-08-04",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/04-08-2024"
+        },
+        {
+          "date": "2024-08-05",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/05-08-2024"
+        },
+        {
+          "date": "2024-08-06",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/montreal/2024/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          31
+        ],
+        [
+          2024,
+          32
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/montreal/2024/atp-muzi/?phase=qualification",
+        "note": "ATP announced Aug 4–5 Q. Organizer reports six qualifying finals moved to Aug 6 after rain; dated results confirm Aug 6 scores. Main also starts Aug 6. Main finishes Aug 12 in W33 outside the majority-week W32. The 2024 host is Montreal, not Toronto."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-08-06",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-08-2024",
+        "observed_iso_week": [
+          2024,
+          32
+        ]
+      },
+      "source_finish_iso_week": [
+        2024,
+        33
+      ],
+      "source_disagreement": {
+        "source_url": "https://nationalbankopen.com/news/read/2024/the-main-draw-gets-rolling-raonic-diallo-action",
+        "note": "Six qualifying bouts postponed from Aug 5 to Aug 6 after rain; actual Q extends beyond advertised Aug 4–5.",
+        "advertised_schedule_url": "https://www.atptour.com/en/news/montreal-2024-atp-masters-1000-history-draw-schedule"
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Montreal, Canada",
+        "source_url": "https://www.atptour.com/en/news/montreal-2024-atp-masters-1000-history-draw-schedule",
+        "note": "Men's event in Montreal in 2024; same Canadian Open series as Toronto 2025."
+      },
+      "schedule_confirmation": {
+        "source_url": "https://nationalbankopen.com/news/read/2023/2024-national-bank-open-follow-new-schedule-due-olympics",
+        "note": "Olympic calendar moved Main opening to Tuesday Aug 6 and final to Monday Aug 12."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_cincinnati",
+      "series_id": "cincinnati",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-08-12",
+      "main_end_date": "2024-08-19",
+      "main_year_weeks": [
+        [
+          2024,
+          33
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-08-11",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/11-08-2024"
+        },
+        {
+          "date": "2024-08-12",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/12-08-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          32
+        ],
+        [
+          2024,
+          33
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/12-08-2024",
+        "note": "Organizer confirms two qualifying rounds and seven men's qualifier places. Scored Main singles and qualifying finals Aug 12. Main finishes Aug 19 in W34 outside majority-week W33; do not copy 2025 extended schedule."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-08-12",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/12-08-2024",
+        "observed_iso_week": [
+          2024,
+          33
+        ]
+      },
+      "source_finish_iso_week": [
+        2024,
+        34
+      ],
+      "qualifying_geometry_evidence": {
+        "physical_rounds": 2,
+        "qualifier_places": 7,
+        "source_url": "https://cincinnatiopen.com/news/2024-qualifying-fields-announced/",
+        "status": "published_event_description_not_full_profile"
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_winston_salem",
+      "series_id": "winston_salem",
+      "category_id": "atp_250",
+      "main_start_date": "2024-08-18",
+      "main_end_date": "2024-08-24",
+      "main_year_weeks": [
+        [
+          2024,
+          34
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-08-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2024/"
+        },
+        {
+          "date": "2024-08-18",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2024/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          33
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2024/",
+        "note": "Local dated results show eight Q1 matches Aug 17 and four Q finals plus seven scored Main singles Aug 18. Actual Main starts W33."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening week separate from canonical projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-08-18",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2024/",
+        "observed_iso_week": [
+          2024,
+          33
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_chengdu",
+      "series_id": "chengdu",
+      "category_id": "atp_250",
+      "main_start_date": "2024-09-18",
+      "main_end_date": "2024-09-24",
+      "main_year_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-17",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/17-09-2024"
+        },
+        {
+          "date": "2024-09-18",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/18-09-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/18-09-2024",
+        "note": "Dated men's Q results on Sep 17 and 18; four scored Q finals and three scored Main singles on Sep 18. Canonical finish Sep 24 in W39 outside majority W38."
+      },
+      "follow_up": "Review same-day Q/Main ordering and source finish in following week.",
+      "source_finish_iso_week": [
+        2024,
+        39
+      ],
+      "main_opening_play_evidence": {
+        "date": "2024-09-18",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/chengdu/2024/orderofplay/2024-09-18",
+        "observed_iso_week": [
+          2024,
+          38
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_hangzhou",
+      "series_id": "hangzhou",
+      "category_id": "atp_250",
+      "main_start_date": "2024-09-18",
+      "main_end_date": "2024-09-24",
+      "main_year_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-09-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification",
+        "note": "Four scored Q finals and three scored Main singles Sep 18; source finish Sep 24 is W39 outside majority W38."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-09-18",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          38
+        ]
+      },
+      "source_finish_iso_week": [
+        2024,
+        39
+      ]
+    },
+    {
+      "occurrence_id": "atp_2024_tokyo",
+      "series_id": "tokyo",
+      "category_id": "atp_500",
+      "main_start_date": "2024-09-25",
+      "main_end_date": "2024-10-01",
+      "main_year_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-23",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-23"
+        },
+        {
+          "date": "2024-09-24",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-24"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-24",
+        "note": "Men's Q1 Sep 23 and Q2 Sep 24. Main begins Sep 25 and source finish Oct 1 is W40 outside majority W39."
+      },
+      "follow_up": "Review source finish outside majority week and same-week Q/Main ordering.",
+      "source_finish_iso_week": [
+        2024,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2024_beijing",
+      "series_id": "beijing",
+      "category_id": "atp_500",
+      "main_start_date": "2024-09-26",
+      "main_end_date": "2024-10-02",
+      "main_year_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-24",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-09-25",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification",
+        "note": "Eight scored Q1 matches Sep 24 and four Q finals Sep 25. Main begins Sep 26, finishes Oct 2 in W40 outside majority W39; exclude women's Q."
+      },
+      "follow_up": "Review source finish outside majority week and same-week Q/Main ordering.",
+      "source_finish_iso_week": [
+        2024,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2024_shanghai",
+      "series_id": "shanghai",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-10-02",
+      "main_end_date": "2024-10-13",
+      "main_year_weeks": [
+        [
+          2024,
+          40
+        ],
+        [
+          2024,
+          41
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-30",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-01",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          40
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification",
+        "note": "Dated men's first-round qualifying Sep 30 and final qualifying Oct 1, before Oct 2 Main. Partial-score records establish play, not precise completion chronology."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks."
+    },
+    {
+      "occurrence_id": "atp_2024_almaty",
+      "series_id": "almaty",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/almaty/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ],
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "note": "ATP announced Oct 13–14 Q; four scored Q finals and three scored Main singles Oct 14. Actual host Almaty from 2024."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-10-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "observed_iso_week": [
+          2024,
+          42
+        ]
+      },
+      "schedule_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/almaty-2024-atp-250-history-draw-schedule",
+        "note": "Official Q October 13–14 and relocation to Almaty from 2024."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_brussels",
+      "series_id": "brussels",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/antwerp/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ],
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "note": "European Open in Antwerp in 2024, relocated to Brussels from 2025. Eight Q1 scores Oct 13; four Q finals and four scored Main singles Oct 14."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-10-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "observed_iso_week": [
+          2024,
+          42
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Antwerp, Belgium",
+        "source_event_id": 7485,
+        "source_url": "https://www.atptour.com/en/news/antwerp-brussels-relocation-2025",
+        "note": "ATP confirms relocation from Antwerp to Brussels in 2025, retaining Series identity."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_stockholm",
+      "series_id": "stockholm",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification",
+        "note": "Dated first-round Q and Q finals on successive days."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_basel",
+      "series_id": "basel",
+      "category_id": "atp_500",
+      "main_start_date": "2024-10-21",
+      "main_end_date": "2024-10-27",
+      "main_year_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification",
+        "note": "Men's singles qualifying result dates Oct 19 and 20; Main starts Oct 21."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_500",
+      "main_start_date": "2024-10-21",
+      "main_end_date": "2024-10-27",
+      "main_year_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-19",
+          "status": "played",
+          "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv"
+        },
+        {
+          "date": "2024-10-20",
+          "status": "played",
+          "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv",
+        "note": "Eight first-round and four final qualifying scores on successive dates. Organizer confirms advertised Oct 19–20 qualifying."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication.",
+      "schedule_confirmation": {
+        "source_url": "https://www.erstebank-open.com/en/news/storys/vienna-2024-atp-500-history-draw-schedule",
+        "note": "Organizer confirms Oct 19–20 Q."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-10-28",
+      "main_end_date": "2024-11-03",
+      "main_year_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-26",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/26-10-2024"
+        },
+        {
+          "date": "2024-10-27",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/27-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/27-10-2024",
+        "note": "Dated men's first-round and final qualifying results Oct 26–27."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_belgrade",
+      "series_id": "belgrade",
+      "category_id": "atp_250",
+      "main_start_date": "2024-11-03",
+      "main_end_date": "2024-11-09",
+      "main_year_weeks": [
+        [
+          2024,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/belgrade/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-11-03",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/belgrade/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/medjedeovic-marozsan-belgrade-2024-sunday",
+        "note": "Dated eight Q1 and four Q finals; ATP confirms scored Main singles Nov 3. Actual host Belgrade, Serbia, before Athens relocation in 2025."
+      },
+      "follow_up": "Review same-day Q/Main in W44 before mapped W45; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-11-03",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/medjedeovic-marozsan-belgrade-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          44
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Belgrade, Serbia",
+        "source_url": "https://www.atptour.com/en/news/belgrade-2024-atp-250-history-draw-schedule",
+        "note": "2024 host Belgrade; same canonical Series as Athens 2025."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_metz",
+      "series_id": "metz",
+      "category_id": "atp_250",
+      "main_start_date": "2024-11-03",
+      "main_end_date": "2024-11-09",
+      "main_year_weeks": [
+        [
+          2024,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-11-03",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/michelsen-moutet-metz-2024-sunday",
+        "note": "Dated eight Q1 and four Q finals; ATP confirms scored Main singles Nov 3."
+      },
+      "follow_up": "Review same-day Q/Main in W44 before mapped W45; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-11-03",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/michelsen-moutet-metz-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          44
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2024-11-10",
+      "main_end_date": "2024-11-17",
+      "main_year_weeks": [
+        [
+          2024,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_end_rankings_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_02jul.pdf",
+        "format_source_url": "https://www.atptour.com/en/news/nitto-atp-finals-2024-schedule-sunday-monday",
+        "rule_section": "4.01 B",
+        "selection_priority": {
+          "top_ranked_players": 7,
+          "eligible_current_year_grand_slam_winners_up_to": 2,
+          "grand_slam_winner_rank_range": [
+            8,
+            20
+          ],
+          "then_ranked_players_from": 8,
+          "direct_acceptances": 8
+        },
+        "note": "2024 written rule uses PIF ATP Rankings on Monday after final ATP Tour event; top eight of selection list accepted. No on-site Q. Exact withdrawals/alternates and runtime selection not certified."
+      },
+      "main_opening_play_evidence": {
+        "date": "2024-11-10",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/sinner-de-minaur-nitto-atp-finals-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          45
+        ]
+      },
+      "follow_up": "Review published selection rule versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
+    },
+    {
+      "occurrence_id": "atp_2024_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2024-12-18",
+      "main_end_date": "2024-12-22",
+      "main_year_weeks": [
+        [
+          2024,
+          51
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race_with_wild_card_rule",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_02jul.pdf",
+        "format_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-2024-history-draw-schedule",
+        "rule_section": "4.04 B",
+        "maximum_age_throughout_calendar_year": 20,
+        "race_direct_acceptances": 7,
+        "wild_card_places_in_written_rule": 1,
+        "age_change_source_url": "https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024",
+        "actual_field_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-2024-qualifications-4/",
+        "note": "Written rule sets seven Race places and one age-eligible ATP wild card; ATP also announced final field. Do not infer the individual eighth player's acceptance classification from this rule alone. Nitto Finals direct acceptances/alternates exempt from mandatory participation. No on-site Q."
+      },
+      "main_opening_play_evidence": {
+        "date": "2024-12-18",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/tien-mensik-jeddah-2024-wednesday",
+        "observed_iso_week": [
+          2024,
+          51
+        ]
+      },
+      "follow_up": "Review published selection rule versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
+    }
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 62,
+    "recorded_occurrences": 62,
+    "occurrences_with_observed_qualifying_play": 60,
+    "no_onsite_qualifying_occurrences": 2,
+    "occurrences_with_scheduled_only_day_evidence": 0,
+    "qualifying_overlaps_projected_main_week": 23,
+    "observed_main_opening_outside_projection": 10,
+    "source_finish_outside_projection": 6,
+    "three_week_main_review_only": 0,
+    "qualifying_before_january_run_start": 2,
+    "sporting_schedule_installed": false,
+    "remaining_evidence_gaps": [
+      "Some dated result records include partial scores or multiple physical rounds on the same day; precise start/completion chronology is not established.",
+      "Individual event source URLs, round allocation, scoring and points require review before sporting profile publication.",
+      "Finals written selection rules do not certify actual entry classification, eligibility runtime, ranking closure or Save/reopen."
+    ]
+  }
+}

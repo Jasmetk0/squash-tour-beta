@@ -36,7 +36,7 @@ def test_inventory_and_cancellation():
     assert len(rows) == len({r["occurrence_id"] for r in rows}) == 148
     assert {r["year"] for r in rows} == set(range(1990, 2027))
     assert all(sum(r["year"] == y for r in rows) == 4 for y in range(1990, 2027))
-    assert sum(r["status"] == "played" for r in rows) == 68
+    assert sum(r["status"] == "played" for r in rows) == 143
     cancelled = [r for r in rows if r["status"] == "cancelled"]
     assert len(cancelled) == 1
     assert cancelled[0]["occurrence_id"] == "atp_2020_grand_slam_wimbledon"
@@ -184,3 +184,54 @@ def test_modern_nominal_geometry_and_bindings():
 def test_no_fixed_qualifying_feeder_claim():
     assert "after qualifying concludes" in RULES["nominal"]["qualification_winner_assignment"]
     assert any("fixed feeder" in s for s in RULES["unresolved_runtime"])
+
+
+@pytest.mark.parametrize("year", [y for y in range(2005, 2026) if y != 2020])
+def test_completed_historical_year_coverage(year):
+    rows = [r for r in DATA["inventory"] if r["year"] == year]
+    assert len(rows) == 4
+    assert all(r["status"] == "played" for r in rows)
+    ordered = sorted(rows, key=lambda r: r["main"]["start"])
+    assert all(a["main"]["end"] < b["main"]["start"] for a, b in zip(ordered, ordered[1:]))
+
+
+def test_2020_actual_archive_order_and_cancellation():
+    rows = [r for r in DATA["inventory"] if r["year"] == 2020]
+    played = sorted((r for r in rows if r["status"] == "played"), key=lambda r: r["main"]["start"])
+    assert [r["series_id"] for r in played] == [
+        "grand_slam_australian_open", "grand_slam_us_open", "grand_slam_roland_garros"]
+    assert len([r for r in rows if r["status"] == "cancelled"]) == 1
+    assert played[-1]["main"]["start"] == "2020-09-27"
+
+
+@pytest.mark.parametrize("year", range(2008, 2013))
+def test_us_open_monday_final_distinct_from_archive(year):
+    r = next(r for r in DATA["inventory"] if r["occurrence_id"] == f"atp_{year}_grand_slam_us_open")
+    e = r["actual_mens_final_evidence"]
+    p = e["actual_window_projection"]
+    check_phase(p)
+    assert date.fromisoformat(e["date"]) - date.fromisoformat(r["main"]["end"]) == timedelta(days=1)
+    assert p["start"] == r["main"]["start"] and p["end"] == e["date"]
+    assert len(r["main"]["iso_weeks"]) == 2 and len(p["iso_weeks"]) == 3
+
+
+def test_ao_2020_archive_extra_day():
+    r = next(r for r in DATA["inventory"] if r["occurrence_id"] == "atp_2020_grand_slam_australian_open")
+    p = r["actual_mens_final_evidence"]["actual_window_projection"]
+    check_phase(p)
+    assert r["main"]["end"] == "2020-02-03" and p["end"] == "2020-02-02"
+    assert len(r["main"]["iso_weeks"]) == 3 and len(p["iso_weeks"]) == 2
+
+
+@pytest.mark.parametrize("year", [2024, 2025])
+def test_roland_garros_indexed_marker_audit_separate_from_final_visual(year):
+    q = next(e["qualification"] for e in DRAW_EVIDENCE["editions"]
+             if e["occurrence_id"] == f"atp_{year}_grand_slam_roland_garros")
+    a = q["indexed_marker_audit"]
+    assert a["scope"] == [1, 128]
+    assert len(set(a["wild_card_slots"])) == 9
+    assert a["seed_positions"] == [p for i in range(16) for p in (8*i+1, 8*i+8)]
+    assert not set(a["wild_card_slots"]) & set(a["seed_positions"])
+    assert a["seed_count"] == 32 and a["alternate_labels_observed"] == 0
+    assert a["report_stage"] == "early_first_round_snapshot_not_final"
+    assert "observed_slots" not in q and q["sha256"] is None

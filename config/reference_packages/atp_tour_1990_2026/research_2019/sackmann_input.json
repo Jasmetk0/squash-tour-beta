@@ -1,0 +1,34 @@
+{
+  "schema": "atp_2019_sackmann_audit_input.v1",
+  "source": {
+    "repo": "Aneeshers/tennis-sackmann-archive",
+    "commit": "83733587353df8a41f2fd4f516147d5aa83f5a8d",
+    "path": "atp/atp_matches_2019.csv",
+    "url": "https://github.com/Aneeshers/tennis-sackmann-archive/blob/83733587353df8a41f2fd4f516147d5aa83f5a8d/atp/atp_matches_2019.csv",
+    "bytes": 586071,
+    "sha256": "7f1a21451ff622bb0c6a09690898db46d51e59dcdf08086d369753822e1d5478",
+    "git_blob_sha1": "cae0152824354b50ceede3d93f856cbfa2d94f38",
+    "retrieved": "2026-11-26",
+    "license": "Jeff Sackmann CC BY-NC-SA 4.0. Noncommercial and share-alike restrictions; audit-only input, no raw records or per-match derived data committed, no commercial use authorised.",
+    "license_url": "https://github.com/Aneeshers/tennis-sackmann-archive/blob/83733587353df8a41f2fd4f516147d5aa83f5a8d/LICENSE",
+    "readme_url": "https://github.com/Aneeshers/tennis-sackmann-archive/blob/83733587353df8a41f2fd4f516147d5aa83f5a8d/atp/UPSTREAM_README.md"
+  },
+  "aggregate_observation": {
+    "all_rows": 2806,
+    "all_groups": 128,
+    "scope_groups": 63,
+    "scope_rows": 2117,
+    "excluded_levels": [
+      "G",
+      "D"
+    ],
+    "excluded_team_event": "2019-9210"
+  },
+  "interpretation": "tourney_date is an approximate tournament-week date; winner_rank_points/loser_rank_points are rankings at that date, never event awards. A includes both ATP250/500 and Laver Cup; M Masters, F Finals; exclude G and D, and explicit team event. No automatic ID match for M-prefixed local IDs. Qualifying CSV larger than connector limit, bytes not acquired.",
+  "missing_qualifying_input": {
+    "path": "atp/atp_matches_qual_chall_2019.csv",
+    "bytes": 1842377,
+    "git_blob_sha1": "ba53f0198dec1f29ad08fe1c437e0dc0401bbd69",
+    "sha256": null
+  }
+}

@@ -26,7 +26,7 @@ def geometry(key):
 def test_inventory_pinned_and_not_production():
     report = audit()
     assert report["totals"] == {"dated": 2407, "not_held": 24, "profiled": 23}
-    assert report["reviewed"] == 4
+    assert report["reviewed"] == 5
     assert report["production_profiles_added"] == 0
     assert all(v == "missing_local_bytes" for v in report["external_inputs"].values())
 
@@ -91,7 +91,8 @@ def test_preplay_sources_pass_real_date_validator_but_unhashed_profile_is_reject
     assert evidence.end_date == row["q_end"]
     projected = project_qualification_window(RunCalendar(52, 1, 2019, 1),
                                              SimpleNamespace(qualification_date_evidence=evidence))
-    expected = [5] if p["occurrence_id"].endswith("cordoba") else [5, 6]
+    expected = {"atp_2019_cordoba": [5], "atp_2019_sofia": [5, 6],
+                "atp_2019_delray_beach": [7]}[p["occurrence_id"]]
     assert [w["year_week"] for w in projected["iso_year_weeks"]] == expected
     assert not projected["sporting_execution_ready"]
     assert p["source_pdf_sha256"] == {}
@@ -110,3 +111,23 @@ def test_historical_points_and_geometry_not_modernized():
     assert cordoba["geometry"]["q_wc"] == 2
     assert sofia["main_bye_positions"] == [2, 10, 23, 31]
     assert sofia["qualification_geometry_detail"]["main_walkover_count"] == 1
+
+
+def test_delray_2019_full_main_not_modern_28_player_shape():
+    key = "atp_2019_delray_beach"
+    row = ROWS[key]
+    main, sections = geometry(key)
+    assert main.source_main_entrants == main.bracket_capacity == 32
+    assert main.unplaced_byes == 0
+    assert len(sections) == 4
+    assert main.actual_match_count_if_fully_played + sum(
+        s.actual_match_count_if_fully_played for s in sections) == 43
+    assert row["qualification_geometry_detail"]["qualifier_winners_in_final_main"] == 4
+    assert row["qualification_geometry_detail"]["main_wc_slots"] == [1, 21, 32]
+    assert row["qualification_geometry_detail"]["main_q_slots"] == [11, 22, 23, 30]
+    candidate = next(c["profile"] for c in CANDIDATES if c["occurrence_id"] == key)
+    from beta_engine.domain.tournaments.atp_knockout_profile import ATPQualificationDateEvidence
+    evidence = ATPQualificationDateEvidence.model_validate_json(json.dumps(candidate["qualification_date_evidence"]))
+    result = project_qualification_window(RunCalendar(52, 37, 2018, 2),
+                                         SimpleNamespace(qualification_date_evidence=evidence))
+    assert result["run_weeks"] == [{"season_index": 0, "season_week": 23}]

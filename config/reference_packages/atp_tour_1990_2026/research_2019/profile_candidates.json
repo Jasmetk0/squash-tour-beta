@@ -112,6 +112,62 @@
           "round_1_loss": 0
         }
       }
+    },
+    {
+      "occurrence_id": "atp_2019_delray_beach",
+      "blocked_on": [
+        "Original PDF bytes unavailable; visual and text review is not SHA-256 evidence",
+        "February-effective general additive Q ranking rule still needs exact source review; draw tables directly confirm both point tables",
+        "production Setup and native play not executed"
+      ],
+      "profile": {
+        "schema_version": "atp_squash_knockout_profile.v2",
+        "occurrence_id": "atp_2019_delray_beach",
+        "category_id": "atp_250",
+        "name": "Delray Beach Open 2019",
+        "source_start_date": "2019-02-18",
+        "source_end_date": "2019-02-24",
+        "source_urls": [
+          "https://www.protennislive.com/posting/2019/499/mds.pdf",
+          "https://www.protennislive.com/posting/2019/499/qs.pdf"
+        ],
+        "source_pdf_sha256": {},
+        "qualification_date_status": "verified",
+        "qualification_date_evidence": {
+          "start_date": "2019-02-16",
+          "end_date": "2019-02-17",
+          "source_urls": [
+            "https://www.ustaflorida.com/news/deadline-this-week-for-atp-delray-beach-survivor-pre-qualifying/",
+            "https://www.inflorida.com/news/delray-beach-open-by-vitacostcom-announces-2019-line-up/648"
+          ],
+          "published_dates": [
+            "2018-11-12",
+            "2019-01-02"
+          ]
+        },
+        "entrant_selection": "admin_selected_no_automatic_race_or_age",
+        "main_entrants": 32,
+        "qualification_entrants": 16,
+        "qualifier_spots": 4,
+        "wild_cards": 3,
+        "seeds_count": 8,
+        "byes": 0,
+        "match_best_of": 5,
+        "ranked": true,
+        "main_points": {
+          "champion": 250,
+          "finalist": 150,
+          "semifinal": 90,
+          "quarterfinal": 45,
+          "round_of_16": 20,
+          "round_of_32": 0
+        },
+        "qualification_points": {
+          "qualifier": 12,
+          "round_2_loss": 6,
+          "round_1_loss": 0
+        }
+      }
     }
   ]
 }

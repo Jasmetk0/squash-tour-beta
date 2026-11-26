@@ -383,3 +383,97 @@ def test_autumn_2023_finish_outside_majority_projection(phase_evidence, series, 
     assert row["source_finish_iso_week"] == [2023, finish_week]
     assert row["source_finish_iso_week"] == list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2])
     assert row["source_finish_iso_week"] not in row["main_year_weeks"]
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("vienna", ["2023-10-21","2023-10-22"], [42], [43]),
+        ("paris_masters", ["2023-10-28","2023-10-29"], [43], [44]),
+        ("metz", ["2023-11-04","2023-11-05"], [44], [45]),
+        ("sofia", ["2023-11-04","2023-11-05","2023-11-06"], [44,45], [45]),
+    ],
+)
+def test_final_2023_knockout_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == RunCalendarPosition(1, week - 36, 2023, week)
+
+
+def test_sofia_2023_actual_qualifying_completion_and_main_start(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "sofia")
+    assert row["qualifying_date_evidence"][-1]["date"] == row["main_start_date"] == "2023-11-06"
+    assert row["main_opening_play_evidence"]["date"] == "2023-11-07"
+    assert row["observed_qualifying_iso_weeks"] == [[2023, 44], [2023, 45]]
+    assert row["main_year_weeks"] == [[2023, 45]]
+    assert row["source_disagreement"]["source_url"]
+
+
+@pytest.mark.parametrize(("series", "opening_week", "mapped_week"), [
+    ("atp_finals", 45, 46), ("next_gen_atp_finals", 48, 48),
+])
+def test_2023_finals_no_onsite_qualification(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["qualification_status"] == "not_applicable_no_onsite_qualifying"
+    assert row["qualifying_date_evidence"] == row["observed_qualifying_iso_weeks"] == []
+    assert row["entry_selection_evidence"]["field_size"] == 8
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2023, opening_week]
+    assert row["main_year_weeks"] == [[2023, mapped_week]]
+    assert RunCalendar.earth_default(start_year=2023, season_count=2).calendar_to_season(
+        2023, mapped_week
+    ) == RunCalendarPosition(0, mapped_week, 2023, mapped_week)
+    assert RunCalendar(52, 37, 2022, 2).calendar_to_season(
+        2023, mapped_week
+    ) == RunCalendarPosition(1, mapped_week - 36, 2023, mapped_week)
+
+
+def test_2023_finals_year_specific_selection_rules(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    senior = rows["atp_finals"]["entry_selection_evidence"]
+    young = rows["next_gen_atp_finals"]["entry_selection_evidence"]
+    assert senior["rule_section"] == "4.01 B"
+    assert senior["selection_priority"]["grand_slam_winner_rank_range"] == [8, 20]
+    assert senior["selection_priority"]["direct_acceptances"] == 8
+    assert young["rule_section"] == "4.04 B"
+    assert young["maximum_age_throughout_calendar_year"] == 21
+    assert young["race_direct_acceptances"] == 7
+    assert young["wild_card_places_in_written_rule"] == 1
+    assert young["race_cutoff_date"] == "2023-11-20"
+
+
+def test_2023_complete_roster_and_evidence_status(phase_evidence):
+    source = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))
+    canonical = {r["source_identity"] for r in build_projection(source)["mappings"] if r["atp_season_year"] == 2023}
+    seasons = json.loads((SOURCE_FILE.parent / "seasons_1990_2026.json").read_text(encoding="utf-8"))["seasons"]
+    membership = next(s for s in seasons if s["year"] == 2023)
+    rows = phase_evidence["occurrences"]
+    assert len(rows) == len(canonical) == 62
+    assert {r["occurrence_id"] for r in rows} == canonical
+    assert {r["series_id"] for r in rows} == set(membership["series_category_ids"])
+    coverage = phase_evidence["coverage_review"]
+    assert coverage["canonical_occurrences"] == coverage["recorded_occurrences"] == 62
+    assert coverage["occurrences_with_observed_qualifying_play"] == sum(
+        bool(r["observed_qualifying_iso_weeks"]) for r in rows
+    ) == 60
+    assert coverage["no_onsite_qualifying_occurrences"] == sum(
+        r.get("qualification_status") == "not_applicable_no_onsite_qualifying" for r in rows
+    ) == 2
+    assert coverage["qualifying_overlaps_projected_main_week"] == sum(
+        any(q in r["main_year_weeks"] for q in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert coverage["observed_main_opening_outside_projection"] == sum(
+        "main_opening_play_evidence" in r and
+        r["main_opening_play_evidence"]["observed_iso_week"] not in r["main_year_weeks"] for r in rows
+    )
+    assert coverage["source_finish_outside_projection"] == sum(
+        list(date.fromisoformat(r["main_end_date"]).isocalendar()[:2]) not in r["main_year_weeks"] for r in rows
+    )
+    assert coverage["qualifying_before_january_run_start"] == sum(
+        any(year < 2023 for year, _ in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert coverage["sporting_schedule_installed"] is phase_evidence["sporting_schedule_installed"] is False

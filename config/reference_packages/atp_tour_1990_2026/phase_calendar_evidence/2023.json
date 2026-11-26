@@ -2388,6 +2388,289 @@
         "note": "Dated Q1 and four Q finals Oct 21–22."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_500",
+      "main_start_date": "2023-10-23",
+      "main_end_date": "2023-10-29",
+      "main_year_weeks": [
+        [
+          2023,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-10-21",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/vienna/2023/orderofplay/2023-10-21"
+        },
+        {
+          "date": "2023-10-22",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/vienna/2023/orderofplay/2023-10-22"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/vienna/2023/orderofplay/2023-10-22",
+        "note": "Dated Q1 and Q final results Oct 21–22; three scored Q finals and one walkover on Oct 22."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-10-30",
+      "main_end_date": "2023-11-05",
+      "main_year_weeks": [
+        [
+          2023,
+          44
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-10-28",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/paris/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-10-29",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/paris/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          43
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/paris/2023/atp-men/?phase=qualification",
+        "note": "Dated men's first round Oct 28 and seven Q finals Oct 29."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_metz",
+      "series_id": "metz",
+      "category_id": "atp_250",
+      "main_start_date": "2023-11-05",
+      "main_end_date": "2023-11-11",
+      "main_year_weeks": [
+        [
+          2023,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-11-04",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-metz-2023/"
+        },
+        {
+          "date": "2023-11-05",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-metz-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-metz-2023/",
+        "note": "Eight Q1 scores Nov 4; four final qualifying scores and two scored Main singles Nov 5, in W44 before majority W45."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-11-05",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-metz-2023/",
+        "observed_iso_week": [
+          2023,
+          44
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_sofia",
+      "series_id": "sofia",
+      "category_id": "atp_250",
+      "main_start_date": "2023-11-06",
+      "main_end_date": "2023-11-11",
+      "main_year_weeks": [
+        [
+          2023,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-11-04",
+          "status": "played",
+          "source_url": "https://www.lunosport.com/atp/2023-11-04"
+        },
+        {
+          "date": "2023-11-05",
+          "status": "played",
+          "source_url": "https://www.infobetting.com/tennis/calendari/tabellone/sofia/2023/cal-t-355-2-c-1420-2023.htm"
+        },
+        {
+          "date": "2023-11-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-11-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          44
+        ],
+        [
+          2023,
+          45
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-11-2023",
+        "note": "Dated Q1 Nov 4 and mixed Q1/Q finals Nov 5; final qualifier secured Nov 6, confirmed by Sky Sports and organizer. Actual men's Main starts Nov 7; canonical event interval starts Nov 6."
+      },
+      "follow_up": "Review Q completion Nov 6 and Main singles Nov 7 in same mapped week; preserve distinct source interval and observed opening.",
+      "main_opening_play_evidence": {
+        "date": "2023-11-07",
+        "status": "played",
+        "source_url": "https://canaltenis.com/carballes-ramos-atp-sofia/",
+        "observed_iso_week": [
+          2023,
+          45
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://sofiaopen.bg/full-sofia-open-2023-line-up-completed-as-harris-claims-final-spot-in-the-main-draw/?lang=en",
+        "note": "Organizer Nov 6 report (search-indexed; live site suspended on reopen) confirms final qualifier that day and singles Main opening Nov 7, corroborated by dated results. Canonical published interval starts Nov 6; retain both."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2023-11-12",
+      "main_end_date": "2023-11-19",
+      "main_year_weeks": [
+        [
+          2023,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_end_rankings_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2023/2023-atp-rulebook_chapter-4_world-championships-09oct.pdf",
+        "rule_section": "4.01 B",
+        "selection_priority": {
+          "top_ranked_players": 7,
+          "eligible_current_year_grand_slam_winners_up_to": 2,
+          "grand_slam_winner_rank_range": [
+            8,
+            20
+          ],
+          "then_ranked_players_from": 8,
+          "direct_acceptances": 8
+        },
+        "note": "2023 written rule sets selection list based on rankings after final regular ATP event; top eight in list are direct acceptances. No on-site Q; actual replacements and eligibility runtime not certified."
+      },
+      "main_opening_play_evidence": {
+        "date": "2023-11-12",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/sinner-tsitsipas-turin-2023-sunday",
+        "observed_iso_week": [
+          2023,
+          45
+        ]
+      },
+      "follow_up": "Review published selection rules versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
+    },
+    {
+      "occurrence_id": "atp_2023_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2023-11-28",
+      "main_end_date": "2023-12-02",
+      "main_year_weeks": [
+        [
+          2023,
+          48
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race_with_wild_card_rule",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2023/2023-atp-rulebook_chapter-4_world-championships-09oct.pdf",
+        "rule_section": "4.04 B",
+        "maximum_age_throughout_calendar_year": 21,
+        "race_direct_acceptances": 7,
+        "wild_card_places_in_written_rule": 1,
+        "race_cutoff_date": "2023-11-20",
+        "actual_field_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-2023-qualifications-part-2",
+        "wild_card_confirmation_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-2023-qualifications",
+        "age_change_source_url": "https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024",
+        "note": "2023 age limit 21 throughout year; seven Race places and one age-eligible ATP wild card. ATP separately announced the wild card. Age threshold changes only from 2024. No on-site Q."
+      },
+      "main_opening_play_evidence": {
+        "date": "2023-11-28",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/stricker-cobolli-jeddah-2023-tuesday",
+        "observed_iso_week": [
+          2023,
+          48
+        ]
+      },
+      "follow_up": "Review published selection rules versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
     }
-  ]
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 62,
+    "recorded_occurrences": 62,
+    "occurrences_with_observed_qualifying_play": 60,
+    "no_onsite_qualifying_occurrences": 2,
+    "occurrences_with_scheduled_only_day_evidence": 0,
+    "qualifying_overlaps_projected_main_week": 19,
+    "observed_main_opening_outside_projection": 9,
+    "source_finish_outside_projection": 4,
+    "three_week_main_review_only": 0,
+    "qualifying_before_january_run_start": 2,
+    "sporting_schedule_installed": false,
+    "remaining_evidence_gaps": [
+      "Actual local opening chronology remains unverified for Auckland, Dallas and Astana; preserve source disagreements.",
+      "Some dated results include walkovers, retirements, or multiple rounds on the same day; precise start/completion chronology is not established.",
+      "Individual source URLs, round allocation, scoring and points require review before sporting profile publication.",
+      "Finals written selection rules do not certify actual entry classification, eligibility runtime, ranking closure or Save/reopen."
+    ]
+  }
 }

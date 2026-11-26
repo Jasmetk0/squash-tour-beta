@@ -29,11 +29,11 @@
     "plan_verified": 0,
     "played_and_reopened": 0,
     "reported_main_geometry_rows": 75,
-    "reported_qualification_size_rows": 13,
+    "reported_qualification_size_rows": 17,
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 68,
+    "reported_seed_count_rows": 70,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,8 +44,8 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 63,
-    "reported_main_wild_card_count_rows": 63,
+    "reported_main_qualifier_count_rows": 67,
+    "reported_main_wild_card_count_rows": 67,
     "main_draw_disagreement_rows": 15,
     "second_pass_review_attempted_rows": 75,
     "second_pass_main_field_crosscheck_rows": 75,
@@ -5076,19 +5076,21 @@
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
-        "main_seeds": null,
-        "main_draw_source": null,
+        "main_seeds": 8,
+        "main_draw_source": "https://de.wikipedia.org/wiki/Salem_Open_1990",
         "event_source": "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://en.wikipedia.org/wiki/1990_Salem_Hong_Kong_Open",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Salem_Open_1990",
+          "https://www.stevegtennis.com/draw-results/atp/Hong%20Kong/1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 185000,
@@ -5179,6 +5181,66 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Salem_Open_1990",
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://de.wikipedia.org/wiki/Salem_Open_1990",
+          "source_revision": "271915648",
+          "corroborating_main_draw_url": "https://www.stevegtennis.com/draw-results/atp/Hong%20Kong/1990",
+          "reviewed_on": "2026-11-26",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "qualifier_counts_by_section": [
+            2,
+            0,
+            2,
+            0
+          ],
+          "wild_card_counts_by_section": [
+            0,
+            2,
+            0,
+            1
+          ],
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "observed_lucky_losers": 0,
+          "observed_special_exempts": 0,
+          "observed_seeded_wild_cards": 0,
+          "observed_seeded_wild_card_ranks": [],
+          "unmarked_entrants": 25,
+          "scope": "All 32 initial singles Main positions read in edition-specific secondary draw; counts by quarter, repeated later-round labels excluded. Eight nominal seeds, withdrawn rank separated. Q32 header describes reported draw size, not actual entrants, dates, reserved places or section geometry. No historical identities or scores imported."
+        },
+        "april_may_main_draw_followup_2026_11_26": {
+          "status": "conditional_geometry_from_secondary_edition_specific_header_and_main_labels",
+          "reviewed_on": "2026-11-26",
+          "prior_fields": {
+            "main_seeds": null,
+            "main_draw_source": null,
+            "qualification_size_secondary": null,
+            "reported_main_qualifiers": null,
+            "reported_main_wild_cards": null
+          },
+          "reported_main_entrants": 32,
+          "reported_qualification_draw_size": 32,
+          "reported_nominal_seeds": 8,
+          "observed_seed_count": 8,
+          "missing_nominal_seed_ranks": [],
+          "source_url": "https://de.wikipedia.org/wiki/Salem_Open_1990",
+          "actual_qualification_entrants": null,
+          "actual_qualification_dates": null,
+          "complete_qualification_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "Conditional topology treats four observed Q labels as assumed four guaranteed feeder places solely for a shape probe. LL and SE are separate observed entry labels, not extra guaranteed qualifiers. No historical or product acceptance policy inferred."
         }
       }
     },
@@ -5417,19 +5479,22 @@
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
-        "main_seeds": null,
-        "main_draw_source": null,
+        "main_seeds": 8,
+        "main_draw_source": "https://dewiki.de/Lexikon/Madrid_Tennis_Grand_Prix_1990",
         "event_source": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://elpais.com/diario/1990/05/01/deportes/641512807_850215.html",
+          "https://elpais.com/diario/1990/05/05/deportes/641858408_850215.html",
+          "https://dewiki.de/Lexikon/Madrid_Tennis_Grand_Prix_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 279000,
@@ -5518,6 +5583,85 @@
             "differences": [],
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
+          }
+        },
+        "qualification_size_source": "https://dewiki.de/Lexikon/Madrid_Tennis_Grand_Prix_1990",
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://dewiki.de/Lexikon/Madrid_Tennis_Grand_Prix_1990",
+          "corroborating_main_draw_url": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
+          "reviewed_on": "2026-11-26",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "qualifier_counts_by_section": [
+            1,
+            1,
+            0,
+            2
+          ],
+          "wild_card_counts_by_section": [
+            2,
+            0,
+            1,
+            0
+          ],
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            7,
+            8
+          ],
+          "observed_lucky_losers": 1,
+          "observed_special_exempts": 0,
+          "observed_seeded_wild_cards": 0,
+          "observed_seeded_wild_card_ranks": [],
+          "unmarked_entrants": 24,
+          "scope": "All 32 initial singles Main positions read in edition-specific secondary draw; counts by quarter, repeated later-round labels excluded. Eight nominal seeds, withdrawn rank separated. Q32 header describes reported draw size, not actual entrants, dates, reserved places or section geometry. No historical identities or scores imported."
+        },
+        "observed_lucky_losers": 1,
+        "april_may_main_draw_followup_2026_11_26": {
+          "status": "conditional_geometry_from_secondary_edition_specific_header_and_main_labels",
+          "reviewed_on": "2026-11-26",
+          "prior_fields": {
+            "main_seeds": null,
+            "main_draw_source": null,
+            "qualification_size_secondary": null,
+            "reported_main_qualifiers": null,
+            "reported_main_wild_cards": null
+          },
+          "reported_main_entrants": 32,
+          "reported_qualification_draw_size": 32,
+          "reported_nominal_seeds": 8,
+          "observed_seed_count": 7,
+          "missing_nominal_seed_ranks": [
+            6
+          ],
+          "source_url": "https://dewiki.de/Lexikon/Madrid_Tennis_Grand_Prix_1990",
+          "actual_qualification_entrants": null,
+          "actual_qualification_dates": null,
+          "complete_qualification_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "Conditional topology treats four observed Q labels as assumed four guaranteed feeder places solely for a shape probe. LL and SE are separate observed entry labels, not extra guaranteed qualifiers. No historical or product acceptance policy inferred.",
+          "contemporary_replacement_evidence": {
+            "main_opening_source_url": "https://elpais.com/diario/1990/05/01/deportes/641512807_850215.html",
+            "main_opening_publication_date": "1990-05-01",
+            "main_opening_date": "1990-04-30",
+            "replacement_source_url": "https://elpais.com/diario/1990/05/05/deportes/641858408_850215.html",
+            "replacement_publication_date": "1990-05-05",
+            "printed_pages": null,
+            "observed_lucky_loser_count": 1,
+            "scope": "May 1 reports last-minute withdrawal and opening April 30; May 5 EFE confirms one entrant advanced from qualifying as the replacement for that withdrawal. Together with the complete Main draw's LL and missing nominal seed 6, corroborates a historical replacement, not the general LL priority rule or qualification dates."
+          },
+          "itf_main_crosscheck": {
+            "source_url": "https://www.itftennis.com/en/tournament/madrid/esp/1990/m-wsf-esp-01a-1990/draws-and-results/",
+            "access": "indexed_main_draw_entry_statuses_read_direct_redirect_unavailable",
+            "observed_qualifiers": 4,
+            "observed_wild_cards": 3,
+            "observed_lucky_losers": 1,
+            "scope": "ITF indexed Main draw labels corroborate Q/WC/LL. No qualifying sheet; not full directly accessible official draw."
           }
         }
       }
@@ -5758,7 +5902,7 @@
         "main_byes": 0,
         "main_geometry_status": "reported_field_and_arithmetic_not_certified_bye_placement",
         "main_seeds": 8,
-        "main_draw_source": null,
+        "main_draw_source": "https://de.wikipedia.org/wiki/Singapore_Open_1990",
         "event_source": "https://en.wikipedia.org/wiki/1990_Epson_Singapore_Super_Tennis",
         "source_urls": [
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
@@ -5766,13 +5910,14 @@
           "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
           "https://eresources.nlb.gov.sg/newspapers/digitised/issue/straitstimes19900430-1",
           "https://eresources.nlb.gov.sg/newspapers/digitised/article/straitstimes19900430-1.2.61.3",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://de.wikipedia.org/wiki/Singapore_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -5866,6 +6011,71 @@
             "stored_candidate_comparison_status": "all_main_stage_values_agree",
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Singapore_Open_1990",
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://de.wikipedia.org/wiki/Singapore_Open_1990",
+          "reviewed_on": "2026-11-26",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "qualifier_counts_by_section": [
+            1,
+            2,
+            1,
+            0
+          ],
+          "wild_card_counts_by_section": [
+            0,
+            3,
+            0,
+            0
+          ],
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "observed_lucky_losers": 0,
+          "observed_special_exempts": 1,
+          "observed_seeded_wild_cards": 0,
+          "observed_seeded_wild_card_ranks": [],
+          "unmarked_entrants": 24,
+          "scope": "All 32 initial singles Main positions read in edition-specific secondary draw; counts by quarter, repeated later-round labels excluded. Eight nominal seeds, withdrawn rank separated. Q32 header describes reported draw size, not actual entrants, dates, reserved places or section geometry. No historical identities or scores imported."
+        },
+        "observed_special_exempts": 1,
+        "april_may_main_draw_followup_2026_11_26": {
+          "status": "conditional_geometry_from_secondary_edition_specific_header_and_main_labels",
+          "reviewed_on": "2026-11-26",
+          "prior_fields": {
+            "main_seeds": 8,
+            "main_draw_source": null,
+            "qualification_size_secondary": null,
+            "reported_main_qualifiers": null,
+            "reported_main_wild_cards": null
+          },
+          "reported_main_entrants": 32,
+          "reported_qualification_draw_size": 32,
+          "reported_nominal_seeds": 8,
+          "observed_seed_count": 8,
+          "missing_nominal_seed_ranks": [],
+          "source_url": "https://de.wikipedia.org/wiki/Singapore_Open_1990",
+          "actual_qualification_entrants": null,
+          "actual_qualification_dates": null,
+          "complete_qualification_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "Conditional topology treats four observed Q labels as assumed four guaranteed feeder places solely for a shape probe. LL and SE are separate observed entry labels, not extra guaranteed qualifiers. No historical or product acceptance policy inferred.",
+          "surface_source_disagreement": {
+            "secondary_reported_surface": "indoor hard",
+            "official_itf_reported_surface": "outdoor hard",
+            "official_url": "https://www.itftennis.com/en/tournament/singapore/sgp/1990/m-wsf-sin-01a-1990/draws-and-results/",
+            "scope": "Preserve source disagreement; no canonical surface, category or Series edit."
           }
         }
       }
@@ -6658,13 +6868,15 @@
           "https://de.wikipedia.org/wiki/ATP_Tour_1990",
           "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
           "https://en.wikipedia.org/wiki/1990_Muratti-Time_Internazionali_di_Tennis",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.dewiki.de/Lexikon/ATP_Bologna",
+          "https://de.wikipedia.org/wiki/Bologna_Open_1990"
         ],
         "source_review_date": "2026-11-25",
-        "qualification_size_secondary": null,
+        "qualification_size_secondary": 32,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 225000,
@@ -6746,6 +6958,75 @@
             "stored_candidate_comparison_status": "all_main_stage_values_agree",
             "stored_candidate_reference": "base_points_250k_32_candidate",
             "scope": "No automatic changes to working draw, financial classification, qualification or publication status."
+          }
+        },
+        "qualification_size_source": "https://de.wikipedia.org/wiki/Bologna_Open_1990",
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://de.wikipedia.org/wiki/Bologna_Open_1990",
+          "source_revision": "247822234",
+          "corroborating_main_draw_url": "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
+          "reviewed_on": "2026-11-26",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "qualifier_counts_by_section": [
+            2,
+            0,
+            0,
+            2
+          ],
+          "wild_card_counts_by_section": [
+            1,
+            1,
+            1,
+            0
+          ],
+          "observed_seed_ranks": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8
+          ],
+          "observed_lucky_losers": 0,
+          "observed_special_exempts": 0,
+          "observed_seeded_wild_cards": 1,
+          "observed_seeded_wild_card_ranks": [
+            6
+          ],
+          "unmarked_entrants": 25,
+          "scope": "All 32 initial singles Main positions read in edition-specific secondary draw; counts by quarter, repeated later-round labels excluded. Eight nominal seeds, withdrawn rank separated. Q32 header describes reported draw size, not actual entrants, dates, reserved places or section geometry. No historical identities or scores imported."
+        },
+        "observed_seeded_wild_card": true,
+        "april_may_main_draw_followup_2026_11_26": {
+          "status": "conditional_geometry_from_secondary_edition_specific_header_and_main_labels",
+          "reviewed_on": "2026-11-26",
+          "prior_fields": {
+            "main_seeds": 8,
+            "main_draw_source": "https://it.wikipedia.org/wiki/ATP_Bologna_Outdoor_1990_-_Singolare",
+            "qualification_size_secondary": null,
+            "reported_main_qualifiers": null,
+            "reported_main_wild_cards": null
+          },
+          "reported_main_entrants": 32,
+          "reported_qualification_draw_size": 32,
+          "reported_nominal_seeds": 8,
+          "observed_seed_count": 8,
+          "missing_nominal_seed_ranks": [],
+          "source_url": "https://de.wikipedia.org/wiki/Bologna_Open_1990",
+          "actual_qualification_entrants": null,
+          "actual_qualification_dates": null,
+          "complete_qualification_graph": null,
+          "reserved_advancement_places": null,
+          "scope": "Conditional topology treats four observed Q labels as assumed four guaranteed feeder places solely for a shape probe. LL and SE are separate observed entry labels, not extra guaranteed qualifiers. No historical or product acceptance policy inferred.",
+          "qualification_size_series_comparison": {
+            "source_url": "https://www.dewiki.de/Lexikon/ATP_Bologna",
+            "series_generic_draw_size": 16,
+            "edition_specific_reported_draw_size": 32,
+            "scope": "Series page describes end-of-run format, not a 1990 edition source. Do not use series generic Q16 to override the edition-specific Q32 claim."
           }
         }
       }
@@ -10049,7 +10330,8 @@
           "https://en.wikipedia.org/wiki/1990_Czechoslovak_Open_%E2%80%93_Singles",
           "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?f=ACareerqqDPragueqq&p=101924%2FStefano-Pescosolido",
           "https://www.latimes.com/archives/la-xpm-1990-08-06-sp-338-story.html",
-          "https://www.ndk.cz/periodical/uuid:80bdddb0-2ce0-11e3-bd38-5ef3fc9ae867"
+          "https://www.ndk.cz/periodical/uuid:80bdddb0-2ce0-11e3-bd38-5ef3fc9ae867",
+          "https://files.scriptum.cz/scriptum/narodni-politika/narodni-politika_1990_09_ocr.pdf"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10253,6 +10535,18 @@
           "complete_q_draw": null,
           "reserved_main_places": null,
           "next_request": "Ask National Museum for carton 3 item 126, programme pages showing phase schedule, entry/advance rules and any inserted Q draws; inspect Rudé právo and Československý sport sports pages Aug 4–7 for actual match results."
+        },
+        "contemporary_czech_press_followup_2026_11_26": {
+          "source_url": "https://files.scriptum.cz/scriptum/narodni-politika/narodni-politika_1990_09_ocr.pdf",
+          "publication": "Zvon, September 1990 supplement",
+          "published_month": "1990-09",
+          "printed_page": "IV",
+          "pdf_page_index": 11,
+          "pdf_page_visually_checked": true,
+          "pdf_sha256": null,
+          "download_status": "local_dns_failed",
+          "reported_singles_champion_prize_usd": 21370,
+          "scope": "Visually checked Czech-language contemporary retrospective on Prague Main event reports champion prize USD 21,370 (not total purse or points). No Q phase dates or draw. Do not confuse prize with financial commitment."
         }
       }
     },
@@ -16121,14 +16415,14 @@
     "status": "diagnostic_only_not_source_certification_or_publication",
     "reviewed_on": "2026-11-26",
     "source_model_head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
-    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 13 reported Q-size rows now have observed entry labels; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
+    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. All 17 reported Q-size rows now have observed entry labels; all 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy. Do not populate certified fields or create a sporting profile.",
     "counts": {
-      "reported_q_size": 13,
-      "conditional_geometry": 13,
-      "conditional_geometry_and_band": 10,
-      "geometry_without_exact_band": 3,
+      "reported_q_size": 17,
+      "conditional_geometry": 17,
+      "conditional_geometry_and_band": 12,
+      "geometry_without_exact_band": 5,
       "missing_main_entry_labels": 0,
-      "no_reported_q_size": 61
+      "no_reported_q_size": 57
     },
     "rows": [
       {
@@ -16390,9 +16684,90 @@
           "bracket_slots_per_section": 4,
           "potential_matches": 76
         }
+      },
+      {
+        "occurrence_id": "atp_1990_hong_kong_salem_2002",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_madrid_clay_1994",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_singapore_march_1992",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_bologna_1998",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
       }
     ],
     "followup_source_model_head": "b4b2ba435e93f0953f363b9159ac8157cb5bce25",
-    "followup": "Toronto Indoor, Philadelphia and Memphis initial entry labels completed, conditional equal-section geometry now constructible for all 13 reported Q-size candidates. Actual Q and reserved-policy evidence remains absent."
+    "followup": "Toronto Indoor, Philadelphia and Memphis initial entry labels completed, conditional equal-section geometry now constructible for all 13 reported Q-size candidates. Actual Q and reserved-policy evidence remains absent.",
+    "april_may_followup": "Four additional edition-specific 32Q headers and complete Main labels; 17 conditional cases in total. Madrid LL and Singapore SE are not additional feeder places; Bologna seeded WC counts once. No actual qualifying graph."
   }
 }

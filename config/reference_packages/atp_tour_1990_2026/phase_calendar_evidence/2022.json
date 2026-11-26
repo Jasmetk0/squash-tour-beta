@@ -1770,6 +1770,344 @@
         "note": "Dated men's Q1 and four Q finals July 16–17; ATP and WTA distinguished."
       },
       "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_atlanta",
+      "series_id": "atlanta",
+      "category_id": "atp_250",
+      "main_start_date": "2022-07-25",
+      "main_end_date": "2022-07-31",
+      "main_year_weeks": [
+        [
+          2022,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-07-23",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/atlanta/2022/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2022-07-24",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/atlanta/2022/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/atlanta/2022/atp-muzi/?phase=qualification",
+        "note": "Dated men's qualifying rounds July 23–24."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_kitzbuhel",
+      "series_id": "kitzbuhel",
+      "category_id": "atp_250",
+      "main_start_date": "2022-07-25",
+      "main_end_date": "2022-07-30",
+      "main_year_weeks": [
+        [
+          2022,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-07-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2022/"
+        },
+        {
+          "date": "2022-07-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-kitzbuhel-2022/",
+        "note": "Dated men's qualifying rounds July 23–24."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_umag",
+      "series_id": "umag",
+      "category_id": "atp_250",
+      "main_start_date": "2022-07-25",
+      "main_end_date": "2022-07-31",
+      "main_year_weeks": [
+        [
+          2022,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-07-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-umag-2022/"
+        },
+        {
+          "date": "2022-07-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-umag-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-umag-2022/",
+        "note": "Dated Q1 and Q finals; three played finals and one walkover on July 24; played matches independently establish the date."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2022_los_cabos",
+      "series_id": "los_cabos",
+      "category_id": "atp_250",
+      "main_start_date": "2022-08-01",
+      "main_end_date": "2022-08-06",
+      "main_year_weeks": [
+        [
+          2022,
+          31
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-07-30",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-los-cabos-2022/"
+        },
+        {
+          "date": "2022-07-31",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-los-cabos-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          30
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-los-cabos-2022/",
+        "note": "Local event dates July 30–31; TennisExplorer display in GMT+1 rolls evening matches into July 31 and August 1."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "source_disagreement": {
+        "source_url": "https://www.tennisexplorer.com/los-cabos/2022/atp-men/?phase=qualification",
+        "note": "GMT+1 result timestamps roll local July 30–31 evening matches into July 31–August 1; retain event-local dates from dated result report."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_washington",
+      "series_id": "washington",
+      "category_id": "atp_500",
+      "main_start_date": "2022-08-01",
+      "main_end_date": "2022-08-07",
+      "main_year_weeks": [
+        [
+          2022,
+          31
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-07-30",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-washington-2022/"
+        },
+        {
+          "date": "2022-07-31",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-washington-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          30
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-washington-2022/",
+        "note": "Dated twelve Q1 matches and six Q finals July 30–31."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "qualifier_capacity_evidence": {
+        "qualifier_places": 6,
+        "source_url": "https://canaltenis.com/resultados-atp-washington-2022/",
+        "note": "Number of final qualifying matches; not a published sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_canadian_open",
+      "series_id": "canadian_open",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2022-08-08",
+      "main_end_date": "2022-08-14",
+      "main_year_weeks": [
+        [
+          2022,
+          32
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-08-06",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/montreal/2022/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2022-08-07",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/montreal/2022/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          31
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/montreal/2022/atp-men/?phase=qualification",
+        "note": "Montreal men's qualifying results August 6–7; seven finals including partial-score records."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "historical_identity_evidence": {
+        "actual_host": "Montreal, Canada",
+        "source_url": "https://www.tennisexplorer.com/montreal/2022/atp-men/?phase=qualification",
+        "note": "Men's event held in Montreal, not the simultaneous women's Toronto event."
+      },
+      "qualifier_capacity_evidence": {
+        "qualifier_places": 7,
+        "source_url": "https://www.tennisexplorer.com/montreal/2022/atp-men/?phase=qualification",
+        "note": "Number of final qualifying matches; not a published sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_cincinnati",
+      "series_id": "cincinnati",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2022-08-14",
+      "main_end_date": "2022-08-21",
+      "main_year_weeks": [
+        [
+          2022,
+          33
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-08-13",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/13-08-2022"
+        },
+        {
+          "date": "2022-08-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-08-2022"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          32
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-08-2022",
+        "note": "Dated men's Q1 and seven Q finals; scored men's Main round of 64 also August 14."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "main_opening_play_evidence": {
+        "date": "2022-08-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-08-2022",
+        "observed_iso_week": [
+          2022,
+          32
+        ]
+      },
+      "qualifier_capacity_evidence": {
+        "qualifier_places": 7,
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-08-2022",
+        "note": "Number of final qualifying matches; not a published sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2022_winston_salem",
+      "series_id": "winston_salem",
+      "category_id": "atp_250",
+      "main_start_date": "2022-08-21",
+      "main_end_date": "2022-08-27",
+      "main_year_weeks": [
+        [
+          2022,
+          34
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [
+        {
+          "date": "2022-08-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2022/"
+        },
+        {
+          "date": "2022-08-21",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2022/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2022,
+          33
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2022/",
+        "note": "Dated four Q finals and scored Main matches August 21."
+      },
+      "follow_up": "Review Q/Main ordering and source geometry/points before profile publication.",
+      "main_opening_play_evidence": {
+        "date": "2022-08-21",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-winston-salem-2022/",
+        "observed_iso_week": [
+          2022,
+          33
+        ]
+      }
     }
   ]
 }

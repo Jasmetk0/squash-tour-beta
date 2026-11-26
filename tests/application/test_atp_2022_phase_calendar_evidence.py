@@ -262,3 +262,42 @@ def test_2022_mallorca_sunday_opening_precedes_projected_main(phase_evidence):
     assert row["main_opening_play_evidence"]["date"] == "2022-06-19"
     assert row["main_opening_play_evidence"]["observed_iso_week"] == [2022, 24]
     assert row["main_year_weeks"] == [[2022, 25]]
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("atlanta", ["2022-07-23","2022-07-24"], [[2022,29]], [[2022,30]]),
+        ("kitzbuhel", ["2022-07-23","2022-07-24"], [[2022,29]], [[2022,30]]),
+        ("umag", ["2022-07-23","2022-07-24"], [[2022,29]], [[2022,30]]),
+        ("los_cabos", ["2022-07-30","2022-07-31"], [[2022,30]], [[2022,31]]),
+        ("washington", ["2022-07-30","2022-07-31"], [[2022,30]], [[2022,31]]),
+        ("canadian_open", ["2022-08-06","2022-08-07"], [[2022,31]], [[2022,32]]),
+        ("cincinnati", ["2022-08-13","2022-08-14"], [[2022,32]], [[2022,33]]),
+        ("winston_salem", ["2022-08-20","2022-08-21"], [[2022,33]], [[2022,34]]),
+    ],
+)
+def test_late_summer_2022_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    january = RunCalendar.earth_default(start_year=2022, season_count=2)
+    shifted = RunCalendar(52, 37, 2021, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        season_index, season_week = (0, week + 16) if week <= 36 else (1, week - 36)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(season_index, season_week, year, week)
+
+
+@pytest.mark.parametrize("series", ["cincinnati", "winston_salem"])
+def test_2022_late_summer_sunday_opening_precedes_projected_main(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] not in row["main_year_weeks"]
+
+
+@pytest.mark.parametrize(("series", "places"), [("washington", 6), ("canadian_open", 7), ("cincinnati", 7)])
+def test_2022_north_america_capacity_evidence(phase_evidence, series, places):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["qualifier_capacity_evidence"]["qualifier_places"] == places
+    assert phase_evidence["sporting_schedule_installed"] is False

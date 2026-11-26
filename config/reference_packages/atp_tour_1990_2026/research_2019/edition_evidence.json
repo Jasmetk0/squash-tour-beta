@@ -1,0 +1,380 @@
+{
+  "schema": "atp_2019_edition_evidence.v1",
+  "base": "29784d51d01d9d747705be8abae30f0c82706c1e",
+  "license": "No source PDFs or raw match data redistributed; derived factual counts only; redistribution rights not established.",
+  "pdf_hash_status": "missing_original_bytes",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_rotterdam",
+      "category_id": "atp_500",
+      "main_start": "2019-02-11",
+      "main_end": "2019-02-17",
+      "q_start": "2019-02-09",
+      "q_end": "2019-02-10",
+      "q_round_matches": [
+        7,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 32,
+        "main_byes": 0,
+        "main_wc": 3,
+        "main_seed_markers": 8,
+        "q_capacity": 16,
+        "q_entrants": 15,
+        "q_byes": 1,
+        "q_spots": 4,
+        "q_seed_markers": 8,
+        "q_wc": 3,
+        "main_q_markers": 4,
+        "main_ll_markers": 2
+      },
+      "atp_id": 407,
+      "q_bye_positions": [
+        2
+      ],
+      "main_points": {
+        "champion": 500,
+        "finalist": 300,
+        "semifinal": 180,
+        "quarterfinal": 90,
+        "round_of_16": 45,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 20,
+        "round_2_loss": 10,
+        "round_1_loss": 0
+      },
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "kind": "official_archive",
+          "fields": "Main window",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/rotterdam/2019/draw-qualifications",
+          "kind": "secondary_draw",
+          "fields": "Q geometry, markers, one BYE",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/rotterdam/2019/orderofplay/2019-02-09",
+          "kind": "secondary_dated_results",
+          "fields": "Q1 seven results",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/rotterdam/2019/orderofplay/2019-02-10",
+          "kind": "secondary_dated_results",
+          "fields": "Q2 four results",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/rotterdam/2019/draw",
+          "kind": "secondary_draw",
+          "fields": "Main capacity, actual seed labels 1–5,8–10, WC,Q,LL, points",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/files/rulebook/2019/2019-atp-rulebook_chapter-9_the-rankings_03jul.pdf",
+          "kind": "official_rulebook_july_revision",
+          "fields": "9.03 G pp.217–218 points and additive Q/BYE rules",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        }
+      ],
+      "gaps": [
+        "Q entrants 15 / 4 sections rejected: Original Qualification entrants are not divisible into equal Q sections",
+        "original Main/Q PDFs not accessible; exact hashes missing",
+        "dated pre-play Q source required by v2; dated historical results alone do not satisfy publication constraint",
+        "official nominal Main seed list and substitutions pending"
+      ],
+      "profile_status": "blocked",
+      "import_status": "not_attempted",
+      "planning_status": "not_attempted",
+      "played_status": "not_attempted"
+    },
+    {
+      "occurrence_id": "atp_2019_cordoba",
+      "category_id": "atp_250",
+      "main_start": "2019-02-04",
+      "main_end": "2019-02-10",
+      "q_start": "2019-02-02",
+      "q_end": "2019-02-03",
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_wc": 3,
+        "main_seed_markers": 8,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4,
+        "q_seed_markers": 8,
+        "q_wc": 2,
+        "main_q_markers": 4,
+        "main_ll_markers": 2
+      },
+      "atp_id": 9158,
+      "main_points": {
+        "champion": 250,
+        "finalist": 150,
+        "semifinal": 90,
+        "quarterfinal": 45,
+        "round_of_16": 20,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 12,
+        "round_2_loss": 6,
+        "round_1_loss": 0
+      },
+      "main_bye_seed_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "kind": "official_archive",
+          "fields": "Main window",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.protennislive.com/posting/2019/9158/qs.pdf",
+          "kind": "official_pdf_extracted_text",
+          "fields": "Q geometry, seeds, WC, 12/6/0 points; retirement recorded",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://pt.tennistemple.com/competitions/cordoba-2019/4185/orderofplay/2019-02-02",
+          "kind": "secondary_dated_results",
+          "fields": "Q1 eight results",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://pt.tennistemple.com/competitions/cordoba-2019/4185/orderofplay/2019-02-03",
+          "kind": "secondary_dated_results",
+          "fields": "Q2 four results",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://pt.tennistemple.com/competitions/cordoba-2019/4185/draw",
+          "kind": "secondary_draw",
+          "fields": "Main 28/32, four BYE, eight seeds, three WC, four Q, two LL; historical 250 points",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/files/rulebook/2019/2019-atp-rulebook_chapter-9_the-rankings_03jul.pdf",
+          "kind": "official_rulebook_july_revision",
+          "fields": "9.03 G pp.217–218",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        }
+      ],
+      "gaps": [
+        "primary Main PDF not retrieved; Q PDF text only, original bytes unavailable",
+        "v2 pre-play dated Q source missing; dated results reviewed",
+        "confirm February-effective rulebook edition (draw confirms Q and secondary Main points)",
+        "production Setup HTTP/SQLite not executed"
+      ],
+      "profile_status": "blocked",
+      "import_status": "not_attempted",
+      "planning_status": "not_attempted",
+      "played_status": "not_attempted"
+    },
+    {
+      "occurrence_id": "atp_2019_montpellier",
+      "category_id": "atp_250",
+      "main_start": "2019-02-04",
+      "main_end": "2019-02-10",
+      "q_start": "2019-02-03",
+      "q_end": "2019-02-04",
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_wc": 3,
+        "main_seed_markers": 8,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4,
+        "q_seed_markers": 8,
+        "q_wc": 2,
+        "main_q_markers": 4,
+        "main_ll_markers": 2
+      },
+      "atp_id": 375,
+      "main_points": {
+        "champion": 250,
+        "finalist": 150,
+        "semifinal": 90,
+        "quarterfinal": 45,
+        "round_of_16": 20,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 12,
+        "round_2_loss": 6,
+        "round_1_loss": 0
+      },
+      "main_bye_seed_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "sources": [
+        {
+          "url": "https://www.protennislive.com/posting/2019/375/mds.pdf",
+          "kind": "official_pdf_extracted_text",
+          "fields": "Main capacity, BYE positions 2,10,23,31, WC,Q,LL",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.protennislive.com/posting/2019/375/qs.pdf",
+          "kind": "official_pdf_extracted_text",
+          "fields": "Q geometry, eight seeds, two WC, two ALT, 12/6/0",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://fr.tennistemple.com/competitions/montpellier-2019/4186/orderofplay/2019-02-03",
+          "kind": "secondary_dated_results",
+          "fields": "Q1",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://fr.tennistemple.com/competitions/montpellier-2019/4186/orderofplay/2019-02-04",
+          "kind": "secondary_dated_results",
+          "fields": "Q2 overlaps Main opening day",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/files/rulebook/2019/2019-atp-rulebook_chapter-9_the-rankings_03jul.pdf",
+          "kind": "official_rulebook_july_revision",
+          "fields": "9.03 G pp.217–218",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        }
+      ],
+      "gaps": [
+        "PDF text read but raw bytes and screenshot unavailable",
+        "Q spans W05/W06: do not compress or move Q",
+        "dated pre-play Q source and review of overlap required"
+      ],
+      "profile_status": "blocked",
+      "import_status": "not_attempted",
+      "planning_status": "not_attempted",
+      "played_status": "not_attempted"
+    },
+    {
+      "occurrence_id": "atp_2019_sofia",
+      "category_id": "atp_250",
+      "main_start": "2019-02-04",
+      "main_end": "2019-02-10",
+      "q_start": "2019-02-03",
+      "q_end": "2019-02-04",
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_wc": 3,
+        "main_seed_markers": 8,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4,
+        "q_seed_markers": null,
+        "q_wc": null,
+        "main_q_markers": 4,
+        "main_ll_markers": null
+      },
+      "atp_id": 7434,
+      "main_points": {
+        "champion": 250,
+        "finalist": 150,
+        "semifinal": 90,
+        "quarterfinal": 45,
+        "round_of_16": 20,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 12,
+        "round_2_loss": 6,
+        "round_1_loss": 0
+      },
+      "main_bye_seed_numbers": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "sources": [
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "kind": "official_archive",
+          "fields": "Main window",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://topsport.bg/tennis/vsichki-rezultati-ot-sofia-open-2019.html",
+          "kind": "contemporary_press_center_republication",
+          "fields": "dated Q1/Q2 results, 16 Q, four spots, Main28, BYEs, WC, seeds",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/files/rulebook/2019/2019-atp-rulebook_chapter-9_the-rankings_03jul.pdf",
+          "kind": "official_rulebook_july_revision",
+          "fields": "category points candidate; edition-specific confirmation pending",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        }
+      ],
+      "gaps": [
+        "original Main/Q PDFs and hashes missing",
+        "Q WC/seed markers and LL unresolved",
+        "published article after Q start, not valid pre-play v2 evidence",
+        "Q overlaps Main on 4 Feb; exact round scheduling review"
+      ],
+      "profile_status": "blocked",
+      "import_status": "not_attempted",
+      "planning_status": "not_attempted",
+      "played_status": "not_attempted"
+    }
+  ]
+}

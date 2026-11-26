@@ -182,3 +182,44 @@ def test_2022_miami_qualifier_capacity_is_evidence_only(phase_evidence):
     row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "miami")
     assert row["qualifier_capacity_evidence"]["qualifier_places"] == 12
     assert phase_evidence["sporting_schedule_installed"] is False
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("estoril", ["2022-04-23","2022-04-24"], [[2022,16]], [[2022,17]]),
+        ("munich", ["2022-04-23","2022-04-24"], [[2022,16]], [[2022,17]]),
+        ("madrid", ["2022-04-30","2022-05-01"], [[2022,17]], [[2022,18]]),
+        ("rome", ["2022-05-07","2022-05-08"], [[2022,18]], [[2022,19]]),
+        ("geneva", ["2022-05-14","2022-05-15"], [[2022,19]], [[2022,20]]),
+        ("lyon_old", ["2022-05-14","2022-05-15"], [[2022,19]], [[2022,20]]),
+        ("s_hertogenbosch", ["2022-06-04","2022-06-06","2022-06-07"], [[2022,22],[2022,23]], [[2022,23]]),
+        ("stuttgart", ["2022-06-04","2022-06-05"], [[2022,22]], [[2022,23]]),
+    ],
+)
+def test_late_spring_2022_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    january = RunCalendar.earth_default(start_year=2022, season_count=2)
+    shifted = RunCalendar(52, 37, 2021, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(0, week + 16, year, week)
+
+
+@pytest.mark.parametrize("series", ["madrid", "rome", "geneva", "lyon_old"])
+def test_2022_sunday_main_opening_precedes_projected_main(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    observed = row["main_opening_play_evidence"]
+    assert observed["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert observed["observed_iso_week"] not in row["main_year_weeks"]
+
+
+def test_2022_rosmalen_delayed_qualification_overlaps_main(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "s_hertogenbosch")
+    assert [e["date"] for e in row["qualifying_date_evidence"]] == ["2022-06-04", "2022-06-06", "2022-06-07"]
+    assert row["observed_qualifying_iso_weeks"] == [[2022, 22], [2022, 23]]
+    assert row["main_year_weeks"] == [[2022, 23]]
+    assert row["main_opening_play_evidence"]["date"] == "2022-06-06"
+    assert row["source_disagreement"]["source_url"]

@@ -1,0 +1,208 @@
+{
+  "schema_version": "grand_slam_modern_rules_evidence.v1",
+  "source_version": 1,
+  "status": "source_only_not_runtime_import",
+  "scope": "Men's singles, 2024 and 2025 only. Nominal rules separate from observed draw markings; no tennis scoring adaptation or historical extrapolation.",
+  "years": [
+    {
+      "year": 2024,
+      "grand_slam_rulebook": {
+        "url": "https://www.itftennis.com/media/5986/grand-slam-rule-book-2024-f3.pdf",
+        "printed_pages": [
+          26,
+          27,
+          28,
+          29,
+          30,
+          31,
+          32
+        ],
+        "review": "indexed_text; visual retrieval failed",
+        "sha256": null
+      },
+      "atp_ranking_rulebook": {
+        "url": "https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pif-atp-rankings_27feb.pdf",
+        "printed_pages": [
+          253,
+          254
+        ],
+        "review": "indexed_text; visual retrieval failed",
+        "sha256": null
+      },
+      "main_points": {
+        "champion": 2000,
+        "finalist": 1300,
+        "semifinal": 800,
+        "quarterfinal": 400,
+        "round_of_16": 200,
+        "round_of_32": 100,
+        "round_of_64": 50,
+        "round_of_128": 10
+      },
+      "qualification_points": {
+        "qualifier": 30,
+        "round_3_loss": 16,
+        "round_2_loss": 8,
+        "round_1_loss": 0
+      }
+    },
+    {
+      "year": 2025,
+      "grand_slam_rulebook": {
+        "url": "https://www.wimbledon.com/pdf/Grand_Slam_Rulebook_2025.pdf",
+        "printed_pages": [
+          24,
+          25,
+          26,
+          29,
+          30,
+          31
+        ],
+        "review": "visual pages reviewed",
+        "sha256": null
+      },
+      "atp_ranking_rulebook": {
+        "url": "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf",
+        "printed_pages": [
+          264
+        ],
+        "review": "visual page reviewed",
+        "sha256": null
+      },
+      "main_points": {
+        "champion": 2000,
+        "finalist": 1300,
+        "semifinal": 800,
+        "quarterfinal": 400,
+        "round_of_16": 200,
+        "round_of_32": 100,
+        "round_of_64": 50,
+        "round_of_128": 10
+      },
+      "qualification_points": {
+        "qualifier": 30,
+        "round_3_loss": 16,
+        "round_2_loss": 8,
+        "round_1_loss": 0
+      }
+    }
+  ],
+  "nominal": {
+    "main": {
+      "capacity": 128,
+      "direct_acceptances": 104,
+      "qualifiers": 16,
+      "wild_cards": 8
+    },
+    "qualification": {
+      "capacity": 128,
+      "direct_acceptances": 119,
+      "wild_cards": 9,
+      "sections": 16,
+      "section_size": 8,
+      "rounds": 3,
+      "seeds_per_section": 2,
+      "seed_positions": "top_and_bottom"
+    },
+    "qualification_winner_assignment": "drawn after qualifying concludes; do not assume a fixed section-to-main slot mapping before qualification",
+    "lucky_loser_policy": "Initially eligible final qualifying round losers; earlier round losers only if additional replacements needed. Random draw among top four ranked eligible losers; for more than two withdrawals use number of withdrawals plus two. Not a predetermined additional entrant allocation.",
+    "ranking_policy": {
+      "main_wild_card_first_round_loss": 0,
+      "qualifier_points_additive": true,
+      "bye_then_first_played_loss": "award first-round loser points"
+    },
+    "entry_deadlines_days_before_first_monday": {
+      "main": 42,
+      "qualification": 28
+    }
+  },
+  "edition_bindings": [
+    {
+      "occurrence_id": "atp_2024_grand_slam_australian_open",
+      "rule_year": 2024,
+      "draw_evidence_id": "atp_2024_grand_slam_australian_open",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 3,
+      "qualification_marker_audit": "incomplete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_roland_garros",
+      "rule_year": 2024,
+      "draw_evidence_id": "atp_2024_grand_slam_roland_garros",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 3,
+      "qualification_marker_audit": "incomplete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_us_open",
+      "rule_year": 2024,
+      "draw_evidence_id": "atp_2024_grand_slam_us_open",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 1,
+      "qualification_marker_audit": "complete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_wimbledon",
+      "rule_year": 2024,
+      "draw_evidence_id": "atp_2024_grand_slam_wimbledon",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 5,
+      "qualification_marker_audit": "complete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_australian_open",
+      "rule_year": 2025,
+      "draw_evidence_id": "atp_2025_grand_slam_australian_open",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 1,
+      "qualification_marker_audit": "incomplete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_roland_garros",
+      "rule_year": 2025,
+      "draw_evidence_id": "atp_2025_grand_slam_roland_garros",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 6,
+      "qualification_marker_audit": "incomplete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_us_open",
+      "rule_year": 2025,
+      "draw_evidence_id": "atp_2025_grand_slam_us_open",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 4,
+      "qualification_marker_audit": "complete",
+      "profile_status": "source_evidence_only_not_imported"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_wimbledon",
+      "rule_year": 2025,
+      "draw_evidence_id": "atp_2025_grand_slam_wimbledon",
+      "observed_main_seeds": 32,
+      "observed_main_byes": 0,
+      "observed_main_lucky_losers": 3,
+      "qualification_marker_audit": "complete",
+      "profile_status": "source_evidence_only_not_imported"
+    }
+  ],
+  "unresolved_runtime": [
+    "Qualification winners assigned after Q; shared fixed feeder contract requires Work review.",
+    "Q seed and wild-card selection not represented by the existing Main-only seed count.",
+    "Ranking must preserve Main WC first-round exception and additive Q points; LL ranking semantics need separate verification.",
+    "Raw official PDF bytes and SHA-256 not retrieved; no fabricated hashes.",
+    "Cross-week Main rounds and calendar/source namespace gates remain unresolved."
+  ]
+}

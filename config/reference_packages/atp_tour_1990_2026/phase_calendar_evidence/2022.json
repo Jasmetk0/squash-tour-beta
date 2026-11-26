@@ -2747,6 +2747,107 @@
         "source_url": "https://canaltenis.com/resultados-atp-masters-1000-paris-bercy-2022/",
         "note": "Seven dated final qualifying matches; not a published sporting profile."
       }
+    },
+    {
+      "occurrence_id": "atp_2022_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2022-11-08",
+      "main_end_date": "2022-11-12",
+      "main_year_weeks": [
+        [
+          2022,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race_with_wild_card_rule",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2022/2022-atp-rulebook_21mar.pdf",
+        "rule_section": "4.04 B",
+        "maximum_age_throughout_calendar_year": 21,
+        "race_direct_acceptances": 7,
+        "wild_card_places_in_written_rule": 1,
+        "race_cutoff_date": "2022-10-31",
+        "actual_field_source_url": "https://www.atptour.com/en/news/next-gen-groups-are-set-milan-2022",
+        "note": "Written 2022 rule sets seven Race to Milan places and one FIT-designated, ATP-approved age-eligible wild card. Later ATP report confirms actual field; no assumption that announced qualifiers remained unchanged, and no on-site Q. ATP groups article contains a conflicting event date range; actual opening and canonical range independently confirmed."
+      },
+      "main_opening_play_evidence": {
+        "date": "2022-11-08",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/nakashima-arnaldi-milan-2022-tuesday",
+        "observed_iso_week": [
+          2022,
+          45
+        ]
+      },
+      "follow_up": "Review published selection rules versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
+    },
+    {
+      "occurrence_id": "atp_2022_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2022-11-13",
+      "main_end_date": "2022-11-20",
+      "main_year_weeks": [
+        [
+          2022,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2022",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_end_rankings_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2022/2022-atp-rulebook_21mar.pdf",
+        "rule_section": "4.01 B",
+        "selection_priority": {
+          "top_ranked_players": 7,
+          "eligible_current_year_grand_slam_winners_up_to": 2,
+          "grand_slam_winner_rank_range": [
+            8,
+            20
+          ],
+          "then_ranked_players_from": 8,
+          "direct_acceptances": 8
+        },
+        "actual_field_source_url": "https://www.atptour.com/en/news/nitto-atp-finals-2022-field-is-set",
+        "note": "Written selection rule uses final regular-season rankings and Grand Slam exception. ATP separately announced the eight-player field. No on-site Q; actual replacements and eligibility runtime not certified."
+      },
+      "main_opening_play_evidence": {
+        "date": "2022-11-13",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/nadal-fritz-turin-2022-sunday",
+        "observed_iso_week": [
+          2022,
+          45
+        ]
+      },
+      "follow_up": "Review published selection rules versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
     }
-  ]
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 65,
+    "recorded_occurrences": 65,
+    "known_not_held_series_ids": [
+      "beijing",
+      "chengdu",
+      "hangzhou",
+      "shanghai"
+    ],
+    "occurrences_with_observed_qualifying_play": 63,
+    "no_onsite_qualifying_occurrences": 2,
+    "qualifying_overlaps_projected_main_week": 21,
+    "observed_main_opening_outside_projection": 9,
+    "source_finish_outside_projection": 0,
+    "qualifying_before_january_run_start": 1,
+    "sporting_schedule_installed": false
+  }
 }

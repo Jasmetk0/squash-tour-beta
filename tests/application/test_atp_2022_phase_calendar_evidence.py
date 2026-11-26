@@ -387,3 +387,70 @@ def test_2022_paris_masters_capacity_evidence(phase_evidence):
     row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "paris_masters")
     assert row["qualifier_capacity_evidence"]["qualifier_places"] == 7
     assert phase_evidence["sporting_schedule_installed"] is False
+
+@pytest.mark.parametrize(("series", "opening_week", "mapped_week"), [
+    ("next_gen_atp_finals", 45, 45), ("atp_finals", 45, 46),
+])
+def test_2022_finals_no_onsite_qualification(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["qualification_status"] == "not_applicable_no_onsite_qualifying"
+    assert row["qualifying_date_evidence"] == row["observed_qualifying_iso_weeks"] == []
+    assert row["entry_selection_evidence"]["field_size"] == 8
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2022, opening_week]
+    assert row["main_year_weeks"] == [[2022, mapped_week]]
+    assert RunCalendar.earth_default(start_year=2022, season_count=2).calendar_to_season(
+        2022, mapped_week
+    ) == RunCalendarPosition(0, mapped_week, 2022, mapped_week)
+    assert RunCalendar(52, 37, 2021, 2).calendar_to_season(
+        2022, mapped_week
+    ) == RunCalendarPosition(1, mapped_week - 36, 2022, mapped_week)
+
+
+def test_2022_finals_year_specific_selection_rules(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    senior = rows["atp_finals"]["entry_selection_evidence"]
+    young = rows["next_gen_atp_finals"]["entry_selection_evidence"]
+    assert senior["rule_section"] == "4.01 B"
+    assert senior["selection_priority"]["grand_slam_winner_rank_range"] == [8, 20]
+    assert senior["selection_priority"]["direct_acceptances"] == 8
+    assert young["rule_section"] == "4.04 B"
+    assert young["maximum_age_throughout_calendar_year"] == 21
+    assert young["race_direct_acceptances"] == 7
+    assert young["wild_card_places_in_written_rule"] == 1
+    assert young["race_cutoff_date"] == "2022-10-31"
+
+
+def test_2022_complete_roster_and_evidence_status(phase_evidence):
+    source = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))
+    canonical = {r["source_identity"] for r in build_projection(source)["mappings"] if r["atp_season_year"] == 2022}
+    seasons = json.loads((SOURCE_FILE.parent / "seasons_1990_2026.json").read_text(encoding="utf-8"))["seasons"]
+    membership = next(s for s in seasons if s["year"] == 2022)
+    rows = phase_evidence["occurrences"]
+    excluded = set(membership["known_not_held_series_ids"])
+    assert excluded == {"beijing", "chengdu", "hangzhou", "shanghai"}
+    assert len(rows) == len(canonical) == 65
+    assert {r["occurrence_id"] for r in rows} == canonical
+    assert {r["series_id"] for r in rows} == set(membership["series_category_ids"]) - excluded
+    coverage = phase_evidence["coverage_review"]
+    assert set(coverage["known_not_held_series_ids"]) == excluded
+    assert coverage["canonical_occurrences"] == coverage["recorded_occurrences"] == 65
+    assert coverage["occurrences_with_observed_qualifying_play"] == sum(
+        bool(r["observed_qualifying_iso_weeks"]) for r in rows
+    ) == 63
+    assert coverage["no_onsite_qualifying_occurrences"] == sum(
+        r.get("qualification_status") == "not_applicable_no_onsite_qualifying" for r in rows
+    ) == 2
+    assert coverage["qualifying_overlaps_projected_main_week"] == sum(
+        any(q in r["main_year_weeks"] for q in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert coverage["observed_main_opening_outside_projection"] == sum(
+        "main_opening_play_evidence" in r and
+        r["main_opening_play_evidence"]["observed_iso_week"] not in r["main_year_weeks"] for r in rows
+    )
+    assert coverage["source_finish_outside_projection"] == sum(
+        list(date.fromisoformat(r["main_end_date"]).isocalendar()[:2]) not in r["main_year_weeks"] for r in rows
+    )
+    assert coverage["qualifying_before_january_run_start"] == sum(
+        any(year < 2022 for year, _ in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert coverage["sporting_schedule_installed"] is phase_evidence["sporting_schedule_installed"] is False

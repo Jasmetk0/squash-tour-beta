@@ -883,120 +883,766 @@
       "year": 1991,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_1991_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "main": {
+        "start": "1991-01-14",
+        "end": "1991-01-27",
+        "iso_weeks": [
+          {
+            "year": 1991,
+            "week": 3
+          },
+          {
+            "year": 1991,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1991,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1990,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1991,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_1991_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "main": {
+        "start": "1991-05-27",
+        "end": "1991-06-09",
+        "iso_weeks": [
+          {
+            "year": 1991,
+            "week": 22
+          },
+          {
+            "year": 1991,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1991,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1990,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1991,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_1991_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "main": {
+        "start": "1991-06-24",
+        "end": "1991-07-07",
+        "iso_weeks": [
+          {
+            "year": 1991,
+            "week": 26
+          },
+          {
+            "year": 1991,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1991,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1990,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1991,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_1991_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "main": {
+        "start": "1991-08-26",
+        "end": "1991-09-08",
+        "iso_weeks": [
+          {
+            "year": 1991,
+            "week": 35
+          },
+          {
+            "year": 1991,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1991,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1990,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1991",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1992,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_1992_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "main": {
+        "start": "1992-01-13",
+        "end": "1992-01-26",
+        "iso_weeks": [
+          {
+            "year": 1992,
+            "week": 3
+          },
+          {
+            "year": 1992,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1992,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1991,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1992,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_1992_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "main": {
+        "start": "1992-05-25",
+        "end": "1992-06-07",
+        "iso_weeks": [
+          {
+            "year": 1992,
+            "week": 22
+          },
+          {
+            "year": 1992,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1992,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1991,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1992,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_1992_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "main": {
+        "start": "1992-06-22",
+        "end": "1992-07-05",
+        "iso_weeks": [
+          {
+            "year": 1992,
+            "week": 26
+          },
+          {
+            "year": 1992,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1992,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1991,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 1991,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1992,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_1992_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "main": {
+        "start": "1992-08-31",
+        "end": "1992-09-13",
+        "iso_weeks": [
+          {
+            "year": 1992,
+            "week": 36
+          },
+          {
+            "year": 1992,
+            "week": 37
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1992,
+              "season_week": 36
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 37
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1991,
+              "season_week": 52
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 1
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1992",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1993,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_1993_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "main": {
+        "start": "1993-01-18",
+        "end": "1993-01-31",
+        "iso_weeks": [
+          {
+            "year": 1993,
+            "week": 3
+          },
+          {
+            "year": 1993,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1993,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1992,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1993,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_1993_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "main": {
+        "start": "1993-05-24",
+        "end": "1993-06-06",
+        "iso_weeks": [
+          {
+            "year": 1993,
+            "week": 21
+          },
+          {
+            "year": 1993,
+            "week": 22
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1993,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 22
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1992,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 38
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1993,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_1993_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "main": {
+        "start": "1993-06-21",
+        "end": "1993-07-04",
+        "iso_weeks": [
+          {
+            "year": 1993,
+            "week": 25
+          },
+          {
+            "year": 1993,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1993,
+              "season_week": 25
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1992,
+              "season_week": 41
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1993,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_1993_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "main": {
+        "start": "1993-08-30",
+        "end": "1993-09-12",
+        "iso_weeks": [
+          {
+            "year": 1993,
+            "week": 35
+          },
+          {
+            "year": 1993,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1993,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1992,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 1992,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1993",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1994,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_1994_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "main": {
+        "start": "1994-01-17",
+        "end": "1994-01-30",
+        "iso_weeks": [
+          {
+            "year": 1994,
+            "week": 3
+          },
+          {
+            "year": 1994,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1994,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1994,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1993,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1994,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_1994_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "main": {
+        "start": "1994-05-23",
+        "end": "1994-06-05",
+        "iso_weeks": [
+          {
+            "year": 1994,
+            "week": 21
+          },
+          {
+            "year": 1994,
+            "week": 22
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1994,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 1994,
+              "season_week": 22
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1993,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 38
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1994,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_1994_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "main": {
+        "start": "1994-06-20",
+        "end": "1994-07-03",
+        "iso_weeks": [
+          {
+            "year": 1994,
+            "week": 25
+          },
+          {
+            "year": 1994,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1994,
+              "season_week": 25
+            },
+            {
+              "season_start_year": 1994,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1993,
+              "season_week": 41
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1994,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_1994_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "main": {
+        "start": "1994-08-29",
+        "end": "1994-09-11",
+        "iso_weeks": [
+          {
+            "year": 1994,
+            "week": 35
+          },
+          {
+            "year": 1994,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1994,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 1994,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1993,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 1993,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1994",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1995,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_1995_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995",
+      "main": {
+        "start": "1995-01-16",
+        "end": "1995-01-29",
+        "iso_weeks": [
+          {
+            "year": 1995,
+            "week": 3
+          },
+          {
+            "year": 1995,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1995,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1995,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1994,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1994,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1995",
+      "date_evidence": "ATP archive indexed result text; direct page access returned HTTP 403"
     },
     {
       "year": 1995,

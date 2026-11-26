@@ -117,3 +117,57 @@ def test_marseille_2023_actual_main_overlap_and_historical_identity(phase_eviden
     assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
     assert opening["observed_iso_week"] in row["main_year_weeks"]
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("indian_wells", ["2023-03-06","2023-03-07"], [10], [10,11]),
+        ("miami", ["2023-03-20","2023-03-21"], [12], [12,13]),
+        ("estoril", ["2023-04-01","2023-04-02"], [13], [14]),
+        ("houston", ["2023-04-01","2023-04-02"], [13], [14]),
+        ("marrakech", ["2023-04-02","2023-04-03"], [13,14], [14]),
+        ("monte_carlo", ["2023-04-08","2023-04-09"], [14], [15]),
+        ("banja_luka", ["2023-04-16","2023-04-17"], [15,16], [16]),
+        ("barcelona", ["2023-04-15","2023-04-16"], [15], [16]),
+    ],
+)
+def test_spring_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == RunCalendarPosition(0, week + 16, 2023, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "mapped_week"),
+    [("marrakech", 14, 14), ("monte_carlo", 14, 15), ("banja_luka", 16, 16)],
+)
+def test_spring_2023_actual_main_opening_overlap(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2023, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2023, mapped_week]]
+
+
+def test_houston_2023_rain_compressed_main_not_qualifying(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "houston")
+    assert row["observed_qualifying_iso_weeks"] == [[2023, 13]]
+    assert row["main_year_weeks"] == [[2023, 14]]
+    evidence = row["main_round_date_evidence"]
+    assert evidence["basis"] == "official_ATP_report_of_winners_completed_rounds_not_full_draw_schedule"
+    assert evidence["winner_rounds"] == [
+        {"date": "2023-04-08", "physical_rounds": ["round_of_16", "quarterfinal"]},
+        {"date": "2023-04-09", "physical_rounds": ["semifinal", "final"]},
+    ]
+    assert all(list(date.fromisoformat(r["date"]).isocalendar()[:2]) in row["main_year_weeks"]
+               for r in evidence["winner_rounds"])
+    assert phase_evidence["sporting_schedule_installed"] is False

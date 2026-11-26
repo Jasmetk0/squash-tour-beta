@@ -661,6 +661,368 @@
         "note": "Eight Q1 results including retirement and four Q finals; scored Main singles Feb 27."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_indian_wells",
+      "series_id": "indian_wells",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-03-08",
+      "main_end_date": "2023-03-19",
+      "main_year_weeks": [
+        [
+          2023,
+          10
+        ],
+        [
+          2023,
+          11
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-03-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-03-2023"
+        },
+        {
+          "date": "2023-03-07",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/07-03-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/07-03-2023",
+        "note": "Dated men's singles qualifying first-round and final results March 6–7; separate from WTA qualifying."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks."
+    },
+    {
+      "occurrence_id": "atp_2023_miami",
+      "series_id": "miami",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-03-22",
+      "main_end_date": "2023-04-02",
+      "main_year_weeks": [
+        [
+          2023,
+          12
+        ],
+        [
+          2023,
+          13
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-03-20",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/20-03-2023"
+        },
+        {
+          "date": "2023-03-21",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/21-03-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          12
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/21-03-2023",
+        "note": "Dated men's singles Q1 and finals; tournament organizer confirms first-round play March 20."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks.",
+      "additional_qualifying_source_url": "https://www.miamiopen.com/latest-news/kokkinakis-paire-garin-one-step-closer-to-mens-singles-main-draw/"
+    },
+    {
+      "occurrence_id": "atp_2023_estoril",
+      "series_id": "estoril",
+      "category_id": "atp_250",
+      "main_start_date": "2023-04-03",
+      "main_end_date": "2023-04-09",
+      "main_year_weeks": [
+        [
+          2023,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-01",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-estoril-2023/"
+        },
+        {
+          "date": "2023-04-02",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-estoril-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          13
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-estoril-2023/",
+        "note": "Dated qualifying first-round and final scores; Main begins April 3."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_houston",
+      "series_id": "houston",
+      "category_id": "atp_250",
+      "main_start_date": "2023-04-03",
+      "main_end_date": "2023-04-09",
+      "main_year_weeks": [
+        [
+          2023,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-01",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-houston-2023/"
+        },
+        {
+          "date": "2023-04-02",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-houston-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          13
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-houston-2023/",
+        "note": "Eight Q1 and four Q finals dated April 1–2. Major rain disruption documented during Main, not an extension of qualifying."
+      },
+      "follow_up": "Review same-day Main round sequencing under rain disruption; no sporting schedule installed.",
+      "main_round_date_evidence": {
+        "basis": "official_ATP_report_of_winners_completed_rounds_not_full_draw_schedule",
+        "source_url": "https://www.atptour.com/en/news/tiafoe-etcheverry-houston-2023-final",
+        "additional_source_url": "https://www.atptour.com/en/news/tiafoe-kubler-houston-2023-qf",
+        "winner_rounds": [
+          {
+            "date": "2023-04-08",
+            "physical_rounds": [
+              "round_of_16",
+              "quarterfinal"
+            ]
+          },
+          {
+            "date": "2023-04-09",
+            "physical_rounds": [
+              "semifinal",
+              "final"
+            ]
+          }
+        ],
+        "note": "Rain delayed Main play across three days; winner completed entire four-match run in two days. This is not a full daily allocation for all entrants."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_marrakech",
+      "series_id": "marrakech",
+      "category_id": "atp_250",
+      "main_start_date": "2023-04-03",
+      "main_end_date": "2023-04-09",
+      "main_year_weeks": [
+        [
+          2023,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-02",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-marrakech-2023/"
+        },
+        {
+          "date": "2023-04-03",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-marrakech-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          13
+        ],
+        [
+          2023,
+          14
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-marrakech-2023/",
+        "note": "Eight Q1 scores April 2; four Q finals and four Main singles scores April 3."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-04-03",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-marrakech-2023/",
+        "observed_iso_week": [
+          2023,
+          14
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_monte_carlo",
+      "series_id": "monte_carlo",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-04-09",
+      "main_end_date": "2023-04-16",
+      "main_year_weeks": [
+        [
+          2023,
+          15
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-08",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/08-04-2023"
+        },
+        {
+          "date": "2023-04-09",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/09-04-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          14
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-montecarlo-2023/",
+        "note": "Dated qualifying scores and at least two scored Main singles April 9, in W14 before majority W15; distinguish scored matches from merely listed start times."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-04-09",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-montecarlo-2023/",
+        "observed_iso_week": [
+          2023,
+          14
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_banja_luka",
+      "series_id": "banja_luka",
+      "category_id": "atp_250",
+      "main_start_date": "2023-04-17",
+      "main_end_date": "2023-04-23",
+      "main_year_weeks": [
+        [
+          2023,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-16",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/banja-luka/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-04-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/banja-luka/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          15
+        ],
+        [
+          2023,
+          16
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/17-04-2023",
+        "note": "Dated Q1 and four Q finals April 16–17; dated Main singles April 17. Preserve canonical Banja Luka occurrence."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-04-17",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/17-04-2023",
+        "observed_iso_week": [
+          2023,
+          16
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_barcelona",
+      "series_id": "barcelona",
+      "category_id": "atp_500",
+      "main_start_date": "2023-04-17",
+      "main_end_date": "2023-04-23",
+      "main_year_weeks": [
+        [
+          2023,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-barcelona-2023/"
+        },
+        {
+          "date": "2023-04-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-barcelona-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          15
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-barcelona-2023/",
+        "note": "Dated Q1 and six final qualifying scores April 15–16."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
     }
   ]
 }

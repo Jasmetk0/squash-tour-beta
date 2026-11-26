@@ -2491,6 +2491,284 @@
         "note": "Men's singles qualifying result dates Oct 19 and 20; Main starts Oct 21."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_vienna",
+      "series_id": "vienna",
+      "category_id": "atp_500",
+      "main_start_date": "2024-10-21",
+      "main_end_date": "2024-10-27",
+      "main_year_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-19",
+          "status": "played",
+          "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv"
+        },
+        {
+          "date": "2024-10-20",
+          "status": "played",
+          "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://tenisaldia.es/atp/centro-atp-viena-open-2024-horario-todos-los-resultados-premios-y-guia-de-tv",
+        "note": "Eight first-round and four final qualifying scores on successive dates. Organizer confirms advertised Oct 19–20 qualifying."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication.",
+      "schedule_confirmation": {
+        "source_url": "https://www.erstebank-open.com/en/news/storys/vienna-2024-atp-500-history-draw-schedule",
+        "note": "Organizer confirms Oct 19–20 Q."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_paris_masters",
+      "series_id": "paris_masters",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-10-28",
+      "main_end_date": "2024-11-03",
+      "main_year_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-26",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/26-10-2024"
+        },
+        {
+          "date": "2024-10-27",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/27-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/27-10-2024",
+        "note": "Dated men's first-round and final qualifying results Oct 26–27."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_belgrade",
+      "series_id": "belgrade",
+      "category_id": "atp_250",
+      "main_start_date": "2024-11-03",
+      "main_end_date": "2024-11-09",
+      "main_year_weeks": [
+        [
+          2024,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/belgrade/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-11-03",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/belgrade/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/medjedeovic-marozsan-belgrade-2024-sunday",
+        "note": "Dated eight Q1 and four Q finals; ATP confirms scored Main singles Nov 3. Actual host Belgrade, Serbia, before Athens relocation in 2025."
+      },
+      "follow_up": "Review same-day Q/Main in W44 before mapped W45; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-11-03",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/medjedeovic-marozsan-belgrade-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          44
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Belgrade, Serbia",
+        "source_url": "https://www.atptour.com/en/news/belgrade-2024-atp-250-history-draw-schedule",
+        "note": "2024 host Belgrade; same canonical Series as Athens 2025."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_metz",
+      "series_id": "metz",
+      "category_id": "atp_250",
+      "main_start_date": "2024-11-03",
+      "main_end_date": "2024-11-09",
+      "main_year_weeks": [
+        [
+          2024,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-11-02",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-11-03",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/metz/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          44
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/michelsen-moutet-metz-2024-sunday",
+        "note": "Dated eight Q1 and four Q finals; ATP confirms scored Main singles Nov 3."
+      },
+      "follow_up": "Review same-day Q/Main in W44 before mapped W45; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2024-11-03",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/michelsen-moutet-metz-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          44
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2024-11-10",
+      "main_end_date": "2024-11-17",
+      "main_year_weeks": [
+        [
+          2024,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_end_rankings_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_02jul.pdf",
+        "format_source_url": "https://www.atptour.com/en/news/nitto-atp-finals-2024-schedule-sunday-monday",
+        "rule_section": "4.01 B",
+        "selection_priority": {
+          "top_ranked_players": 7,
+          "eligible_current_year_grand_slam_winners_up_to": 2,
+          "grand_slam_winner_rank_range": [
+            8,
+            20
+          ],
+          "then_ranked_players_from": 8,
+          "direct_acceptances": 8
+        },
+        "note": "2024 written rule uses PIF ATP Rankings on Monday after final ATP Tour event; top eight of selection list accepted. No on-site Q. Exact withdrawals/alternates and runtime selection not certified."
+      },
+      "main_opening_play_evidence": {
+        "date": "2024-11-10",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/sinner-de-minaur-nitto-atp-finals-2024-sunday",
+        "observed_iso_week": [
+          2024,
+          45
+        ]
+      },
+      "follow_up": "Review published selection rule versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
+    },
+    {
+      "occurrence_id": "atp_2024_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2024-12-18",
+      "main_end_date": "2024-12-22",
+      "main_year_weeks": [
+        [
+          2024,
+          51
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race_with_wild_card_rule",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_02jul.pdf",
+        "format_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-2024-history-draw-schedule",
+        "rule_section": "4.04 B",
+        "maximum_age_throughout_calendar_year": 20,
+        "race_direct_acceptances": 7,
+        "wild_card_places_in_written_rule": 1,
+        "age_change_source_url": "https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024",
+        "actual_field_source_url": "https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-2024-qualifications-4/",
+        "note": "Written rule sets seven Race places and one age-eligible ATP wild card; ATP also announced final field. Do not infer the individual eighth player's acceptance classification from this rule alone. Nitto Finals direct acceptances/alternates exempt from mandatory participation. No on-site Q."
+      },
+      "main_opening_play_evidence": {
+        "date": "2024-12-18",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/tien-mensik-jeddah-2024-wednesday",
+        "observed_iso_week": [
+          2024,
+          51
+        ]
+      },
+      "follow_up": "Review published selection rule versus actual entries and alternates; no fabricated Q phase or automatic sporting eligibility."
     }
-  ]
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 62,
+    "recorded_occurrences": 62,
+    "occurrences_with_observed_qualifying_play": 60,
+    "no_onsite_qualifying_occurrences": 2,
+    "occurrences_with_scheduled_only_day_evidence": 0,
+    "qualifying_overlaps_projected_main_week": 23,
+    "observed_main_opening_outside_projection": 10,
+    "source_finish_outside_projection": 6,
+    "three_week_main_review_only": 0,
+    "qualifying_before_january_run_start": 2,
+    "sporting_schedule_installed": false,
+    "remaining_evidence_gaps": [
+      "Some dated result records include partial scores or multiple physical rounds on the same day; precise start/completion chronology is not established.",
+      "Individual event source URLs, round allocation, scoring and points require review before sporting profile publication.",
+      "Finals written selection rules do not certify actual entry classification, eligibility runtime, ranking closure or Save/reopen."
+    ]
+  }
 }

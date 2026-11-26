@@ -370,3 +370,104 @@ def test_antwerp_2024_preserves_brussels_licence_identity(phase_evidence):
     assert row["historical_identity_evidence"]["actual_host"] == "Antwerp, Belgium"
     assert row["historical_identity_evidence"]["source_event_id"] == 7485
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_week", "main_week", "opening"),
+    [
+        ("vienna", ["2024-10-19","2024-10-20"], 42, 43, False),
+        ("paris_masters", ["2024-10-26","2024-10-27"], 43, 44, False),
+        ("belgrade", ["2024-11-02","2024-11-03"], 44, 45, True),
+        ("metz", ["2024-11-02","2024-11-03"], 44, 45, True),
+    ],
+)
+def test_final_knockout_2024_phase_positions(phase_evidence, series, q_dates, q_week, main_week, opening):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, q_week]]
+    assert row["main_year_weeks"] == [[2024, main_week]]
+    if opening:
+        assert row["main_opening_play_evidence"]["date"] == row["main_start_date"] == q_dates[-1]
+        assert row["main_opening_play_evidence"]["observed_iso_week"] == [2024, q_week]
+    else:
+        assert q_dates[-1] < row["main_start_date"]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in (q_week, main_week):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(1, week - 36, 2024, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "main_week", "opening_week", "rule_section"),
+    [("atp_finals", 46, 45, "4.01 B"), ("next_gen_atp_finals", 51, 51, "4.04 B")],
+)
+def test_2024_finals_no_onsite_qualifying(phase_evidence, series, main_week, opening_week, rule_section):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["qualification_status"] == "not_applicable_no_onsite_qualifying"
+    assert row["qualifying_date_evidence"] == row["observed_qualifying_iso_weeks"] == []
+    assert row["entry_selection_evidence"]["field_size"] == 8
+    assert row["entry_selection_evidence"]["rule_section"] == rule_section
+    assert row["main_year_weeks"] == [[2024, main_week]]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2024, opening_week]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in {main_week, opening_week}:
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(1, week - 36, 2024, week)
+
+
+def test_2024_finals_written_selection_rule_distinct_from_actual_field(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    senior = rows["atp_finals"]["entry_selection_evidence"]
+    young = rows["next_gen_atp_finals"]["entry_selection_evidence"]
+    assert senior["selection_priority"] == {
+        "top_ranked_players": 7,
+        "eligible_current_year_grand_slam_winners_up_to": 2,
+        "grand_slam_winner_rank_range": [8, 20],
+        "then_ranked_players_from": 8,
+        "direct_acceptances": 8,
+    }
+    assert young["maximum_age_throughout_calendar_year"] == 20
+    assert (young["race_direct_acceptances"], young["wild_card_places_in_written_rule"]) == (7, 1)
+    assert young["actual_field_source_url"] != young["source_url"]
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+def test_2024_inventory_complete_but_not_sporting_certified(phase_evidence):
+    rows = phase_evidence["occurrences"]
+    canonical = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))["year_sources"]["2024"]["events"]
+    assert len(rows) == len(canonical) == 62
+    assert {r["series_id"] for r in rows} == {r["series_id"] for r in canonical}
+    summary = phase_evidence["coverage_review"]
+    assert summary["canonical_occurrences"] == summary["recorded_occurrences"] == len(rows)
+    assert summary["occurrences_with_observed_qualifying_play"] == sum(
+        any(e["status"] == "played" for e in r["qualifying_date_evidence"]) for r in rows
+    ) == 60
+    assert summary["no_onsite_qualifying_occurrences"] == sum(
+        r.get("qualification_status") == "not_applicable_no_onsite_qualifying" for r in rows
+    ) == 2
+    assert all(r["observed_qualifying_iso_weeks"] or r.get("qualification_status") ==
+               "not_applicable_no_onsite_qualifying" for r in rows)
+    assert summary["occurrences_with_scheduled_only_day_evidence"] == sum(
+        any(e["status"] == "scheduled" for e in r["qualifying_date_evidence"]) for r in rows
+    )
+    assert summary["qualifying_overlaps_projected_main_week"] == sum(
+        any(w in r["main_year_weeks"] for w in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert summary["observed_main_opening_outside_projection"] == sum(
+        "main_opening_play_evidence" in r and
+        r["main_opening_play_evidence"]["observed_iso_week"] not in r["main_year_weeks"] for r in rows
+    )
+    assert summary["source_finish_outside_projection"] == sum(
+        list(date.fromisoformat(r["main_end_date"]).isocalendar()[:2]) not in r["main_year_weeks"]
+        for r in rows
+    )
+    assert summary["three_week_main_review_only"] == sum(
+        r.get("main_projection_review_only", False) for r in rows
+    ) == 0
+    assert summary["qualifying_before_january_run_start"] == sum(
+        any(y < 2024 for y, _ in r["observed_qualifying_iso_weeks"]) for r in rows
+    )
+    assert summary["remaining_evidence_gaps"]
+    assert summary["sporting_schedule_installed"] is phase_evidence["sporting_schedule_installed"] is False

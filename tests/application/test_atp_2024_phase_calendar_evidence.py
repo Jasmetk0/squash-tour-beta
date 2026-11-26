@@ -146,3 +146,61 @@ def test_spring_2024_actual_main_opening_overlap(phase_evidence, series, opening
     assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
     assert row["main_year_weeks"] == [[2024, mapped_week]]
     assert (opening["observed_iso_week"] in row["main_year_weeks"]) == (series == "marrakech")
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks", "category"),
+    [
+        ("bucharest", ["2024-04-14","2024-04-15"], [15,16], [16], "atp_250"),
+        ("munich", ["2024-04-13","2024-04-14"], [15], [16], "atp_250"),
+        ("madrid", ["2024-04-22","2024-04-23"], [17], [17,18], "atp_masters_1000"),
+        ("rome", ["2024-05-06","2024-05-07"], [19], [19,20], "atp_masters_1000"),
+        ("geneva", ["2024-05-18","2024-05-19"], [20], [21], "atp_250"),
+        ("lyon_old", ["2024-05-18","2024-05-19"], [20], [21], "atp_250"),
+        ("s_hertogenbosch", ["2024-06-08","2024-06-09"], [23], [24], "atp_250"),
+        ("stuttgart", ["2024-06-08","2024-06-09"], [23], [24], "atp_250"),
+    ],
+)
+def test_april_june_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks, category):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["category_id"] == category
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2024, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(0, week + 16, 2024, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "mapped_week"),
+    [("bucharest", 16, 16), ("geneva", 20, 21), ("lyon_old", 20, 21)],
+)
+def test_april_may_2024_actual_main_opening_overlap(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2024, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2024, mapped_week]]
+
+
+def test_2024_lyon_clay_and_marseille_are_distinct_licences(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    assert rows["lyon_old"]["historical_identity_evidence"]["actual_host"] == "Lyon, France"
+    assert rows["lyon"]["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+    assert rows["lyon_old"]["occurrence_id"] != rows["lyon"]["occurrence_id"]
+
+
+def test_stuttgart_2024_qualifying_round_dates_not_one_round_per_day(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "stuttgart")
+    evidence = row["qualifying_round_date_evidence"]
+    assert evidence["basis"] == "dated_scored_result_records_not_start_completion_timestamps"
+    assert [(r["date"], r["physical_round"], r["scored_matches"]) for r in evidence["rounds"]] == [
+        ("2024-06-08", 1, 6), ("2024-06-09", 1, 2), ("2024-06-09", 2, 4)
+    ]
+    assert {r["date"] for r in evidence["rounds"]} == {e["date"] for e in row["qualifying_date_evidence"]}
+    assert phase_evidence["sporting_schedule_installed"] is False

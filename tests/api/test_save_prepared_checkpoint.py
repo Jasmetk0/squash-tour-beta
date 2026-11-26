@@ -512,6 +512,16 @@ def test_taken_live_value_is_uncopied_and_returns_only_after_commit(tmp_path, pr
         assert seen["used"] == 2 and "decoded_live_calendar_component" not in copies
         # The committed Save returned exactly its own value to the live cache.
         assert [value is fresh for value in retained(repository)] == [True]
-        copies.clear()
+        # Every later reader still receives its own defensive copy.
+        from sqlalchemy import text
+
+        from beta_engine.infrastructure.db.calendar_sporting_checkpoint import load_checkpoint
+
+        with repository._session_factory() as session:
+            reader = load_checkpoint(session, run_id="run", branch_id="branch", _repository=repository)
+            raw = session.execute(text(
+                "SELECT payload_json FROM calendar_player_sporting_checkpoints "
+                "WHERE run_id='run' AND branch_id='branch'")).scalar_one()
+        assert reader is not fresh and reader.model_dump(mode="json") == json.loads(raw)
         execute(server, command(inspect(server), "next-match", name="taken-after-commit"))
-        assert "decoded_live_calendar_component" in copies  # readers still get copies
+        assert save_tour(server)["revision_id"]

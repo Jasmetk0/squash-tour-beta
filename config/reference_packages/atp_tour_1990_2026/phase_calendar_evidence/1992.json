@@ -1,0 +1,5623 @@
+{
+ "atp_season_year": 1992,
+ "counts": {
+  "occurrences": 78,
+  "wikipedia_dates_agree": 43,
+  "wikipedia_dates_differ": 22,
+  "wikipedia_dates_not_parsed": 0
+ },
+ "occurrences": [
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1991-12-30..1992-01-06 differ from canonical 1991-12-30..1992-01-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-01-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1991-12-30",
+   "main_year_weeks": [
+    [
+     1992,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1992_brisbane",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "brisbane",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Australian_Men's_Hardcourt_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1991-12-30",
+     "1992-01-06"
+    ],
+    "main_article": {
+     "bytes": 161941,
+     "revision_id": 1341098445,
+     "sha256": "bb64722c3f57d52f94da2a67709b903892dc705841c0a60ff501425992aa5839",
+     "url": "https://en.wikipedia.org/wiki/1992_Australian_Men's_Hardcourt_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Australian Hardcourt Championships Adelaide, AustraliaATP World Series Hard – $157,500 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323510,
+     "revision_id": 1177987670,
+     "sha256": "28d7e8516791e59bcd82a9e995d5a9ebcc18787aa5374b9f301172026de11e37",
+     "url": "https://en.wikipedia.org/wiki/1992_Australian_Men's_Hardcourt_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-01-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1991-12-30",
+   "main_year_weeks": [
+    [
+     1992,
+     1
+    ]
+   ],
+   "occurrence_id": "atp_1992_wellington_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    1
+   ],
+   "run_weeks_offset_37": [
+    17
+   ],
+   "series_id": "wellington_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_BP_Nationals",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1991-12-30",
+     "1992-01-05"
+    ],
+    "main_article": {
+     "bytes": 147307,
+     "revision_id": 1372149157,
+     "sha256": "bf3c0dc561bb61049eccd42570551192146e432df721891dbb63bb4f95f681d0",
+     "url": "https://en.wikipedia.org/wiki/1992_BP_Nationals"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BP Nationals Wellington, New Zealand ATP World Series Hard – $157,500 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-01-06..1992-01-13 differ from canonical 1992-01-06..1992-01-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1992-01-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-01-06",
+   "main_year_weeks": [
+    [
+     1992,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1992_auckland",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "auckland",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Benson_and_Hedges_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-01-06",
+     "1992-01-13"
+    ],
+    "main_article": {
+     "bytes": 157211,
+     "revision_id": 1277541457,
+     "sha256": "f4eae07d4cd1ca5f08cfcfc7b3593ec4dfe7c7240bc51e8aee38e5830b9b3825",
+     "url": "https://en.wikipedia.org/wiki/1992_Benson_and_Hedges_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Benson and Hedges Open Auckland, New ZealandATP World Series Hard – $157,500 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 314422,
+     "revision_id": 1177988160,
+     "sha256": "99624bf11d5a39931c48f85a94f5c6179d9a814fbeb84bfa108a25ea2c915e88",
+     "url": "https://en.wikipedia.org/wiki/1992_Benson_and_Hedges_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-01-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-01-06",
+   "main_year_weeks": [
+    [
+     1992,
+     2
+    ]
+   ],
+   "occurrence_id": "atp_1992_sydney_2019",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    2
+   ],
+   "run_weeks_offset_37": [
+    18
+   ],
+   "series_id": "sydney_2019",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_NSW_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-01-06",
+     "1992-01-12"
+    ],
+    "main_article": {
+     "bytes": 208250,
+     "revision_id": 1386100782,
+     "sha256": "04972ef7f9d48cf991be2d7bf411f6b688305b7b9568406f5f214daa54bb2fe5",
+     "url": "https://en.wikipedia.org/wiki/1992_NSW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "NSW Open Sydney, AustraliaATP World Series Hard – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327110,
+     "revision_id": 1380927290,
+     "sha256": "1440b61dc700871e3191b5a043a554cc14cfe1e4b04bc02999c2d6298f99c721",
+     "url": "https://en.wikipedia.org/wiki/1992_NSW_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-03",
+   "main_year_weeks": [
+    [
+     1992,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1992_dallas",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "dallas",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-02-03..1992-02-10 differ from canonical 1992-02-03..1992-02-09; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-03",
+   "main_year_weeks": [
+    [
+     1992,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1992_maceio_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "maceio_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Maceió_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-02-03",
+     "1992-02-10"
+    ],
+    "main_article": {
+     "bytes": 149440,
+     "revision_id": 1360449300,
+     "sha256": "2c32d03b7ef13fd350b3661132f7d2bf56df6e0a61ad50d8c9e8ce1d971515b2",
+     "url": "https://en.wikipedia.org/wiki/1992_Macei%C3%B3_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Maceió Open Maceio, BrazilATP World Series Clay – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 309749,
+     "revision_id": 1311952608,
+     "sha256": "7a8bbb09447deee5344353a851eca30620e2d487aa1f686610a0bfe40d9ad920",
+     "url": "https://en.wikipedia.org/wiki/1992_Macei%C3%B3_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-02-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-03",
+   "main_year_weeks": [
+    [
+     1992,
+     6
+    ]
+   ],
+   "occurrence_id": "atp_1992_sofia",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    6
+   ],
+   "run_weeks_offset_37": [
+    22
+   ],
+   "series_id": "sofia",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-02-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-10",
+   "main_year_weeks": [
+    [
+     1992,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1992_brussels_championship_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "brussels_championship_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Donnay_Indoor_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-02-10",
+     "1992-02-16"
+    ],
+    "main_article": {
+     "bytes": 153740,
+     "revision_id": 1159759621,
+     "sha256": "124a5d6d7613fd5472663951765e405cc06e190556300f0afe884bb85010c33d",
+     "url": "https://en.wikipedia.org/wiki/1992_Donnay_Indoor_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Donnay Indoor Championships Brussels, BelgiumATP Championship Series Carpet (i) – $665,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326400,
+     "revision_id": 1120789525,
+     "sha256": "67ec59b98842631170ac56499851006e433166f782f511800e8e4965af15cf0d",
+     "url": "https://en.wikipedia.org/wiki/1992_Donnay_Indoor_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-02-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-10",
+   "main_year_weeks": [
+    [
+     1992,
+     7
+    ]
+   ],
+   "occurrence_id": "atp_1992_rio",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    7
+   ],
+   "run_weeks_offset_37": [
+    23
+   ],
+   "series_id": "rio",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Federal_Express_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-02-10",
+     "1992-02-16"
+    ],
+    "main_article": {
+     "bytes": 167970,
+     "revision_id": 1383097470,
+     "sha256": "2da12648b820d90c754a40b9ff0a3a20344b33c49e86e261a42fd304ed65be1c",
+     "url": "https://en.wikipedia.org/wiki/1992_Federal_Express_International"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Federal Express International Memphis, Tennessee, USAATP Championship Series Hard (i) – $630,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 437499,
+     "revision_id": 1311857953,
+     "sha256": "a7d231a86631ab2216bcd133750c4192dd022986f3accd3bb5e1b1ea0d3c25c0",
+     "url": "https://en.wikipedia.org/wiki/1992_Federal_Express_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-02-17..1992-02-24 differ from canonical 1992-02-17..1992-02-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-02-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-17",
+   "main_year_weeks": [
+    [
+     1992,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1992_philadelphia_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "philadelphia_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_U.S._Pro_Indoor",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-02-17",
+     "1992-02-24"
+    ],
+    "main_article": {
+     "bytes": 149787,
+     "revision_id": 1172366582,
+     "sha256": "4dc3bd0a7d7580670d21ecbf9deee066926f2306d9d2389094421bb820b395e7",
+     "url": "https://en.wikipedia.org/wiki/1992_U.S._Pro_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Pro Indoor Philadelphia, PA, USAATP Championship Series Carpet (i) – $865,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 424271,
+     "revision_id": 1172366590,
+     "sha256": "18f5c5a68bda323532c028606d40717b4b2caf0085ab84ae7be21fbaea10cc39",
+     "url": "https://en.wikipedia.org/wiki/1992_U.S._Pro_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-02-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-17",
+   "main_year_weeks": [
+    [
+     1992,
+     8
+    ]
+   ],
+   "occurrence_id": "atp_1992_stuttgart_indoor_feb_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    8
+   ],
+   "run_weeks_offset_37": [
+    24
+   ],
+   "series_id": "stuttgart_indoor_feb_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Eurocard_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-02-17",
+     "1992-02-23"
+    ],
+    "main_article": {
+     "bytes": 146058,
+     "revision_id": 1374492332,
+     "sha256": "fdb96dcc98304302e14e439399b017d06506df887277ad76273b8fbf248c2394",
+     "url": "https://en.wikipedia.org/wiki/1992_Eurocard_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Eurocard Open Stuttgart, GermanyATP Championship Series Carpet (i) – $865,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327939,
+     "revision_id": 1120789681,
+     "sha256": "45b8a715fd6da84535f3c3b29557e69b3ead2efe74e752ebd2ed95fcfef4809a",
+     "url": "https://en.wikipedia.org/wiki/1992_Eurocard_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-02-24..1992-03-02 differ from canonical 1992-02-24..1992-03-01; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-24",
+   "main_year_weeks": [
+    [
+     1992,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1992_las_vegas_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "las_vegas_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Tennis_Channel_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-02-24",
+     "1992-03-02"
+    ],
+    "main_article": {
+     "bytes": 151515,
+     "revision_id": 1177992731,
+     "sha256": "e2f82d0484b7afafc0a091c894f40cdb9dfe8c388bdf8984de33e921419ad695",
+     "url": "https://en.wikipedia.org/wiki/1992_Tennis_Channel_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tennis Channel Open Scottsdale, Arizona, USAATP World Series Hard – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 332002,
+     "revision_id": 1272778680,
+     "sha256": "bfe7bddd57cce3e0c448654814204a0ff8a0c4377b3ceff36e668d3a8a2304fb",
+     "url": "https://en.wikipedia.org/wiki/1992_Tennis_Channel_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-03-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-02-24",
+   "main_year_weeks": [
+    [
+     1992,
+     9
+    ]
+   ],
+   "occurrence_id": "atp_1992_rotterdam",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    9
+   ],
+   "run_weeks_offset_37": [
+    25
+   ],
+   "series_id": "rotterdam",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_ABN_AMRO_World_Tennis_Tournament",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-02-24",
+     "1992-03-01"
+    ],
+    "main_article": {
+     "bytes": 160729,
+     "revision_id": 1362081576,
+     "sha256": "1251948c374b343bd8f284e43fa14619872f0ae5b1ec672f8ba765dadbdcf5ac",
+     "url": "https://en.wikipedia.org/wiki/1992_ABN_AMRO_World_Tennis_Tournament"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ABN AMRO World Tennis Tournament Rotterdam, The NetherlandsATP World Series Carpet (i) – $475,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 320263,
+     "revision_id": 1361713206,
+     "sha256": "f306a1a5a3931951bb1c121a9430bf55831ca0c4fd1a9d45d42b4ff5e637da21",
+     "url": "https://en.wikipedia.org/wiki/1992_ABN_AMRO_World_Tennis_Tournament_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-03-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-02",
+   "main_year_weeks": [
+    [
+     1992,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1992_copenhagen_2003",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "copenhagen_2003",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Copenhagen_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-03-02",
+     "1992-03-08"
+    ],
+    "main_article": {
+     "bytes": 155313,
+     "revision_id": 1321628609,
+     "sha256": "d5bf2e285007ac305bb3e04e05a59e9e4ebe524d4518f6db0c64c5a3dd62347b",
+     "url": "https://en.wikipedia.org/wiki/1992_Copenhagen_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Copenhagen Open Copenhagen, DenmarkATP World Series Carpet (i) – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326118,
+     "revision_id": 1120426667,
+     "sha256": "8ceca42c885a83fa5eb15f96461168883cbb8dab0680d3a54cdec573781ba986",
+     "url": "https://en.wikipedia.org/wiki/1992_Copenhagen_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-03-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-02",
+   "main_year_weeks": [
+    [
+     1992,
+     10
+    ]
+   ],
+   "occurrence_id": "atp_1992_indian_wells",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    10
+   ],
+   "run_weeks_offset_37": [
+    26
+   ],
+   "series_id": "indian_wells",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-03-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-13",
+   "main_year_weeks": [
+    [
+     1992,
+     11
+    ],
+    [
+     1992,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1992_miami",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    11,
+    12
+   ],
+   "run_weeks_offset_37": [
+    27,
+    28
+   ],
+   "series_id": "miami",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-03-16..1992-03-23 differ from canonical 1992-03-16..1992-03-22; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-03-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-16",
+   "main_year_weeks": [
+    [
+     1992,
+     12
+    ]
+   ],
+   "occurrence_id": "atp_1992_marrakech",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    12
+   ],
+   "run_weeks_offset_37": [
+    28
+   ],
+   "series_id": "marrakech",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Grand_Prix_Hassan_II",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-03-16",
+     "1992-03-23"
+    ],
+    "main_article": {
+     "bytes": 155499,
+     "revision_id": 1362407720,
+     "sha256": "5390350025108c45440a49a4ced2adf08034e836249e461dfee353a613eda61e",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_Hassan_II"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Hassan II Casablanca, MoroccoATP World Series Clay – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 329408,
+     "revision_id": 1222301119,
+     "sha256": "1ff2e9df7528c90c1679c1dc0df483554403eeef3e0d0980d18c428a059996a4",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_Hassan_II_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-03-30..1992-04-06 differ from canonical 1992-03-30..1992-04-05; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-30",
+   "main_year_weeks": [
+    [
+     1992,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1992_estoril",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "estoril",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Estoril_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-03-30",
+     "1992-04-06"
+    ],
+    "main_article": {
+     "bytes": 150059,
+     "revision_id": 1361653603,
+     "sha256": "9245e94a51c11ab21713ccf337ad7bb910af18084254ad6b88048568f0b164a9",
+     "url": "https://en.wikipedia.org/wiki/1992_Estoril_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Estoril Open Oeiras, PortugalATP World Series Clay – $465,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328803,
+     "revision_id": 1311897363,
+     "sha256": "55a29892ee746e14349342811fd96ac4663770c9bfff210342f4f66ec6bebb18",
+     "url": "https://en.wikipedia.org/wiki/1992_Estoril_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-30",
+   "main_year_weeks": [
+    [
+     1992,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1992_johannesburg_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "johannesburg_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_South_African_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-03-30",
+     "1992-04-05"
+    ],
+    "main_article": {
+     "bytes": 158301,
+     "revision_id": 1376245992,
+     "sha256": "e1c05d4f443ead978852555c127d0f716d184d402278b28b62bcaf834cefd08d",
+     "url": "https://en.wikipedia.org/wiki/1992_South_African_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "South African Open Johannesburg, South AfricaATP World Series Hard – $270,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331667,
+     "revision_id": 1375771257,
+     "sha256": "fedaa82a4a9793e5f26fe64e9348a301f8aec33bbe45ac31f10a75099693017c",
+     "url": "https://en.wikipedia.org/wiki/1992_South_African_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-05",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-03-30",
+   "main_year_weeks": [
+    [
+     1992,
+     14
+    ]
+   ],
+   "occurrence_id": "atp_1992_singapore_march_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    14
+   ],
+   "run_weeks_offset_37": [
+    30
+   ],
+   "series_id": "singapore_march_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Epson_Singapore_Super_Tennis",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-03-30",
+     "1992-04-05"
+    ],
+    "main_article": {
+     "bytes": 145970,
+     "revision_id": 1189271033,
+     "sha256": "3285438eeff12e9fc11d570ce61d0a947188c3f167df849a72b601fe4933a2e9",
+     "url": "https://en.wikipedia.org/wiki/1992_Epson_Singapore_Super_Tennis"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Epson Singapore Super Tennis Singapore, SingaporeATP World Series Hard – $240,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-06",
+   "main_year_weeks": [
+    [
+     1992,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1992_barcelona",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "barcelona",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Torneo_Godó",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-06",
+     "1992-04-12"
+    ],
+    "main_article": {
+     "bytes": 162593,
+     "revision_id": 1227913440,
+     "sha256": "f4b9fc7b80b3fe1dc4de9294c7b191cd162322e75b7a5b23ec32d6569333d8c3",
+     "url": "https://en.wikipedia.org/wiki/1992_Torneo_God%C3%B3"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Torneo Godó Barcelona, SpainATP Championship Series Clay – $660,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 485277,
+     "revision_id": 1327177709,
+     "sha256": "6822bca4c0108ab51b0dd74626e424fdbe06e10ccff5cbca8e350a115c2c5b99",
+     "url": "https://en.wikipedia.org/wiki/1992_Torneo_God%C3%B3_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-06",
+   "main_year_weeks": [
+    [
+     1992,
+     15
+    ]
+   ],
+   "occurrence_id": "atp_1992_tokyo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    15
+   ],
+   "run_weeks_offset_37": [
+    31
+   ],
+   "series_id": "tokyo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Suntory_Japan_Open_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-06",
+     "1992-04-12"
+    ],
+    "main_article": {
+     "bytes": 217779,
+     "revision_id": 1359200372,
+     "sha256": "acc4e0aacb82dfc114ffb3a5facfef015940456ba53c58cea53bc7ee97e2248c",
+     "url": "https://en.wikipedia.org/wiki/1992_Suntory_Japan_Open_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Japan Open Tennis Championships Tokyo, JapanATP Championship Series Hard – $865,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 494454,
+     "revision_id": 1346826952,
+     "sha256": "90e650a06602bc5e7e6163347e399c1d377772358376b8d113efa08c22502774",
+     "url": "https://en.wikipedia.org/wiki/1992_Suntory_Japan_Open_Tennis_Championships_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-04-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-13",
+   "main_year_weeks": [
+    [
+     1992,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1992_hong_kong",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "hong_kong",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-13",
+   "main_year_weeks": [
+    [
+     1992,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1992_hong_kong_salem_2002",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "hong_kong_salem_2002",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Salem_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-13",
+     "1992-04-19"
+    ],
+    "main_article": {
+     "bytes": 150621,
+     "revision_id": 1375234950,
+     "sha256": "a8db65b1ca20bbbcb054311fc9c3eebc11b72a8a5e408f9b64e397e654330b5c",
+     "url": "https://en.wikipedia.org/wiki/1992_Salem_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Salem Open Hong KongATP World Series Hard – $270,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327260,
+     "revision_id": 1375235037,
+     "sha256": "a40c4814d423cad96a1bc12505a8e8b4141397f2cf96813fdbbb4836cf806a91",
+     "url": "https://en.wikipedia.org/wiki/1992_Salem_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-13",
+   "main_year_weeks": [
+    [
+     1992,
+     16
+    ]
+   ],
+   "occurrence_id": "atp_1992_houston",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    16
+   ],
+   "run_weeks_offset_37": [
+    32
+   ],
+   "series_id": "houston",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Philips_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-13",
+     "1992-04-19"
+    ],
+    "main_article": {
+     "bytes": 151734,
+     "revision_id": 1347149440,
+     "sha256": "9d470a2aad4d80ad37aa177bf3bd4fc2ef0bb80d6922c2f41b571704a3fc320d",
+     "url": "https://en.wikipedia.org/wiki/1992_Philips_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Philips Open Nice, FranceATP World Series Clay – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 325357,
+     "revision_id": 1347145577,
+     "sha256": "7f1abcebc4ae72c7c11fd285ff163c43e608d7b7cbb39e99f2d53c2c9a1eb273",
+     "url": "https://en.wikipedia.org/wiki/1992_Philips_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-20",
+   "main_year_weeks": [
+    [
+     1992,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1992_monte_carlo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "monte_carlo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Monte_Carlo_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-20",
+     "1992-04-26"
+    ],
+    "main_article": {
+     "bytes": 182527,
+     "revision_id": 1333900368,
+     "sha256": "bdfc25ace15c1e9d0fe48cc76d0d1e43824fd4617cb1afcc2003f46fb1130e24",
+     "url": "https://en.wikipedia.org/wiki/1992_Monte_Carlo_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Monte Carlo Open Roquebrune-Cap-Martin, FranceATP Championship Series, Single Week Clay – $1,020,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 464557,
+     "revision_id": 1311953384,
+     "sha256": "3f574e39a98cdb9ad2f395ff048df571d6e4cad43c7b9bdd20cd359e2ea71f2d",
+     "url": "https://en.wikipedia.org/wiki/1992_Monte_Carlo_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-04-20..1992-04-27 differ from canonical 1992-04-20..1992-04-26; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-04-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-20",
+   "main_year_weeks": [
+    [
+     1992,
+     17
+    ]
+   ],
+   "occurrence_id": "atp_1992_seoul_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    17
+   ],
+   "run_weeks_offset_37": [
+    33
+   ],
+   "series_id": "seoul_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Seoul_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-04-20",
+     "1992-04-27"
+    ],
+    "main_article": {
+     "bytes": 145721,
+     "revision_id": 1177993794,
+     "sha256": "544f7e3f1959157436b699c2b3b474c0f24577670841ee798c79c91da60c7a5c",
+     "url": "https://en.wikipedia.org/wiki/1992_Seoul_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Seoul OpenSeoul, South KoreaATP World Series Hard – $145,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330436,
+     "revision_id": 1333900404,
+     "sha256": "9ae03c257ac07d49c8068305f96d30e60c5ba8058b27b251fcf606eb31f0c303",
+     "url": "https://en.wikipedia.org/wiki/1992_Seoul_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-27",
+   "main_year_weeks": [
+    [
+     1992,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1992_atlanta_verizon_2001",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "atlanta_verizon_2001",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_AT&T_Challenge",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-27",
+     "1992-05-03"
+    ],
+    "main_article": {
+     "bytes": 151694,
+     "revision_id": 1374260445,
+     "sha256": "f4ee278636962763cba8ef1841c6e1b5d8a71538bb7983e74fc0ac2f17d9b73f",
+     "url": "https://en.wikipedia.org/wiki/1992_AT%26T_Challenge"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "AT&T Challenge Atlanta, GA, USAATP World Series Clay – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 335657,
+     "revision_id": 1233945470,
+     "sha256": "ba5388d19e4545711c2d6f3d99ce96778c63b6a233dc39b6377f40a694511bc8",
+     "url": "https://en.wikipedia.org/wiki/1992_AT%26T_Challenge_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-27",
+   "main_year_weeks": [
+    [
+     1992,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1992_madrid_clay_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "madrid_clay_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Trofeo_Villa_de_Madrid",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-04-27",
+     "1992-05-03"
+    ],
+    "main_article": {
+     "bytes": 149999,
+     "revision_id": 1256885393,
+     "sha256": "bd829059082f03c1c3c8e20cf32980163b127ed7b3c5aef0700c35ed612de24c",
+     "url": "https://en.wikipedia.org/wiki/1992_Trofeo_Villa_de_Madrid"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Trofeo Villa de Madrid Madrid, SpainATP World Series Clay – $700,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328724,
+     "revision_id": 1311961466,
+     "sha256": "76c6bbb1ac423ce73372df775b3af0a326aa6fd72eae9f58243ccafd285cd9fc",
+     "url": "https://en.wikipedia.org/wiki/1992_Trofeo_Villa_de_Madrid_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-04-27..1992-05-04 differ from canonical 1992-04-27..1992-05-03; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-03",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-04-27",
+   "main_year_weeks": [
+    [
+     1992,
+     18
+    ]
+   ],
+   "occurrence_id": "atp_1992_munich",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    18
+   ],
+   "run_weeks_offset_37": [
+    34
+   ],
+   "series_id": "munich",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_BMW_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-04-27",
+     "1992-05-04"
+    ],
+    "main_article": {
+     "bytes": 155834,
+     "revision_id": 1317270494,
+     "sha256": "dac47b8f7f9440f6233b5f1f7e7ee948f8bfcf5a858e3bd7fa6ba17b9363514e",
+     "url": "https://en.wikipedia.org/wiki/1992_BMW_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "BMW Open Munich, GermanyATP World Series Clay – $275,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328035,
+     "revision_id": 1177994414,
+     "sha256": "3165d77d7c3a0126f6af9ccf30d964e8c31a4fc8c39fee82ef6affe44322dc45",
+     "url": "https://en.wikipedia.org/wiki/1992_BMW_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-05-04..1992-05-11 differ from canonical 1992-05-04..1992-05-10; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-05-04",
+   "main_year_weeks": [
+    [
+     1992,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1992_birmingham_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "birmingham_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_U.S._Men's_Clay_Court_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-05-04",
+     "1992-05-11"
+    ],
+    "main_article": {
+     "bytes": 161427,
+     "revision_id": 1320288426,
+     "sha256": "2384ecbd97e258f773a58331c2e949c779dd56a9fd4fedf91bcab3cb98ff5adf",
+     "url": "https://en.wikipedia.org/wiki/1992_U.S._Men's_Clay_Court_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "U.S. Men's Clay Court Championships Charlotte, NC, USATP World Series Clay – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 316227,
+     "revision_id": 1346293605,
+     "sha256": "9dc34bd99044444b4fd3f4b7f3e750f5a035977b44ed7596fd2502a691fb1276",
+     "url": "https://en.wikipedia.org/wiki/1992_U.S._Men's_Clay_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-05-04..1992-05-11 differ from canonical 1992-05-04..1992-05-10; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-10",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-05-04",
+   "main_year_weeks": [
+    [
+     1992,
+     19
+    ]
+   ],
+   "occurrence_id": "atp_1992_hamburg",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    19
+   ],
+   "run_weeks_offset_37": [
+    35
+   ],
+   "series_id": "hamburg",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_ATP_German_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-05-04",
+     "1992-05-11"
+    ],
+    "main_article": {
+     "bytes": 155717,
+     "revision_id": 1195242844,
+     "sha256": "a12f728909e4e6c2d4e3324a636fe6d416780554049478368cb626441c3341f9",
+     "url": "https://en.wikipedia.org/wiki/1992_ATP_German_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "ATP German Open Hamburg, GermanyATP Championship Series, Single Week Clay – $1,000,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 406305,
+     "revision_id": 1312227837,
+     "sha256": "6d9afcc57b67c47786c17071109ee23477550354a1e2181007a9f2d58d90d5c3",
+     "url": "https://en.wikipedia.org/wiki/1992_ATP_German_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-05-11..1992-05-18 differ from canonical 1992-05-11..1992-05-17; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 64,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-05-17",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-05-11",
+   "main_year_weeks": [
+    [
+     1992,
+     20
+    ]
+   ],
+   "occurrence_id": "atp_1992_rome",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    20
+   ],
+   "run_weeks_offset_37": [
+    36
+   ],
+   "series_id": "rome",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Italian_Open_(tennis)",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-05-11",
+     "1992-05-18"
+    ],
+    "main_article": {
+     "bytes": 213498,
+     "revision_id": 1317270414,
+     "sha256": "8a3875297a0aaea2410c8a9c4e80e97dd762b644bb28abd6fb277429058c82ac",
+     "url": "https://en.wikipedia.org/wiki/1992_Italian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Italian Open Rome, ItalyATP Championship Series, Single Week Clay – $1,125,000 – 64S/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 513866,
+     "revision_id": 1311953404,
+     "sha256": "3d34400f89ad5e27e1c3b5942f01073f91bfa7449ab1f3ccfd85302a588078d4",
+     "url": "https://en.wikipedia.org/wiki/1992_Italian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-05-24",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-05-18",
+   "main_year_weeks": [
+    [
+     1992,
+     21
+    ]
+   ],
+   "occurrence_id": "atp_1992_bologna_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    21
+   ],
+   "run_weeks_offset_37": [
+    37
+   ],
+   "series_id": "bologna_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-06-08",
+   "main_year_weeks": [
+    [
+     1992,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1992_florence_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "florence_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Trofeo_Kim_Top_Line",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-06-08",
+     "1992-06-14"
+    ],
+    "main_article": {
+     "bytes": 149902,
+     "revision_id": 1371705591,
+     "sha256": "7268670e9fab59fa41a34e275e93cf1cab38399c25358b7421ff4785fc1d7827",
+     "url": "https://en.wikipedia.org/wiki/1992_Trofeo_Kim_Top_Line"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Trofeo Kim Top Line Florence, ItalyATP World Series Clay – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327755,
+     "revision_id": 1370766274,
+     "sha256": "32d5d4060697c889c7b02b7000dd52d1edc224ebb1a0bdad9385c67e7c6cea7d",
+     "url": "https://en.wikipedia.org/wiki/1992_Trofeo_Kim_Top_Line_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-06-08",
+   "main_year_weeks": [
+    [
+     1992,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1992_queens_club",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "queens_club",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Stella_Artois_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-06-08",
+     "1992-06-14"
+    ],
+    "main_article": {
+     "bytes": 160800,
+     "revision_id": 1276262961,
+     "sha256": "e8a79280d48319c636dec568727c30fbdbc99b77228524d44be297a984429d4a",
+     "url": "https://en.wikipedia.org/wiki/1992_Stella_Artois_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stella Artois Championships London, EnglandATP World Series Grass – $475,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 473005,
+     "revision_id": 1178065065,
+     "sha256": "294ec2fd8ed9c40118bc66461e485ad942f4f2d82503dee1de1d1efef753db50",
+     "url": "https://en.wikipedia.org/wiki/1992_Stella_Artois_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-06-14",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-06-08",
+   "main_year_weeks": [
+    [
+     1992,
+     24
+    ]
+   ],
+   "occurrence_id": "atp_1992_s_hertogenbosch",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    24
+   ],
+   "run_weeks_offset_37": [
+    40
+   ],
+   "series_id": "s_hertogenbosch",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Rosmalen_Grass_Court_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-06-08",
+     "1992-06-14"
+    ],
+    "main_article": {
+     "bytes": 151805,
+     "revision_id": 1178067097,
+     "sha256": "f82122d54ce82539071023949310c6cd36065816a487576a4d43abc15444ba21",
+     "url": "https://en.wikipedia.org/wiki/1992_Rosmalen_Grass_Court_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Rosmalen Grass Court Championships Rosmalen, The NetherlandsATP World Series Grass – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 337592,
+     "revision_id": 1276265480,
+     "sha256": "e61b2d634da24d0737b70da8176efd31e1f772baea29509afafd5113b83cddf2",
+     "url": "https://en.wikipedia.org/wiki/1992_Rosmalen_Grass_Court_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-06-15",
+   "main_year_weeks": [
+    [
+     1992,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1992_eastbourne",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "eastbourne",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-06-21",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-06-15",
+   "main_year_weeks": [
+    [
+     1992,
+     25
+    ]
+   ],
+   "occurrence_id": "atp_1992_poertschach_2008",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    25
+   ],
+   "run_weeks_offset_37": [
+    41
+   ],
+   "series_id": "poertschach_2008",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-06",
+   "main_year_weeks": [
+    [
+     1992,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1992_bastad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "bastad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Swedish_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-06",
+     "1992-07-12"
+    ],
+    "main_article": {
+     "bytes": 161492,
+     "revision_id": 1342434105,
+     "sha256": "bc124add20d5ccd3d498603a4a143d935514ef2ae78a0c3b7e866584b3e18a6b",
+     "url": "https://en.wikipedia.org/wiki/1992_Swedish_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swedish Open Båstad, SwedenATP World Series $235,000 − Clay − 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326349,
+     "revision_id": 1311960525,
+     "sha256": "29233a18e11cd024eab0897621c148bf96548a0660c938d1db9c14dc229abfda",
+     "url": "https://en.wikipedia.org/wiki/1992_Swedish_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-07-06..1992-07-13 differ from canonical 1992-07-06..1992-07-12; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-06",
+   "main_year_weeks": [
+    [
+     1992,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1992_gstaad",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "gstaad",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Rado_Swiss_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-07-06",
+     "1992-07-13"
+    ],
+    "main_article": {
+     "bytes": 154879,
+     "revision_id": 1361554057,
+     "sha256": "1ea2997ad5263c2403f081aa89df894cf3114fe31bc12b6d6c9eaafed8404d08",
+     "url": "https://en.wikipedia.org/wiki/1992_Rado_Swiss_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Rado Swiss Open Gstaad, SwitzerlandATP World Series Clay – $300,000 – 32S/16DSingles – Doubles",
+    "singles_article": {
+     "bytes": 314089,
+     "revision_id": 1387940791,
+     "sha256": "f9c16a49c8909296892cb47567d688c7a04edcdefdc2484d38d8807913aab532",
+     "url": "https://en.wikipedia.org/wiki/1992_Rado_Swiss_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-12",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-06",
+   "main_year_weeks": [
+    [
+     1992,
+     28
+    ]
+   ],
+   "occurrence_id": "atp_1992_newport",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    28
+   ],
+   "run_weeks_offset_37": [
+    44
+   ],
+   "series_id": "newport",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Miller_Lite_Hall_of_Fame_Tennis_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-06",
+     "1992-07-12"
+    ],
+    "main_article": {
+     "bytes": 159444,
+     "revision_id": 1333900361,
+     "sha256": "4c5678c5d43055972600680c1a02bd9d2a008bc5509227b15866556aafd9c5f5",
+     "url": "https://en.wikipedia.org/wiki/1992_Miller_Lite_Hall_of_Fame_Tennis_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Miller Lite Hall of Fame Championships Newport, Rhode Island, USAATP World Series Grass – $175,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-13",
+   "main_year_weeks": [
+    [
+     1992,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1992_stuttgart",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "stuttgart",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Mercedes_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-13",
+     "1992-07-19"
+    ],
+    "main_article": {
+     "bytes": 152433,
+     "revision_id": 1373769239,
+     "sha256": "8e94e4846631787f17eba3f6252a1860eca51ac5917d7c9eec068c3e4aea61a2",
+     "url": "https://en.wikipedia.org/wiki/1992_Mercedes_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Mercedes Cup Stuttgart, GermanyATP Championship Series Clay – $865,000 – 48S/24DSingles – Doubles",
+    "singles_article": {
+     "bytes": 454960,
+     "revision_id": 1373437746,
+     "sha256": "99bc8a53df989b1da03772258b52ff209f96b9a4a9ce6d62d419588cd3d67470",
+     "url": "https://en.wikipedia.org/wiki/1992_Mercedes_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The first eight seeds received a bye into the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-19",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-13",
+   "main_year_weeks": [
+    [
+     1992,
+     29
+    ]
+   ],
+   "occurrence_id": "atp_1992_washington",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    29
+   ],
+   "run_weeks_offset_37": [
+    45
+   ],
+   "series_id": "washington",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_NationsBank_Classic",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-13",
+     "1992-07-19"
+    ],
+    "main_article": {
+     "bytes": 157879,
+     "revision_id": 1331868906,
+     "sha256": "549d6f8d21c6a06b4fe67cabea8d305fdac683fd374973b6811e932342929fc7",
+     "url": "https://en.wikipedia.org/wiki/1992_NationsBank_Classic"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "NationsBank Classic Washington, D.C., USAATP Championship Series Hard – $490,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 494248,
+     "revision_id": 1387849361,
+     "sha256": "528d4c58704bc2e759b6404e1c31e8f068d1304b99b8f5b3ac4f10b76a19940b",
+     "url": "https://en.wikipedia.org/wiki/1992_NationsBank_Classic_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-20",
+   "main_year_weeks": [
+    [
+     1992,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1992_belgrade_2012",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "belgrade_2012",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Dutch_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-20",
+     "1992-07-26"
+    ],
+    "main_article": {
+     "bytes": 152704,
+     "revision_id": 1372150614,
+     "sha256": "9e9856f8d8b6d1c67fa7ab02bc4fba13fdc0fdd8974d9eeb2a7e4c9955f31d85",
+     "url": "https://en.wikipedia.org/wiki/1992_Dutch_Open_(tennis)"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Dutch Open Hilversum, The NetherlandsATP World Series Clay – $225,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330343,
+     "revision_id": 1178068649,
+     "sha256": "565cc8df6629e621a2c8a93849a50d9a88e75d96a4c90f9ea7f97c19a3316ab8",
+     "url": "https://en.wikipedia.org/wiki/1992_Dutch_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-20",
+   "main_year_weeks": [
+    [
+     1992,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1992_canadian_open",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "canadian_open",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Canadian_Open_(tennis)",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-20",
+     "1992-07-26"
+    ],
+    "main_article": {
+     "bytes": 208990,
+     "revision_id": 1344300413,
+     "sha256": "ae271a7d4d434c076f00e716ce8c70c74d46915e57dae70cc1540277d2b97224",
+     "url": "https://en.wikipedia.org/wiki/1992_Canadian_Open_(tennis)"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Canadian Open Toronto, Ontario, CanadaATP Championship Series, Single Week Hard – $1,025,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 463817,
+     "revision_id": 1353952860,
+     "sha256": "4655382fac965eb98a78d822c10351f15930386e69f4cefc72236a635b6d40fb",
+     "url": "https://en.wikipedia.org/wiki/1992_Canadian_Open_%E2%80%93_Men's_singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-07-26",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-20",
+   "main_year_weeks": [
+    [
+     1992,
+     30
+    ]
+   ],
+   "occurrence_id": "atp_1992_kitzbuhel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    30
+   ],
+   "run_weeks_offset_37": [
+    46
+   ],
+   "series_id": "kitzbuhel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Philips_Head_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-20",
+     "1992-07-26"
+    ],
+    "main_article": {
+     "bytes": 156424,
+     "revision_id": 1178068740,
+     "sha256": "b492f7f5c996f1fea2e504c139c6ef724f16badfdbdf9a48e1772846d4c60183",
+     "url": "https://en.wikipedia.org/wiki/1992_Philips_Head_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Philips Head Cup Kitzbühel, AustriaATP World Series Clay – $355,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 457920,
+     "revision_id": 1346250012,
+     "sha256": "a1d6f4ef7f2b7591675625cbeda5663df8c7abc1b2c6098c436e644e9a100b41",
+     "url": "https://en.wikipedia.org/wiki/1992_Philips_Head_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-02",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-07-27",
+   "main_year_weeks": [
+    [
+     1992,
+     31
+    ]
+   ],
+   "occurrence_id": "atp_1992_san_marino_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    31
+   ],
+   "run_weeks_offset_37": [
+    47
+   ],
+   "series_id": "san_marino_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Internazionali_di_Tennis_di_San_Marino",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-07-27",
+     "1992-08-02"
+    ],
+    "main_article": {
+     "bytes": 154222,
+     "revision_id": 1303126601,
+     "sha256": "8a75b67297d90bfa4e3b11b6c2666fd827681c93d77c146c5866ec98d29dd807",
+     "url": "https://en.wikipedia.org/wiki/1992_Internazionali_di_Tennis_di_San_Marino"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Internazionali di Tennis di San Marino San Marino, San MarinoATP World Series Clay – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330458,
+     "revision_id": 1168081162,
+     "sha256": "6b1e99a9a0a29092a6183e37a948e37480bc3a90423b1ca7a0f16866fc33fd0a",
+     "url": "https://en.wikipedia.org/wiki/1992_Internazionali_di_Tennis_di_San_Marino_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-09",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-03",
+   "main_year_weeks": [
+    [
+     1992,
+     32
+    ]
+   ],
+   "occurrence_id": "atp_1992_los_cabos",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    32
+   ],
+   "run_weeks_offset_37": [
+    48
+   ],
+   "series_id": "los_cabos",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Volvo_Tennis/Los_Angeles",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-08-03",
+     "1992-08-09"
+    ],
+    "main_article": {
+     "bytes": 176349,
+     "revision_id": 1178072731,
+     "sha256": "5ab9c4a8181403f77e0d905713f4ab4161f6c8788d75675abd33d215785df9a9",
+     "url": "https://en.wikipedia.org/wiki/1992_Volvo_Tennis%2FLos_Angeles"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Volvo Tennis/Los Angeles Los Angeles, CA, USATP World Series Hard – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 332825,
+     "revision_id": 1178072757,
+     "sha256": "65b66821e82290aa4024a779451de248695cf2015ec9830b7e019816fd698980",
+     "url": "https://en.wikipedia.org/wiki/1992_Volvo_Tennis%2FLos_Angeles_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-08-10..1992-08-17 differ from canonical 1992-08-10..1992-08-16; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-10",
+   "main_year_weeks": [
+    [
+     1992,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1992_cincinnati",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "cincinnati",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Thriftway_ATP_Championships",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-08-10",
+     "1992-08-17"
+    ],
+    "main_article": {
+     "bytes": 162125,
+     "revision_id": 1381804619,
+     "sha256": "2d4b08f80d3399e3db2ad82294ce7a7b544efd86d8a66ecfb478f2189de2f6bb",
+     "url": "https://en.wikipedia.org/wiki/1992_Thriftway_ATP_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Thriftway ATP Championships Mason, Ohio, USAATP Championship Series, Single Week Hard – $1,125,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 495223,
+     "revision_id": 1272778697,
+     "sha256": "6121e514ae027bd3a4cf018e46238fc7eb5b6fd22ed2c61a4cb1aacaea6604f4",
+     "url": "https://en.wikipedia.org/wiki/1992_Thriftway_ATP_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-16",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-10",
+   "main_year_weeks": [
+    [
+     1992,
+     33
+    ]
+   ],
+   "occurrence_id": "atp_1992_prague_1999",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    33
+   ],
+   "run_weeks_offset_37": [
+    49
+   ],
+   "series_id": "prague_1999",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Skoda_Czechoslovak_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-08-10",
+     "1992-08-16"
+    ],
+    "main_article": {
+     "bytes": 152061,
+     "revision_id": 1378209127,
+     "sha256": "f9ac4582db59028fa61421e4ee6110b1b8749aab3a164b238c177bf64e664114",
+     "url": "https://en.wikipedia.org/wiki/1992_Skoda_Czechoslovak_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Skoda Czechoslovak Open Prague, CzechoslovakiaATP World Series Clay – $320,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 331295,
+     "revision_id": 1178072926,
+     "sha256": "90f34358ac539ddb40975eec30218500df709ccc5718c3894d6e3f2d75a68b74",
+     "url": "https://en.wikipedia.org/wiki/1992_Skoda_Czechoslovak_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-17",
+   "main_year_weeks": [
+    [
+     1992,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1992_atlanta",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "atlanta",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_RCA_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-08-17",
+     "1992-08-23"
+    ],
+    "main_article": {
+     "bytes": 155170,
+     "revision_id": 1374901287,
+     "sha256": "a4549dbda4eba67749f3ae063268ba19517854e5d2557eb09e5ed99151343b9b",
+     "url": "https://en.wikipedia.org/wiki/1992_RCA_Championships"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "RCA Championships Indianapolis, IN, USAATP Championship Series Hard – $865,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 489727,
+     "revision_id": 1360317948,
+     "sha256": "ddd7527cff5c9d331865e38ffb246ebeff862760d5f0145d635d5b42057c1bdd",
+     "url": "https://en.wikipedia.org/wiki/1992_RCA_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-08-17..1992-08-24 differ from canonical 1992-08-17..1992-08-23; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "The top eight seeds received a bye to the second round.",
+    "byes_derived": 8,
+    "main_draw_players": 56,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-23",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-17",
+   "main_year_weeks": [
+    [
+     1992,
+     34
+    ]
+   ],
+   "occurrence_id": "atp_1992_new_haven_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    34
+   ],
+   "run_weeks_offset_37": [
+    50
+   ],
+   "series_id": "new_haven_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Volvo_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-08-17",
+     "1992-08-24"
+    ],
+    "main_article": {
+     "bytes": 148386,
+     "revision_id": 1361735764,
+     "sha256": "b6d283f062eb161d535cdbb0c3cb25ddce3e1cf918a994fcbbd073767793c99c",
+     "url": "https://en.wikipedia.org/wiki/1992_Volvo_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Volvo International New Haven, CT, USAATP Championship Series Hard – $865,000 – 56S/28D Singles – Doubles",
+    "singles_article": {
+     "bytes": 468688,
+     "revision_id": 1328927044,
+     "sha256": "31b0ba7bd3285b2f36de24c9f536576532dbeea95e449557e0378b2a14a85b28",
+     "url": "https://en.wikipedia.org/wiki/1992_Volvo_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-08-24..1992-08-31 differ from canonical 1992-08-24..1992-08-30; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-24",
+   "main_year_weeks": [
+    [
+     1992,
+     35
+    ]
+   ],
+   "occurrence_id": "atp_1992_schenectady_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    35
+   ],
+   "run_weeks_offset_37": [
+    51
+   ],
+   "series_id": "schenectady_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_OTB_Schenectady_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-08-24",
+     "1992-08-31"
+    ],
+    "main_article": {
+     "bytes": 199013,
+     "revision_id": 1172366486,
+     "sha256": "1533e75ef9674ad51660a6ddaf7f307c8dcb6d369e1a5eb095ea2d2bda0af10a",
+     "url": "https://en.wikipedia.org/wiki/1992_OTB_Schenectady_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "OTB Schenectady Open Schenectady, NY, USAATP World Series Hard – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326984,
+     "revision_id": 1172366499,
+     "sha256": "5282c1f66d1a18af4e230cbfc38d000252bbe7e560e7153d634ea8e1b7db0ae6",
+     "url": "https://en.wikipedia.org/wiki/1992_OTB_Schenectady_Open_%E2%80%93_Men's_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-24",
+   "main_year_weeks": [
+    [
+     1992,
+     35
+    ]
+   ],
+   "occurrence_id": "atp_1992_umag",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    35
+   ],
+   "run_weeks_offset_37": [
+    51
+   ],
+   "series_id": "umag",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Croatia_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-08-24",
+     "1992-08-30"
+    ],
+    "main_article": {
+     "bytes": 149924,
+     "revision_id": 1311169119,
+     "sha256": "7e75a2a5a99b6fe07a129be372e0ec8c51801e1467aaf40dbbddac66a8b57f66",
+     "url": "https://en.wikipedia.org/wiki/1992_Croatia_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Croatia Open Umag, CroatiaATP World Series Clay – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327987,
+     "revision_id": 1374758285,
+     "sha256": "05be1bf798bdfdffcb6838a026e55b825d551fbecbd6d8d33357aadafc77af8f",
+     "url": "https://en.wikipedia.org/wiki/1992_Croatia_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-08-30",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-08-24",
+   "main_year_weeks": [
+    [
+     1992,
+     35
+    ]
+   ],
+   "occurrence_id": "atp_1992_winston_salem",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    35
+   ],
+   "run_weeks_offset_37": [
+    51
+   ],
+   "series_id": "winston_salem",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Waldbaum's_Hamlet_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-08-24",
+     "1992-08-30"
+    ],
+    "main_article": {
+     "bytes": 153971,
+     "revision_id": 1272778763,
+     "sha256": "28fa6b4307ae0c0b426e83555013c16bb9acbd7d4a88d7ddd745ecdd64342dba",
+     "url": "https://en.wikipedia.org/wiki/1992_Waldbaum's_Hamlet_Cup"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Waldbaum's Hamlet Cup Long Island, NY, USAATP World Series Hard – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 323838,
+     "revision_id": 1314026338,
+     "sha256": "4f75baeff631932b8f35e31c583bf4cb8517f98964bab0d315310d55d4f60f43",
+     "url": "https://en.wikipedia.org/wiki/1992_Waldbaum's_Hamlet_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-09-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-09-14",
+   "main_year_weeks": [
+    [
+     1992,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_1992_bordeaux_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "bordeaux_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Grand_Prix_Passing_Shot",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-09-14",
+     "1992-09-20"
+    ],
+    "main_article": {
+     "bytes": 148028,
+     "revision_id": 1178073746,
+     "sha256": "373e37acfc86f855ceb9189d1999f4aa94deb9c3db9ec75a2e37aeaa3cfa390f",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_Passing_Shot"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix Passing Shot Bordeaux, FranceATP World Series Clay – $300,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 326604,
+     "revision_id": 1178073847,
+     "sha256": "3e9c41f86ba60f3c205f16d785687faa17db65f1d60c2775c6c8ec2b5daba30e",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_Passing_Shot_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-09-20",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-09-14",
+   "main_year_weeks": [
+    [
+     1992,
+     38
+    ]
+   ],
+   "occurrence_id": "atp_1992_cologne_1992_clay",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    38
+   ],
+   "run_weeks_offset_37": [
+    2
+   ],
+   "series_id": "cologne_1992_clay",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-09-28",
+   "main_year_weeks": [
+    [
+     1992,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1992_basel",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "basel",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Swiss_Indoors",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-09-28",
+     "1992-10-04"
+    ],
+    "main_article": {
+     "bytes": 155397,
+     "revision_id": 1374492831,
+     "sha256": "42216b3156f4b8a6bc39c957245c17082481efe7cbda3c35767e59dd1472c6c5",
+     "url": "https://en.wikipedia.org/wiki/1992_Swiss_Indoors"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Swiss IndoorsBasel, SwitzerlandATP World Series Hard (i) – $700,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330966,
+     "revision_id": 1178074153,
+     "sha256": "1bedf7d0067fd0da397ec185c4098fe103ef9545dbcf41a017308da41d06e68b",
+     "url": "https://en.wikipedia.org/wiki/1992_Swiss_Indoors_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-09-28",
+   "main_year_weeks": [
+    [
+     1992,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1992_brisbane_autumn_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "brisbane_autumn_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Campionati_Internazionali_di_Sicilia",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-09-28",
+     "1992-10-04"
+    ],
+    "main_article": {
+     "bytes": 152161,
+     "revision_id": 1333900326,
+     "sha256": "bd52f8b5e9d584e1f73e6bf9fb1c96997905b74214078b41296f779bb30f201c",
+     "url": "https://en.wikipedia.org/wiki/1992_Campionati_Internazionali_di_Sicilia"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Campionati Internazionali di Sicilia Palermo, ItalyATP World Series Clay – $285,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 328752,
+     "revision_id": 1311959881,
+     "sha256": "e208fca7734c7761a94ba5f672489c1dd5b455ee6a274cc37b6252b7051a5639",
+     "url": "https://en.wikipedia.org/wiki/1992_Campionati_Internazionali_di_Sicilia_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-10-04",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-09-28",
+   "main_year_weeks": [
+    [
+     1992,
+     40
+    ]
+   ],
+   "occurrence_id": "atp_1992_palermo",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    40
+   ],
+   "run_weeks_offset_37": [
+    4
+   ],
+   "series_id": "palermo",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-10-05..1992-10-12 differ from canonical 1992-10-05..1992-10-11; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-05",
+   "main_year_weeks": [
+    [
+     1992,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1992_athens_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "athens_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Saab_International",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-10-05",
+     "1992-10-12"
+    ],
+    "main_article": {
+     "bytes": 143427,
+     "revision_id": 1327334292,
+     "sha256": "83ef4eb27edd5b5a333a406a62b3d8eef36f5f9ebab508db7b2319accc371a64",
+     "url": "https://en.wikipedia.org/wiki/1992_Saab_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Saab International Athens, GreeceATP World Series Clay – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 319170,
+     "revision_id": 1311953865,
+     "sha256": "368ef082cb02d21b4fec599be27764489a244074bae9bf6df24c5dfba82bdd32",
+     "url": "https://en.wikipedia.org/wiki/1992_Saab_International_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": "All sixteen seeds received a bye to the second round.",
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-05",
+   "main_year_weeks": [
+    [
+     1992,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1992_sydney_indoor_1994",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "sydney_indoor_1994",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Australian_Indoor_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-10-05",
+     "1992-10-11"
+    ],
+    "main_article": {
+     "bytes": 153975,
+     "revision_id": 1374889005,
+     "sha256": "d73de1e98142791dd35072a25bc2288cfec16707f340386857fb97941e83e92f",
+     "url": "https://en.wikipedia.org/wiki/1992_Australian_Indoor_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Australian Indoor Championships Sydney, AustraliaATP Championship Series Hard (i) – $825,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 425923,
+     "revision_id": 1276269031,
+     "sha256": "e4e8b0d4104199c675503b0c73ceca37509f60777d3111f8652da9fbf86fe338",
+     "url": "https://en.wikipedia.org/wiki/1992_Australian_Indoor_Championships_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-11",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-05",
+   "main_year_weeks": [
+    [
+     1992,
+     41
+    ]
+   ],
+   "occurrence_id": "atp_1992_toulouse_2000",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    41
+   ],
+   "run_weeks_offset_37": [
+    5
+   ],
+   "series_id": "toulouse_2000",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Grand_Prix_de_Tennis_de_Toulouse",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-10-05",
+     "1992-10-11"
+    ],
+    "main_article": {
+     "bytes": 150389,
+     "revision_id": 1178076704,
+     "sha256": "1ecd6f40109dc43d9d7744f0f3f44a016977964171a71d0d362d3db50cc9f443",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_de_Tennis_de_Toulouse"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Grand Prix de Tennis de Toulouse Toulouse, FranceATP World Series Hard (i) – $275,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 327049,
+     "revision_id": 1314590271,
+     "sha256": "d2851fb78ef4bdbe1727d2bcf198d4d279b2f5d7de3918104cf311b43a413bf0",
+     "url": "https://en.wikipedia.org/wiki/1992_Grand_Prix_de_Tennis_de_Toulouse_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-10-12..1992-10-19 differ from canonical 1992-10-12..1992-10-18; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-12",
+   "main_year_weeks": [
+    [
+     1992,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1992_bolzano_1993",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "bolzano_1993",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Tel_Aviv_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-10-12",
+     "1992-10-19"
+    ],
+    "main_article": {
+     "bytes": 147941,
+     "revision_id": 1222534016,
+     "sha256": "373b3b32bc879d2977f31dfa00325e07b9d6898be905b95946902db3d3866f7d",
+     "url": "https://en.wikipedia.org/wiki/1992_Tel_Aviv_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tel Aviv Open Tel Aviv, IsraelATP World Series Hard – $130,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 329788,
+     "revision_id": 1333900414,
+     "sha256": "4027b9c8fc1b55b0751a9bc06c6fcc9e3e4f39fed6465aecfd89f80976632edb",
+     "url": "https://en.wikipedia.org/wiki/1992_Tel_Aviv_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-10-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-12",
+   "main_year_weeks": [
+    [
+     1992,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1992_tel_aviv_1996",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "tel_aviv_1996",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_championship_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-18",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-12",
+   "main_year_weeks": [
+    [
+     1992,
+     42
+    ]
+   ],
+   "occurrence_id": "atp_1992_tokyo_indoor_1995",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    42
+   ],
+   "run_weeks_offset_37": [
+    6
+   ],
+   "series_id": "tokyo_indoor_1995",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Tokyo_Indoor",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-10-12",
+     "1992-10-18"
+    ],
+    "main_article": {
+     "bytes": 143718,
+     "revision_id": 1333900427,
+     "sha256": "b09be2eb2c9ff15ea918e8c90d08dbf4faf4fd0f6a56b9d8384a4f4d01307fb8",
+     "url": "https://en.wikipedia.org/wiki/1992_Tokyo_Indoor"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Tokyo Indoor Tokyo, JapanATP Championship Series Carpet (i) – $825,000 – 64S/32D Singles – Doubles",
+    "singles_article": {
+     "bytes": 422805,
+     "revision_id": 1276269386,
+     "sha256": "08d5f2744d2716cc9be121773b7a134efdd91527b23603899724bebdd2b9fd3d",
+     "url": "https://en.wikipedia.org/wiki/1992_Tokyo_Indoor_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-10-19..1992-10-26 differ from canonical 1992-10-19..1992-10-25; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-19",
+   "main_year_weeks": [
+    [
+     1992,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1992_montpellier",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "montpellier",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Lyon_Grand_Prix",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-10-19",
+     "1992-10-26"
+    ],
+    "main_article": {
+     "bytes": 154067,
+     "revision_id": 1253033886,
+     "sha256": "59c3ca3eaa1f304bff1121f7e116cfb6e8290451939cacb67f8193a2142c919e",
+     "url": "https://en.wikipedia.org/wiki/1992_Lyon_Grand_Prix"
+    },
+    "match_method": "date_only_unique_lineage",
+    "role": "secondary_source",
+    "schedule_row": "Lyon Grand Prix Lyon, FranceATP World Series Carpet (i) – $550,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330335,
+     "revision_id": 1311957154,
+     "sha256": "8e201d787d6b448c9ab4aa297f0498d00a4091bfe2a99527700441bee9cd6f71",
+     "url": "https://en.wikipedia.org/wiki/1992_Lyon_Grand_Prix_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-19",
+   "main_year_weeks": [
+    [
+     1992,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1992_taipei_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "taipei_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Pacific_Cup_International",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-10-19",
+     "1992-10-25"
+    ],
+    "main_article": {
+     "bytes": 148636,
+     "revision_id": 1178086006,
+     "sha256": "a096e143b8c149097687f38ee21c3bc8a557fe2d8fbd37f70701559b81c271a7",
+     "url": "https://en.wikipedia.org/wiki/1992_Pacific_Cup_International"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Pacific Cup International Taipei, TaiwanATP World Series Carpet (i) – $270,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-10-19..1992-10-26 differ from canonical 1992-10-19..1992-10-25; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-10-25",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-19",
+   "main_year_weeks": [
+    [
+     1992,
+     43
+    ]
+   ],
+   "occurrence_id": "atp_1992_vienna",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    43
+   ],
+   "run_weeks_offset_37": [
+    7
+   ],
+   "series_id": "vienna",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_CA-TennisTrophy",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-10-19",
+     "1992-10-26"
+    ],
+    "main_article": {
+     "bytes": 154170,
+     "revision_id": 1372146438,
+     "sha256": "92da04d51e923c3865db62e77623728fbcaaf3614f6b30cd749fc8b1efe66177",
+     "url": "https://en.wikipedia.org/wiki/1992_CA-TennisTrophy"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "CA-TennisTrophy Vienna, AustriaATP World Series Carpet (i) – $280,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 330830,
+     "revision_id": 1181806922,
+     "sha256": "e91e3a8044e148bb525c100a91abb38e97bbfadc64c5e3c2f6503ca75c9ef806",
+     "url": "https://en.wikipedia.org/wiki/1992_CA-TennisTrophy_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-10-26..1992-11-02 differ from canonical 1992-10-26..1992-11-01; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-11-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-26",
+   "main_year_weeks": [
+    [
+     1992,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1992_guaruja_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "guaruja_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Stockholm_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-10-26",
+     "1992-11-02"
+    ],
+    "main_article": {
+     "bytes": 156203,
+     "revision_id": 1381902144,
+     "sha256": "56f6d20a138d5cb6e298c6e4bd734e278d5f7a2b6e880ec4a3578cbe4a84ab8c",
+     "url": "https://en.wikipedia.org/wiki/1992_Stockholm_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Stockholm Open Stockholm, SwedenATP Championship Series, Single Week Carpet (i) – $1,040,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 736939,
+     "revision_id": 1374261001,
+     "sha256": "150d5714e36fb320e84bc116133ce9a3dc33a8ac973637df47ba1584e3afd8b3",
+     "url": "https://en.wikipedia.org/wiki/1992_Stockholm_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-11-01",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-10-26",
+   "main_year_weeks": [
+    [
+     1992,
+     44
+    ]
+   ],
+   "occurrence_id": "atp_1992_stockholm",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    44
+   ],
+   "run_weeks_offset_37": [
+    8
+   ],
+   "series_id": "stockholm",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-11-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-02",
+   "main_year_weeks": [
+    [
+     1992,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1992_buzios_1992",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "buzios_1992",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Kolynos_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-11-02",
+     "1992-11-08"
+    ],
+    "main_article": {
+     "bytes": 139282,
+     "revision_id": 1222347090,
+     "sha256": "b97f63786dd367c700bf8396f6fab71ea9b568534e7ee6ec6f33f55493a09bee",
+     "url": "https://en.wikipedia.org/wiki/1992_Kolynos_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kolynos Cup Búzios, BrazilATP World Series Hard – $155,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_championship_single_week",
+   "conflicts": [
+    "Wikipedia infobox dates 1992-11-02..1992-11-09 differ from canonical 1992-11-02..1992-11-08; canonical (ATP archive) retained"
+   ],
+   "format_evidence": {
+    "bracket_capacity": 64,
+    "bye_statement": null,
+    "byes_derived": 16,
+    "main_draw_players": 48,
+    "main_rounds": 6,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 16,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-11-08",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-02",
+   "main_year_weeks": [
+    [
+     1992,
+     45
+    ]
+   ],
+   "occurrence_id": "atp_1992_paris_masters",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    45
+   ],
+   "run_weeks_offset_37": [
+    9
+   ],
+   "series_id": "paris_masters",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Paris_Open",
+    "date_status": "differs",
+    "infobox_dates": [
+     "1992-11-02",
+     "1992-11-09"
+    ],
+    "main_article": {
+     "bytes": 153787,
+     "revision_id": 1289037402,
+     "sha256": "719cfcd8935b01dc5b01d3211c178181179bab7ec8a3bd6ba215305a68c57d9d",
+     "url": "https://en.wikipedia.org/wiki/1992_Paris_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Paris Open Paris, FranceATP Championship Series, Single Week Carpet (i) – $1,815,000 – 48S/24D Singles – Doubles",
+    "singles_article": {
+     "bytes": 449043,
+     "revision_id": 1236208762,
+     "sha256": "695f49be9c200928804468677e1dfcb706821a7ce55acb81ebc4a63a3646d548",
+     "url": "https://en.wikipedia.org/wiki/1992_Paris_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": null,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-09",
+   "main_year_weeks": [
+    [
+     1992,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1992_antwerp_1998",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards",
+    "seeds"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "antwerp_1998",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_European_Community_Championships",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-11-09",
+     "1992-11-15"
+    ],
+    "main_article": {
+     "bytes": 146829,
+     "revision_id": 1374513951,
+     "sha256": "bb392960624af26b23be5e12ab76b33d8a61e9fe26e1d4a185ec99574bfa3ee3",
+     "url": "https://en.wikipedia.org/wiki/1992_European_Community_Championships"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "European Community Championships Antwerp, BelgiumATP World Series Carpet (i) – $1,000,000 – 32S/16D",
+    "singles_article": null
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": 4,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": 3
+   },
+   "main_end_date": "1992-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-09",
+   "main_year_weeks": [
+    [
+     1992,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1992_moscow",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "moscow",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Kremlin_Cup",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-11-09",
+     "1992-11-15"
+    ],
+    "main_article": {
+     "bytes": 153228,
+     "revision_id": 1280792273,
+     "sha256": "7ca9517c3c7d1d0e8c6559ff1a0cfd272b4415a2093b9c2918e7c5086b0a4d75",
+     "url": "https://en.wikipedia.org/wiki/1992_Kremlin_Cup"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Kremlin Cup Moscow, RussiaATP World Series Carpet (i) – $315,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 332766,
+     "revision_id": 1178074779,
+     "sha256": "fc6088202971032495d1979d445825315a045c59ce64188d4058a30351352a7b",
+     "url": "https://en.wikipedia.org/wiki/1992_Kremlin_Cup_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_world_series",
+   "conflicts": [],
+   "format_evidence": {
+    "bracket_capacity": 32,
+    "bye_statement": null,
+    "byes_derived": 0,
+    "main_draw_players": 32,
+    "main_rounds": 5,
+    "qualifier_places": null,
+    "qualifying_draw_size": null,
+    "seeds": 8,
+    "wild_cards": null
+   },
+   "main_end_date": "1992-11-15",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-09",
+   "main_year_weeks": [
+    [
+     1992,
+     46
+    ]
+   ],
+   "occurrence_id": "atp_1992_sao_paulo_1993",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes",
+    "qualifier_places",
+    "wild_cards"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    46
+   ],
+   "run_weeks_offset_37": [
+    10
+   ],
+   "series_id": "sao_paulo_1993",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": {
+    "article": "1992_Banespa_Open",
+    "date_status": "agrees",
+    "infobox_dates": [
+     "1992-11-09",
+     "1992-11-15"
+    ],
+    "main_article": {
+     "bytes": 145604,
+     "revision_id": 1338595098,
+     "sha256": "bde327c754cb991d27aa55917efc7cfeffc57b6fc123787a73b177225e99d5c0",
+     "url": "https://en.wikipedia.org/wiki/1992_Banespa_Open"
+    },
+    "match_method": "name_and_date",
+    "role": "secondary_source",
+    "schedule_row": "Banespa Open São Paulo, BrazilATP World Series Hard – $235,000 – 32S/16D Singles – Doubles",
+    "singles_article": {
+     "bytes": 325280,
+     "revision_id": 1334503775,
+     "sha256": "fad6592bb82956da93babdc38b6c4423535723d6d043fbe577308a28c02ac6c0",
+     "url": "https://en.wikipedia.org/wiki/1992_Banespa_Open_%E2%80%93_Singles"
+    }
+   }
+  },
+  {
+   "category_id": "atp_finals",
+   "conflicts": [
+    "no matching English Wikipedia event article found"
+   ],
+   "main_end_date": "1992-11-22",
+   "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=1992",
+   "main_start_date": "1992-11-16",
+   "main_year_weeks": [
+    [
+     1992,
+     47
+    ]
+   ],
+   "occurrence_id": "atp_1992_atp_finals",
+   "open_fields": [
+    "qualifying_dates",
+    "point_table",
+    "qualifying_pdf_hashes"
+   ],
+   "points": {
+    "missing_evidence": "2019 ATP Rulebook points table (Main and Q) not read: atptour.com results archive, draws and order-of-play pages answered HTTP 403 from this environment, so ATP-published qualifying dates and point tables were not read",
+    "status": "open"
+   },
+   "qualifying_dates": {
+    "missing_evidence": "round-robin Finals have no qualifying draw",
+    "status": "open"
+   },
+   "review_flags": [],
+   "run_weeks_offset_1": [
+    47
+   ],
+   "run_weeks_offset_37": [
+    11
+   ],
+   "series_id": "atp_finals",
+   "status": {
+    "calendar_evidence": "main_dates_archive_dated",
+    "played_and_reopened": "not_played",
+    "published_profile": "none",
+    "verified_schedule": "not_verified"
+   },
+   "wikipedia_cross_check": null
+  }
+ ],
+ "retrieved_at": "2026-11-26",
+ "schema_version": "atp.phase_calendar_evidence.v2",
+ "scope": "ATP Tour men's singles main tour, Next Gen Finals and ATP Finals; no Grand Slam, Challenger, ITF, team or doubles",
+ "season_source": {
+  "bytes": 1645504,
+  "revision_id": 1387204134,
+  "role": "secondary_source",
+  "sha256": "16a6cb077978b9caf9944ebfc32baee16d52e9e2f05378728d6cff8832cea2d8",
+  "url": "https://en.wikipedia.org/wiki/1992_ATP_Tour"
+ },
+ "sporting_schedule_installed": false
+}

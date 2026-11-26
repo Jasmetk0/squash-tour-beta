@@ -172,7 +172,9 @@ def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=())
     Turn Pro decision effective at ``target``; an application from a player who had
     not already turned pro is rejected, and applications never create Entry.
     """
-    if target.ordinal != predecessor.week.ordinal + 1:
+    target_ordinal = target.ordinal
+    completed_ordinal = predecessor.week.ordinal
+    if target_ordinal != completed_ordinal + 1:
         raise ValueError("Native lifecycle requires a consecutive Week Transition")
     original = predecessor.week.calendar
     if (
@@ -191,29 +193,25 @@ def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=())
     decisions = turn_pro_decisions_by_player(
         turn_pro, run_id=predecessor.run_id, branch_id=predecessor.branch_id
     )
-    known_ids = {p.player_id for p in predecessor.players}
+    known_players = {p.player_id: p for p in predecessor.players}
     if any(
-        d.effective_week.ordinal <= target.ordinal and pid not in known_ids
+        d.effective_week.ordinal <= target_ordinal and pid not in known_players
         for pid, d in decisions.items()
     ):
         raise ValueError("Turn Pro decision references a player absent from lifecycle")
     first = {}
+    owner = (predecessor.run_id, predecessor.branch_id)
     for source in submissions:
-        if (source.run_id, source.branch_id) != (
-            predecessor.run_id,
-            predecessor.branch_id,
-        ):
+        if (source.run_id, source.branch_id) != owner:
             raise ValueError("Foreign native lifecycle Entry authority")
-        if source.submission_week.ordinal > predecessor.week.ordinal:
+        submission_ordinal = source.submission_week.ordinal
+        if submission_ordinal > completed_ordinal:
             continue
         if turn_pro_rule:
             # v87: the application is a consequence of being a pro, never its cause.
-            known = next(
-                (p for p in predecessor.players if p.player_id == source.player_id),
-                None,
-            )
+            known = known_players.get(source.player_id)
             entered = getattr(known, "tour_entry_week", None)
-            if entered is None or entered.ordinal > source.submission_week.ordinal:
+            if entered is None or entered.ordinal > submission_ordinal:
                 raise ValueError(
                     "Application predates the player's Turn Pro week under policy v87"
                 )
@@ -239,7 +237,7 @@ def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=())
             entry = source.submission_week
             token = source.nr_tie_break_token
         decision = decisions.get(old.player_id)
-        if decision is not None and decision.effective_week.ordinal <= target.ordinal:
+        if decision is not None and decision.effective_week.ordinal <= target_ordinal:
             clock = decision.effective_week.calendar
             if (
                 clock.weeks_per_year,
@@ -254,7 +252,7 @@ def advance_calendar_lifecycle(predecessor, target, submissions=(), turn_pro=())
             if entry is not None:
                 if entry.ordinal != decision.effective_week.ordinal:
                     raise ValueError("Turn Pro decision conflicts with recorded Tour entry")
-            elif decision.effective_week.ordinal != target.ordinal:
+            elif decision.effective_week.ordinal != target_ordinal:
                 raise ValueError("Turn Pro decision was not applied at its own week")
             elif retired:
                 raise ValueError("A retired player cannot turn pro")

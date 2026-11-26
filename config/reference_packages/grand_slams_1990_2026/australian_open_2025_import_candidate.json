@@ -54,7 +54,8 @@
   "notes": [
     "Final Main draw PDF reviewed on both pages; raw bytes unavailable (DNS), so exact SHA-256 is intentionally absent. Original Q draw available from ATP as HTML, not yet a verified PDF.",
     "Main WC first-round losers receive zero, not 10; normal qualifiers receive additive Q points. Do not publish until the existing award policy is checked.",
-    "Official Main final draw confirms 16 qualifiers, 8 WC, 1 LL and 103 unmarked entries; planned allocation is 104 other places before replacement. Q seed/WC actual placement audit remains pending. No player identities are imported into simulation."
+    "Official Main final draw confirms 16 qualifiers, 8 WC, 1 LL and 103 unmarked entries; planned allocation is 104 other places before replacement. Q seed/WC actual placement audit remains pending. No player identities are imported into simulation.",
+    "See modern_rules_evidence_v1.json (2025) for official Q entry allocation, seed placement and post-qualifying randomized winner assignment. A fixed Q-section-to-Main placeholder assignment is not claimed as historically exact."
   ],
   "evidence": {
     "geometry": [
@@ -69,7 +70,7 @@
     "qualification_closure": "https://ausopen.com/articles/news/ao-qualifying-habib-makes-history-fonseca-breaks-through",
     "points": [
       "https://www.atptour.com/en/news/2024-rankings-points-update",
-      "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf%7Ctitle%3D2025"
+      "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf"
     ],
     "points_printed_page": 264,
     "pdf_hash_status": "official_main_pdf_readable_via_web_but_raw_bytes_dns_failure; official_Q_PDF_not_located",

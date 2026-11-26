@@ -139,6 +139,17 @@ def parse_singles(text: str) -> dict:
     return out
 
 
+SCHEDULE_IDS = ("Schedule", "Calendar", "Schedule_and_results", "January")
+
+
+def _schedule_start(page: str) -> int:
+    for sid in SCHEDULE_IDS:
+        i = page.find(f'id="{sid}"')
+        if i >= 0:
+            return i
+    return -1
+
+
 def build(year: int, raw_dir: Path) -> dict:
     season_raw = None
     for title in (f"{year}_ATP_Tour", f"{year}_ATP_World_Tour"):
@@ -147,14 +158,12 @@ def build(year: int, raw_dir: Path) -> dict:
             season_raw, _ = fetch(season_url, raw_dir)
         except RuntimeError:
             continue
-        if b'id="Schedule"' in season_raw or b'id="Calendar"' in season_raw:
+        if _schedule_start(season_raw.decode("utf8")) >= 0:
             break
     if season_raw is None:
         raise RuntimeError(f"no season article for {year}")
     season = season_raw.decode("utf8")
-    start = season.find('id="Schedule"')
-    if start < 0:
-        start = season.find('id="Calendar"')
+    start = _schedule_start(season)
     seg = season[start:start + 2_500_000]
     rows = []
     for tr in re.findall(r"<tr.*?</tr>", seg, flags=re.DOTALL):

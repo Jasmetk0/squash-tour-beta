@@ -10836,7 +10836,13 @@
             },
             "expected_total_candidate_points": 950,
             "expected_max_individual_candidate_points": 400,
-            "points_certified": false
+            "points_certified": false,
+            "play_position": {
+              "season_index": 0,
+              "season_week": 4,
+              "calendar_year": 1990,
+              "year_week": 46
+            }
           }
         }
       }

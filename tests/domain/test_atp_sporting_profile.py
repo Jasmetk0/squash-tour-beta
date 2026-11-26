@@ -4,7 +4,7 @@ import json
 import pytest
 
 from beta_engine.application.atp_sporting_package_adapter import (
-    KNOCKOUT_KIND, KNOCKOUT_KIND_V2, SPORTING_KIND, build_atp_sporting_package,
+    KNOCKOUT_KIND_V2, SPORTING_KIND, build_atp_sporting_package,
 )
 from beta_engine.domain.tournaments.atp_sporting_profile import ATPSportingProfile
 
@@ -49,6 +49,6 @@ def test_source_order_and_fingerprints_are_reproducible():
     assert {
         "atp_2025_atp_finals": SPORTING_KIND,
         "atp_2025_next_gen_atp_finals": SPORTING_KIND,
-        "atp_2025_rotterdam": KNOCKOUT_KIND,
+        "atp_2025_rotterdam": KNOCKOUT_KIND_V2,
         "atp_2025_dallas": KNOCKOUT_KIND_V2,
     }.items() <= entity_kinds.items()

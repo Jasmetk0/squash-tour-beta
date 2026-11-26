@@ -1291,3 +1291,66 @@ def test_stuttgart_indoor_qualifier_and_evidence_count(batch):
         for e in (row["historical_evidence"] for row in batch["occurrences"])
     )
     assert batch["summary"]["contemporary_qualification_completion_evidence_rows"] == count == 5
+
+
+def test_edition_specific_secondary_workbook_points_remain_unapproved(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    rules = batch["historical_points_evidence"]
+    workbook = rules["edition_specific_workbook_crosscheck"]
+    assert workbook["git_blob_sha1"] == "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6"
+    assert workbook["byte_count"] == 23346
+    assert workbook["workbook_sheets"] == ["View", "Week-by-week", "RG", "AO"]
+    stages = tuple(workbook["main_stage_columns"].values())
+    expected = {
+        "dallas": (56, [103, 78, 52, 26, 13, 1]),
+        "los_cabos": (49, [103, 78, 52, 26, 13, 1]),
+        "rotterdam": (31, [133, 100, 67, 34, 17, 1]),
+        "barcelona": (26, [180, 135, 90, 45, 23, 12, 1]),
+        "new_haven_1998": (14, [230, 173, 115, 58, 30, 15, 1]),
+        "indian_wells": (20, [230, 173, 115, 58, 30, 15, 1]),
+        "stuttgart_indoor_feb_1995": (18, [230, 173, 115, 58, 30, 1]),
+    }
+    for series, (sheet_row, values) in expected.items():
+        row = rows[series]
+        e = row["historical_evidence"]
+        source = e["edition_specific_base_points_crosscheck"]
+        assert source["source_url"] == workbook["source_url"]
+        assert source["workbook_git_blob_sha1"] == workbook["git_blob_sha1"]
+        assert source["row"] == sheet_row
+        assert source["reported_main_entrants"] == e["main_entrants"]
+        assert source["reported_prize_money_usd"] == e["reported_prize_money"]
+        assert source["base_main_points"] == dict(zip(stages, values))
+        assert source["week_by_week_champion_points"] == values[0]
+        assert source["qualifier_award"] is source["qualifying_loss_points"] is None
+        assert source["source_rule_certified"] is False
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    for series, band in (("dallas", "base_points_250k_32_candidate"),
+                         ("los_cabos", "base_points_250k_32_candidate"),
+                         ("rotterdam", "base_points_500k_32_candidate")):
+        candidate = rules[band]
+        observed = rows[series]["historical_evidence"]["edition_specific_base_points_crosscheck"]["base_main_points"]
+        assert observed == {stage: candidate[stage] for stage in observed}
+    for series in ("barcelona", "new_haven_1998", "indian_wells"):
+        e = rows[series]["historical_evidence"]
+        assert e["edition_specific_base_points_crosscheck"]["reported_main_entrants"] == 56
+        assert e["main_bracket_slots"] == 64
+    finals = rows["atp_finals"]
+    observed = finals["historical_evidence"]["edition_specific_base_points_crosscheck"]
+    assert observed["cell"] == "B81"
+    assert observed["reported_maximum_points"] == rules["finals_1990_candidate"]["undefeated_champion"] == 400
+    assert observed["group_win_points"] is observed["finalist_knockout_component"] is observed["champion_knockout_component"] is None
+    assert observed["source_rule_certified"] is False
+    assert workbook["primary_rule_page"] is None
+    assert finals["profile_status"] == "not_in_published_sporting_source"
+    assert batch["summary"]["published_sporting_profiles"] == 0
+
+
+def test_entry_commitment_followup_ci_keeps_candidate_test_only(batch):
+    e = next(r["historical_evidence"] for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    research = e["targeted_import_research"]
+    ci = research["verified_ci_after_entry_commitment_followup"]
+    assert ci["head"] == "512deaaa710f7e3a9078cb7ad3ed2f5e861d6126"
+    assert ci["conclusion"] == "success"
+    assert ci["selected_tests_passed"] == 127
+    assert ci["security_tests_passed"] == 24
+    assert research["saved_source_execution_probe"]["points_certified"] is False

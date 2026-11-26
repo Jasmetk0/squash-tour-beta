@@ -164,3 +164,42 @@ def test_marseille_2025_retains_relocated_licence_identity(phase_evidence):
     assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
     assert row["historical_identity_evidence"]["source_event_id"] == 496
     assert not any(r["series_id"] == "lyon_old" for r in phase_evidence["occurrences"])
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks", "opening_iso_week"),
+    [
+        ("bucharest", ["2025-03-30", "2025-03-31"], [13, 14], [14], 14),
+        ("houston", ["2025-03-29", "2025-03-30"], [13], [14], None),
+        ("marrakech", ["2025-03-30", "2025-03-31"], [13, 14], [14], 14),
+        ("monte_carlo", ["2025-04-05", "2025-04-06"], [14], [15], 14),
+        ("barcelona", ["2025-04-12", "2025-04-13"], [15], [16], None),
+        ("munich", ["2025-04-12", "2025-04-13"], [15], [16], None),
+        ("madrid", ["2025-04-21", "2025-04-22"], [17], [17, 18], None),
+        ("rome", ["2025-05-05", "2025-05-06"], [19], [19, 20], None),
+    ],
+)
+def test_spring_phase_positions_preserve_source_overlap(
+    phase_evidence, series, q_dates, q_weeks, main_weeks, opening_iso_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2025, week] for week in q_weeks]
+    assert row["main_year_weeks"] == [[2025, week] for week in main_weeks]
+    assert (q_dates[-1] == row["main_start_date"]) == (opening_iso_week is not None)
+
+    if opening_iso_week is not None:
+        opening = row["main_opening_play_evidence"]
+        assert opening["status"] == "played"
+        assert opening["date"] == row["main_start_date"]
+        assert opening["observed_iso_week"] == [2025, opening_iso_week]
+        assert date.fromisoformat(opening["date"]).isocalendar()[:2] == (2025, opening_iso_week)
+        assert opening_iso_week in q_weeks
+        if series == "monte_carlo":
+            assert opening_iso_week not in main_weeks
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)

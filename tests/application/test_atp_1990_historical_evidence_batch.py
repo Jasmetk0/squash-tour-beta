@@ -649,7 +649,7 @@ def test_second_pass_bordeaux_through_toulouse_keeps_observed_labels_separate(ba
     assert a["observed_lucky_losers"] == 1
     assert (s["main_entrants"], s["main_bracket_slots"], s["main_byes"], s["main_seeds"]) == (48, 64, 16, 16)
     assert s["bye_seed_ranks"] == list(range(1, 17))
-    assert t["reported_main_qualifiers"] is t["reported_main_wild_cards"] is None
+    assert (t["reported_main_qualifiers"], t["reported_main_wild_cards"]) == (4, 3)
     for row in reviewed:
         e = row["historical_evidence"]
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
@@ -672,7 +672,7 @@ def test_second_pass_berlin_through_sao_paulo_no_inferred_entry_policy(batch):
     assert tok["bye_seed_ranks"] == list(range(1, 17))
     assert v["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [5]
     assert sp["main_entry_label_partial_evidence"]["observed_lucky_loser_seed_rank"] == 7
-    assert sp["reported_main_qualifiers"] is sp["reported_main_wild_cards"] is None
+    assert (sp["reported_main_qualifiers"], sp["reported_main_wild_cards"]) == (4, 3)
     for row in reviewed:
         e = row["historical_evidence"]
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
@@ -886,13 +886,13 @@ def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy
                 if type(r["historical_evidence"].get("qualification_size_secondary")) is int}
     assert {r["occurrence_id"] for r in triage["rows"]} == reported
     assert triage["counts"] == {
-        "reported_q_size": 38, "conditional_geometry": 36,
-        "conditional_geometry_and_band": 23, "geometry_without_exact_band": 13,
+        "reported_q_size": 39, "conditional_geometry": 37,
+        "conditional_geometry_and_band": 24, "geometry_without_exact_band": 13,
         "blocked_source_geometry_conflict": 2,
-        "missing_main_entry_labels": 0, "no_reported_q_size": 36,
+        "missing_main_entry_labels": 0, "no_reported_q_size": 35,
     }
     statuses = Counter(r["triage_status"] for r in triage["rows"])
-    assert statuses == {"conditional_geometry_and_band_candidate": 23,
+    assert statuses == {"conditional_geometry_and_band_candidate": 24,
                         "missing_exact_band_candidate": 13,
                         "blocked_source_geometry_conflict": 2}
     for item in triage["rows"]:
@@ -1506,8 +1506,9 @@ def test_workbook_conflict_followup_preserves_original_comparison_and_qualificat
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert row["profile_status"] == "not_in_published_sporting_source"
-    assert batch["summary"]["reported_seed_count_rows"] == 73
-    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 70
+    assert batch["summary"]["reported_seed_count_rows"] == 74
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == 74
+    assert batch["summary"]["reported_main_wild_card_count_rows"] == 73
 
 
 def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
@@ -2144,7 +2145,8 @@ def test_italian_seed_lists_do_not_turn_omitted_entry_labels_into_zero(batch, se
     assert a["status"] == "secondary_edition_seed_list_only_entry_labels_omitted"
     assert a["nominal_seed_ranks"] == list(range(1, 9))
     assert e["main_seeds"] == 8
-    assert e["reported_main_qualifiers"] is e["reported_main_wild_cards"] is None
+    assert e["reported_main_qualifiers"] == 4
+    assert e["reported_main_wild_cards"] == (None if series == "poertschach_2008" else 2)
     assert e["qualification_size_secondary"] is e["qualification_entrants"] is None
     assert all(v is None for v in e["entry_policy"].values())
     assert row["profile_status"] == "not_in_published_sporting_source"
@@ -2276,3 +2278,157 @@ def test_new_q_archive_leads_do_not_establish_actual_dates_or_points(batch):
     assert b["body_financial_commitment_usd"] == 213000
     assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
     assert batch["summary"]["verified_qualification_date_rows"] == 0
+
+
+def test_secondary_match_file_reconciles_all_75_editions_without_importing_results(batch):
+    audit = batch["secondary_match_dataset_reconciliation_2026_11_26"]
+    assert audit["status"] == "anonymous_secondary_crosscheck_not_historical_source_certification"
+    assert audit["source_git_blob_sha1"] == audit["matching_mirror_git_blob_sha1"] == (
+        "d6fb69a7a1fdb48862f124cfbe979ea14352ad66")
+    assert audit["source_rows"] == 3681
+    assert audit["source_tournament_groups"] == 162
+    rows = {r["occurrence_id"]: r for r in batch["occurrences"]}
+    assert [a["occurrence_id"] for a in audit["rows"]] == list(rows)
+    assert len({a["dataset_tourney_id"] for a in audit["rows"]}) == 75
+    q_counts, wc_counts, seeds = Counter(), Counter(), Counter()
+    for a in audit["rows"]:
+        r = rows[a["occurrence_id"]]
+        e = r["historical_evidence"]
+        assert a["dataset_tourney_id"].startswith("1990-")
+        assert a["dataset_start_date"] == r["original_start_date"]
+        assert a["reported_draw_size"] == a["distinct_main_entrants"] == e["main_entrants"]
+        assert sum(a["entry_label_counts"].values()) == e["main_entrants"]
+        assert sum(a["round_counts"].values()) == a["match_rows"]
+        assert a["entry_conflicts_across_rows"] == a["seed_conflicts_across_rows"] == 0
+        assert len(set(a["observed_seed_ranks"])) == len(a["observed_seed_ranks"])
+        assert all(a["comparison"][k] is True for k in (
+            "main_entrants_agree", "main_start_date_agree", "reported_draw_size_agree", "match_count_agree"))
+        if r["series_id"] == "atp_finals":
+            assert a["match_rows"] == 15 and e["main_entrants"] == 8
+            assert a["comparison"]["q_labels"] == "not_applicable"
+            continue
+        assert a["match_rows"] == e["main_entrants"] - 1
+        previous = a["previous_evidence"]
+        labels = a["entry_label_counts"]
+        for key, actual, comparison_key, counter in (
+            ("reported_main_qualifiers", labels.get("Q", 0), "q_labels", q_counts),
+            ("reported_main_wild_cards", labels.get("WC", 0), "wc_labels", wc_counts),
+            ("main_seeds", len(a["observed_seed_ranks"]), "nominal_seed_count_vs_observed", seeds),
+        ):
+            prior = previous[key]
+            status = "previously_unknown" if prior is None else "agrees" if prior == actual else "differs"
+            assert a["comparison"][comparison_key] == status
+            counter[status] += 1
+            if prior is not None:
+                assert e[key] == prior  # Do not overwrite conflicting evidence.
+        assert all(v is None for v in e["entry_policy"].values())
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert r["profile_status"] == "not_in_published_sporting_source"
+    assert q_counts == {"agrees": 69, "differs": 1, "previously_unknown": 4}
+    assert wc_counts == {"agrees": 49, "differs": 21, "previously_unknown": 4}
+    assert seeds == {"agrees": 60, "differs": 13, "previously_unknown": 1}
+    assert audit["summary"] == {
+        "mapped_occurrences": 75, "main_entrant_agree": 75,
+        "main_date_agree": 75, "draw_size_agree": 75, "knockout_match_count_agree": 74,
+        "existing_q_agree": 69, "existing_q_disagree": 1, "existing_q_unknown": 4,
+        "existing_wc_agree": 49, "existing_wc_disagree": 21, "existing_wc_unknown": 4,
+        "existing_nominal_seed_count_matches_observed_seed_count": 60,
+        "existing_nominal_seed_count_differs_observed_seed_count": 13,
+        "existing_nominal_seed_count_unknown": 1,
+    }
+
+
+def test_secondary_qualifying_file_name_does_not_prove_tour_level_qualifying_coverage(batch):
+    inventory = batch["secondary_match_dataset_reconciliation_2026_11_26"]["qualification_file_inventory"]
+    assert inventory["source_git_blob_sha1"] == inventory["matching_mirror_git_blob_sha1"] == (
+        "e67ffea2df04a0123a8325149077f2cdae4014f8")
+    assert inventory["total_rows"] == 2233
+    assert inventory["level_counts"] == {"C": 2233}
+    assert inventory["round_counts"] == {
+        "R32": 1136, "R16": 568, "QF": 284, "SF": 142, "F": 71, "R64": 32}
+    assert sum(inventory["round_counts"].values()) == inventory["total_rows"]
+    assert inventory["tour_level_qualifying_rows"] == 0
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+
+
+@pytest.mark.parametrize("series,tourney_id,wc,observed_wc,ll", [
+    ("poertschach_2008", "1990-306", None, 0, 1),
+    ("san_marino_2000", "1990-475", 2, 2, 1),
+    ("toulouse_2000", "1990-327", 3, 3, 0),
+    ("sao_paulo_1993", "1990-237", 3, 3, 0),
+])
+def test_secondary_match_labels_fill_gaps_without_certifying_acceptance_rules(
+    batch, series, tourney_id, wc, observed_wc, ll
+):
+    r = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = r["historical_evidence"]
+    a = e["dataset_main_entry_followup_2026_11_26"]
+    assert a["dataset_tourney_id"] == tourney_id
+    assert a["source_url"] in e["source_urls"]
+    assert a["observed_qualifier_labels"] == e["reported_main_qualifiers"] == 4
+    assert a["observed_wild_card_labels"] == observed_wc
+    assert e["reported_main_wild_cards"] == wc
+    assert a["retained_wild_card_unknown"] is (wc is None)
+    assert a["observed_lucky_loser_labels"] == ll
+    assert e["main_seeds"] == 8 and a["observed_seed_ranks"] == list(range(1, 9))
+    if series == "sao_paulo_1993":
+        assert e["main_entry_label_partial_evidence"]["observed_lucky_loser_seed_rank"] == 7
+        assert ll == 0  # missing dataset tag, not proof no LL played.
+    assert all(v is None for v in e["entry_policy"].values())
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert r["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_miami_secondary_singles_q_size_and_two_main_weeks(batch):
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "miami")
+    e = r["historical_evidence"]
+    a = e["miami_q_header_followup_2026_11_26"]
+    assert a["source_url"] == e["qualification_size_source"]
+    assert a["source_url"] in e["source_urls"]
+    assert (a["reported_main"], a["reported_singles_q"], a["reported_doubles"], a["reported_doubles_q"]) == (96, 48, 48, 8)
+    assert e["qualification_size_secondary"] == 48
+    assert e["reported_main_qualifiers"] == 12 and e["reported_main_wild_cards"] == 2
+    assert all(a[k] is None for k in ("actual_q_entrants", "actual_q_dates", "complete_q_graph", "reserved_advancement_places"))
+    m, sections = build_knockout_bracket_parts(
+        event_id=r["occurrence_id"], main_entrants=96, qualification_entrants=48,
+        qualifier_spots=12, wild_cards=2, byes=32)
+    assert m.bracket_capacity == 128 and m.unplaced_byes == 32
+    assert len(sections) == 12
+    assert all(s.bracket_capacity == s.source_entrant_count == 4 for s in sections)
+    assert 95 + sum(s.actual_match_count_if_fully_played for s in sections) == 131
+    for clock, key in (
+        (RunCalendar(52, 1, 1990, 2), "run_positions_offset_1_start_1990"),
+        (RunCalendar(52, 37, 1989, 2), "run_positions_offset_37_start_1989"),
+    ):
+        positions = [clock.calendar_to_season(1990, w) for w in (11, 12)]
+        assert all(pos is not None for pos in positions)
+        assert r[key] == [{"season_index": pos.season_index, "season_week": pos.season_week} for pos in positions]
+    assert e["qualification_start_date"] is e["qualification_end_date"] is None
+
+
+def test_main_dataset_does_not_resolve_conflicting_q_capacity_assumptions(batch):
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    for series, q_size, previous_q, dataset_q in (
+        ("queens_club", 32, 7, 7),
+        ("stockholm", 28, 6, 6),
+        ("monte_carlo", 48, 6, 7),
+    ):
+        r = rows[series]
+        e = r["historical_evidence"]
+        a = e["dataset_geometry_conflict_followup_2026_11_26"]
+        assert a["reported_q_size"] == q_size
+        assert a["prior_main_q_labels"] == e["reported_main_qualifiers"] == previous_q
+        assert a["reported_main_q_labels"] == dataset_q
+        assert a["alternative_equal_section_remainder"] == q_size % dataset_q != 0
+        with pytest.raises(ValueError, match="Original Qualification entrants are not divisible into equal Q sections"):
+            build_knockout_bracket_parts(
+                event_id=r["occurrence_id"], main_entrants=e["main_entrants"],
+                qualification_entrants=q_size, qualifier_spots=dataset_q,
+                wild_cards=e["reported_main_wild_cards"], byes=e["main_byes"])
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert r["profile_status"] == "not_in_published_sporting_source"

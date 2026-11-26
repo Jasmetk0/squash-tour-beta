@@ -147,3 +147,45 @@ def test_2021_marseille_retains_lyon_identity(phase_evidence):
     row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "lyon")
     assert row["occurrence_id"] == "atp_2021_lyon"
     assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks", "places"),
+    [
+        ("marbella_2021", ["2021-04-04","2021-04-05"], [[2021,13],[2021,14]], [[2021,14]], 4),
+        ("monte_carlo", ["2021-04-10","2021-04-11"], [[2021,14]], [[2021,15]], 7),
+        ("barcelona", ["2021-04-17","2021-04-18"], [[2021,15]], [[2021,16]], 6),
+        ("belgrade_clay_2021", ["2021-04-18","2021-04-19"], [[2021,15],[2021,16]], [[2021,16]], 4),
+        ("estoril", ["2021-04-24","2021-04-25"], [[2021,16]], [[2021,17]], 4),
+        ("munich", ["2021-04-24","2021-04-25"], [[2021,16]], [[2021,17]], 4),
+        ("madrid", ["2021-05-01","2021-05-02"], [[2021,17]], [[2021,18]], 7),
+        ("rome", ["2021-05-08","2021-05-09"], [[2021,18]], [[2021,19]], 7),
+    ],
+)
+def test_april_may_2021_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks, places):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    assert row["qualifying_capacity_evidence"]["qualifying_rounds"] == 2
+    assert row["qualifying_capacity_evidence"]["qualifier_places"] == places
+    january = RunCalendar.earth_default(start_year=2021, season_count=2)
+    shifted = RunCalendar(52, 37, 2020, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(0, week + 16, year, week)
+
+
+@pytest.mark.parametrize("series", ["monte_carlo", "madrid", "rome"])
+def test_2021_sunday_masters_opening_precedes_projection(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert opening["observed_iso_week"] not in row["main_year_weeks"]
+
+
+@pytest.mark.parametrize("series", ["marbella_2021", "belgrade_clay_2021"])
+def test_2021_april_monday_actual_overlap(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] in row["main_year_weeks"]

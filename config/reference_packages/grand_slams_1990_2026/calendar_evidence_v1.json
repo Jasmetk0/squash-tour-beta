@@ -5318,7 +5318,61 @@
         }
       },
       "source": "https://www.atptour.com/en/scores/results-archive?year=2013",
-      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2013-09-09",
+        "source": "https://www.tennis.com/news/articles/u-s-open-nadal-d-djokovic",
+        "additional_source": "https://www.cbsnews.com/news/rafael-nadal-wins-us-open-mens-final/",
+        "note": "Monday final one day after ATP archive end; preserve source windows separately.",
+        "actual_window_projection": {
+          "start": "2013-08-26",
+          "end": "2013-09-09",
+          "iso_weeks": [
+            {
+              "year": 2013,
+              "week": 35
+            },
+            {
+              "year": 2013,
+              "week": 36
+            },
+            {
+              "year": 2013,
+              "week": 37
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2013,
+                "season_week": 35
+              },
+              {
+                "season_start_year": 2013,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2013,
+                "season_week": 37
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2012,
+                "season_week": 51
+              },
+              {
+                "season_start_year": 2012,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2013,
+                "season_week": 1
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2014,

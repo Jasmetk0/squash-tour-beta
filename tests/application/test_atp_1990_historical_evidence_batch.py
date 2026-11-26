@@ -2520,3 +2520,46 @@ def test_all_wild_card_discrepancies_preserve_observations_not_entry_policy(batc
     recounted = {occurrences[a["occurrence_id"]]["series_id"]: a["source_observed_seeded_wc_ranks"]
                  for a in audit["rows"] if a["source_basis"] == "new_initial_main_draw_recount"}
     assert recounted == {"umag": [5], "bordeaux_1995": [2], "basel": [2]}
+
+
+@pytest.mark.parametrize("series,week,season,offset_week,kind,q,ll,qwc,seed,access", [
+    ("brussels_championship_1992", 7, 0, 23, "qualifier_reached_main", 1, 0, None, None, "full_html_read"),
+    ("philadelphia_1998", 8, 0, 24, "qualifier_reached_main_semifinal", 1, 0, None, None, "full_html_read"),
+    ("basel", 39, 1, 3, "qualification_wild_card_reached_main", 1, 0, 1, None, "indexed_text_read_direct_access_403"),
+    ("brisbane_autumn_1992", 39, 1, 3, "lucky_loser_replaced_absent_seed", 0, 1, None, 7, "full_html_read"),
+    ("wembley_1990", 45, 1, 9, "lucky_loser_replaced_injured_entrant", 0, 1, None, None, "indexed_text_read_direct_access_403"),
+])
+def test_contemporary_qualification_paths_are_partial_edition_specific_evidence(
+    batch, series, week, season, offset_week, kind, q, ll, qwc, seed, access
+):
+    r = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = r["historical_evidence"]
+    a = e["contemporary_qualification_path_followup_2026_11_26"]
+    assert a["status"] == "partial_contemporary_report_not_complete_qualification_evidence"
+    assert a["source_url"] in e["source_urls"]
+    assert a["access"] == access
+    assert a["observed_path"] == kind
+    assert a["minimum_successful_qualifiers_reported"] == q <= e["reported_main_qualifiers"]
+    assert a["minimum_lucky_losers_reported"] == ll
+    assert a["minimum_qualification_wild_cards_reported"] == qwc
+    assert a["replaced_seed_rank"] == seed
+    assert r["original_start_date"] <= a["published_on"] <= "1990-12-31"
+    assert r["mapped_year_weeks"] == [{"calendar_year": 1990, "year_week": week}]
+    for clock, key, s, w in (
+        (RunCalendar(52, 1, 1990, 2), "run_positions_offset_1_start_1990", 0, week),
+        (RunCalendar(52, 37, 1989, 2), "run_positions_offset_37_start_1989", season, offset_week),
+    ):
+        pos = clock.calendar_to_season(1990, week)
+        assert pos is not None
+        assert (pos.season_index, pos.season_week) == (s, w)
+        assert r[key] == [{"season_index": s, "season_week": w}]
+    if series == "philadelphia_1998":
+        assert a["excluded_other_edition_year"] == 1988
+    if series == "wembley_1990":
+        assert a["secondary_main_match_crosscheck_url"] in e["source_urls"]
+    assert all(a[k] is None for k in (
+        "actual_q_entrants", "actual_q_dates", "complete_q_graph", "reserved_entry_policy"))
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert all(v is None for v in e["entry_policy"].values())
+    assert r["profile_status"] == "not_in_published_sporting_source"
+    assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"

@@ -131,3 +131,54 @@ def test_2022_marseille_retains_lyon_series_identity(phase_evidence):
     assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
     assert row["historical_identity_evidence"]["source_event_id"] == 496
     assert phase_evidence["sporting_schedule_installed"] is False
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("santiago", ["2022-02-19","2022-02-20"], [[2022,7]], [[2022,8]]),
+        ("indian_wells", ["2022-03-08","2022-03-09"], [[2022,10]], [[2022,10],[2022,11]]),
+        ("miami", ["2022-03-21","2022-03-22"], [[2022,12]], [[2022,12],[2022,13]]),
+        ("houston", ["2022-04-02","2022-04-03"], [[2022,13]], [[2022,14]]),
+        ("marrakech", ["2022-04-03","2022-04-04","2022-04-05"], [[2022,13],[2022,14]], [[2022,14]]),
+        ("monte_carlo", ["2022-04-09","2022-04-10"], [[2022,14]], [[2022,15]]),
+        ("banja_luka", ["2022-04-17","2022-04-18"], [[2022,15],[2022,16]], [[2022,16]]),
+        ("barcelona", ["2022-04-16","2022-04-17"], [[2022,15]], [[2022,16]]),
+    ],
+)
+def test_spring_2022_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    january = RunCalendar.earth_default(start_year=2022, season_count=2)
+    shifted = RunCalendar(52, 37, 2021, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(0, week + 16, year, week)
+
+
+def test_2022_marrakech_rain_preserves_played_days_and_opening(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "marrakech")
+    assert row["main_start_date"] == "2022-04-04"
+    assert row["main_opening_play_evidence"]["date"] == "2022-04-05"
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["qualifying_date_evidence"][-2]["date"] == "2022-04-04"
+    assert row["qualifying_date_evidence"][-2]["status"] == "played"
+
+
+def test_2022_monte_carlo_opening_precedes_projected_main(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "monte_carlo")
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2022, 14]
+    assert row["main_year_weeks"] == [[2022, 15]]
+
+
+def test_2022_belgrade_retains_banja_luka_series(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "banja_luka")
+    assert row["historical_identity_evidence"]["actual_host"] == "Belgrade, Serbia"
+    assert row["occurrence_id"] == "atp_2022_banja_luka"
+
+
+def test_2022_miami_qualifier_capacity_is_evidence_only(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "miami")
+    assert row["qualifier_capacity_evidence"]["qualifier_places"] == 12
+    assert phase_evidence["sporting_schedule_installed"] is False

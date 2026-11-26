@@ -10731,6 +10731,35 @@
             "focused_earth_validation": "skipped",
             "earth_realism_audit": "skipped",
             "scope": "Prior exact HEAD includes anonymous production award-composition test; not actual Saved run."
+          },
+          "native_execution_probe": {
+            "status": "test_authored_execution_not_yet_verified",
+            "reviewed_on": "2026-11-26",
+            "test_path": "tests/api/test_atp_1990_frankfurt_candidate.py",
+            "reference_test_path": "tests/api/test_atp_next_gen_edition.py",
+            "reference_source_head": "dd7e1de91e7baa5845e60766502ad019e1c8d63f",
+            "scope": "Isolated manually configured Edition in a temporary SQLite Run, with candidate geometry and awards, using synthetic players and actual HTTP Preview/Execute/Save/MatchEngine/Official Ranking/cold reopen. Deliberately not a Saved sourced ATP import; no catalog mutation or historical entrant identity. Existing squash policy fields from 2025 are probe-only.",
+            "probe_edition_id": "historical-frankfurt-contract-probe",
+            "calendar": {
+              "weeks_per_year": 52,
+              "season_start_year_week": 43,
+              "start_year": 1990,
+              "season_count": 2
+            },
+            "play_position": {
+              "season_index": 0,
+              "season_week": 4,
+              "calendar_year": 1990,
+              "year_week": 46
+            },
+            "expected_match_counts": {
+              "groups": 12,
+              "knockout": 3,
+              "total": 15
+            },
+            "expected_total_candidate_points": 950,
+            "expected_max_individual_candidate_points": 400,
+            "points_certified": false
           }
         }
       }

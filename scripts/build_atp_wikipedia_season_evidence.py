@@ -164,7 +164,7 @@ def build(year: int, raw_dir: Path) -> dict:
         label = html.unescape(re.sub(r"<[^>]+>", "", cells[0][2])).strip()
         first = cells[1][2] if re.match(r"^\d{1,2} [A-Z][a-z]{2}", label) and len(cells) > 1 else cells[0][2]
         text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", first))).strip()
-        if len(text) < 40 or not (re.search(TIER_RE, text) or re.search(r"(Hard|Clay|Grass|Carpet)", text)):
+        if len(text) < 20:
             continue
         if re.search(EXCLUDED_RE, text) or re.search(EXCLUDED_RE, first[:600]):
             continue
@@ -172,6 +172,8 @@ def build(year: int, raw_dir: Path) -> dict:
         main = re.search(base + r'[^"#]*?)"', first)
         sing = re.findall(base + r"""[^"#]*?(?:_Singles|_singles|Men%27s_singles)[^"#]*?)\"""", first)
         sing += re.findall(base + r"""[^"#]*?_–_(?:Men's_)?[Ss]ingles)\"""", first)
+        if not main:
+            continue
         rows.append({"schedule_text": text[:160], "main": main.group(1) if main else None,
                      "singles": sing[0] if sing else None, "schedule_format": re.search(r"(\d+)S(?:/(\d+)Q)?", text)})
     events = []

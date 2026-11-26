@@ -33,7 +33,7 @@
     "candidate_point_row_links": 32,
     "annual_census_only_rows": 0,
     "annual_or_individual_historical_evidence_rows": 75,
-    "reported_seed_count_rows": 67,
+    "reported_seed_count_rows": 68,
     "reported_field_distribution_all_year": {
       "8": 1,
       "28": 2,
@@ -44,8 +44,8 @@
       "96": 1
     },
     "official_finals_format_evidence_rows": 1,
-    "reported_main_qualifier_count_rows": 62,
-    "reported_main_wild_card_count_rows": 62,
+    "reported_main_qualifier_count_rows": 63,
+    "reported_main_wild_card_count_rows": 63,
     "main_draw_disagreement_rows": 15,
     "second_pass_review_attempted_rows": 75,
     "second_pass_main_field_crosscheck_rows": 75,
@@ -86,7 +86,12 @@
       "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
       "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
       "https://www.independent.co.uk/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html",
-      "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+      "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+      "https://ausopen.com/articles/news/looking-back-50-years-rankings",
+      "https://dailyiowan.lib.uiowa.edu/DI/1992/di1992-01-31.pdf",
+      "https://www.the-independent.com/sport/tennis-revised-ranks-reveal-a-truer-picture-1128135.html",
+      "https://www.scmp.com/article/233993/how-players-tot-those-ranking-points",
+      "https://www.world.tennis/media/2213/atp-and-wta-points.pdf"
     ],
     "rank_dependent_bonus_awards": true,
     "base_points_150k_32_candidate": {
@@ -399,6 +404,64 @@
         "reported_bonus_elimination_effective_year": 2000,
         "reported_new_mandatory_tournaments": 13,
         "scope": "Contemporary report of 2000 reform distinguishes previous Best14 and opponent bonuses from future mandatory events. Does not supply the 1990 Finals award table or exact special inclusion/expiry policy."
+      },
+      "additional_source_review_2026_11_26": {
+        "status": "conflicting_historical_rules_explicitly_separated",
+        "reviewed_on": "2026-11-26",
+        "source_reconstruction": {
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "access": "indexed_base_rules_1990_to_1992_direct_503",
+          "reported_finals_counted_until": "Monday after last regular calendar tournament",
+          "reported_finals_no_opponent_bonus": true,
+          "reported_mandatory_grand_slams": 4,
+          "scope": "General secondary section, not primary dated 1990 rule. Inclusion and mandatory-Slam claims not certified."
+        },
+        "atp": {
+          "source_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+          "reported_bonus_end_year": 1999,
+          "scope": "Official retrospective general bonus scheme, not Finals-specific."
+        },
+        "ao": {
+          "source_url": "https://ausopen.com/articles/news/looking-back-50-years-rankings",
+          "published_on": "2023-08-23",
+          "reported_bonus_end_year": 1989,
+          "reported_grand_slams_mandatory_in_1990": false,
+          "scope": "Retrospective says bonuses scrapped with Best14 in 1990 and first-round Slam losses could be discarded. Bonus statement conflicts with ATP and contemporary press."
+        },
+        "contemporary_bonus": {
+          "source_url": "https://dailyiowan.lib.uiowa.edu/DI/1992/di1992-01-31.pdf",
+          "published_on": "1992-01-31",
+          "printed_page": "4B",
+          "pdf_page_index": null,
+          "pdf_sha256": null,
+          "screen_status": "timeout",
+          "reported_opponent_rank_max": 200,
+          "scope": "AP article expressly states bonus points still earned against top-200 opponents in January 1992. Indexed full text inspected; page render timed out. Supports ATP general timeline, not exact 1990 amounts, qualifying or Finals."
+        },
+        "later_qualification_context": {
+          "source_url": "https://www.scmp.com/article/233993/how-players-tot-those-ranking-points",
+          "publication_year": 1998,
+          "access": "indexed_text_direct_403",
+          "reported_points_main_draw_only": true,
+          "scope": "Later-decade report supports distinguishing qualifying elimination from Main points, but contradicts blanket use of later rule for 1990; do not infer qualifying loss values or invalidate successful qualifier award."
+        },
+        "independent_reform": {
+          "source_url": "https://www.the-independent.com/sport/tennis-revised-ranks-reveal-a-truer-picture-1128135.html",
+          "published_on": "1999-11-23",
+          "printed_page": null,
+          "scope": "Readable alternate URL for same earlier cited article; not independent of existing citation. Explicitly describes dropping poor Slam results, new 13 mandatory events and bonus removal in 2000."
+        },
+        "itf_visual": {
+          "source_url": "https://www.world.tennis/media/2213/atp-and-wta-points.pdf",
+          "pdf_page_index": 6,
+          "printed_page": null,
+          "pdf_sha256": null,
+          "reported_cutoff_change_year": 1991,
+          "scope": "Visually checked men's paragraph: year-end cutoff changed in 1991. March 1990 weekly note is women's, not men's. Does not verify award or inclusion."
+        },
+        "finals_primary_rule": null,
+        "qualifying_loss_points": null,
+        "product_policy_approved": false
       }
     },
     "contemporary_rule_announcement": {
@@ -9971,7 +10034,7 @@
         "main_bracket_slots": 32,
         "main_byes": 0,
         "main_geometry_status": "annual_field_candidate_with_event_specific_reference",
-        "main_seeds": null,
+        "main_seeds": 8,
         "main_draw_source": "https://www.ultimatetennisstatistics.com/tournamentEvent?tournamentEventId=2016",
         "event_source": "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/",
         "source_urls": [
@@ -9980,13 +10043,19 @@
           "https://www.itftennis.com/en/tournament/prague/tch/1990/m-wsd-tch-01a-1990/draws-and-results/",
           "https://tennis.esp.br/en/tournaments/prague?tour=ATP&year=1990",
           "https://web.kurzy.cz/wiki/Czechoslovak_Open_1990",
-          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "https://www.nm.cz/cs/file/55b81afdbc6dbbfd12c5301d64f65f4c/5889/Tenis.pdf",
+          "https://books.google.com/books/about/Czechoslovak_Open.html?id=jjx90QEACAAJ",
+          "https://en.wikipedia.org/wiki/1990_Czechoslovak_Open_%E2%80%93_Singles",
+          "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?f=ACareerqqDPragueqq&p=101924%2FStefano-Pescosolido",
+          "https://www.latimes.com/archives/la-xpm-1990-08-06-sp-338-story.html",
+          "https://www.ndk.cz/periodical/uuid:80bdddb0-2ce0-11e3-bd38-5ef3fc9ae867"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
         "qualification_entrants": null,
-        "reported_main_qualifiers": null,
-        "reported_main_wild_cards": null,
+        "reported_main_qualifiers": 4,
+        "reported_main_wild_cards": 3,
         "qualification_start_date": null,
         "qualification_end_date": null,
         "reported_prize_money": 148400,
@@ -10082,6 +10151,108 @@
             "source_rule_certified": false,
             "scope": "Reverse numeric lookup, not an independent event-band assignment. Never replace prior financial commitment with this band or count it as an exact-label match."
           }
+        },
+        "main_entry_label_evidence": {
+          "status": "observed_labels_in_secondary_main_draw_not_guaranteed_policy",
+          "source_url": "https://en.wikipedia.org/wiki/1990_Czechoslovak_Open_%E2%80%93_Singles",
+          "corroborating_main_draw_url": "https://web.kurzy.cz/wiki/Czechoslovak_Open_1990",
+          "observed_qualifiers": 4,
+          "observed_wild_cards": 3,
+          "observed_seeds": 8,
+          "reviewed_on": "2026-11-26",
+          "scope": "English singles draw header and Czech translated event list agree on 8 seeds, 4 Q and 3 WC. Tennis Abstract independently displays two Q labels in the same R32 match; secondary feed independence not established. Contemporary August 6 report confirms that pairing was Main R32, not qualifying. No historical identities, scores, reserved places or Q field inferred."
+        },
+        "prague_program_archive_followup_2026_11_26": {
+          "status": "physical_program_identified_contents_not_obtained",
+          "reviewed_on": "2026-11-26",
+          "museum_inventory": {
+            "source_url": "https://www.nm.cz/cs/file/55b81afdbc6dbbfd12c5301d64f65f4c/5889/Tenis.pdf",
+            "collection": "Tenis, 1889–2007 +",
+            "institution": "Národní muzeum, Archiv tělesné výchovy a sportu",
+            "carton": 3,
+            "item": 126,
+            "section": "Český tenisový svaz od 1990 / Programy zápasů",
+            "pdf_page_index": 7,
+            "printed_page": null,
+            "visual_verification": true,
+            "reported_item_year": 1990,
+            "reported_copies": 1,
+            "pdf_sha256": null,
+            "download_status": "local_dns_failed",
+            "scope": "Visually checked inventory entry 126, not the physical programme itself. Red 3 is carton number, not printed page."
+          },
+          "bibliographic_record": {
+            "source_url": "https://books.google.com/books/about/Czechoslovak_Open.html?id=jjx90QEACAAJ",
+            "publisher": "Český tenisový svaz",
+            "publication_year": 1990,
+            "authors": [
+              "Petr Müller",
+              "Jan Kodeš",
+              "Ilja Kubec",
+              "Magdalena Šimková"
+            ],
+            "scope": "Catalog title explicitly dates programme 4–12 August at central court Štvanice; no digitized contents obtained."
+          },
+          "program_event_window": {
+            "start_date": "1990-08-04",
+            "end_date": "1990-08-12",
+            "calendar_year_weeks": [
+              31,
+              32
+            ],
+            "offset_1": [
+              {
+                "season_index": 0,
+                "season_week": 31
+              },
+              {
+                "season_index": 0,
+                "season_week": 32
+              }
+            ],
+            "offset_37": [
+              {
+                "season_index": 0,
+                "season_week": 47
+              },
+              {
+                "season_index": 0,
+                "season_week": 48
+              }
+            ],
+            "scope": "Whole programme range, not a phase-specific advertised Q window; August 4–5 is a research lead only. Do not change canonical August 6–12 Main window."
+          },
+          "main_opening": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-06-sp-338-story.html",
+            "published_on": "1990-08-06",
+            "printed_page": null,
+            "reported_round": "R32",
+            "reported_date": "1990-08-06",
+            "scope": "Wire report states first-round matches today, including the pairing later tagged Q/Q. Not Q results."
+          },
+          "partial_label_crosscheck": {
+            "source_url": "https://www.tennisabstract.com/cgi-bin/player-classic.cgi?f=ACareerqqDPragueqq&p=101924%2FStefano-Pescosolido",
+            "observed_q_labels_in_one_main_pairing": 2,
+            "scope": "Two Q-labelled entrants in R32, no qualifying match results."
+          },
+          "local_press_route": {
+            "source_url": "https://www.ndk.cz/periodical/uuid:80bdddb0-2ce0-11e3-bd38-5ef3fc9ae867",
+            "periodical": "Rudé právo",
+            "year": 1990,
+            "volume": 70,
+            "shelfmark": "54 B 1389",
+            "requested_issue_dates": [
+              "1990-08-04",
+              "1990-08-06",
+              "1990-08-07"
+            ],
+            "access": "volume_metadata_only_issue_contents_not_obtained"
+          },
+          "actual_q_dates": null,
+          "actual_q_entrants": null,
+          "complete_q_draw": null,
+          "reserved_main_places": null,
+          "next_request": "Ask National Museum for carton 3 item 126, programme pages showing phase schedule, entry/advance rules and any inserted Q draws; inspect Rudé právo and Československý sport sports pages Aug 4–7 for actual match results."
         }
       }
     },
@@ -15817,6 +15988,17 @@
           "owner_approval": false,
           "publication_allowed": false,
           "scope": "Three actual competition dates corroborated without changing canonical November 12–18 archive window; all lie in W46. Distinguish extraction, format, points and ranking inclusion."
+        },
+        "ranking_source_conflict_followup_2026_11_26": {
+          "status": "secondary_finals_bonus_exception_not_primary_certified",
+          "source_url": "https://openerarankings.com/RankingRules1990",
+          "secondary_reported_opponent_bonus": false,
+          "secondary_reported_special_inclusion": true,
+          "secondary_reported_expiry": "Monday after last regular calendar tournament",
+          "primary_finals_bonus_rule": null,
+          "primary_finals_inclusion_rule": null,
+          "owner_approved": false,
+          "scope": "Explicitly distinguish general ATP opponent-bonus scheme and Finals exception; 1992 press is not evidence of Finals-specific rule. Proposed squash adaptation remains pending."
         }
       }
     }

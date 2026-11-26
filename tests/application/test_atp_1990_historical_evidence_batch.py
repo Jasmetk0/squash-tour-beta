@@ -2437,3 +2437,35 @@ def test_main_dataset_does_not_resolve_conflicting_q_capacity_assumptions(batch)
                 wild_cards=e["reported_main_wild_cards"], byes=e["main_byes"])
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert r["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_monte_carlo_header_draw_and_withdrawal_do_not_certify_q_policy(batch):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "monte_carlo")
+    e = row["historical_evidence"]
+    a = e["monte_carlo_entry_conflict_reconciliation_2026_11_26"]
+    en, fr, tt, contemporary = (a[k] for k in (
+        "english_draw", "french_draw", "tennistemple_draw", "contemporary_report"))
+    assert all(source["source_url"] in e["source_urls"]
+               for source in (en, fr, tt, contemporary))
+    assert en["header_q"] == a["retained_historical_header_q"] == e["reported_main_qualifiers"] == 6
+    assert en["initial_position_q"] == fr["listed_qualifiers"] == tt["initial_position_q"] == a["secondary_csv_q"] == 7
+    assert en["initial_position_wc"] == fr["listed_wild_cards"] == tt["initial_position_wc"] == e["reported_main_wild_cards"] == 4
+    assert a["secondary_csv_wc"] == 5
+    assert en["initial_position_ll"] == tt["initial_position_ll"] == a["secondary_csv_ll"] == 1
+    assert en["nominal_seeds"] == e["main_seeds"] == 16
+    assert en["missing_seed_rank"] == contemporary["reported_late_withdrawal_seed_rank"] == 3
+    assert en["q_in_missing_seed_bye_position"] == tt["q_in_missing_seed_bye_position"] == 1
+    assert contemporary["replaced_on_seeding_list"] is False
+    assert contemporary["main_opening_date"] == row["original_start_date"] == "1990-04-23"
+    assert a["reported_q_size"] == e["qualification_size_secondary"] == 48
+    assert a["alternative_equal_section_remainder"] == 48 % 7 == 6
+    assert all(a[k] is None for k in (
+        "actual_q_entrants", "actual_q_dates", "reserved_advancement_places",
+        "replacement_entry_mechanism"))
+    assert all(v is None for v in e["entry_policy"].values())
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    item = next(t for t in batch["knockout_candidate_triage"]["rows"]
+                if t["occurrence_id"] == row["occurrence_id"])
+    assert item["conditional_geometry"]["qualifier_spots"] == 6  # source-specific hypothesis only
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert row["plan_status"] == row["played_and_reopened_status"] == "not_tested"

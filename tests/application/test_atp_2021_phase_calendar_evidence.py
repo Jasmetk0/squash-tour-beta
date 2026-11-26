@@ -281,3 +281,45 @@ def test_2021_los_cabos_local_qualifying_dates(phase_evidence):
     assert row["qualifying_capacity_evidence"]["qualifier_places"] == 4
     assert row["additional_qualifying_source_url"]
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(("series", "q_dates", "q_weeks", "main_weeks", "places"), [
+        ("kitzbuhel", ["2021-07-24","2021-07-25"], [[2021,29]], [[2021,30]], 4),
+        ("washington", ["2021-07-31","2021-08-01"], [[2021,30]], [[2021,31]], 6),
+        ("canadian_open", ["2021-08-07","2021-08-08"], [[2021,31]], [[2021,32]], 6),
+        ("cincinnati", ["2021-08-14","2021-08-15"], [[2021,32]], [[2021,33]], 7),
+        ("winston_salem", ["2021-08-21","2021-08-22"], [[2021,33]], [[2021,34]], 4),
+        ("almaty", ["2021-09-19","2021-09-20"], [[2021,37],[2021,38]], [[2021,38]], 4),
+        ("metz", ["2021-09-19","2021-09-20"], [[2021,37],[2021,38]], [[2021,38]], 4),
+        ("san_diego_2021", ["2021-09-25","2021-09-26"], [[2021,38]], [[2021,39]], 4),
+])
+def test_late_summer_2021_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks, places):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    assert row["qualifying_capacity_evidence"]["qualifying_rounds"] == 2
+    assert row["qualifying_capacity_evidence"]["qualifier_places"] == places
+    january = RunCalendar.earth_default(start_year=2021, season_count=2)
+    shifted = RunCalendar(52, 37, 2020, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        index, position = (0, week + 16) if week <= 36 else (1, week - 36)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(index, position, year, week)
+
+
+@pytest.mark.parametrize("series", ["cincinnati", "winston_salem", "almaty", "metz"])
+def test_late_summer_2021_actual_main_overlap(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert (opening["observed_iso_week"] in row["main_year_weeks"]) == (series in {"almaty", "metz"})
+
+
+def test_2021_san_diego_local_date_boundary(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "san_diego_2021")
+    assert row["observed_qualifying_iso_weeks"] == [[2021, 38]]
+    assert row["main_year_weeks"] == [[2021, 39]]
+    assert row["additional_qualifying_source_url"]
+    assert phase_evidence["sporting_schedule_installed"] is False

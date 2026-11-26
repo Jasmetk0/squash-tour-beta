@@ -598,7 +598,7 @@ def test_second_pass_stuttgart_through_los_angeles_preserves_source_scope(batch)
     assert sum(c["main_entry_label_evidence"]["qualifier_counts_by_section"]) == 7
     assert sum(c["main_entry_label_evidence"]["wild_card_counts_by_section"]) == 5
     assert k["secondary_main_match_count_evidence"]["reported_match_count"] == k["main_entrants"] - 1
-    assert k["main_seeds"] is None
+    assert k["main_seeds"] == 16
     assert la["contemporary_main_opening_date_evidence"]["date"] == "1990-07-30"
     for row in reviewed:
         e = row["historical_evidence"]
@@ -1456,5 +1456,111 @@ def test_workbook_first_pass_ci_does_not_certify_season_crosscheck(batch):
     assert ci["head"] == "a9154b049175967cfc2cceeecb9d7bc71c732c79"
     assert ci["conclusion"] == "success"
     assert ci["selected_tests_passed"] == 129
+    assert ci["security_tests_passed"] == 24
+    assert research["saved_source_execution_probe"]["points_certified"] is False
+
+
+def test_workbook_conflict_followup_preserves_original_comparison_and_qualification(batch):
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    k = rows["kitzbuhel"]["historical_evidence"]
+    source = k["workbook_conflict_followup"]
+    assert (k["main_entrants"], k["main_bracket_slots"], k["main_byes"], k["main_seeds"]) == (48, 64, 16, 16)
+    assert source["bye_seed_ranks"] == k["bye_seed_ranks"] == list(range(1, 17))
+    assert (k["reported_main_qualifiers"], k["reported_main_wild_cards"]) == (6, 4)
+    assert source["observed_seeded_wild_card_ranks"] == [2]
+    assert source["observed_special_exempt"] == 1
+    assert (source["workbook_field"], source["workbook_stage_count"], source["working_stage_count"]) == (32, 6, 7)
+    assert k["secondary_main_match_count_evidence"]["reported_match_count"] == 47
+    assert k["main_entry_label_evidence"]["source_url"] in k["source_urls"]
+    s = rows["schenectady_1994"]["historical_evidence"]
+    source = s["workbook_conflict_followup"]
+    assert (source["reported_main_entrants"], source["reported_main_byes"], source["reported_main_seeds"]) == (28, 4, 8)
+    assert source["workbook_field"] == 32
+    assert s["bye_seed_ranks"] == [1, 2, 3, 4]
+    expected = {
+        "sofia": (540000, 450000, 540000, "supports_prior_prize"),
+        "toronto_indoor_1990": (1005000, 1050000, 1005000, "supports_prior_prize"),
+        "moscow": (225000, 297000, 297000, "supports_workbook_prize"),
+        "wembley_1990": (450000, 297000, 297000, "supports_workbook_prize"),
+    }
+    for series, (prior, workbook, itf, status) in expected.items():
+        e = rows[series]["historical_evidence"]
+        source = e["workbook_conflict_followup"]
+        assert e["reported_prize_money"] == source["prior_prize_money_usd"] == prior
+        assert e["edition_specific_base_points_crosscheck"]["reported_prize_money_usd"] == source["workbook_prize_money_usd"] == workbook
+        assert source["reported_prize_money_usd"] == itf
+        assert source["status"] == status
+    m = rows["moscow"]["historical_evidence"]["workbook_conflict_followup"]
+    assert m["contemporary_event_amount"]["reported_event_amount_usd"] == m["organiser_retrospective"]["reported_prize_money_usd"] == 330000
+    assert m["contemporary_event_amount"]["reported_start_date"] == rows["moscow"]["original_start_date"] == "1990-11-05"
+    assert m["organiser_retrospective"]["reported_start_date"] == "1990-10-05"
+    for series in ("kitzbuhel", "schenectady_1994", *expected):
+        row = rows[series]
+        e = row["historical_evidence"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    assert batch["summary"]["reported_seed_count_rows"] == 67
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 59
+
+
+def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
+    rules = batch["historical_points_evidence"]
+    source = rules["champ_series_1990_targeted_secondary_rows"]
+    assert source["iteration"] == 1990
+    assert source["qualification_loss_points"] is None
+    tables = {(r["band_usd"], r["md"]): r for r in source["rows"]}
+    assert len(tables) == 4
+    agree, diff = [], []
+    for row in batch["occurrences"]:
+        e = row["historical_evidence"]
+        prior = e["point_candidate_comparison"]
+        if prior["status"] != "exact_reported_band_and_bracket_size_candidate" or prior["source_tier_candidate"] != "CHAMP SERIES":
+            continue
+        x = e["edition_specific_base_points_crosscheck"]
+        comp = x["targeted_champ_series_rule_comparison"]
+        t = tables[(prior["reported_financial_commitment_usd"], e["main_bracket_slots"])]
+        assert (comp["band_usd"], comp["md"]) == (t["band_usd"], t["md"])
+        assert comp["iteration"] == 1990
+        assert len(t["main"]) == len(x["base_main_points"])
+        differences = [
+            {"stage": k, "workbook": v, "rule_row": candidate}
+            for (k, v), candidate in zip(x["base_main_points"].items(), t["main"])
+            if v != candidate
+        ]
+        assert comp["differences"] == differences
+        if differences:
+            assert differences == [{"stage": "round_of_16", "workbook": 30, "rule_row": 29}]
+            assert comp["status"] == "main_stage_values_differ"
+            diff.append(row["series_id"])
+        else:
+            assert comp["status"] == "all_main_stage_values_agree"
+            agree.append(row["series_id"])
+        assert comp["secondary_qualifier_award_candidate"] == t["qualifier"]
+        assert comp["workbook_qualifier_award"] is None
+        assert comp["source_rule_certified"] is False
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    book = rules["edition_specific_workbook_crosscheck"]
+    followup = book["targeted_rule_followup"]
+    baseline = book["season_crosscheck"]
+    assert agree == followup["additional_agree_series"] == ["miami", "barcelona"]
+    assert diff == followup["additional_disagreement_series"]
+    assert len(diff) == 11
+    assert len(agree) + len(diff) == followup["additional_compared_knockout_rows"] == 13
+    assert len(baseline["stored_main_candidate_exact_match_series"]) + len(agree) == followup["combined_agree_rows"] == 38
+    assert len(baseline["stored_main_candidate_disagreement_series"]) + len(diff) == followup["combined_disagreement_rows"] == 12
+    assert followup["combined_compared_knockout_rows"] == 50
+    assert len(baseline["stored_main_candidate_not_compared_series"]) - 13 == followup["remaining_without_exact_label_numeric_comparison"] == 24
+    assert book["primary_rule_page"] is None
+    assert batch["summary"]["published_sporting_profiles"] == 0
+
+
+def test_full_season_workbook_ci_is_prior_head_not_publication_approval(batch):
+    e = next(r["historical_evidence"] for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    research = e["targeted_import_research"]
+    ci = research["verified_ci_after_workbook_full_season"]
+    assert ci["head"] == "378121db699ea063bb56bf8f4e7d25632112d1e6"
+    assert ci["conclusion"] == "success"
+    assert ci["selected_tests_passed"] == 131
     assert ci["security_tests_passed"] == 24
     assert research["saved_source_execution_probe"]["points_certified"] is False

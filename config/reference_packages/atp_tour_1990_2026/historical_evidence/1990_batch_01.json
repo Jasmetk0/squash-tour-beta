@@ -354,6 +354,25 @@
       "later_iteration_evidence": "Same secondary author states awards for elimination in qualifying at Championship Series or above appeared after 1997; table marks such awards from 1997 onward. Exact transition wording differs from table labels; neither is independent nor primary 1990 evidence.",
       "qualification_loss_points": null,
       "scope": "Strengthens hypothesis of no ordinary 1990 Q-loss stage awards; does not establish rank bonus applicability in qualifying or every tier. Never treat blank as explicit zero or make a squash rule from this alone."
+    },
+    "year_end_ranking_chronology": {
+      "status": "official_itf_retrospective_context",
+      "source_url": "https://www.itftennis.com/media/2213/atp-and-wta-points.pdf",
+      "pdf_page_index": 6,
+      "reviewed_on": "2026-11-26",
+      "year_end_cutoff_change_year": 1991,
+      "calendar_year_1990_cutoff": "last_issue_of_year_or_first_issue_of_following_year",
+      "year_1991_onward_cutoff": "after_singles_and_doubles_championships",
+      "singles_race_introduced_year": 2000,
+      "scope": "ITF retrospective section on men's ranking history distinguishes year-end cutoff from ATP Finals. The March 1990 weekly publication note belongs to the women's section, not men's. This does not establish exact historical ATP point awards or change the squash Run's ranking/season policy."
+    },
+    "year_end_snapshot_lead": {
+      "status": "third_party_hosted_atp_report_transcription_not_verified_original",
+      "source_url": "https://www.scribd.com/doc/82086774/1990-ATP-Year-End-Rankings",
+      "ranking_date": "1990-12-24",
+      "report_as_of": "2002-02-06",
+      "reported_top_two_gap_points": 361,
+      "scope": "Public text of retrospective ATP-branded entry system report. Not original file independently authenticated; no per-event awards or week-before/after snapshot. Gap is anonymous arithmetic of first two totals; no player identities or full rankings ingested. Do not equate Dec 24 with Nov 19 or gross event points."
     }
   },
   "finals_alternate_window": {
@@ -1852,6 +1871,13 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "organiser_financial_crosscheck": {
+          "source_url": "https://www.abnamro-open.nl/over-ons/historie/de-jaren-90/1990",
+          "reviewed_on": "2026-11-26",
+          "reported_total_prize_money_usd": 500000,
+          "reported_seed_of_champion": 1,
+          "scope": "Official organizer retrospectively labels $500k total prize money, matching the secondary commitment rather than its $450k prize figure; preserve both meanings and do not certify ranking band. No Q draw or dates."
         }
       }
     },
@@ -1959,7 +1985,9 @@
           "date": "1990-03-05",
           "source_url": "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
           "published_date": "1990-03-06",
-          "scope": "Main opening day confirmed; does not establish Q dates."
+          "scope": "Contemporary article confirms Main opening day, advertised $1m amount and reports entitlement to six designated top-ten players as Championship Series event. Not a verified mandatory field composition, exact ranking band or Q dates.",
+          "reported_event_amount_usd": 1000000,
+          "reported_designated_top10_players_entitlement": 6
         },
         "second_pass_review": {
           "status": "qualification_source_search_attempted_unresolved",
@@ -2666,7 +2694,7 @@
           "https://de.wikipedia.org/wiki/Torneo_God%C3%B3_1990",
           "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo",
           "https://en.wikipedia.org/wiki/1990_Torneo_God%C3%B3",
-          "https://archivo.rctb1899.es/edicion-bcnopen/xxxviii-trofeo-conde-de-godo"
+          "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_134.pdf"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2764,6 +2792,15 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "contemporary_qualifier_progress_evidence": {
+          "source_url": "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_134.pdf",
+          "printed_page": 19,
+          "pdf_page_index": 0,
+          "published_issue_label": "13–14 April 1990",
+          "reviewed_on": "2026-11-26",
+          "reported_qualifier_reached": "quarterfinal",
+          "scope": "Contemporary newspaper scan in the official club archive confirms a qualifier reached Main quarterfinal. Does not establish Q match count, dates, field or full feeder graph. No scores/identities imported."
         }
       }
     },
@@ -10464,7 +10501,9 @@
           "https://openerarankings.com/About",
           "https://datahub.io/core/atp-world-tour-tennis-data",
           "https://github.com/Tennismylife/TML-Rankings-Database",
-          "https://atp-rankings.ishanjha.com/api-docs"
+          "https://atp-rankings.ishanjha.com/api-docs",
+          "https://www.itftennis.com/media/2213/atp-and-wta-points.pdf",
+          "https://www.scribd.com/doc/82086774/1990-ATP-Year-End-Rankings"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10638,7 +10677,8 @@
               "candidate_challenger_maximum": 400,
               "hypothetical_gross_swing": 250,
               "hypothetical_gross_gap_excess": 25,
-              "scope": "AP reported the leader had secured year-end No. 1 after group play. The hypothetical 250 gross swing exceeds the reported pre-event gap by 25; simple gross addition therefore cannot establish the historical ranking result. Best14 replacement, expiry, ranking inclusion and other timing or reporting differences remain unresolved. This is not disproof or certification of the candidate award table. No historical identities, match scores or rankings imported."
+              "scope": "AP reported the leader had secured year-end No. 1 after group play. The hypothetical 250 gross swing exceeds the reported pre-event gap by 25; simple gross addition therefore cannot establish the historical ranking result. Best14 replacement, expiry, ranking inclusion and other timing or reporting differences remain unresolved. This is not disproof or certification of the candidate award table. No historical identities, match scores or rankings imported.",
+              "year_end_cutoff_crosscheck": "Official ITF retrospective says November Championships cutoff began in 1991; 1990 remained calendar-year issue based. A third-party Dec 24 report gives anonymous top-two gap 361, not a Nov 19 delta. The 225 pre-event gap and 250 hypothetical gross swing do not certify points."
             }
           },
           "proposed_adaptation": {
@@ -10818,7 +10858,7 @@
             }
           },
           "saved_source_execution_probe": {
-            "status": "test_authored_execution_not_yet_verified",
+            "status": "passed_test_only_saved_source_not_published",
             "reviewed_on": "2026-11-26",
             "test_path": "tests/api/test_atp_1990_frankfurt_candidate.py",
             "scope": "Test-only temporary sporting child with one additional candidate and unchanged modern profiles; real Setup preview/confirm/Save and real sourced Edition preview/execute/Save, genuine native match execution, point composition, official ranking and cold SQLite reopen. Adapter fixture is scoped only to copying the test document. No published sporting catalog change; not owner-approved import or historical certification.",
@@ -10842,6 +10882,16 @@
               "season_week": 4,
               "calendar_year": 1990,
               "year_week": 46
+            },
+            "verified_ci": {
+              "head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
+              "workflow_run_id": 45775021783,
+              "job_id": 139756629524,
+              "conclusion": "success",
+              "test_call_seconds": 182.68,
+              "selected_tests_passed": 31,
+              "security_tests_passed": 24,
+              "scope": "Exact prior HEAD log shows complete Saved test-only ATP package -> sourced Edition -> 15 real matches -> Official Ranking -> Save/cold reopen; does not certify historical rules or publish profile."
             }
           }
         }
@@ -10916,11 +10966,11 @@
   },
   "import_candidate_priority": {
     "status": "research_priority_not_publication_decision",
-    "reviewed_on": "2026-11-25",
+    "reviewed_on": "2026-11-26",
     "ordered": [
       {
         "occurrence_id": "atp_1990_atp_finals",
-        "reason": "Existing group contract can represent secondary additive table and official format without Q; exact primary points or explicit adaptation approval missing."
+        "reason": "Saved test-only ATP package fully executed and reopened with candidate group awards; exact primary points or explicit adaptation approval and shared catalog coordination still missing."
       },
       {
         "occurrence_id": "atp_1990_new_haven_1998",
@@ -10931,6 +10981,252 @@
         "reason": "Reported Q32 and observed Q4, no actual Q date/graph and exact awards."
       }
     ],
-    "next_research": "Original 1990 ATP guide/yearbook; exact Finals point rule; actual Q sheets for New Haven and San Francisco. Coordinate before publication."
+    "next_research": "Frankfurt owner/Work decision on documented candidate adaptation and ranking policy; New Haven Yale archive; San Francisco and other eight conditional geometry+band candidates; original 1990 ATP guide and complete dated qualifying evidence."
+  },
+  "knockout_candidate_triage": {
+    "status": "diagnostic_only_not_source_certification_or_publication",
+    "reviewed_on": "2026-11-26",
+    "source_model_head": "1208a00c466a1b42c069f138715ea6ef4d673bb0",
+    "scope": "Use integer secondary Q size, observed main Q/WC labels and nominal seed count solely as conditional inputs to the existing topology contract; not actual Q entrants or reserved acceptance policy. Exact band means a matching secondary table row, not a verified award. Do not populate certified fields or create a sporting profile. All 74 knockout events still need actual Q graph/dates, full awards and approved provenance/policy.",
+    "counts": {
+      "reported_q_size": 13,
+      "conditional_geometry": 10,
+      "conditional_geometry_and_band": 8,
+      "geometry_without_exact_band": 2,
+      "missing_main_entry_labels": 3,
+      "no_reported_q_size": 61
+    },
+    "rows": [
+      {
+        "occurrence_id": "atp_1990_sydney_2019",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_dallas",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_maceio_1992",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_sofia",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_exact_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_toronto_indoor_1990",
+        "reported_q_size": 28,
+        "observed_q": null,
+        "observed_wc": null,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": false,
+        "triage_status": "missing_main_entry_labels",
+        "conditional_geometry": null
+      },
+      {
+        "occurrence_id": "atp_1990_philadelphia_1998",
+        "reported_q_size": 24,
+        "observed_q": null,
+        "observed_wc": null,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "missing_main_entry_labels",
+        "conditional_geometry": null
+      },
+      {
+        "occurrence_id": "atp_1990_rio",
+        "reported_q_size": 24,
+        "observed_q": null,
+        "observed_wc": null,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "missing_main_entry_labels",
+        "conditional_geometry": null
+      },
+      {
+        "occurrence_id": "atp_1990_rotterdam",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_indian_wells",
+        "reported_q_size": 28,
+        "observed_q": 7,
+        "observed_wc": 5,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_estoril",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 2,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 2,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_orlando_1991",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_rio_carpet_1990",
+        "reported_q_size": 32,
+        "observed_q": 4,
+        "observed_wc": 3,
+        "nominal_main_seeds": 8,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 32,
+          "main_byes": 0,
+          "qualification_entrants": 32,
+          "qualifier_spots": 4,
+          "wild_cards": 3,
+          "sections": 4,
+          "entrants_per_section": 8,
+          "bracket_slots_per_section": 8,
+          "potential_matches": 59
+        }
+      },
+      {
+        "occurrence_id": "atp_1990_barcelona",
+        "reported_q_size": 28,
+        "observed_q": 7,
+        "observed_wc": 5,
+        "nominal_main_seeds": 16,
+        "exact_secondary_band_candidate": true,
+        "triage_status": "conditional_geometry_and_band_candidate",
+        "conditional_geometry": {
+          "main_entrants": 56,
+          "main_byes": 8,
+          "qualification_entrants": 28,
+          "qualifier_spots": 7,
+          "wild_cards": 5,
+          "sections": 7,
+          "entrants_per_section": 4,
+          "bracket_slots_per_section": 4,
+          "potential_matches": 76
+        }
+      }
+    ]
   }
 }

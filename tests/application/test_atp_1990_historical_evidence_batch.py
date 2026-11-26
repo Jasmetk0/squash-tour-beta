@@ -875,3 +875,73 @@ def test_new_haven_partial_qualification_evidence_does_not_certify_dates_or_geom
         build_knockout_bracket_parts(event_id=r["occurrence_id"], **{
             **assumptions, "qualification_entrants": probe["alternative_hypothetical_q_entrants"]})
     assert r["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy(batch):
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    triage = batch["knockout_candidate_triage"]
+    rows = {r["occurrence_id"]: r for r in batch["occurrences"]}
+    reported = {key for key, r in rows.items()
+                if type(r["historical_evidence"].get("qualification_size_secondary")) is int}
+    assert {r["occurrence_id"] for r in triage["rows"]} == reported
+    assert triage["counts"] == {
+        "reported_q_size": 13, "conditional_geometry": 10,
+        "conditional_geometry_and_band": 8, "geometry_without_exact_band": 2,
+        "missing_main_entry_labels": 3, "no_reported_q_size": 61,
+    }
+    statuses = Counter(r["triage_status"] for r in triage["rows"])
+    assert statuses == {"conditional_geometry_and_band_candidate": 8,
+                        "missing_exact_band_candidate": 2, "missing_main_entry_labels": 3}
+    for item in triage["rows"]:
+        occurrence = rows[item["occurrence_id"]]
+        e = occurrence["historical_evidence"]
+        assert item["reported_q_size"] == e["qualification_size_secondary"]
+        assert item["observed_q"] == e["reported_main_qualifiers"]
+        assert item["observed_wc"] == e["reported_main_wild_cards"]
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert e["entry_policy"]["reserved_main_wild_cards"] is None
+        assert occurrence["profile_status"] == "not_in_published_sporting_source"
+        assert item["exact_secondary_band_candidate"] == (
+            e["point_candidate_comparison"]["status"] == "exact_reported_band_and_bracket_size_candidate")
+        g = item["conditional_geometry"]
+        if g is None:
+            assert item["triage_status"] == "missing_main_entry_labels"
+            continue
+        # Explicitly conditional on equating reported size with actual entrants
+        # and observed labels with reserved places. Neither equivalence is proven.
+        main, sections = build_knockout_bracket_parts(
+            event_id=item["occurrence_id"], main_entrants=g["main_entrants"],
+            qualification_entrants=g["qualification_entrants"],
+            qualifier_spots=g["qualifier_spots"], wild_cards=g["wild_cards"], byes=g["main_byes"])
+        assert main.source_main_entrants == e["main_entrants"]
+        assert main.bracket_capacity == e["main_bracket_slots"]
+        assert len(sections) == g["sections"] == item["observed_q"]
+        assert all(s.source_entrant_count == g["entrants_per_section"]
+                   and s.bracket_capacity == g["bracket_slots_per_section"] for s in sections)
+        assert g["potential_matches"] == e["main_entrants"] - 1 + sum(s.source_entrant_count - 1 for s in sections)
+    assert batch["summary"]["published_sporting_profiles"] == 0
+    assert batch["summary"]["played_and_reopened"] == 0
+
+
+def test_frankfurt_verified_test_only_import_and_historical_ranking_cutoff_remain_distinct(batch):
+    from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package
+
+    r = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    c = r["historical_evidence"]["targeted_import_research"]
+    probe = c["saved_source_execution_probe"]
+    assert probe["status"] == "passed_test_only_saved_source_not_published"
+    assert probe["verified_ci"]["conclusion"] == "success"
+    assert probe["expected_match_counts"] == {"groups": 12, "knockout": 3, "total": 15}
+    assert probe["points_certified"] is False
+    assert c["points_evidence"]["primary_exact_table_verified"] is False
+    assert c["proposed_adaptation"]["status"] == "contract_probe_only_not_approved_for_import"
+    assert r["profile_status"] == "not_in_published_sporting_source"
+    assert r["plan_status"] == r["played_and_reopened_status"] == "not_tested"
+    assert r["occurrence_id"] not in {e.source_entity_id for e in build_atp_sporting_package().entities}
+    cutoff = batch["historical_points_evidence"]["year_end_ranking_chronology"]
+    assert cutoff["year_end_cutoff_change_year"] == 1991
+    assert cutoff["singles_race_introduced_year"] == 2000
+    assert batch["historical_points_evidence"]["year_end_snapshot_lead"]["ranking_date"] == "1990-12-24"
+    assert batch["historical_points_evidence"]["qualifying_loss_points"] is None

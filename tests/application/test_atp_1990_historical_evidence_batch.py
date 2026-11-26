@@ -1065,3 +1065,53 @@ def test_historical_snapshot_followup_does_not_certify_tournament_awards(batch):
         assert evidence["qualification_start_date"] is None
         assert evidence["qualification_end_date"] is None
         assert evidence["entry_policy"]["reserved_main_qualifier_spots"] is None
+
+
+def test_frankfurt_visual_source_corroborates_geometry_not_ranking_points(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    row = rows["atp_finals"]
+    e = row["historical_evidence"]
+    research = e["targeted_import_research"]
+    visual = research["official_group_evidence"]["visually_verified_alternate_pdf"]
+    assert visual["visual_status"] == "page_render_checked"
+    assert visual["printed_page"] == 18 and visual["pdf_page_index"] == 17
+    assert visual["source_url"] in e["source_urls"]
+    for key in ("group_count", "group_size", "group_matches", "semifinals", "finals",
+                "competition_start_date", "competition_end_date"):
+        assert visual[key] == e["group_format"][key]
+    assert len(visual["group_win_distribution"]) == visual["group_count"] * visual["group_size"]
+    assert sum(visual["group_win_distribution"]) == visual["group_matches"]
+    assert sum(visual["prize_money_distribution_usd"]) == visual["prize_money_sum_usd"] == 2000000
+    assert visual["primary_ranking_points_table"] is None
+    assert visual["pdf_sha256"] is None
+    assert research["saved_source_execution_probe"]["points_certified"] is False
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    rule = batch["historical_points_evidence"]["contemporary_rule_announcement"]
+    assert rule["effective_season"] == batch["source_year"] == 1990
+    assert rule["best_results_count"] == 14
+    assert rule["primary_full_rule_text"] is None
+
+
+def test_historical_singles_finish_and_itf_money_are_not_inferred_qualification(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    nh = rows["new_haven_1998"]
+    e = nh["historical_evidence"]
+    finish = e["singles_vs_doubles_finish_evidence"]
+    assert finish["singles_final_date"] == nh["original_end_date"] == "1990-08-19"
+    assert finish["doubles_final_postponed_due_to_rain"] is True
+    assert e["alternate_event_end_date"] == "1990-08-20"
+    g = rows["maceio_1992"]
+    e = g["historical_evidence"]
+    itf = e["itf_event_metadata_crosscheck"]
+    assert itf["start_date"] == g["original_start_date"]
+    assert itf["end_date"] == g["original_end_date"]
+    assert itf["prize_money_usd"] == e["reported_prize_money"] == 125000
+    assert e["reported_financial_commitment_usd"] == 150000
+    assert g["category_id"] == "atp_world_series"
+    assert e["point_candidate_comparison"]["source_rule_certified"] is False
+    for row in (nh, g):
+        evidence = row["historical_evidence"]
+        assert evidence["qualification_entrants"] is None
+        assert evidence["qualification_start_date"] is None
+        assert evidence["qualification_end_date"] is None
+        assert evidence["entry_policy"]["reserved_main_qualifier_spots"] is None

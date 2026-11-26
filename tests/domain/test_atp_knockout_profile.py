@@ -7,7 +7,7 @@ pytestmark = pytest.mark.pr_critical
 
 
 def profile(series_id="rotterdam"):
-    occurrence_id = f"atp_2025_{series_id}"
+    occurrence_id = series_id if series_id.startswith("atp_") else f"atp_2025_{series_id}"
     entity = next(item for item in build_atp_sporting_package().entities
                   if item.source_entity_id == occurrence_id)
     return parse_sporting_profile(entity.payload)
@@ -18,6 +18,15 @@ def profile(series_id="rotterdam"):
     ("dallas", 3, "2025-02-01", "2025-02-02"),
     ("munich", 3, "2025-04-12", "2025-04-13"),
     ("vienna", 3, "2025-10-18", "2025-10-19"),
+    ("atp_2025_doha", 3, "2025-02-15", "2025-02-16"),
+    ("atp_2025_dubai", 3, "2025-02-22", "2025-02-23"),
+    ("atp_2025_halle", 3, "2025-06-14", "2025-06-15"),
+    ("atp_2024_dubai", 3, "2024-02-24", "2024-02-25"),
+    ("atp_2024_halle", 3, "2024-06-15", "2024-06-16"),
+    ("atp_2025_queens_club", 3, "2025-06-14", "2025-06-15"),
+    ("atp_2024_rotterdam", 3, "2024-02-10", "2024-02-11"),
+    ("atp_2024_acapulco", 3, "2024-02-24", "2024-02-25"),
+    ("atp_2024_vienna", 3, "2024-10-19", "2024-10-20"),
 ])
 def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series_id, wild_cards, q_start, q_end):
     p = profile(series_id)
@@ -56,3 +65,34 @@ def test_verified_atp_500_keeps_full_main_and_four_independent_q_sections(series
 def test_invalid_knockout_configuration_cannot_become_a_ready_profile(patch):
     with pytest.raises(ValueError):
         ATPKnockoutProfile.model_validate_json(json.dumps({**profile().model_dump(mode='json'), **patch}))
+
+
+@pytest.mark.parametrize(("occurrence", "q_start", "q_end"), [
+    ("atp_2024_stuttgart", "2024-06-08", "2024-06-09"),
+    ("atp_2025_stuttgart", "2025-06-07", "2025-06-08"),
+    ("atp_2024_delray_beach", "2024-02-10", "2024-02-11"),
+    ("atp_2025_delray_beach", "2025-02-08", "2025-02-09"),
+    ("atp_2025_houston", "2025-03-29", "2025-03-30"),
+    ("atp_2025_santiago", "2025-02-22", "2025-02-23"),
+])
+def test_atp_250_28_player_geometry_counts_byes_not_matches(occurrence, q_start, q_end):
+    p = profile(occurrence)
+    g = p.geometry()
+    assert p.category_id == "atp_250"
+    assert (p.main_entrants, p.qualification_entrants, p.qualifier_spots) == (28, 16, 4)
+    assert (p.seeds_count, p.wild_cards, p.byes) == (8, 3, 4)
+    assert g["main"]["bracket_capacity"] == 32
+    assert g["main"]["unplaced_byes"] == 4
+    assert g["main"]["direct_main_slots"] == 21
+    assert len(g["main"]["nodes"]) == 31
+    assert len(g["qualification_sections"]) == 4
+    assert all(len(s["nodes"]) == 3 and s["unplaced_byes"] == 0
+               for s in g["qualification_sections"])
+    assert g["actual_match_count"] == 39
+    assert p.main_points == {"champion": 250, "finalist": 165, "semifinal": 100,
+                             "quarterfinal": 50, "round_of_16": 25, "round_of_32": 0}
+    assert p.qualification_points == {"qualifier": 13, "round_2_loss": 7, "round_1_loss": 0}
+    assert (p.qualification_date_evidence.start_date, p.qualification_date_evidence.end_date) == (q_start, q_end)
+    assert not g["sporting_execution_ready"]
+    with pytest.raises(ValueError):
+        ATPKnockoutProfile.model_validate_json(json.dumps({**p.model_dump(mode="json"), "byes": 0}))

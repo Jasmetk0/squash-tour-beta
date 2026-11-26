@@ -1,5 +1,11 @@
 # Saved ATP squash sporting profiles V1
 
+## 2024 Finals and source coverage audit
+
+Setup source v7 / sporting Category v6 append two independent 2024 group profiles: ATP Finals (10–17 November, 200 per group win, 400 semifinal win, 500 final win) and Next Gen ATP Finals (18–22 December, unranked). Both retain the existing eight-player, two-group, crossover semifinal and squash BO5 adaptation with Admin-selected entrants. No automatic Race or age selection and no historical player identities or results. The 2024 dates match the existing canonical Calendar. Source links are stored on each profile. Existing v5 profiles remain identical.
+
+Run `python scripts/audit_atp_sporting_coverage.py --year 2024 --year 2025` for deterministic source coverage by year/category and per-occurrence missing/profiled status. This read-only tool checks identity, category and Main dates against the canonical Calendar. Undated and known-not-held memberships are separately reported. The audit validates the complete yearly membership partition regardless of selected years. Each dated row includes the original source URL, source state, inclusive duration and occupied ISO weeks; missing events spanning at least three ISO weeks are flagged for chronology research (not an execution decision). A profile is not a claim of native execution readiness or full-season acceptance. It does not verify live external sources or change Run data.
+
 ## Munich and Vienna 2025
 
 Setup source v6 and sporting Category source v5 append two profiles without
@@ -27,6 +33,49 @@ PDF SHA-256 values were obtained from complete downloads in
 Both phases are calendar-projected from Saved source data; Admin proposes the
 round slots. The 43 nodes describe scheduled geometry, not executed matches.
 Native Ranked W52 execution remains outside this source-only change.
+
+### Additional ATP 500 profiles (same unreleased source v6 / Setup v7)
+
+| Event | Qualification | Main | Main/Q weeks (calendar year) | Source |
+| --- | --- | --- | --- | --- |
+| Doha 2025 | 15–16 Feb | 17–22 Feb | W08/W07 | [ATP](https://www.atptour.com/en/news/doha-2025-history-draw-schedule) |
+| Dubai 2025 | 22–23 Feb | 24 Feb–1 Mar | W09/W08 | [ATP](https://www.atptour.com/en/news/dubai-2025-history-draw-schedule) |
+| Halle 2025 | 14–15 Jun | 16–22 Jun | W25/W24 | [ATP](https://www.atptour.com/en/news/halle-2025-atp-500-history-draw-schedule) |
+| Dubai 2024 | 24–25 Feb | 26 Feb–2 Mar | W09/W08 | [ATP](https://www.atptour.com/en/news/dubai-2024-history-draw-schedule) |
+| Halle 2024 | 15–16 Jun | 17–23 Jun | W25/W24 | [ATP](https://www.atptour.com/en/news/halle-2024-atp-500-history-draw-schedule) |
+
+Each has a full Main32, 8 seeds, 3 Main WC, zero BYEs, Q16 in four sections of four, four Q winners and 43 planned matches. All four actual Q winners are present in each final Main draw. The additional historical LL, PR and SE designations are not imported, and do not create additional qualification-winner spots. This is the existing nominal Admin-selected squash geometry, not a reproduction of historical selection or replacement rules. The 2025 Doha schedule article has a typo in the detailed end-date line; the canonical archive and both PDF headers agree on 17–22 February. All five Main points are 500/330/200/100/50/0 and Q points 25/13/0. The ten original PDF SHA-256 values are stored in the profiles; [evidence run 45688533510](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45688533510) downloaded and extracted the original draw files. Doha 2024 remains outside the package: the Q PDF could not be downloaded, and its Main draw has BYEs. No sporting execution claim.
+
+### First ATP 250 profiles and Queen's 2025 (same unreleased source v6 / Setup v7)
+
+| Event | Qualification | Main | Main/Q calendar weeks | Evidence |
+| --- | --- | --- | --- | --- |
+| Stuttgart 2024 | 8–9 Jun | 10–16 Jun | W24/W23 | [Organizer schedule](https://bossopen.com/en/news/packed-program-at-the-boss-open) |
+| Stuttgart 2025 | 7–8 Jun | 9–15 Jun | W24/W23 | [ATP schedule](https://www.atptour.com/en/news/stuttgart-2025-atp-250-history-draw-schedule) |
+| Queen's 2025 | 14–15 Jun | 16–22 Jun | W25/W24 | [ATP schedule](https://www.atptour.com/en/news/queens-2025-atp-500-history-draw-schedule) |
+
+Stuttgart has 28 actual Main entrants in a 32-position bracket, four unplaced BYEs, eight nominal seeds, three Main WC, and 16 Q entrants in four sections producing four winners. The Main awards are 250/165/100/50/25/0 and Q 13/7/0. Exactly 27 Main + 12 Q matches if fully played, not 43. The existing source geometry describes unplaced BYEs; their placement and points unlock after a BYE belong to the native Draw/ranking authorities, not to this data change. The 2024 final draw includes a seed withdrawal and LL in that position; nominal seed count and four Q winners remain unchanged. Historical player identities, replacements and results are not imported. Queen's is Main32/Q16, 8 seeds, 3 Main WC, four Q winners, 43 matches and the existing ATP500 awards. All six original draw PDF hashes are recorded in the package; [evidence run 45690237346](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45690237346) also obtained Houston and Geneva 2025 PDFs. Geneva Q overlaps the Main source window, requiring separate schedule review. Houston is imported below. Geneva remains excluded.
+
+### Further American ATP250 profiles
+
+| Event | Qualification | Main | Main/Q weeks | Dated Q-window evidence |
+| --- | --- | --- | --- | --- |
+| Delray Beach 2024 | 10–11 Feb | 12–18 Feb | W07/W06 | [Organizer, 10 Jan 2024](https://www.delraybeachopen.com/en/tournament/news/fritz-and-paul-rankings-race) |
+| Delray Beach 2025 | 8–9 Feb | 10–16 Feb | W07/W06 | [Organizer, 23 Oct 2024](https://www.delraybeachopen.com/en/tournament/news/2025-dbo-fritz-and-paul) |
+| Houston 2025 | 29–30 Mar | 31 Mar–6 Apr | W14/W13 | [Contemporary Houston Chronicle report, 27 Mar 2025](https://www.houstonchronicle.com/la-voz/article/conciertos-de-emmanuel-marisela-tenis-golf-y-20244570.php) |
+| Santiago 2025 | 22–23 Feb | 24 Feb–2 Mar | W09/W08 | [Organizer, 24 Jan 2025](https://www.chileopen.cl/todo-lo-que-necesitas-saber-para-el-movistar-chileopen-2025-horarios-shows-y-m%C3%A1s) |
+
+Each uses 28 actual Main entrants, 4 unplaced BYEs, 8 nominal seeds, 3 Main WC, 16 Q entrants and four Q winners (39 matches if fully played). All four Q winners are present in the respective final Main draws; historical LL/SE/PR and personal results are not copied. Houston's dates use the contemporary newspaper's explicit dates, corroborated by the archived Q match results; its capacity and points come from the official draw PDFs, not from the newspaper. The Delray Beach 2025 Q PDF does not print points: its 13/7/0 awards are independently checked against the [2025 ATP rulebook, §9.G, p.264](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf). The same rulebook explains the zero-point first loss after BYE; native ranking adoption remains out of scope. [Evidence run 45691597086](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45691597086) downloaded eight original PDFs including Buenos Aires 2025; the Houston hashes come from run 45690237346. Buenos Aires remains excluded pending clarification of the qualified player's replacement (only three Q markers in final Main despite four qualifying winners), even though its [organizer's schedule](https://iebmasargentinaopen.com/todo-lo-que-tenes-que-saber-sobre-el-ieb-argentina-open-2025/) is complete. Source v6 / Setup v7 remain unreleased; previous v5 payloads unchanged.
+
+### Further 2024 ATP500 profiles
+
+| Event | Qualification | Main | Q/Main calendar weeks | Official dated source |
+| --- | --- | --- | --- | --- |
+| Rotterdam 2024 | 10–11 Feb | 12–18 Feb | W06/W07 | [ATP, 8 Feb](https://www.atptour.com/en/news/rotterdam-2024-history-draw-schedule) |
+| Acapulco 2024 | 24–25 Feb | 26 Feb–2 Mar | W08/W09 | [ATP, 23 Feb](https://www.atptour.com/en/news/acapulco-2024-history-draw-schedule) |
+| Vienna 2024 | 19–20 Oct | 21–27 Oct | W42/W43 | [ATP, 15 Oct](https://www.atptour.com/en/news/vienna-2024-atp-500-history-draw-schedule?q=ton) |
+
+Each retains Main32/Q16, 8 seeds, 3 Main WC, four qualifying winners, no BYEs, 43 matches and ATP500 points. The original six draw PDF hashes are in the profile source. [Evidence run 45694538668](https://github.com/Jasmetk0/squash-tour-beta/actions/runs/45694538668) obtained ten of fourteen attempted original PDFs. Acapulco 2025 and Rio 2025 require separate review of seed substitution; Rio 2025 Q points are not printed in its PDF. Rio 2024 and Queen's 2024 original PDFs were unavailable in this run. None of these four are imported. Historical replacements/identities and native execution remain out of scope.
 
 ## Dallas Open 2025
 

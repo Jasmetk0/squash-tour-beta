@@ -178,6 +178,9 @@ Independent sources: [ATP 2012 Los Angeles results](https://www.atptour.com/en/t
 
 ## Canonical boundaries
 
+The boundaries below describe this ATP Tour source. Master v90 adds [a separate Grand Slam source](GRAND_SLAM_W52_PACKAGE_HANDOFF.md) to the full ATP Earth setup. ATP Tour counts and source identities below refer to this source alone.
+
+
 - **Inside:** ATP Tour World Series / Championship Series (1990–99),
   Masters Series / International Series Gold / International Series (2000–08),
   Masters 1000 / ATP 500 / ATP 250 (2009–26), and ATP's year-end Finals.

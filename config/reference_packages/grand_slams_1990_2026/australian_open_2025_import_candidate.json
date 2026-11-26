@@ -19,6 +19,10 @@
       "source_urls": [
         "https://ausopen.com/articles/news/australian-open-2025-qualifying-entry-lists-released",
         "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park"
+      ],
+      "published_dates": [
+        "2024-12-18",
+        "2024-11-25"
       ]
     },
     "entrant_selection": "admin_selected_no_automatic_race_or_age",
@@ -48,7 +52,7 @@
     }
   },
   "notes": [
-    "Profile shape only, not a valid source payload: HTML evidence is not a PDF and exact PDF hashes are missing. Source publication dates must be verified before model validation; intentionally absent.",
+    "Profile shape only, not a valid source payload: HTML evidence is not a PDF and exact PDF hashes are missing. Both source publication dates verified on the organizer pages.",
     "Main WC first-round losers receive zero, not 10; normal qualifiers receive additive Q points. Do not publish until the existing award policy is checked.",
     "Q seeds and Q wild cards, lucky losers and complete original draws need edition-specific review. No simulated historical entrants/results are copied."
   ],
@@ -56,7 +60,9 @@
     "geometry": [
       "https://ausopen.com/articles/news/how-grand-slam-tournament-draws-are-made",
       "https://ausopen.com/articles/news/full-field-australian-open-2025-entry-lists-released",
-      "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park"
+      "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park",
+      "https://ausopen.com/articles/news/australian-open-2025-seeds",
+      "https://www.world.tennis/en/tournament/draws-and-results/print/?circuitCode=MT&eventClassificationCode=Q&matchTypeCode=S&tournamentId=1100197703"
     ],
     "qualification_closure": "https://ausopen.com/articles/news/ao-qualifying-habib-makes-history-fonseca-breaks-through",
     "points": [
@@ -64,7 +70,8 @@
       "https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf%7Ctitle%3D2025"
     ],
     "points_printed_page": 264,
-    "pdf_hash_status": "not_retrieved"
+    "pdf_hash_status": "not_retrieved",
+    "qualification_opening": "https://ausopen.com/articles/news/emerging-talents-stop-gasquet-evans-first-hurdle-ao-qualifying"
   },
   "expected_geometry": {
     "main_matches": 127,
@@ -74,7 +81,7 @@
     "total_matches": 239,
     "unique_field_players": 240
   },
-  "expected_current_model_rejection": "After verified publication dates are supplied: Knockout sources require exact PDF evidence hashes",
+  "expected_current_model_rejection": "Knockout sources require exact PDF evidence hashes",
   "proposed_schedule": {
     "status": "manual_proposal_not_native_preview",
     "calendar": {
@@ -128,6 +135,6 @@
         "slot": 3
       }
     ],
-    "note": "Proposed seven Main and three Q round positions, not exact civil days or validated runtime slots; preserve Sunday opening in W02. Entry/announcement must precede Q."
+    "note": "Manual round-level approximation: real Main R1 ran across Sunday and Tuesday (W02/W03), while current Run schedule binds a complete round to one slot. Proposed W02 R1 requires explicit product/Work review, not historical day equivalence. Entry/announcement must precede Q."
   }
 }

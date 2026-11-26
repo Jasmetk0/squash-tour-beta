@@ -2114,8 +2114,6 @@ class CalendarTourService:
                     result["wild_card_player_ids"] = list(
                         authority.wild_card_authority.active_wild_card_player_ids
                     ) if authority.wild_card_authority else []
-                elif command.data:
-                    raise ValueError("Draw accepts Wild Card input only for a scheduled v5 Edition")
                 draw = build_draw(authority, command.command_id, command.seed)
                 authority = authority.model_copy(
                     update={

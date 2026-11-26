@@ -3403,253 +3403,1922 @@
       "year": 2005,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2005_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "main": {
+        "start": "2005-01-17",
+        "end": "2005-01-30",
+        "iso_weeks": [
+          {
+            "year": 2005,
+            "week": 3
+          },
+          {
+            "year": 2005,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2005,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2004,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2005,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2005_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "main": {
+        "start": "2005-05-23",
+        "end": "2005-06-05",
+        "iso_weeks": [
+          {
+            "year": 2005,
+            "week": 21
+          },
+          {
+            "year": 2005,
+            "week": 22
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2005,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 22
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2004,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 38
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2005,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2005_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "main": {
+        "start": "2005-06-20",
+        "end": "2005-07-03",
+        "iso_weeks": [
+          {
+            "year": 2005,
+            "week": 25
+          },
+          {
+            "year": 2005,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2005,
+              "season_week": 25
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2004,
+              "season_week": 41
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2005,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2005_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "main": {
+        "start": "2005-08-29",
+        "end": "2005-09-11",
+        "iso_weeks": [
+          {
+            "year": 2005,
+            "week": 35
+          },
+          {
+            "year": 2005,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2005,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2004,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2004,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2005",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2006,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2006_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "main": {
+        "start": "2006-01-16",
+        "end": "2006-01-29",
+        "iso_weeks": [
+          {
+            "year": 2006,
+            "week": 3
+          },
+          {
+            "year": 2006,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2006,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2005,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2006,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2006_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "main": {
+        "start": "2006-05-29",
+        "end": "2006-06-11",
+        "iso_weeks": [
+          {
+            "year": 2006,
+            "week": 22
+          },
+          {
+            "year": 2006,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2006,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2005,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2006,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2006_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "main": {
+        "start": "2006-06-26",
+        "end": "2006-07-09",
+        "iso_weeks": [
+          {
+            "year": 2006,
+            "week": 26
+          },
+          {
+            "year": 2006,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2006,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2005,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2006,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2006_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "main": {
+        "start": "2006-08-28",
+        "end": "2006-09-10",
+        "iso_weeks": [
+          {
+            "year": 2006,
+            "week": 35
+          },
+          {
+            "year": 2006,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2006,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2005,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2005,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2006",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2007,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2007_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "main": {
+        "start": "2007-01-15",
+        "end": "2007-01-28",
+        "iso_weeks": [
+          {
+            "year": 2007,
+            "week": 3
+          },
+          {
+            "year": 2007,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2007,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2006,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2007,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2007_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "main": {
+        "start": "2007-05-28",
+        "end": "2007-06-10",
+        "iso_weeks": [
+          {
+            "year": 2007,
+            "week": 22
+          },
+          {
+            "year": 2007,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2007,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2006,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2007,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2007_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "main": {
+        "start": "2007-06-25",
+        "end": "2007-07-08",
+        "iso_weeks": [
+          {
+            "year": 2007,
+            "week": 26
+          },
+          {
+            "year": 2007,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2007,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2006,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2007,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2007_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "main": {
+        "start": "2007-08-27",
+        "end": "2007-09-09",
+        "iso_weeks": [
+          {
+            "year": 2007,
+            "week": 35
+          },
+          {
+            "year": 2007,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2007,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2006,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2006,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2007",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2008,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2008_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "main": {
+        "start": "2008-01-14",
+        "end": "2008-01-27",
+        "iso_weeks": [
+          {
+            "year": 2008,
+            "week": 3
+          },
+          {
+            "year": 2008,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2008,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2007,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2008,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2008_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "main": {
+        "start": "2008-05-25",
+        "end": "2008-06-08",
+        "iso_weeks": [
+          {
+            "year": 2008,
+            "week": 21
+          },
+          {
+            "year": 2008,
+            "week": 22
+          },
+          {
+            "year": 2008,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2008,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2007,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2008,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2008_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "main": {
+        "start": "2008-06-23",
+        "end": "2008-07-06",
+        "iso_weeks": [
+          {
+            "year": 2008,
+            "week": 26
+          },
+          {
+            "year": 2008,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2008,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2007,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2008,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2008_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "main": {
+        "start": "2008-08-25",
+        "end": "2008-09-07",
+        "iso_weeks": [
+          {
+            "year": 2008,
+            "week": 35
+          },
+          {
+            "year": 2008,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2008,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2007,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2007,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2008",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2008-09-08",
+        "source": "https://www.thenationalnews.com/sport/us-open-men-s-singles-finals-a-look-back-1.633193",
+        "note": "Observed Monday final is one day later than ATP archive end; archive projection retained separately, no sporting schedule installed.",
+        "actual_window_projection": {
+          "start": "2008-08-25",
+          "end": "2008-09-08",
+          "iso_weeks": [
+            {
+              "year": 2008,
+              "week": 35
+            },
+            {
+              "year": 2008,
+              "week": 36
+            },
+            {
+              "year": 2008,
+              "week": 37
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2008,
+                "season_week": 35
+              },
+              {
+                "season_start_year": 2008,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2008,
+                "season_week": 37
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2007,
+                "season_week": 51
+              },
+              {
+                "season_start_year": 2007,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2008,
+                "season_week": 1
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2009,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2009_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "main": {
+        "start": "2009-01-19",
+        "end": "2009-02-01",
+        "iso_weeks": [
+          {
+            "year": 2009,
+            "week": 4
+          },
+          {
+            "year": 2009,
+            "week": 5
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2009,
+              "season_week": 4
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 5
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2008,
+              "season_week": 20
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 21
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2009,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2009_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "main": {
+        "start": "2009-05-25",
+        "end": "2009-06-07",
+        "iso_weeks": [
+          {
+            "year": 2009,
+            "week": 22
+          },
+          {
+            "year": 2009,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2009,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2008,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2009,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2009_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "main": {
+        "start": "2009-06-22",
+        "end": "2009-07-05",
+        "iso_weeks": [
+          {
+            "year": 2009,
+            "week": 26
+          },
+          {
+            "year": 2009,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2009,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2008,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2008,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2009,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2009_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "main": {
+        "start": "2009-08-31",
+        "end": "2009-09-13",
+        "iso_weeks": [
+          {
+            "year": 2009,
+            "week": 36
+          },
+          {
+            "year": 2009,
+            "week": 37
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2009,
+              "season_week": 36
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 37
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2008,
+              "season_week": 52
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 1
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2009",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2009-09-14",
+        "source": "https://www.thenationalnews.com/sport/us-open-men-s-singles-finals-a-look-back-1.633193",
+        "note": "Observed Monday final is one day later than ATP archive end; archive projection retained separately, no sporting schedule installed.",
+        "actual_window_projection": {
+          "start": "2009-08-31",
+          "end": "2009-09-14",
+          "iso_weeks": [
+            {
+              "year": 2009,
+              "week": 36
+            },
+            {
+              "year": 2009,
+              "week": 37
+            },
+            {
+              "year": 2009,
+              "week": 38
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2009,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2009,
+                "season_week": 37
+              },
+              {
+                "season_start_year": 2009,
+                "season_week": 38
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2008,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2009,
+                "season_week": 1
+              },
+              {
+                "season_start_year": 2009,
+                "season_week": 2
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2010,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2010_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "main": {
+        "start": "2010-01-18",
+        "end": "2010-01-31",
+        "iso_weeks": [
+          {
+            "year": 2010,
+            "week": 3
+          },
+          {
+            "year": 2010,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2010,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2009,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2010,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2010_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "main": {
+        "start": "2010-05-24",
+        "end": "2010-06-06",
+        "iso_weeks": [
+          {
+            "year": 2010,
+            "week": 21
+          },
+          {
+            "year": 2010,
+            "week": 22
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2010,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 22
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2009,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 38
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2010,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2010_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "main": {
+        "start": "2010-06-21",
+        "end": "2010-07-04",
+        "iso_weeks": [
+          {
+            "year": 2010,
+            "week": 25
+          },
+          {
+            "year": 2010,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2010,
+              "season_week": 25
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2009,
+              "season_week": 41
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2010,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2010_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "main": {
+        "start": "2010-08-30",
+        "end": "2010-09-12",
+        "iso_weeks": [
+          {
+            "year": 2010,
+            "week": 35
+          },
+          {
+            "year": 2010,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2010,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2009,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2009,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2010",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2010-09-13",
+        "source": "https://www.thenationalnews.com/sport/us-open-men-s-singles-finals-a-look-back-1.633193",
+        "note": "Observed Monday final is one day later than ATP archive end; archive projection retained separately, no sporting schedule installed.",
+        "actual_window_projection": {
+          "start": "2010-08-30",
+          "end": "2010-09-13",
+          "iso_weeks": [
+            {
+              "year": 2010,
+              "week": 35
+            },
+            {
+              "year": 2010,
+              "week": 36
+            },
+            {
+              "year": 2010,
+              "week": 37
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2010,
+                "season_week": 35
+              },
+              {
+                "season_start_year": 2010,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2010,
+                "season_week": 37
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2009,
+                "season_week": 51
+              },
+              {
+                "season_start_year": 2009,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2010,
+                "season_week": 1
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2011,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2011_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "main": {
+        "start": "2011-01-17",
+        "end": "2011-01-30",
+        "iso_weeks": [
+          {
+            "year": 2011,
+            "week": 3
+          },
+          {
+            "year": 2011,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2011,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2010,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2011,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2011_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "main": {
+        "start": "2011-05-22",
+        "end": "2011-06-05",
+        "iso_weeks": [
+          {
+            "year": 2011,
+            "week": 20
+          },
+          {
+            "year": 2011,
+            "week": 21
+          },
+          {
+            "year": 2011,
+            "week": 22
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2011,
+              "season_week": 20
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 22
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2010,
+              "season_week": 36
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 38
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2011,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2011_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "main": {
+        "start": "2011-06-20",
+        "end": "2011-07-03",
+        "iso_weeks": [
+          {
+            "year": 2011,
+            "week": 25
+          },
+          {
+            "year": 2011,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2011,
+              "season_week": 25
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2010,
+              "season_week": 41
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2011,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2011_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "main": {
+        "start": "2011-08-29",
+        "end": "2011-09-11",
+        "iso_weeks": [
+          {
+            "year": 2011,
+            "week": 35
+          },
+          {
+            "year": 2011,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2011,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2010,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2010,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2011",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2011-09-12",
+        "source": "https://www.thenationalnews.com/sport/us-open-men-s-singles-finals-a-look-back-1.633193",
+        "note": "Observed Monday final is one day later than ATP archive end; archive projection retained separately, no sporting schedule installed.",
+        "actual_window_projection": {
+          "start": "2011-08-29",
+          "end": "2011-09-12",
+          "iso_weeks": [
+            {
+              "year": 2011,
+              "week": 35
+            },
+            {
+              "year": 2011,
+              "week": 36
+            },
+            {
+              "year": 2011,
+              "week": 37
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2011,
+                "season_week": 35
+              },
+              {
+                "season_start_year": 2011,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2011,
+                "season_week": 37
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2010,
+                "season_week": 51
+              },
+              {
+                "season_start_year": 2010,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2011,
+                "season_week": 1
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2012,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2012_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "main": {
+        "start": "2012-01-16",
+        "end": "2012-01-29",
+        "iso_weeks": [
+          {
+            "year": 2012,
+            "week": 3
+          },
+          {
+            "year": 2012,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2012,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2011,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2012,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2012_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "main": {
+        "start": "2012-05-27",
+        "end": "2012-06-10",
+        "iso_weeks": [
+          {
+            "year": 2012,
+            "week": 21
+          },
+          {
+            "year": 2012,
+            "week": 22
+          },
+          {
+            "year": 2012,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2012,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2011,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2012,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2012_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "main": {
+        "start": "2012-06-25",
+        "end": "2012-07-08",
+        "iso_weeks": [
+          {
+            "year": 2012,
+            "week": 26
+          },
+          {
+            "year": 2012,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2012,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2011,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2012,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2012_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "main": {
+        "start": "2012-08-27",
+        "end": "2012-09-09",
+        "iso_weeks": [
+          {
+            "year": 2012,
+            "week": 35
+          },
+          {
+            "year": 2012,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2012,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2011,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2011,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2012",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established",
+      "actual_mens_final_evidence": {
+        "date": "2012-09-10",
+        "source": "https://www.thenationalnews.com/sport/us-open-men-s-singles-finals-a-look-back-1.633193",
+        "note": "Observed Monday final is one day later than ATP archive end; archive projection retained separately, no sporting schedule installed.",
+        "actual_window_projection": {
+          "start": "2012-08-27",
+          "end": "2012-09-10",
+          "iso_weeks": [
+            {
+              "year": 2012,
+              "week": 35
+            },
+            {
+              "year": 2012,
+              "week": 36
+            },
+            {
+              "year": 2012,
+              "week": 37
+            }
+          ],
+          "run_offsets": {
+            "1": [
+              {
+                "season_start_year": 2012,
+                "season_week": 35
+              },
+              {
+                "season_start_year": 2012,
+                "season_week": 36
+              },
+              {
+                "season_start_year": 2012,
+                "season_week": 37
+              }
+            ],
+            "37": [
+              {
+                "season_start_year": 2011,
+                "season_week": 51
+              },
+              {
+                "season_start_year": 2011,
+                "season_week": 52
+              },
+              {
+                "season_start_year": 2012,
+                "season_week": 1
+              }
+            ]
+          }
+        }
+      }
     },
     {
       "year": 2013,
       "series_id": "grand_slam_australian_open",
       "occurrence_id": "atp_2013_grand_slam_australian_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "main": {
+        "start": "2013-01-14",
+        "end": "2013-01-27",
+        "iso_weeks": [
+          {
+            "year": 2013,
+            "week": 3
+          },
+          {
+            "year": 2013,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2013,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2013,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2012,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2013,
       "series_id": "grand_slam_roland_garros",
       "occurrence_id": "atp_2013_grand_slam_roland_garros",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "main": {
+        "start": "2013-05-27",
+        "end": "2013-06-09",
+        "iso_weeks": [
+          {
+            "year": 2013,
+            "week": 22
+          },
+          {
+            "year": 2013,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2013,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2013,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2012,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2013,
       "series_id": "grand_slam_wimbledon",
       "occurrence_id": "atp_2013_grand_slam_wimbledon",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "main": {
+        "start": "2013-06-24",
+        "end": "2013-07-07",
+        "iso_weeks": [
+          {
+            "year": 2013,
+            "week": 26
+          },
+          {
+            "year": 2013,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2013,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 2013,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2012,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2013,
       "series_id": "grand_slam_us_open",
       "occurrence_id": "atp_2013_grand_slam_us_open",
-      "status": "unreviewed",
-      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "main": {
+        "start": "2013-08-26",
+        "end": "2013-09-08",
+        "iso_weeks": [
+          {
+            "year": 2013,
+            "week": 35
+          },
+          {
+            "year": 2013,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2013,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2013,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2012,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2012,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2013",
+      "date_evidence": "ATP archive indexed event window; actual daily match chronology not established"
     },
     {
       "year": 2014,

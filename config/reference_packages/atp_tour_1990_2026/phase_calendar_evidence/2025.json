@@ -1,0 +1,61 @@
+{
+  "atp_season_year": 2025,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2025_brisbane",
+      "series_id": "brisbane",
+      "category_id": "atp_250",
+      "main_start_date": "2024-12-29",
+      "main_end_date": "2025-01-05",
+      "main_year_weeks": [[2025, 1]],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-12-28",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/brisbane/2025/orderofplay/2024-12-28"
+        },
+        {
+          "date": "2024-12-29",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/29-12-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [[2024, 52]],
+      "source_disagreement": {
+        "source_url": "https://www.tennis.com.au/brisbane-international/news/2024/12/everything-you-need-to-know-tournament-details-and-key-dates-explained",
+        "note": "The December 5 combined-event announcement lists December 27–28 for qualifying. Dated ATP men's singles results include qualifying finals on December 29, the first day of Main."
+      },
+      "follow_up": "Verify the original ATP draw and phase calendar. A January 2025 Run start excludes the observed 2024 W52 qualifying dates. A clock that includes the dates still needs reviewed stage ordering."
+    },
+    {
+      "occurrence_id": "atp_2025_adelaide",
+      "series_id": "adelaide",
+      "category_id": "atp_250",
+      "main_start_date": "2025-01-06",
+      "main_end_date": "2025-01-11",
+      "main_year_weeks": [[2025, 2]],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-01-05",
+          "status": "scheduled",
+          "source_url": "https://www.adelaideinternational.com.au/wp-content/uploads/2025/01/Sunday-5-January-OP-1.pdf"
+        },
+        {
+          "date": "2025-01-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-01-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [[2025, 2]],
+      "source_disagreement": {
+        "source_url": "https://www.tennis.com.au/wp-content/uploads/2025/01/ORDER-OF-PLAY-MONDAY-6-JANUARY-2025-1.pdf",
+        "note": "The January 6 official order of play includes ATP men's singles qualifying and Main. The completed results confirm qualifying on that date. The Sunday order of play alone certifies scheduling, not completion."
+      },
+      "follow_up": "Find the complete qualifying day-by-day record and draw. Treat qualification continuing into the mapped Main week as needing sporting schedule review."
+    }
+  ]
+}

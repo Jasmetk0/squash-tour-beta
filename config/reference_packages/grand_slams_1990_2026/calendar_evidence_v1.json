@@ -1,0 +1,2247 @@
+{
+  "schema_version": "grand_slam_source_evidence.v1",
+  "source_version": 1,
+  "as_of": "2026-11-26",
+  "category": {
+    "category_id": "grand_slam",
+    "name": "Grand Slam"
+  },
+  "series": [
+    {
+      "series_id": "grand_slam_australian_open",
+      "name": "Australian Open",
+      "atp_id": 580,
+      "country": "AUS",
+      "category_id": "grand_slam",
+      "discipline": "mens_singles"
+    },
+    {
+      "series_id": "grand_slam_roland_garros",
+      "name": "Roland Garros",
+      "atp_id": 520,
+      "country": "FRA",
+      "category_id": "grand_slam",
+      "discipline": "mens_singles"
+    },
+    {
+      "series_id": "grand_slam_wimbledon",
+      "name": "Wimbledon",
+      "atp_id": 540,
+      "country": "GBR",
+      "category_id": "grand_slam",
+      "discipline": "mens_singles"
+    },
+    {
+      "series_id": "grand_slam_us_open",
+      "name": "US Open",
+      "atp_id": 560,
+      "country": "USA",
+      "category_id": "grand_slam",
+      "discipline": "mens_singles"
+    }
+  ],
+  "editions": [
+    {
+      "occurrence_id": "atp_2024_grand_slam_australian_open",
+      "series_id": "grand_slam_australian_open",
+      "year": 2024,
+      "main": {
+        "start": "2024-01-14",
+        "end": "2024-01-28",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 2
+          },
+          {
+            "year": 2024,
+            "week": 3
+          },
+          {
+            "year": 2024,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 2
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 18
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualification": {
+        "start": "2024-01-09",
+        "end": "2024-01-12",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 2
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 2
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 18
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "observed_endpoints",
+      "qualification_sources": [
+        "https://ausopen.com/articles/news/goffin-leads-mens-winners-ao-2024-qualifying-begins",
+        "https://ausopen.com/articles/news/aussies-open-jasika-sweeny-hunter-complete-dream-qualifying-runs",
+        "https://www.atptour.com/en/news/australian-open-2024-history-draw-schedule"
+      ],
+      "original_published_qualification": [
+        "2024-01-08",
+        "2024-01-11"
+      ],
+      "note": "Rain delayed start; organizer's initial schedule superseded.",
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_roland_garros",
+      "series_id": "grand_slam_roland_garros",
+      "year": 2024,
+      "main": {
+        "start": "2024-05-26",
+        "end": "2024-06-09",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 21
+          },
+          {
+            "year": 2024,
+            "week": 22
+          },
+          {
+            "year": 2024,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualification": {
+        "start": "2024-05-20",
+        "end": "2024-05-24",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 21
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 21
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 37
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "schedule_and_closure",
+      "qualification_sources": [
+        "https://www.rolandgarros.com/en-us/article/qualifying-draws-unveiled-roland-garros-2024",
+        "https://www.rolandgarros.com/en-us/article/rg2024-yannick-noah-day-sat-may-25-live"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_wimbledon",
+      "series_id": "grand_slam_wimbledon",
+      "year": 2024,
+      "main": {
+        "start": "2024-07-01",
+        "end": "2024-07-14",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 27
+          },
+          {
+            "year": 2024,
+            "week": 28
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 27
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 28
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 43
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 44
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualification": {
+        "start": "2024-06-24",
+        "end": "2024-06-27",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "published_window_pending_dated_results",
+      "qualification_sources": [
+        "https://www.atptour.com/en/news/wimbledon-2024-history-draw-schedule"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_us_open",
+      "series_id": "grand_slam_us_open",
+      "year": 2024,
+      "main": {
+        "start": "2024-08-26",
+        "end": "2024-09-08",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 35
+          },
+          {
+            "year": 2024,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualification": {
+        "start": "2024-08-19",
+        "end": "2024-08-22",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 34
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 34
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 50
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "observed_endpoints",
+      "qualification_sources": [
+        "https://www.atptour.com/en/news/us-open-2024-history-draw-schedule",
+        "https://www.atptour.com/en/news/van-assche-us-open-2024-r1-qualifying-monday",
+        "https://www.usopen.org/amp/en_US/news/articles/2024-08-25/medjedovic_schwartzman_and_more_meet_the_2024_us_open_mens_qualifiers.html"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_australian_open",
+      "series_id": "grand_slam_australian_open",
+      "year": 2025,
+      "main": {
+        "start": "2025-01-12",
+        "end": "2025-01-26",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 2
+          },
+          {
+            "year": 2025,
+            "week": 3
+          },
+          {
+            "year": 2025,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 2
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 18
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualification": {
+        "start": "2025-01-06",
+        "end": "2025-01-09",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 2
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 2
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 18
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "schedule_and_closure",
+      "qualification_sources": [
+        "https://ausopen.com/articles/news/australian-open-2025-qualifying-entry-lists-released",
+        "https://ausopen.com/articles/news/ao-qualifying-habib-makes-history-fonseca-breaks-through",
+        "https://ausopen.com/articles/news/australian-open-2025-provisional-schedule-plan-your-three-weeks-melbourne-park"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_roland_garros",
+      "series_id": "grand_slam_roland_garros",
+      "year": 2025,
+      "main": {
+        "start": "2025-05-25",
+        "end": "2025-06-08",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 21
+          },
+          {
+            "year": 2025,
+            "week": 22
+          },
+          {
+            "year": 2025,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualification": {
+        "start": "2025-05-19",
+        "end": "2025-05-23",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 21
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 21
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 37
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "schedule_and_closure",
+      "qualification_sources": [
+        "https://www.rolandgarros.com/en-us/article/2025-wildcards-men-women-singles-qualifying-rounds",
+        "https://www.rolandgarros.com/en-us/article/rg2025-roland-garros-wrap-friday-may-23"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_wimbledon",
+      "series_id": "grand_slam_wimbledon",
+      "year": 2025,
+      "main": {
+        "start": "2025-06-30",
+        "end": "2025-07-13",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 27
+          },
+          {
+            "year": 2025,
+            "week": 28
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 27
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 28
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 43
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 44
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualification": {
+        "start": "2025-06-23",
+        "end": "2025-06-26",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 26
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 26
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 42
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "published_window_pending_dated_results",
+      "qualification_sources": [
+        "https://www.atptour.com/en/news/wimbledon-2025-history-draw-schedule",
+        "https://www.wimbledon.com/en_GB/tickets/Qualifying_Terms_and_Conditions_of_Sale"
+      ],
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_us_open",
+      "series_id": "grand_slam_us_open",
+      "year": 2025,
+      "main": {
+        "start": "2025-08-24",
+        "end": "2025-09-07",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 34
+          },
+          {
+            "year": 2025,
+            "week": 35
+          },
+          {
+            "year": 2025,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 34
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 50
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "main_source": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualification": {
+        "start": "2025-08-18",
+        "end": "2025-08-22",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 34
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 34
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 50
+            }
+          ]
+        }
+      },
+      "qualification_evidence": "schedule_and_closure",
+      "qualification_sources": [
+        "https://www.atptour.com/en/news/us-open-2025-history-draw-schedule",
+        "https://www.usopen.org/en_US/news/articles/2025-08-21/day_4_of_mens_and_womens_qualifying_at_the_2025_us_open.html",
+        "https://www.usopen.org/en_US/news/articles/2025-08-22/day_5_of_mens_and_womens_qualifying_at_the_2025_us_open.html"
+      ],
+      "original_published_qualification": [
+        "2025-08-18",
+        "2025-08-21"
+      ],
+      "note": "Rain postponed Wednesday play; final qualification Friday.",
+      "sporting_profile_status": "not_imported",
+      "schedule_status": "not_previewed"
+    }
+  ],
+  "inventory": [
+    {
+      "year": 1990,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1990_grand_slam_australian_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "main": {
+        "start": "1990-01-15",
+        "end": "1990-01-28",
+        "iso_weeks": [
+          {
+            "year": 1990,
+            "week": 3
+          },
+          {
+            "year": 1990,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1990,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1989,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 1989,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1990"
+    },
+    {
+      "year": 1990,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1990_grand_slam_roland_garros",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "main": {
+        "start": "1990-05-28",
+        "end": "1990-06-10",
+        "iso_weeks": [
+          {
+            "year": 1990,
+            "week": 22
+          },
+          {
+            "year": 1990,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1990,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1989,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 1989,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1990"
+    },
+    {
+      "year": 1990,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1990_grand_slam_wimbledon",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "main": {
+        "start": "1990-06-25",
+        "end": "1990-07-08",
+        "iso_weeks": [
+          {
+            "year": 1990,
+            "week": 26
+          },
+          {
+            "year": 1990,
+            "week": 27
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1990,
+              "season_week": 26
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 27
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1989,
+              "season_week": 42
+            },
+            {
+              "season_start_year": 1989,
+              "season_week": 43
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1990"
+    },
+    {
+      "year": 1990,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1990_grand_slam_us_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1990",
+      "main": {
+        "start": "1990-08-27",
+        "end": "1990-09-09",
+        "iso_weeks": [
+          {
+            "year": 1990,
+            "week": 35
+          },
+          {
+            "year": 1990,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 1990,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 1990,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 1989,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 1989,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=1990"
+    },
+    {
+      "year": 1991,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1991_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+    },
+    {
+      "year": 1991,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1991_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+    },
+    {
+      "year": 1991,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1991_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+    },
+    {
+      "year": 1991,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1991_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1991"
+    },
+    {
+      "year": 1992,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1992_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+    },
+    {
+      "year": 1992,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1992_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+    },
+    {
+      "year": 1992,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1992_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+    },
+    {
+      "year": 1992,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1992_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1992"
+    },
+    {
+      "year": 1993,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1993_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+    },
+    {
+      "year": 1993,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1993_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+    },
+    {
+      "year": 1993,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1993_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+    },
+    {
+      "year": 1993,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1993_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1993"
+    },
+    {
+      "year": 1994,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1994_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+    },
+    {
+      "year": 1994,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1994_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+    },
+    {
+      "year": 1994,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1994_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+    },
+    {
+      "year": 1994,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1994_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1994"
+    },
+    {
+      "year": 1995,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1995_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995"
+    },
+    {
+      "year": 1995,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1995_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995"
+    },
+    {
+      "year": 1995,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1995_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995"
+    },
+    {
+      "year": 1995,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1995_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1995"
+    },
+    {
+      "year": 1996,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1996_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1996"
+    },
+    {
+      "year": 1996,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1996_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1996"
+    },
+    {
+      "year": 1996,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1996_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1996"
+    },
+    {
+      "year": 1996,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1996_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1996"
+    },
+    {
+      "year": 1997,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1997_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1997"
+    },
+    {
+      "year": 1997,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1997_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1997"
+    },
+    {
+      "year": 1997,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1997_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1997"
+    },
+    {
+      "year": 1997,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1997_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1997"
+    },
+    {
+      "year": 1998,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1998_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1998"
+    },
+    {
+      "year": 1998,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1998_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1998"
+    },
+    {
+      "year": 1998,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1998_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1998"
+    },
+    {
+      "year": 1998,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1998_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1998"
+    },
+    {
+      "year": 1999,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_1999_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1999"
+    },
+    {
+      "year": 1999,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_1999_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1999"
+    },
+    {
+      "year": 1999,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_1999_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1999"
+    },
+    {
+      "year": 1999,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_1999_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=1999"
+    },
+    {
+      "year": 2000,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2000_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2000"
+    },
+    {
+      "year": 2000,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2000_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2000"
+    },
+    {
+      "year": 2000,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2000_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2000"
+    },
+    {
+      "year": 2000,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2000_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2000"
+    },
+    {
+      "year": 2001,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2001_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2001"
+    },
+    {
+      "year": 2001,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2001_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2001"
+    },
+    {
+      "year": 2001,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2001_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2001"
+    },
+    {
+      "year": 2001,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2001_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2001"
+    },
+    {
+      "year": 2002,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2002_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+    },
+    {
+      "year": 2002,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2002_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+    },
+    {
+      "year": 2002,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2002_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+    },
+    {
+      "year": 2002,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2002_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2002"
+    },
+    {
+      "year": 2003,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2003_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+    },
+    {
+      "year": 2003,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2003_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+    },
+    {
+      "year": 2003,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2003_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+    },
+    {
+      "year": 2003,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2003_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2003"
+    },
+    {
+      "year": 2004,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2004_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+    },
+    {
+      "year": 2004,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2004_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+    },
+    {
+      "year": 2004,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2004_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+    },
+    {
+      "year": 2004,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2004_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2004"
+    },
+    {
+      "year": 2005,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2005_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+    },
+    {
+      "year": 2005,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2005_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+    },
+    {
+      "year": 2005,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2005_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+    },
+    {
+      "year": 2005,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2005_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2005"
+    },
+    {
+      "year": 2006,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2006_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+    },
+    {
+      "year": 2006,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2006_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+    },
+    {
+      "year": 2006,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2006_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+    },
+    {
+      "year": 2006,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2006_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2006"
+    },
+    {
+      "year": 2007,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2007_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+    },
+    {
+      "year": 2007,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2007_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+    },
+    {
+      "year": 2007,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2007_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+    },
+    {
+      "year": 2007,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2007_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2007"
+    },
+    {
+      "year": 2008,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2008_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+    },
+    {
+      "year": 2008,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2008_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+    },
+    {
+      "year": 2008,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2008_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+    },
+    {
+      "year": 2008,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2008_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2008"
+    },
+    {
+      "year": 2009,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2009_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+    },
+    {
+      "year": 2009,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2009_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+    },
+    {
+      "year": 2009,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2009_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+    },
+    {
+      "year": 2009,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2009_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2009"
+    },
+    {
+      "year": 2010,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2010_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+    },
+    {
+      "year": 2010,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2010_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+    },
+    {
+      "year": 2010,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2010_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+    },
+    {
+      "year": 2010,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2010_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2010"
+    },
+    {
+      "year": 2011,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2011_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+    },
+    {
+      "year": 2011,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2011_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+    },
+    {
+      "year": 2011,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2011_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+    },
+    {
+      "year": 2011,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2011_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2011"
+    },
+    {
+      "year": 2012,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2012_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+    },
+    {
+      "year": 2012,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2012_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+    },
+    {
+      "year": 2012,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2012_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+    },
+    {
+      "year": 2012,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2012_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2012"
+    },
+    {
+      "year": 2013,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2013_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+    },
+    {
+      "year": 2013,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2013_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+    },
+    {
+      "year": 2013,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2013_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+    },
+    {
+      "year": 2013,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2013_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2013"
+    },
+    {
+      "year": 2014,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2014_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2014"
+    },
+    {
+      "year": 2014,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2014_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2014"
+    },
+    {
+      "year": 2014,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2014_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2014"
+    },
+    {
+      "year": 2014,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2014_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2014"
+    },
+    {
+      "year": 2015,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2015_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2015"
+    },
+    {
+      "year": 2015,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2015_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2015"
+    },
+    {
+      "year": 2015,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2015_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2015"
+    },
+    {
+      "year": 2015,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2015_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2015"
+    },
+    {
+      "year": 2016,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2016_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2016"
+    },
+    {
+      "year": 2016,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2016_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2016"
+    },
+    {
+      "year": 2016,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2016_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2016"
+    },
+    {
+      "year": 2016,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2016_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2016"
+    },
+    {
+      "year": 2017,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2017_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2017"
+    },
+    {
+      "year": 2017,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2017_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2017"
+    },
+    {
+      "year": 2017,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2017_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2017"
+    },
+    {
+      "year": 2017,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2017_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2017"
+    },
+    {
+      "year": 2018,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2018_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2018"
+    },
+    {
+      "year": 2018,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2018_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2018"
+    },
+    {
+      "year": 2018,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2018_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2018"
+    },
+    {
+      "year": 2018,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2018_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2018"
+    },
+    {
+      "year": 2019,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2019_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2019"
+    },
+    {
+      "year": 2019,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2019_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2019"
+    },
+    {
+      "year": 2019,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2019_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2019"
+    },
+    {
+      "year": 2019,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2019_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2019"
+    },
+    {
+      "year": 2020,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2020_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2020"
+    },
+    {
+      "year": 2020,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2020_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2020"
+    },
+    {
+      "year": 2020,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2020_grand_slam_wimbledon",
+      "status": "cancelled",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2020",
+      "source": "https://www.wimbledon.com/pdf/Wimbledon_Compendium_2021v3.pdf",
+      "note": "Official compendium text records cancellation; PDF bytes/page not yet authenticated."
+    },
+    {
+      "year": 2020,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2020_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2020"
+    },
+    {
+      "year": 2021,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2021_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2021"
+    },
+    {
+      "year": 2021,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2021_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2021"
+    },
+    {
+      "year": 2021,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2021_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2021"
+    },
+    {
+      "year": 2021,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2021_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2021"
+    },
+    {
+      "year": 2022,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2022_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2022"
+    },
+    {
+      "year": 2022,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2022_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2022"
+    },
+    {
+      "year": 2022,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2022_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2022"
+    },
+    {
+      "year": 2022,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2022_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2022"
+    },
+    {
+      "year": 2023,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2023_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2023"
+    },
+    {
+      "year": 2023,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2023_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2023"
+    },
+    {
+      "year": 2023,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2023_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2023"
+    },
+    {
+      "year": 2023,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2023_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2023"
+    },
+    {
+      "year": 2024,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2024_grand_slam_australian_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "main": {
+        "start": "2024-01-14",
+        "end": "2024-01-28",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 2
+          },
+          {
+            "year": 2024,
+            "week": 3
+          },
+          {
+            "year": 2024,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 2
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 18
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2024"
+    },
+    {
+      "year": 2024,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2024_grand_slam_roland_garros",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "main": {
+        "start": "2024-05-26",
+        "end": "2024-06-09",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 21
+          },
+          {
+            "year": 2024,
+            "week": 22
+          },
+          {
+            "year": 2024,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2024"
+    },
+    {
+      "year": 2024,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2024_grand_slam_wimbledon",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "main": {
+        "start": "2024-07-01",
+        "end": "2024-07-14",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 27
+          },
+          {
+            "year": 2024,
+            "week": 28
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 27
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 28
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 43
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 44
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2024"
+    },
+    {
+      "year": 2024,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2024_grand_slam_us_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "main": {
+        "start": "2024-08-26",
+        "end": "2024-09-08",
+        "iso_weeks": [
+          {
+            "year": 2024,
+            "week": 35
+          },
+          {
+            "year": 2024,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2024,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2023,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2023,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2024"
+    },
+    {
+      "year": 2025,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2025_grand_slam_australian_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "main": {
+        "start": "2025-01-12",
+        "end": "2025-01-26",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 2
+          },
+          {
+            "year": 2025,
+            "week": 3
+          },
+          {
+            "year": 2025,
+            "week": 4
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 2
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 3
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 4
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 18
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 19
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 20
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2025"
+    },
+    {
+      "year": 2025,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2025_grand_slam_roland_garros",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "main": {
+        "start": "2025-05-25",
+        "end": "2025-06-08",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 21
+          },
+          {
+            "year": 2025,
+            "week": 22
+          },
+          {
+            "year": 2025,
+            "week": 23
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 21
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 22
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 23
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 37
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 38
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 39
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2025"
+    },
+    {
+      "year": 2025,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2025_grand_slam_wimbledon",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "main": {
+        "start": "2025-06-30",
+        "end": "2025-07-13",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 27
+          },
+          {
+            "year": 2025,
+            "week": 28
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 27
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 28
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 43
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 44
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2025"
+    },
+    {
+      "year": 2025,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2025_grand_slam_us_open",
+      "status": "played",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "main": {
+        "start": "2025-08-24",
+        "end": "2025-09-07",
+        "iso_weeks": [
+          {
+            "year": 2025,
+            "week": 34
+          },
+          {
+            "year": 2025,
+            "week": 35
+          },
+          {
+            "year": 2025,
+            "week": 36
+          }
+        ],
+        "run_offsets": {
+          "1": [
+            {
+              "season_start_year": 2025,
+              "season_week": 34
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 35
+            },
+            {
+              "season_start_year": 2025,
+              "season_week": 36
+            }
+          ],
+          "37": [
+            {
+              "season_start_year": 2024,
+              "season_week": 50
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 51
+            },
+            {
+              "season_start_year": 2024,
+              "season_week": 52
+            }
+          ]
+        }
+      },
+      "source": "https://www.atptour.com/en/scores/results-archive?year=2025"
+    },
+    {
+      "year": 2026,
+      "series_id": "grand_slam_australian_open",
+      "occurrence_id": "atp_2026_grand_slam_australian_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2026"
+    },
+    {
+      "year": 2026,
+      "series_id": "grand_slam_roland_garros",
+      "occurrence_id": "atp_2026_grand_slam_roland_garros",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2026"
+    },
+    {
+      "year": 2026,
+      "series_id": "grand_slam_wimbledon",
+      "occurrence_id": "atp_2026_grand_slam_wimbledon",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2026"
+    },
+    {
+      "year": 2026,
+      "series_id": "grand_slam_us_open",
+      "occurrence_id": "atp_2026_grand_slam_us_open",
+      "status": "unreviewed",
+      "source_to_check": "https://www.atptour.com/en/scores/results-archive?year=2026"
+    }
+  ],
+  "meaning": "Source inventory only; no sporting authority. W52 projections preserve all touched ISO weeks for long Main windows, not automatic round slots. Season start year is the year containing offset week 1 of the season (offset 37 means Year Week 37). Unknown is not cancelled or provisional."
+}

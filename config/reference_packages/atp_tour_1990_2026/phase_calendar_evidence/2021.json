@@ -375,6 +375,422 @@
           9
         ]
       }
+    },
+    {
+      "occurrence_id": "atp_2021_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2021-03-01",
+      "main_end_date": "2021-03-07",
+      "main_year_weeks": [
+        [
+          2021,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-02-27",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/rotterdam/2021/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2021-02-28",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/rotterdam/2021/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/rotterdam/2021/atp-muzi/?phase=qualification",
+        "note": "Dated first and final qualifying rounds Feb 27–28; four final-round winners."
+      },
+      "follow_up": "Review source geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.tenisportal.cz/rotterdam/2021/atp-muzi/?phase=qualification",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_doha",
+      "series_id": "doha",
+      "category_id": "atp_250",
+      "main_start_date": "2021-03-08",
+      "main_end_date": "2021-03-13",
+      "main_year_weeks": [
+        [
+          2021,
+          10
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-06",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-doha-2021/"
+        },
+        {
+          "date": "2021-03-07",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-doha-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          9
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-doha-2021/",
+        "note": "Dated first-round results March 6 and four finals March 7; March 6 result list is partial."
+      },
+      "follow_up": "Review source geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-doha-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2021-03-08",
+      "main_end_date": "2021-03-14",
+      "main_year_weeks": [
+        [
+          2021,
+          10
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-07",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/lyon/2021/orderofplay/2021-03-07"
+        },
+        {
+          "date": "2021-03-08",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/lyon/2021/orderofplay/2021-03-08"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          9
+        ],
+        [
+          2021,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/lyon/2021/orderofplay/2021-03-08",
+        "note": "Scored men's qualifying first round March 7, second round March 8; historical host Marseille."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/lyon/2021/orderofplay/2021-03-08",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+        "note": "ATP confirms relocation to Lyon from 2026; distinct from historical Lyon clay tournament."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_santiago",
+      "series_id": "santiago",
+      "category_id": "atp_250",
+      "main_start_date": "2021-03-08",
+      "main_end_date": "2021-03-14",
+      "main_year_weeks": [
+        [
+          2021,
+          10
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-06",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/"
+        },
+        {
+          "date": "2021-03-07",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/"
+        },
+        {
+          "date": "2021-03-08",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          9
+        ],
+        [
+          2021,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/",
+        "note": "Sixteen Q1, eight Q2, four Q3 results March 6–8; five scored Main singles March 8."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 3,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-03-08",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-santiago-2021/",
+        "observed_iso_week": [
+          2021,
+          10
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2021-03-14",
+      "main_end_date": "2021-03-20",
+      "main_year_weeks": [
+        [
+          2021,
+          11
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-13",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-dubai-2021/"
+        },
+        {
+          "date": "2021-03-14",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-dubai-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-dubai-2021/",
+        "note": "Twelve qualifying first-round scores March 13, six finals March 14, with scored Main singles same day."
+      },
+      "follow_up": "Review source geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 6,
+        "source_url": "https://canaltenis.com/resultados-atp-dubai-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-03-14",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-dubai-2021/",
+        "observed_iso_week": [
+          2021,
+          10
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2021-03-15",
+      "main_end_date": "2021-03-20",
+      "main_year_weeks": [
+        [
+          2021,
+          11
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-13",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/"
+        },
+        {
+          "date": "2021-03-14",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/"
+        },
+        {
+          "date": "2021-03-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          10
+        ],
+        [
+          2021,
+          11
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/",
+        "note": "Sixteen Q1, eight Q2, four Q3 results March 13–15; final-day retirement with score and scored Main singles March 15."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 3,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-03-15",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2021/",
+        "observed_iso_week": [
+          2021,
+          11
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_miami",
+      "series_id": "miami",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2021-03-24",
+      "main_end_date": "2021-04-04",
+      "main_year_weeks": [
+        [
+          2021,
+          12
+        ],
+        [
+          2021,
+          13
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-03-22",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/miami/2021/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2021-03-23",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/miami/2021/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          12
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/miami/2021/atp-muzi/?phase=qualification",
+        "note": "Dated men's qualifying rounds March 22–23; organizer confirms schedule and twelve additional singles places."
+      },
+      "follow_up": "Review two-week Main sporting round allocation; do not infer slot order from week labels.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 12,
+        "source_url": "https://www.tenisportal.cz/miami/2021/atp-muzi/?phase=qualification",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "additional_qualifying_source_url": "https://www.miamiopen.com/latest-news/2021-player-announcement/"
+    },
+    {
+      "occurrence_id": "atp_2021_cagliari_2021",
+      "series_id": "cagliari_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-04-05",
+      "main_end_date": "2021-04-11",
+      "main_year_weeks": [
+        [
+          2021,
+          14
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-04-04",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-cagliari-2021/"
+        },
+        {
+          "date": "2021-04-05",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-cagliari-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          13
+        ],
+        [
+          2021,
+          14
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-cagliari-2021/",
+        "note": "Eight Q1 and four Q finals April 4–5; one retirement with score in final round, four scored Main singles April 5."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-cagliari-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-04-05",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-cagliari-2021/",
+        "observed_iso_week": [
+          2021,
+          14
+        ]
+      }
     }
   ]
 }

@@ -2,13 +2,13 @@
   "schema_version": "grand_slam_draw_evidence.v1",
   "source_version": 1,
   "as_of": "2026-11-26",
-  "authority": "Historical label/geometry review only. Slot positions refer to final official first-round draw PDFs, not proposed simulation seeding. Unmarked means no Q/WC/LL or W/A label, not proven direct-entry status. Hash null means raw PDF bytes not retrieved, never substitute rendered screenshot hashes. Nominal geometry excludes actual withdrawals, walkovers, and LL reuse.",
+  "authority": "Historical label/geometry review only. Slot positions refer to final official first-round draw PDFs, not proposed simulation seeding. Unmarked means no Q/WC/LL or W/A label, not proven direct-entry status. Hash null means raw PDF bytes not retrieved, never substitute rendered screenshot hashes. Nominal geometry excludes actual withdrawals, walkovers, and LL reuse. First-round marker snapshots can be intermediate; explicit report_stage distinguishes them. Unmarked counts preserve PDF marks even when organizer provides a separately reconciled classification.",
   "editions": [
     {
-      "occurrence_id": "atp_2025_grand_slam_australian_open",
+      "occurrence_id": "atp_2024_grand_slam_australian_open",
       "source_review": "all_two_main_pdf_pages_visual_review; Q PDF pages visual where available",
       "main": {
-        "url": "https://ausopen.com/sites/default/files/2026-11/draw_ms_2025-01-26_2235.pdf",
+        "url": "https://ausopen.com/sites/default/files/2026-11/draw_ms_2024-01-28_2336.pdf",
         "pages": [
           1,
           2
@@ -20,48 +20,50 @@
         "byes": 0,
         "slots": {
           "wild_card": [
-            3,
-            19,
+            4,
+            27,
+            38,
             52,
-            63,
-            66,
-            74,
-            76,
-            127
+            68,
+            93,
+            101,
+            124
           ],
           "qualifier": [
-            20,
-            29,
-            36,
-            44,
-            50,
+            2,
+            23,
+            35,
+            46,
+            55,
+            58,
             60,
-            62,
-            67,
-            69,
-            87,
-            90,
-            94,
-            99,
+            74,
+            78,
+            79,
+            92,
+            95,
+            100,
+            108,
             110,
-            114,
-            115
+            122
           ],
           "lucky_loser": [
-            79
+            20,
+            31,
+            44
           ]
         },
-        "unmarked": 103
+        "unmarked": 101
       },
       "qualification": {
-        "url": "https://www.atptour.com/en/scores/archive/australian-open/580/2025/draws?matchtype=qualifiersingles",
+        "url": "https://ausopen.com/articles/news/australian-open-2024-qualifying-events-set-thrill-fans",
         "pages": null,
         "sha256": null,
         "draw_capacity": 128,
         "entrant_target": 128,
         "qualifier_spots": 16,
         "rounds": 3,
-        "review": "official HTML draw accessed; complete first-round label audit pending"
+        "review": "Full qualifying draw marker audit pending"
       },
       "nominal": {
         "main_wc": 8,
@@ -71,7 +73,101 @@
         "total_bracket_nodes": 239,
         "unique_field_without_replacements": 240
       },
-      "notes": "One observed LL in final Main draw; Q draw official HTML only. Main PDF has no BYEs."
+      "notes": "Final Main PDF. Q source is entry list, not complete draw."
+    },
+    {
+      "occurrence_id": "atp_2024_grand_slam_us_open",
+      "source_review": "all_two_main_pdf_pages_visual_review; Q PDF pages visual where available",
+      "main": {
+        "url": "https://www.usopen.org/en_US/scores/draws/2024_MS_draw.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrants": 128,
+        "seeds": 32,
+        "byes": 0,
+        "slots": {
+          "wild_card": [
+            6,
+            10,
+            21,
+            58,
+            59,
+            93,
+            99
+          ],
+          "qualifier": [
+            3,
+            5,
+            12,
+            30,
+            34,
+            51,
+            52,
+            63,
+            66,
+            68,
+            69,
+            101,
+            102,
+            111,
+            124,
+            127
+          ],
+          "lucky_loser": [
+            95
+          ]
+        },
+        "unmarked": 104,
+        "additional_verified_wild_card_slots": [
+          114
+        ],
+        "additional_verified_wild_card_sources": [
+          "https://www.usopen.org/en_US/news/articles/2024-08-14/former_mens_champions_thiem_wawrinka_among_2024_us_open_wild_cards.html",
+          "https://www.usopen.org/en_US/news/articles/2024-08-26/ben_shelton_defeats_former_us_open_champion_dominic_thiem_at_austrians_last_slam.html"
+        ]
+      },
+      "qualification": {
+        "url": "https://www.usopen.org/en_US/scores/draws/2024_MQ_draw.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrant_target": 128,
+        "qualifier_spots": 16,
+        "rounds": 3,
+        "observed_slots": {
+          "wild_card": [
+            27,
+            34,
+            38,
+            59,
+            71,
+            90,
+            94,
+            98,
+            124
+          ],
+          "alternate": []
+        },
+        "observed_unmarked": 119,
+        "seeds": 32,
+        "byes": 0
+      },
+      "nominal": {
+        "main_wc": 8,
+        "main_other_places": 104,
+        "main_matches": 127,
+        "q_matches": 112,
+        "total_bracket_nodes": 239,
+        "unique_field_without_replacements": 240
+      },
+      "notes": "Final Main PDF omits WC label at slot 114. Organizer announced and confirmed WC status in match report. Preserve the observed PDF label separately from reconciled entry status."
     },
     {
       "occurrence_id": "atp_2024_grand_slam_wimbledon",
@@ -164,6 +260,259 @@
         "unique_field_without_replacements": 240
       },
       "notes": "Actual final Q has six WC and two A marks, not assumed from another year. Two Main walkovers in later rounds; geometry is 239 potential nodes, not actual played match count."
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_australian_open",
+      "source_review": "all_two_main_pdf_pages_visual_review; Q PDF pages visual where available",
+      "main": {
+        "url": "https://ausopen.com/sites/default/files/2026-11/draw_ms_2025-01-26_2235.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrants": 128,
+        "seeds": 32,
+        "byes": 0,
+        "slots": {
+          "wild_card": [
+            3,
+            19,
+            52,
+            63,
+            66,
+            74,
+            76,
+            127
+          ],
+          "qualifier": [
+            20,
+            29,
+            36,
+            44,
+            50,
+            60,
+            62,
+            67,
+            69,
+            87,
+            90,
+            94,
+            99,
+            110,
+            114,
+            115
+          ],
+          "lucky_loser": [
+            79
+          ]
+        },
+        "unmarked": 103
+      },
+      "qualification": {
+        "url": "https://www.atptour.com/en/scores/archive/australian-open/580/2025/draws?matchtype=qualifiersingles",
+        "pages": null,
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrant_target": 128,
+        "qualifier_spots": 16,
+        "rounds": 3,
+        "review": "official HTML draw accessed; complete first-round label audit pending"
+      },
+      "nominal": {
+        "main_wc": 8,
+        "main_other_places": 104,
+        "main_matches": 127,
+        "q_matches": 112,
+        "total_bracket_nodes": 239,
+        "unique_field_without_replacements": 240
+      },
+      "notes": "One observed LL in final Main draw; Q draw official HTML only. Main PDF has no BYEs."
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_roland_garros",
+      "source_review": "Main both pages visually reviewed, first-round label snapshot 2025-05-30; Q partial",
+      "main": {
+        "url": "https://rg-organisation.fft.fr/sites/default/files/2025-05/Mens_Singles_20250530234841.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrants": 128,
+        "seeds": 32,
+        "byes": 0,
+        "slots": {
+          "wild_card": [
+            3,
+            4,
+            27,
+            54,
+            67,
+            77,
+            102,
+            110
+          ],
+          "qualifier": [
+            7,
+            10,
+            11,
+            21,
+            22,
+            47,
+            59,
+            62,
+            66,
+            90,
+            98,
+            99,
+            116,
+            117,
+            118,
+            127
+          ],
+          "lucky_loser": [
+            37,
+            45,
+            52,
+            68,
+            111,
+            123
+          ]
+        },
+        "unmarked": 98,
+        "report_stage": "after_first_round_not_final"
+      },
+      "qualification": {
+        "url": "https://rg-organisation.fft.fr/sites/default/files/2025-05/Mens_Qualifying_20250519210617.pdf",
+        "pages": [
+          1
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrant_target": 128,
+        "qualifier_spots": 16,
+        "rounds": 3,
+        "review": "Initial Q draw PDF snapshot; only upper half visually reviewed, remaining page inaccessible.",
+        "partial_observed_slots": {
+          "wild_card": [
+            3,
+            6,
+            12,
+            38,
+            43,
+            60
+          ]
+        },
+        "partial_slot_scope": [
+          1,
+          64
+        ]
+      },
+      "nominal": {
+        "main_wc": 8,
+        "main_other_places": 104,
+        "main_matches": 127,
+        "q_matches": 112,
+        "total_bracket_nodes": 239,
+        "unique_field_without_replacements": 240
+      },
+      "notes": "Main draw is dated 30 May, after R1 but not final tournament report; qualification PDF dated 19 May has partial first-round results. Page 1 visually reviewed; page 2 screenshot blocked by federation maintenance redirect."
+    },
+    {
+      "occurrence_id": "atp_2025_grand_slam_us_open",
+      "source_review": "all_two_main_pdf_pages_visual_review; Q PDF pages visual where available",
+      "main": {
+        "url": "https://www.usopen.org/en_US/scores/draws/2025_MS_draw.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrants": 128,
+        "seeds": 32,
+        "byes": 0,
+        "slots": {
+          "wild_card": [
+            5,
+            12,
+            46,
+            50,
+            76,
+            95,
+            123,
+            124
+          ],
+          "qualifier": [
+            23,
+            31,
+            44,
+            47,
+            53,
+            62,
+            67,
+            68,
+            75,
+            77,
+            83,
+            90,
+            91,
+            94,
+            98,
+            100
+          ],
+          "lucky_loser": [
+            28,
+            39,
+            45,
+            109
+          ]
+        },
+        "unmarked": 100
+      },
+      "qualification": {
+        "url": "https://www.usopen.org/en_US/scores/draws/2025_MQ_draw.pdf",
+        "pages": [
+          1,
+          2
+        ],
+        "sha256": null,
+        "draw_capacity": 128,
+        "entrant_target": 128,
+        "qualifier_spots": 16,
+        "rounds": 3,
+        "observed_slots": {
+          "wild_card": [
+            4,
+            19,
+            29,
+            39,
+            66,
+            71,
+            85,
+            93,
+            101
+          ],
+          "alternate": [
+            16
+          ]
+        },
+        "observed_unmarked": 118,
+        "seeds": 32,
+        "byes": 0
+      },
+      "nominal": {
+        "main_wc": 8,
+        "main_other_places": 104,
+        "main_matches": 127,
+        "q_matches": 112,
+        "total_bracket_nodes": 239,
+        "unique_field_without_replacements": 240
+      },
+      "notes": "Final Main and Q draws; one Q alternate. A Main walkover is not a scored match."
     },
     {
       "occurrence_id": "atp_2025_grand_slam_wimbledon",

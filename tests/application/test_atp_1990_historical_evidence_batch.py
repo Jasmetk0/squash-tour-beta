@@ -243,7 +243,7 @@ def test_april_june_sources_and_frankfurt_finals(batch):
     rows = {row["series_id"]: row for row in batch["occurrences"]}
     assert rows["hong_kong"]["historical_evidence"]["host_city"] == "Nice"
     assert rows["hong_kong_salem_2002"]["historical_evidence"]["host_city"] == "Hong Kong"
-    assert rows["hong_kong_salem_2002"]["historical_evidence"]["reported_main_wild_cards"] is None
+    assert rows["hong_kong_salem_2002"]["historical_evidence"]["reported_main_wild_cards"] == 3
     assert rows["hong_kong_salem_2002"]["historical_evidence"]["observed_wild_cards_minimum"] == 1
     assert rows["hamburg"]["historical_evidence"]["alternate_event_end_date"] == "1990-05-14"
     assert rows["hamburg"]["original_end_date"] == "1990-05-13"
@@ -539,7 +539,7 @@ def test_second_pass_june_seed_and_entry_labels_remain_observations(batch):
         "bologna_1998", "florence_1994", "queens_club"]
     b, f, q = [r["historical_evidence"] for r in rows[32:35]]
     assert b["main_seeds"] == 8
-    assert b["reported_main_qualifiers"] is b["reported_main_wild_cards"] is None
+    assert (b["reported_main_qualifiers"], b["reported_main_wild_cards"]) == (4, 3)
     assert f["main_entry_label_evidence"]["observed_seeded_wild_card_ranks"] == [3, 6, 7]
     assert f["main_entry_label_evidence"]["observed_lucky_losers"] == 1
     assert (q["main_entrants"], q["main_bracket_slots"], q["main_byes"], q["main_seeds"]) == (56, 64, 8, 16)
@@ -886,13 +886,13 @@ def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy
                 if type(r["historical_evidence"].get("qualification_size_secondary")) is int}
     assert {r["occurrence_id"] for r in triage["rows"]} == reported
     assert triage["counts"] == {
-        "reported_q_size": 13, "conditional_geometry": 13,
-        "conditional_geometry_and_band": 10, "geometry_without_exact_band": 3,
-        "missing_main_entry_labels": 0, "no_reported_q_size": 61,
+        "reported_q_size": 17, "conditional_geometry": 17,
+        "conditional_geometry_and_band": 12, "geometry_without_exact_band": 5,
+        "missing_main_entry_labels": 0, "no_reported_q_size": 57,
     }
     statuses = Counter(r["triage_status"] for r in triage["rows"])
-    assert statuses == {"conditional_geometry_and_band_candidate": 10,
-                        "missing_exact_band_candidate": 3}
+    assert statuses == {"conditional_geometry_and_band_candidate": 12,
+                        "missing_exact_band_candidate": 5}
     for item in triage["rows"]:
         occurrence = rows[item["occurrence_id"]]
         e = occurrence["historical_evidence"]
@@ -1498,8 +1498,8 @@ def test_workbook_conflict_followup_preserves_original_comparison_and_qualificat
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert row["profile_status"] == "not_in_published_sporting_source"
-    assert batch["summary"]["reported_seed_count_rows"] == 68
-    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 63
+    assert batch["summary"]["reported_seed_count_rows"] == 70
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 67
 
 
 def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
@@ -1939,3 +1939,93 @@ def test_ranking_source_conflicts_are_not_approved_historical_policy(batch):
     assert f["primary_finals_bonus_rule"] is f["primary_finals_inclusion_rule"] is None
     assert f["owner_approved"] is False
     assert row["profile_status"] == "not_in_published_sporting_source"
+
+
+@pytest.mark.parametrize("series,week,q_sections,wc_sections,nominal_gap,ll,se,seeded_wc,exact_band", [
+    ("hong_kong_salem_2002", 17, [2, 0, 2, 0], [0, 2, 0, 1], [], 0, 0, [], False),
+    ("madrid_clay_1994", 18, [1, 1, 0, 2], [2, 0, 1, 0], [6], 1, 0, [], False),
+    ("singapore_march_1992", 18, [1, 2, 1, 0], [0, 3, 0, 0], [], 0, 1, [], True),
+    ("bologna_1998", 21, [2, 0, 0, 2], [1, 1, 1, 0], [], 0, 0, [6], True),
+])
+def test_april_may_additional_main_observations_are_conditional_geometry_only(
+    batch, series, week, q_sections, wc_sections, nominal_gap, ll, se, seeded_wc, exact_band
+):
+    from datetime import date
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    a = e["april_may_main_draw_followup_2026_11_26"]
+    labels = e["main_entry_label_evidence"]
+    assert a["prior_fields"]["qualification_size_secondary"] is None
+    assert a["prior_fields"]["reported_main_qualifiers"] is None
+    assert a["prior_fields"]["reported_main_wild_cards"] is None
+    assert a["source_url"] == e["qualification_size_source"] == labels["source_url"]
+    assert a["source_url"] in e["source_urls"]
+    assert a["reported_qualification_draw_size"] == e["qualification_size_secondary"] == 32
+    assert e["main_seeds"] == a["reported_nominal_seeds"] == 8
+    assert a["missing_nominal_seed_ranks"] == nominal_gap
+    assert a["observed_seed_count"] == 8 - len(nominal_gap)
+    assert labels["observed_seed_ranks"] == [n for n in range(1, 9) if n not in nominal_gap]
+    assert labels["qualifier_counts_by_section"] == q_sections
+    assert labels["wild_card_counts_by_section"] == wc_sections
+    assert sum(q_sections) == e["reported_main_qualifiers"] == 4
+    assert sum(wc_sections) == e["reported_main_wild_cards"] == 3
+    assert labels["observed_lucky_losers"] == ll
+    assert labels["observed_special_exempts"] == se
+    assert labels["observed_seeded_wild_card_ranks"] == seeded_wc
+    assert labels["observed_seeded_wild_cards"] == len(seeded_wc)
+    assert labels["unmarked_entrants"] + ll + se + 4 + 3 == 32
+    assert all(a[k] is None for k in (
+        "actual_qualification_entrants", "actual_qualification_dates",
+        "complete_qualification_graph", "reserved_advancement_places"))
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert all(v is None for v in e["entry_policy"].values())
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    t = next(t for t in batch["knockout_candidate_triage"]["rows"] if t["occurrence_id"] == row["occurrence_id"])
+    assert t["exact_secondary_band_candidate"] is exact_band
+    g = t["conditional_geometry"]
+    main, sections = build_knockout_bracket_parts(
+        event_id=row["occurrence_id"], main_entrants=g["main_entrants"],
+        qualification_entrants=g["qualification_entrants"], qualifier_spots=g["qualifier_spots"],
+        wild_cards=g["wild_cards"], byes=g["main_byes"])
+    assert main.bracket_capacity == 32
+    assert len(sections) == 4  # LL and SE are not extra assumed qualifier spots.
+    assert all(s.bracket_capacity == s.source_entrant_count == 8 for s in sections)
+    assert g["potential_matches"] == 31 + sum(s.source_entrant_count - 1 for s in sections) == 59
+    assert date.fromisoformat(row["original_start_date"]).isocalendar().week == week
+    assert date.fromisoformat(row["original_end_date"]).isocalendar().week == week
+    for clock, key in (
+        (RunCalendar(52, 1, 1990, 2), "run_positions_offset_1_start_1990"),
+        (RunCalendar(52, 37, 1989, 2), "run_positions_offset_37_start_1989"),
+    ):
+        pos = clock.calendar_to_season(1990, week)
+        assert pos is not None
+        assert row[key] == [{"season_index": pos.season_index, "season_week": pos.season_week}]
+
+
+def test_madrid_replacement_and_prague_press_do_not_prove_qualifying_rules(batch):
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    m = rows["madrid_clay_1994"]["historical_evidence"]
+    a = m["april_may_main_draw_followup_2026_11_26"]
+    press = a["contemporary_replacement_evidence"]
+    assert press["main_opening_date"] == rows["madrid_clay_1994"]["original_start_date"]
+    assert press["main_opening_publication_date"] == "1990-05-01"
+    assert press["replacement_publication_date"] == "1990-05-05"
+    assert press["observed_lucky_loser_count"] == m["observed_lucky_losers"] == 1
+    assert m["entry_policy"]["lucky_loser_replacement_rule"] is None
+    assert a["itf_main_crosscheck"]["observed_qualifiers"] == 4
+    sg = rows["singapore_march_1992"]["historical_evidence"]["april_may_main_draw_followup_2026_11_26"]
+    assert sg["surface_source_disagreement"]["official_itf_reported_surface"] == "outdoor hard"
+    assert sg["surface_source_disagreement"]["secondary_reported_surface"] == "indoor hard"
+    bo = rows["bologna_1998"]["historical_evidence"]["april_may_main_draw_followup_2026_11_26"]
+    assert bo["qualification_size_series_comparison"]["series_generic_draw_size"] == 16
+    assert bo["qualification_size_series_comparison"]["edition_specific_reported_draw_size"] == 32
+    p = rows["prague_1999"]["historical_evidence"]
+    c = p["contemporary_czech_press_followup_2026_11_26"]
+    assert c["printed_page"] == "IV" and c["pdf_page_index"] == 11
+    assert c["pdf_page_visually_checked"] is True and c["pdf_sha256"] is None
+    assert c["source_url"] in p["source_urls"]
+    assert c["reported_singles_champion_prize_usd"] == 21370
+    assert c["reported_singles_champion_prize_usd"] != p["reported_prize_money"]
+    assert p["qualification_start_date"] is p["qualification_end_date"] is None

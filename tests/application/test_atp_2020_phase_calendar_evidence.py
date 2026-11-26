@@ -89,3 +89,42 @@ def test_2020_stable_series_historical_host(phase_evidence, series, host):
     row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
     assert row["historical_identity_evidence"]["actual_host"] == host
     assert row["occurrence_id"] == f"atp_2020_{series}"
+
+
+@pytest.mark.parametrize(("series", "q_dates", "q_weeks", "main_weeks", "places"), [
+    ("rotterdam", ["2020-02-08","2020-02-09"], [[2020,6]], [[2020,7]], 4),
+    ("delray_beach", ["2020-02-15","2020-02-16"], [[2020,7]], [[2020,8]], 4),
+    ("lyon", ["2020-02-16","2020-02-17"], [[2020,7],[2020,8]], [[2020,8]], 4),
+    ("rio", ["2020-02-15","2020-02-16"], [[2020,7]], [[2020,8]], 4),
+    ("acapulco", ["2020-02-22","2020-02-23"], [[2020,8]], [[2020,9]], 4),
+    ("dubai", ["2020-02-22","2020-02-23"], [[2020,8]], [[2020,9]], 4),
+    ("santiago", ["2020-02-22","2020-02-23"], [[2020,8]], [[2020,9]], 4),
+    ("cincinnati", ["2020-08-20","2020-08-21"], [[2020,34]], [[2020,35]], 12),
+])
+def test_february_august_2020_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks, places):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    assert row["qualifying_capacity_evidence"]["qualifying_rounds"] == 2
+    assert row["qualifying_capacity_evidence"]["qualifier_places"] == places
+    january = RunCalendar.earth_default(start_year=2020, season_count=2)
+    shifted = RunCalendar(52, 37, 2019, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(0, week + 16, year, week)
+
+
+def test_2020_marseille_same_day_main_and_q(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "lyon")
+    assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+    assert row["main_opening_play_evidence"]["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] in row["main_year_weeks"]
+
+
+def test_2020_cincinnati_relocated_and_expanded_qualification(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "cincinnati")
+    assert row["historical_identity_evidence"]["actual_host"] == "New York, USA"
+    assert row["qualifying_capacity_evidence"]["qualifier_places"] == 12
+    assert row["additional_qualifying_source_url"]
+    assert phase_evidence["sporting_schedule_installed"] is False

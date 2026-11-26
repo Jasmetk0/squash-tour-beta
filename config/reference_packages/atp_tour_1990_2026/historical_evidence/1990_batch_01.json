@@ -81,7 +81,8 @@
     "rule_year": 1990,
     "source_urls": [
       "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
-      "https://www.openerarankings.com/RankingRules1990"
+      "https://www.openerarankings.com/RankingRules1990",
+      "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html"
     ],
     "rank_dependent_bonus_awards": true,
     "base_points_150k_32_candidate": {
@@ -385,6 +386,15 @@
       "official_atp_scope": "Historical ATP account retains opponent-rank bonus system through 1999.",
       "scope": "Retrospective accounts disagree about mandatory Grand Slam inclusion and when bonuses ended. Historical ranking reconstruction is not an approved squash rule; weekly net changes are not gross event points.",
       "primary_rule_page": null
+    },
+    "contemporary_rule_announcement": {
+      "source_url": "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html",
+      "published_on": "1989-08-31",
+      "source_type": "contemporary_press_report_of_atp_announcement",
+      "effective_season": 1990,
+      "best_results_count": 14,
+      "scope": "Contemporary announcement corroborates introduction of Best 14, independently of later reconstructions. It does not establish the detailed 1990 award matrix, mandatory-event inclusion, qualifier bonus, ranking expiry or Finals-specific exception. Historical ATP evidence, not adoption into the squash Run policy.",
+      "primary_full_rule_text": null
     }
   },
   "finals_alternate_window": {
@@ -1140,7 +1150,8 @@
         "event_source": "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990",
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Chevrolet_Classic_%E2%80%93_Singles",
-          "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990"
+          "https://de.wikipedia.org/wiki/Chevrolet_Classic_1990",
+          "https://www.itftennis.com/en/tournament/guaruja/bra/1990/m-wsf-bra-01a-1990/draws-and-results/"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1190,6 +1201,16 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "itf_event_metadata_crosscheck": {
+          "source_url": "https://www.itftennis.com/en/tournament/guaruja/bra/1990/m-wsf-bra-01a-1990/draws-and-results/",
+          "source_type": "official_itf_historical_event_metadata",
+          "start_date": "1990-02-05",
+          "end_date": "1990-02-11",
+          "prize_money_usd": 125000,
+          "surface": "outdoor hard",
+          "grade_as_displayed": "3.5",
+          "scope": "Corroborates historical city, original event window, surface and reported prize money. The reported $150000 financial commitment is separate and not certified ranking class; ITF grade is not ATP category. No original qualifying sheet obtained."
         }
       }
     },
@@ -7173,7 +7194,8 @@
           "https://openerarankings.com/RankingRules1990",
           "https://www.latimes.com/archives/la-xpm-1990-08-16-sp-979-story.html",
           "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/",
-          "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php"
+          "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php",
+          "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-1012-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7437,6 +7459,14 @@
           "source_url": "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php",
           "source_type": "retrospective_local_press",
           "scope": "Local report identifies 1991 as first edition in new stadium and describes long rain delay during 1990 final. Qualifying disqualification discussed in same article belongs to 1994, not 1990. No new Q dates or field inferred."
+        },
+        "singles_vs_doubles_finish_evidence": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-1012-story.html",
+          "published_on": "1990-08-20",
+          "source_type": "contemporary_ap_report",
+          "singles_final_date": "1990-08-19",
+          "doubles_final_postponed_due_to_rain": true,
+          "scope": "Report explicitly separates Sunday singles final from delayed doubles final. This explains why an all-event finish could differ; does not prove the secondary Aug20 label refers to doubles. Preserve singles W33 and alternate reported date, no change to Q evidence."
         }
       }
     },
@@ -10687,7 +10717,8 @@
           "https://ultimatetennisstatistics.com/rankingsTable?date=29-10-1990&rankType=RANK",
           "https://collections2.swco.ttu.edu/bitstream/handle/20.500.12255/295087/Big_Spring_Herald_1990_11_06.pdf?isAllowed=y&sequence=1",
           "https://www.ultimatetennisstatistics.com/rankingsTable?date=26-11-1990&rankType=RANK",
-          "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000"
+          "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000",
+          "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -10771,7 +10802,48 @@
             "source_pdf_url": "https://www.atptour.com/-/media/254456cd5274468ea5f4ac3ac7387bb1.pdf",
             "pdf_text_access": "indexed_text_available_but_render_403",
             "pdf_sha256": null,
-            "pdf_scope": "ATP retrospective PDF lists $2m event and competition window but extracted match rows contain contradictions; use corrected official heritage HTML for match topology. No verified PDF bytes or hash."
+            "pdf_scope": "ATP retrospective PDF lists $2m event and competition window but extracted match rows contain contradictions; use corrected official heritage HTML for match topology. No verified PDF bytes or hash.",
+            "visually_verified_alternate_pdf": {
+              "source_url": "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf",
+              "source_type": "official_retrospective_atp_finals_media_guide",
+              "printed_page": 18,
+              "pdf_page_index": 17,
+              "reviewed_on": "2026-11-26",
+              "pdf_sha256": null,
+              "pdf_byte_access": "direct_download_dns_failed",
+              "visual_status": "page_render_checked",
+              "competition_start_date": "1990-11-13",
+              "competition_end_date": "1990-11-18",
+              "group_count": 2,
+              "group_size": 4,
+              "group_matches": 12,
+              "semifinals": 2,
+              "finals": 1,
+              "group_win_distribution": [
+                3,
+                3,
+                2,
+                2,
+                1,
+                1,
+                0,
+                0
+              ],
+              "prize_money_distribution_usd": [
+                950000,
+                400000,
+                200000,
+                150000,
+                100000,
+                100000,
+                50000,
+                50000
+              ],
+              "prize_money_sum_usd": 2000000,
+              "source_text_warning": "Indexed text of this PDF contains contradictory match rows and a wrong final. The visually rendered printed page instead agrees with official heritage HTML. Treat the indexed extraction as unreliable, not proof that the printed document is wrong. Previously cited different PDF still returned 403 for page rendering.",
+              "primary_ranking_points_table": null,
+              "scope": "Anonymous aggregate geometry, dates and prize-money cross-check only; no historical players or scores imported. Prize-money entries are dollars, not ranking points. No bytes downloaded or hash invented."
+            }
           },
           "points_evidence": {
             "source_url": "https://openerarankings.com/RankingRules1990",
@@ -11244,7 +11316,36 @@
         "request_scope": "1990 season yearbook, not the 1990 edition covering 1989. Inspect tournament pages and ranking rule appendix; no claim it contains full Q sheets until inspected."
       }
     ],
-    "scope": "Public catalog entries identify physical publications, not verified contents, dates, points or PDF hashes."
+    "scope": "Public catalog entries identify physical publications, not verified contents, dates, points or PDF hashes.",
+    "additional_edition_leads_2026_11_26": {
+      "status": "physical_editions_identified_contents_not_obtained",
+      "leads": [
+        {
+          "title": "ATP Tour. Player Guide 1990",
+          "source_url": "https://memorsport.com/product-eng-28295-ATP-Tour-Player-Guide-1990.html",
+          "listed_publication_year": 1989,
+          "listed_pages": 544,
+          "scope": "Seller describes player biographies/stats. Actual ranking appendix or rules not seen."
+        },
+        {
+          "title": "1990 Player Guide",
+          "source_url": "https://www.boekwinkeltjes.nl/s/?dist=0&img=0&n=1&order=0&oud=0&p=1&prijstot=0&prijsvan=0&q=sport+-+tennis&shfee=0&sort=titel&t=1&tl=&zip=",
+          "listed_publication_year": 1990,
+          "listed_pages": 545,
+          "scope": "Alternate seller lists first edition and different pagination; confirm title page/edition before relying on contents."
+        },
+        {
+          "title": "ATP Tour Year One 1990, hardcover",
+          "source_url": "https://www.abebooks.co.uk/9780747509172/Atp-Tour-Year-1990-0747509174/plp",
+          "isbn10": "0747509174",
+          "isbn13": "9780747509172",
+          "listed_publication_year": 1991,
+          "listed_pages": 224,
+          "scope": "Alternate binding/ISBN compared to existing OBNB record. Neither contents nor rule pages obtained."
+        }
+      ],
+      "request_scope": "Ask custodian or seller for table of contents, title/imprint page, exact 1990 points/ranking regulation pages, and original qualifying draw pages. No purchase or message sent."
+    }
   },
   "import_candidate_priority": {
     "status": "research_priority_not_publication_decision",

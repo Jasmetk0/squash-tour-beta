@@ -1349,6 +1349,371 @@
         "note": "The full men's qualifying result list has eight first-round matches June 21 and four finals June 22; no men's Q match dated June 23 in that list. Do not infer a third day from an aggregate competition window."
       },
       "follow_up": "Adjacent Q W25 to Main W26; verify geometry and points and coordinate profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_bastad",
+      "series_id": "bastad",
+      "category_id": "atp_250",
+      "main_start_date": "2025-07-14",
+      "main_end_date": "2025-07-20",
+      "main_year_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/bastad/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-07-14",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/bastad/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          28
+        ],
+        [
+          2025,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/darderi-collignon-bastad-2025-monday",
+        "note": "Dated qualifying results show Sunday Q1 and Monday Q finals; ATP confirms two actual Main singles on Monday July 14."
+      },
+      "follow_up": "Review observed Q/Main overlap and slot/feeder ordering before sporting publication.",
+      "main_opening_play_evidence": {
+        "date": "2025-07-14",
+        "status": "played",
+        "source_url": "https://www.atptour.com/en/news/darderi-collignon-bastad-2025-monday",
+        "observed_iso_week": [
+          2025,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_gstaad",
+      "series_id": "gstaad",
+      "category_id": "atp_250",
+      "main_start_date": "2025-07-14",
+      "main_end_date": "2025-07-20",
+      "main_year_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/gstaad/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-07-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/gstaad/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/gstaad/2025/atp-men/?phase=qualification",
+        "note": "Dated qualifying results record first-round play on July 12 and four finals on July 13."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately and coordinate profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_los_cabos",
+      "series_id": "los_cabos",
+      "category_id": "atp_250",
+      "main_start_date": "2025-07-14",
+      "main_end_date": "2025-07-19",
+      "main_year_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-12",
+          "status": "played",
+          "source_url": "https://loscabostennisopen.com/en/2025/07/13/mexicos-magadan-and-colombias-mejia-advance-in-los-cabos-qualifiers/"
+        },
+        {
+          "date": "2025-07-13",
+          "status": "played",
+          "source_url": "https://loscabostennisopen.com/2025/07/15/tennis-times-domingo-13-de-julio-2025/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://loscabostennisopen.com/2025/07/15/tennis-times-domingo-13-de-julio-2025/",
+        "note": "Organizer reports Saturday Q1 and Sunday four qualifying places. European date feeds show July 13/14 for evening local July 12/13 matches."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately and coordinate profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_umag",
+      "series_id": "umag",
+      "category_id": "atp_250",
+      "main_start_date": "2025-07-20",
+      "main_end_date": "2025-07-26",
+      "main_year_weeks": [
+        [
+          2025,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/umag/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-07-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/umag/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/umag/2025/atp-men/?phase=main",
+        "note": "Four Q finals and two actual Main singles on July 20, before majority Main projection W30."
+      },
+      "follow_up": "Review observed Q/Main overlap and slot/feeder ordering before sporting publication.",
+      "main_opening_play_evidence": {
+        "date": "2025-07-20",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/umag/2025/atp-men/?phase=main",
+        "observed_iso_week": [
+          2025,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_kitzbuhel",
+      "series_id": "kitzbuhel",
+      "category_id": "atp_250",
+      "main_start_date": "2025-07-21",
+      "main_end_date": "2025-07-26",
+      "main_year_weeks": [
+        [
+          2025,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/kitzbuhel/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-07-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/kitzbuhel/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/kitzbuhel/2025/atp-men/?phase=qualification",
+        "note": "Dated qualifying results show Q1 July 19 and four finals July 20."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately and coordinate profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_washington",
+      "series_id": "washington",
+      "category_id": "atp_500",
+      "main_start_date": "2025-07-21",
+      "main_end_date": "2025-07-27",
+      "main_year_weeks": [
+        [
+          2025,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/washington/2025/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2025-07-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/washington/2025/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/washington-2025-atp-500-history-draw-schedule",
+        "note": "Dated Q results and official local July 19–20 program agree; overseas timestamps may differ. The two-round draw has eight qualifying places."
+      },
+      "follow_up": "Adjacent phase weeks; verify geometry and points separately and coordinate profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_canadian_open",
+      "series_id": "canadian_open",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-07-27",
+      "main_end_date": "2025-08-07",
+      "main_year_weeks": [
+        [
+          2025,
+          30
+        ],
+        [
+          2025,
+          31
+        ],
+        [
+          2025,
+          32
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-07-26",
+          "status": "played",
+          "source_url": "https://nationalbankopen.com/news/read/2025/saturday-1-nbo-toronto-results"
+        },
+        {
+          "date": "2025-07-27",
+          "status": "played",
+          "source_url": "https://nationalbankopen.com/news/read/2025/toronto-day-2-recap-served-up-by-sobeys-pospisils-road-ends-arseneaults-begins"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          30
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://nationalbankopen.com/news/read/2025/toronto-day-2-recap-served-up-by-sobeys-pospisils-road-ends-arseneaults-begins",
+        "note": "Toronto men's Q has one physical round. Thirteen matches finished Saturday, three finished Sunday following rain. Organizer confirms Main singles began after remaining qualifying matches on July 27. Three-week Main projection is review-only."
+      },
+      "follow_up": "Review-only three-ISO-week projection; confirm actual round allocation and sport model compatibility before profile publication.",
+      "main_opening_play_evidence": {
+        "date": "2025-07-27",
+        "status": "played",
+        "source_url": "https://nationalbankopen.com/news/read/2025/toronto-day-2-recap-served-up-by-sobeys-pospisils-road-ends-arseneaults-begins",
+        "observed_iso_week": [
+          2025,
+          30
+        ]
+      },
+      "qualifying_geometry_evidence": {
+        "entrants": 32,
+        "physical_rounds": 1,
+        "qualifier_places": 16,
+        "source_url": "https://nationalbankopen.com/news/read/2025/former-national-bank-open-champion-pablo-carreno-busta-headlines-2025-qualifying-list-as-toronto-event-moves-to-a-one-day-preliminary-round"
+      },
+      "source_disagreement": {
+        "source_url": "https://www.atptour.com/en/news/fonseca-toronto-2025-schedule-change",
+        "note": "Originally advertised July 26 only; ATP confirms three unfinished qualifying matches completed Sunday July 27, affecting Main scheduling."
+      },
+      "main_projection_review_only": true
+    },
+    {
+      "occurrence_id": "atp_2025_cincinnati",
+      "series_id": "cincinnati",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-08-07",
+      "main_end_date": "2025-08-18",
+      "main_year_weeks": [
+        [
+          2025,
+          32
+        ],
+        [
+          2025,
+          33
+        ],
+        [
+          2025,
+          34
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-08-05",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/05-08-2025"
+        },
+        {
+          "date": "2025-08-06",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/06-08-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          32
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/06-08-2025",
+        "note": "Two-round qualifying on local August 5–6, including carried-over first-round matches and finals on August 6. European timestamps show some finals on August 7; contemporaneous Argentine reporting confirms local August 6 final. Main spans three ISO weeks, review-only."
+      },
+      "follow_up": "Review-only three-ISO-week projection; confirm actual round allocation and sport model compatibility before profile publication.",
+      "qualifying_geometry_evidence": {
+        "entrants": 48,
+        "physical_rounds": 2,
+        "qualifier_places": 12,
+        "source_url": "https://cincinnatiopen.com/news/qualifying-entry-list-released/"
+      },
+      "source_disagreement": {
+        "source_url": "https://deportv.gob.ar/tenis/tirante-gano-metio-cuadro-principal-navone-tropezo-despidio-cincinnati-nid%3A5997",
+        "note": "August 6 evening report confirms completed qualifying final that a European date feed labels August 7."
+      },
+      "main_projection_review_only": true
     }
   ]
 }

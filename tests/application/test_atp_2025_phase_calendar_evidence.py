@@ -242,3 +242,59 @@ def test_may_june_phase_positions_and_observed_opening(
     for week in sorted(set(q_weeks + [main_week])):
         assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
         assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks", "opening_week"),
+    [
+        ("bastad", ["2025-07-13", "2025-07-14"], [28, 29], [29], 29),
+        ("gstaad", ["2025-07-12", "2025-07-13"], [28], [29], None),
+        ("los_cabos", ["2025-07-12", "2025-07-13"], [28], [29], None),
+        ("kitzbuhel", ["2025-07-19", "2025-07-20"], [29], [30], None),
+        ("umag", ["2025-07-19", "2025-07-20"], [29], [30], 29),
+        ("washington", ["2025-07-19", "2025-07-20"], [29], [30], None),
+        ("canadian_open", ["2025-07-26", "2025-07-27"], [30], [30, 31, 32], 30),
+        ("cincinnati", ["2025-08-05", "2025-08-06"], [32], [32, 33, 34], None),
+    ],
+)
+def test_summer_phase_positions_and_review_only_masters(
+    phase_evidence, series, q_dates, q_weeks, main_weeks, opening_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2025, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2025, w] for w in main_weeks]
+    assert row.get("main_projection_review_only", False) == (len(main_weeks) == 3)
+    if opening_week is not None:
+        opening = row["main_opening_play_evidence"]
+        assert opening["status"] == "played"
+        assert opening["date"] == q_dates[-1] == row["main_start_date"]
+        assert opening["observed_iso_week"] == [2025, opening_week]
+        assert date.fromisoformat(opening["date"]).isocalendar()[:2] == (2025, opening_week)
+        assert opening_week in q_weeks
+    else:
+        assert q_dates[-1] < row["main_start_date"]
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "entrants", "rounds", "places"),
+    [("canadian_open", 32, 1, 16), ("cincinnati", 48, 2, 12)],
+)
+def test_summer_masters_qualifying_geometry_not_inferred_from_duration(
+    phase_evidence, series, entrants, rounds, places
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    geometry = row["qualifying_geometry_evidence"]
+    assert (geometry["entrants"], geometry["physical_rounds"], geometry["qualifier_places"]) == (
+        entrants, rounds, places
+    )
+    assert entrants == places * 2 ** rounds
+    assert len(row["qualifying_date_evidence"]) == 2
+    assert row["main_projection_review_only"] is True
+    assert phase_evidence["sporting_schedule_installed"] is False

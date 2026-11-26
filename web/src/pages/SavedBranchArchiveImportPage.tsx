@@ -31,7 +31,7 @@ const texts = {
     retryHint: 'Výsledek obnovy se nepodařilo potvrdit. Opakování použije stejný příkaz a nevytvoří duplicitní Run.',
     refresh: 'Ověř archiv znovu, protože cílový stav se změnil.',
     restored: 'Run byl úspěšně obnoven.', openRun: 'Otevřít obnovený Run',
-    fullArchive: 'Celý uložený Run', branchArchive: 'Vybraná větev s historií', scope: 'Rozsah archivu'
+    fullArchive: 'Celý uložený Run', customArchive: 'Vlastní výběr větví', branchArchive: 'Vybraná větev s historií', scope: 'Rozsah archivu'
   },
   en: {
     title: 'Saved Branch import review', intro: 'Independently validate the file and target-database collisions first. This preview never restores, saves or overwrites anything.',
@@ -55,7 +55,7 @@ const texts = {
     retryHint: 'The restore outcome could not be confirmed. Retrying uses the same command and cannot create a duplicate Run.',
     refresh: 'Review the archive again because the target state has changed.',
     restored: 'The Run was restored successfully.', openRun: 'Open restored Run',
-    fullArchive: 'Entire Saved Run', branchArchive: 'Selected Branch with history', scope: 'Archive scope'
+    fullArchive: 'Entire Saved Run', customArchive: 'Custom Branch selection', branchArchive: 'Selected Branch with history', scope: 'Archive scope'
   }
 }
 
@@ -193,7 +193,8 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
         {data.can_restore ? l.ready : l.blocked}</p>}
       <dl>
         <dt>{l.name}</dt><dd>{data.display_name} · <code>{data.run_id}</code></dd>
-        <dt>{l.scope}</dt><dd>{data.scope === 'full_saved_run' ? l.fullArchive : l.branchArchive}</dd>
+        <dt>{l.scope}</dt><dd>{data.scope === 'custom_saved_branches' ? l.customArchive :
+          data.scope === 'full_saved_run' ? l.fullArchive : l.branchArchive}</dd>
         <dt>{l.selected}</dt><dd><code>{data.selected_branch_id}</code></dd>
         <dt>{l.viewer}</dt><dd><code>{data.viewer_branch_id}</code></dd>
         <dt>{l.head}</dt><dd><code>{data.selected_head_revision_id}</code></dd>

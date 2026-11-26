@@ -135,7 +135,64 @@
         "entrant_target": 128,
         "qualifier_spots": 16,
         "rounds": 3,
-        "review": "Original Q draw snapshot 20 May with partial first-round results; indexed text available, both screenshots failed due federation maintenance redirect. No final Q marker count claimed."
+        "review": "Original Q draw snapshot 20 May with partial first-round results; indexed text available, both screenshots failed due federation maintenance redirect. No final Q marker count claimed.; complete indexed first-round marker audit added, distinct from final visual audit.",
+        "indexed_marker_audit": {
+          "scope": [
+            1,
+            128
+          ],
+          "wild_card_slots": [
+            23,
+            36,
+            58,
+            61,
+            62,
+            74,
+            95,
+            106,
+            125
+          ],
+          "alternate_labels_observed": 0,
+          "seed_count": 32,
+          "seed_positions": [
+            1,
+            8,
+            9,
+            16,
+            17,
+            24,
+            25,
+            32,
+            33,
+            40,
+            41,
+            48,
+            49,
+            56,
+            57,
+            64,
+            65,
+            72,
+            73,
+            80,
+            81,
+            88,
+            89,
+            96,
+            97,
+            104,
+            105,
+            112,
+            113,
+            120,
+            121,
+            128
+          ],
+          "source_method": "both pages indexed text; screenshots inaccessible",
+          "report_stage": "early_first_round_snapshot_not_final",
+          "organizer_wildcard_announcement": "https://www.rolandgarros.com/en-us/article/2024-wildcards-men-women-singles-qualifying-rounds",
+          "limitations": "Complete first-round positions in indexed source; not an independently visually verified final draw. No claim about subsequent replacement or completed scores."
+        }
       },
       "nominal": {
         "main_wc": 8,
@@ -467,7 +524,7 @@
         "entrant_target": 128,
         "qualifier_spots": 16,
         "rounds": 3,
-        "review": "Initial Q draw PDF snapshot; only upper half visually reviewed, remaining page inaccessible.",
+        "review": "Initial Q draw PDF snapshot; only upper half visually reviewed, remaining page inaccessible.; complete indexed first-round marker audit added, distinct from final visual audit.",
         "partial_observed_slots": {
           "wild_card": [
             3,
@@ -481,7 +538,64 @@
         "partial_slot_scope": [
           1,
           64
-        ]
+        ],
+        "indexed_marker_audit": {
+          "scope": [
+            1,
+            128
+          ],
+          "wild_card_slots": [
+            3,
+            6,
+            12,
+            38,
+            43,
+            60,
+            99,
+            107,
+            119
+          ],
+          "alternate_labels_observed": 0,
+          "seed_count": 32,
+          "seed_positions": [
+            1,
+            8,
+            9,
+            16,
+            17,
+            24,
+            25,
+            32,
+            33,
+            40,
+            41,
+            48,
+            49,
+            56,
+            57,
+            64,
+            65,
+            72,
+            73,
+            80,
+            81,
+            88,
+            89,
+            96,
+            97,
+            104,
+            105,
+            112,
+            113,
+            120,
+            121,
+            128
+          ],
+          "source_method": "page 1 screenshot and both pages indexed text; page 2 screenshot inaccessible",
+          "report_stage": "early_first_round_snapshot_not_final",
+          "organizer_wildcard_announcement": "https://www.rolandgarros.com/en-us/article/2025-wildcards-men-women-singles-qualifying-rounds",
+          "limitations": "Complete first-round positions in indexed source; not an independently visually verified final draw. No claim about subsequent replacement or completed scores."
+        }
       },
       "nominal": {
         "main_wc": 8,

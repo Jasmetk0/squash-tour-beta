@@ -106,3 +106,43 @@ def test_los_cabos_2024_published_capacity_not_a_sporting_profile(phase_evidence
     assert (evidence["main_places"], evidence["qualifier_places"]) == (28, 4)
     assert evidence["status"] == "published_event_description_not_full_profile"
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("santiago", ["2024-02-24","2024-02-25"], [8], [9]),
+        ("indian_wells", ["2024-03-04","2024-03-05"], [10], [10,11]),
+        ("miami", ["2024-03-18","2024-03-19"], [12], [12,13]),
+        ("estoril", ["2024-03-30","2024-03-31"], [13], [14]),
+        ("houston", ["2024-03-30","2024-03-31"], [13], [14]),
+        ("marrakech", ["2024-03-31","2024-04-01"], [13,14], [14]),
+        ("monte_carlo", ["2024-04-06","2024-04-07"], [14], [15]),
+        ("barcelona", ["2024-04-13","2024-04-14"], [15], [16]),
+    ],
+)
+def test_spring_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2024, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(0, week + 16, 2024, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "mapped_week"),
+    [("marrakech", 14, 14), ("monte_carlo", 14, 15)],
+)
+def test_spring_2024_actual_main_opening_overlap(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2024, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2024, mapped_week]]
+    assert (opening["observed_iso_week"] in row["main_year_weeks"]) == (series == "marrakech")

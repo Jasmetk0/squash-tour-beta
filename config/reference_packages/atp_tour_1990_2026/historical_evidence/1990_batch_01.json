@@ -5552,7 +5552,10 @@
           "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
           "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
           "https://de.wikipedia.org/wiki/Monte_Carlo_Open_1990",
-          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv"
+          "https://github.com/shishirnarwal/tennis_atp_jeff_sackman/blob/master/atp_matches_1990.csv",
+          "https://fr.wikipedia.org/w/index.php?title=Tournoi_de_tennis_de_Monte-Carlo_(ATP_1990)&oldid=230539612",
+          "https://fr.tennistemple.com/competitions/monte-carlo/1990/draw",
+          "https://www.latimes.com/archives/la-xpm-1990-04-23-sp-350-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 48,
@@ -5684,6 +5687,56 @@
           "reported_q_size": 48,
           "alternative_equal_section_remainder": 6,
           "scope": "Main-only dataset does not establish actual Q size, dates or reserved places. Queen's and Stockholm conflicts persist; Monte Carlo existing Q48/6 hypothesis is source-specific, while dataset Q7 conflicts with it. Do not replace prior source values or promote a profile."
+        },
+        "monte_carlo_entry_conflict_reconciliation_2026_11_26": {
+          "status": "summary_vs_draw_discrepancy_reconciled_as_observations_not_reserved_policy",
+          "reviewed_on": "2026-11-26",
+          "english_draw": {
+            "source_url": "https://en.wikipedia.org/wiki/1990_Monte_Carlo_Open_%E2%80%93_Singles",
+            "revision_id": 1351040632,
+            "header_q": 6,
+            "header_wc": 4,
+            "initial_position_q": 7,
+            "initial_position_wc": 4,
+            "initial_position_ll": 1,
+            "nominal_seeds": 16,
+            "missing_seed_rank": 3,
+            "q_in_missing_seed_bye_position": 1
+          },
+          "french_draw": {
+            "source_url": "https://fr.wikipedia.org/w/index.php?title=Tournoi_de_tennis_de_Monte-Carlo_(ATP_1990)&oldid=230539612",
+            "revision_id": 230539612,
+            "listed_qualifiers": 7,
+            "listed_wild_cards": 4
+          },
+          "tennistemple_draw": {
+            "source_url": "https://fr.tennistemple.com/competitions/monte-carlo/1990/draw",
+            "initial_position_q": 7,
+            "initial_position_wc": 4,
+            "initial_position_ll": 1,
+            "q_in_missing_seed_bye_position": 1
+          },
+          "contemporary_report": {
+            "source_url": "https://www.latimes.com/archives/la-xpm-1990-04-23-sp-350-story.html",
+            "published_on": "1990-04-23",
+            "main_opening_date": "1990-04-23",
+            "reported_late_withdrawal_seed_rank": 3,
+            "replaced_on_seeding_list": false,
+            "reported_event_amount_usd": 1000000,
+            "reported_winner_prize_usd": 125000
+          },
+          "retained_historical_header_q": 6,
+          "retained_historical_header_wc": 4,
+          "secondary_csv_q": 7,
+          "secondary_csv_wc": 5,
+          "secondary_csv_ll": 1,
+          "reported_q_size": 48,
+          "alternative_equal_section_remainder": 6,
+          "actual_q_entrants": null,
+          "actual_q_dates": null,
+          "reserved_advancement_places": null,
+          "replacement_entry_mechanism": null,
+          "scope": "The English header and its own detailed draw disagree; French and TennisTemple observations corroborate seven Q labels and four WC labels, not the CSV's five WC. A Q-labelled entrant occupied the withdrawn seed's bye position; the contemporary report confirms late withdrawal without reseeding but does not establish the entrant's actual replacement mechanism. Independence of secondary sources is unverified. Preserve six-Q header as source-specific diagnostic only; neither six nor seven is certified reserved advancement. No change to prior triage or canonical data."
         }
       }
     },

@@ -317,3 +317,56 @@ def test_cincinnati_2024_geometry_not_copied_from_2025(phase_evidence):
     assert (evidence["physical_rounds"], evidence["qualifier_places"]) == (2, 7)
     assert evidence["status"] == "published_event_description_not_full_profile"
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("hangzhou", ["2024-09-17","2024-09-18"], [38], [38]),
+        ("tokyo", ["2024-09-23","2024-09-24"], [39], [39]),
+        ("beijing", ["2024-09-24","2024-09-25"], [39], [39]),
+        ("shanghai", ["2024-09-30","2024-10-01"], [40], [40,41]),
+        ("almaty", ["2024-10-13","2024-10-14"], [41,42], [42]),
+        ("brussels", ["2024-10-13","2024-10-14"], [41,42], [42]),
+        ("stockholm", ["2024-10-12","2024-10-13"], [41], [42]),
+        ("basel", ["2024-10-19","2024-10-20"], [42], [43]),
+    ],
+)
+def test_autumn_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2024, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(1, week - 36, 2024, week)
+    assert shifted.calendar_to_season(2024, 36) == RunCalendarPosition(0, 52, 2024, 36)
+    assert shifted.calendar_to_season(2024, 37) == RunCalendarPosition(1, 1, 2024, 37)
+
+
+@pytest.mark.parametrize("series", ["chengdu", "hangzhou", "almaty", "brussels"])
+def test_autumn_2024_same_day_scored_main_and_qualifying(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert opening["observed_iso_week"] in row["main_year_weeks"]
+
+
+@pytest.mark.parametrize(("series", "finish_week"), [("hangzhou", 39), ("tokyo", 40), ("beijing", 40)])
+def test_autumn_2024_finish_outside_majority_week(phase_evidence, series, finish_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["source_finish_iso_week"] == [2024, finish_week]
+    assert list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2]) == row["source_finish_iso_week"]
+    assert row["source_finish_iso_week"] not in row["main_year_weeks"]
+
+
+def test_antwerp_2024_preserves_brussels_licence_identity(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "brussels")
+    assert row["occurrence_id"] == "atp_2024_brussels"
+    assert row["historical_identity_evidence"]["actual_host"] == "Antwerp, Belgium"
+    assert row["historical_identity_evidence"]["source_event_id"] == 7485
+    assert phase_evidence["sporting_schedule_installed"] is False

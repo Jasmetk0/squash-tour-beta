@@ -2118,13 +2118,379 @@
       ],
       "source_confirmation": {
         "source_url": "https://www.skysports.com/tennis/scores-schedule/18-09-2024",
-        "note": "Dated men's Q results on Sep 17 and 18. Canonical Main starts Sep 18 and ends Sep 24 in W39 outside majority-week W38; actual scored Main opening still needs explicit verification."
+        "note": "Dated men's Q results on Sep 17 and 18; four scored Q finals and three scored Main singles on Sep 18. Canonical finish Sep 24 in W39 outside majority W38."
       },
-      "follow_up": "Confirm scored Main opening and review Q/Main ordering and finish in following week.",
+      "follow_up": "Review same-day Q/Main ordering and source finish in following week.",
+      "source_finish_iso_week": [
+        2024,
+        39
+      ],
+      "main_opening_play_evidence": {
+        "date": "2024-09-18",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/chengdu/2024/orderofplay/2024-09-18",
+        "observed_iso_week": [
+          2024,
+          38
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_hangzhou",
+      "series_id": "hangzhou",
+      "category_id": "atp_250",
+      "main_start_date": "2024-09-18",
+      "main_end_date": "2024-09-24",
+      "main_year_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-17",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-09-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          38
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=qualification",
+        "note": "Four scored Q finals and three scored Main singles Sep 18; source finish Sep 24 is W39 outside majority W38."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-09-18",
+        "status": "played",
+        "source_url": "https://www.tennisexplorer.com/hangzhou/2024/atp-men/?phase=main",
+        "observed_iso_week": [
+          2024,
+          38
+        ]
+      },
       "source_finish_iso_week": [
         2024,
         39
       ]
+    },
+    {
+      "occurrence_id": "atp_2024_tokyo",
+      "series_id": "tokyo",
+      "category_id": "atp_500",
+      "main_start_date": "2024-09-25",
+      "main_end_date": "2024-10-01",
+      "main_year_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-23",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-23"
+        },
+        {
+          "date": "2024-09-24",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-24"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/tokyo/2024/orderofplay/2024-09-24",
+        "note": "Men's Q1 Sep 23 and Q2 Sep 24. Main begins Sep 25 and source finish Oct 1 is W40 outside majority W39."
+      },
+      "follow_up": "Review source finish outside majority week and same-week Q/Main ordering.",
+      "source_finish_iso_week": [
+        2024,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2024_beijing",
+      "series_id": "beijing",
+      "category_id": "atp_500",
+      "main_start_date": "2024-09-26",
+      "main_end_date": "2024-10-02",
+      "main_year_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-24",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-09-25",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          39
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/beijing/2024/atp-men/?phase=qualification",
+        "note": "Eight scored Q1 matches Sep 24 and four Q finals Sep 25. Main begins Sep 26, finishes Oct 2 in W40 outside majority W39; exclude women's Q."
+      },
+      "follow_up": "Review source finish outside majority week and same-week Q/Main ordering.",
+      "source_finish_iso_week": [
+        2024,
+        40
+      ]
+    },
+    {
+      "occurrence_id": "atp_2024_shanghai",
+      "series_id": "shanghai",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2024-10-02",
+      "main_end_date": "2024-10-13",
+      "main_year_weeks": [
+        [
+          2024,
+          40
+        ],
+        [
+          2024,
+          41
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-09-30",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-01",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          40
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/shanghai/2024/atp-men/?phase=qualification",
+        "note": "Dated men's first-round qualifying Sep 30 and final qualifying Oct 1, before Oct 2 Main. Partial-score records establish play, not precise completion chronology."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks."
+    },
+    {
+      "occurrence_id": "atp_2024_almaty",
+      "series_id": "almaty",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/almaty/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ],
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "note": "ATP announced Oct 13–14 Q; four scored Q finals and three scored Main singles Oct 14. Actual host Almaty from 2024."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-10-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "observed_iso_week": [
+          2024,
+          42
+        ]
+      },
+      "schedule_confirmation": {
+        "source_url": "https://www.atptour.com/en/news/almaty-2024-atp-250-history-draw-schedule",
+        "note": "Official Q October 13–14 and relocation to Almaty from 2024."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_brussels",
+      "series_id": "brussels",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/antwerp/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-14",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ],
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "note": "European Open in Antwerp in 2024, relocated to Brussels from 2025. Eight Q1 scores Oct 13; four Q finals and four scored Main singles Oct 14."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain source dates independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2024-10-14",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/14-10-2024",
+        "observed_iso_week": [
+          2024,
+          42
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Antwerp, Belgium",
+        "source_event_id": 7485,
+        "source_url": "https://www.atptour.com/en/news/antwerp-brussels-relocation-2025",
+        "note": "ATP confirms relocation from Antwerp to Brussels in 2025, retaining Series identity."
+      }
+    },
+    {
+      "occurrence_id": "atp_2024_stockholm",
+      "series_id": "stockholm",
+      "category_id": "atp_250",
+      "main_start_date": "2024-10-14",
+      "main_end_date": "2024-10-20",
+      "main_year_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-12",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-13",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          41
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/stockholm/2024/atp-men/?phase=qualification",
+        "note": "Dated first-round Q and Q finals on successive days."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2024_basel",
+      "series_id": "basel",
+      "category_id": "atp_500",
+      "main_start_date": "2024-10-21",
+      "main_end_date": "2024-10-27",
+      "main_year_weeks": [
+        [
+          2024,
+          43
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2024",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-10-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2024-10-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          42
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/basel/2024/atp-men/?phase=qualification",
+        "note": "Men's singles qualifying result dates Oct 19 and 20; Main starts Oct 21."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
     }
   ]
 }

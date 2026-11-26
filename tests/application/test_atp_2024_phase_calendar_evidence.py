@@ -204,3 +204,54 @@ def test_stuttgart_2024_qualifying_round_dates_not_one_round_per_day(phase_evide
     ]
     assert {r["date"] for r in evidence["rounds"]} == {e["date"] for e in row["qualifying_date_evidence"]}
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_week", "category"),
+    [
+        ("halle", ["2024-06-15","2024-06-16"], [24], 25, "atp_500"),
+        ("queens_club", ["2024-06-15","2024-06-16"], [24], 25, "atp_500"),
+        ("mallorca", ["2024-06-22","2024-06-23"], [25], 26, "atp_250"),
+        ("eastbourne", ["2024-06-22","2024-06-23"], [25], 26, "atp_250"),
+        ("bastad", ["2024-07-14","2024-07-15"], [28,29], 29, "atp_250"),
+        ("gstaad", ["2024-07-13","2024-07-14"], [28], 29, "atp_250"),
+        ("hamburg", ["2024-07-13","2024-07-14"], [28], 29, "atp_500"),
+        ("newport", ["2024-07-14","2024-07-15"], [28,29], 29, "atp_250"),
+    ],
+)
+def test_june_july_2024_phase_positions(phase_evidence, series, q_dates, q_weeks, main_week, category):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["category_id"] == category
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2024, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2024, main_week]]
+    january = RunCalendar.earth_default(start_year=2024, season_count=2)
+    shifted = RunCalendar(52, 37, 2023, 2)
+    for week in sorted(set(q_weeks + [main_week])):
+        assert january.calendar_to_season(2024, week) == RunCalendarPosition(0, week, 2024, week)
+        assert shifted.calendar_to_season(2024, week) == RunCalendarPosition(0, week + 16, 2024, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_week", "main_week"),
+    [("mallorca", 25, 26), ("bastad", 29, 29), ("newport", 29, 29)],
+)
+def test_june_july_2024_actual_main_opening_overlap(phase_evidence, series, opening_week, main_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2024, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2024, main_week]]
+
+
+def test_queens_2024_same_entrant_can_win_two_physical_rounds_same_day(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "queens_club")
+    evidence = row["qualifying_round_date_evidence"]
+    assert evidence["date"] == "2024-06-16"
+    assert evidence["physical_rounds"] == [1, 2]
+    assert evidence["same_entrant_two_wins"] is True
+    assert evidence["basis"] == "national_federation_report_of_two_wins_same_day_not_exact_match_start_timestamps"
+    assert evidence["date"] in [e["date"] for e in row["qualifying_date_evidence"]]
+    assert phase_evidence["sporting_schedule_installed"] is False

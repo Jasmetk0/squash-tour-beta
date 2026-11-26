@@ -1,0 +1,427 @@
+{
+  "schema": "atp_2019_late_february_evidence.v1",
+  "status": "research_only_no_profiles_installed",
+  "rows": [
+    {
+      "occurrence_id": "atp_2019_rio",
+      "atp_id": "6932",
+      "category_id": "atp_500",
+      "main_start": "2019-02-18",
+      "main_end": "2019-02-24",
+      "observed_q_dates": [
+        "2019-02-16",
+        "2019-02-17"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 32,
+        "main_byes": 0,
+        "main_wc": 3,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4
+      },
+      "main_seed_markers": 8,
+      "main_ll_markers": 1,
+      "q_seed_markers": 7,
+      "q_nominal_seed_count": 8,
+      "q_wc": 3,
+      "q_alt": 1,
+      "qualifier_winners_in_main": 4,
+      "main_walkovers": 1,
+      "main_walkover_stage": "semifinal",
+      "main_expected_match_nodes": 31,
+      "q_expected_match_nodes": 12,
+      "qualification_date_evidence": {
+        "start_date": "2019-02-16",
+        "end_date": "2019-02-17",
+        "source_urls": [
+          "https://tenisrj.rio/2019/01/08/atp-divulga-lista-completa-do-rio-open-2019/"
+        ],
+        "published_dates": [
+          "2019-01-08"
+        ]
+      },
+      "point_evidence": "2019 category guide only; exact event-specific points table not acquired",
+      "sources": [
+        {
+          "url": "https://tenisrj.rio/2019/01/08/atp-divulga-lista-completa-do-rio-open-2019/",
+          "role": "January 8 association announcement explicitly gives Q dates and four qualifier places",
+          "access": "text reviewed",
+          "published": "2019-01-08",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.rioopen.com/-/media/sites/tournaments/rio/revista-programa/revista-rio-open-2019.pdf",
+          "role": "official event program confirms both Q days and Main first day",
+          "access": "PDF extracted table; screenshot failed (35 MB limit)",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.wikipedia.org/w/index.php?title=2019_Rio_Open_%E2%80%93_Singles&oldid=1363343467",
+          "role": "secondary final draw: Main32, Q16, three Main WC and three Q WC, four winners enter Main, one Main LL, Q seed 2 moved to Main and replaced by alternate; one semifinal walkover",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.tennisexplorer.com/rio-de-janeiro/2019/atp-men/?phase=qualification",
+          "role": "dated Q results agree with final bracket",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/en/scores/results-archive?year=2019",
+          "role": "official Main date archive",
+          "access": "indexed archive",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Main/Q original PDFs inaccessible at ATP6932 URLs; binary hashes absent",
+        "Need exact event point tables and additive/LL rules",
+        "Q seed replacement and walkover semantics; do not conflate 31 planned nodes and 31 played matches",
+        "Production import/native execution untested"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_lyon",
+      "atp_id": "496",
+      "historic_host": "Marseille",
+      "category_id": "atp_250",
+      "main_start": "2019-02-18",
+      "main_end": "2019-02-24",
+      "observed_q_dates": [
+        "2019-02-17",
+        "2019-02-18"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_wc": 3,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4
+      },
+      "main_seed_markers": 8,
+      "main_ll_markers": 2,
+      "q_seed_markers": 8,
+      "q_wc": 2,
+      "q_alt": 1,
+      "qualifier_winners_in_main": 4,
+      "q_retirements": 1,
+      "main_expected_match_nodes": 27,
+      "q_expected_match_nodes": 12,
+      "qualification_date_evidence": null,
+      "point_evidence": "2019 category guide only",
+      "daily_counts": [
+        {
+          "date": "2019-02-17",
+          "q": 8,
+          "main": 0
+        },
+        {
+          "date": "2019-02-18",
+          "q": 4,
+          "main": 3
+        },
+        {
+          "date": "2019-02-19",
+          "q": 0,
+          "main": 6
+        },
+        {
+          "date": "2019-02-20",
+          "q": 0,
+          "main": 6
+        },
+        {
+          "date": "2019-02-21",
+          "q": 0,
+          "main": 5
+        },
+        {
+          "date": "2019-02-22",
+          "q": 0,
+          "main": 4
+        },
+        {
+          "date": "2019-02-23",
+          "q": 0,
+          "main": 2
+        },
+        {
+          "date": "2019-02-24",
+          "q": 0,
+          "main": 1
+        }
+      ],
+      "sources": [
+        {
+          "url": "https://www.atptour.com/-/media/1efa829ce2cf45e6874aafe4d0289005.pdf",
+          "role": "official media notes Main28 and Main date",
+          "access": "PDF text read, screenshot HTTP403",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.gamesetpredict.com/fr/tournoi/open-13-provence-2019-atp/",
+          "role": "all 39 Q/Main result rows with dates; Q2 and Main R1 overlap",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://newikis.com/en/2019_Open_13_Provence_%E2%80%93_Singles",
+          "role": "secondary Wikipedia mirror final draw and entry markers; two LL; Q16, eight seeds, two WC, one ALT",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/marseille-2019/4190/orderofplay/2019-02-18",
+          "role": "independent daily results, four Q2 and three Main R1",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.tennisactu.net/news-atp-marseille-q-barrere-janvier-et-lesbienne-qualifies-79886.html",
+          "role": "contemporary Feb17 report states Sunday Q opening",
+          "access": "indexed contemporary report",
+          "published": "2019-02-17",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "ATP496 original Main/Q PDFs inaccessible and no hashes",
+        "No dated preplay source establishes both Q days",
+        "Q2/Main overlap W08 must be preserved",
+        "Exact event points, import/native execution untested"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_dubai",
+      "atp_id": "495",
+      "category_id": "atp_500",
+      "main_start": "2019-02-25",
+      "main_end": "2019-03-02",
+      "observed_q_dates": [
+        "2019-02-23",
+        "2019-02-24"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 32,
+        "main_byes": 0,
+        "main_wc": 3,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4
+      },
+      "main_seed_markers": 8,
+      "main_ll_markers": 2,
+      "q_seed_markers": 8,
+      "q_wc": 3,
+      "q_alt": 0,
+      "qualifier_winners_in_main": 4,
+      "main_expected_match_nodes": 31,
+      "q_expected_match_nodes": 12,
+      "qualification_date_evidence": null,
+      "main_points": {
+        "champion": 500,
+        "finalist": 300,
+        "semifinal": 180,
+        "quarterfinal": 90,
+        "round_of_16": 45,
+        "round_of_32": 0
+      },
+      "qualification_points": {
+        "qualifier": 20,
+        "round_2_loss": 10,
+        "round_1_loss": 0
+      },
+      "point_evidence": "both ATP original PDF extracted tables (screenshot unavailable); Q 20/10/0 and Main 500/300/180/90/45/0",
+      "main_q_slots": [
+        4,
+        5,
+        15,
+        29
+      ],
+      "main_ll_slots": [
+        18,
+        20
+      ],
+      "main_wc_slots": [
+        11,
+        12,
+        22
+      ],
+      "q_wc_slots": [
+        3,
+        7,
+        15
+      ],
+      "sources": [
+        {
+          "url": "https://www.protennislive.com/posting/2019/495/mds.pdf",
+          "role": "original ATP final Main draw extracted 32 slots, eight seeds, 3 WC, four Q, two LL, points table",
+          "access": "PDF text read; screenshot DisabledError",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.protennislive.com/posting/2019/495/qs.pdf",
+          "role": "original ATP final Q16, 8 seeds, three WC, all 12 match scores and point table",
+          "access": "PDF text read; screenshot DisabledError",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/dubai/2019/draw",
+          "role": "independent Main bracket entry markers",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/dubai/2019/orderofplay/2019-02-23",
+          "role": "eight men's Q1; separate women's final excluded",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://en.tennistemple.com/competitions/dubai-2019/4281/orderofplay/2019-02-24",
+          "role": "four men's Q2",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://dubaidutyfreetennischampionships.com/epic-returns-2019-mens-week-at-the-dubai-duty-free-tennis-championships/",
+          "role": "organizer Feb23 post confirms Main dates only, not full Q window",
+          "access": "text reviewed",
+          "published": "2019-02-23",
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Original PDF bytes/hash absent; visual review still missing",
+        "Dated preplay source explicitly establishing complete men's Q window missing",
+        "Additive Q/LL rule review and production import/native execution untested",
+        "Do not confuse women's February 17–23 draw with ATP"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_sao_paulo",
+      "atp_id": "533",
+      "category_id": "atp_250",
+      "main_start": "2019-02-25",
+      "main_end": "2019-03-03",
+      "observed_q_dates": [
+        "2019-02-23",
+        "2019-02-24"
+      ],
+      "q_round_matches": [
+        8,
+        4
+      ],
+      "geometry": {
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "main_byes": 4,
+        "main_wc": null,
+        "q_capacity": 16,
+        "q_entrants": 16,
+        "q_byes": 0,
+        "q_spots": 4
+      },
+      "main_wc_announced": 3,
+      "main_seed_markers": null,
+      "main_ll_markers": null,
+      "q_seed_markers": null,
+      "q_wc": null,
+      "qualifier_winners_in_main": 4,
+      "main_expected_match_nodes": 27,
+      "q_expected_match_nodes": 12,
+      "qualification_date_evidence": {
+        "start_date": "2019-02-23",
+        "end_date": "2019-02-24",
+        "source_urls": [
+          "https://ge.globo.com/google/amp/tenis/noticia/ainda-sem-brasileiros-atp-divulga-lista-dos-tenistas-do-brasil-open-em-sao-paulo.ghtml"
+        ],
+        "published_dates": [
+          "2019-01-15"
+        ]
+      },
+      "point_evidence": "2019 category guide only",
+      "sources": [
+        {
+          "url": "https://ge.globo.com/google/amp/tenis/noticia/ainda-sem-brasileiros-atp-divulga-lista-dos-tenistas-do-brasil-open-em-sao-paulo.ghtml",
+          "role": "January 15 ATP entry list report explicit both Q dates and four places; three announced WC, not final draw",
+          "access": "text reviewed",
+          "published": "2019-01-15",
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.gamesetpredict.com/fr/tournoi/brasil-open-2019-atp/",
+          "role": "all Q results: eight Feb23, four Feb24, four winners each appear in Main, Main28",
+          "access": "text reviewed",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        },
+        {
+          "url": "https://www.itftennis.com/en/tournament/sao-paulo/bra/2019/m-250-bra-01a-2019/draws-and-results/",
+          "role": "ITF Main dates agree",
+          "access": "indexed archive",
+          "published": null,
+          "accessed": "2026-11-26",
+          "sha256": null
+        }
+      ],
+      "gaps": [
+        "Original final Main and Q draws not yet reviewed; no hashes",
+        "Final seeds, WC, LL and Q entry statuses unresolved; announced WC cannot substitute for actual",
+        "Exact event points, import/native execution untested"
+      ]
+    }
+  ]
+}

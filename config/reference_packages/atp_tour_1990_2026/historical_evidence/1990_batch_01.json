@@ -57,16 +57,16 @@
       "missing_reported_financial_commitment": 11,
       "finals_separate_group_points_candidate": 1
     },
-    "second_pass_review_note": "All 75 occurrences received a second-pass review of source access, observed Main labels or retained prior evidence. 74 knockout events plus one official Finals group format; one advertised Q window, no actual Q sheet obtained. Review completion is not sporting-profile readiness.",
+    "second_pass_review_note": "All 75 occurrences received a second-pass review of source access, observed Main labels or retained prior evidence. 74 knockout events plus one official Finals group format; subsequent targeted reviews found two advertised Q windows, no actual Q sheet obtained. Review completion is not sporting-profile readiness.",
     "calendar_verified_rows": 75,
     "full_sporting_format_verified_rows": 0,
     "main_entrant_crosschecked_rows": 75,
-    "advertised_qualification_window_rows": 1,
+    "advertised_qualification_window_rows": 2,
     "targeted_import_candidates_reviewed_rows": 3,
     "partial_actual_qualification_play_evidence_rows": 1,
     "contemporary_printed_main_draw_evidence_rows": 1,
-    "contemporary_qualification_completion_evidence_rows": 3,
-    "contemporary_qualification_completion_evidence_note": "Includes New Haven three-win path, Barcelona explicitly qualified entrant before Main, and Orlando qualifier reported reaching Main semifinal. None establishes a full Q field/draw or exact event-wide dates. Older partial_actual_qualification_play_evidence_rows counts specific Q match-count evidence only."
+    "contemporary_qualification_completion_evidence_rows": 4,
+    "contemporary_qualification_completion_evidence_note": "Includes New Haven three-win path, Barcelona qualified entrant before Main, Orlando qualifier reaching Main semifinal, and Indian Wells qualifier winning on Main opening day. None establishes a full Q field/draw or exact event-wide dates. Older partial_actual_qualification_play_evidence_rows counts specific Q match-count evidence only."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -82,7 +82,8 @@
     "source_urls": [
       "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
       "https://www.openerarankings.com/RankingRules1990",
-      "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html"
+      "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html",
+      "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/"
     ],
     "rank_dependent_bonus_awards": true,
     "base_points_150k_32_candidate": {
@@ -394,7 +395,14 @@
       "effective_season": 1990,
       "best_results_count": 14,
       "scope": "Contemporary announcement corroborates introduction of Best 14, independently of later reconstructions. It does not establish the detailed 1990 award matrix, mandatory-event inclusion, qualifier bonus, ranking expiry or Finals-specific exception. Historical ATP evidence, not adoption into the squash Run policy.",
-      "primary_full_rule_text": null
+      "primary_full_rule_text": null,
+      "upi_corroboration": {
+        "source_url": "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
+        "published_on": "1989-08-31",
+        "effective_season": 1990,
+        "best_results_count": 14,
+        "scope": "Directly accessible contemporary wire report explicitly describes Best 14 introduction in January. Additional match conduct changes are tennis-specific and not adopted into squash. No exact points table or Finals inclusion details."
+      }
     }
   },
   "finals_alternate_window": {
@@ -2002,7 +2010,8 @@
           "https://www.dewiki.de/Lexikon/Newsweek_Champions_Cup_1990",
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
           "https://www.itftennis.com/en/tournament/indian-wells/usa/1990/m-css-usa-01a-1990/draws-and-results/",
-          "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
+          "https://www.latimes.com/archives/la-xpm-1990-02-04-sp-371-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2075,6 +2084,25 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "contemporary_qualification_completion_evidence": {
+          "status": "one_qualifier_confirmed_in_main_not_dated_full_q_draw",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
+          "published_on": "1990-03-06",
+          "printed_page": null,
+          "minimum_confirmed_qualifiers": 1,
+          "reported_qualifier_main_match_date": "1990-03-05",
+          "reported_qualifier_defeated_seed_rank": 15,
+          "scope": "Existing contemporary opening-day report explicitly labels one successful qualifier and records a Main win over seed 15 on March 5. This corroborates Q completion for at least one entrant by Main opening; no full Q field, actual event-wide dates or reserved places."
+        },
+        "contemporary_advance_announcement": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-02-04-sp-371-story.html",
+          "published_on": "1990-02-04",
+          "printed_page": null,
+          "advertised_main_start_date": "1990-03-05",
+          "advertised_main_end_date": "1990-03-11",
+          "advertised_event_amount_usd": 1000000,
+          "scope": "Pre-event report supports original men's Main window and advertised amount; expected player field is not guaranteed actual entry or Q policy."
         }
       }
     },
@@ -6547,7 +6575,8 @@
           "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles",
           "https://www.latimes.com/archives/la-xpm-1990-07-30-sp-867-story.html",
-          "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html",
+          "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6609,13 +6638,51 @@
           "status": "qualification_source_search_attempted_unresolved",
           "reviewed_on": "2026-11-25",
           "qualification_draw_status": "not_obtained",
-          "qualification_dates_status": "not_obtained",
+          "qualification_dates_status": "advertised_window_actual_dates_not_verified",
           "point_rule_status": "secondary_not_primary_verified",
           "source_access": {
             "source_url": "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles_%E2%80%93_Singles",
             "outcome": "secondary_main_draw_available_no_q_sheet"
           },
-          "remaining": "No Q draw or dates; 1991/1992/1993 prequalification articles cannot establish 1990 rules or days."
+          "remaining": "Obtain actual July 28–29 regular Q results/field, distinguish the two prequalifying berths from Q-to-Main advances, and coordinate any prequalification representation; no inference from other years."
+        },
+        "advertised_qualification_window": {
+          "status": "contemporary_press_announced_window_not_actual_play",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html",
+          "published_on": "1990-07-20",
+          "printed_page": null,
+          "start_date": "1990-07-28",
+          "end_date": "1990-07-29",
+          "advertised_main_start_date": "1990-07-30",
+          "advertised_main_end_date": null,
+          "main_start_corroboration_url": "https://www.latimes.com/archives/la-xpm-1990-07-30-sp-867-story.html",
+          "calendar_year_week": 30,
+          "main_calendar_year_week": 31,
+          "run_positions_offset_1_start_1990": [
+            {
+              "season_index": 0,
+              "season_week": 30
+            }
+          ],
+          "run_positions_offset_37_start_1989": [
+            {
+              "season_index": 0,
+              "season_week": 46
+            }
+          ],
+          "scope": "July 20 report explicitly schedules regular qualifying for July 28–29. July 30 article independently confirms opening of Main. Advertised qualifying dates only; no complete actual Q results or event-wide dates. Original print pagination not available in HTML."
+        },
+        "prequalification_evidence": {
+          "status": "contemporary_partial_play_and_reported_allocation_separate_from_regular_q",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html",
+          "published_on": "1990-07-20",
+          "printed_page": null,
+          "reported_prequalification_main_slots": 32,
+          "reported_seeded_reserved_berths": 16,
+          "reported_other_berths": 16,
+          "reported_advances_to_regular_qualification": 2,
+          "minimum_reported_prequalification_main_matches": 5,
+          "scope": "Report describes a separate prequalification main draw with 16 reserved seeded berths and 16 other berths, and two advances into regular qualifying. Five distinct first-round losses described. Does not establish prequalification total initial participants, full draw or actual dates, regular Q entrants, Q-to-Main advances, or a supported three-stage engine policy. No historical identities or scores imported."
         }
       }
     },

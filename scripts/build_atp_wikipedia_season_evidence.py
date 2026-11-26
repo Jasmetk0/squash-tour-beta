@@ -28,6 +28,7 @@ from pathlib import Path
 
 MONTHS = {m: i for i, m in enumerate(
     ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"], 1)}
+TIER_RE = r"ATP (?:World )?Tour (?:250|500|Masters)|ATP (?:World Tour )?Finals|Next Generation"
 CATEGORY_WORDS = (
     ("ATP Tour Masters 1000", "atp_masters_1000"), ("ATP Tour 500", "atp_500"),
     ("ATP Tour 250", "atp_250"), ("Next Generation ATP Finals", "next_gen_finals"),
@@ -43,13 +44,19 @@ def fetch(url: str, raw_dir: Path, delay: float = 1.0) -> tuple[bytes, str]:
     name = hashlib.sha256(url.encode()).hexdigest()[:16] + ".html"
     path = raw_dir / name
     if not path.exists():
-        res = subprocess.run(
-            ["curl", "-sS", "-m", "60", "-L", "-A", "Mozilla/5.0", "-o", str(path),
-             "-w", "%{http_code}", url], capture_output=True, text=True, check=False)
-        time.sleep(delay)
-        if res.stdout.strip() != "200":
+        code = ""
+        for attempt in range(6):
+            res = subprocess.run(
+                ["curl", "-sS", "-m", "60", "-L", "-A", "Mozilla/5.0", "-o", str(path),
+                 "-w", "%{http_code}", url], capture_output=True, text=True, check=False)
+            code = res.stdout.strip()
+            time.sleep(delay)
+            if code != "429":
+                break
+            time.sleep(15 * (attempt + 1))
+        if code != "200":
             path.unlink(missing_ok=True)
-            raise RuntimeError(f"{url}: HTTP {res.stdout.strip()} {res.stderr.strip()}")
+            raise RuntimeError(f"{url}: HTTP {code}")
     return path.read_bytes(), url
 
 
@@ -104,10 +111,10 @@ def parse_dates(text: str, year: int) -> tuple[str, str] | None:
 
 
 def category_of(text: str) -> str | None:
-    m = re.search(r"part of the (ATP Tour (?:250|500|Masters 1000)|ATP Finals|Next Generation ATP Finals)", text)
+    m = re.search(r"part of the (ATP (?:World )?Tour (?:250|500|Masters 1000)|ATP (?:World Tour )?Finals|Next Generation ATP Finals)", text)
     if not m:
         return None
-    return dict(CATEGORY_WORDS)[m.group(1)]
+    return dict(CATEGORY_WORDS)[m.group(1).replace("World Tour", "Tour").replace("ATP Tour Finals", "ATP Finals")]
 
 
 def parse_singles(text: str) -> dict:
@@ -130,8 +137,17 @@ def parse_singles(text: str) -> dict:
 
 
 def build(year: int, raw_dir: Path) -> dict:
-    season_url = f"https://en.wikipedia.org/wiki/{year}_ATP_Tour"
-    season_raw, _ = fetch(season_url, raw_dir)
+    season_raw = None
+    for title in (f"{year}_ATP_Tour", f"{year}_ATP_World_Tour"):
+        season_url = f"https://en.wikipedia.org/wiki/{title}"
+        try:
+            season_raw, _ = fetch(season_url, raw_dir)
+        except RuntimeError:
+            continue
+        if b'id="Schedule"' in season_raw:
+            break
+    if season_raw is None:
+        raise RuntimeError(f"no season article for {year}")
     season = season_raw.decode("utf8")
     start = season.find('id="Schedule"')
     seg = season[start:start + 2_500_000]
@@ -143,7 +159,7 @@ def build(year: int, raw_dir: Path) -> dict:
         label = html.unescape(re.sub(r"<[^>]+>", "", cells[0][2])).strip()
         first = cells[1][2] if re.match(r"^\d{1,2} [A-Z][a-z]{2}", label) and len(cells) > 1 else cells[0][2]
         text = re.sub(r"\s+", " ", html.unescape(re.sub(r"<[^>]+>", "", first))).strip()
-        if len(text) < 40 or not re.search(r"ATP Tour (250|500|Masters)|ATP Finals|Next Generation", text):
+        if len(text) < 40 or not re.search(TIER_RE, text):
             continue
         base = r'href="https://en\.wikipedia\.org/wiki/(' + str(year) + "_"
         main = re.search(base + r'[^"#]*?)"', first)

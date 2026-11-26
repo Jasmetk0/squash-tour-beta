@@ -74,6 +74,7 @@
      "sha256": "034f937abbec29e8b3a08d7ded1fb2e3cc1fe1a6861bd9580b3238c3b6fe99bc",
      "url": "https://en.wikipedia.org/wiki/2019_Brisbane_International"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Brisbane International Brisbane, AustraliaATP Tour 250Hard – $589,680 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -149,6 +150,7 @@
      "sha256": "af8ad4480adfd4f6e1a704f4f41c26a23fe4773b84267538b7d732c646639cd1",
      "url": "https://en.wikipedia.org/wiki/2019_Qatar_ExxonMobil_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Qatar Open Doha, QatarATP Tour 250Hard – $1,416,205 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -225,6 +227,7 @@
      "sha256": "f7bd12b84598c9a6ec3a4bd6b33c0bc1f6ff255dd590230f33738bf1d33cb375",
      "url": "https://en.wikipedia.org/wiki/2019_Maharashtra_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Maharashtra Open Pune, IndiaATP Tour 250Hard – $589,680 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -302,6 +305,7 @@
      "sha256": "11b013ad5968e1178d711404343789b2c69b312f8ff7e1baaf5aec71e9eb04b5",
      "url": "https://en.wikipedia.org/wiki/2019_Sydney_International"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Sydney International Sydney, AustraliaATP Tour 250Hard – $589,680 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -377,6 +381,7 @@
      "sha256": "c98b78b684c3570ec5e53cd0e577b733c9a9d5a8c8a52017592d2c44576d39a3",
      "url": "https://en.wikipedia.org/wiki/2019_ASB_Classic"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Auckland Open Auckland, New ZealandATP Tour 250Hard – $589,680 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -452,6 +457,7 @@
      "sha256": "6c6627c01087d6b6a9e06e9e9e32811441f7988f25162cd59fe462bd5508a856",
      "url": "https://en.wikipedia.org/wiki/2019_C%C3%B3rdoba_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Córdoba Open[3] Córdoba, ArgentinaATP Tour 250Clay (red) – $589,680 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -527,6 +533,7 @@
      "sha256": "4ff31a7e0d1f1f7930aeddc511aeac16bef63a6837747065bc484f0ccc85cdc0",
      "url": "https://en.wikipedia.org/wiki/2019_Open_Sud_de_France"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Open Sud de France Montpellier, FranceATP Tour 250Hard (i) – €586,140 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -602,6 +609,7 @@
      "sha256": "1c9cc1b6a0eeb1b1a35ba832d113f9fc5bacbbea2d966ebc1b6bbcb38b9daa03",
      "url": "https://en.wikipedia.org/wiki/2019_Sofia_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Sofia Open Sofia, BulgariaATP Tour 250Hard (i) – €586,140 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -677,6 +685,7 @@
      "sha256": "92209b5133239296fab3e4dc671b90e199836a775de24b2be4dbe0ce81eecd7b",
      "url": "https://en.wikipedia.org/wiki/2019_Argentina_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Argentina Open Buenos Aires, ArgentinaATP Tour 250Clay (red) – $673,135 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -753,6 +762,7 @@
      "sha256": "04a2e079b8e56d91642b28a7eded488bc5653feee90a3625ae47afaf81f0ae8b",
      "url": "https://en.wikipedia.org/wiki/2019_New_York_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "New York Open Uniondale, United StatesATP Tour 250Hard (i) – $777,385 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -828,6 +838,7 @@
      "sha256": "c384312852a5cbaf5fcb48e492312d0eb3aafe964658150fcb9ebc0c58260d0d",
      "url": "https://en.wikipedia.org/wiki/2019_ABN_AMRO_World_Tennis_Tournament"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Rotterdam Open Rotterdam, NetherlandsATP Tour 500Hard (i) – €2,098,480 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -903,6 +914,7 @@
      "sha256": "5129abe1c70ef7a48dc3e762de54b635337d83e9d1d219e530a2049128a6a5b8",
      "url": "https://en.wikipedia.org/wiki/2019_Delray_Beach_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Delray Beach Open Delray Beach, United StatesATP Tour 250Hard – $651,215 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -979,6 +991,7 @@
      "sha256": "6741c4d8289245e60abf2d7a9ed00b6a0c5d907abefef21d04cf9618fcabca19",
      "url": "https://en.wikipedia.org/wiki/2019_Open_13"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Open 13 Marseille, FranceATP Tour 250Hard (i) – €744,010 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -1054,6 +1067,7 @@
      "sha256": "76a04ce18a1f8941372bc11e0182001cc939f05767e4ad1e1d8c7bd67b8f38c7",
      "url": "https://en.wikipedia.org/wiki/2019_Rio_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Rio Open Rio de Janeiro, BrazilATP Tour 500Clay (red) – $1,937,740 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -1129,6 +1143,7 @@
      "sha256": "e37bcc23ef90c5a7d7074baedbdcb88ab1c4adfca6d84d01f9149067c57518db",
      "url": "https://en.wikipedia.org/wiki/2019_Abierto_Mexicano_Telcel"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Mexican Open Acapulco, MexicoATP Tour 500Hard – $1,931,110 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -1204,6 +1219,7 @@
      "sha256": "d418e619ea852dfb28163daf23023a0fb38384491f891f534aa81fb6117077af",
      "url": "https://en.wikipedia.org/wiki/2019_Dubai_Tennis_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Dubai Tennis Championships Dubai, United Arab EmiratesATP Tour 500Hard – $2,887,895 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -1279,6 +1295,7 @@
      "sha256": "e75b78be3908dfab7ae4767ddd3040bdd00372fb4e2a97d4bc5506e89f7e5a08",
      "url": "https://en.wikipedia.org/wiki/2019_Brasil_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Brasil Open São Paulo, BrazilATP Tour 250Clay (red) (i) – $618,810 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -1362,6 +1379,7 @@
      "sha256": "695ae260b3fc2753cab2b9a993ae627c30f1b6a128b6292ad2811221a9c1cd7b",
      "url": "https://en.wikipedia.org/wiki/2019_BNP_Paribas_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Indian Wells Open Indian Wells, United StatesATP Tour Masters 1000Hard – $8,359,455 – 96S/48Q/32DSingles – Doubles",
     "singles_article": {
@@ -1445,6 +1463,7 @@
      "sha256": "cd61aa967eb403e09fcd77055ba41189a7eb066fa9c6e6bcabce98b5c46a2d9f",
      "url": "https://en.wikipedia.org/wiki/2019_Miami_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Miami Open Key Biscayne, United StatesATP Tour Masters 1000Hard – $8,359,455 – 96S/48Q/32DSingles – Doubles",
     "singles_article": {
@@ -1520,6 +1539,7 @@
      "sha256": "ddda0bf785e36e14970dc15cb0d8726de751b75e2a6c0bbf9996d66ad838a5ef",
      "url": "https://en.wikipedia.org/wiki/2019_U.S._Men's_Clay_Court_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "U.S. Men's Clay Court Championships Houston, United StatesATP Tour 250$652,245 − Clay (maroon) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -1595,6 +1615,7 @@
      "sha256": "063c8d1f087f360b874ca6fe928b0326adc8d6edc8a69f58bf837d744c50062e",
      "url": "https://en.wikipedia.org/wiki/2019_Grand_Prix_Hassan_II"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Grand Prix Hassan II Marrakesh, MoroccoATP Tour 250€586,140 − Clay (red) − 32S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -1674,6 +1695,7 @@
      "sha256": "372ce51acbb7640702f33fa1e08d5a67aa0421a63d00aa964e5a6f7d716e21b8",
      "url": "https://en.wikipedia.org/wiki/2019_Monte-Carlo_Masters"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Monte-Carlo Masters Roquebrune-Cap-Martin, FranceATP Tour Masters 1000Clay (red) – €5,207,405 – 56S/28Q/32D Singles − Doubles",
     "singles_article": {
@@ -1749,6 +1771,7 @@
      "sha256": "a9ea535b9d1f71bbc630da8fff675c52553df661baafdfd19f661c2da9bba73a",
      "url": "https://en.wikipedia.org/wiki/2019_Barcelona_Open_Banco_Sabadell"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Barcelona Open Barcelona, SpainATP Tour 500€2,746,455 − Clay (red) − 48S/24Q/16D Singles − Doubles",
     "singles_article": {
@@ -1827,6 +1850,7 @@
      "sha256": "0aa4fd9a3f31874d12512a64987412d5ef1331ff696b4e84d9b6cb6a4303e38e",
      "url": "https://en.wikipedia.org/wiki/2019_Hungarian_Open_(tennis)"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Hungarian Open Budapest, HungaryATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -1902,6 +1926,7 @@
      "sha256": "a6cbaa090baf4c933a2a7af63bf2395af5e5c385f1b95f4136a807309dc17220",
      "url": "https://en.wikipedia.org/wiki/2019_Estoril_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Estoril Open Cascais, PortugalATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -1977,6 +2002,7 @@
      "sha256": "262c4f1b10a25966943c280085e253b288c0f720d56075b7c12ea6500b3506d7",
      "url": "https://en.wikipedia.org/wiki/2019_BMW_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Bavarian International Tennis Championships Munich, GermanyATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2056,6 +2082,7 @@
      "sha256": "1b1b21c02f790723994e8ca46f606efeff99ec18b380cd4f8f0cfc68a5ba457a",
      "url": "https://en.wikipedia.org/wiki/2019_Mutua_Madrid_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Madrid Open Madrid, SpainATP Tour Masters 1000€6,536,160 − Clay (red) − 56S/28Q/32DSingles − Doubles",
     "singles_article": {
@@ -2135,6 +2162,7 @@
      "sha256": "977695008c167cffa1e6c912830d71974df5e57934ca7a6b776c5a80093e7978",
      "url": "https://en.wikipedia.org/wiki/2019_Italian_Open_(tennis)"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Italian Open Rome, ItalyATP Tour Masters 1000€5,207,405 − Clay (red) − 56S/28Q/32DSingles − Doubles",
     "singles_article": {
@@ -2212,6 +2240,7 @@
      "sha256": "6dd62513bd7df7b371290f2851c31397fd37d5b5206f2e8b1daeacba72106d39",
      "url": "https://en.wikipedia.org/wiki/2019_Geneva_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Geneva Open Geneva, SwitzerlandATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -2289,6 +2318,7 @@
      "sha256": "49a337808c60c8f207d9eb3f9d984282902d188aa46cabf7804382da8d7434c1",
      "url": "https://en.wikipedia.org/wiki/2019_Lyon_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Lyon Open Lyon, FranceATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -2364,6 +2394,7 @@
      "sha256": "747fe5f192ab04ff23b58c52689ddc9828f539cf1adf9771c52a9f822543a681",
      "url": "https://en.wikipedia.org/wiki/2019_Rosmalen_Grass_Court_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Rosmalen Grass Court Championships Rosmalen, NetherlandsATP Tour 250€711,275 − Grass − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2439,6 +2470,7 @@
      "sha256": "20a74e591a18b4cf801d3633adbb539e74693537eacbce8f3642aef324b6c608",
      "url": "https://en.wikipedia.org/wiki/2019_MercedesCup"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "MercedesCup Stuttgart, GermanyATP Tour 250€754,540 − Grass − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2514,6 +2546,7 @@
      "sha256": "1dd01963ad60dfa45c54578961e006171d3b2015b9f58d140beeb6269470628b",
      "url": "https://en.wikipedia.org/wiki/2019_Noventi_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Halle Open Halle, GermanyATP Tour 500€2,219,150 − Grass − 32S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2590,6 +2623,7 @@
      "sha256": "fc3ed87ffd08962d7d75c23c6d2aea76b7b70e80c3bcb8ef6ba0d9bd55e4026b",
      "url": "https://en.wikipedia.org/wiki/2019_Queen's_Club_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Queen's Club Championships London, United KingdomATP Tour 500€2,219,150 − Grass − 32S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2667,6 +2701,7 @@
      "sha256": "8176de06899fb303314426fdb09a84f119620e22973031d2ffb5562d4c091712",
      "url": "https://en.wikipedia.org/wiki/2019_Antalya_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Antalya Open Antalya, TurkeyATP Tour 250Grass – €507,490 – 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -2746,6 +2781,7 @@
      "sha256": "09a28844fb1fe65fd7043ed658b395a700908af25f7fda736e0d883ae0e9d7e3",
      "url": "https://en.wikipedia.org/wiki/2019_Eastbourne_International"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Eastbourne International Eastbourne, United Kingdom ATP Tour 250 €745,880 − Grass − 28S/16Q/16D Singles − Doubles",
     "singles_article": {
@@ -2825,6 +2861,7 @@
      "sha256": "e313521e534a8b107446880ccb0a9af81e380df9cffd9306eb7bb1f076916aad",
      "url": "https://en.wikipedia.org/wiki/2019_Hall_of_Fame_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Hall of Fame Open Newport, United StatesATP Tour 250$652,245 − Grass − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2902,6 +2939,7 @@
      "sha256": "a0b7a5505869833efbdf04dfafe84c273bbf74561906241217382d5c6ee66131",
      "url": "https://en.wikipedia.org/wiki/2019_Swedish_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Swedish Open Båstad, SwedenATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -2977,6 +3015,7 @@
      "sha256": "831e50e74f1fc294de7992dcbb7d84eb41765972ebbb1074c8530cd3c55cc457",
      "url": "https://en.wikipedia.org/wiki/2019_Croatia_Open_Umag"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Croatia Open Umag, CroatiaATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -3056,6 +3095,7 @@
      "sha256": "c7164ced49ed1eb9757bfd7ea8b254f9a9edcd3e557ab34613791b081c0a50f5",
      "url": "https://en.wikipedia.org/wiki/2019_BB%26T_Atlanta_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Atlanta Open Atlanta, United StatesATP Tour 250$777,385 − Hard − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3135,6 +3175,7 @@
      "sha256": "a19bedc615d6c0faadb399de5eefb28b83d6606b538d20c87621f1342d37aa4f",
      "url": "https://en.wikipedia.org/wiki/2019_Swiss_Open_Gstaad"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Swiss Open Gstaad, SwitzerlandATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3211,6 +3252,7 @@
      "sha256": "d38fc7cf72459ddac618dbcae93fdad0b29169f6570b4b7d02f62770fa6946c1",
      "url": "https://en.wikipedia.org/wiki/2019_Hamburg_European_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Hamburg Open Hamburg, GermanyATP Tour 500€1,855,490 − Clay (red) − 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3295,6 +3337,7 @@
      "sha256": "fb6d9447320121aa56495d7feb395366e0239cdd89142f099fe18379db7110ea",
      "url": "https://en.wikipedia.org/wiki/2019_Citi_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Washington Open Washington, D.C., United StatesATP Tour 500$2,046,340 − Hard − 48S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3372,6 +3415,7 @@
      "sha256": "4ad13fcd4f1269d163317757cac026fb945d25983e7c3a50342099953ee7415c",
      "url": "https://en.wikipedia.org/wiki/2019_Generali_Open_Kitzb%C3%BChel"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Austrian Open Kitzbühel Kitzbühel, AustriaATP Tour 250€586,140 − Clay (red) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3449,6 +3493,7 @@
      "sha256": "277a926a1e3a87b34a95ca6b4b7cae3de0ec305d070ce68a36ef31db3ee5a759",
      "url": "https://en.wikipedia.org/wiki/2019_Los_Cabos_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Los Cabos Open Cabo San Lucas, MexicoATP Tour 250$858,565 − Hard − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3524,6 +3569,7 @@
      "sha256": "79e84340a6c3ce73c21a5dccbec6e57b69bb2bfb6200e7b071c91b9ef1f0e378",
      "url": "https://en.wikipedia.org/wiki/2019_Rogers_Cup"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Canadian Open Montreal, CanadaATP Tour Masters 1000$5,701,945 − Hard − 56S/28Q/32DSingles – Doubles",
     "singles_article": {
@@ -3603,6 +3649,7 @@
      "sha256": "17d84f7f1fc8c412099fcc8be6a79b6b1ac48f2606f6579fa52fb77ec2b85b95",
      "url": "https://en.wikipedia.org/wiki/2019_Western_%26_Southern_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Cincinnati Open Mason, United StatesATP Tour Masters 1000Hard – $6,056,280 – 56S/28Q/32DSingles – Doubles",
     "singles_article": {
@@ -3680,6 +3727,7 @@
      "sha256": "e243f66c96bda6287786dd45f30cccc10d18c816f4ebf4d23621aaa17acf99ae",
      "url": "https://en.wikipedia.org/wiki/2019_Winston-Salem_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Winston-Salem Open Winston-Salem, United States ATP Tour 250Hard – $807,210 – 48S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3759,6 +3807,7 @@
      "sha256": "11bdf113eccbb27749344d7303023a238727b0a48860b54e987ce2602e67d000",
      "url": "https://en.wikipedia.org/wiki/2019_Moselle_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Moselle Open Metz, FranceATP Tour 250€586,140 − Hard (i) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -3838,6 +3887,7 @@
      "sha256": "fca0b30504815a7f20982fc6f1eeed0441f121022597cb6ab121d9a2fb5e91c9",
      "url": "https://en.wikipedia.org/wiki/2019_St._Petersburg_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "St. Petersburg Open St. Petersburg, RussiaATP Tour 250$1,248,665 − Hard (i) − 28S/16Q/16DSingles − Doubles",
     "singles_article": {
@@ -3914,6 +3964,7 @@
      "sha256": "7c0d3c04bb4e47ac89a220d182a2b5c6241204b3399465a883bb1f0946df0b1d",
      "url": "https://en.wikipedia.org/wiki/2019_Chengdu_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Chengdu Open Chengdu, ChinaATP Tour 250$1,213,295 − Hard − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -3990,6 +4041,7 @@
      "sha256": "064a801be5cb7008efa9debc1910f3b08159b80e7260f2628124acce9714781d",
      "url": "https://en.wikipedia.org/wiki/2019_Zhuhai_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Zhuhai Championships Zhuhai, ChinaATP Tour 250$1,000,000 − Hard − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4066,6 +4118,7 @@
      "sha256": "95346fbc97929f994c8415e0f44826159cf9db99d13768c5a8b907ff7b7fffd2",
      "url": "https://en.wikipedia.org/wiki/2019_China_Open_(tennis)"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "China Open Beijing, ChinaATP Tour 500Hard – $3,666,275 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4142,6 +4195,7 @@
      "sha256": "02e0a5712ff0e27897e684b01d268e1fbe9a3a1c419000b4c6ed01a4696758c4",
      "url": "https://en.wikipedia.org/wiki/2019_Rakuten_Japan_Open_Tennis_Championships"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Japan Open Tokyo, JapanATP Tour 500Hard – $2,046,340 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4219,6 +4273,7 @@
      "sha256": "25081b14e2acd31e80876e6bbf7bd598b9a7653b43fe42ea0def8fddb21b4eb3",
      "url": "https://en.wikipedia.org/wiki/2019_Rolex_Shanghai_Masters"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Shanghai Masters Shanghai, ChinaATP Tour Masters 1000$7,473,620 − Hard − 56S/28Q/32DSingles – Doubles",
     "singles_article": {
@@ -4295,6 +4350,7 @@
      "sha256": "f32070ff441bc5253e8b745b231346f8d68cde3a82805453051d7590c5c40574",
      "url": "https://en.wikipedia.org/wiki/2019_European_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "European OpenAntwerp, BelgiumATP Tour 250€711,275 − Hard (i) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4370,6 +4426,7 @@
      "sha256": "8b584048150e614140926830d828d2c04c721ee3a34e5f206fbaf2a291d6cb28",
      "url": "https://en.wikipedia.org/wiki/2019_Kremlin_Cup"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Kremlin Cup Moscow, RussiaATP Tour 250$922,520 − Hard (i) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4446,6 +4503,7 @@
      "sha256": "a4e666da9d44fbf47a82a672b11e7e951296a14382aae858cc9372dfc9ffbe42",
      "url": "https://en.wikipedia.org/wiki/2019_Stockholm_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Stockholm Open Stockholm, SwedenATP Tour 250€711,275 − Hard (i) − 28S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4521,6 +4579,7 @@
      "sha256": "c2dcb5738943dddc1c19139a536bd8f21c5c24e4765f3ff0faabc73383cf203d",
      "url": "https://en.wikipedia.org/wiki/2019_Swiss_Indoors"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Swiss Indoors Basel, SwitzerlandATP Tour 500Hard (i) – €2,219,975 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4596,6 +4655,7 @@
      "sha256": "414d8d56ae6aa2ef696377f6900ff4910317f53df2a9112ac6804e4e72561670",
      "url": "https://en.wikipedia.org/wiki/2019_Erste_Bank_Open"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Vienna Open Vienna, AustriaATP Tour 500Hard (i) – €2,443,810 – 32S/16Q/16DSingles – Doubles",
     "singles_article": {
@@ -4671,6 +4731,7 @@
      "sha256": "75ff3f9ce98acc4f3d05b5b21097a5aadff450b189b196155f643a3b304da3b6",
      "url": "https://en.wikipedia.org/wiki/2019_Rolex_Paris_Masters"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Paris Masters Paris, FranceATP Tour Masters 1000€5,207,405 − Hard (i) − 48S/24Q/32DSingles – Doubles",
     "singles_article": {
@@ -4748,6 +4809,7 @@
      "sha256": "ea41cd6581d78cff8184d367b541a49a4ace563252eac56d4744ca44b57520f7",
      "url": "https://en.wikipedia.org/wiki/2019_Next_Generation_ATP_Finals"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "Next Gen ATP Finals Milan, Italy Next Generation ATP Finals Hard (i) – $1,400,000 – 8S (RR) Singles",
     "singles_article": null
@@ -4822,6 +4884,7 @@
      "sha256": "42ff6f811d5bd7347de6139cda21d58dc8719a740708e5c9c0eead1d5533e61f",
      "url": "https://en.wikipedia.org/wiki/2019_ATP_Finals"
     },
+    "match_method": "manual_reviewed",
     "role": "secondary_source",
     "schedule_row": "ATP Finals London, United KingdomATP FinalsHard (i) – $9,000,000 – 8S/8D (RR)Singles – Doubles",
     "singles_article": {

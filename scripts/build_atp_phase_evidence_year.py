@@ -12,10 +12,13 @@ PDF hashes are left open when no read source states them.
 from __future__ import annotations
 
 import argparse
+import datetime as dt
 import html
 import json
 import math
+import re
 import sys
+import unicodedata
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -38,7 +41,7 @@ ARCHIVE_ACCESS = (
 # Wikipedia article title -> canonical stable Series (2019).  The licence-lineage
 # identities already documented in ATP_TOUR_1990_2026_HISTORICAL_CALENDAR_REFERENCE.md
 # are kept: they are not renamed to the 2019 host city.
-SERIES_BY_TITLE = {
+MANUAL_SERIES_BY_TITLE_2019 = {
     "Qatar_ExxonMobil_Open": "doha", "Brisbane_International": "brisbane",
     "Maharashtra_Open": "hong_kong", "Sydney_International": "sydney_2019",
     "ASB_Classic": "auckland", "Open_Sud_de_France": "montpellier", "Sofia_Open": "sofia",
@@ -77,6 +80,70 @@ LINEAGE_NOTE = {
 }
 
 
+def _norm(x: str) -> str:
+    return re.sub(r"[^a-z0-9 ]", " ", unicodedata.normalize("NFKD", x).encode("ascii", "ignore").decode().lower())
+
+
+_STOP = {"open", "the", "championships", "tennis", "international", "classic", "tour", "atp", "cup", "masters"}
+
+
+def _series_tokens(series: dict, sid: str) -> set[str]:
+    t = set(_norm(sid.replace("_", " ")).split())
+    for key in ("name", "host_city_2026", "historical_host_city"):
+        if series.get(key):
+            t |= set(_norm(series[key]).split())
+    return {x for x in t if len(x) > 2 and not x.isdigit()} - _STOP
+
+
+def match_events(year: int, canonical: list[dict], wp_events: list[dict], series: dict) -> dict[str, tuple[dict, str]]:
+    """Pair canonical series with Wikipedia articles: name+date first, then unique date-only lineage."""
+    out: dict[str, tuple[dict, str]] = {}
+    used: set[int] = set()
+    if year == 2019:
+        by_title = {}
+        for i, ev in enumerate(wp_events):
+            title = html.unescape(ev["wikipedia_main"]).split("_", 1)[1]
+            sid = MANUAL_SERIES_BY_TITLE_2019.get(title)
+            if sid and sid not in by_title:
+                by_title[sid] = i
+        for sid, i in by_title.items():
+            out[sid] = (wp_events[i], "manual_reviewed")
+            used.add(i)
+        return out
+
+    def start_gap(ev: dict, cev: dict) -> int | None:
+        d = ev["wikipedia_dates"]
+        if not d:
+            return None
+        return abs((dt.date.fromisoformat(d[0]) - dt.date.fromisoformat(cev["start_date"])).days)
+
+    for cev in sorted(canonical, key=lambda x: x["start_date"]):
+        sid = cev["series_id"]
+        toks = _series_tokens(series.get(sid, {}), sid)
+        best = None
+        for i, ev in enumerate(wp_events):
+            if i in used:
+                continue
+            text = set(_norm(html.unescape(ev["wikipedia_main"]).split("_", 1)[1].replace("_", " ") + " " + ev["schedule_text"]).split())
+            score = len(toks & text)
+            gap = start_gap(ev, cev)
+            if score and gap is not None and gap <= 4 and (best is None or (score, -gap) > best[0]):
+                best = ((score, -gap), i)
+        if best:
+            out[sid] = (wp_events[best[1]], "name_and_date")
+            used.add(best[1])
+    left_c = [c for c in canonical if c["series_id"] not in out]
+    left_w = [i for i in range(len(wp_events)) if i not in used]
+    for cev in left_c:
+        cand = [i for i in left_w if (g := start_gap(wp_events[i], cev)) is not None and g <= 4]
+        peers = [c for c in left_c if c is not cev and any(
+            (g := start_gap(wp_events[i], c)) is not None and g <= 4 for i in cand)]
+        if len(cand) == 1 and not peers:
+            out[cev["series_id"]] = (wp_events[cand[0]], "date_only_unique_lineage")
+            left_w.remove(cand[0])
+    return out
+
+
 def _pow2(n: int) -> int:
     return 1 << max(0, math.ceil(math.log2(n)))
 
@@ -96,17 +163,14 @@ def build(year: int, wp: dict) -> dict:
     mapping = build_projection(json.loads(SOURCE_FILE.read_text(encoding="utf-8")))
     year_map = {m["source_identity"]: m for m in mapping["mappings"] if m["atp_season_year"] == year}
     runs = {off: _run_weeks(year, off, mapping) for off in (1, 37)}
-    wiki = {}
-    for ev in wp["events"]:
-        title = html.unescape(ev["wikipedia_main"]).split("_", 1)[1]
-        series = SERIES_BY_TITLE.get(title)
-        if series and series not in wiki:
-            wiki[series] = ev
+    series = {e["source_entity_id"]: e["payload"] for e in
+              json.loads((PKG / "series.json").read_text(encoding="utf-8"))["entities"]}
+    wiki = match_events(year, dates["events"], wp["events"], series)
     out_occ = []
     for e in sorted(dates["events"], key=lambda x: (x["start_date"], x["series_id"])):
         sid = e["series_id"]
         oid = f"atp_{year}_{sid}"
-        w = wiki.get(sid)
+        w, match_method = wiki.get(sid, (None, None))
         rec: dict = {
             "occurrence_id": oid, "series_id": sid, "category_id": cats[sid],
             "main_start_date": e["start_date"], "main_end_date": e["end_date"],
@@ -116,7 +180,7 @@ def build(year: int, wp: dict) -> dict:
             "run_weeks_offset_37": [x["season_week"] for x in runs[37][oid]],
             "review_flags": year_map[oid]["review_flags"],
         }
-        if sid in LINEAGE_NOTE:
+        if year == 2019 and sid in LINEAGE_NOTE:
             rec["identity_note"] = LINEAGE_NOTE[sid]
         conflicts, open_fields = [], ["qualifying_dates", "point_table", "qualifying_pdf_hashes"]
         if w is None:
@@ -135,6 +199,7 @@ def build(year: int, wp: dict) -> dict:
                                  f"{e['start_date']}..{e['end_date']}; canonical (ATP archive) retained")
             rec["wikipedia_cross_check"] = {
                 "role": "secondary_source", "article": html.unescape(w["wikipedia_main"]),
+                "match_method": match_method,
                 "main_article": w["main_source"], "singles_article": w.get("singles_source"),
                 "infobox_dates": wd, "date_status": date_status,
                 "schedule_row": w["schedule_text"],

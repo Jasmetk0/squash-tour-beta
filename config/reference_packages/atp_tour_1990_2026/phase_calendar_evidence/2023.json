@@ -1345,6 +1345,347 @@
         "note": "Eight Q1 and four Q final results June 17–18, including a retirement in one final; Main singles June 19."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_queens_club",
+      "series_id": "queens_club",
+      "category_id": "atp_500",
+      "main_start_date": "2023-06-19",
+      "main_end_date": "2023-06-25",
+      "main_year_weeks": [
+        [
+          2023,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-queens-2023/"
+        },
+        {
+          "date": "2023-06-18",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-queens-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-queens-2023/",
+        "note": "Eight scored Q1 matches June 17, four scored qualifying finals June 18; dated Main singles June 19."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_mallorca",
+      "series_id": "mallorca",
+      "category_id": "atp_250",
+      "main_start_date": "2023-06-24",
+      "main_end_date": "2023-07-01",
+      "main_year_weeks": [
+        [
+          2023,
+          26
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mallorca-2023/"
+        },
+        {
+          "date": "2023-06-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mallorca-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          25
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-mallorca-2023/",
+        "note": "Eight Q1 and four Q final scores; two completed Main singles June 25 plus one interrupted Main match. Canonical published interval starts June 24 but actual Main play is established June 25, still W25."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-06-25",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-mallorca-2023/",
+        "observed_iso_week": [
+          2023,
+          25
+        ]
+      },
+      "source_disagreement": {
+        "source_url": "https://www.tennisexplorer.com/mallorca/2023/atp-men/",
+        "note": "Canonical ATP date window begins June 24; dated men's Main singles results begin June 25, independently corroborating the June 25 scores. Preserve both dates."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_eastbourne",
+      "series_id": "eastbourne",
+      "category_id": "atp_250",
+      "main_start_date": "2023-06-26",
+      "main_end_date": "2023-07-01",
+      "main_year_weeks": [
+        [
+          2023,
+          26
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-24",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/eastbourne/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-06-25",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/eastbourne/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          25
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/eastbourne/2023/atp-men/?phase=qualification",
+        "note": "Eight men's Q1 results June 24 and four Q finals June 25; men's singles source selected explicitly rather than combined WTA/ATP dates."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_bastad",
+      "series_id": "bastad",
+      "category_id": "atp_250",
+      "main_start_date": "2023-07-17",
+      "main_end_date": "2023-07-23",
+      "main_year_weeks": [
+        [
+          2023,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-07-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-bastad-2023/"
+        },
+        {
+          "date": "2023-07-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-bastad-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          28
+        ],
+        [
+          2023,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-bastad-2023/",
+        "note": "Eight Q1 scores July 16; three scored Q finals and one walkover July 17, plus two completed Main singles. A walkover is not actual play."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-07-17",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-bastad-2023/",
+        "observed_iso_week": [
+          2023,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_gstaad",
+      "series_id": "gstaad",
+      "category_id": "atp_250",
+      "main_start_date": "2023-07-17",
+      "main_end_date": "2023-07-23",
+      "main_year_weeks": [
+        [
+          2023,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-07-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gstaad-2023/"
+        },
+        {
+          "date": "2023-07-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gstaad-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-gstaad-2023/",
+        "note": "Eight Q1 results July 15 and four Q finals July 16; Main singles July 17."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_newport",
+      "series_id": "newport",
+      "category_id": "atp_250",
+      "main_start_date": "2023-07-17",
+      "main_end_date": "2023-07-23",
+      "main_year_weeks": [
+        [
+          2023,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-07-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-newport-2023/"
+        },
+        {
+          "date": "2023-07-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-newport-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          28
+        ],
+        [
+          2023,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-newport-2023/",
+        "note": "Four Q1 scores July 16; four Q1 and four Q final scores reported July 17, alongside four completed Main singles. Exact match start versus suspension/resumption times are unverified."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-07-17",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-newport-2023/",
+        "observed_iso_week": [
+          2023,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_atlanta",
+      "series_id": "atlanta",
+      "category_id": "atp_250",
+      "main_start_date": "2023-07-24",
+      "main_end_date": "2023-07-30",
+      "main_year_weeks": [
+        [
+          2023,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-07-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-atlanta-2023/"
+        },
+        {
+          "date": "2023-07-23",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-atlanta-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-atlanta-2023/",
+        "note": "Eight Q1 and four Q final results July 22–23; four completed Main singles July 24."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_hamburg",
+      "series_id": "hamburg",
+      "category_id": "atp_500",
+      "main_start_date": "2023-07-24",
+      "main_end_date": "2023-07-30",
+      "main_year_weeks": [
+        [
+          2023,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-07-22",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/hamburk/2023/atp-muzi/?phase=qualification"
+        },
+        {
+          "date": "2023-07-23",
+          "status": "played",
+          "source_url": "https://www.tenisportal.cz/hamburk/2023/atp-muzi/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tenisportal.cz/hamburk/2023/atp-muzi/?phase=qualification",
+        "note": "Sky Sports daily results and TenisPortal dated draw both place eight Q1 results (one retirement) July 22 and all four scored Q finals July 23; Canal Tenis labels the same rounds July 23–24. Do not treat the latter as independently confirmed additional Monday qualifying."
+      },
+      "follow_up": "Review source date disagreement; two dated result sources agree on July 22–23; no July 24 play inferred. Coordinate sourced geometry and points before profile publication.",
+      "additional_qualifying_source_url": "https://www.skysports.com/tennis/scores-schedule/23-07-2023",
+      "additional_qualifying_first_round_source_url": "https://www.skysports.com/tennis/scores-schedule/22-07-2023",
+      "source_disagreement": {
+        "source_url": "https://canaltenis.com/resultados-atp-hamburgo-2023/",
+        "note": "Canal Tenis dates the same Q1 and Q final results July 23–24, while TenisPortal and Sky Sports date both rounds July 22–23. No separate scored Q match on July 24 established."
+      }
     }
   ]
 }

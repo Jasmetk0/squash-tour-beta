@@ -41,7 +41,10 @@ def test_phase_evidence_binds_to_canonical_2023_memberships_and_main_dates(phase
         assert [list(k) for k in sorted(observed)] == row["observed_qualifying_iso_weeks"]
         if "main_opening_play_evidence" in row:
             opening = row["main_opening_play_evidence"]
-            assert opening["date"] == row["main_start_date"]
+            assert row["main_start_date"] <= opening["date"] <= row["main_end_date"]
+            if opening["date"] != row["main_start_date"]:
+                assert row["source_disagreement"]["source_url"]
+                assert row["source_disagreement"]["note"]
             assert opening["status"] == "played"
             assert list(date.fromisoformat(opening["date"]).isocalendar()[:2]) == opening["observed_iso_week"]
 
@@ -215,3 +218,65 @@ def test_2023_lyon_clay_and_marseille_remain_distinct(phase_evidence):
     assert rows["lyon"]["occurrence_id"] == "atp_2023_lyon"
     assert rows["lyon_old"]["main_start_date"] == "2023-05-21"
     assert rows["lyon"]["main_start_date"] == "2023-02-20"
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("queens_club", ["2023-06-17", "2023-06-18"], [24], [25]),
+        ("mallorca", ["2023-06-24", "2023-06-25"], [25], [26]),
+        ("eastbourne", ["2023-06-24", "2023-06-25"], [25], [26]),
+        ("bastad", ["2023-07-16", "2023-07-17"], [28,29], [29]),
+        ("gstaad", ["2023-07-15", "2023-07-16"], [28], [29]),
+        ("newport", ["2023-07-16", "2023-07-17"], [28,29], [29]),
+        ("atlanta", ["2023-07-22", "2023-07-23"], [29], [30]),
+        ("hamburg", ["2023-07-22", "2023-07-23"], [29], [30]),
+    ],
+)
+def test_early_summer_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == RunCalendarPosition(0, week + 16, 2023, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "opening_date", "opening_week", "mapped_week"),
+    [
+        ("mallorca", "2023-06-25", 25, 26),
+        ("bastad", "2023-07-17", 29, 29),
+        ("newport", "2023-07-17", 29, 29),
+    ],
+)
+def test_early_summer_2023_actual_main_opening_overlap(
+    phase_evidence, series, opening_date, opening_week, mapped_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["qualifying_date_evidence"][-1]["date"] == opening_date
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2023, opening_week]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2023, mapped_week]]
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+def test_mallorca_2023_source_start_and_actual_main_opening_are_distinct(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "mallorca")
+    assert row["main_start_date"] == "2023-06-24"
+    assert row["main_opening_play_evidence"]["date"] == "2023-06-25"
+    assert row["source_disagreement"]["source_url"]
+
+
+def test_hamburg_2023_q_date_disagreement_retained_without_extra_play(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "hamburg")
+    assert [e["date"] for e in row["qualifying_date_evidence"]] == ["2023-07-22", "2023-07-23"]
+    assert row["observed_qualifying_iso_weeks"] == [[2023, 29]]
+    assert row["main_year_weeks"] == [[2023, 30]]
+    assert row["source_disagreement"]["source_url"] != row["source_confirmation"]["source_url"]
+    assert row["additional_qualifying_first_round_source_url"]
+    assert row["additional_qualifying_source_url"]

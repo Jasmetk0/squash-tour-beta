@@ -91,4 +91,3 @@ def test_rotterdam_and_dallas_share_weeks_with_separate_draws_qualifiers_and_poi
                      for o in (DALLAS, ROTTERDAM)}
         assert champions[DALLAS]["main_points"] == 500 and champions[ROTTERDAM]["main_points"] == 500
     print("TWO_ATP_TIMINGS", TIMINGS)
-

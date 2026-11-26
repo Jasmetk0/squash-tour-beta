@@ -228,6 +228,14 @@ def dallas_run(tmp_path_factory):
             code, error = _request("POST", tour_url(server) + "/preview",
                                    command(before_draw, "draw", edition_id=DALLAS, data={"wild_card_player_ids": bad}))
             assert code == 409, error
+        malformed = command(
+            before_draw, "draw", edition_id=DALLAS,
+            data={"wild_card_player_ids": [*wild_cards[:2], {}]},
+        )
+        code, error = _request("POST", tour_url(server) + "/preview", malformed)
+        assert code == 409, error
+        assert "distinct Wild Card players" in error["detail"]["message"]
+        assert inspect(server) == before_draw
         drawn, _ = execute(server, command(before_draw, "draw", name="dallas-draw", edition_id=DALLAS,
                                            data={"wild_card_player_ids": wild_cards}))
         assert drawn["wild_card_player_ids"] == wild_cards

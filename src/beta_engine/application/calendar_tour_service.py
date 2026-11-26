@@ -1510,8 +1510,8 @@ class CalendarTourService:
         if (
             not isinstance(ids, list)
             or len(ids) != count
-            or len(set(ids)) != len(ids)
             or any(type(p) is not str for p in ids)
+            or len(set(ids)) != len(ids)
         ):
             raise ValueError(f"Scheduled Draw requires exactly {count} distinct Wild Card players")
         if not count:

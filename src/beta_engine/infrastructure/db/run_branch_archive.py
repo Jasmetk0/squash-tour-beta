@@ -14,6 +14,7 @@ from beta_engine.domain.run_branch_archive import (
     AuditSpec,
     BranchSpec,
     CheckpointSpec,
+    MAX_ARCHIVE_BYTES,
     RevisionSpec,
     RunSpec,
     decode,
@@ -41,6 +42,7 @@ from beta_engine.infrastructure.db.run_branch_archive_components import (
     prospect_records,
     validate_components,
 )
+from beta_engine.infrastructure.db.saved_v2_store import ENVELOPE_KEY, ENVELOPE_PREFIX
 
 
 class RunBranchArchiveReceiptModel(Base):
@@ -189,7 +191,41 @@ def _check_clean(repository, session, branch, payload):
         )
 
 
-def collect_archive(repository, session, *, run_id, branch_id, expected_head=None):
+def _check_full_archive_size(session, run_id):
+    # A UTF-8 JSON archive is at least as large as its unescaped payload
+    # character count. Reject an oversized Run before expanding its history.
+    # A small declared Saved v2 length never replaces the physical validation.
+    lengths = session.execute(
+        text(
+            """
+            SELECT CASE
+                WHEN substr(payload_json, 1, :prefix_size) = :prefix THEN
+                    CASE WHEN json_valid(payload_json)
+                         THEN json_extract(payload_json, :chars_path) END
+                ELSE length(payload_json)
+            END
+            FROM branch_saved_revisions WHERE run_id = :run_id
+            """
+        ),
+        {
+            "run_id": run_id, "prefix": ENVELOPE_PREFIX,
+            "prefix_size": len(ENVELOPE_PREFIX), "chars_path": f"$.{ENVELOPE_KEY}.chars",
+        },
+    )
+    size = 0
+    for (length,) in lengths:
+        if type(length) is int and length >= 0:
+            size += length
+        if size > MAX_ARCHIVE_BYTES:
+            fail(
+                "archive_request_too_large",
+                "Saved payloads alone exceed the full archive size budget",
+            )
+
+
+def collect_archive(
+    repository, session, *, run_id, branch_id, expected_head=None, full_run=False
+):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
     run = session.get(RunContainerModel, run_id)
     if run is None:
@@ -218,6 +254,8 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             "stale_export_preview",
             "Saved HEAD changed since export preview; review the new Saved state",
         )
+    if full_run:
+        _check_full_archive_size(session, run_id)
     branches, anchors, rows, payloads, checked = {}, {}, {}, {}, set()
     pending = []
 
@@ -255,6 +293,9 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
     candidates = session.scalars(
         select(RunBranchModel).where(RunBranchModel.run_id == run_id)
     ).all()
+    if full_run:
+        for candidate in candidates:
+            anchor(candidate.branch_id)
     candidates.sort(
         key=lambda b: (
             b.branch_id != branch_id,
@@ -293,7 +334,8 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             # Verify reachability against ACTUAL source metadata and full original
             # lineage. Only the selected historical prefix goes into the archive.
             lineage = repository._validated_branch_revision_lineage_in_session(
-                session=session, branch=owner
+                session=session, branch=owner,
+                payload_revision_ids=frozenset() if full_run else None,
             )
             members = {r.revision_id: r for r in lineage}
             if rid not in members:
@@ -353,6 +395,7 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         if not pending:
             break
     specs = []
+    other_role = "included" if full_run else "dependency"
     for bid in sorted(branches):
         branch, rid = branches[bid], anchors[bid]
         if rid == branch.saved_head_revision_id:
@@ -367,10 +410,16 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
                 forked_from_saved_revision_id=branch.forked_from_saved_revision_id,
                 saved_head_revision_id=rid,
                 metadata_json=branch.metadata_json,
-                role="selected" if bid == branch_id else "dependency",
+                role="selected" if bid == branch_id else other_role,
             ).model_dump()
         )
     revision_ids = set(rows)
+    if full_run and revision_ids != set(session.scalars(
+        select(BranchSavedRevisionModel.revision_id).where(
+            BranchSavedRevisionModel.run_id == run_id
+        )
+    )):
+        fail("incomplete_run_history", "Full archive cannot omit Saved revisions outside Branch history")
     audits = [
         AuditSpec.model_validate(_row_values(a, AuditSpec)).model_dump()
         for a in session.scalars(
@@ -395,6 +444,15 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             .order_by(BranchSavedRevisionCheckpointModel.checkpoint_id)
         )
     ]
+    if full_run:
+        for model, primary_key, included in (
+            (BranchRevisionAuditEventModel, BranchRevisionAuditEventModel.audit_event_id, audits),
+            (BranchSavedRevisionCheckpointModel, BranchSavedRevisionCheckpointModel.checkpoint_id, checkpoints),
+        ):
+            if set(session.scalars(select(primary_key).where(model.run_id == run_id))) != {
+                row[primary_key.key] for row in included
+            }:
+                fail("incomplete_run_history", "Full archive cannot omit original audits or checkpoints")
     allocator = session.get(RunPackageIdentityAllocatorModel, run_id)
     omitted = sorted(
         set(
@@ -427,6 +485,7 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         selected_branch_id=branch_id,
         selected_head_revision_id=selected.saved_head_revision_id,
         omitted_branch_ids=omitted,
+        full_run=full_run,
     )
     return raw
 

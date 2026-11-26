@@ -1,0 +1,380 @@
+{
+  "atp_season_year": 2021,
+  "scope": "Reference evidence for ATP Tour men's singles phase dates.",
+  "sporting_schedule_installed": false,
+  "occurrences": [
+    {
+      "occurrence_id": "atp_2021_antalya_2021",
+      "series_id": "antalya_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-01-07",
+      "main_end_date": "2021-01-13",
+      "main_year_weeks": [
+        [
+          2021,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-01-06",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/antalya-2/2021/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2021-01-07",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/antalya-2/2021/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/antalya-2/2021/atp-men/?phase=qualification",
+        "note": "Dated qualifying draw shows twelve first-round pairings Jan 6, six final-round matches Jan 7; partial-score Q1 is not a full match."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication. Preserve source finish independently of result closure.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 6,
+        "source_url": "https://www.tennisexplorer.com/antalya-2/2021/atp-men/?phase=qualification",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "source_finish_iso_week": [
+        2021,
+        2
+      ]
+    },
+    {
+      "occurrence_id": "atp_2021_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2021-01-07",
+      "main_end_date": "2021-01-13",
+      "main_year_weeks": [
+        [
+          2021,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-01-05",
+          "status": "played",
+          "source_url": "https://longislandtennismagazine.com/article/delray-beach-open-day-two-recap/"
+        },
+        {
+          "date": "2021-01-06",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/delray-beach-2021/4637/orderofplay/2021-01-06"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          1
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/delray-beach-2021/4637/orderofplay/2021-01-06",
+        "note": "Contemporary tournament recap confirms eight first-round qualifying results Jan 5, four dated final results Jan 6; separate from Champions Tour."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication. Preserve source finish independently of result closure.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/delray-beach-2021/4637/orderofplay/2021-01-06",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "source_finish_iso_week": [
+        2021,
+        2
+      ]
+    },
+    {
+      "occurrence_id": "atp_2021_melbourne_1_2021",
+      "series_id": "melbourne_1_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-02-01",
+      "main_end_date": "2021-02-07",
+      "main_year_weeks": [
+        [
+          2021,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "source_confirmation": {
+        "source_url": "https://www.ubitennis.net/2021/01/updated-entry-lists-for-great-ocean-road-open-and-murray-river-open/",
+        "note": "Great Ocean Road Open: qualifying cancelled and main draw expanded to 56 during quarantine-related scheduling change."
+      },
+      "follow_up": "Review expanded Main geometry and points without fabricating Q, and preserve separate simultaneous ATP editions.",
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "qualification_cancellation_evidence": {
+        "reason": "pandemic_quarantine_schedule_change",
+        "main_draw_size": 56,
+        "source_url": "https://www.ubitennis.net/2021/01/updated-entry-lists-for-great-ocean-road-open-and-murray-river-open/",
+        "official_draw_confirmation_url": "https://ausopen.com/articles/news/great-ocean-road-open-and-murray-river-open-draws-released",
+        "note": "Both ATP 250 draws expanded and qualifying cancelled; not Australian Open or WTA qualifying."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_melbourne_2_2021",
+      "series_id": "melbourne_2_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-02-01",
+      "main_end_date": "2021-02-07",
+      "main_year_weeks": [
+        [
+          2021,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "source_confirmation": {
+        "source_url": "https://www.ubitennis.net/2021/01/updated-entry-lists-for-great-ocean-road-open-and-murray-river-open/",
+        "note": "Murray River Open: qualifying cancelled and main draw expanded to 56 during quarantine-related scheduling change."
+      },
+      "follow_up": "Review expanded Main geometry and points without fabricating Q, and preserve separate simultaneous ATP editions.",
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "qualification_cancellation_evidence": {
+        "reason": "pandemic_quarantine_schedule_change",
+        "main_draw_size": 56,
+        "source_url": "https://www.ubitennis.net/2021/01/updated-entry-lists-for-great-ocean-road-open-and-murray-river-open/",
+        "official_draw_confirmation_url": "https://ausopen.com/articles/news/great-ocean-road-open-and-murray-river-open-draws-released",
+        "note": "Both ATP 250 draws expanded and qualifying cancelled; not Australian Open or WTA qualifying."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_cordoba",
+      "series_id": "cordoba",
+      "category_id": "atp_250",
+      "main_start_date": "2021-02-22",
+      "main_end_date": "2021-02-28",
+      "main_year_weeks": [
+        [
+          2021,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-02-20",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-20"
+        },
+        {
+          "date": "2021-02-21",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-21"
+        },
+        {
+          "date": "2021-02-22",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-22"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          7
+        ],
+        [
+          2021,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-22",
+        "note": "Three qualifying rounds on Feb 20, 21 and 22; four Q3 finals and two scored Main singles Feb 22."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 3,
+        "qualifier_places": 4,
+        "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-22",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-02-22",
+        "status": "played",
+        "source_url": "https://en.tennistemple.com/competitions/cordoba-2021/4657/orderofplay/2021-02-22",
+        "observed_iso_week": [
+          2021,
+          8
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2021-02-22",
+      "main_end_date": "2021-02-28",
+      "main_year_weeks": [
+        [
+          2021,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-02-21",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-montpellier-2021/"
+        },
+        {
+          "date": "2021-02-22",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-montpellier-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          7
+        ],
+        [
+          2021,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-montpellier-2021/",
+        "note": "Eight first-round results Feb 21 (one retirement with score); four Q finals and two scored Main singles Feb 22."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-montpellier-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-02-22",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-montpellier-2021/",
+        "observed_iso_week": [
+          2021,
+          8
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_singapore_2021",
+      "series_id": "singapore_2021",
+      "category_id": "atp_250",
+      "main_start_date": "2021-02-22",
+      "main_end_date": "2021-02-28",
+      "main_year_weeks": [
+        [
+          2021,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-02-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-singapur-2021/"
+        },
+        {
+          "date": "2021-02-21",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-singapur-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-singapur-2021/",
+        "note": "Eight first-round and four final qualifying scores Feb 20–21; Main starts Feb 22."
+      },
+      "follow_up": "Review source geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-singapur-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_buenos_aires",
+      "series_id": "buenos_aires",
+      "category_id": "atp_250",
+      "main_start_date": "2021-03-01",
+      "main_end_date": "2021-03-07",
+      "main_year_weeks": [
+        [
+          2021,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-02-27",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/"
+        },
+        {
+          "date": "2021-02-28",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/"
+        },
+        {
+          "date": "2021-03-01",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          8
+        ],
+        [
+          2021,
+          9
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/",
+        "note": "Three qualifying rounds Feb 27, 28 and Mar 1; four Q3 finals and four scored Main singles Mar 1. First-round walkover not counted as play."
+      },
+      "follow_up": "Review same-week Q/Main ordering; coordinate sourced geometry and points before profile publication.",
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 3,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/",
+        "note": "Dated qualifying results support round count and final winner count; not a full sporting profile."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-03-01",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-buenos-aires-2021/",
+        "observed_iso_week": [
+          2021,
+          9
+        ]
+      }
+    }
+  ]
+}

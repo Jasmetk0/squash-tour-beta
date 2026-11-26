@@ -1729,3 +1729,87 @@ def test_los_angeles_announcement_can_pass_date_shape_without_proving_actual_pla
     assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
     assert row["profile_status"] == "not_in_published_sporting_source"
     assert batch["summary"]["verified_qualification_date_rows"] == 0
+
+
+def test_targeted_finals_adaptation_requires_separate_owner_and_ranking_decisions(batch):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    e = row["historical_evidence"]
+    followup = e["targeted_archive_followup_2026_11_26"]
+    decision = followup["decision"]
+    assert followup["primary_rule_verified"] is False
+    assert decision["status"] == "pending_owner_approval"
+    assert decision["publication_allowed"] is False
+    assert decision["historical_finals_inclusion_verified"] is False
+    assert decision["workbook_phase_breakdown"] is None
+    assert decision["played_group_win"] == 50
+    assert decision["semifinal_win_increment"] == 100
+    assert decision["final_win_increment"] == 150
+    assert decision["champion_knockout_total"] == 250
+    assert decision["finalist_knockout_total"] == 100
+    assert decision["semifinal_loser_knockout_total"] == 0
+    assert decision["champion_knockout_total"] == (
+        decision["semifinal_win_increment"] + decision["final_win_increment"])
+    assert decision["maximum"] == decision["workbook_maximum_only"] == (
+        3 * decision["played_group_win"] + decision["champion_knockout_total"])
+    assert decision["completed_15_match_award_sum"] == (
+        12 * decision["played_group_win"] +
+        2 * decision["semifinal_win_increment"] + decision["final_win_increment"])
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert all(s["url"] in e["source_urls"] for s in followup["sources"])
+
+
+@pytest.mark.parametrize("series,window_key,expected_week", [
+    ("atp_finals", "actual_competition", 46),
+    ("new_haven_1998", "advertised_qualification", 32),
+    ("los_cabos", "advertised_qualification", 30),
+])
+def test_targeted_archive_windows_project_without_promoting_evidence(
+        batch, series, window_key, expected_week):
+    from datetime import date
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    window = e["targeted_archive_followup_2026_11_26"][window_key]
+    assert window["calendar_year_week"] == expected_week
+    for endpoint in ("start", "end"):
+        original = date.fromisoformat(window[endpoint])
+        assert original.year == 1990 and original.isocalendar().week == expected_week
+        for offset, clock in (
+                (1, RunCalendar(52, 1, 1990, 2)),
+                (37, RunCalendar(52, 37, 1989, 2))):
+            pos = clock.calendar_to_season(original.year, expected_week)
+            assert pos is not None
+            assert window[f"offset_{offset}"] == {
+                "season_index": pos.season_index, "season_week": pos.season_week}
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    if window_key == "advertised_qualification":
+        assert window["end"] < row["original_start_date"]
+        assert e["qualification_start_date"] is e["qualification_end_date"] is None
+
+
+def test_targeted_archive_inventory_and_prequalifying_are_not_main_entry_rules(batch):
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    for series in ("new_haven_1998", "los_cabos", "dallas"):
+        row = rows[series]
+        e = row["historical_evidence"]
+        followup = e["targeted_archive_followup_2026_11_26"]
+        assert followup["actual_qualification"] is None
+        assert followup["full_qualifying_draw"] is None
+        assert followup["reserved_main_places"] is None
+        assert e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+        assert row["profile_status"] == "not_in_published_sporting_source"
+        assert all(s["url"] in e["source_urls"] for s in followup["sources"])
+    yale = rows["new_haven_1998"]["historical_evidence"]["targeted_archive_followup_2026_11_26"]["archive"]
+    assert (yale["collection"], yale["accession"], yale["box"], yale["folder"]) == (
+        "RU 507", "2006-A-242", 11, 411)
+    assert (yale["finding_aid_pdf_page_index"], yale["printed_page"]) == (37, 38)
+    assert yale["folder_contents_accessed"] is False
+    assert yale["pdf_sha256"] is None
+    pre = rows["los_cabos"]["historical_evidence"]["targeted_archive_followup_2026_11_26"]["prequalifying"]
+    assert pre["reported_draw"] == 32
+    assert pre["reported_advances_to_regular_qualification"] == 2
+    assert pre["advances_to_main"] is None
+    sf = rows["dallas"]["historical_evidence"]["targeted_archive_followup_2026_11_26"]
+    assert sf["search_window"]["purpose"] == "archive search dates only, not qualifying dates"
+    assert batch["summary"]["verified_qualification_date_rows"] == 0

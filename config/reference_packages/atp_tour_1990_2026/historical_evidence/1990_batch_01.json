@@ -376,6 +376,15 @@
       "report_as_of": "2002-02-06",
       "reported_top_two_gap_points": 361,
       "scope": "Public text of retrospective ATP-branded entry system report. Not original file independently authenticated; no per-event awards or week-before/after snapshot. Gap is anonymous arithmetic of first two totals; no player identities or full rankings ingested. Do not equate Dec 24 with Nov 19 or gross event points."
+    },
+    "ranking_inclusion_source_disagreement": {
+      "status": "unresolved_separate_from_tournament_awards",
+      "secondary_url": "https://openerarankings.com/RankingRules1990",
+      "secondary_claim": "Best 14 and special Finals treatment, with first-iteration wording requiring primary clarification; do not infer exact inclusion or mandatory event rule.",
+      "official_atp_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
+      "official_atp_scope": "Historical ATP account retains opponent-rank bonus system through 1999.",
+      "scope": "Retrospective accounts disagree about mandatory Grand Slam inclusion and when bonuses ended. Historical ranking reconstruction is not an approved squash rule; weekly net changes are not gross event points.",
+      "primary_rule_page": null
     }
   },
   "finals_alternate_window": {
@@ -887,7 +896,8 @@
           "https://openerarankings.com/RankingRules1990",
           "https://www.atptour.com/en/scores/results-archive?year=1990",
           "https://www.latimes.com/archives/la-xpm-1990-02-18-sp-1580-story.html",
-          "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html",
+          "https://en.tennistemple.com/competitions/san-jose/1990/draw"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1060,6 +1070,23 @@
             ],
             "note": "Retain all actual Q data, exact points and hashes as unknown."
           }
+        },
+        "targeted_source_followup_2026_11_26": {
+          "status": "qualification_draw_not_obtained",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://en.tennistemple.com/competitions/san-jose/1990/draw",
+          "source_type": "secondary_main_draw_modern_host_label",
+          "observed_main_entrants": 32,
+          "observed_main_matches": 31,
+          "observed_main_qualifiers": 4,
+          "observed_main_wild_cards": 3,
+          "scope": "Modern San Jose label points to the same historical San Francisco Main event. Main entry tags corroborate earlier secondary counts, not independent proof of reserved policy, Q field, dates or feeder topology. No qualifying sheet.",
+          "missing": [
+            "actual Q dates",
+            "actual Q entrants",
+            "complete feeder sections and reserved advances"
+          ],
+          "pdf_sha256": null
         }
       }
     },
@@ -2890,6 +2917,22 @@
           "repository": "Centre d’Estudis Olímpics i de l’Esport Joan Antoni Samaranch, Barcelona",
           "collection": "RCTB-1899 documentary and bibliographic collection",
           "scope": "Museum confirms custody of the club's documentary collection and offers research access by contact. Request actual qualifying sheet and programme for the 1990 edition; no item-level catalogue or qualifying document verified, no request sent."
+        },
+        "targeted_source_followup_2026_11_26": {
+          "status": "qualification_draw_not_obtained",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
+          "published_on": "1990-04-09",
+          "printed_page": 47,
+          "pdf_page_index": 0,
+          "visually_rechecked": true,
+          "pdf_sha256": null,
+          "scope": "Printed Main bracket and prior qualifying completion confirmed. The article says a qualifier qualified in preceding days, not exact dates. Organizer April 7–15 overall window does not certify qualifying dates. Direct download unavailable; no byte hash.",
+          "missing": [
+            "dated Q results or draw",
+            "actual Q field",
+            "reserved advancement places"
+          ]
         }
       }
     },
@@ -7346,6 +7389,26 @@
             "reported_commitment_usd": 1000000,
             "scope": "Contemporary pre-event report confirms advertised main window, $1m event and temporary Yale stadium. Not actual qualification dates or exact payout/financial classification."
           }
+        },
+        "targeted_source_followup_2026_11_26": {
+          "status": "qualification_draw_not_obtained",
+          "reviewed_on": "2026-11-26",
+          "source_url": "https://dockeryauctions.com/auction/223-full-estate-auction/lot-82-1990-volvo/",
+          "source_type": "auction_description_of_1990_poster_not_original_draw",
+          "advertised_start_date": "1990-08-11",
+          "advertised_end_date": "1990-08-12",
+          "scope": "Rechecked advertisement description; not actual event-wide play. August 16 contemporary report establishes one three-win path only.",
+          "archive_url": "https://as13dev-new.library.yale.edu/2814.pdf",
+          "archive_printed_page": 38,
+          "archive_box": 11,
+          "archive_folder": 411,
+          "missing": [
+            "actual event-wide dates",
+            "complete qualifying entrants and feeder sections",
+            "reserved advancement places"
+          ],
+          "actual_qualification_dates": null,
+          "pdf_sha256": null
         }
       }
     },
@@ -10991,6 +11054,48 @@
             "selected_tests_passed": 33,
             "security_tests_passed": 24,
             "scope": "Exact previous HEAD, log explicitly lists saved-source Frankfurt integration test passing, plus application triage tests. Not validation of subsequent evidence changes."
+          }
+        },
+        "targeted_source_followup_2026_11_26": {
+          "reviewed_on": "2026-11-26",
+          "primary_exact_table_verified": false,
+          "source_year": 1990,
+          "secondary_table": {
+            "source_url": "https://openerarankings.com/RankingRules1990",
+            "group_win": 50,
+            "semifinal_win_component": 100,
+            "final_win_increment": 150,
+            "champion_knockout_total": 250,
+            "undefeated_champion": 400,
+            "next_year_undefeated_champion": 480,
+            "scope": "Year-specific secondary reconstruction, not primary ATP certification. Do not mix the 1991 values with 1990."
+          },
+          "acquisition": {
+            "status": "catalogue_and_archive_leads_only",
+            "requested_documents": [
+              "1990 ATP Tour Player Guide (distinct from retrospective Year One guide)",
+              "Richard Evans ATP Tour Year One 1990, published 1991, ISBN 0747509123",
+              "World of Tennis 1991, ISBN 0002184036",
+              "ATP Tour ranking regulation and bulletins for November 1990, including pre/post Finals and final regular tournament issue"
+            ],
+            "archive": "International Tennis Hall of Fame Information Research Center",
+            "contact": "research@tennisfame.com",
+            "scope": "Ask for title/edition, printed rule page, event award schedule and separate ranking inclusion/expiry treatment. No rule page or bulletin obtained; no request sent."
+          },
+          "work_decision": {
+            "status": "pending_work_and_owner_approval",
+            "publication_allowed": false,
+            "option_wait": "Obtain a dated primary ATP rule page verifying 50/group win and 250/100 knockout totals, and separately clarify the ranking inclusion policy.",
+            "option_adapt": "Explicitly label secondary-based squash adaptation; 50 per played group win, 100 for winning semifinal, additional 150 for winning final; maximum 400, aggregate 950 in completed 15-match test. Do not claim historical ranking certification.",
+            "recommended": "option_adapt_for_pre_alpha_subject_to_approval",
+            "excluded_unapproved_rules": [
+              "historical Best 14 inclusion/replacement",
+              "special Finals inclusion/cutoff",
+              "historical bonus points and expiry",
+              "historical walkover awards",
+              "automatic historical entry selection"
+            ],
+            "scope": "Existing isolated Saved source test only; no shared catalog publication, no production policy change."
           }
         }
       }

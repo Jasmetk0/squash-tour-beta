@@ -1813,3 +1813,63 @@ def test_targeted_archive_inventory_and_prequalifying_are_not_main_entry_rules(b
     sf = rows["dallas"]["historical_evidence"]["targeted_archive_followup_2026_11_26"]
     assert sf["search_window"]["purpose"] == "archive search dates only, not qualifying dates"
     assert batch["summary"]["verified_qualification_date_rows"] == 0
+
+
+def test_frankfurt_contemporary_play_dates_do_not_certify_numeric_ranking_policy(batch):
+    from datetime import date
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    e = row["historical_evidence"]
+    followup = e["contemporary_source_integrity_followup_2026_11_26"]
+    opening = followup["opening_report"]
+    closing = followup["semifinal_final_report"]
+    assert opening["reported_completed_group_matches"] == 3
+    assert opening["reported_retirements_in_those_matches"] == 0
+    assert (closing["reported_semifinals"], closing["reported_finals"]) == (2, 1)
+    assert (opening["actual_day"], closing["semifinal_day"], closing["final_day"]) == (
+        "1990-11-13", "1990-11-17", "1990-11-18")
+    for day in (opening["actual_day"], closing["semifinal_day"], closing["final_day"]):
+        d = date.fromisoformat(day)
+        assert d.isocalendar().week == opening["calendar_year_week"] == 46
+        assert row["original_start_date"] <= day <= row["original_end_date"]
+        for clock, key in (
+            (RunCalendar(52, 1, 1990, 2), "run_positions_offset_1_start_1990"),
+            (RunCalendar(52, 37, 1989, 2), "run_positions_offset_37_start_1989"),
+        ):
+            pos = clock.calendar_to_season(d.year, d.isocalendar().week)
+            assert pos is not None
+            assert row[key] == [{"season_index": pos.season_index, "season_week": pos.season_week}]
+    crosscheck = followup["source_extraction_crosscheck"]
+    assert crosscheck["current_pdf_screen_attempts"] == "http_403"
+    assert crosscheck["pdf_sha256"] is None
+    assert all(url in e["source_urls"] for url in crosscheck["pdf_urls"])
+    assert all(s["source_url"] in e["source_urls"]
+               for s in [opening, closing, *followup["ranking_context"]])
+    assert [s["published_on"] for s in followup["ranking_context"]] == [
+        "1989-08-31", "1999-11-22", "1992-11-18"]
+    for key in ("historical_finals_inclusion_verified", "primary_numeric_rule_verified",
+                "owner_approval", "publication_allowed"):
+        assert followup[key] is False
+    assert row["profile_status"] == "not_in_published_sporting_source"
+
+
+def test_new_haven_additional_partial_report_does_not_inflate_qualification_coverage(batch):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "new_haven_1998")
+    e = row["historical_evidence"]
+    followup = e["contemporary_source_integrity_followup_2026_11_26"]
+    report = followup["source"]
+    prior = e["targeted_import_research"]["actual_qualification_partial_evidence"]
+    assert report["reported_q_wins"] == prior["reported_qualifier_match_wins"] == 3
+    assert report["reported_matches_in_seven_days"] == 8
+    assert report["reported_quarterfinal_day"] == "1990-08-17"
+    assert report["source_url"] in e["source_urls"]
+    assert followup["additional_source"]["source_url"] in e["source_urls"]
+    assert report["screen_status"] == "http_403"
+    assert report["pdf_sha256"] is report["pdf_page_index"] is report["printed_page"] is None
+    for key in ("actual_qualification_start_date", "actual_qualification_end_date",
+                "actual_qualification_entrants", "full_qualifying_draw", "reserved_main_places"):
+        assert followup[key] is None
+    assert e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert batch["summary"]["verified_qualification_date_rows"] == 0

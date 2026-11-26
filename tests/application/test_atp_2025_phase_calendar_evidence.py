@@ -58,3 +58,41 @@ def test_w52_run_positions_preserve_year_boundary_and_same_week_play(phase_evide
     assert shifted.calendar_to_season(2024, 52) == RunCalendarPosition(0, 16, 2024, 52)
     assert shifted.calendar_to_season(2025, 1) == RunCalendarPosition(0, 17, 2025, 1)
     assert shifted.calendar_to_season(2025, 2) == RunCalendarPosition(0, 18, 2025, 2)
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_week", "january_q", "shifted_q", "shifted_main"),
+    [
+        ("hong_kong", ["2024-12-29", "2024-12-30"], [[2024, 52], [2025, 1]],
+         1, [None, 1], [16, 17], 17),
+        ("auckland", ["2025-01-04", "2025-01-05"], [[2025, 1]],
+         2, [1], [17], 18),
+        ("montpellier", ["2025-01-26", "2025-01-27"], [[2025, 4], [2025, 5]],
+         5, [4, 5], [20, 21], 21),
+    ],
+)
+def test_modern_phase_dates_and_native_positions(
+    phase_evidence, series, q_dates, q_weeks, main_week, january_q, shifted_q, shifted_main
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == [[2025, main_week]]
+    assert (row["main_start_date"] in q_dates) == (series != "auckland")
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for (year, week), jan_week, shifted_week in zip(q_weeks, january_q, shifted_q):
+        jan_expected = (
+            None if jan_week is None else RunCalendarPosition(0, jan_week, year, week)
+        )
+        assert january.calendar_to_season(year, week) == jan_expected
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(
+            0, shifted_week, year, week
+        )
+    assert january.calendar_to_season(2025, main_week) == RunCalendarPosition(
+        0, main_week, 2025, main_week
+    )
+    assert shifted.calendar_to_season(2025, main_week) == RunCalendarPosition(
+        0, shifted_main, 2025, main_week
+    )

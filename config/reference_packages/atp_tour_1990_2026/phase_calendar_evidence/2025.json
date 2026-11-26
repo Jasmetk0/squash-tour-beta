@@ -9,7 +9,12 @@
       "category_id": "atp_250",
       "main_start_date": "2024-12-29",
       "main_end_date": "2025-01-05",
-      "main_year_weeks": [[2025, 1]],
+      "main_year_weeks": [
+        [
+          2025,
+          1
+        ]
+      ],
       "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
       "qualifying_date_evidence": [
         {
@@ -23,7 +28,12 @@
           "source_url": "https://www.skysports.com/tennis/scores-schedule/29-12-2024"
         }
       ],
-      "observed_qualifying_iso_weeks": [[2024, 52]],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          52
+        ]
+      ],
       "source_disagreement": {
         "source_url": "https://www.tennis.com.au/brisbane-international/news/2024/12/everything-you-need-to-know-tournament-details-and-key-dates-explained",
         "note": "The December 5 combined-event announcement lists December 27–28 for qualifying. Dated ATP men's singles results include qualifying finals on December 29, the first day of Main."
@@ -31,12 +41,58 @@
       "follow_up": "Verify the original ATP draw and phase calendar. A January 2025 Run start excludes the observed 2024 W52 qualifying dates. A clock that includes the dates still needs reviewed stage ordering."
     },
     {
+      "occurrence_id": "atp_2025_hong_kong",
+      "series_id": "hong_kong",
+      "category_id": "atp_250",
+      "main_start_date": "2024-12-30",
+      "main_end_date": "2025-01-05",
+      "main_year_weeks": [
+        [
+          2025,
+          1
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2024-12-29",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/29-12-2024"
+        },
+        {
+          "date": "2024-12-30",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/30-12-2024"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2024,
+          52
+        ],
+        [
+          2025,
+          1
+        ]
+      ],
+      "source_disagreement": {
+        "source_url": "https://en.tennistemple.com/competitions/hong-kong-2025/64693/orderofplay/2024-12-30",
+        "note": "Four qualifying finals and actual Main singles matches are recorded on December 30. December 29 belongs to ISO 2024 W52; December 30 belongs to ISO 2025 W01 despite both civil dates being in 2024."
+      },
+      "follow_up": "A January 2025 Run excludes the first observed qualifying week. An offset-37 Run starting in 2024 contains both; review Q/Main ordering in W01 and verify profile geometry and points before publication."
+    },
+    {
       "occurrence_id": "atp_2025_adelaide",
       "series_id": "adelaide",
       "category_id": "atp_250",
       "main_start_date": "2025-01-06",
       "main_end_date": "2025-01-11",
-      "main_year_weeks": [[2025, 2]],
+      "main_year_weeks": [
+        [
+          2025,
+          2
+        ]
+      ],
       "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
       "qualifying_date_evidence": [
         {
@@ -50,12 +106,95 @@
           "source_url": "https://www.skysports.com/tennis/scores-schedule/06-01-2025"
         }
       ],
-      "observed_qualifying_iso_weeks": [[2025, 2]],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          2
+        ]
+      ],
       "source_disagreement": {
         "source_url": "https://www.tennis.com.au/wp-content/uploads/2025/01/ORDER-OF-PLAY-MONDAY-6-JANUARY-2025-1.pdf",
         "note": "The January 6 official order of play includes ATP men's singles qualifying and Main. The completed results confirm qualifying on that date. The Sunday order of play alone certifies scheduling, not completion."
       },
       "follow_up": "Find the complete qualifying day-by-day record and draw. Treat qualification continuing into the mapped Main week as needing sporting schedule review."
+    },
+    {
+      "occurrence_id": "atp_2025_auckland",
+      "series_id": "auckland",
+      "category_id": "atp_250",
+      "main_start_date": "2025-01-06",
+      "main_end_date": "2025-01-11",
+      "main_year_weeks": [
+        [
+          2025,
+          2
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-01-04",
+          "status": "played",
+          "source_url": "https://tennis.kiwi/news/klintcharov-rai-show-courage-in-asb-classic-qualifying/"
+        },
+        {
+          "date": "2025-01-05",
+          "status": "played",
+          "source_url": "https://en.tennistemple.com/competitions/auckland/2025/orderofplay/2025-01-05"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          1
+        ]
+      ],
+      "source_disagreement": {
+        "source_url": "https://www.reuters.com/sports/tennis/atp-roundup-alex-michelsen-survives-test-auckland-2025-01-06/",
+        "note": "Local Tennis NZ reports first-round qualifying on January 4; the January 5 results list four qualifying finals. Reuters confirms Main play on local Monday January 6. Do not use an overseas time-zone date for Main opening."
+      },
+      "follow_up": "Compatible adjacent-week Q W01 to Main W02 on both reviewed clocks. Verify original draw and point awards and coordinate profile publication separately."
+    },
+    {
+      "occurrence_id": "atp_2025_montpellier",
+      "series_id": "montpellier",
+      "category_id": "atp_250",
+      "main_start_date": "2025-01-27",
+      "main_end_date": "2025-02-02",
+      "main_year_weeks": [
+        [
+          2025,
+          5
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-01-26",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/26-01-2025"
+        },
+        {
+          "date": "2025-01-27",
+          "status": "played",
+          "source_url": "https://www.rte.ie/sport/results/tennis/open-sud-de-france-qualification-men/895569/results/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          4
+        ],
+        [
+          2025,
+          5
+        ]
+      ],
+      "source_disagreement": {
+        "source_url": "https://en.tennistemple.com/competitions/montpellier-2025/67851/orderofplay/2025-01-27",
+        "note": "Dated results show qualifying finals and Main singles on January 27. The original overlap is not equivalent to placing all qualifying in W04."
+      },
+      "follow_up": "Review split qualifying across W04/W05 and Q-before-Main slot ordering in W05; verify geometry and points before publication."
     }
   ]
 }

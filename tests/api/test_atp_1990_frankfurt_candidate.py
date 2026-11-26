@@ -3,6 +3,7 @@
 Never publish the candidate or import historical player identities/results.
 Only the source document provider is substituted while copying the fixture.
 """
+from itertools import combinations
 import json
 
 import pytest
@@ -151,20 +152,98 @@ def test_frankfurt_candidate_saved_source_matches_ranking_and_cold_reopen(tmp_pa
         assert len(tournament.matches) == 15
         assert all(m.result.rally_log.events for m in tournament.matches)
         assert all(m.input_context.best_of == 5 for m in tournament.matches)
-        assert tournament.winner_player_id == tournament.matches[-1].result.winner_player_id
-        # Independent per-player oracle: each played group win pays 50,
-        # each semifinal winner reaches the 100-point finalist floor, and
-        # the final winner receives only the extra 150 (250 total component).
-        expected = dict.fromkeys(entrants, 0)
-        group_reward = candidate.played_group_win_points
-        finalist = candidate.knockout_stage_points["finalist"]
-        champion = candidate.knockout_stage_points["champion"]
-        assert candidate.knockout_stage_points["semifinal"] == 0
-        for match, award in zip(tournament.matches,
-                [group_reward] * 12 + [finalist, finalist, champion - finalist], strict=True):
-            expected[match.result.winner_player_id] += award
+        # Reconstruct the competition from the saved receipts and actual match
+        # identities, not the order of the tournament.matches tuple.
+        matches = {m.match_id: m for m in tournament.matches}
+        assert len(matches) == 15
+        assert not tournament.walkovers
+        standings = tournament.standings
+        group_players = {g.group_index: {r.position: r.player_id for r in g.rows}
+                         for g in standings.groups}
+        assert len(group_players) == 2
+        assert all(set(p) == {1, 2, 3, 4} for p in group_players.values())
+        assert sorted(p for g in group_players.values() for p in g.values()) == sorted(entrants)
+
+        group_wins = dict.fromkeys(entrants, 0)
+        group_pairs = {g: set() for g in group_players}
+        group_match_ids = set()
+        for receipt in standings.source_results:
+            assert receipt.match_id not in group_match_ids
+            group_match_ids.add(receipt.match_id)
+            result = matches[receipt.match_id].result
+            pair = frozenset((result.winner_player_id, result.loser_player_id))
+            assert len(pair) == 2
+            assert pair <= set(group_players[receipt.group_index].values())
+            assert pair not in group_pairs[receipt.group_index]
+            group_pairs[receipt.group_index].add(pair)
+            assert receipt.winner_player_id == result.winner_player_id
+            assert receipt.loser_player_id == result.loser_player_id
+            assert receipt.result_kind in {"played", "retirement"}
+            group_wins[result.winner_player_id] += 1
+        assert len(group_match_ids) == sum(group_wins.values()) == 12
+        for group, positions in group_players.items():
+            assert group_pairs[group] == {
+                frozenset(pair) for pair in combinations(positions.values(), 2)}
+        for group in standings.groups:
+            for row in group.rows:
+                assert row.wins == group_wins[row.player_id]
+                assert row.losses == 3 - row.wins
+
+        bracket = tournament.knockout_bracket
+        assert bracket is not None
+        assert bracket.entrant_count == 4 and bracket.round_count == 2
+        semifinals = [m for m in bracket.matches if m.round_number == 1]
+        finals = [m for m in bracket.matches if m.round_number == 2]
+        assert len(semifinals) == 2 and len(finals) == 1
+        final = finals[0]
+        assert final.match_id == bracket.terminal_match_id
+        knockout_ids = {m.match_id for m in bracket.matches}
+        assert len(knockout_ids) == 3
+        assert not group_match_ids & knockout_ids
+        assert group_match_ids | knockout_ids == set(matches)
+
+        a, b = (group_players[g] for g in sorted(group_players))
+        expected_crossovers = {
+            frozenset((a[1], b[2])), frozenset((a[2], b[1]))}
+        observed_crossovers = set()
+        semifinal_winners = set()
+        semifinal_losers = set()
+        for semifinal in semifinals:
+            result = matches[semifinal.match_id].result
+            observed_crossovers.add(frozenset((result.winner_player_id, result.loser_player_id)))
+            semifinal_winners.add(result.winner_player_id)
+            semifinal_losers.add(result.loser_player_id)
+        assert observed_crossovers == expected_crossovers
+        result = matches[final.match_id].result
+        assert {result.winner_player_id, result.loser_player_id} == semifinal_winners
+        assert tournament.winner_player_id == result.winner_player_id
+
+        # Independent candidate oracle: literal secondary-based award values,
+        # not the production composition helper or copied modern profile.
+        # Do not treat these values as historically certified or owner-approved.
+        assert candidate.played_group_win_points == 50
+        assert candidate.knockout_stage_points == {"champion": 250, "finalist": 100, "semifinal": 0}
+        knockout_points = dict.fromkeys(entrants, 0)
+        knockout_points[result.winner_player_id] = 250
+        knockout_points[result.loser_player_id] = 100
+        expected = {p: 50 * wins + knockout_points[p] for p, wins in group_wins.items()}
         assert sum(expected.values()) == probe["expected_total_candidate_points"] == 950
         assert max(expected.values()) <= probe["expected_max_individual_candidate_points"] == 400
+        prepared = {a.player_id: a for a in tournament.prepared_awards}
+        assert len(tournament.prepared_awards) == len(prepared) == 8
+        assert set(prepared) == set(entrants)
+        for player_id, award in prepared.items():
+            assert award.group_points == 50 * group_wins[player_id]
+            assert award.knockout_points == knockout_points[player_id]
+            assert award.main_points == expected[player_id]
+            assert award.source_policy_fingerprint == tournament.prepared_policy.fingerprint
+            stage = ("champion" if player_id == result.winner_player_id else
+                     "finalist" if player_id == result.loser_player_id else
+                     "semifinal" if player_id in semifinal_losers else None)
+            if stage is None:
+                assert award.reached_stage in {"group_position_3", "group_position_4"}
+            else:
+                assert award.reached_stage == stage
 
         execute(server, command(current, "confirm-result", edition_id=edition_id))
         save_tour(server)

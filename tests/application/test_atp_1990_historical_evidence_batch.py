@@ -886,13 +886,13 @@ def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy
                 if type(r["historical_evidence"].get("qualification_size_secondary")) is int}
     assert {r["occurrence_id"] for r in triage["rows"]} == reported
     assert triage["counts"] == {
-        "reported_q_size": 17, "conditional_geometry": 17,
-        "conditional_geometry_and_band": 12, "geometry_without_exact_band": 5,
-        "missing_main_entry_labels": 0, "no_reported_q_size": 57,
+        "reported_q_size": 23, "conditional_geometry": 23,
+        "conditional_geometry_and_band": 17, "geometry_without_exact_band": 6,
+        "missing_main_entry_labels": 0, "no_reported_q_size": 51,
     }
     statuses = Counter(r["triage_status"] for r in triage["rows"])
-    assert statuses == {"conditional_geometry_and_band_candidate": 12,
-                        "missing_exact_band_candidate": 5}
+    assert statuses == {"conditional_geometry_and_band_candidate": 17,
+                        "missing_exact_band_candidate": 6}
     for item in triage["rows"]:
         occurrence = rows[item["occurrence_id"]]
         e = occurrence["historical_evidence"]
@@ -1498,8 +1498,8 @@ def test_workbook_conflict_followup_preserves_original_comparison_and_qualificat
         assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert row["profile_status"] == "not_in_published_sporting_source"
-    assert batch["summary"]["reported_seed_count_rows"] == 70
-    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 67
+    assert batch["summary"]["reported_seed_count_rows"] == 73
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 70
 
 
 def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
@@ -2029,3 +2029,114 @@ def test_madrid_replacement_and_prague_press_do_not_prove_qualifying_rules(batch
     assert c["reported_singles_champion_prize_usd"] == 21370
     assert c["reported_singles_champion_prize_usd"] != p["reported_prize_money"]
     assert p["qualification_start_date"] is p["qualification_end_date"] is None
+
+
+@pytest.mark.parametrize("series,week,main,byes,q_size,q_spots,wc,q_per_section,matches,exact_band", [
+    ("brisbane", 1, 32, 0, 32, 4, 3, 8, 59, True),
+    ("stuttgart_indoor_feb_1995", 8, 32, 0, 32, 4, 3, 8, 59, True),
+    ("monte_carlo", 17, 56, 8, 48, 6, 4, 8, 97, True),
+    ("munich", 18, 32, 0, 16, 4, 3, 4, 43, True),
+    ("hamburg", 19, 56, 8, 28, 7, 5, 4, 76, True),
+    ("rome", 20, 64, 0, 32, 8, 5, 4, 87, False),
+])
+def test_additional_edition_q_sizes_keep_candidate_geometry_and_calendar_separate(
+    batch, series, week, main, byes, q_size, q_spots, wc, q_per_section, matches, exact_band
+):
+    from datetime import date
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    a = e["additional_qualification_size_followup_2026_11_26"]
+    assert a["status"] == "edition_specific_secondary_qualification_size_only_not_actual_draw"
+    assert a["prior_fields"]["qualification_size_secondary"] is None
+    assert a["source_url"] == e["qualification_size_source"]
+    assert a["source_url"] in e["source_urls"]
+    assert a["reported_header_main"] == e["main_entrants"] == main
+    assert a["reported_header_q"] == e["qualification_size_secondary"] == q_size
+    assert e["reported_main_qualifiers"] == q_spots
+    assert e["reported_main_wild_cards"] == wc
+    assert e["main_byes"] == byes
+    assert all(a[k] is None for k in (
+        "actual_q_entrants", "actual_q_dates", "complete_q_graph", "reserved_advancement_places"))
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert all(v is None for v in e["entry_policy"].values())
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    t = next(t for t in batch["knockout_candidate_triage"]["rows"] if t["occurrence_id"] == row["occurrence_id"])
+    assert t["exact_secondary_band_candidate"] is exact_band
+    g = t["conditional_geometry"]
+    m, sections = build_knockout_bracket_parts(
+        event_id=row["occurrence_id"], main_entrants=main,
+        qualification_entrants=q_size, qualifier_spots=q_spots,
+        wild_cards=wc, byes=byes)
+    assert m.source_main_entrants == main
+    assert m.bracket_capacity == main + byes
+    assert m.unplaced_byes == byes
+    assert len(sections) == g["sections"] == q_spots
+    assert all(s.source_entrant_count == s.bracket_capacity == q_per_section for s in sections)
+    assert g["potential_matches"] == matches == main - 1 + sum(
+        s.actual_match_count_if_fully_played for s in sections)
+    assert date.fromisoformat(row["original_start_date"]).isocalendar().week == week
+    assert date.fromisoformat(row["original_end_date"]).isocalendar().week == week
+    for clock, key in (
+        (RunCalendar(52, 1, 1990, 2), "run_positions_offset_1_start_1990"),
+        (RunCalendar(52, 37, 1989, 2), "run_positions_offset_37_start_1989"),
+    ):
+        pos = clock.calendar_to_season(1990, week)
+        assert pos is not None
+        assert row[key] == [{"season_index": pos.season_index, "season_week": pos.season_week}]
+
+
+@pytest.mark.parametrize("series,main,seeds,q_by_section,wc_by_section,ll_by_section,se,missing_seeds", [
+    ("hamburg", 56, 16, [1, 2, 3, 1], [3, 1, 1, 0], [1, 1, 0, 0], 0, [8, 12]),
+    ("rome", 64, 16, [2, 3, 2, 1], [0, 1, 3, 1], [1, 0, 1, 0], 1, []),
+    ("berlin_1991", 32, 8, [3, 1], [1, 2], [2, 0], 0, []),
+])
+def test_remaining_main_labels_preserve_lucky_loser_and_seed_distinctions(
+    batch, series, main, seeds, q_by_section, wc_by_section, ll_by_section, se, missing_seeds
+):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    labels = e["main_entry_label_evidence"]
+    assert labels["source_url"] in e["source_urls"]
+    assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+    assert labels["qualifier_counts_by_section"] == q_by_section
+    assert labels["wild_card_counts_by_section"] == wc_by_section
+    assert labels["lucky_loser_counts_by_section"] == ll_by_section
+    assert labels["observed_seed_ranks"] == [n for n in range(1, seeds + 1) if n not in missing_seeds]
+    assert e["main_seeds"] == seeds
+    assert sum(q_by_section) == labels["observed_qualifiers"] == e["reported_main_qualifiers"]
+    assert sum(wc_by_section) == labels["observed_wild_cards"] == e["reported_main_wild_cards"]
+    assert sum(ll_by_section) == labels["observed_lucky_losers"] == e["observed_lucky_losers"]
+    assert labels.get("observed_special_exempts", 0) == se
+    assert main == labels["unmarked_entrants"] + sum(q_by_section) + sum(wc_by_section) + sum(ll_by_section) + se
+    assert all(v is None for v in e["entry_policy"].values())
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    if series == "hamburg":
+        a = e["additional_qualification_size_followup_2026_11_26"]["main_label_followup"]
+        assert a["observed_seed_count"] == 14 and a["observed_bye_positions"] == e["main_byes"] == 8
+        assert a["observed_lucky_loser_in_bye_position"] is e["observed_lucky_loser_in_bye_position"] is True
+    elif series == "rome":
+        a = e["additional_qualification_size_followup_2026_11_26"]
+        assert a["retrospective_entry_crosscheck"]["published_year"] == 2014
+        assert a["retrospective_entry_crosscheck"]["source_url"] in e["source_urls"]
+        assert [x["outcome"] for x in a["archive_attempts"]] == [
+            "content_too_large", "not_accessible", "content_too_large"]
+    else:
+        assert e["qualification_size_secondary"] is None
+    assert row["profile_status"] == "not_in_published_sporting_source"
+
+
+@pytest.mark.parametrize("series", ["poertschach_2008", "san_marino_2000"])
+def test_italian_seed_lists_do_not_turn_omitted_entry_labels_into_zero(batch, series):
+    row = next(r for r in batch["occurrences"] if r["series_id"] == series)
+    e = row["historical_evidence"]
+    a = e["main_draw_seed_followup_2026_11_26"]
+    assert a["source_url"] in e["source_urls"]
+    assert a["status"] == "secondary_edition_seed_list_only_entry_labels_omitted"
+    assert a["nominal_seed_ranks"] == list(range(1, 9))
+    assert e["main_seeds"] == 8
+    assert e["reported_main_qualifiers"] is e["reported_main_wild_cards"] is None
+    assert e["qualification_size_secondary"] is e["qualification_entrants"] is None
+    assert all(v is None for v in e["entry_policy"].values())
+    assert row["profile_status"] == "not_in_published_sporting_source"

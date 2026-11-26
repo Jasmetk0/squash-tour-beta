@@ -1023,6 +1023,328 @@
         "note": "Dated Q1 and six final qualifying scores April 15–16."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_munich",
+      "series_id": "munich",
+      "category_id": "atp_250",
+      "main_start_date": "2023-04-17",
+      "main_end_date": "2023-04-23",
+      "main_year_weeks": [
+        [
+          2023,
+          16
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-15",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-munich-2023/"
+        },
+        {
+          "date": "2023-04-16",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-munich-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          15
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-munich-2023/",
+        "note": "Eight scored Q1 matches April 15 and three scored Q finals plus one walkover April 16. The walkover is not a played match; qualifying play on April 16 is independently established by the other scores."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_madrid",
+      "series_id": "madrid",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-04-26",
+      "main_end_date": "2023-05-07",
+      "main_year_weeks": [
+        [
+          2023,
+          17
+        ],
+        [
+          2023,
+          18
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-04-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mutua-madrid-open-2023/"
+        },
+        {
+          "date": "2023-04-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-mutua-madrid-open-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          17
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-mutua-madrid-open-2023/",
+        "note": "Dated men's singles first qualifying round April 24 and twelve final qualifying scores April 25; Main archive opens April 26. Distinguish from women's draw."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks."
+    },
+    {
+      "occurrence_id": "atp_2023_rome",
+      "series_id": "rome",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2023-05-10",
+      "main_end_date": "2023-05-21",
+      "main_year_weeks": [
+        [
+          2023,
+          19
+        ],
+        [
+          2023,
+          20
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-05-08",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-roma-2023/"
+        },
+        {
+          "date": "2023-05-09",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-roma-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          19
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-roma-2023/",
+        "note": "Dated men's singles qualifying first round May 8 and twelve final qualifying scores May 9; Main archive opens May 10."
+      },
+      "follow_up": "Review explicit sporting round allocation across both Main weeks."
+    },
+    {
+      "occurrence_id": "atp_2023_geneva",
+      "series_id": "geneva",
+      "category_id": "atp_250",
+      "main_start_date": "2023-05-21",
+      "main_end_date": "2023-05-27",
+      "main_year_weeks": [
+        [
+          2023,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-05-20",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/20-05-2023"
+        },
+        {
+          "date": "2023-05-21",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/21-05-2023"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/21-05-2023",
+        "note": "Eight scored Q1 matches May 20 and four scored Q finals May 21; two scored Main singles also May 21. Main byes excluded. Dated May 22 men's singles results show Main, not an additional Q final."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-05-21",
+        "status": "played",
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/21-05-2023",
+        "observed_iso_week": [
+          2023,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_lyon_old",
+      "series_id": "lyon_old",
+      "category_id": "atp_250",
+      "main_start_date": "2023-05-21",
+      "main_end_date": "2023-05-27",
+      "main_year_weeks": [
+        [
+          2023,
+          21
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-05-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-lyon-2023/"
+        },
+        {
+          "date": "2023-05-21",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-lyon-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          20
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-lyon-2023/",
+        "note": "Eight Q1 and four Q final scores; three scored Main singles May 21. Actual Lyon clay occurrence is lyon_old, distinct from Marseille's canonical lyon identity."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; retain actual opening independently of majority projection.",
+      "main_opening_play_evidence": {
+        "date": "2023-05-21",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-lyon-2023/",
+        "observed_iso_week": [
+          2023,
+          20
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_s_hertogenbosch",
+      "series_id": "s_hertogenbosch",
+      "category_id": "atp_250",
+      "main_start_date": "2023-06-12",
+      "main_end_date": "2023-06-18",
+      "main_year_weeks": [
+        [
+          2023,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-10",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hertogenbosch-2023/"
+        },
+        {
+          "date": "2023-06-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hertogenbosch-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-hertogenbosch-2023/",
+        "note": "Eight scored Q1 and four Q finals June 10–11; scored men's Main singles June 12. Separate from WTA qualifying."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_stuttgart",
+      "series_id": "stuttgart",
+      "category_id": "atp_250",
+      "main_start_date": "2023-06-12",
+      "main_end_date": "2023-06-18",
+      "main_year_weeks": [
+        [
+          2023,
+          24
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-10",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-stuttgart-2023/"
+        },
+        {
+          "date": "2023-06-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-stuttgart-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          23
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-stuttgart-2023/",
+        "note": "Eight scored Q1 and four Q finals June 10–11; scored Main singles June 12."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_halle",
+      "series_id": "halle",
+      "category_id": "atp_500",
+      "main_start_date": "2023-06-19",
+      "main_end_date": "2023-06-25",
+      "main_year_weeks": [
+        [
+          2023,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-06-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-halle-2023/"
+        },
+        {
+          "date": "2023-06-18",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-halle-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-halle-2023/",
+        "note": "Eight Q1 and four Q final results June 17–18, including a retirement in one final; Main singles June 19."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
     }
   ]
 }

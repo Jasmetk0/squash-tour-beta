@@ -171,3 +171,47 @@ def test_houston_2023_rain_compressed_main_not_qualifying(phase_evidence):
     assert all(list(date.fromisoformat(r["date"]).isocalendar()[:2]) in row["main_year_weeks"]
                for r in evidence["winner_rounds"])
     assert phase_evidence["sporting_schedule_installed"] is False
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("munich", ["2023-04-15", "2023-04-16"], [15], [16]),
+        ("madrid", ["2023-04-24", "2023-04-25"], [17], [17,18]),
+        ("rome", ["2023-05-08", "2023-05-09"], [19], [19,20]),
+        ("geneva", ["2023-05-20", "2023-05-21"], [20], [21]),
+        ("lyon_old", ["2023-05-20", "2023-05-21"], [20], [21]),
+        ("s_hertogenbosch", ["2023-06-10", "2023-06-11"], [23], [24]),
+        ("stuttgart", ["2023-06-10", "2023-06-11"], [23], [24]),
+        ("halle", ["2023-06-17", "2023-06-18"], [24], [25]),
+    ],
+)
+def test_late_spring_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == RunCalendarPosition(0, week + 16, 2023, week)
+
+
+@pytest.mark.parametrize("series", ["geneva", "lyon_old"])
+def test_may_2023_actual_main_opening_precedes_projected_week(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"] == "2023-05-21"
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2023, 20]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert row["main_year_weeks"] == [[2023, 21]]
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+def test_2023_lyon_clay_and_marseille_remain_distinct(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    assert rows["lyon_old"]["occurrence_id"] == "atp_2023_lyon_old"
+    assert rows["lyon"]["occurrence_id"] == "atp_2023_lyon"
+    assert rows["lyon_old"]["main_start_date"] == "2023-05-21"
+    assert rows["lyon"]["main_start_date"] == "2023-02-20"

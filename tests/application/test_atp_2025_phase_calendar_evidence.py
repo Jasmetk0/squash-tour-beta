@@ -69,6 +69,8 @@ def test_w52_run_positions_preserve_year_boundary_and_same_week_play(phase_evide
          2, [1], [17], 18),
         ("montpellier", ["2025-01-26", "2025-01-27"], [[2025, 4], [2025, 5]],
          5, [4, 5], [20, 21], 21),
+        ("lyon", ["2025-02-09", "2025-02-10"], [[2025, 6], [2025, 7]],
+         7, [6, 7], [22, 23], 23),
     ],
 )
 def test_modern_phase_dates_and_native_positions(
@@ -105,6 +107,11 @@ def test_modern_phase_dates_and_native_positions(
         ("rotterdam", ["2025-02-01", "2025-02-02"], 5, 6),
         ("buenos_aires", ["2025-02-08", "2025-02-09"], 6, 7),
         ("delray_beach", ["2025-02-08", "2025-02-09"], 6, 7),
+        ("doha", ["2025-02-15", "2025-02-16"], 7, 8),
+        ("rio", ["2025-02-15", "2025-02-16"], 7, 8),
+        ("acapulco", ["2025-02-22", "2025-02-23"], 8, 9),
+        ("dubai", ["2025-02-22", "2025-02-23"], 8, 9),
+        ("santiago", ["2025-02-22", "2025-02-23"], 8, 9),
     ],
 )
 def test_adjacent_week_phase_dates_and_native_positions(
@@ -126,3 +133,34 @@ def test_adjacent_week_phase_dates_and_native_positions(
         assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(
             0, week + 16, 2025, week
         )
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "first_main_week"),
+    [
+        ("indian_wells", ["2025-03-03", "2025-03-04"], 10),
+        ("miami", ["2025-03-17", "2025-03-18"], 12),
+    ],
+)
+def test_masters_two_week_main_preserves_same_week_qualifying(
+    phase_evidence, series, q_dates, first_main_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["category_id"] == "atp_masters_1000"
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert q_dates[-1] < row["main_start_date"]
+    assert row["observed_qualifying_iso_weeks"] == [[2025, first_main_week]]
+    assert row["main_year_weeks"] == [[2025, first_main_week], [2025, first_main_week + 1]]
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in (first_main_week, first_main_week + 1):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)
+
+
+def test_marseille_2025_retains_relocated_licence_identity(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "lyon")
+    assert row["occurrence_id"] == "atp_2025_lyon"
+    assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+    assert row["historical_identity_evidence"]["source_event_id"] == 496
+    assert not any(r["series_id"] == "lyon_old" for r in phase_evidence["occurrences"])

@@ -343,6 +343,324 @@
         "note": "The tournament's February 8 notebook and dated first-round/final results distinguish men's ATP qualifying from the opening-weekend Legends event."
       },
       "follow_up": "Adjacent Q W06 to Main W07; coordinate geometry, point awards and profile publication with Work."
+    },
+    {
+      "occurrence_id": "atp_2025_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2025-02-10",
+      "main_end_date": "2025-02-16",
+      "main_year_weeks": [
+        [
+          2025,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-09",
+          "status": "played",
+          "source_url": "https://www.gamesetpredict.com/tournament/open-13-provence-2025-atp/"
+        },
+        {
+          "date": "2025-02-10",
+          "status": "played",
+          "source_url": "https://www.tennis.com/tournaments/open-13-provence?date=2025-02-10"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          6
+        ],
+        [
+          2025,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennis.com/tournaments/open-13-provence?date=2025-02-10",
+        "note": "The 2025 host is Marseille (Open 13 Provence), not Lyon. ATP approved relocation to Lyon from 2026; the separate clay Lyon licence is lyon_old. Q finals and Main singles were played on February 10."
+      },
+      "follow_up": "Review split Q and Q-before-Main round slots in W07. Preserve canonical Series ID lyon.",
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_event_id": 496,
+        "source_url": "https://www.atptour.com/en/news/marseille-lyon-relocation",
+        "note": "Relocation applies from 2026, not 2025; distinct from lyon_old."
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_doha",
+      "series_id": "doha",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-17",
+      "main_end_date": "2025-02-22",
+      "main_year_weeks": [
+        [
+          2025,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-15",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/15-02-2025"
+        },
+        {
+          "date": "2025-02-16",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/16-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/16-02-2025",
+        "note": "ATP men's qualifying results show first round on February 15 and four finals on February 16; not the concurrent WTA event."
+      },
+      "follow_up": "Adjacent Q W07 to Main W08; source geometry and points separately before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2025_rio",
+      "series_id": "rio",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-17",
+      "main_end_date": "2025-02-23",
+      "main_year_weeks": [
+        [
+          2025,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-15",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/15-02-2025"
+        },
+        {
+          "date": "2025-02-16",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/16-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/16-02-2025",
+        "note": "Dated ATP men's singles results identify Q first round and four Q finals on successive days."
+      },
+      "follow_up": "Adjacent Q W07 to Main W08; preserve four qualifying places independently of any lucky-loser replacements."
+    },
+    {
+      "occurrence_id": "atp_2025_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-24",
+      "main_end_date": "2025-03-01",
+      "main_year_weeks": [
+        [
+          2025,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-22",
+          "status": "played",
+          "source_url": "https://es.tennistemple.com/competitions/acapulco/2025/orderofplay/2025-02-22"
+        },
+        {
+          "date": "2025-02-23",
+          "status": "played",
+          "source_url": "https://abiertomexicanodetenis.com/en/2025/02/23/the-amt-2025-has-a-complete-draw-after-the-qualy-tickets-were-defined/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://abiertomexicanodetenis.com/en/2025/02/23/the-amt-2025-has-a-complete-draw-after-the-qualy-tickets-were-defined/",
+        "note": "Official tournament report confirms four qualifying tickets on local Sunday February 23; ATP published local Feb 22/23 schedule. Overseas result dates may place Saturday evening matches on Sunday."
+      },
+      "follow_up": "Adjacent local-date Q W08 to Main W09; do not move Q into W09 based on overseas dates.",
+      "source_disagreement": {
+        "source_url": "https://www.atptour.com/en/news/acapulco-2025-history-draw-schedule",
+        "note": "Official local qualifying dates February 22 and 23; overseas date feeds can show February 23 for the Saturday night first round."
+      }
+    },
+    {
+      "occurrence_id": "atp_2025_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2025-02-24",
+      "main_end_date": "2025-03-01",
+      "main_year_weeks": [
+        [
+          2025,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-22",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/22-02-2025"
+        },
+        {
+          "date": "2025-02-23",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/23-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-02-2025",
+        "note": "Dated men's ATP first round and finals are separate from women's WTA and doubles results."
+      },
+      "follow_up": "Adjacent Q W08 to Main W09; geometry and point provenance needed for publication."
+    },
+    {
+      "occurrence_id": "atp_2025_santiago",
+      "series_id": "santiago",
+      "category_id": "atp_250",
+      "main_start_date": "2025-02-24",
+      "main_end_date": "2025-03-02",
+      "main_year_weeks": [
+        [
+          2025,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-02-22",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/22-02-2025"
+        },
+        {
+          "date": "2025-02-23",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/23-02-2025"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.skysports.com/tennis/scores-schedule/23-02-2025",
+        "note": "Dated ATP men's singles first round and four qualifying finals precede Main."
+      },
+      "follow_up": "Adjacent Q W08 to Main W09; geometry and point provenance needed for publication."
+    },
+    {
+      "occurrence_id": "atp_2025_indian_wells",
+      "series_id": "indian_wells",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-03-05",
+      "main_end_date": "2025-03-16",
+      "main_year_weeks": [
+        [
+          2025,
+          10
+        ],
+        [
+          2025,
+          11
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-03-03",
+          "status": "played",
+          "source_url": "https://bnpparibasopen.com/news/mens-qualifying-day-1-roundup--rudy-quan-indian-wells"
+        },
+        {
+          "date": "2025-03-04",
+          "status": "played",
+          "source_url": "https://bnpparibasopen.com/news/2025-qualifiers"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          10
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://bnpparibasopen.com/news/2025-qualifiers",
+        "note": "Official organizer's day-one and qualifier reports confirm local Monday and Tuesday men's qualifying, before Wednesday Main."
+      },
+      "follow_up": "Q shares W10 with first Main week. Two-week Main W10/W11 needs explicit round-by-round allocation; no schedule or profile installed."
+    },
+    {
+      "occurrence_id": "atp_2025_miami",
+      "series_id": "miami",
+      "category_id": "atp_masters_1000",
+      "main_start_date": "2025-03-19",
+      "main_end_date": "2025-03-30",
+      "main_year_weeks": [
+        [
+          2025,
+          12
+        ],
+        [
+          2025,
+          13
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2025",
+      "qualifying_date_evidence": [
+        {
+          "date": "2025-03-17",
+          "status": "played",
+          "source_url": "https://www.skysports.com/tennis/scores-schedule/17-03-2025"
+        },
+        {
+          "date": "2025-03-18",
+          "status": "played",
+          "source_url": "https://www.rte.ie/sport/results/tennis/miami-open-qualification-men/895593/results/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2025,
+          12
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.rte.ie/sport/results/tennis/miami-open-qualification-men/895593/results/",
+        "note": "Dated men's qualifying results on March 17 and 18; Main archive starts March 19."
+      },
+      "follow_up": "Q shares W12 with first Main week. Two-week Main W12/W13 needs explicit round-by-round allocation; no schedule or profile installed."
     }
   ]
 }

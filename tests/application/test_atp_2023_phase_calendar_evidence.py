@@ -333,3 +333,53 @@ def test_chengdu_2023_source_finish_is_not_main_projection(phase_evidence):
     assert row["source_finish_iso_week"] == [2023, 39]
     assert row["source_finish_iso_week"] == list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2])
     assert row["source_finish_iso_week"] not in row["main_year_weeks"]
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_weeks"),
+    [
+        ("hangzhou", ["2023-09-19","2023-09-20"], [38], [38]),
+        ("almaty", ["2023-09-26","2023-09-27"], [39], [39]),
+        ("beijing", ["2023-09-26","2023-09-27"], [39], [39]),
+        ("shanghai", ["2023-10-02","2023-10-03"], [40], [40,41]),
+        ("brussels", ["2023-10-15","2023-10-16"], [41,42], [42]),
+        ("stockholm", ["2023-10-14","2023-10-15"], [41], [42]),
+        ("tokyo", ["2023-10-14","2023-10-15"], [41], [42]),
+        ("basel", ["2023-10-21","2023-10-22"], [42], [43]),
+    ],
+)
+def test_autumn_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2023, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2023, w] for w in main_weeks]
+    january = RunCalendar.earth_default(start_year=2023, season_count=2)
+    shifted = RunCalendar(52, 37, 2022, 2)
+    for week in sorted(set(q_weeks + main_weeks)):
+        assert january.calendar_to_season(2023, week) == RunCalendarPosition(0, week, 2023, week)
+        assert shifted.calendar_to_season(2023, week) == RunCalendarPosition(1, week - 36, 2023, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "actual_host"),
+    [("hangzhou", "Zhuhai, China"), ("almaty", "Astana, Kazakhstan"), ("brussels", "Antwerp, Belgium")],
+)
+def test_2023_relocated_series_retains_historical_host(phase_evidence, series, actual_host):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["occurrence_id"] == f"atp_2023_{series}"
+    assert row["historical_identity_evidence"]["actual_host"] == actual_host
+    assert row["historical_identity_evidence"]["source_url"]
+
+
+@pytest.mark.parametrize(("series", "opening_week"), [("hangzhou", 38), ("brussels", 42)])
+def test_autumn_2023_actual_main_opening_overlap(phase_evidence, series, opening_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["main_opening_play_evidence"]["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2023, opening_week]
+
+
+@pytest.mark.parametrize(("series", "finish_week"), [("hangzhou", 39), ("almaty", 40), ("beijing", 40)])
+def test_autumn_2023_finish_outside_majority_projection(phase_evidence, series, finish_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["source_finish_iso_week"] == [2023, finish_week]
+    assert row["source_finish_iso_week"] == list(date.fromisoformat(row["main_end_date"]).isocalendar()[:2])
+    assert row["source_finish_iso_week"] not in row["main_year_weeks"]

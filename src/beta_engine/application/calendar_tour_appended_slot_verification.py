@@ -166,9 +166,19 @@ def _appended_event(reference, new_raw):
 def verify_appended_slot(service, session, run_id, branch_id, successor, base, *,
                          _fingerprints=None, _save_values=None):
     """The post-write context of a proven append, or None (use the full path)."""
+    from beta_engine.infrastructure.db.full_simulation_execution_guard import (
+        FullSimulationPauseRequested,
+        FullSimulationStopped,
+        FullSimulationTargetReached,
+    )
+
     try:
         return _verify(service, session, run_id, branch_id, successor, base,
                        _fingerprints=_fingerprints, _save_values=_save_values)
+    except (FullSimulationPauseRequested, FullSimulationStopped, FullSimulationTargetReached):
+        # A Full Simulation control fence is never an unproven increment: it
+        # must reach the driver exactly as from the complete path.
+        raise
     except Exception:  # noqa: BLE001 - fallback only; the full path decides
         # Any unproven case (pydantic ValidationError included). The complete
         # original post-write context then decides and reports acceptance or
@@ -297,18 +307,34 @@ def _verify(service, session, run_id, branch_id, successor, base, *, _fingerprin
         ):
             return None
 
-        # 5. Every other live component again, against the authenticated candidate.
+        # The private prefix models must still be exactly the authenticated
+        # values: a nested mutable value changed after authentication would
+        # change this complete fresh canonical hash (no memo, no scope).
+        if (base['tour_fingerprint'] is None
+                or canonical_hash(state_pre.model_dump(mode='json')) != base['tour_fingerprint']):
+            return None
+        saved_tour_component = revision.saved_revision.payload.get('content', {}).get(TOUR_KEY)
+        if (not isinstance(saved_tour_component, dict)
+                or canonical_hash(signed.model_dump(mode='json')) != saved_tour_component.get('fingerprint')):
+            return None
+
+        # 5. Every other live component again. Build the candidate from the
+        # Saved payload just re-validated above, exactly as
+        # native_working_context does, and require it to equal the
+        # authenticated pre-write candidate outside the two written rows.
         payload_pre = base['payload']
-        payload = {**payload_pre, 'content': dict(payload_pre['content'])}
+        saved_payload = revision.saved_revision.payload
+        payload = {**saved_payload, 'content': dict(saved_payload['content'])}
         validate_live_run_prospect_source_against_saved(session, payload, run_id=run_id)
         capture_saved_application_submissions(session, payload, run_id=run_id, branch_id=branch_id)
         capture_saved_lifecycle(session, payload, run_id=run_id, branch_id=branch_id)
         capture_saved_health(session, payload, run_id=run_id, branch_id=branch_id)
         content, content_pre = payload['content'], payload_pre['content']
-        if set(content) != set(content_pre) or any(
-            content[key] != content_pre[key] for key in content
-            if key not in (SPORTING_KEY, TOUR_KEY)
-        ):
+        if (set(payload) != set(payload_pre)
+                or any(payload[key] != payload_pre[key] for key in payload if key != 'content')
+                or set(content) != set(content_pre)
+                or any(content[key] != content_pre[key] for key in content
+                       if key not in (SPORTING_KEY, TOUR_KEY))):
             return None
         # The same component body native_working_context builds for a changed Tour.
         tour_body = state.model_dump(mode='json')
@@ -317,6 +343,11 @@ def _verify(service, session, run_id, branch_id, successor, base, *, _fingerprin
         # builds it, so the recorded proof below keys the payload that the
         # next reader or Save captures from these same rows.
         checkpoint_body = checkpoint.model_dump(mode='json')
+        # Complete fresh canonical hash of the actual value: binds every
+        # prefix event object to the authenticated digest (a mutated private
+        # prefix cannot pass) and the appended event to the stored column.
+        if canonical_hash(checkpoint_body) != fingerprint:
+            return None
         content[SPORTING_KEY] = {'state': checkpoint_body, 'fingerprint': fingerprint}
         rows = load_match_rows(session, run_id=run_id, branch_id=branch_id)
         evidence = rows[0] if len(rows) == 1 else None

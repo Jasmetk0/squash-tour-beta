@@ -223,13 +223,14 @@ def test_prepared_step_equals_original_path_bytes_with_half_the_authentication(
     assert full[0]["prepared_install"] == 0
     # Both include the one review context of the POST that creates the task.
     if variant == "global":
-        # Child: planning context + post-write verification, versus planning,
-        # Preview and Execute; one preparation, not two. The original path's
-        # Execute verifies its appended next-slot increment without a second
-        # complete context (PR #1901); a fallback there would add one here.
-        assert (prepared[0]["context"], prepared[0]["prepare"]) == (1 + 2, 1)
+        # Child: one planning context, versus planning, Preview and Execute;
+        # one preparation, not two. Both paths verify the appended next-slot
+        # increment without a second complete post-write context (the
+        # prepared worker against its read snapshot, Execute against its own
+        # pre-write context); a fallback would add that context back here.
+        assert (prepared[0]["context"], prepared[0]["prepare"]) == (1 + 1, 1)
         assert (full[0]["context"], full[0]["prepare"]) == (1 + 3, 2)
-        assert full[0]["appended_slot"] == 1
+        assert prepared[0]["appended_slot"] == full[0]["appended_slot"] == 1
     elif variant == "original":
         # The legacy configured Tour v1 has no post-write replay in Execute.
         assert (prepared[0]["context"], prepared[0]["prepare"]) == (1 + 1, 1)

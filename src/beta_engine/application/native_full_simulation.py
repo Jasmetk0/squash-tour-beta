@@ -164,9 +164,14 @@ def _native_context(repository, session, run_id, branch_id, _loaded_out=None):
     else:
         service = CalendarTourService(repository)
         fingerprints = {}
-        ctx, state, signed = service._context(session, run_id, branch_id, _fingerprints=fingerprints)
+        # Only the prepared-child driver asks for the snapshot's own verified
+        # candidate payload (a reference set after its complete proof).
+        verified_payload = {} if _loaded_out is not None else None
+        ctx, state, signed = service._context(session, run_id, branch_id, _fingerprints=fingerprints,
+                                              _save_values=verified_payload)
         if _loaded_out is not None:
             _loaded_out["calendar"] = ((ctx, state, signed), fingerprints)
+            _loaded_out["calendar_payload"] = verified_payload
         clock, revision_state = ctx[:2]
         revision = revision_state.saved_revision
         draft = session.get(BranchWorkingDraftModel, revision_state.working_draft.draft_id)
@@ -902,7 +907,8 @@ class NativeFullSimulationDriver:
                         for value, value_fingerprint in fingerprints.values():
                             _prime_private_fingerprint(value, value_fingerprint)
                         prepared = service._prepare(session, command.run_id, command.branch_id, child, loaded=values)
-                    step.update(fork=False, prepared=prepared, fingerprints=fingerprints)
+                    step.update(fork=False, prepared=prepared, fingerprints=fingerprints,
+                                loaded=values, verified_payload=loaded.get("calendar_payload"))
                 step["request"] = CalendarTourCommit(
                     command=child, expected_preview_fingerprint=prepared[0]["preview_fingerprint"],
                     explicit_confirmation=True,
@@ -995,11 +1001,27 @@ class NativeFullSimulationDriver:
             global_replay_projection_scope,
         )
         service = CalendarTourService(self.repository)
+        increment = None
+        if step["child"].action == "next-slot" and step.get("verified_payload") is not None:
+            from beta_engine.application.calendar_tour_appended_slot_verification import (
+                begin_appended_slot,
+            )
+
+            # The read snapshot authenticated this exact prefix. The caller has
+            # just proved, inside THIS writer transaction, that no connection
+            # committed since before that snapshot (data_version on the same
+            # pinned connection) and that the parent, Saved HEAD, Working Draft
+            # and lease are unchanged; nothing has been written here yet. The
+            # verifier re-reads and independently checks only the append and
+            # otherwise returns to the complete post-write context.
+            increment = begin_appended_slot(session, step["loaded"], step["fingerprints"],
+                                            step["verified_payload"])
         with global_replay_projection_scope():
             for value, value_fingerprint in step["fingerprints"].values():
                 _prime_private_fingerprint(value, value_fingerprint)
             result, successor = service._install_prepared(session, step["request"], step["prepared"])
-        post = service._verify_installed(session, command.run_id, command.branch_id, successor)
+        post = service._verify_installed(session, command.run_id, command.branch_id, successor,
+                                         _increment=increment)
         step["result"] = result
         return None if post is None else post[1]
 

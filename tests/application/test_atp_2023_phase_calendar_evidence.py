@@ -57,6 +57,14 @@ def test_phase_evidence_binds_to_canonical_2023_memberships_and_main_dates(phase
         ("dallas", ["2023-02-05","2023-02-06"], [[2023,5],[2023,6]], 6, "atp_250"),
         ("montpellier", ["2023-02-05","2023-02-06"], [[2023,5],[2023,6]], 6, "atp_250"),
         ("buenos_aires", ["2023-02-11","2023-02-12"], [[2023,6]], 7, "atp_250"),
+        ("delray_beach", ["2023-02-11","2023-02-12"], [[2023,6]], 7, "atp_250"),
+        ("rotterdam", ["2023-02-11","2023-02-12"], [[2023,6]], 7, "atp_500"),
+        ("doha", ["2023-02-18","2023-02-19"], [[2023,7]], 8, "atp_250"),
+        ("lyon", ["2023-02-19","2023-02-20"], [[2023,7],[2023,8]], 8, "atp_250"),
+        ("rio", ["2023-02-18","2023-02-19"], [[2023,7]], 8, "atp_500"),
+        ("acapulco", ["2023-02-25","2023-02-26"], [[2023,8]], 9, "atp_500"),
+        ("dubai", ["2023-02-25","2023-02-26"], [[2023,8]], 9, "atp_500"),
+        ("santiago", ["2023-02-25","2023-02-26"], [[2023,8]], 9, "atp_250"),
     ],
 )
 def test_initial_2023_phase_positions(phase_evidence, series, q_dates, q_weeks, main_week, category):
@@ -96,4 +104,16 @@ def test_auckland_source_disagreement_not_silently_installed(phase_evidence):
     assert row["main_start_date"] == "2023-01-09"
     assert "source_disagreement" in row
     assert "main_opening_play_evidence" not in row
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+def test_marseille_2023_actual_main_overlap_and_historical_identity(phase_evidence):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == "lyon")
+    assert row["historical_identity_evidence"]["actual_host"] == "Marseille, France"
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["main_start_date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert opening["status"] == "played"
+    assert opening["observed_iso_week"] == [2023, 8]
+    assert opening["observed_iso_week"] in row["observed_qualifying_iso_weeks"]
+    assert opening["observed_iso_week"] in row["main_year_weeks"]
     assert phase_evidence["sporting_schedule_installed"] is False

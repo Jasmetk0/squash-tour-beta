@@ -347,6 +347,320 @@
         "note": "Dated eight Q1 and four final qualifying records Feb 11–12."
       },
       "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_delray_beach",
+      "series_id": "delray_beach",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-13",
+      "main_end_date": "2023-02-19",
+      "main_year_weeks": [
+        [
+          2023,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-delray-beach-2023/"
+        },
+        {
+          "date": "2023-02-12",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-delray-beach-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-delray-beach-2023/",
+        "note": "Eight first-round scores, including one retirement, and four final qualifying scores. The dated Main scores start Feb 13."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_rotterdam",
+      "series_id": "rotterdam",
+      "category_id": "atp_500",
+      "main_start_date": "2023-02-13",
+      "main_end_date": "2023-02-19",
+      "main_year_weeks": [
+        [
+          2023,
+          7
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-rotterdam-2023/"
+        },
+        {
+          "date": "2023-02-12",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-rotterdam-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          6
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-rotterdam-2023/",
+        "note": "Eight Q1 and four Q2 results Feb 11–12; four scored Main singles Feb 13."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_doha",
+      "series_id": "doha",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-20",
+      "main_end_date": "2023-02-25",
+      "main_year_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-02-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/doha/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/doha/2023/atp-men/?phase=qualification",
+        "note": "Eight men's Q1 and four Q2 records. ATP250 in 2023; do not copy later ATP500 category."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_lyon",
+      "series_id": "lyon",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-20",
+      "main_end_date": "2023-02-26",
+      "main_year_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/marseille/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-02-20",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/marseille/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          7
+        ],
+        [
+          2023,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-marsella-2023/",
+        "note": "Four Q finals and three scored Main singles Feb 20. Actual host Marseille, separate from clay Lyon (lyon_old)."
+      },
+      "follow_up": "Review same-day Q/Main and feeder ordering; no sporting schedule installed.",
+      "main_opening_play_evidence": {
+        "date": "2023-02-20",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-marsella-2023/",
+        "observed_iso_week": [
+          2023,
+          8
+        ]
+      },
+      "historical_identity_evidence": {
+        "actual_host": "Marseille, France",
+        "source_url": "https://canaltenis.com/resultados-atp-marsella-2023/",
+        "note": "Preserve canonical lyon licence, separate from clay Lyon lyon_old."
+      }
+    },
+    {
+      "occurrence_id": "atp_2023_rio",
+      "series_id": "rio",
+      "category_id": "atp_500",
+      "main_start_date": "2023-02-20",
+      "main_end_date": "2023-02-26",
+      "main_year_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-18",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-02-19",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          7
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/rio-de-janeiro/2023/atp-men/?phase=qualification",
+        "note": "Dated Q1 and four Q2 scores Feb 18–19; source timestamps in European time but recorded dates remain within local weekend."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_acapulco",
+      "series_id": "acapulco",
+      "category_id": "atp_500",
+      "main_start_date": "2023-02-27",
+      "main_end_date": "2023-03-04",
+      "main_year_weeks": [
+        [
+          2023,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2023/"
+        },
+        {
+          "date": "2023-02-26",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-acapulco-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-acapulco-2023/",
+        "note": "Local dated Spanish-language results give eight Q1 and four final scores Feb 25–26."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_dubai",
+      "series_id": "dubai",
+      "category_id": "atp_500",
+      "main_start_date": "2023-02-27",
+      "main_end_date": "2023-03-04",
+      "main_year_weeks": [
+        [
+          2023,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-25",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/dubai/2023/atp-men/?phase=qualification"
+        },
+        {
+          "date": "2023-02-26",
+          "status": "played",
+          "source_url": "https://www.tennisexplorer.com/dubai/2023/atp-men/?phase=qualification"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.tennisexplorer.com/dubai/2023/atp-men/?phase=qualification",
+        "note": "Dated ATP men's singles Q results, including partial-score records in both rounds. Do not equate partial scores with fully completed matches or infer suspension chronology."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2023_santiago",
+      "series_id": "santiago",
+      "category_id": "atp_250",
+      "main_start_date": "2023-02-27",
+      "main_end_date": "2023-03-05",
+      "main_year_weeks": [
+        [
+          2023,
+          9
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2023",
+      "qualifying_date_evidence": [
+        {
+          "date": "2023-02-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-santiago-2023/"
+        },
+        {
+          "date": "2023-02-26",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-santiago-2023/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2023,
+          8
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-santiago-2023/",
+        "note": "Eight Q1 results including retirement and four Q finals; scored Main singles Feb 27."
+      },
+      "follow_up": "Adjacent week phases; coordinate sourced geometry and points before profile publication."
     }
   ]
 }

@@ -3,7 +3,9 @@ import json
 
 import pytest
 
-from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package
+from beta_engine.application.atp_sporting_package_adapter import (
+    KNOCKOUT_KIND, KNOCKOUT_KIND_V2, SPORTING_KIND, build_atp_sporting_package,
+)
 from beta_engine.domain.tournaments.atp_sporting_profile import ATPSportingProfile
 
 pytestmark = pytest.mark.pr_critical
@@ -40,5 +42,13 @@ def test_invalid_source_profile_is_rejected(patch):
 
 
 def test_source_order_and_fingerprints_are_reproducible():
-    assert build_atp_sporting_package() == build_atp_sporting_package()
-    assert len(build_atp_sporting_package().entities) == 3
+    source = build_atp_sporting_package()
+    assert source == build_atp_sporting_package()
+    entity_kinds = {entity.source_entity_id: entity.entity_kind for entity in source.entities}
+    assert len(entity_kinds) == len(source.entities)
+    assert {
+        "atp_2025_atp_finals": SPORTING_KIND,
+        "atp_2025_next_gen_atp_finals": SPORTING_KIND,
+        "atp_2025_rotterdam": KNOCKOUT_KIND,
+        "atp_2025_dallas": KNOCKOUT_KIND_V2,
+    }.items() <= entity_kinds.items()

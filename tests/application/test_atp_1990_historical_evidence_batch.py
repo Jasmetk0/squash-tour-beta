@@ -1354,3 +1354,107 @@ def test_entry_commitment_followup_ci_keeps_candidate_test_only(batch):
     assert ci["selected_tests_passed"] == 127
     assert ci["security_tests_passed"] == 24
     assert research["saved_source_execution_probe"]["points_certified"] is False
+
+
+def test_1990_workbook_season_mapping_and_disagreement_census(batch):
+    rules = batch["historical_points_evidence"]
+    book = rules["edition_specific_workbook_crosscheck"]
+    census = book["season_crosscheck"]
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    knockout = {k: r for k, r in rows.items() if k != "atp_finals"}
+    seen_view, seen_week = set(), set()
+    field_diff, prize_diff, stage_diff = [], [], []
+    agrees, disagrees, not_compared = [], [], []
+    both = 0
+    stages = list(book["main_stage_columns"].values())
+    for series, row in knockout.items():
+        e = row["historical_evidence"]
+        x = e["edition_specific_base_points_crosscheck"]
+        assert x["source_url"] == book["source_url"]
+        assert x["workbook_git_blob_sha1"] == book["git_blob_sha1"]
+        assert x["sheet"] == "View"
+        assert x["row"] not in seen_view
+        seen_view.add(x["row"])
+        week = int(x["week_by_week_champion_cell"][1:])
+        assert week not in seen_week
+        seen_week.add(week)
+        values = x["base_main_points"]
+        assert list(values) == stages[:len(values)]
+        assert all(type(v) is int and v > 0 for v in values.values())
+        assert list(values.values()) == sorted(values.values(), reverse=True)
+        assert values["champion"] == x["week_by_week_champion_points"]
+        assert x["qualifier_award"] is x["qualifying_loss_points"] is None
+        assert x["source_rule_certified"] is False
+        comparison = x["comparison_to_prior_evidence"]
+        field_matches = x["reported_main_entrants"] == e["main_entrants"]
+        prize_matches = x["reported_prize_money_usd"] == e["reported_prize_money"]
+        stage_matches = len(values) == e["main_bracket_slots"].bit_length()
+        assert comparison["reported_field_matches"] == field_matches
+        assert comparison["reported_prize_matches"] == prize_matches
+        assert comparison["main_stage_count_matches_working_bracket"] == stage_matches
+        assert comparison["prior_main_bracket_slots"] == e["main_bracket_slots"]
+        assert comparison["prior_main_entrants"] == e["main_entrants"]
+        assert comparison["prior_reported_prize_money_usd"] == e["reported_prize_money"]
+        if not field_matches:
+            field_diff.append(series)
+        if not prize_matches:
+            prize_diff.append(series)
+        if not stage_matches:
+            stage_diff.append(series)
+        both += int(field_matches and prize_matches)
+        ref = comparison["stored_candidate_reference"]
+        if ref is None:
+            not_compared.append(series)
+            expected = "not_compared_no_stored_exact_candidate_table"
+        else:
+            if ref.startswith("world_series_64_candidate_rows:"):
+                band = int(ref.split(":")[1])
+                candidate = next(c["main"] for c in rules["world_series_64_candidate_rows"] if c["band_usd"] == band)
+            else:
+                candidate = [rules[ref][k] for k in stages[:6]]
+            if list(values.values()) == candidate:
+                agrees.append(series)
+                expected = "all_main_stage_values_agree"
+            else:
+                disagrees.append(series)
+                expected = "main_stage_values_or_count_differ"
+        assert comparison["stored_candidate_comparison_status"] == expected
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    assert seen_view == set(range(6, 80))
+    assert seen_week == set(range(3, 81)) - set(census["excluded_week_by_week_rows"])
+    assert len(rows) == census["mapped_occurrences"] == 75
+    assert len(knockout) == census["knockout_rows"] == 74
+    assert census["excluded_view_rows"] == [2, 3, 4, 5]
+    assert census["finals_maximum_rows"] == 1
+    assert both == census["knockout_field_and_prize_agree_rows"] == 68
+    assert field_diff == census["reported_field_disagreement_series"] == ["kitzbuhel", "schenectady_1994"]
+    assert prize_diff == census["reported_prize_disagreement_series"] == [
+        "sofia", "toronto_indoor_1990", "moscow", "wembley_1990"]
+    assert stage_diff == census["main_stage_count_disagreement_series"] == ["kitzbuhel"]
+    assert agrees == census["stored_main_candidate_exact_match_series"]
+    assert disagrees == census["stored_main_candidate_disagreement_series"] == ["wembley_1990"]
+    assert not_compared == census["stored_main_candidate_not_compared_series"]
+    assert (len(agrees), len(disagrees), len(not_compared)) == (36, 1, 37)
+    assert rows["sofia"]["historical_evidence"]["edition_specific_base_points_crosscheck"]["reported_name"] == "Milan"
+    assert rows["dallas"]["historical_evidence"]["edition_specific_base_points_crosscheck"]["reported_name"] == "San Francisco"
+    assert rows["hong_kong"]["historical_evidence"]["edition_specific_base_points_crosscheck"]["reported_name"] == "Nice"
+    assert rows["toronto_indoor_1990"]["historical_evidence"]["edition_specific_base_points_crosscheck"]["row"] == 10
+    assert rows["canadian_open"]["historical_evidence"]["edition_specific_base_points_crosscheck"]["row"] == 11
+    finals = rows["atp_finals"]["historical_evidence"]
+    assert finals["edition_specific_base_points_crosscheck"]["cell"] == "B81"
+    assert finals["edition_specific_base_points_crosscheck"]["reported_maximum_points"] == 400
+    assert book["primary_rule_page"] is None
+    assert batch["summary"]["published_sporting_profiles"] == 0
+    assert batch["summary"]["verified_qualification_date_rows"] == 0
+    assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+
+
+def test_workbook_first_pass_ci_does_not_certify_season_crosscheck(batch):
+    e = next(r["historical_evidence"] for r in batch["occurrences"] if r["series_id"] == "atp_finals")
+    research = e["targeted_import_research"]
+    ci = research["verified_ci_after_workbook_first_pass"]
+    assert ci["head"] == "a9154b049175967cfc2cceeecb9d7bc71c732c79"
+    assert ci["conclusion"] == "success"
+    assert ci["selected_tests_passed"] == 129
+    assert ci["security_tests_passed"] == 24
+    assert research["saved_source_execution_probe"]["points_certified"] is False

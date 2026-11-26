@@ -323,3 +323,35 @@ def test_2021_san_diego_local_date_boundary(phase_evidence):
     assert row["main_year_weeks"] == [[2021, 39]]
     assert row["additional_qualifying_source_url"]
     assert phase_evidence["sporting_schedule_installed"] is False
+
+
+@pytest.mark.parametrize(("series", "q_dates", "q_weeks", "main_weeks", "places"), [
+    ("sofia", ["2021-09-26","2021-09-27"], [[2021,38],[2021,39]], [[2021,39]], 4),
+    ("indian_wells", ["2021-10-05","2021-10-06"], [[2021,40]], [[2021,40],[2021,41]], 12),
+    ("brussels", ["2021-10-17","2021-10-18"], [[2021,41],[2021,42]], [[2021,42]], 4),
+    ("moscow", ["2021-10-16","2021-10-17"], [[2021,41]], [[2021,42]], 4),
+    ("st_petersburg", ["2021-10-24","2021-10-25"], [[2021,42],[2021,43]], [[2021,43]], 4),
+    ("vienna", ["2021-10-23","2021-10-24"], [[2021,42]], [[2021,43]], 4),
+    ("paris_masters", ["2021-10-30","2021-10-31"], [[2021,43]], [[2021,44]], 7),
+    ("stockholm", ["2021-11-06","2021-11-07"], [[2021,44]], [[2021,45]], 4),
+])
+def test_autumn_2021_phase_positions(phase_evidence, series, q_dates, q_weeks, main_weeks, places):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == q_weeks
+    assert row["main_year_weeks"] == main_weeks
+    assert row["qualifying_capacity_evidence"]["qualifying_rounds"] == 2
+    assert row["qualifying_capacity_evidence"]["qualifier_places"] == places
+    january = RunCalendar.earth_default(start_year=2021, season_count=2)
+    shifted = RunCalendar(52, 37, 2020, 2)
+    for year, week in q_weeks + main_weeks:
+        assert january.calendar_to_season(year, week) == RunCalendarPosition(0, week, year, week)
+        assert shifted.calendar_to_season(year, week) == RunCalendarPosition(1, week - 36, year, week)
+
+
+@pytest.mark.parametrize("series", ["sofia", "brussels", "st_petersburg", "stockholm"])
+def test_autumn_2021_actual_main_overlap(phase_evidence, series):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    opening = row["main_opening_play_evidence"]
+    assert opening["date"] == row["qualifying_date_evidence"][-1]["date"]
+    assert (opening["observed_iso_week"] in row["main_year_weeks"]) == (series != "stockholm")

@@ -355,3 +355,53 @@ def test_autumn_2021_actual_main_overlap(phase_evidence, series):
     opening = row["main_opening_play_evidence"]
     assert opening["date"] == row["qualifying_date_evidence"][-1]["date"]
     assert (opening["observed_iso_week"] in row["main_year_weeks"]) == (series != "stockholm")
+
+
+@pytest.mark.parametrize(("series", "opening_week", "mapped_week"), [
+    ("next_gen_atp_finals", 45, 45), ("atp_finals", 45, 46),
+])
+def test_2021_finals_no_onsite_qualification(phase_evidence, series, opening_week, mapped_week):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert row["qualification_status"] == "not_applicable_no_onsite_qualifying"
+    assert row["qualifying_date_evidence"] == row["observed_qualifying_iso_weeks"] == []
+    assert row["entry_selection_evidence"]["field_size"] == 8
+    assert row["main_opening_play_evidence"]["observed_iso_week"] == [2021, opening_week]
+    assert row["main_year_weeks"] == [[2021, mapped_week]]
+    assert RunCalendar.earth_default(start_year=2021, season_count=2).calendar_to_season(2021, mapped_week) == RunCalendarPosition(0, mapped_week, 2021, mapped_week)
+    assert RunCalendar(52, 37, 2020, 2).calendar_to_season(2021, mapped_week) == RunCalendarPosition(1, mapped_week - 36, 2021, mapped_week)
+
+
+def test_2021_finals_selection_rule_not_runtime(phase_evidence):
+    rows = {r["series_id"]: r for r in phase_evidence["occurrences"]}
+    senior = rows["atp_finals"]["entry_selection_evidence"]
+    young = rows["next_gen_atp_finals"]["entry_selection_evidence"]
+    assert senior["selection_priority"]["grand_slam_winner_rank_range"] == [8, 20]
+    assert senior["selection_priority"]["direct_acceptances"] == 8
+    assert young["maximum_age_throughout_calendar_year"] == 21
+    assert young["race_direct_acceptances"] == 7
+    assert young["wild_card_places_in_written_rule"] == 1
+    assert "race_cutoff_date" not in young
+    assert phase_evidence["sporting_schedule_installed"] is False
+
+
+def test_2021_complete_roster_and_evidence_status(phase_evidence):
+    source = json.loads(SOURCE_FILE.read_text(encoding="utf-8"))
+    canonical = {r["source_identity"] for r in build_projection(source)["mappings"] if r["atp_season_year"] == 2021}
+    seasons = json.loads((SOURCE_FILE.parent / "seasons_1990_2026.json").read_text(encoding="utf-8"))["seasons"]
+    membership = next(s for s in seasons if s["year"] == 2021)
+    rows = phase_evidence["occurrences"]
+    excluded = set(membership["known_not_held_series_ids"])
+    assert excluded == {"basel", "beijing", "chengdu", "hangzhou", "houston", "rio", "shanghai"}
+    assert len(rows) == len(canonical) == 58
+    assert {r["occurrence_id"] for r in rows} == canonical
+    assert {r["series_id"] for r in rows} == set(membership["series_category_ids"]) - excluded
+    coverage = phase_evidence["coverage_review"]
+    assert set(coverage["known_not_held_series_ids"]) == excluded
+    assert coverage["canonical_occurrences"] == coverage["recorded_occurrences"] == 58
+    assert coverage["occurrences_with_observed_qualifying_play"] == sum(bool(r["observed_qualifying_iso_weeks"]) for r in rows) == 54
+    assert coverage["no_onsite_qualifying_occurrences"] == sum(r.get("qualification_status") == "not_applicable_no_onsite_qualifying" for r in rows) == 4
+    assert coverage["qualifying_overlaps_projected_main_week"] == sum(any(q in r["main_year_weeks"] for q in r["observed_qualifying_iso_weeks"]) for r in rows) == 24
+    assert coverage["observed_main_opening_outside_projection"] == sum("main_opening_play_evidence" in r and r["main_opening_play_evidence"]["observed_iso_week"] not in r["main_year_weeks"] for r in rows) == 11
+    assert coverage["source_finish_outside_projection"] == sum(list(date.fromisoformat(r["main_end_date"]).isocalendar()[:2]) not in r["main_year_weeks"] for r in rows) == 2
+    assert coverage["qualifying_before_january_run_start"] == sum(any(year < 2021 for year, _ in r["observed_qualifying_iso_weeks"]) for r in rows) == 0
+    assert coverage["sporting_schedule_installed"] is phase_evidence["sporting_schedule_installed"] is False

@@ -2770,6 +2770,110 @@
           44
         ]
       }
+    },
+    {
+      "occurrence_id": "atp_2021_next_gen_atp_finals",
+      "series_id": "next_gen_atp_finals",
+      "category_id": "next_gen_finals",
+      "main_start_date": "2021-11-09",
+      "main_end_date": "2021-11-13",
+      "main_year_weeks": [
+        [
+          2021,
+          45
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "age_restricted_season_race_with_wild_card_rule",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2021/2021-atp-rulebook-22sep.pdf",
+        "rule_section": "4.04 B",
+        "maximum_age_throughout_calendar_year": 21,
+        "race_direct_acceptances": 7,
+        "wild_card_places_in_written_rule": 1,
+        "actual_field_source_url": "https://www.nextgenatpfinals.com/it/heritage/results",
+        "note": "Written rule provides seven Race places and one FIT-designated ATP-approved wild card. Printed cutoff says Monday (2 Nov), following Basel/Vienna/Challenger; calendar wording is inconsistent with 2021 and actual cutoff not certified. ATP November 9 report identifies Gaston as the last player earning a place after Paris; actual substitutions and entry eligibility remain unresolved.",
+        "additional_source_url": "https://www.atptour.com/en/news/gaston-milan-2021-feature"
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-11-09",
+        "status": "played",
+        "source_url": "https://www.tennis.com/news/articles/korda-nakashima-alcaraz-win-on-day-one-of-next-gen-finals",
+        "observed_iso_week": [
+          2021,
+          45
+        ]
+      },
+      "follow_up": "Review written selection against actual entries and replacements; no fabricated Q phase or automatic sporting eligibility."
+    },
+    {
+      "occurrence_id": "atp_2021_atp_finals",
+      "series_id": "atp_finals",
+      "category_id": "atp_finals",
+      "main_start_date": "2021-11-14",
+      "main_end_date": "2021-11-21",
+      "main_year_weeks": [
+        [
+          2021,
+          46
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [],
+      "observed_qualifying_iso_weeks": [],
+      "qualification_status": "not_applicable_no_onsite_qualifying",
+      "entry_selection_evidence": {
+        "method": "season_end_rankings_with_grand_slam_exception",
+        "field_size": 8,
+        "source_url": "https://www.atptour.com/-/media/files/rulebook/2021/2021-atp-rulebook-22sep.pdf",
+        "rule_section": "4.01 B",
+        "selection_priority": {
+          "top_ranked_players": 7,
+          "eligible_current_year_grand_slam_winners_up_to": 2,
+          "grand_slam_winner_rank_range": [
+            8,
+            20
+          ],
+          "then_ranked_players_from": 8,
+          "direct_acceptances": 8
+        },
+        "actual_field_source_url": "https://www.nittoatpfinals.com/en/heritage/results-2000-2023",
+        "note": "Written selection rule and actual field are separate evidence. No on-site qualifying; replacement and eligibility runtime not certified."
+      },
+      "main_opening_play_evidence": {
+        "date": "2021-11-14",
+        "status": "played",
+        "source_url": "https://www.tennis.com/news/articles/medvedev-and-zverev-win-berrettini-injured-at-atp-finals",
+        "observed_iso_week": [
+          2021,
+          45
+        ]
+      },
+      "follow_up": "Review written selection against actual entries and replacements; no fabricated Q phase or automatic sporting eligibility."
     }
-  ]
+  ],
+  "coverage_review": {
+    "canonical_occurrences": 58,
+    "recorded_occurrences": 58,
+    "known_not_held_series_ids": [
+      "basel",
+      "beijing",
+      "chengdu",
+      "hangzhou",
+      "houston",
+      "rio",
+      "shanghai"
+    ],
+    "occurrences_with_observed_qualifying_play": 54,
+    "no_onsite_qualifying_occurrences": 4,
+    "qualifying_overlaps_projected_main_week": 24,
+    "observed_main_opening_outside_projection": 11,
+    "source_finish_outside_projection": 2,
+    "qualifying_before_january_run_start": 0,
+    "sporting_schedule_installed": false
+  }
 }

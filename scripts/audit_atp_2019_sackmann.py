@@ -47,7 +47,10 @@ def main():
     result = audit_matches(read_pinned(args.matches, m["source"]))
     if any(result[k] != m["aggregate_observation"][k] for k in result):
         raise ValueError("Pinned source aggregate mismatch")
-    print(json.dumps(result, indent=2))
+    from scripts.audit_atp_2019_match_crosscheck import compare_match_groups
+    crosswalk = load(ROOT / "research_2019/identity_crosswalk.json")
+    comparison = compare_match_groups(read_pinned(args.matches, m["source"]), crosswalk, m)
+    print(json.dumps({"aggregate": result, "comparison": comparison}, indent=2))
     return 0
 
 

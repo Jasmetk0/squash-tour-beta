@@ -371,17 +371,132 @@
           "fields": "Printed page 176, category and advertised draw point table; ATP250 32 draw 250/150/90/45/20, Q12/Q2 6; ATP500 32 draw 500/300/180/90/45, Q20/Q2 10. Blanks are not explicit zeros; previous draws/rulebook corroborate. PDF screenshot HTTP 403, original bytes unavailable.",
           "accessed": "2026-11-26",
           "raw_sha256": null
+        },
+        {
+          "url": "https://34infos.fr/2019/02/06/open-sud-de-france-une-reference-mondiale-du-tennis-indoor/",
+          "kind": "contemporary_poststart_program",
+          "published": "2019-02-06",
+          "fields": "Program explicitly identifies Feb 3 Q, Feb 4 Q finish + Main first round; after Q start, cannot meet v2 publication requirement",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.laregion.fr/Open-Sud-de-France-de-tennis-qui-succedera-a-Lucas-Pouille",
+          "kind": "preplay_regional_partner_announcement",
+          "published": "2019-01-30",
+          "fields": "Event Feb 3–10, 28 players; page last edited 2021-11-17; does not explicitly establish Q end, not used as complete v2 Q evidence",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.gamesetpredict.com/fr/tournoi/open-sud-de-france-2019-atp/",
+          "kind": "secondary_dated_match_results",
+          "fields": "All 39 Q/Main results; aggregate daily counts independently reviewed; Q2 and three Main R1 on Feb 4",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
+        },
+        {
+          "url": "https://www.atptour.com/-/media/576fc886b9c4478f97cfccf0c0d111df.pdf",
+          "kind": "official_contemporary_media_notes",
+          "fields": "Page index 0 screenshot shows 10 February Media Notes, Main28, final; bundle also includes Feb 5 notes, Q and PR entry markers; binary hash unavailable",
+          "accessed": "2026-11-26",
+          "raw_sha256": null
         }
       ],
       "gaps": [
-        "PDF text read but raw bytes and screenshot unavailable",
-        "Q spans W05/W06: do not compress or move Q",
-        "dated pre-play Q source and review of overlap required"
+        "Final PDF text reviewed, screenshot failed (DisabledError), raw bytes and hashes missing",
+        "Q spans W05/W06; actual Q2/Main overlap Feb 4 verified, not a round-slot plan",
+        "January 30 partner announcement establishes event opening but not Q end; Feb 6 program postdates start, so complete v2 pre-play evidence still missing"
       ],
       "profile_status": "blocked",
       "import_status": "not_attempted",
       "planning_status": "not_attempted",
-      "played_status": "not_attempted"
+      "played_status": "not_attempted",
+      "main_bye_positions": [
+        2,
+        10,
+        23,
+        31
+      ],
+      "qualification_geometry_detail": {
+        "section_entrant_counts": [
+          4,
+          4,
+          4,
+          4
+        ],
+        "main_q_slots": [
+          4,
+          13,
+          28,
+          30
+        ],
+        "main_ll_slots": [
+          3,
+          15
+        ],
+        "main_wc_slots": [
+          11,
+          12,
+          24
+        ],
+        "main_pr_slots": [
+          14
+        ],
+        "q_wc_slots": [
+          10,
+          15
+        ],
+        "q_alternate_slots": [
+          6,
+          11
+        ],
+        "qualifier_winners_in_final_main": 4,
+        "main_withdrawals": 2,
+        "main_walkovers": 0
+      },
+      "daily_match_counts": [
+        {
+          "date": "2019-02-03",
+          "qualification": 8,
+          "main": 0
+        },
+        {
+          "date": "2019-02-04",
+          "qualification": 4,
+          "main": 3
+        },
+        {
+          "date": "2019-02-05",
+          "qualification": 0,
+          "main": 6
+        },
+        {
+          "date": "2019-02-06",
+          "qualification": 0,
+          "main": 7
+        },
+        {
+          "date": "2019-02-07",
+          "qualification": 0,
+          "main": 4
+        },
+        {
+          "date": "2019-02-08",
+          "qualification": 0,
+          "main": 4
+        },
+        {
+          "date": "2019-02-09",
+          "qualification": 0,
+          "main": 2
+        },
+        {
+          "date": "2019-02-10",
+          "qualification": 0,
+          "main": 1
+        }
+      ]
     },
     {
       "occurrence_id": "atp_2019_sofia",

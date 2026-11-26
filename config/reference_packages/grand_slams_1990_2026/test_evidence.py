@@ -36,7 +36,7 @@ def test_inventory_and_cancellation():
     assert len(rows) == len({r["occurrence_id"] for r in rows}) == 148
     assert {r["year"] for r in rows} == set(range(1990, 2027))
     assert all(sum(r["year"] == y for r in rows) == 4 for y in range(1990, 2027))
-    assert sum(r["status"] == "played" for r in rows) == 29
+    assert sum(r["status"] == "played" for r in rows) == 68
     cancelled = [r for r in rows if r["status"] == "cancelled"]
     assert len(cancelled) == 1
     assert cancelled[0]["occurrence_id"] == "atp_2020_grand_slam_wimbledon"
@@ -139,10 +139,48 @@ def test_roland_garros_partial_snapshot_is_not_final():
     assert "observed_slots" not in e["qualification"]
 
 
-@pytest.mark.parametrize("year", range(1991, 1995))
+@pytest.mark.parametrize("year", range(1990, 2005))
 def test_historical_batch_four_dated_events(year):
     rows = [r for r in DATA["inventory"] if r["year"] == year]
     assert len(rows) == 4
     assert all(r["status"] == "played" and r["source"].endswith(f"year={year}") for r in rows)
     assert all(len(r["main"]["iso_weeks"]) == 2 for r in rows)
     assert all(a["main"]["end"] < b["main"]["start"] for a, b in zip(rows, rows[1:]))
+
+
+RULES = json.loads((ROOT / "modern_rules_evidence_v1.json").read_text())
+
+
+@pytest.mark.parametrize("rule", RULES["years"], ids=lambda x: str(x["year"]))
+def test_modern_ranking_points(rule):
+    assert list(rule["main_points"].values()) == [2000,1300,800,400,200,100,50,10]
+    assert list(rule["qualification_points"].values()) == [30,16,8,0]
+    assert RULES["nominal"]["ranking_policy"]["main_wild_card_first_round_loss"] == 0
+    assert RULES["nominal"]["ranking_policy"]["qualifier_points_additive"] is True
+    assert rule["atp_ranking_rulebook"]["sha256"] is None
+
+
+def test_modern_nominal_geometry_and_bindings():
+    n = RULES["nominal"]
+    main, q = n["main"], n["qualification"]
+    assert main["direct_acceptances"] + main["qualifiers"] + main["wild_cards"] == main["capacity"] == 128
+    assert q["direct_acceptances"] + q["wild_cards"] == q["capacity"] == 128
+    assert q["sections"] * q["section_size"] == q["capacity"]
+    assert q["sections"] == main["qualifiers"]
+    assert q["seeds_per_section"] * q["sections"] == 32
+    assert RULES["status"] == "source_only_not_runtime_import"
+    draws = {e["occurrence_id"]: e for e in DRAW_EVIDENCE["editions"]}
+    assert len(draws) == len(RULES["edition_bindings"]) == 8
+    assert set(draws) == {e["occurrence_id"] for e in DATA["editions"]}
+    for b in RULES["edition_bindings"]:
+        draw = draws[b["draw_evidence_id"]]
+        assert b["occurrence_id"] == draw["occurrence_id"]
+        assert b["rule_year"] == int(b["occurrence_id"].split("_")[1])
+        assert b["observed_main_lucky_losers"] == len(draw["main"]["slots"]["lucky_loser"])
+        assert b["qualification_marker_audit"] == ("complete" if "observed_slots" in draw["qualification"] else "incomplete")
+        assert b["profile_status"] == "source_evidence_only_not_imported"
+
+
+def test_no_fixed_qualifying_feeder_claim():
+    assert "after qualifying concludes" in RULES["nominal"]["qualification_winner_assignment"]
+    assert any("fixed feeder" in s for s in RULES["unresolved_runtime"])

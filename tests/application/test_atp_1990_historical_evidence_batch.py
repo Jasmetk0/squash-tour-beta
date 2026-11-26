@@ -2300,7 +2300,12 @@ def test_secondary_match_file_reconciles_all_75_editions_without_importing_resul
         assert sum(a["entry_label_counts"].values()) == e["main_entrants"]
         assert sum(a["round_counts"].values()) == a["match_rows"]
         assert a["entry_conflicts_across_rows"] == a["seed_conflicts_across_rows"] == 0
-        assert len(set(a["observed_seed_ranks"])) == len(a["observed_seed_ranks"])
+        if r["series_id"] == "palermo":
+            # The secondary file has two rank-3 tags and no rank-4 tag.
+            # A matching count of eight seeded entrants is not a verified seed assignment.
+            assert a["observed_seed_ranks"] == [1, 2, 3, 3, 5, 6, 7, 8]
+        else:
+            assert len(set(a["observed_seed_ranks"])) == len(a["observed_seed_ranks"])
         assert all(a["comparison"][k] is True for k in (
             "main_entrants_agree", "main_start_date_agree", "reported_draw_size_agree", "match_count_agree"))
         if r["series_id"] == "atp_finals":

@@ -204,7 +204,7 @@ def test_2020_actual_archive_order_and_cancellation():
     assert played[-1]["main"]["start"] == "2020-09-27"
 
 
-@pytest.mark.parametrize("year", range(2008, 2013))
+@pytest.mark.parametrize("year", range(2008, 2014))
 def test_us_open_monday_final_distinct_from_archive(year):
     r = next(r for r in DATA["inventory"] if r["occurrence_id"] == f"atp_{year}_grand_slam_us_open")
     e = r["actual_mens_final_evidence"]

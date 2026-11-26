@@ -203,3 +203,42 @@ def test_spring_phase_positions_preserve_source_overlap(
     for week in sorted(set(q_weeks + main_weeks)):
         assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
         assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)
+
+
+@pytest.mark.parametrize(
+    ("series", "q_dates", "q_weeks", "main_week", "opening_week"),
+    [
+        ("geneva", ["2025-05-17", "2025-05-18"], [20], 21, 20),
+        ("hamburg", ["2025-05-17", "2025-05-18"], [20], 21, 20),
+        ("stuttgart", ["2025-06-07", "2025-06-08"], [23], 24, None),
+        ("s_hertogenbosch", ["2025-06-07", "2025-06-08", "2025-06-09"], [23, 24], 24, 24),
+        ("halle", ["2025-06-14", "2025-06-15"], [24], 25, None),
+        ("queens_club", ["2025-06-14", "2025-06-15"], [24], 25, None),
+        ("mallorca", ["2025-06-21", "2025-06-22"], [25], 26, 25),
+        ("eastbourne", ["2025-06-21", "2025-06-22"], [25], 26, None),
+    ],
+)
+def test_may_june_phase_positions_and_observed_opening(
+    phase_evidence, series, q_dates, q_weeks, main_week, opening_week
+):
+    row = next(r for r in phase_evidence["occurrences"] if r["series_id"] == series)
+    assert [e["date"] for e in row["qualifying_date_evidence"] if e["status"] == "played"] == q_dates
+    assert row["observed_qualifying_iso_weeks"] == [[2025, w] for w in q_weeks]
+    assert row["main_year_weeks"] == [[2025, main_week]]
+    if opening_week is not None:
+        opening = row["main_opening_play_evidence"]
+        assert opening["status"] == "played"
+        assert opening["date"] == q_dates[-1] == row["main_start_date"]
+        assert opening["observed_iso_week"] == [2025, opening_week]
+        assert date.fromisoformat(opening["date"]).isocalendar()[:2] == (2025, opening_week)
+        assert opening_week in q_weeks
+        assert (opening_week == main_week) == (series == "s_hertogenbosch")
+    else:
+        assert q_dates[-1] < row["main_start_date"]
+        assert "main_opening_play_evidence" not in row
+
+    january = RunCalendar.earth_default(start_year=2025, season_count=2)
+    shifted = RunCalendar(52, 37, 2024, 2)
+    for week in sorted(set(q_weeks + [main_week])):
+        assert january.calendar_to_season(2025, week) == RunCalendarPosition(0, week, 2025, week)
+        assert shifted.calendar_to_season(2025, week) == RunCalendarPosition(0, week + 16, 2025, week)

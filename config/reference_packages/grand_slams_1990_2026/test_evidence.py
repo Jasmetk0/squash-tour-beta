@@ -36,7 +36,7 @@ def test_inventory_and_cancellation():
     assert len(rows) == len({r["occurrence_id"] for r in rows}) == 148
     assert {r["year"] for r in rows} == set(range(1990, 2027))
     assert all(sum(r["year"] == y for r in rows) == 4 for y in range(1990, 2027))
-    assert sum(r["status"] == "played" for r in rows) == 12
+    assert sum(r["status"] == "played" for r in rows) == 29
     cancelled = [r for r in rows if r["status"] == "cancelled"]
     assert len(cancelled) == 1
     assert cancelled[0]["occurrence_id"] == "atp_2020_grand_slam_wimbledon"
@@ -96,9 +96,14 @@ def test_reviewed_draw_positions_and_replacements(edition):
     assert all(1 <= p <= main["draw_capacity"] for p in positions)
     assert main["unmarked"] + len(positions) == main["entrants"] == 128
     assert len(main["slots"]["qualifier"]) == q["qualifier_spots"] == 16
-    assert len(main["slots"]["wild_card"]) == nominal["main_wc"] == 8
+    additional_wc = main.get("additional_verified_wild_card_slots", [])
+    assert len(positions + additional_wc) == len(set(positions + additional_wc))
+    assert all(1 <= p <= main["draw_capacity"] for p in additional_wc)
+    assert len(main["slots"]["wild_card"]) + len(additional_wc) == nominal["main_wc"] == 8
+    if additional_wc:
+        assert main["additional_verified_wild_card_sources"]
     assert main["seeds"] == 32 and main["byes"] == 0
-    assert nominal["main_other_places"] - main["unmarked"] == len(main["slots"]["lucky_loser"])
+    assert nominal["main_other_places"] - (main["unmarked"] - len(additional_wc)) == len(main["slots"]["lucky_loser"])
     assert nominal["total_bracket_nodes"] == 239
     assert nominal["unique_field_without_replacements"] == 240
     assert main["sha256"] is None and q["sha256"] is None  # raw source bytes missing
@@ -117,3 +122,27 @@ def test_wimbledon_played_qualification_endpoints(year):
     assert e["qualification_evidence"] == "observed_endpoints"
     assert len(e["qualification_sources"]) == 3
     assert e["qualification"]["iso_weeks"] == [{"year": year, "week": 26}]
+
+
+def test_us_open_2024_wildcard_pdf_discrepancy_retained():
+    e = next(e for e in DRAW_EVIDENCE["editions"] if e["occurrence_id"] == "atp_2024_grand_slam_us_open")
+    assert len(e["main"]["slots"]["wild_card"]) == 7
+    assert e["main"]["additional_verified_wild_card_slots"] == [114]
+    assert len(e["main"]["additional_verified_wild_card_sources"]) == 2
+
+
+def test_roland_garros_partial_snapshot_is_not_final():
+    e = next(e for e in DRAW_EVIDENCE["editions"] if e["occurrence_id"] == "atp_2025_grand_slam_roland_garros")
+    assert e["main"]["report_stage"] == "after_first_round_not_final"
+    assert e["qualification"]["pages"] == [1]
+    assert e["qualification"]["partial_slot_scope"] == [1, 64]
+    assert "observed_slots" not in e["qualification"]
+
+
+@pytest.mark.parametrize("year", range(1991, 1995))
+def test_historical_batch_four_dated_events(year):
+    rows = [r for r in DATA["inventory"] if r["year"] == year]
+    assert len(rows) == 4
+    assert all(r["status"] == "played" and r["source"].endswith(f"year={year}") for r in rows)
+    assert all(len(r["main"]["iso_weeks"]) == 2 for r in rows)
+    assert all(a["main"]["end"] < b["main"]["start"] for a, b in zip(rows, rows[1:]))

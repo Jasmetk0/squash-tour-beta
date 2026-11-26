@@ -1598,6 +1598,390 @@
           24
         ]
       }
+    },
+    {
+      "occurrence_id": "atp_2021_eastbourne",
+      "series_id": "eastbourne",
+      "category_id": "atp_250",
+      "main_start_date": "2021-06-21",
+      "main_end_date": "2021-06-26",
+      "main_year_weeks": [
+        [
+          2021,
+          25
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-06-19",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-eastbourne-2021/"
+        },
+        {
+          "date": "2021-06-20",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-eastbourne-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          24
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-eastbourne-2021/",
+        "note": "Six Q1 results June 19; two more Q1 and four Q finals June 20. Precise start/resumption chronology unresolved."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-eastbourne-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_bastad",
+      "series_id": "bastad",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-12",
+      "main_end_date": "2021-07-18",
+      "main_year_weeks": [
+        [
+          2021,
+          28
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-bastad-2021/"
+        },
+        {
+          "date": "2021-07-12",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-bastad-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          27
+        ],
+        [
+          2021,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-bastad-2021/",
+        "note": "Eight Q1 July 11; four listed Q final results and three Main scores July 12. Source duplicates one player in Q finals; retain dates and capacity only, not erroneous pairings."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-bastad-2021/",
+        "note": "Four final-round pairings listed; source contains a duplicated participant and requires draw-level review."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-07-12",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-bastad-2021/",
+        "observed_iso_week": [
+          2021,
+          28
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_hamburg",
+      "series_id": "hamburg",
+      "category_id": "atp_500",
+      "main_start_date": "2021-07-12",
+      "main_end_date": "2021-07-18",
+      "main_year_weeks": [
+        [
+          2021,
+          28
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-10",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hamburgo-2021/"
+        },
+        {
+          "date": "2021-07-11",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-hamburgo-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          27
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-hamburgo-2021/",
+        "note": "Twelve Q1 July 10 and six Q finals July 11."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 6,
+        "source_url": "https://canaltenis.com/resultados-atp-hamburgo-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_newport",
+      "series_id": "newport",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-12",
+      "main_end_date": "2021-07-18",
+      "main_year_weeks": [
+        [
+          2021,
+          28
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-11",
+          "status": "played",
+          "source_url": "https://www.gamesetpredict.com/fr/tournoi/hall-of-fame-open-2021-atp/"
+        },
+        {
+          "date": "2021-07-12",
+          "status": "played",
+          "source_url": "https://www.gamesetpredict.com/fr/tournoi/hall-of-fame-open-2021-atp/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          27
+        ],
+        [
+          2021,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/hall-of-fame-open-2021-atp/",
+        "note": "Eight Q1 July 11; four finals and five scored Main matches (one retirement) July 12."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/hall-of-fame-open-2021-atp/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-07-12",
+        "status": "played",
+        "source_url": "https://www.gamesetpredict.com/fr/tournoi/hall-of-fame-open-2021-atp/",
+        "observed_iso_week": [
+          2021,
+          28
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_gstaad",
+      "series_id": "gstaad",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-19",
+      "main_end_date": "2021-07-25",
+      "main_year_weeks": [
+        [
+          2021,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-17",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gstaad-2021/"
+        },
+        {
+          "date": "2021-07-18",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-gstaad-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-gstaad-2021/",
+        "note": "Eight Q1 July 17 and four Q finals July 18."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-gstaad-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
+    },
+    {
+      "occurrence_id": "atp_2021_los_cabos",
+      "series_id": "los_cabos",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-19",
+      "main_end_date": "2021-07-24",
+      "main_year_weeks": [
+        [
+          2021,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-17",
+          "status": "played",
+          "source_url": "https://loscabostennisopen.com/2021/07/19/termina-la-qualy-del-abierto-de-tenis-mifel-2021/"
+        },
+        {
+          "date": "2021-07-18",
+          "status": "played",
+          "source_url": "https://loscabostennisopen.com/2021/07/19/termina-la-qualy-del-abierto-de-tenis-mifel-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          28
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://loscabostennisopen.com/2021/07/19/termina-la-qualy-del-abierto-de-tenis-mifel-2021/",
+        "note": "Organizer reports two days of qualifying and four places, including one final retirement; July 18 advance report confirms final round on Sunday and Monday Main start. Use local dates."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://loscabostennisopen.com/2021/07/19/termina-la-qualy-del-abierto-de-tenis-mifel-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication.",
+      "additional_qualifying_source_url": "https://loscabostennisopen.com/category/noticias/page/21/"
+    },
+    {
+      "occurrence_id": "atp_2021_umag",
+      "series_id": "umag",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-19",
+      "main_end_date": "2021-07-25",
+      "main_year_weeks": [
+        [
+          2021,
+          29
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-18",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-umag-2021/"
+        },
+        {
+          "date": "2021-07-19",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-umag-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          28
+        ],
+        [
+          2021,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-umag-2021/",
+        "note": "Eight Q1 July 18; four qualifying finals and three scored Main singles July 19."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-umag-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review same-day Q/Main and feeder order; retain actual opening independently of projection.",
+      "main_opening_play_evidence": {
+        "date": "2021-07-19",
+        "status": "played",
+        "source_url": "https://canaltenis.com/resultados-atp-umag-2021/",
+        "observed_iso_week": [
+          2021,
+          29
+        ]
+      }
+    },
+    {
+      "occurrence_id": "atp_2021_atlanta",
+      "series_id": "atlanta",
+      "category_id": "atp_250",
+      "main_start_date": "2021-07-26",
+      "main_end_date": "2021-08-01",
+      "main_year_weeks": [
+        [
+          2021,
+          30
+        ]
+      ],
+      "main_source_url": "https://www.atptour.com/en/scores/results-archive?year=2021",
+      "qualifying_date_evidence": [
+        {
+          "date": "2021-07-24",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-atlanta-2021/"
+        },
+        {
+          "date": "2021-07-25",
+          "status": "played",
+          "source_url": "https://canaltenis.com/resultados-atp-atlanta-2021/"
+        }
+      ],
+      "observed_qualifying_iso_weeks": [
+        [
+          2021,
+          29
+        ]
+      ],
+      "source_confirmation": {
+        "source_url": "https://canaltenis.com/resultados-atp-atlanta-2021/",
+        "note": "Eight Q1 July 24 and four Q finals July 25 including a scored retirement."
+      },
+      "qualifying_capacity_evidence": {
+        "qualifying_rounds": 2,
+        "qualifier_places": 4,
+        "source_url": "https://canaltenis.com/resultados-atp-atlanta-2021/",
+        "note": "Dated results or organizer confirm two rounds and final places; not a full sporting profile."
+      },
+      "follow_up": "Review source geometry and points before profile publication."
     }
   ]
 }

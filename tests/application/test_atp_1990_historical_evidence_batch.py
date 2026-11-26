@@ -1037,3 +1037,31 @@ def test_targeted_qualification_followup_preserves_unknowns_and_calendar(batch):
     assert haven["actual_qualification_dates"] is None
     assert batch["summary"]["verified_qualification_date_rows"] == 0
     assert batch["summary"]["complete_verified_qualification_draw_rows"] == 0
+
+
+def test_historical_snapshot_followup_does_not_certify_tournament_awards(batch):
+    rows = {row["series_id"]: row for row in batch["occurrences"]}
+    finals = rows["atp_finals"]
+    research = finals["historical_evidence"]["targeted_import_research"]["points_evidence"]["extended_ranking_snapshot_research"]
+    snapshots = {s["date"]: s for s in research["snapshots"]}
+    assert snapshots["1990-10-29"]["top_two_gap"] == 147
+    assert snapshots["1990-11-12"]["top_two_gap"] == 225
+    assert snapshots["1990-11-26"]["top_two_gap"] == 361
+    ocr = snapshots["1990-11-04"]
+    assert ocr["source_type"] == "contemporary_newspaper_scan_indexed_ocr_unverified"
+    assert "top_two_gap" not in ocr
+    assert ocr["pdf_sha256"] is None and ocr["printed_page"] is None
+    assert research["missing_exact_weekly_snapshots"] == ["1990-11-12", "1990-11-19"]
+    assert research["primary_award_table"] is None
+    assert finals["profile_status"] == "not_in_published_sporting_source"
+    barcelona = rows["barcelona"]
+    category = barcelona["historical_evidence"]["category_history_followup"]
+    assert category["status"] == "application_label_not_proof_of_effective_category"
+    assert barcelona["category_id"] == "atp_championship_series"
+    assert barcelona["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": 15}]
+    for series in ("barcelona", "new_haven_1998"):
+        evidence = rows[series]["historical_evidence"]
+        assert evidence["qualification_entrants"] is None
+        assert evidence["qualification_start_date"] is None
+        assert evidence["qualification_end_date"] is None
+        assert evidence["entry_policy"]["reserved_main_qualifier_spots"] is None

@@ -403,6 +403,102 @@ def test_fork_progress_reuses_only_exact_authenticated_inputs(tmp_path, native_f
         assert calls["resolve_saved_run_calendar"] == 4
 
 
+def test_original_progress_reuses_only_exact_tour_and_receipt_inputs(
+    tmp_path, global_slot_source, monkeypatch,
+):
+    from sqlalchemy import text
+
+    source, command = global_slot_source
+    path = tmp_path / "original-progress.db"
+    _copy(source, path)
+    run_id, branch_id = command["run_id"], command["branch_id"]
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        task = start(server, command)
+        assert task["checkpoint"] == "native_manual_save_required", task
+        _, parent = _parent(path, command["command_id"])
+        factory = server.app.state.runtime.repository._session_factory
+
+        def read(payload=parent):
+            with factory() as session:
+                session.execute(text("BEGIN"))
+                return native.read_native_task_progress(
+                    session, run_id=run_id, branch_id=branch_id, parent=payload,
+                )
+
+        monkeypatch.setattr(native, "_exact_facts", native.OrderedDict())
+        calls = Calls(monkeypatch)
+        calls.watch(native, "_native_progress_from_tour")
+        first = read()
+        assert first[1] > 0
+        assert read() == first
+
+        assert calls["_native_progress_from_tour"] == 1
+
+        # A change to actual Tour bytes must miss, even when the stored
+        # fingerprint and the task's accepted receipts have not changed.
+        with sqlite3.connect(path) as sql:
+            where = (run_id, branch_id)
+            original, = sql.execute(
+                "SELECT payload_json FROM calendar_tour_authorities WHERE run_id=? AND branch_id=?", where,
+            ).fetchone()
+            damaged = json.loads(original)
+            damaged["receipts"][-1]["result"]["changed"] = True
+            update = "UPDATE calendar_tour_authorities SET payload_json=? WHERE run_id=? AND branch_id=?"
+            sql.execute(update, (json.dumps(damaged), *where))
+        with pytest.raises(ValueError, match="sporting/Tour hash or position is corrupt"):
+            read()
+        with sqlite3.connect(path) as sql:
+            sql.execute(update, (original, *where))
+
+        bad_parent = json.loads(json.dumps(parent))
+        bad_parent["children"][0]["result_fingerprint"] = "0" * 64
+        with pytest.raises(ValueError, match="child differs"):
+            read(bad_parent)
+        assert read() == first
+
+
+@pytest.mark.pr_critical
+def test_task_calendar_rechecks_saved_v2_nodes_without_warm_materialization(tmp_path, monkeypatch):
+    from sqlalchemy import text
+
+    from beta_engine.infrastructure.db import saved_v2_store
+    from beta_engine.infrastructure.db.saved_v2_hooks import ENVIRONMENT_VARIABLE
+    from tests.api.test_saved_v2_http import _tamper
+
+    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "saved_v2")
+    path = tmp_path / "task-calendar-v2.db"
+    with ApiServer(database_url=f"sqlite:///{path}") as server:
+        code, run = _request("POST", server.base_url + "/run-containers", {"display_name": "Task Calendar"})
+        assert code == 201, run
+        factory = server.app.state.runtime.repository._session_factory
+        with sqlite3.connect(path) as sql:
+            revision_id, stored = sql.execute(
+                "SELECT revision_id, payload_json FROM branch_saved_revisions WHERE run_id=?", (run["run_id"],),
+            ).fetchone()
+        root, _ = saved_v2_store.parse_envelope(stored, run_id=run["run_id"])
+
+        def read():
+            with factory() as session:
+                session.execute(text("BEGIN"))
+                return native.verified_revision_calendar(
+                    session, run_id=run["run_id"], revision_id=revision_id,
+                )
+
+        monkeypatch.setattr(native, "_exact_facts", native.OrderedDict())
+        calls = Calls(monkeypatch)
+        calls.watch(saved_v2_store, "_materialize_nodes")
+        first = read()
+        count = calls["_materialize_nodes"]
+        assert count > 0
+        assert read() == first
+        assert calls["_materialize_nodes"] == count
+
+        _tamper(path, [("UPDATE saved_revision_nodes SET body='damaged' WHERE run_id=? AND digest=?",
+                       (run["run_id"], root))])
+        with pytest.raises(saved_v2_store.SavedV2IntegrityError):
+            read()
+
+
 def test_lease_expiry_between_read_and_write_writes_nothing(tmp_path, native_source, monkeypatch):
     from beta_engine.infrastructure.db import full_simulation_execution_guard as guard
 

@@ -5,7 +5,7 @@ import { getBranchWorkingDraft, getRunContainer, listRunBranches } from '../api/
 import type { RunBranch, RunContainer } from '../api/types'
 import {
   downloadSavedBranchArchive, previewSavedBranchArchive,
-  type SavedBranchArchivePreview
+  type ArchiveExportMode, type SavedBranchArchivePreview
 } from '../api/runBranchArchiveExport'
 import { useLanguage } from '../i18n/LanguageContext'
 import { savedBranchArchiveText } from '../i18n/savedBranchArchiveText'
@@ -29,6 +29,7 @@ export function SavedBranchArchiveExportPanel({
 }: { run: RunContainer; branch: RunBranch | null }): JSX.Element {
   const { language } = useLanguage()
   const l = savedBranchArchiveText[language]
+  const [mode, setMode] = useState<ArchiveExportMode>('branch')
   // Consent also depends on live eligibility; a parent refresh that changes
   // editability/status must invalidate and abort the old reviewed download.
   const scope = JSON.stringify([
@@ -36,7 +37,7 @@ export function SavedBranchArchiveExportPanel({
     branch?.run_id ?? null, branch?.branch_id ?? null,
     branch?.display_name ?? null, branch?.saved_head_revision_id ?? null,
     branch?.status ?? null,
-    branch?.read_only ?? null
+    branch?.read_only ?? null, mode
   ])
   const currentScope = useRef(scope)
   currentScope.current = scope
@@ -132,7 +133,9 @@ export function SavedBranchArchiveExportPanel({
     try {
       await recheck(selected.saved_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
-      const data = await previewSavedBranchArchive(run.run_id, selected.branch_id, requestController.signal)
+      const data = mode === 'full_run'
+        ? await previewSavedBranchArchive(run.run_id, selected.branch_id, requestController.signal, mode)
+        : await previewSavedBranchArchive(run.run_id, selected.branch_id, requestController.signal)
       if (generation.current !== token || currentScope.current !== key) return
       if (data.selected_head_revision_id !== selected.saved_head_revision_id) {
         throw new Error(l.invalidSelection)
@@ -165,7 +168,7 @@ export function SavedBranchArchiveExportPanel({
       try {
         const anchor = document.createElement('a')
         anchor.href = url
-        anchor.download = 'saved-branch-v1.sqbranch'
+        anchor.download = mode === 'full_run' ? 'full-run-v1.sqbranch' : 'saved-branch-v1.sqbranch'
         document.body.appendChild(anchor)
         try { anchor.click() } finally { anchor.remove() }
       } finally {
@@ -197,7 +200,13 @@ export function SavedBranchArchiveExportPanel({
   const base = '/admin/runs/' + encodeURIComponent(run.run_id)
   return <section aria-label={l.title} className="panel">
     <h4>{l.title}</h4>
-    <p>{l.description}</p>
+    <label>{l.scope}{' '}
+      <select value={mode} onChange={event => setMode(event.target.value === 'full_run' ? 'full_run' : 'branch')}>
+        <option value="branch">{l.branchMode}</option>
+        <option value="full_run">{l.fullRunMode}</option>
+      </select>
+    </label>
+    <p>{mode === 'full_run' ? l.fullRunDescription : l.description}</p>
     <p className="status">{l.context}: <strong>{selected?.display_name || selected?.branch_id || '—'}</strong>
       {' · '}{l.head}: <code>{selected?.saved_head_revision_id || l.noHead}</code></p>
     <p>{l.warning}</p>
@@ -223,7 +232,8 @@ export function SavedBranchArchiveExportPanel({
         <dt>{l.revisionCount}</dt><dd>{active.history.length}</dd>
         <dt>{l.activationRevision}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{active.run_activation_revision_id}</code></dd>
         <dt>{l.branches}</dt><dd>{active.branches.length}</dd>
-        <dt>{l.dependencies}</dt><dd>{active.branches.filter(b => b.role === 'dependency').length}</dd>
+        {mode === 'branch' && <><dt>{l.dependencies}</dt>
+          <dd>{active.branches.filter(b => b.role === 'dependency').length}</dd></>}
         <dt>{l.size}</dt><dd>{active.archive_size_bytes.toLocaleString()} B ({bytes(active.archive_size_bytes)})</dd>
         <dt>{l.audit}</dt><dd>{active.audit_event_count}</dd>
         <dt>{l.checkpoints}</dt><dd>{active.checkpoint_count}</dd>
@@ -231,7 +241,8 @@ export function SavedBranchArchiveExportPanel({
       </dl>
       <h5>{l.included}</h5>
       <ul>{active.branches.map(item => <li key={item.branch_id}>
-        <strong>{item.display_name}</strong> ({item.role === 'selected' ? l.selected : l.dependency})
+        <strong>{item.display_name}</strong> ({item.role === 'selected' ? l.selected :
+          item.role === 'included' ? l.branchIncluded : l.dependency})
         {' · '}<code>{item.branch_id}</code>
         {' · '}{l.parent}: <code>{item.forked_from_branch_id || l.noParent}</code>
       </li>)}</ul>

@@ -130,6 +130,26 @@ describe('Saved Branch archive Admin export panel', () => {
     expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(2)
   })
 
+  it('requires new confirmation when the user switches to the whole Run', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    fireEvent.change(screen.getByRole('combobox', {name: 'Rozsah exportu'}), {
+      target: {value: 'full_run'}
+    })
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+    mocks.previewSavedBranchArchive.mockResolvedValueOnce({
+      ...archive, scope: 'full_saved_run', format: 'run_full_archive.v1',
+      omitted_branch_ids: [],
+      branches: archive.branches.map(b => b.role === 'dependency' ? {...b, role: 'included'} : b)
+    })
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByText(/součást Runu/)).toBeInTheDocument()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenLastCalledWith(
+      'r', 'b', expect.any(AbortSignal), 'full_run'
+    )
+  })
+
   it.each([
     ['duplicate selected Branch', [branch, {...branch, display_name: 'Conflicting duplicate'}]],
     ['foreign matching Branch', [{...branch, run_id: 'another-run'}, branch]],

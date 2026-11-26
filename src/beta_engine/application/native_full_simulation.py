@@ -10,12 +10,14 @@ from __future__ import annotations
 import hashlib
 import json
 from collections import OrderedDict
+from contextlib import nullcontext
 from dataclasses import dataclass
 from threading import Lock
 from typing import Literal
 
 from pydantic import Field, model_validator
 from sqlalchemy import select, text
+from sqlalchemy.orm import defer
 
 from beta_engine.application.calendar_tour_service import (
     CalendarTourCommand,
@@ -232,13 +234,30 @@ def _text_sha256(text):
 
 def _revision_signature(revision):
     """Every column that the immutable Saved envelope content hash covers."""
-    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256
+    from beta_engine.infrastructure.db.exact_text_digest import row_text_sha256, unloaded_column
+    from beta_engine.infrastructure.db.native_fork_runtime_state import native_read_proof_scope
 
-    return (
-        revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
-        revision.parent_revision_id, revision.kind, revision.payload_schema_version,
-        revision.content_hash_algorithm, revision.content_hash,
-        row_text_sha256(revision, "payload_json"), row_text_sha256(revision, "change_summary_json"),
+    # A deferred payload uses the existing physical reader. A known v2 digest
+    # still requires authentication of this snapshot's actual reachable nodes.
+    with native_read_proof_scope() if unloaded_column(revision, "payload_json") else nullcontext():
+        return (
+            revision.revision_id, revision.run_id, revision.branch_id, revision.sequence,
+            revision.parent_revision_id, revision.kind, revision.payload_schema_version,
+            revision.content_hash_algorithm, revision.content_hash,
+            row_text_sha256(revision, "payload_json"), row_text_sha256(revision, "change_summary_json"),
+        )
+
+
+def _task_saved_revision(session, run_id, revision_id):
+    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel, RunSavedStorageFormatModel
+
+    if revision_id is None:
+        return None
+    if session.get(RunSavedStorageFormatModel, run_id) is None:
+        # Inline Saved v1 has no nodes to reuse. Keep its one eager read.
+        return session.get(BranchSavedRevisionModel, revision_id)
+    return session.get(
+        BranchSavedRevisionModel, revision_id, options=[defer(BranchSavedRevisionModel.payload_json)],
     )
 
 
@@ -249,9 +268,7 @@ def verified_revision_calendar(session, *, run_id, revision_id):
     per step and on every poll. Identical row bytes give an identical result;
     the first sight of any bytes still performs the full content-hash check.
     """
-    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
-
-    revision = session.get(BranchSavedRevisionModel, revision_id)
+    revision = _task_saved_revision(session, run_id, revision_id)
     if revision is None or revision.run_id != run_id:
         return resolve_revision_run_calendar(session, run_id=run_id, revision_id=revision_id)
     return _exact_fact(
@@ -260,14 +277,11 @@ def verified_revision_calendar(session, *, run_id, revision_id):
     )
 
 
-def _verified_saved_calendar(session, *, run_id, branch_id):
+def _verified_saved_calendar(session, *, run_id, branch, head):
     """``resolve_saved_run_calendar`` evaluated once per exact Run/Branch/HEAD row."""
-    from beta_engine.infrastructure.db.models import BranchSavedRevisionModel
-
+    branch_id = branch.branch_id
     run = session.get(RunContainerModel, run_id)
-    branch = session.get(RunBranchModel, branch_id)
-    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id) if branch is not None and branch.saved_head_revision_id else None
-    if run is None or branch is None or (branch.saved_head_revision_id and head is None):
+    if run is None or (branch.saved_head_revision_id and head is None):
         return resolve_saved_run_calendar(session, run_id=run_id, branch_id=branch_id)
     return _exact_fact(
         ("saved_calendar", run_id, branch_id, _run_clock_input(run),
@@ -312,49 +326,63 @@ def read_native_task_progress(session, *, run_id, branch_id, parent):
     keeps its existing fingerprint contract. Unicode must not mix the two.
     """
     from beta_engine.infrastructure.db.models import (
-        BranchSavedRevisionModel,
         CalendarPlayerSportingCheckpointModel,
         CalendarTourAuthorityModel,
     )
     branch = session.get(RunBranchModel, branch_id)
     if branch is None or branch.run_id != run_id:
         raise ValueError("Native task progress Branch is unavailable")
-    head = session.get(BranchSavedRevisionModel, branch.saved_head_revision_id)
+    head = _task_saved_revision(session, run_id, branch.saved_head_revision_id)
     if head is not None and head.payload_schema_version == "native_fork_saved_root.v2":
         return _read_fork_task_progress(session, run_id, branch_id, parent, head)
     # The original Branch needs only the verified clock, not the payload.
-    available_clock = _verified_saved_calendar(session, run_id=run_id, branch_id=branch_id)
+    available_clock = _verified_saved_calendar(session, run_id=run_id, branch=branch, head=head)
     checkpoint_row = session.get(CalendarPlayerSportingCheckpointModel, (run_id, branch_id))
     tour_row = session.get(CalendarTourAuthorityModel, (run_id, branch_id))
     if checkpoint_row is None or tour_row is None:
         raise ValueError("Native task progress lacks its sporting/Tour owner")
-    tour = json.loads(tour_row.payload_json)
-    if tour.get("schema_version") not in _TOUR_SCHEMAS:
-        raise ValueError("Native task progress sporting/Tour schema is unsupported")
-    # Strict decoding and canonical hashing are pure functions of these
-    # exact texts; compute them once per distinct text, not on every poll.
-    checkpoint_hash, actual_week, owner = _exact_fact(
-        ("checkpoint_progress", _text_sha256(checkpoint_row.payload_json)),
-        lambda: _checkpoint_progress_facts(checkpoint_row.payload_json),
+    checkpoint_digest = _text_sha256(checkpoint_row.payload_json)
+    tour_digest = _text_sha256(tour_row.payload_json)
+    key = (
+        "original_task_progress", run_id, branch_id, available_clock,
+        checkpoint_digest, checkpoint_row.fingerprint, tour_digest, tour_row.fingerprint,
+        _task_progress_input(parent),
     )
 
-    def tour_hash():
-        from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
-        parse_tour_json(tour_row.payload_json)
-        return canonical_hash(tour)
+    def project():
+        tour = json.loads(tour_row.payload_json)
+        if tour.get("schema_version") not in _TOUR_SCHEMAS:
+            raise ValueError("Native task progress sporting/Tour schema is unsupported")
+        checkpoint_hash, actual_week, owner = _exact_fact(
+            ("checkpoint_progress", checkpoint_digest),
+            lambda: _checkpoint_progress_facts(checkpoint_row.payload_json),
+        )
 
-    if (
-        checkpoint_hash != checkpoint_row.fingerprint
-        or _exact_fact(("tour_progress", _text_sha256(tour_row.payload_json)), tour_hash) != tour_row.fingerprint
-        or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint
-        or actual_week != json.dumps(tour["week"], sort_keys=True)
-    ):
-        raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
-    source_fingerprint = fingerprint({"checkpoint": checkpoint_row.fingerprint, "tour": tour_row.fingerprint})
+        def tour_hash():
+            from beta_engine.domain.tournaments.calendar_tour import parse_tour_json
+            parse_tour_json(tour_row.payload_json)
+            return canonical_hash(tour)
 
-    return _native_progress_from_tour(
-        run_id, branch_id, parent, available_clock, tour, owner, source_fingerprint,
-    )
+        if (
+            checkpoint_hash != checkpoint_row.fingerprint
+            or _exact_fact(("tour_progress", tour_digest), tour_hash) != tour_row.fingerprint
+            or tour["checkpoint_fingerprint"] != checkpoint_row.fingerprint
+            or actual_week != json.dumps(tour["week"], sort_keys=True)
+        ):
+            raise ValueError("Native task progress sporting/Tour hash or position is corrupt")
+        source_fingerprint = fingerprint({
+            "checkpoint": checkpoint_row.fingerprint,
+            "tour": tour_row.fingerprint,
+        })
+        return _native_progress_from_tour(
+            run_id, branch_id, parent, available_clock, tour, owner, source_fingerprint,
+        )
+
+    return _exact_fact(key, project)
+
+
+def _task_progress_input(parent):
+    return fingerprint([parent["children"], parent["resume_command"]["execution_calendar"]])
 
 
 def _read_fork_task_progress(session, run_id, branch_id, parent, head):
@@ -407,7 +435,7 @@ def _read_fork_task_progress(session, run_id, branch_id, parent, head):
         "fork_task_progress", run_id, branch_id, _run_clock_input(run), _revision_signature(head),
         draft.status, draft.draft_schema_version, draft.change_count,
         _text_sha256(draft_text) if draft_text is not None else None,
-        fingerprint([parent["children"], parent["resume_command"]["execution_calendar"]]),
+        _task_progress_input(parent),
     )
     return _exact_fact(key, project)
 

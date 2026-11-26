@@ -1,10 +1,11 @@
 import {afterEach,beforeEach,describe,expect,it,vi} from 'vitest'
 import {
-  assertSavedBranchImportPreview, previewSavedBranchImport, MAX_IMPORT_ARCHIVE_BYTES
+  assertSavedBranchImportPreview, confirmSavedBranchImport, previewSavedBranchImport,
+  MAX_IMPORT_ARCHIVE_BYTES, type SavedBranchImportPreview
 } from './runBranchArchiveImportPreview'
 
 const digest = 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
-const preview = {
+const preview: SavedBranchImportPreview = {
   schema_version:'run_branch_archive_preview.v1',
   scope:'custom_selected_saved_branch_with_dependency_history',
   archive_digest:digest, archive_size_bytes:3,
@@ -114,5 +115,43 @@ describe('Saved Branch import read-only preview contract',()=>{
     }),{status:409,headers:{'Content-Type':'application/json'}}))
     await expect(previewSavedBranchImport(file())).rejects.toThrow(/Run name already exists/)
     expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  const command = {commandId:'review-1',operatorLabel:'Admin & operator',auditReason:'Restore a verified backup'}
+  const receipt = {
+    schema_version:'run_branch_archive_restore_receipt.v1',command_id:'review-1',
+    archive_digest:digest,preview_fingerprint:preview.preview_fingerprint,
+    run_id:'run',display_name:'Portable world',selected_branch_id:'branch',viewer_branch_id:'branch',
+    saved_head_revision_id:'head',restored_branch_ids:['branch'],restored_revision_ids:['head']
+  }
+  const receiptResponse = (value: unknown) => new Response(JSON.stringify(value),{
+    status:201,headers:{'Content-Type':'application/json'}
+  })
+
+  it('sends the same reviewed file and verifies the exact restore receipt',async()=>{
+    const archive = file()
+    fetchMock.mockResolvedValueOnce(receiptResponse(receipt))
+    await expect(confirmSavedBranchImport(archive,preview,command)).resolves.toBeUndefined()
+    const [url,init] = fetchMock.mock.calls[0] as [string,RequestInit]
+    const endpoint = new URL(url)
+    expect(endpoint.pathname).toBe('/admin/run-archives/import/confirm')
+    expect(Object.fromEntries(endpoint.searchParams)).toEqual({
+      command_id:'review-1',expected_preview_fingerprint:preview.preview_fingerprint,
+      explicit_confirmation:'true',operator_label:'Admin & operator',audit_reason:'Restore a verified backup'
+    })
+    expect(init.body).toBe(archive)
+  })
+
+  it('rejects blocked review and incomplete or mismatched restore receipts',async()=>{
+    await expect(confirmSavedBranchImport(file(),{...preview,can_restore:false},command))
+      .rejects.toThrow(/eligible/)
+    expect(fetchMock).not.toHaveBeenCalled()
+    for (const invalid of [
+      {...receipt,run_id:'foreign'}, {...receipt,restored_revision_ids:[]},
+      {...receipt,restored_branch_ids:['foreign']}, {...receipt,archive_digest:'00'.repeat(32)}
+    ]) {
+      fetchMock.mockResolvedValueOnce(receiptResponse(invalid))
+      await expect(confirmSavedBranchImport(file(),preview,command)).rejects.toThrow(/receipt/)
+    }
   })
 })

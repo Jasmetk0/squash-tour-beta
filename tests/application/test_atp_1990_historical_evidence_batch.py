@@ -626,7 +626,8 @@ def test_august_second_pass_distinguishes_advertised_and_actual_qualification(ba
     assert date.fromisoformat(window["start_date"]).isocalendar().week == window["calendar_year_week"] == 32
     assert date.fromisoformat(window["advertised_main_start_date"]).isocalendar().week == window["main_calendar_year_week"] == 33
     assert reviewed[4]["run_positions_offset_1_start_1990"] == [{"season_index": 0, "season_week": 33}]
-    assert nh["second_pass_review"]["qualification_dates_status"] == "advertised_window_reported_actual_dates_not_verified"
+    assert nh["second_pass_review"]["qualification_dates_status"] == (
+        "advertised_window_with_contemporary_partial_play_corroboration_actual_dates_not_verified")
     assert batch["summary"]["advertised_qualification_window_rows"] == sum(
         "advertised_qualification_window" in r["historical_evidence"] for r in batch["occurrences"])
     for row in reviewed:

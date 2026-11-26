@@ -17,14 +17,13 @@ from tests.api.test_atp_saved_run_week_preview_api import _make_run
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 
 ROOT = Path(__file__).resolve().parents[2] / "config/reference_packages/atp_tour_1990_2026"
-KEY = "atp_2019_cordoba"
 
 
-def _reviewed_candidate(directory):
+def _reviewed_candidate(directory, key):
     rows = json.loads((ROOT / "research_2019/profile_candidates.json").read_text(encoding="utf-8"))
-    profile = next(c["profile"] for c in rows["candidates"] if c["occurrence_id"] == KEY)
+    profile = next(c["profile"] for c in rows["candidates"] if c["occurrence_id"] == key)
     review = json.loads((directory / "review.json").read_text(encoding="utf-8"))
-    if review.get("occurrence_id") != KEY or not review.get("reviewer"):
+    if review.get("occurrence_id") != key or not review.get("reviewer"):
         raise ValueError("Explicit edition-specific review is required")
     required = {"identity", "main_geometry", "qualification_geometry", "point_rules", "qualification_dates"}
     if set(review.get("reviewed_fields", [])) != required:
@@ -47,19 +46,24 @@ def _reviewed_candidate(directory):
     return ATPKnockoutProfile.model_validate_json(json.dumps(profile)).model_dump(mode="json")
 
 
-@pytest.mark.parametrize(("offset", "start", "q_week", "main_week"),
-                         [(1, 2019, 5, 6), (37, 2018, 21, 22)])
-def test_cordoba_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, monkeypatch, offset, start, q_week, main_week):
-    folder = os.environ.get("ATP_2019_CORDOBA_REVIEW_DIR")
+@pytest.mark.parametrize(("key", "env_name", "base_q", "base_main", "match_count"), [
+    ("atp_2019_cordoba", "ATP_2019_CORDOBA_REVIEW_DIR", 5, 6, 39),
+    ("atp_2019_delray_beach", "ATP_2019_DELRAY_REVIEW_DIR", 7, 8, 43),
+])
+@pytest.mark.parametrize(("offset", "start", "shift"), [(1, 2019, 0), (37, 2018, 16)])
+def test_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, monkeypatch, key, env_name,
+                                                          base_q, base_main, match_count, offset, start, shift):
+    q_week, main_week = base_q + shift, base_main + shift
+    folder = os.environ.get(env_name)
     if not folder:
         pytest.skip("No externally reviewed 2019 original PDF inputs; no import evidence")
-    profile = _reviewed_candidate(Path(folder))
+    profile = _reviewed_candidate(Path(folder), key)
     source_path = ROOT / "squash_sporting_profiles_v1.json"
     old_bytes = source_path.read_bytes()
     raw = json.loads(old_bytes)
     assert raw["source_version"] == 6
     assert len(raw["profiles"]) == 23
-    assert KEY not in {p["occurrence_id"] for p in raw["profiles"]}
+    assert key not in {p["occurrence_id"] for p in raw["profiles"]}
     old_package = build_atp_sporting_package(ROOT)
     raw["source_version"] = 7
     raw["profiles"].append(profile)
@@ -74,9 +78,9 @@ def test_cordoba_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, mon
         "children": (*base_document.children[:-1], candidate_package)})
     assert source_path.read_bytes() == old_bytes
 
-    database = f"sqlite:///{tmp_path / 'cordoba-reviewed.db'}"
+    database = f"sqlite:///{tmp_path / 'reviewed.db'}"
     with ApiServer(database_url=database) as server:
-        r, b = _make_run(server, name="Cordoba reviewed source", start=start, count=2, offset=offset)
+        r, b = _make_run(server, name=f"{key} reviewed source", start=start, count=2, offset=offset)
         root_path = f"/admin/runs/{r}/branches/{b}"
         working_path = f"/run-containers/{r}/branches/{b}/working-draft"
         root, working = server.base_url + root_path, server.base_url + working_path
@@ -86,7 +90,7 @@ def test_cordoba_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, mon
             code, review = _request("POST", source + "/preview", {})
             assert code == 200, review
             code, applied = _request("POST", source + "/confirm", {
-                "command_id": "copy-reviewed-cordoba",
+                "command_id": f"copy-reviewed-{key}",
                 "expected_head_revision_id": review["saved_head_revision_id"],
                 "expected_draft_version": review["draft_version"],
                 "expected_state_fingerprint": review["current_state_fingerprint"],
@@ -100,7 +104,7 @@ def test_cordoba_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, mon
         catalog_path = root_path + "/calendar-tour/atp-source-editions"
         code, catalog = _request("GET", server.base_url + catalog_path)
         assert code == 200, catalog
-        entry = next(e for e in catalog["entries"] if e["profile"]["occurrence_id"] == KEY)
+        entry = next(e for e in catalog["entries"] if e["profile"]["occurrence_id"] == key)
         assert entry["profile"] == profile
         assert entry["qualification_calendar_projection"]["run_weeks"] == [
             {"season_index": 0, "season_week": q_week}]
@@ -115,11 +119,11 @@ def test_cordoba_reviewed_originals_setup_save_schedule_and_reopen(tmp_path, mon
                    "expected_profile_fingerprint": entry["profile_fingerprint"],
                    "schedule": {"calendar": calendar, "qualification": [pos(q_week, 1), pos(q_week, 2)],
                                 "main": [pos(main_week, n) for n in range(1, 6)]}}
-        schedule_path = catalog_path + f"/{KEY}/schedule-preview"
+        schedule_path = catalog_path + f"/{key}/schedule-preview"
         before = _request("GET", working)
         code, preview = _request("POST", server.base_url + schedule_path, request)
         assert code == 200, preview
-        assert preview["actual_match_count"] == 39
+        assert preview["actual_match_count"] == match_count
         assert preview["qualification_dates_verified"] is True
         assert preview["sporting_execution_ready"] is preview["run_mutated"] is False
         wrong = {**request, "schedule": {**request["schedule"],

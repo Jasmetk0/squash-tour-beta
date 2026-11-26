@@ -1,0 +1,93 @@
+{
+  "schema": "atp_2019_cross_year_source_evidence.v1",
+  "base": "29784d51d01d9d747705be8abae30f0c82706c1e",
+  "status": "blocked_not_installed",
+  "cases": [
+    {
+      "occurrence_id": "atp_2019_brisbane",
+      "atp_id": "339",
+      "canonical_main_start": "2018-12-31",
+      "canonical_main_end": "2019-01-06",
+      "main_pdf": {
+        "url": "https://www.tennis.com.au/content/dam/tennisaustralia/tennis-topic/sot/brisbane/documents/past-draws/brisbane-international-singles-draw-men-2019.pdf.coredownload.pdf",
+        "page": 1,
+        "accessed": "2026-11-26",
+        "access": "text and page screenshot reviewed; file download failed",
+        "sha256": null,
+        "printed_event_header": [
+          "2018-12-28",
+          "2019-01-06"
+        ],
+        "main_capacity": 32,
+        "main_entrants": 28,
+        "bye_slots": [
+          2,
+          10,
+          23,
+          31
+        ],
+        "nominal_seeds": 8,
+        "actual_seed_markers": 7,
+        "wc": 3,
+        "q_markers": 4,
+        "ll": 1,
+        "protected_ranking": 2,
+        "main_points": {
+          "champion": 250,
+          "finalist": 150,
+          "semifinal": 90,
+          "quarterfinal": 45,
+          "round_of_16": 20,
+          "round_of_32": 0
+        }
+      },
+      "qualification_observations": {
+        "observed_mens_q1_date": "2018-12-29",
+        "observed_mens_q2_date": "2018-12-30",
+        "sources": [
+          "https://en.tennistemple.com/competitions/brisbane/2019/orderofplay/2018-12-29",
+          "https://en.tennistemple.com/competitions/brisbane/2019/orderofplay/2018-12-30"
+        ],
+        "caveat": "Mixed ATP/WTA listings: only men's rounds counted. First date source has one missing player label. Exact Q original, final field and pre-play publication still needed. Observed result days are not asserted as complete qualifying window."
+      },
+      "conflicts": [
+        "Main PDF printed header starts 28 Dec; canonical archive Main starts 31 Dec. No calendar edit based on overall event header.",
+        "Top seed withdrew; lucky loser occupies the seed position with BYE, so nominal and actual seed markers differ."
+      ],
+      "gaps": [
+        "Main PDF original bytes and hash",
+        "Original men's Q PDF and exact pre-play Q date evidence",
+        "Nominal seed/LL adaptation review",
+        "Current profile validator rejects prior civil-year Main start"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_doha",
+      "atp_id": "451",
+      "canonical_main_start": "2018-12-31",
+      "canonical_main_end": "2019-01-05",
+      "gaps": [
+        "Original draws and complete actual Q evidence",
+        "Current profile validator rejects prior civil-year Main start"
+      ]
+    },
+    {
+      "occurrence_id": "atp_2019_hong_kong",
+      "atp_id": "891",
+      "historical_host": "Pune",
+      "canonical_main_start": "2018-12-31",
+      "canonical_main_end": "2019-01-05",
+      "gaps": [
+        "Series lineage review",
+        "Original draws and complete actual Q evidence",
+        "Current profile validator rejects prior civil-year Main start"
+      ]
+    }
+  ],
+  "engine_blocker": {
+    "file": "src/beta_engine/domain/tournaments/atp_knockout_profile.py",
+    "condition": "occurrence_id.startswith(f'atp_{start.year}_')",
+    "message": "Invalid ATP knockout dates or identity",
+    "proposed_handoff": "Work to review year identity against canonical occurrence season rather than civil start year; do not rename historical IDs or shift dates."
+  }
+}

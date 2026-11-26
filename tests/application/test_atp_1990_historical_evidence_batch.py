@@ -886,13 +886,13 @@ def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy
                 if type(r["historical_evidence"].get("qualification_size_secondary")) is int}
     assert {r["occurrence_id"] for r in triage["rows"]} == reported
     assert triage["counts"] == {
-        "reported_q_size": 13, "conditional_geometry": 10,
-        "conditional_geometry_and_band": 8, "geometry_without_exact_band": 2,
-        "missing_main_entry_labels": 3, "no_reported_q_size": 61,
+        "reported_q_size": 13, "conditional_geometry": 13,
+        "conditional_geometry_and_band": 10, "geometry_without_exact_band": 3,
+        "missing_main_entry_labels": 0, "no_reported_q_size": 61,
     }
     statuses = Counter(r["triage_status"] for r in triage["rows"])
-    assert statuses == {"conditional_geometry_and_band_candidate": 8,
-                        "missing_exact_band_candidate": 2, "missing_main_entry_labels": 3}
+    assert statuses == {"conditional_geometry_and_band_candidate": 10,
+                        "missing_exact_band_candidate": 3}
     for item in triage["rows"]:
         occurrence = rows[item["occurrence_id"]]
         e = occurrence["historical_evidence"]
@@ -906,9 +906,7 @@ def test_knockout_candidate_triage_uses_geometry_without_certifying_entry_policy
         assert item["exact_secondary_band_candidate"] == (
             e["point_candidate_comparison"]["status"] == "exact_reported_band_and_bracket_size_candidate")
         g = item["conditional_geometry"]
-        if g is None:
-            assert item["triage_status"] == "missing_main_entry_labels"
-            continue
+        assert g is not None
         # Explicitly conditional on equating reported size with actual entrants
         # and observed labels with reserved places. Neither equivalence is proven.
         main, sections = build_knockout_bracket_parts(
@@ -1501,7 +1499,7 @@ def test_workbook_conflict_followup_preserves_original_comparison_and_qualificat
         assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
         assert row["profile_status"] == "not_in_published_sporting_source"
     assert batch["summary"]["reported_seed_count_rows"] == 67
-    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 59
+    assert batch["summary"]["reported_main_qualifier_count_rows"] == batch["summary"]["reported_main_wild_card_count_rows"] == 62
 
 
 def test_championship_1990_secondary_rule_comparison_preserves_round16_discrepancy(batch):
@@ -1669,3 +1667,65 @@ def test_additional_event_amounts_and_commitment_leads_preserve_evidence_boundar
     assert ci["head"] == "7aaa8e43f01c18ac9892a4d2f7c9810742090a67"
     assert ci["selected_tests_passed"] == 134 and ci["security_tests_passed"] == 24
     assert ci["conclusion"] == "success"
+
+
+def test_february_main_entry_label_followup_enables_conditional_geometry_only(batch):
+    from beta_engine.domain.tournaments.fax_reference_bracket_topology import build_knockout_bracket_parts
+
+    rows = {r["series_id"]: r for r in batch["occurrences"]}
+    triage = {r["occurrence_id"]: r for r in batch["knockout_candidate_triage"]["rows"]}
+    for series, host, qsize, q, wc, byes, matches, exact_band in (
+        ("toronto_indoor_1990", "Toronto", 28, 7, 5, 8, 76, False),
+        ("philadelphia_1998", "Philadelphia", 24, 6, 4, 16, 65, True),
+        ("rio", "Memphis", 24, 6, 3, 16, 65, True),
+    ):
+        row = rows[series]
+        e = row["historical_evidence"]
+        assert e["host_city"] == host
+        assert e["qualification_size_secondary"] == qsize
+        assert (e["reported_main_qualifiers"], e["reported_main_wild_cards"]) == (q, wc)
+        labels = e["main_entry_label_evidence"]
+        assert labels["status"] == "observed_labels_in_secondary_main_draw_not_guaranteed_policy"
+        assert labels["source_url"] in e["source_urls"]
+        assert labels["corroborating_main_draw_url"] in e["source_urls"]
+        assert e["bye_seed_ranks"] == list(range(1, byes + 1))
+        item = triage[row["occurrence_id"]]
+        g = item["conditional_geometry"]
+        assert item["exact_secondary_band_candidate"] is exact_band
+        assert (g["sections"], g["entrants_per_section"], g["potential_matches"]) == (q, 4, matches)
+        main, sections = build_knockout_bracket_parts(
+            event_id=row["occurrence_id"], main_entrants=g["main_entrants"],
+            qualification_entrants=qsize, qualifier_spots=q, wild_cards=wc, byes=byes)
+        assert main.direct_main_slots == e["main_entrants"] - q - wc
+        assert len(main.qualifier_placeholder_ids) == len(sections) == q
+        assert len({s.section_id for s in sections}) == q
+        assert {s.qualifier_placeholder_id for s in sections} == set(main.qualifier_placeholder_ids)
+        assert all(s.source_entrant_count == s.bracket_capacity == 4 for s in sections)
+        assert main.actual_match_count_if_fully_played + sum(s.actual_match_count_if_fully_played for s in sections) == matches
+        assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+        assert e["entry_policy"]["reserved_main_qualifier_spots"] is e["entry_policy"]["reserved_main_wild_cards"] is None
+        assert row["profile_status"] == "not_in_published_sporting_source"
+    ph = rows["philadelphia_1998"]["historical_evidence"]["main_entry_label_evidence"]
+    assert sum(ph["qualifier_counts_by_section"]) == 6
+    assert sum(ph["wild_card_counts_by_section"]) == 4
+
+
+def test_los_angeles_announcement_can_pass_date_shape_without_proving_actual_play(batch):
+    from beta_engine.domain.tournaments.atp_knockout_profile import ATPQualificationDateEvidence
+
+    row = next(r for r in batch["occurrences"] if r["series_id"] == "los_cabos")
+    e = row["historical_evidence"]
+    announcement = e["advertised_qualification_window"]
+    # A model's structural validation is not a provenance review.
+    evidence = ATPQualificationDateEvidence.model_validate_json(json.dumps({
+        "start_date": announcement["start_date"],
+        "end_date": announcement["end_date"],
+        "source_urls": [announcement["source_url"]],
+        "published_dates": [announcement["published_on"]],
+    }))
+    assert (evidence.start_date, evidence.end_date) == ("1990-07-28", "1990-07-29")
+    assert e["historical_date_contract_followup"]["expected_structural_date_validator_result"] == "accepts_dated_https_announcement_shape_only"
+    assert e["qualification_entrants"] is e["qualification_start_date"] is e["qualification_end_date"] is None
+    assert e["entry_policy"]["reserved_main_qualifier_spots"] is None
+    assert row["profile_status"] == "not_in_published_sporting_source"
+    assert batch["summary"]["verified_qualification_date_rows"] == 0

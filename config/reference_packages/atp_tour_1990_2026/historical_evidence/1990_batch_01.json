@@ -85,7 +85,8 @@
       "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html",
       "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
       "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
-      "https://www.independent.co.uk/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html"
+      "https://www.independent.co.uk/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html",
+      "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
     ],
     "rank_dependent_bonus_awards": true,
     "base_points_150k_32_candidate": {
@@ -428,6 +429,36 @@
       "reported_planned_tournaments": 77,
       "reported_planned_countries": 28,
       "scope": "Advance press report of ATP calendar launch; these are announced entry obligations, not ranking mandatory-count rules or verified actual fields. March 1990 Indian Wells report instead describes entitlement to six designated top-ten players; do not apply one general announced number to all events. Planned 77 is not the realized in-scope canonical census of 75; reconcile definitions before comparing."
+    },
+    "edition_specific_workbook_crosscheck": {
+      "status": "secondary_workbook_bytes_inspected_not_primary_or_publication_authority",
+      "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+      "methodology_url": "https://github.com/Tennismylife/ATP-Rankings-Tables",
+      "reviewed_on": "2026-11-26",
+      "git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+      "byte_count": 23346,
+      "workbook_sheets": [
+        "View",
+        "Week-by-week",
+        "RG",
+        "AO"
+      ],
+      "scope": "Actual workbook bytes fetched through GitHub and ZIP/XML decoded; data author describes reconstruction from ranking breakdowns with prize-money cross-checks. This is not a contemporary rulebook; independence from other volunteer reconstructions unestablished. Limited anonymous stage-value evidence only, not wholesale workbook redistribution. No raw file or player/rank history committed.",
+      "main_stage_columns": {
+        "D": "champion",
+        "E": "finalist",
+        "F": "semifinal",
+        "G": "quarterfinal",
+        "H": "round_of_16",
+        "I": "round_of_32",
+        "J": "round_of_64",
+        "K": "round_of_128"
+      },
+      "qualifying_loss_points": null,
+      "qualifier_award": null,
+      "bye_loss_rule": null,
+      "primary_rule_page": null,
+      "coverage_note": "Only eight explicitly inspected occurrence mappings recorded in this pass. Main draw column B denotes reported active field in these rows, not necessarily bracket capacity. Column M W ATP is separate from column D W; do not treat M as base points or automatically infer an official bonus formula."
     }
   },
   "finals_alternate_window": {
@@ -940,7 +971,8 @@
           "https://www.atptour.com/en/scores/results-archive?year=1990",
           "https://www.latimes.com/archives/la-xpm-1990-02-18-sp-1580-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-02-07-sp-183-story.html",
-          "https://en.tennistemple.com/competitions/san-jose/1990/draw"
+          "https://en.tennistemple.com/competitions/san-jose/1990/draw",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1130,6 +1162,30 @@
             "complete feeder sections and reserved advances"
           ],
           "pdf_sha256": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 56,
+          "reported_name": "San Francisco",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B10",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -1697,7 +1753,8 @@
           "https://en.wikipedia.org/wiki/1990_Eurocard_Classics_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Eurocard_Classics",
           "https://www.itftennis.com/en/tournament/stuttgart-indoor/ger/1990/m-csd-ger-01a-1990/draws-and-results/",
-          "https://www.latimes.com/archives/la-xpm-1990-02-23-sp-1012-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-02-23-sp-1012-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
@@ -1757,6 +1814,30 @@
           "minimum_confirmed_qualifiers": 1,
           "reported_qualifier_reached": "quarterfinal",
           "scope": "AP report explicitly identifies a qualifier reaching the last eight of the February indoor Eurocard event. This does not certify full Q draw, date window, entrants or reserved spots; distinct from July outdoor Stuttgart and from Philadelphia in the same report. No historical identities or results imported."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 18,
+          "reported_name": "Stuttgart Indoor",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B13",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -1910,7 +1991,8 @@
           "https://de.wikipedia.org/wiki/ABN_AMRO_World_Tennis_Tournament_1990",
           "https://www.abnamro-open.nl/over-ons/historie/de-jaren-90/1990",
           "https://www.abnamro.com/en/news/abn-amro-world-tennis-tournament-becomes-abn-amro-open",
-          "https://rjb.x-cago.com/GARJB/1991/12/19911231/GARJB-19911231-0019/story.pdf"
+          "https://rjb.x-cago.com/GARJB/1991/12/19911231/GARJB-19911231-0019/story.pdf",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "qualification_size_secondary": 32,
         "qualification_entrants": null,
@@ -1989,6 +2071,30 @@
           "chronicle_printed_page": 31,
           "chronicle_pdf_render_status": "text_accessible_screenshot_failed_502",
           "scope": "Official sponsor says ABN AMRO name adopted after 1991 merger; 1990 municipal chronicle text uses ABN name and confirms date range. Retain modern organizer's retrospective title separately; stable Series ID unchanged. No Q date or draw established."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 31,
+          "reported_name": "Rotterdam",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 450000,
+          "base_main_points": {
+            "champion": 133,
+            "finalist": 100,
+            "semifinal": 67,
+            "quarterfinal": 34,
+            "round_of_16": 17,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B15",
+          "week_by_week_champion_points": 133,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -2047,7 +2153,8 @@
           "https://www.itftennis.com/en/tournament/indian-wells/usa/1990/m-css-usa-01a-1990/draws-and-results/",
           "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-02-04-sp-371-story.html",
-          "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html"
+          "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2148,6 +2255,31 @@
           "announced_event_amount_usd": 1000000,
           "announced_category_description": "Championship Series",
           "scope": "Contemporary advance announcement corroborates the generic tier and planned starting week, not exact granted subtype or qualifying dates."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 20,
+          "reported_name": "Indian Wells",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 750000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B18",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -2906,7 +3038,8 @@
           "https://archivo.rctb1899.es/sites/default/files/press-document/document/1990_la_vanguardia_94.pdf",
           "https://elpais.com/diario/1990/04/10/deportes/639698413_850215.html?outputType=amp",
           "https://www.museuolimpicbcn.cat/es/fondos/fondo-rctb-1899/",
-          "https://www.lavanguardia.com/deportes/tenis/20190427/461870770107/historias-godo-primavera-1990-andres-gomez.html"
+          "https://www.lavanguardia.com/deportes/tenis/20190427/461870770107/historias-godo-primavera-1990-andres-gomez.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -3116,6 +3249,31 @@
           ],
           "scope": "Guessed document paths/issue navigation unavailable; do not treat failed access as absence of newspaper coverage. Direct byte download of known April 9 PDF failed DNS.",
           "pdf_sha256": null
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 26,
+          "reported_name": "Barcelona",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 375000,
+          "base_main_points": {
+            "champion": 180,
+            "finalist": 135,
+            "semifinal": 90,
+            "quarterfinal": 45,
+            "round_of_16": 23,
+            "round_of_32": 12,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B23",
+          "week_by_week_champion_points": 180,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -6624,7 +6782,8 @@
           "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html",
           "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
           "https://www.latimes.com/archives/la-xpm-1994-08-07-sp-24589-story.html",
-          "https://www.itftennis.com/en/tournament/los-angeles/usa/1990/m-wsf-usa-05a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/los-angeles/usa/1990/m-wsf-usa-05a-1990/draws-and-results/",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6756,6 +6915,30 @@
           "published_on": "1994-08-07",
           "reported_change_year": 1990,
           "scope": "Retrospective report explicitly describes change to World Series and separate appearance-fee contracts. 1994 amounts are not 1990 prize or ranking class."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 49,
+          "reported_name": "Los Angeles",
+          "reported_main_entrants": 32,
+          "reported_prize_money_usd": 225000,
+          "base_main_points": {
+            "champion": 103,
+            "finalist": 78,
+            "semifinal": 52,
+            "quarterfinal": 26,
+            "round_of_16": 13,
+            "round_of_32": 1
+          },
+          "week_by_week_champion_cell": "B53",
+          "week_by_week_champion_points": 103,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -7402,7 +7585,8 @@
           "https://www.latimes.com/archives/la-xpm-1990-08-16-sp-979-story.html",
           "https://www.caymancompass.com/1990/08/17/seeds-suffer-at-volvo/",
           "https://www.nhregister.com/news/article/20-Years-of-Elite-Tennis-Many-of-the-greats-played-11636170.php",
-          "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-1012-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-08-20-sp-1012-story.html",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -7674,6 +7858,31 @@
           "singles_final_date": "1990-08-19",
           "doubles_final_postponed_due_to_rain": true,
           "scope": "Report explicitly separates Sunday singles final from delayed doubles final. This explains why an all-event finish could differ; does not prove the secondary Aug20 label refers to doubles. Preserve singles W33 and alternate reported date, no change to Q evidence."
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_edition_specific_values_not_certified",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "View",
+          "row": 14,
+          "reported_name": "New Haven",
+          "reported_main_entrants": 56,
+          "reported_prize_money_usd": 825000,
+          "base_main_points": {
+            "champion": 230,
+            "finalist": 173,
+            "semifinal": 115,
+            "quarterfinal": 58,
+            "round_of_16": 30,
+            "round_of_32": 15,
+            "round_of_64": 1
+          },
+          "week_by_week_champion_cell": "B57",
+          "week_by_week_champion_points": 230,
+          "qualifier_award": null,
+          "qualifying_loss_points": null,
+          "source_rule_certified": false,
+          "scope": "Edition-specific secondary base-stage values, not exact historical classification or approved squash policy. Week-by-week value is same workbook, not independent corroboration. Blank stage cells and unlisted qualifying awards are not zero."
         }
       }
     },
@@ -10925,7 +11134,8 @@
           "https://collections2.swco.ttu.edu/bitstream/handle/20.500.12255/295087/Big_Spring_Herald_1990_11_06.pdf?isAllowed=y&sequence=1",
           "https://www.ultimatetennisstatistics.com/rankingsTable?date=26-11-1990&rankType=RANK",
           "https://www.atptour.com/en/rankings/singles?dateWeek=1990-11-26&rankRange=0-5000",
-          "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf"
+          "https://www.atptour.com/-/media/08887c4b3be347dd8a2d701c23fcd587.pdf",
+          "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -11422,6 +11632,15 @@
             "security_tests_passed": 24,
             "saved_candidate_test_call_seconds": 160.82,
             "scope": "Backend PR critical log on exact previous HEAD explicitly includes Saved Frankfurt candidate and historical evidence file. Separate World Package job skipped; backend log reports 24 further passed. Both W52 CLI audits not evidenced by this run; no publication or point certification."
+          },
+          "verified_ci_after_entry_commitment_followup": {
+            "head": "512deaaa710f7e3a9078cb7ad3ed2f5e861d6126",
+            "workflow_run_id": 45784466465,
+            "job_id": 139787741264,
+            "conclusion": "success",
+            "selected_tests_passed": 127,
+            "security_tests_passed": 24,
+            "scope": "Exact previous HEAD backend PR critical log explicitly includes Frankfurt test-only Saved import/play/awards/Save/reopen. Separate World Package job skipped; backend log reports 24 additional checks passed. Both W52 CLI audits not evidenced; no publication or points certification."
           }
         },
         "targeted_source_followup_2026_11_26": {
@@ -11465,6 +11684,20 @@
             ],
             "scope": "Existing isolated Saved source test only; no shared catalog publication, no production policy change."
           }
+        },
+        "edition_specific_base_points_crosscheck": {
+          "status": "secondary_maximum_only_not_phase_rule_certification",
+          "source_url": "https://github.com/Tennismylife/ATP-Rankings-Tables/blob/master/1990.xlsx",
+          "workbook_git_blob_sha1": "ccfdb7120d06f9391dfa4413f6de9c0a8cfc4eb6",
+          "sheet": "Week-by-week",
+          "cell": "B81",
+          "reported_name": "Masters",
+          "reported_maximum_points": 400,
+          "group_win_points": null,
+          "finalist_knockout_component": null,
+          "champion_knockout_component": null,
+          "source_rule_certified": false,
+          "scope": "Matches prior secondary undefeated champion maximum, not independent confirmation of all phase awards. Workbook View does not supply a Finals phase matrix. No rule or profile approved."
         }
       }
     }

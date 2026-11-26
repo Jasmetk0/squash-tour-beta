@@ -65,8 +65,8 @@
     "targeted_import_candidates_reviewed_rows": 3,
     "partial_actual_qualification_play_evidence_rows": 1,
     "contemporary_printed_main_draw_evidence_rows": 1,
-    "contemporary_qualification_completion_evidence_rows": 4,
-    "contemporary_qualification_completion_evidence_note": "Includes New Haven three-win path, Barcelona qualified entrant before Main, Orlando qualifier reaching Main semifinal, and Indian Wells qualifier winning on Main opening day. None establishes a full Q field/draw or exact event-wide dates. Older partial_actual_qualification_play_evidence_rows counts specific Q match-count evidence only."
+    "contemporary_qualification_completion_evidence_rows": 5,
+    "contemporary_qualification_completion_evidence_note": "Includes New Haven three-win path, Barcelona qualified entrant before Main, Orlando qualifier reaching Main semifinal, Indian Wells qualifier winning on Main opening day, and Stuttgart indoor qualifier reaching Main quarterfinal. None establishes a full Q field/draw or exact event-wide dates. Older partial_actual_qualification_play_evidence_rows counts specific Q match-count evidence only."
   },
   "source_urls": [
     "https://www.atptour.com/en/scores/results-archive?year=1990",
@@ -83,7 +83,9 @@
       "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
       "https://www.openerarankings.com/RankingRules1990",
       "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html",
-      "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/"
+      "https://www.upi.com/Archives/1989/08/31/ATP-announces-changes-for-1990/3932620539200/",
+      "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+      "https://www.independent.co.uk/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html"
     ],
     "rank_dependent_bonus_awards": true,
     "base_points_150k_32_candidate": {
@@ -386,7 +388,17 @@
       "official_atp_url": "https://www.atptour.com/en/news/the-rankings-that-changed-tennis",
       "official_atp_scope": "Historical ATP account retains opponent-rank bonus system through 1999.",
       "scope": "Retrospective accounts disagree about mandatory Grand Slam inclusion and when bonuses ended. Historical ranking reconstruction is not an approved squash rule; weekly net changes are not gross event points.",
-      "primary_rule_page": null
+      "primary_rule_page": null,
+      "late_decade_press_crosscheck": {
+        "source_url": "https://www.independent.co.uk/sport/tennis/revised-ranks-reveal-a-truer-picture-of-no-1-741923.html",
+        "published_on": "1999-11-23",
+        "printed_page": null,
+        "reported_best_results_count_since_1990": 14,
+        "reported_rolling_weeks": 52,
+        "reported_bonus_elimination_effective_year": 2000,
+        "reported_new_mandatory_tournaments": 13,
+        "scope": "Contemporary report of 2000 reform distinguishes previous Best14 and opponent bonuses from future mandatory events. Does not supply the 1990 Finals award table or exact special inclusion/expiry policy."
+      }
     },
     "contemporary_rule_announcement": {
       "source_url": "https://www.latimes.com/archives/la-xpm-1989-08-31-sp-2147-story.html",
@@ -403,6 +415,19 @@
         "best_results_count": 14,
         "scope": "Directly accessible contemporary wire report explicitly describes Best 14 introduction in January. Additional match conduct changes are tennis-specific and not adopted into squash. No exact points table or Finals inclusion details."
       }
+    },
+    "preseason_entry_commitment_announcement": {
+      "source_url": "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+      "published_on": "1989-01-20",
+      "printed_page": null,
+      "announced_for_season": 1990,
+      "reported_top10_championship_events_required": 11,
+      "reported_top10_designated_single_championship_week": 7,
+      "reported_top10_designated_per_event_dual_championship_week": 3,
+      "reported_top10_required_open_week": false,
+      "reported_planned_tournaments": 77,
+      "reported_planned_countries": 28,
+      "scope": "Advance press report of ATP calendar launch; these are announced entry obligations, not ranking mandatory-count rules or verified actual fields. March 1990 Indian Wells report instead describes entitlement to six designated top-ten players; do not apply one general announced number to all events. Planned 77 is not the realized in-scope canonical census of 75; reconcile definitions before comparing."
     }
   },
   "finals_alternate_window": {
@@ -1671,7 +1696,8 @@
         "source_urls": [
           "https://en.wikipedia.org/wiki/1990_Eurocard_Classics_%E2%80%93_Singles",
           "https://en.wikipedia.org/wiki/1990_Eurocard_Classics",
-          "https://www.itftennis.com/en/tournament/stuttgart-indoor/ger/1990/m-csd-ger-01a-1990/draws-and-results/"
+          "https://www.itftennis.com/en/tournament/stuttgart-indoor/ger/1990/m-csd-ger-01a-1990/draws-and-results/",
+          "https://www.latimes.com/archives/la-xpm-1990-02-23-sp-1012-story.html"
         ],
         "qualification_size_secondary": null,
         "qualification_entrants": null,
@@ -1722,6 +1748,15 @@
           "reserved_main_qualifier_spots": null,
           "reserved_main_wild_cards": null,
           "lucky_loser_replacement_rule": null
+        },
+        "contemporary_qualification_completion_evidence": {
+          "status": "one_qualifier_confirmed_in_main_not_dated_full_q_draw",
+          "source_url": "https://www.latimes.com/archives/la-xpm-1990-02-23-sp-1012-story.html",
+          "published_on": "1990-02-23",
+          "printed_page": null,
+          "minimum_confirmed_qualifiers": 1,
+          "reported_qualifier_reached": "quarterfinal",
+          "scope": "AP report explicitly identifies a qualifier reaching the last eight of the February indoor Eurocard event. This does not certify full Q draw, date window, entrants or reserved spots; distinct from July outdoor Stuttgart and from Philadelphia in the same report. No historical identities or results imported."
         }
       }
     },
@@ -2011,7 +2046,8 @@
           "https://kiwix.enszfarms.org/content/wikipedia_en_all_maxi_2025-08/1990_Newsweek_Champions_Cup_%E2%80%93_Singles",
           "https://www.itftennis.com/en/tournament/indian-wells/usa/1990/m-css-usa-01a-1990/draws-and-results/",
           "https://www.latimes.com/archives/la-xpm-1990-03-06-sp-1858-story.html",
-          "https://www.latimes.com/archives/la-xpm-1990-02-04-sp-371-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-02-04-sp-371-story.html",
+          "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": 28,
@@ -2103,6 +2139,15 @@
           "advertised_main_end_date": "1990-03-11",
           "advertised_event_amount_usd": 1000000,
           "scope": "Pre-event report supports original men's Main window and advertised amount; expected player field is not guaranteed actual entry or Q policy."
+        },
+        "preseason_category_announcement": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+          "published_on": "1989-01-20",
+          "printed_page": null,
+          "reported_main_start_date": "1990-03-05",
+          "announced_event_amount_usd": 1000000,
+          "announced_category_description": "Championship Series",
+          "scope": "Contemporary advance announcement corroborates the generic tier and planned starting week, not exact granted subtype or qualifying dates."
         }
       }
     },
@@ -6576,7 +6621,10 @@
           "https://en.wikipedia.org/wiki/1990_Volvo_Tennis_Los_Angeles",
           "https://www.latimes.com/archives/la-xpm-1990-07-30-sp-867-story.html",
           "https://www.latimes.com/archives/la-xpm-1990-07-31-sp-1105-story.html",
-          "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html"
+          "https://www.latimes.com/archives/la-xpm-1990-07-20-sp-119-story.html",
+          "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+          "https://www.latimes.com/archives/la-xpm-1994-08-07-sp-24589-story.html",
+          "https://www.itftennis.com/en/tournament/los-angeles/usa/1990/m-wsf-usa-05a-1990/draws-and-results/"
         ],
         "source_review_date": "2026-11-25",
         "qualification_size_secondary": null,
@@ -6683,6 +6731,31 @@
           "reported_advances_to_regular_qualification": 2,
           "minimum_reported_prequalification_main_matches": 5,
           "scope": "Report describes a separate prequalification main draw with 16 reserved seeded berths and 16 other berths, and two advances into regular qualifying. Five distinct first-round losses described. Does not establish prequalification total initial participants, full draw or actual dates, regular Q entrants, Q-to-Main advances, or a supported three-stage engine policy. No historical identities or scores imported."
+        },
+        "preseason_category_announcement": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1989-01-20-sp-1149-story.html",
+          "published_on": "1989-01-20",
+          "printed_page": null,
+          "reported_1990_main_start_date": "1990-07-30",
+          "announced_event_amount_usd": 250000,
+          "announced_category_description": "open-week event",
+          "source_scope": "Contemporary report of ATP calendar announcement distinguishes open-week events from Championship Series. The July 30, 1990 report calls this event World Series. Preserve historical tier and actual dates; do not infer final prize amount or Q field from the announcement."
+        },
+        "itf_event_metadata_crosscheck": {
+          "source_url": "https://www.itftennis.com/en/tournament/los-angeles/usa/1990/m-wsf-usa-05a-1990/draws-and-results/",
+          "source_type": "official_itf_historical_event_metadata",
+          "start_date": "1990-07-30",
+          "end_date": "1990-08-05",
+          "surface": "outdoor hard",
+          "prize_money_usd": 225000,
+          "grade_as_displayed": "3.4",
+          "scope": "Confirms actual Main date window, surface and USD225000 prize money. USD250000 announced amount/commitment and appearance fees are separate. ITF grade is not ATP ranking classification; no Q draw or dates."
+        },
+        "retrospective_category_crosscheck": {
+          "source_url": "https://www.latimes.com/archives/la-xpm-1994-08-07-sp-24589-story.html",
+          "published_on": "1994-08-07",
+          "reported_change_year": 1990,
+          "scope": "Retrospective report explicitly describes change to World Series and separate appearance-fee contracts. 1994 amounts are not 1990 prize or ranking class."
         }
       }
     },

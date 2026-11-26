@@ -27,6 +27,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--root", type=Path, required=True)
     parser.add_argument("--serve", action="store_true")
+    parser.add_argument("--custom", action="store_true")
     args = parser.parse_args()
     work = Path(__file__).resolve().parents[2] / "work"
     root = args.root.resolve()
@@ -53,6 +54,7 @@ def main() -> None:
     from beta_engine.domain.run_branch_archive import Archive
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
     from tests.api.test_player_generation_calendar_gate import _dump
+    from tests.api.test_custom_run_archive_api import preview_command, selection
     from tests.api.test_full_run_archive_api import create_branch, full_preview
     from tests.api.test_run_branch_archive_api import archive_root, export, manual_match, raw_request
     from tests.api.test_saved_revision_history_api import ApiServer, _request
@@ -71,7 +73,12 @@ def main() -> None:
         saved_head = saved["saved_revision"]["revision_id"]
         _, initial_export = export(source, run_id, branch_id)
         fork = create_branch(source, run_id, branch_id, initial_export["history"][0]["revision_id"])
-        reviewed_export, command = full_preview(source, run_id, branch_id)
+        if args.custom:
+            omitted = create_branch(source, run_id, branch_id, initial_export["history"][0]["revision_id"])
+            reviewed_export, command = preview_command(source, selection(run_id, branch_id, [fork]))
+            assert reviewed_export["omitted_branch_ids"] == [omitted]
+        else:
+            reviewed_export, command = full_preview(source, run_id, branch_id)
         status, raw = raw_request(archive_root(source) + "/export", json.dumps(command).encode())
         assert status == 200, raw[:2000]
         assert match["result"], "Source must use an actual completed MatchEngine result"
@@ -206,7 +213,8 @@ def main() -> None:
             assert _dump(target_path) == baseline, "Import preview wrote to the cold SQLite target"
             assert len(requests) == 1 and requests[0].endswith("/import/preview"), requests
             expect(page.get_by_role("button", name="Restore Run")).to_be_disabled()
-            expect(page.get_by_text("Entire Saved Run", exact=True)).to_be_visible()
+            scope_label = "Custom Branch selection" if args.custom else "Entire Saved Run"
+            expect(page.get_by_text(scope_label, exact=True)).to_be_visible()
             page.screenshot(path=str(root / "import-clean-en.png"), full_page=True)
 
             # CS/EN is a presentation switch, never a new import request.
@@ -355,7 +363,7 @@ def main() -> None:
                 "browser_external_deny_probe": True,
                 "import_confirm_calls": 2, "restore_performed": True,
                 "lost_response_exact_retry_without_writes": True,
-                "restored_branch_count": 2, "restart_preserved_history_and_replay": True
+                "restored_branch_count": 2, "archive_scope": reviewed_export["scope"], "restart_preserved_history_and_replay": True
             }, indent=2))
             browser.close()
     finally:

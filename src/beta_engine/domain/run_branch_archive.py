@@ -21,6 +21,10 @@ FULL_RUN_FORMAT = "run_full_archive.v1"
 FULL_RUN_MINIMUM_ENGINE = "engine+full-run-archive.v1"
 BRANCH_SCOPE = "custom_selected_saved_branch_with_dependency_history"
 FULL_RUN_SCOPE = "full_saved_run"
+CUSTOM_FORMAT = "run_custom_archive.v1"
+CUSTOM_SCOPE = "custom_saved_branches"
+CUSTOM_MINIMUM_ENGINE = "engine+custom-run-archive.v1"
+MAX_CUSTOM_BRANCHES = 128
 FULL_RUN_OMITTED_AREAS = (
     "recovery_drafts",
     "working_changes",
@@ -296,6 +300,14 @@ class FullRunEnvelope(ArchiveSelection):
     branch_ids: list[ID]
 
 
+class CustomEnvelope(ArchiveSelection):
+    format: Literal["run_custom_archive.v1"]
+    engine_capability: Literal["run_custom_archive.v1"]
+    minimum_engine: Literal["engine+custom-run-archive.v1"]
+    scope: Literal["custom_saved_branches"]
+    selected_branch_ids: list[ID] = Field(min_length=2, max_length=MAX_CUSTOM_BRANCHES)
+
+
 class Archive:
     """Decoded, integrity-checked envelope; production validation still required."""
 
@@ -306,18 +318,14 @@ class Archive:
                 f"Archive exceeds this operation's {MAX_ARCHIVE_BYTES}-byte parser budget",
             )
         value = decode(raw)
-        if not isinstance(value, dict) or value.get("format") not in (
-            FORMAT, FULL_RUN_FORMAT
-        ):
+        formats = {FORMAT: Envelope, FULL_RUN_FORMAT: FullRunEnvelope, CUSTOM_FORMAT: CustomEnvelope}
+        archive_format = value.get("format") if isinstance(value, dict) else None
+        if not isinstance(archive_format, str) or archive_format not in formats:
             fail(
                 "unsupported_archive_version",
-                f"Requires {FORMAT} or {FULL_RUN_FORMAT}; unknown versions cannot be downgraded",
+                "Unsupported Saved archive format; unknown versions cannot be downgraded",
             )
-        self.envelope = (
-            FullRunEnvelope.model_validate(value)
-            if value["format"] == FULL_RUN_FORMAT
-            else Envelope.model_validate(value)
-        )
+        self.envelope = formats[archive_format].model_validate(value)
         self.raw_digest, self.size = digest(raw), len(raw)
         if [p.name for p in self.envelope.parts] != list(PART_NAMES):
             fail(
@@ -372,12 +380,18 @@ class Archive:
         if len({b.display_name for b in self.branches}) != len(branches):
             fail("duplicate_branch_name", "Branch names must be unique in the Run")
         selected = branches.get(self.envelope.selected_branch_id)
+        requested = (
+            self.envelope.selected_branch_ids
+            if isinstance(self.envelope, CustomEnvelope)
+            else [self.envelope.selected_branch_id]
+        )
         if (
             selected is None
             or selected.saved_head_revision_id
             != self.envelope.selected_head_revision_id
             or [b.branch_id for b in self.branches if b.role == "selected"]
-            != [selected.branch_id]
+            != requested
+            or selected.branch_id not in requested
             or self.run.viewer_branch_id not in branches
         ):
             fail(
@@ -460,7 +474,7 @@ class Archive:
                 "Original Saved authority for the Run/Viewer choice is absent",
             )
         needed = {
-            self.envelope.selected_branch_id,
+            *requested,
             self.run.viewer_branch_id,
             activation.branch_id,
         }
@@ -583,6 +597,7 @@ def pack(
     selected_head_revision_id,
     omitted_branch_ids,
     full_run=False,
+    custom_branch_ids=(),
 ):
     values = (run, branches, revisions, audits, checkpoints, allocator)
     parts = []
@@ -615,5 +630,13 @@ def pack(
             scope=FULL_RUN_SCOPE,
             branch_ids=[branch["branch_id"] for branch in branches],
             omitted_areas=list(FULL_RUN_OMITTED_AREAS),
+        )
+    elif custom_branch_ids:
+        envelope.update(
+            format=CUSTOM_FORMAT,
+            engine_capability=CUSTOM_FORMAT,
+            minimum_engine=CUSTOM_MINIMUM_ENGINE,
+            scope=CUSTOM_SCOPE,
+            selected_branch_ids=list(custom_branch_ids),
         )
     return encode(envelope)

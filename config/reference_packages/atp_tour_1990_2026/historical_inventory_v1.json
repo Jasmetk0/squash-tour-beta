@@ -4,7 +4,7 @@
  "totals": {
   "not_held_memberships": 24,
   "occurrences": 2407,
-  "published_profiles": 4,
+  "published_profiles": 6,
   "years": 37,
   "years_with_phase_calendar_evidence": 29
  },
@@ -661,8 +661,10 @@
    "published_profiles": [
     "atp_2025_atp_finals",
     "atp_2025_dallas",
+    "atp_2025_munich",
     "atp_2025_next_gen_atp_finals",
-    "atp_2025_rotterdam"
+    "atp_2025_rotterdam",
+    "atp_2025_vienna"
    ],
    "status": "verified_results_archive",
    "week_review_flags": {

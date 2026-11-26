@@ -13,7 +13,8 @@ def test_inventory_totals_match_canonical_package_and_audit_baseline() -> None:
     assert inv["totals"]["years"] == 37
     assert inv["totals"]["occurrences"] == 2407
     assert inv["totals"]["not_held_memberships"] == 24
-    assert inv["totals"]["published_profiles"] == 4
+    profiles = json.loads((Path(OUT).parent / "squash_sporting_profiles_v1.json").read_text(encoding="utf-8"))["profiles"]
+    assert inv["totals"]["published_profiles"] == len(profiles)
     assert [y["year"] for y in inv["years"]] == list(range(1990, 2027))
     assert sum(y["occurrences"] for y in inv["years"]) == 2407
     assert next(y for y in inv["years"] if y["year"] == 2019)["occurrences"] == 63

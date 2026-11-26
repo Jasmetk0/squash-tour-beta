@@ -102,8 +102,8 @@
         "main_capacity": 32,
         "main_entrants": 28,
         "main_byes": 4,
-        "main_actual_seed_markers": 8,
-        "main_nominal_seed_count": 8,
+        "main_actual_seed_markers": 7,
+        "main_nominal_seed_count": null,
         "main_wc": 3,
         "main_q_markers": 4,
         "main_ll_markers": 2,
@@ -144,7 +144,7 @@
       "sources": [
         {
           "url": "https://en.tennistemple.com/competitions/auckland/2019/draw",
-          "role": "secondary final Main; seed #9 shown in draw, eight actual seed markers"
+          "role": "secondary final Main; seven visible seed markers including #9, nominal seed list not established"
         },
         {
           "url": "https://en.tennistemple.com/competitions/auckland/2019/draw-qualifications",
@@ -175,7 +175,17 @@
         "original Main/Q PDFs inaccessible; no hashes",
         "dated preplay Q source and primary local daily program needed",
         "Q seed marker #1 disputed between secondary sources; no invented count",
-        "ITF finish Jan13 vs ATP Jan12; retain canonical Jan12 pending actual final source"
+        "ITF finish Jan13 vs ATP Jan12; retain canonical Jan12 pending actual final source",
+        "Seven visible Main seed numbers including #9; original nominal seed list and substitution history unresolved"
+      ],
+      "main_visible_seed_numbers": [
+        1,
+        2,
+        3,
+        4,
+        6,
+        7,
+        9
       ]
     }
   ]

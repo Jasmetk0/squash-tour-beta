@@ -58,6 +58,8 @@ def test_sydney_and_auckland_do_not_normalize_seed_and_date_conflicts():
     assert s["geometry"]["main_nominal_seed_count"] == 8
     assert s["main_start"] == "2019-01-06"
     assert a["geometry"]["q_seed_markers"] is None
+    assert a["geometry"]["main_actual_seed_markers"] == len(a["main_visible_seed_numbers"]) == 7
+    assert a["geometry"]["main_nominal_seed_count"] is None
 
 
 def test_match_crosscheck_distinguishes_local_id_and_group_rounds():

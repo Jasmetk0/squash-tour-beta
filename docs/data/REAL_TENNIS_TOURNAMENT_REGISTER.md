@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 10 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane a Hong Kong 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 11 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong a Adelaide 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -44,10 +44,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [US Open](#us-open-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Brisbane](#brisbane-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Hong Kong](#hong-kong-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Adelaide](#adelaide-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 10 zpracovaných ročníků; 10 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 11 zpracovaných ročníků; 11 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -63,12 +64,14 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 8 | US Open 2025 | HOTOVO (nominální rozsah) |
 | 9 | Brisbane 2024 | HOTOVO (nominální rozsah) |
 | 10 | Hong Kong 2024 | HOTOVO (nominální rozsah) |
-| 11 | Adelaide 2024 | NEZAHÁJENO |
+| 11 | Adelaide 2024 | HOTOVO (nominální rozsah) |
 | 12 | Auckland 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
 
 ## Metodika evidence
+
+- **Special Exempt (SE), doplněno při rešerši Adelaide 2024:** ATP §7.08/7.10 (verze 21.12.2023) pro ATP 250 uvádí dvě rezervy SE, podle potřeby 0–2 skutečně přidělených míst a doplnění nevyužitých míst přímými akceptacemi. Pro 28 hráčů standardně 19 základních DA + 2 rezervy SE + 4 Q + 3 WC. Rozlišovat rezervy, skutečné využití a konečnou kvótu přímých vstupů. Starší formulace Brisbane/Hong Kong „SE 0 v listině“ znamená stav přepisu listiny, nikoli důkaz nulové rezervované kapacity. Případné odlišné turnajové výjimky musejí mít vlastní důkaz. Viz ADL24-8/9. Nepřebírat SE mechanicky do Grand Slamů ani do engine.
 
 - Jeden blok = jeden konkrétní historický ročník. Uvádět původní název, ročník, kategorii, stabilní identifikátor zdroje, pořadatele, místo, povrch, fáze, termíny, uzávěrky, losování, strukturu, nasazení, vstupní kvóty, body, odměny, relevantní pravidla a odchylky. Identifikátor série není náhradou za historické místo.
 - Data YYYY-MM-DD a čas HH:MM jsou **místní civilní údaje** dějiště; IANA timezone evidujeme odděleně, případně doložený tehdejší offset. Datum bez času zůstává datem; nevymýšlet půlnoc a nepřepočítávat na jiný den. Rozlišit program/odhad/skutečný začátek/dokončení a případná přerušení přes půlnoc. Neznámé hodnoty zapisovat jako NEOVĚŘENO, ne jako nulu.
@@ -88,6 +91,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2025](#us-open-2025) | US Open | Grand Slam | 2025-08-18–2025-08-21 (plán) | 2025-08-24–2025-09-07 | HOTOVO v nominálním rozsahu; skutečné Q do 22. 8. |
 | [2024](#brisbane-2024) | Brisbane International | ATP 250 | 2023-12-30–2023-12-31 | 2023-12-31–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#hong-kong-2024) | Bank of China Hong Kong Tennis Open | ATP 250 | 2023-12-31–2024-01-01 | 2024-01-01–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
+| [2024](#adelaide-2024) | Adelaide International | ATP 250 | 2024-01-07–2024-01-08 | 2024-01-08–2024-01-13 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 
 ## Wimbledon 2024
 
@@ -1369,3 +1373,112 @@ I/T/D/B pokryty. H*: booklet pouze indexovaný text a denní archivy, ne komplet
 - HK24-14: [TennisCompanion historické odměny](https://tenniscompanion.org/prize-money/hong-kong/), indexovaný řádek 2024, přímý přístup 403.
 - HK24-15: [CanalTenis tabulka s rozporem](https://canaltenis.com/el-prize-money-del-atp-hong-kong/), [SportsLite 31.12.2023 s rozporem](https://thesportslite.com/latest-sports-news/hong-kong-open-2024-prize-money-and-breakdown/); nepoužívat jako autoritu. [Originální ATP Main](https://www.protennislive.com/posting/2024/336/mds.pdf), [Q](https://www.protennislive.com/posting/2024/336/qs.pdf), [DS](https://www.protennislive.com/posting/2024/336/ds.pdf) v tomto průchodu nedostupné.
 
+
+## Adelaide 2024
+
+**Stav:** HOTOVO v nominálním rozsahu (I/T/H/E/D/R/B/P/Z), s označenými omezeními E/R/Z. Rešerše 2026-11-27. Oba originální ATP losy vizuálně ověřeny; místní mužský Q program je 7.–8. ledna, nikoli 6.–7. ledna (ženská Q / časové pásmo agregátorů).
+
+### 1. Identita
+
+| Pole | Hodnota | Zdroj |
+|---|---|---|
+| Název / disciplína | Adelaide International 2024, mužská dvouhra | ADL24-1/2 |
+| Kategorie / ATP ID | ATP 250 / 8998 | ADL24-1/2 |
+| Dějiště obou fází | The Drive (Memorial Drive Tennis Centre), Adelaide, South Australia, Austrálie | ADL24-3/4 |
+| Povrch | venkovní tvrdý, GreenSet Cushion | ADL24-1/2/3 |
+| Časové pásmo | Australia/Adelaide, ACDT UTC+10:30 v lednu | identita místa; místní OOP |
+| Ředitelka | Alicia Molik | ADL24-5/6 |
+| ATP supervisor | Hans-Juergen Ochs (Main), Nacho Forcadell (Q) | ADL24-1/2 zápatí |
+| Měna | USD (nikoli AUD) | ADL24-1/2 |
+| Míče / individuální diety | NEOVĚŘENO | doplňková metadata |
+
+### 2. Přihlášky a termíny
+
+| Událost | Datum / čas | Důkaz |
+|---|---|---|
+| Main rank date | 2023-12-11 | dobový přepis listiny ADL24-7 |
+| Nominální Main deadline | 2023-12-11 12:00 US Eastern, tj. 2023-12-12 03:30 ACDT | odvozeno dle §7.03 A.1, 28 dnů před pondělím 8.1.; ne originální detail sheet |
+| Nominální Q deadline | 2023-12-18 12:00 US Eastern, tj. 2023-12-19 03:30 ACDT | odvozeno dle §7.03 A.2, 21 dnů před 8.1.; mužský Q rank date samostatně NEOVĚŘEN |
+| Main los | zveřejněn nejpozději 2024-01-06 | ADL24-3/9; přesný čas ceremonie NEOVĚŘEN |
+| Q los | zveřejněn nejpozději 2024-01-06 19:20 (vydání OOP) | ADL24-5; okamžik losování neověřen |
+| Q1 | 2024-01-07 10:00, ALT sign-in 09:30 | ADL24-5, OOP z 6.1. |
+| Q2 | 2024-01-08 11:00 | ADL24-6, OOP z 7.1. |
+| Main | 2024-01-08–13 | ADL24-1/3/4 |
+| Finále | 2024-01-13 16:00 (publikovaný program) | ADL24-4 |
+
+Místní termíny jsou odděleny od data/času americké uzávěrky. Historický Main cutoff 48 v prosincovém seznamu vs Fucsovics 59 při deadline a Draper 61 v konečném losu podle zápatí ATP; tyto údaje zachovat jen jako kontext různých verzí, nikoli jako pevný parametr. Pozor: oficiální hlavička Q pavouka uvádí hlavní turnajové okno 8.–13.1., nikoliv skutečné datum Q. Pro fáze použít původní denní programy.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální datum | Nominální zápasy | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-01-07 | 8 | ADL24-5 (všech osm dvojic předem zveřejněno) |
+| Q2 | 2024-01-08 | 4 | ADL24-6 (všechny čtyři kvalifikační finálové dvojice) |
+| R32 | 2024-01-08–09 | 12 | ADL24-6/10, čtyři zápasy 8.1. a osm 9.1. |
+| R16 | 2024-01-10 | 8 | ADL24-11/4 |
+| QF | 2024-01-11 | 4 | ADL24-12 |
+| SF | 2024-01-12 | 2 | ADL24-13 |
+| F | 2024-01-13 | 1 | ADL24-4 |
+
+Q 2 dny, Main 6 dní, celé okno 7 dní, protože Q2 a R32 souběžně 8.1. Předem vydané OOP 7.1. (6.1. 19:20, pozdější verze 22:07) obsahuje všech osm mužských Q1 dvojic. OOP 8.1. (7.1. 18:39) obsahuje čtyři Q2 a čtyři mužské singlové R32; OOP 9.1. vydán 8.1. 20:15 obsahuje osm zbývajících mužských singlových R32. Mužská čtyřhra v OOP rovněž označená ATP R32 se do počtu nezapočítává. 10.1. R16, 11.1. QF, 12.1. SF potvrzeny příslušnými OOP. Zdroj ADL24-4 potvrzuje celý Main harmonogram. Změny hráčů po losování nejsou změny programu. V tomto ročníku lze evidovat i konkrétní plánované počty Main R32 4+8, nikoli odhad 6+6.
+
+### 4. Nominální struktura a SE
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Plánovaný počet účastníků | 28 | 16 |
+| Základní přímé akceptace | 19 | 14 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 vítězové sekcí |
+| SE rezervy | 2, nevyužité se mění na DA | nevztahuje se |
+| Přímé akceptace při nulovém SE | 21 | 14 |
+| Nasazení | 8 | 8 |
+| BYE | 4 (první čtyři seedy) | 0 |
+| Kola / nominální hrané zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+19+2+3+4=28; při nulovém SE 21+3+4=28. Dobový přepis ADL24-7 uvádí 19 DA, 3 WC, 4 Q, SE 0, což samo o sobě dává 26; **nejde o kompletní nominální kvótu**. Dobový ATP předpis §7.08/7.10 (ADL24-8) explicitně stanoví 19–21 DA, 0–2 SE a dvě rezervy. Předstartovní los ADL24-9 má pět viditelných Q/SE placeholderů (pozice 3,4,7,12,15); §7.10 D.4 popisuje přesně tento postup pro čtyři Q a jednu dosud nevyřešenou SE možnost. Nevydáváme počet placeholderů za počet plánovaných kvalifikantů. Konečný Main los nemá SE označení. Z této skutečnosti nelze odvodit nulovou plánovanou rezervu.
+
+Q nominálně 14+2=16, 4 sekce po 4, dva seedy na sekci. Oba originální losy ADL24-1/2 vizuálně zkontrolovány. Main: BYE 2,10,23,31; Q 3,12,20,26; WC 13,19,28; LL 4,15,30; všech osm seedů. Q: WC 3,11; Alt 1,7,10,14; 7 viditelných seedů (č.1 Draper přešel do Main, výslovně v zápatí Q); 16 míst a 8 nominálních seedů. Žádný Q BYE. 12+8+4+2+1=27 Main zápasů, 8+4=12 Q zápasů, celkem 39. BYE není hraný zápas. Skuteční 3 LL ani 7 viditelných Q seedů nemění nominální strukturu.
+
+### 5. Dobová pravidla
+
+ATP 2024 §7.03/7.08/7.10/7.12/7.15–16/7.20 (ADL24-8 a BRI24-15): Main vstupní rank, 8 seedů a 4 BYE nejvýše nasazeným; Q 8 seedů ve čtyřech sekcích. Předpis Q/SE při neuzavřeném SE výslovně stanoví společné losování Q/SE zástupných pozic a následné přiřazení SE nebo další přímé akceptace. Nevyužité SE rezervy před zahájením Q obsadí další přímé akceptace, hráč může přejít z Q do Main a být nahrazen alternatem. Po skončení Q los kvalifikantů do dostupných pozic. LL přednost poraženým posledního Q kola, poté dřívější kola, při volných místech na konci Q los skupiny nejvýše postavených (1 místo = 2, více míst = počet+1), poté ranking; nejsou-li volná místa při konci Q, pořadí dle rankingu pro Q seeding. Pravidla náhrad před/po OOP dle §7.20. V případě prohry prvního hraného zápasu po BYE body za první kolo, nikoli běžné R16 body (BRI24-17 / HK24-2). Q body přičítat k Main výsledku podle předpisu; jednotlivé historické LL platby a body zde nepřepisujeme.
+
+### 6. Body a prize money (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 100665 |
+| Finalista | 1 | 165 | 58720 |
+| SF | 2 | 100 | 34510 |
+| QF | 4 | 50 | 19995 |
+| R16 | 8 | 25 (0 po BYE při první prohře) | 11610 |
+| R32 | 12 | 0 | 7095 |
+| Q postupující | 4 | 13 | 0 (výslovně v Q PDF, prize z Main samostatně) |
+| Q2 prohra | 4 | 7 | 3550 |
+| Q1 prohra | 8 | 0 | 1935 |
+
+Všechny hodnoty přímo v tabulkách zápatí obou originálních ATP losů ADL24-1/2, vizuálně ověřeny. Nominální součet Main 486405 USD, Q 29680 USD = 516085 USD. Total financial commitment 739945 USD je jiná veličina; údaj 922573 z kombinovaného OOP není mužská singlová dotace. Q2 3550/Q1 1935 se shoduje se sekundárně doloženým Hongkongem 2024, ale samo o sobě nedokazuje jeho odměny (jiný ročník/turnaj, nutný vlastní doklad).
+
+### 7. Kontrola a mezery
+
+I/T/H/D/B/P doloženy, E*: mužský Main rank date z dobového přepisu, deadline odvozen, skutečný Q rank date a čas losování nezískány; R*: ročníkový ATP rulebook §7.08/7.10 dostupný v indexovaném textu, screenshot 403. Z*: originální Main/Q ATP PDF vizuálně ověřeny, OOP textově dostupné, vizuální pokusy 403; DS nedostupný, PDF SHA-256 nezískány. Kalendář na `buuk` již správně uvádí Main 8.–13.1., sportovní profil Adelaide 2024 v prověřeném katalogu není. Žádný engine převod. Další Auckland 2024.
+
+### 8. Zdroje (ADL24)
+
+- ADL24-1: [ATP originální Main los](https://www.protennislive.com/posting/2024/8998/mds.pdf), str. 1 vizuálně.
+- ADL24-2: [ATP originální Q los](https://www.protennislive.com/posting/2024/8998/qs.pdf), str. 1 vizuálně.
+- ADL24-3: [Tennis Australia, Main draw 6.1.2024](https://www.tennis.com.au/fan-zone/news/2024/01/06/aussies-handed-tough-draws-at-adelaide-international-2024), [Q1 7.1.](https://www.tennis.com.au/fan-zone/news/2024/01/07/aussie-contenders-score-big-upsets-at-adelaide-international), [Q2 8.1.](https://www.tennis.com.au/fan-zone/news/2024/01/08/walton-records-back-to-back-top-100-wins-to-qualify-at-adelaide-international).
+- ADL24-4: [Sporting News, denní program a výsledky](https://www.sportingnews.com/ca/tennis/news/adelaide-international-results-scores-draw-schedule-2024/eb0bd6623d46dbe562586228), pozor na duplicitní řádek Arnaldi/Zapata v historickém seznamu; počty podle OOP.
+- ADL24-5: [OOP 7.1. vydán 6.1. 19:20](https://www.adelaideinternational.com.au/documents/2024-01-06-op/), [revize 22:07](https://www.adelaideinternational.com.au/documents/2024-01-07-op/), text, screenshot 403.
+- ADL24-6: [OOP 8.1.](https://www.adelaideinternational.com.au/wp-content/uploads/2024/01/OP-Adelaide-MON-8-JAN-2024.pdf), text, screenshot 403.
+- ADL24-7: [dobový přepis acceptance listu, 25.12.2023](https://www.tennisteen.it/entry-list/atp/24098-atp-entry-list-8-14-gennaio-2024.html), nesoučet kvót vysvětlen dobovým předpisem, ne automatické převzetí.
+- ADL24-8: [ATP 2024 Competition, verze 21.12.2023](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_21dec.pdf), §7.03, §7.08 c), §7.10 A–D, indexovaný text, screenshot 403.
+- ADL24-9: [dobový přepis předstartovního losu s Q/SE](https://www.oasport.it/2024/01/atp-adelaide-2024-il-tabellone-di-arnaldi-e-sonego/), konfrontovat s originálním konečným losem.
+- ADL24-10: [OOP 9.1. vydán 8.1. 20:15](https://www.adelaideinternational.com.au/documents/2024-01-08-op-2/), text, screenshot 403.
+- ADL24-11: [OOP 10.1.](https://www.adelaideinternational.com.au/wp-content/uploads/2024/01/OP-Adelaide-WED-10-JAN-2024.pdf), text, screenshot 403.
+- ADL24-12: [OOP 11.1.](https://www.adelaideinternational.com.au/documents/3462-2/), text, screenshot 403.
+- ADL24-13: [OOP 12.1. vydán 11.1. 19:32](https://www.adelaideinternational.com.au/wp-content/uploads/2024/01/OP-3.pdf), text, screenshot 403.
+- ADL24-14: [ATP detail sheet 2024](https://www.protennislive.com/posting/2024/8998/ds.pdf), nedostupný, nepovažovat za ověřený.

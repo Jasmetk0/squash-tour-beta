@@ -96,7 +96,8 @@ function sortEvents(a: SavedTournamentEntry, b: SavedTournamentEntry): number {
     a.event.event_id.localeCompare(b.event.event_id)
 }
 
-const resultFilterKeys = ['match', 'matchSearch', 'matchDraw', 'matchPage'] as const
+const exactMatchKeys = ['match', 'matchRun', 'matchBranch'] as const
+const resultFilterKeys = [...exactMatchKeys, 'matchSearch', 'matchDraw', 'matchPage'] as const
 function uniqueParam(params: URLSearchParams, key: string): string | null {
   const values = params.getAll(key)
   return values.length === 1 ? values[0] : null
@@ -122,6 +123,10 @@ function ResultMatches({ entry, runId, branchId, t }: {
   const page = readPage(params, 'matchPage')
   const matchId = uniqueParam(params, 'match')
   const hasMatch = params.has('match')
+  const hasMatchScope = params.has('matchRun') || params.has('matchBranch')
+  const invalidMatchScope = hasMatchScope && (!hasMatch ||
+    uniqueParam(params, 'matchRun') !== runId ||
+    uniqueParam(params, 'matchBranch') !== branchId)
   function changeResult(update: (next: URLSearchParams) => void, replace = false): void {
     setParams(previous => {
       const next = new URLSearchParams(previous)
@@ -135,8 +140,13 @@ function ResultMatches({ entry, runId, branchId, t }: {
   const query = useQuery({
     queryKey: ['viewer-saved-match-result', runId, branchId, entry.event.event_id],
     queryFn: () => getViewerTournamentResult(runId, entry.event.event_id),
+    enabled: !invalidMatchScope,
     retry: false, refetchOnWindowFocus: false,
   })
+  if (invalidMatchScope) return <div role="alert">
+    <p>{t('invalidMatch')}</p>
+    <button type="button" onClick={clearResultFilters}>{t('clearMatch')}</button>
+  </div>
   if (query.isPending || query.isFetching) return <p role="status">{t('eventLoading')}</p>
   if (query.isError) return <div role="alert">
     <p>{t('eventError')}</p>
@@ -157,14 +167,16 @@ function ResultMatches({ entry, runId, branchId, t }: {
       const next = new URLSearchParams(params)
       resultFilterKeys.forEach(key => next.delete(key))
       next.set('match', id)
+      next.set('matchRun', runId)
+      next.set('matchBranch', branchId)
       return '?' + next.toString()
     }}
     search={search} onSearch={value => changeResult(next => {
-      next.delete('match'); next.delete('matchPage')
+      exactMatchKeys.forEach(key => next.delete(key)); next.delete('matchPage')
       if (value) next.set('matchSearch', value); else next.delete('matchSearch')
     }, true)}
     draw={draw} onDraw={value => changeResult(next => {
-      next.delete('match'); next.delete('matchPage')
+      exactMatchKeys.forEach(key => next.delete(key)); next.delete('matchPage')
       if (value === 'all') next.delete('matchDraw'); else next.set('matchDraw', value)
     })}
     page={page} onPage={value => changeResult(next => {

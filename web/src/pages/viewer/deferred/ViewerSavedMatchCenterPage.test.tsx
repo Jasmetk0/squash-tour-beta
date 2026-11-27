@@ -343,6 +343,8 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(within(table).queryByText('qualifier')).not.toBeInTheDocument()
     const params = new URLSearchParams(screen.getByTestId('search-params').textContent ?? '')
     expect(params.get('match')).toBe('final')
+    expect(params.get('matchRun')).toBe('run alpha')
+    expect(params.get('matchBranch')).toBe('viewer-branch')
     expect(params.getAll('keep')).toEqual(['one', 'two'])
     await user.click(screen.getByRole('button', { name: 'Back' }))
     expect(within(table).getAllByRole('row')).toHaveLength(3)
@@ -376,6 +378,21 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(params.get('keep')).toBe('1')
     expect(params.has('matchDraw')).toBe(false)
     expect(params.has('matchSearch')).toBe(false)
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+  })
+
+  it.each([
+    'matchRun=other-run&matchBranch=viewer-branch',
+    'matchRun=run+alpha&matchBranch=other-branch',
+    'matchRun=run+alpha',
+    'matchRun=run+alpha&matchBranch=viewer-branch&matchBranch=viewer-branch',
+  ])('rejects a scoped match link before any result GET when scope differs: %s', async scope => {
+    const user = userEvent.setup()
+    mount('/viewer/tour/matches?event=EVENT%2F1&match=final&' + scope)
+    expect(await screen.findByRole('alert')).toHaveTextContent('Požadovaný zápas není')
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Zobrazit všechny zápasy' }))
+    expect(await screen.findByRole('table', { name: 'Publikované zápasy vybraného turnaje' })).toBeInTheDocument()
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
   })
 

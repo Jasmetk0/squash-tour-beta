@@ -187,7 +187,7 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
             <th scope="col">{t('unopposed')}</th>
           </tr></thead>
           <tbody>{([report.playerAStats, report.playerBStats]).flatMap(stats =>
-            stats.byEvent.map(row => <tr key={stats.playerId + ':' + row.eventId}>
+            stats.byEvent.map(row => <tr key={JSON.stringify([stats.playerId, row.eventId])}>
               <td>{stats.playerId}</td>
               <td><Link to={viewerTournamentDetailPath(runId, row.eventId)}>
                 {row.eventName || row.eventId}</Link> ({row.season})</td>
@@ -208,7 +208,7 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
             <th scope="col">{t('matchId')}</th><th scope="col">{t('winner')}</th>
             <th scope="col">{t('loser')}</th><th scope="col">{t('score')}</th>
           </tr></thead>
-          <tbody>{report.encounters.map(match => <tr key={match.eventId + ':' + match.matchId}>
+          <tbody>{report.encounters.map(match => <tr key={JSON.stringify([match.eventId, match.matchId])}>
             <td><Link to={viewerTournamentDetailPath(runId, match.eventId)}>
               {match.eventName || match.eventId}</Link> ({match.season})</td>
             <td>W{match.week}</td><td>{t(match.draw)}</td><td>{match.round}</td>

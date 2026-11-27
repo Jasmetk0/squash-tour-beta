@@ -249,4 +249,29 @@ describe('bounded source-complete public Saved H2H derivation', () => {
       .toMatchObject({ winsA: 1, winsB: 0, encounters: [{ scoreline: 'W/O' }] })
   })
 
+  it('rejects out-of-range legacy completion season indices and zero group indices', () => {
+    for (const season of [-1, 50, 1.5]) {
+      expect(selectedPublishedH2H([fixture(5, { completed_season_index: season })],
+        runId, branchId, 'A', 'B')).toBeNull()
+    }
+    const invalid = fixture(5)
+    invalid.data.players[0].group_index = 0
+    expect(selectedPublishedH2H([invalid], runId, branchId, 'A', 'B')).toBeNull()
+    expect(selectedPublishedH2H([fixture(5, { completed_season_index: 49 })],
+      runId, branchId, 'A', 'B')).not.toBeNull()
+  })
+
+  it('sorts phase before round within the same scheduled tournament without inventing match timestamps', () => {
+    const source = fixture(5)
+    source.data.matches = [
+      { match_id: 'main-r1', draw_type: 'main', round_number: 1, bracket_position: 1,
+        winner_player_id: 'A', loser_player_id: 'B', scoreline: '3-2' },
+      { match_id: 'q-r2', draw_type: 'qualification', round_number: 2, bracket_position: 1,
+        winner_player_id: 'B', loser_player_id: 'A', scoreline: '3-1' },
+    ]
+    const report = selectedPublishedH2H([source], runId, branchId, 'A', 'B')
+    expect(report?.encounters.map(row => row.matchId)).toEqual(['q-r2', 'main-r1'])
+    expect(report).toMatchObject({ winsA: 1, winsB: 1 })
+  })
+
 })

@@ -52,7 +52,7 @@ export function verifiedSavedMatchResult(
       raw.schema_version !== 'viewer_tournament_result.v1' ||
       raw.product_run_id !== runId || raw.viewer_branch_id !== branchId ||
       raw.event_id !== entry.event.event_id ||
-      !whole(raw.completed_season_index) ||
+      !whole(raw.completed_season_index, 0, 49) ||
       // Results can be published after a multi-week event finishes; the
       // scheduled occurrence week is not necessarily its completion week.
       !whole(entry.event.start_season_week, 1, 61) ||
@@ -82,7 +82,7 @@ export function verifiedSavedMatchResult(
         !optionalString(item.knockout_reached_stage) ||
         (item.seed_number !== null && !whole(item.seed_number, 1)) ||
         (item.final_round_number !== null && !whole(item.final_round_number, 1)) ||
-        (item.group_index !== null && !whole(item.group_index)) ||
+        (item.group_index !== null && !whole(item.group_index, 1)) ||
         (item.group_position !== null && !whole(item.group_position, 1)) ||
         (item.played_group_wins !== null && !whole(item.played_group_wins)) ||
         (item.group_walkovers_received !== null && !whole(item.group_walkovers_received)) ||

@@ -9,7 +9,7 @@ import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
 import {
-  viewerPlayerProfilePath, viewerRunsPath, viewerTournamentDetailPath,
+  viewerPlayerProfilePath, viewerRunsPath, viewerTournamentDetailPath, viewerTopTourMatchesPath,
 } from '../../../viewer/viewerRoutes'
 import {
   catalogSeasonsNewestFirst, tournamentViewerBranch, verifiedTournamentCatalog,
@@ -50,6 +50,10 @@ const copy = {
   selections: ['Vybrat zdroje pro H2H', 'Select H2H sources'],
   limit: ['Nejvýše osm publikovaných turnajů. Otevřou se jen jejich explicitně vybrané výsledky.', 'Up to eight published tournaments. Only explicitly selected results are fetched.'],
   selected: ['Vybráno turnajů', 'Selected tournaments'],
+  selectedList: ['Všechny vybrané zdroje (včetně zdrojů mimo aktuální filtr)', 'All selected sources (including those outside the current filter)'],
+  remove: ['Odebrat turnaj', 'Remove tournament'],
+  invalidSelection: ['Některý vybraný turnaj již není publikovaný v ověřené historii. Zruš výběr a vyber zdroje znovu.', 'A selected event is no longer published in the verified history. Clear the selection and choose sources again.'],
+  matchLink: ['Otevřít přesný zápas v Match Center', 'Open exact match in Match Center'],
   select: ['Zahrnout turnaj', 'Include tournament'],
   noMatches: ['Filtrům neodpovídá žádný turnaj.', 'No tournament matches these filters.'],
   analyze: ['Spočítat H2H z vybraných publikací', 'Calculate H2H from selected publications'],
@@ -185,7 +189,9 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
             <td><Link to={viewerTournamentDetailPath(runId, match.eventId)}>
               {match.eventName || match.eventId}</Link> ({match.season})</td>
             <td>W{match.week}</td><td>{match.draw}</td><td>{match.round}</td>
-            <td>{match.matchId}</td>
+            <td><Link title={t('matchLink')} to={viewerTopTourMatchesPath() + '?' + new URLSearchParams({
+              event: match.eventId, match: match.matchId, matchRun: runId, matchBranch: branchId,
+            }).toString()}>{match.matchId}</Link></td>
             <td>{match.winnerId}</td><td>{match.loserId}</td><td>{match.scoreline}</td>
           </tr>)}</tbody>
         </table>
@@ -222,8 +228,11 @@ function PublishedH2HCatalog({ catalog, runId, branchId, t }: {
   const current = Math.min(page, pages || 1)
   const offset = (current - 1) * PAGE_SIZE
   const shown = filtered.slice(offset, offset + PAGE_SIZE)
+  const chosen = published.filter(({ event }) => selectedIds.includes(event.event_id))
   const selected = submitted ? published.filter(({ event }) => submitted.ids.includes(event.event_id)) : []
-  const canSubmit = Boolean(a.trim() && b.trim() && a.trim() !== b.trim() &&
+  const invalidSelection = chosen.length !== selectedIds.length ||
+    (submitted !== null && selected.length !== submitted.ids.length)
+  const canSubmit = Boolean(!invalidSelection && a.trim() && b.trim() && a.trim() !== b.trim() &&
     selectedIds.length > 0 && selectedIds.length <= MAX_SELECTED_H2H_EVENTS)
   function toggle(eventId: string, enabled: boolean): void {
     setSelectedIds(old => enabled
@@ -258,6 +267,17 @@ function PublishedH2HCatalog({ catalog, runId, branchId, t }: {
           onChange={e => { setSearch(e.target.value); setPage(1) }} />
       </div>
       <p>{t('limit')} {t('selected')}: {selectedIds.length}/{MAX_SELECTED_H2H_EVENTS}</p>
+      {invalidSelection ? <p role="alert">{t('invalidSelection')}</p> : null}
+      {chosen.length > 0 ? <section aria-label={t('selectedList')}>
+        <h4>{t('selectedList')}</h4>
+        <ul className="viewer-home-list">
+          {chosen.map(({ event }) => <li key={event.event_id}>
+            {event.event_name || event.event_id} · {String(event.season)} · W{event.season_week}{' '}
+            <button type="button" aria-label={t('remove') + ': ' + (event.event_name || event.event_id) + ' (' + event.event_id + ')'}
+              onClick={() => toggle(event.event_id, false)}>{t('remove')}</button>
+          </li>)}
+        </ul>
+      </section> : null}
       {filtered.length === 0 ? <p className="empty-state">{t('noMatches')}</p> :
         <fieldset aria-label={t('selections')}>
           <legend>{t('selections')}</legend>
@@ -287,7 +307,7 @@ function PublishedH2HCatalog({ catalog, runId, branchId, t }: {
       <button type="button" onClick={() => { setSelectedIds([]); setSubmitted(null) }}>
         {t('clear')}</button>
       {!canSubmit ? <p>{t('validSelection')}</p> : null}
-      {submitted ? <H2HReport key={JSON.stringify([runId, branchId, submitted])}
+      {submitted && !invalidSelection ? <H2HReport key={JSON.stringify([runId, branchId, submitted])}
         events={selected} runId={runId} branchId={branchId}
         a={submitted.a} b={submitted.b} t={t} /> : null}
     </>}

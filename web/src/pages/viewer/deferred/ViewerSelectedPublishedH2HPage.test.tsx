@@ -169,6 +169,12 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
     const table = await screen.findByRole('table', { name: 'Konkrétní vzájemné zápasy' })
     expect(within(table).getAllByRole('row')).toHaveLength(2)
     expect(table).toHaveTextContent('final-a')
+    const matchUrl = within(table).getByRole('link', { name: 'final-a' }).getAttribute('href')!
+    const link = new URL(matchUrl, 'https://viewer.test')
+    expect(link.pathname).toBe('/viewer/tour/matches')
+    expect(Object.fromEntries(link.searchParams)).toEqual({
+      event: 'EVENT/1', match: 'final-a', matchRun: 'run alpha', matchBranch: 'viewer-branch',
+    })
     expect(table).toHaveTextContent('3-2')
     expect(table).not.toHaveTextContent('semi-a')
     expect(within(table).getByRole('link', { name: 'Source Open' }))
@@ -412,4 +418,26 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/players/A/career')
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
   })
+  it('keeps filtered-out selections visible and removable before fetching results', async () => {
+    const user = userEvent.setup()
+    mount()
+    await screen.findByRole('group', { name: 'Vybrat zdroje pro H2H' })
+    await user.type(screen.getByLabelText('ID hráče A'), 'A')
+    await user.type(screen.getByLabelText('ID hráče B'), 'B')
+    await user.click(screen.getByRole('checkbox', { name: 'Zahrnout turnaj: Source Open' }))
+    await user.type(screen.getByLabelText('Hledat turnaj nebo ID'), 'Second Open')
+    expect(screen.queryByRole('checkbox', { name: 'Zahrnout turnaj: Source Open' })).not.toBeInTheDocument()
+    const selection = screen.getByRole('region', {
+      name: 'Všechny vybrané zdroje (včetně zdrojů mimo aktuální filtr)',
+    })
+    expect(selection).toHaveTextContent('Source Open')
+    await user.click(within(selection).getByRole('button', { name: 'Odebrat turnaj: Source Open (EVENT/1)' }))
+    expect(screen.getByRole('button', { name: 'Spočítat H2H z vybraných publikací' })).toBeDisabled()
+    await user.click(screen.getByRole('checkbox', { name: 'Zahrnout turnaj: Second Open' }))
+    await user.click(screen.getByRole('button', { name: 'Spočítat H2H z vybraných publikací' }))
+    expect(await screen.findByRole('table', { name: 'Konkrétní vzájemné zápasy' })).toHaveTextContent('final-b')
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+    expect(api.getViewerTournamentResult).toHaveBeenCalledWith('run alpha', 'EVENT/2')
+  })
+
 })

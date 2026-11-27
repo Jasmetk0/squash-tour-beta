@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 14 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 15 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -48,10 +48,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Auckland](#auckland-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: Q odměny) |
 | 2024 | [Montpellier](#montpellier-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Córdoba](#córdoba-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Dallas](#dallas-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 14 zpracovaných ročníků; 13 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 15 zpracovaných ročníků; 14 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -71,7 +72,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 12 | Auckland 2024 | ROZPRACOVÁNO (P: rozpor odměn Q) |
 | 13 | Montpellier 2024 | HOTOVO (nominální rozsah) |
 | 14 | Córdoba 2024 | HOTOVO (nominální rozsah) |
-| 15 | Dallas 2024 | NEZAHÁJENO |
+| 15 | Dallas 2024 | HOTOVO (nominální rozsah) |
 | 16 | Marseille 2024 | NEZAHÁJENO (ověřit mapování katalogu) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -104,6 +105,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#auckland-2024) | ASB Classic | ATP 250 | 2024-01-06–2024-01-07 | 2024-01-08–2024-01-13 | ROZPRACOVÁNO: Q odměny |
 | [2024](#montpellier-2024) | Open Sud de France | ATP 250 | 2024-01-28–2024-01-29 | 2024-01-29–2024-02-04 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#córdoba-2024) | Córdoba Open | ATP 250 | 2024-02-03–2024-02-04 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
+| [2024](#dallas-2024) | Dallas Open | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 
 ## Wimbledon 2024
 
@@ -1839,6 +1841,128 @@ I/T/D/B/P doloženy, H* obecný veřejný plán vs konkrétní mužské OOP/note
 - COR24-17: [ATP Next Gen oznámení 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024), [ročníkový ATP Competition 2.7.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_02jul.pdf), indexovaný text pravidla účinného od 1.1.2024; konkrétní rozdělení akcím nedoloženo.
 - COR24-18: [historická finanční tabulka](https://tenniscompanion.org/prize-money/cordoba/), [sekundární Q přehled](https://de.wikipedia.org/wiki/C%C3%B3rdoba_Open_2024), [TennisTemple Q pavouk](https://en.tennistemple.com/competition/cordoba-2024/62848/draw-qualifications). Originální ATP URL [Q](https://www.protennislive.com/posting/2024/9158/qs.pdf) nedostupná; alternativní primární pořadatelská kopie COR24-1 dostupná textově.
 
+
+## Dallas 2024
+
+**Stav:** HOTOVO v nominálním rozsahu 9/9 s vyznačenými omezeními H/E/R/P/Z. Rešerše 2026-11-27. Kategorie ATP 250 v roce 2024, nikoli ATP 500 z roku 2025. Žádná konverze do enginu.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název / disciplína | Dallas Open 2024, mužská dvouhra | DAL24-1/2 |
+| Kategorie / ATP ID | ATP 250 / 424 | DAL24-1/3 |
+| Dějiště | Styslinger/Altec Tennis Complex, Southern Methodist University, Dallas, Texas, USA | DAL24-1/2/4 |
+| Povrch | krytý tvrdý, Laykold | DAL24-5/6 |
+| Časové pásmo | America/Chicago, CST UTC−06:00 v únoru | lokalita a datum |
+| Ředitel | Peter Lebedevs | DAL24-2 |
+| Měna | USD | DAL24-1 |
+| Míče, referee, supervisor, diety | NEOVĚŘENO pro mužskou dvouhru | doplňková metadata |
+
+Třetí ročník v Dallasu, historická série má delší historii v jiných městech (DAL24-1). Nepřebírat Ford Center ve Frisco z ročníku 2025 ani jeho novou ATP 500 kategorii (DAL24-7).
+
+### 2. Vstup, termíny a losování
+
+| Událost | Údaj | Zdroj / význam |
+|---|---|---|
+| Main rank date | 2024-01-08 | DAL24-8, dobový přepis |
+| Q rank date v přepisu | 2024-01-08 | DAL24-8; nepovažovat za uzávěrku, rozpor s obecným výpočtem 15.1. |
+| Nominální Main deadline | 2024-01-08 12:00 US Eastern = 11:00 CST | §7.03, 28 dní před 5.2., odvozeno |
+| Nominální Q deadline | 2024-01-15 12:00 US Eastern = 11:00 CST | §7.03, 21 dní před 5.2., odvozeno |
+| Nominální LE deadline | 2024-02-01 10:00 US Eastern = 09:00 CST | §7.04, odvozeno |
+| Q los | zveřejněn nejpozději 3.2. | hostitel SMU předem uvedl konkrétní dvojice, DAL24-4; přesný čas neověřen |
+| Main los | zveřejněn nejpozději 3.2. | DAL24-4/9; přesný okamžik losu neověřen |
+| Q1 | 2024-02-04, oznámený start 11:00 CST | DAL24-4, předturnajový článek 3.2. |
+| Q2 | 2024-02-05 | DAL24-1/10; čtyři postupující určeni v pondělí |
+| Main | 2024-02-05–11 | DAL24-1/3 |
+| Finále | 2024-02-11 13:00 CST | DAL24-1 str. 1, oznámený program |
+
+Celé pořadatelské okno 3.–11.2. (DAL24-2) zahrnuje 3.2. v 19:00 Women's Tennis Classic, nikoli mužskou Q (DAL24-11). Některý sekundární web uvádí Q 3.–4.2. (DAL24-12); v rozporu s dobovým oznámením SMU a pondělními ATP notes. Mužské Q 4.–5.2. mají přednost. Historický cutoff Main 92 a Q 164 z přepisu DAL24-8 nejsou nominální kvóty. Detail Sheet nedostupný, přesné ročníkové uzávěrky samostatně neověřeny.
+
+### 3. Nominální harmonogram
+
+| Kolo | Místní datum / okno | Nominální zápasy | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-02-04 | 8 | DAL24-4/10 |
+| Q2 | 2024-02-05 | 4 | DAL24-1/10 |
+| R32 | 2024-02-05–06 | 12 | DAL24-13 |
+| R16 | 2024-02-07–08 | 8 | DAL24-14 |
+| QF | 2024-02-09 | 4 | DAL24-15 |
+| SF | 2024-02-10 | 2 | DAL24-15 |
+| F | 2024-02-11 | 1 | DAL24-1/15 |
+
+Q 2 kalendářní dny, Main 7 dní, celé sportovní okno 8 dní. Q2 a R32 souběžně 5.2. Dobové denní ATP Media Notes a zprávy pořadatele potvrzují okna Main; kompletní původní předturnajový rozpis všech dnů nezískán. Q1 oznámena předem hostitelem a Q2 přímo ATP Preview jako pondělní určení čtyř postupujících. Denní rozdělení 12/8 zápasů vícedenních kol se neodhaduje; některé agregátory zobrazují následující den kvůli jinému pásmu (např. QF 10.2.), místní ATP notes mají přednost. 27 Main + 12 Q = 39 nominálně hraných zápasů. Historický R16 walkover nenahrazuje standardní program.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Účastníci | 28 | 16 |
+| Základní DA dle standardní tabulky | 18 | 14 |
+| SE rezervy | 2 | nevztahuje se |
+| LE rezerva | 1 | nevztahuje se |
+| WC | 3 | 2 |
+| Q postupy | 4 | 4 vítězové sekcí |
+| DA při nevyužití SE/LE | 21 (bez zvláštní NextGen alokace) | 14 (bez zvláštní NextGen alokace) |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / nominálně hrané zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 | BO3 |
+
+18+2+1+3+4=28 a 14+2=16; standardní rámec dle §7.08 a přepisu DAL24-8 (18 DA, 3 WC, 4 Q, pozdější rezervy zatím neobsazené). Přesná ročníková alokace NextGen zůstává otevřená a může měnit složení uvnitř kapacity, nikoliv celkový počet. Původní ATP kalendář potvrzuje 28/16 (DAL24-6). Main konečný sekundární archiv DAL24-16 potvrzuje osm seedů, čtyři BYE, čtyři Q, tři WC, dva LL během průběhu turnaje; první LL očekáván v pondělních ATP notes, druhý až při pozdějším odstoupení. Nejde o plánovanou kvótu. Q úplný archiv DAL24-17: 16 účastníků, všech osm seedů, dva označení WC (Trevor Svajda/Jerry Barton, potvrzeno přímo SMU), dvě označení Alt, čtyři sekce po čtyřech, bez BYE. U neoznačených hráčů nelze bez vstupní listiny určit přesný typ akceptace. BO3 potvrzen výsledky obou pavouků. Nezaměňovat tři původně oznámené WC z 9.1. (Opelka, Neff, Quinn) s konečným stavem (Krueger, Neff, Quinn) v ATP Preview.
+
+### 5. Dobová pravidla a Next Gen
+
+ATP §7.03/7.04/7.08/7.10/7.12/7.15–16/7.20 (MPL24-7, ADL24-8, DAL24-18): 8 Main seedů, BYE pro 4 nejvyšší; Q 8 seedů ve 4 sekcích, Q vítězové přiřazeni po kvalifikaci do volných míst losem. SE/LE rezervy a jejich uvolnění dle předpisu, LL pořadí dle ATP (ne Grand Slam). První prohra po BYE = 0 bodů, výslovně v DAL24-1 str. 2. Odměny a body se posuzují odděleně podle finančního předpisu AKL24-14.
+
+**Upřesnění Next Gen:** ATP oznámení 20.12.2023 uvádí pro způsobilé hráče (20 let a méně, top 250) jednu Main a dvě Q příležitosti na úrovni ATP 250; to není automaticky počet míst v každém pavouku ani nárok využít všechny v jednom týdnu. §7.08 dobového 2024 Rulebooku hostovaného ITF (DAL24-18, tištěná str. 147) výslovně uvádí jedno rezervované NextGen Program místo pro ATP 250 v týdnech se třemi ATP Tour turnaji. Znění ověřeno textově, screenshot nedostupný; samotná konkrétní alokace Main/Q pro Dallas a ostatní dvě akce z dostupných listin nezjištěna. Alex Michelsen, kterého pořadatel označuje jako NextGen, byl již v původní Main listině jako DA na ranku 92 (DAL24-8), samotná marketingová značka tedy není důkaz využití rezervy. Nezvyšovat 28/16. Otevřený společný audit týdne zůstává v seznamu.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD | Doklad |
+|---|---:|---:|---:|---|
+| Vítěz | 1 | 250 | 114970 | ATP |
+| Finalista | 1 | 165 | 67070 | ATP |
+| SF | 2 | 100 | 39435 | ATP |
+| QF | 4 | 50 | 22850 | ATP |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 13270 | ATP |
+| R32 | 12 | 0 | 8110 | ATP |
+| Q postupující | 4 | 13 | 0 samostatně | sekundární |
+| Q2 prohra | 4 | 7 | 4055 | sekundární shoda |
+| Q1 prohra | 8 | 0 | 2210 | sekundární shoda |
+
+Main tabulka přímo ATP Preview str. 2 (DAL24-1, text, screenshot 403), nezávisle shoda s TennisCompanion a TennisTemple. Q peníze shodně ve třech sekundárních tabulkách DAL24-17/19/20; jejich vzájemná nezávislost není prokázána. Původní Q PDF nedostupné. TennisTemple uvádí chybně 8 bodů Q2 a označuje postup jako Q3; dobový ATP rankingový předpis a předsezonní oznámení (DAL24-21) potvrzují 7 bodů a Q má pouze dvě kola. Italský přehled uvádí R32 8100 USD, ale primární ATP uvádí 8110; německé archivní zrcadlo také vykazuje chybné Q řádky, proto primární Main a shoda ročníkových Q tabulek mají přednost. Stevegtennis označuje měnu A$; originální ATP tabulka v USD je autorita pro denominaci. Main nominální součet 555790 USD, Q 33900 USD, celkem 589690 USD; ne celkový prize pool. ITF uvádí celoturnajové prize money 756020 USD (DAL24-22), původní ATP doubles draw financial commitment 841590 USD (DAL24-5). Neodvozovat z rozdílu neznámé odměny. Q body se přičítají dle ATP předpisu; P* značí, že původní Q finanční tabulku je třeba opětovně ověřit, nikoli primární jistotu.
+
+### 7. Kontrola a omezení
+
+I/T/D/B doloženy dobovými ATP/SMU materiály a úplnými sekundárními pavouky. H*: denní okna z dobových notes a zpráv, ne kompletní původní předturnajový rozpis; E*: Main/Q rank dates z přepisu, skutečné uzávěrky a okamžik losu neověřeny; R*: dobový rulebook textově, NextGen přesná turnajová alokace otevřena; P*: Main primární, Q sekundární shoda (odlišný chybný bodový údaj odmítnut); Z*: ATP původní Main/Q/DS nedostupné, screenshoty ATP notes a ITF hostovaného rulebooku 403/500; žádné nové vizuální ověření singlových losů ani SHA-256 se nepředstírá. Existující ročník v `buuk` kalendáři má Main 5.–11.2.; Dallas 2025 je jiná kategorie a nesmí se zaměnit. Další Marseille 2024, ověřit mapování identity a pokračovat ve společném auditu NextGen.
+
+### 8. Zdroje (DAL24)
+
+- DAL24-1: [ATP Preview & Day 1 5.2.2024](https://www.atptour.com/-/media/038f94d7dade47f4958a0f418d9a46ff.pdf), str. 1 (Q/LL, finále), str. 2 (body, odměny, BYE), indexovaný text, screenshot 403.
+- DAL24-2: [pořadatel entry field 9.1.2024](https://www.dallasopen.com/en/media/news/2024playerfieldreleased), místo, ředitel, celé okno akce, původní WC.
+- DAL24-3: [ATP identita série 424](https://www.atptour.com/en/tournaments/nexo-dallas-open/424/overview), [TennisTV ročník 424_2024](https://www.tennistv.com/tournaments/424_2024/dallas).
+- DAL24-4: [SMU 3.2.2024 – Q WC a nedělní start](https://smumustangs.com/news/2024/2/4/mens-tennis-mustangs-set-to-compete-in-2024-dallas-open), datum v záhlaví 3.2., URL 4.2.; předem uvedeny konkrétní dvojice a start 11:00.
+- DAL24-5: [archivní původní ATP doubles los](https://www.raquetc.com/wp-content/uploads/2024/02/mdd.pdf), pouze hlavička povrchu/dotace, text; screenshot nebylo možné vyřešit. Nejde o singlový los.
+- DAL24-6: [ATP/Challenger Calendar 8.2.2024](https://www.atptour.com/-/media/files/calendar-pdfs/2024/2024-atp-challenger-calendar-as-of-8-february-2024.pdf), indexovaný řádek IH/28/16.
+- DAL24-7: [ATP Dallas 2025 preview – první ATP 500](https://www.atptour.com/en/news/dallas-2025-history-draw-schedule).
+- DAL24-8: [dobový přepis Main/Q entry listů 20.1.](https://www.tennisteen.it/entry-list/atp/24110-atp-entry-list-5-11-febbraio-2024.html), Dallas řádky 120–181.
+- DAL24-9: [dobová zpráva o zveřejnění Main losu](https://tennis-infinity.com/atp/2024-dallas-open-atp-draw-with-shelton-tiafoe-paul-more).
+- DAL24-10: [Sky Q1 4.2.](https://www.skysports.com/tennis/scores-schedule/04-02-2024), [Q2 5.2.](https://www.skysports.com/tennis/scores-schedule/05-02-2024), používat s místními daty DAL24-1/4.
+- DAL24-11: [pořadatel oznámení exhibice 3.2.2024](https://www.dallasopen.com/en/media/news/womens-tennis-classic), nikoli mužské Q.
+- DAL24-12: [sekundární přehled s chybným Q datem](https://gotennisracquets.com/dallas-open/), odmítnuto vůči DAL24-1/4.
+- DAL24-13: [ATP Day 2, 6.2.](https://www.atptour.com/-/media/edab2f947f2f40d1b779dc205a04b8b0.pdf), text/screenshot 403; [pořadatel pondělí](https://www.dallasopen.com/en/media/news/purcell-krueger-dallas-2024-monday), [úterý](https://www.dallasopen.com/en/media/news/eubanks-michelsen-dallas-2024-tuesday).
+- DAL24-14: [ATP Day 3, 7.2.](https://www.atptour.com/-/media/39282fbd554e4a5ba16f9255f708974c.pdf), [Day 4, 8.2.](https://www.atptour.com/-/media/88b39511783e440e8c09c8b03a00b099.pdf), text/screenshoty 403; [pořadatel čtvrteční R16](https://www.dallasopen.com/en/media/news/tiafoe-michelsen-dallas-2024-thursday).
+- DAL24-15: ATP notes [QF 9.2.](https://www.atptour.com/-/media/a02a0a52cedb4c16939e5935ada58e62.pdf), [SF 10.2.](https://www.atptour.com/-/media/0f74ca2013c24da29b6089b4781c682a.pdf) indexované názvy fází; [F 11.2.](https://www.atptour.com/-/media/dbe73f4ce72f40938fcd7ce99509cc94.pdf), text/screenshot 403; [pořadatel QF](https://www.dallasopen.com/en/media/news/paul-koepfer-dallas-2024-friday).
+- DAL24-16: [úplný Main archiv TennisTemple](https://en.tennistemple.com/competitions/dallas/2024/draw), místy špatný nadpis Long Island, identita potvrzena datem a hráči; [nezávislá Main kontrola](https://en.wikipedia.org/wiki/2024_Dallas_Open_%E2%80%93_Singles).
+- DAL24-17: [úplný Q archiv TennisTemple](https://fr.tennistemple.com/competitions/dallas/2024/draw-qualifications), Q peníze, chybné body Q2 8 a štítek Q3; [nezávislá kontrola Q](https://de.wikipedia.org/wiki/Dallas_Open_2024/Qualifikation).
+- DAL24-18: [2024 ATP Rulebook hostovaný ITF](https://www.itftennis.com/media/11845/2024-rulebook-atp-update.pdf?embed=true), §7.08 tištěná str. 146–147, text, screenshot 500/redirect; [ATP Next Gen oznámení 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024), [ATP lednová verze](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_22jan.pdf) viz MPL24-7.
+- DAL24-19: [TennisCompanion ročníkový USD rozpis](https://tenniscompanion.org/prize-money/dallas/), sloupec 2024; nebrat jeho aktuální formát jako historický.
+- DAL24-20: [Stevegtennis ročník 2024](https://www.stevegtennis.com/draw-results/atp/Dallas%20Open%20-%20Dallas/2024), Q částky souhlasí, chybné A$ označení; [italský přehled](https://it.wikipedia.org/wiki/Dallas_Open_2024) shoda Q, nesouhlas R32, [německý archiv](https://wiki.postl.cc/content/wikipedia_de_all_maxi_2024-03/A/Dallas_Open_2024) nesouhlas některých řádků.
+- DAL24-21: [ATP předsezonní aktualizace 2024](https://www.atptour.com/en/news/2024-rankings-points-update), tabulka ATP250, 13/7; další ročníkový rankingový předpis viz BRI24-17.
+- DAL24-22: [ITF Dallas 2024](https://www.world.tennis/en/tournament/dallas/usa/2024/m-250-usa-2024-001/draws-and-results/), celková dotace. Originální ATP [Main](https://www.protennislive.com/posting/2024/424/mds.pdf), [Q](https://www.protennislive.com/posting/2024/424/qs.pdf), [DS](https://www.protennislive.com/posting/2024/424/ds.pdf) v tomto průchodu nedostupné.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -1848,3 +1972,4 @@ I/T/D/B/P doloženy, H* obecný veřejný plán vs konkrétní mužské OOP/note
 | Montpellier 2024 | P* – sekundární Q prize money | originální Q tabulka, kandidát 3105/1695 EUR doložen sekundární shodou |
 | Marseille 2024 | inventura – mapování identity v katalogu | před zpracováním potvrdit skutečnou akci proti původnímu kalendáři, neměnit runtime |
 | Córdoba/Dallas/Marseille 2024 | R* – Next Gen rezervy v týdnu tří ATP akcí | ověřit přesnou alokaci mezi akcemi a případné individuální využití, nepřidávat mimo pevnou kapacitu; COR24-17 |
+| Dallas 2024 | P* – sekundární Q prize money | původní ATP Q PDF nebo Detail Sheet; 4055/2210 USD shoda sekundárních zdrojů, DAL24-17/19/20 |

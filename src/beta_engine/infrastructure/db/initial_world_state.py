@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 from sqlalchemy.orm import Session
@@ -17,6 +19,45 @@ if TYPE_CHECKING:
     from beta_engine.application.calendar_initial_world import CalendarInitialWorldState
 
 INITIAL_WORLD_COMPONENT_KEY = "initial_world"
+
+# Parsed Saved InitialWorld components of ONE Week/Season Transition preparation,
+# keyed by the exact JSON text that was parsed (see ``saved_initial_world_parse_scope``).
+_PREPARATION_PARSES: ContextVar[dict | None] = ContextVar(
+    "saved_initial_world_preparation_parses", default=None
+)
+
+
+@contextmanager
+def saved_initial_world_parse_scope():
+    """Parse each identical Saved InitialWorld text at most once in this scope.
+
+    A native transition loads its Saved lifecycle and Health inputs, and each of
+    those loaders independently loads the same InitialWorld component again. A
+    Master v87 world recomputes its whole opening Turn Pro evidence on every
+    parse, so one preparation used to repeat that three times. Inside the scope
+    the frozen model parsed from exactly the same text is reused; a parse that
+    raised is never remembered, and every identity, fingerprint, Run clock and
+    lifecycle check below still runs for every call. Nothing is kept after the
+    scope, crosses an operation or is persisted. Outside the scope every call
+    parses freshly, exactly as before.
+    """
+    token = _PREPARATION_PARSES.set({}) if _PREPARATION_PARSES.get() is None else None
+    try:
+        yield
+    finally:
+        if token is not None:
+            _PREPARATION_PARSES.reset(token)
+
+
+def _parse_saved_initial_world_text(text: str):
+    parses = _PREPARATION_PARSES.get()
+    if parses is None:
+        return parse_initial_world_json(text)
+    state = parses.get(text)
+    if state is None:
+        state = parse_initial_world_json(text)
+        parses[text] = state
+    return state
 
 
 def get_initial_world(
@@ -80,7 +121,7 @@ def load_saved_initial_world(
         return None
     if not isinstance(component, dict) or set(component) != {"fingerprint", "state"}:
         raise ValueError("Invalid Saved Revision initial-world component")
-    state = parse_initial_world_json(json.dumps(component["state"]))
+    state = _parse_saved_initial_world_text(json.dumps(component["state"]))
     if (state.run_id, state.branch_id, state.fingerprint) != (
         run_id,
         branch_id,

@@ -1369,21 +1369,30 @@ class CalendarTourService:
             )
             source = RunProspectSourceSnapshot("run_prospect_source.v1", state.run_id, (), canonical_hash([]))
         if source is not None:
+            from beta_engine.infrastructure.db.initial_world_state import (
+                saved_initial_world_parse_scope,
+            )
+
+            # Both loaders (and Health's own lifecycle load) authenticate the
+            # same Saved InitialWorld text: parse it once for this preparation.
+            with saved_initial_world_parse_scope():
+                lifecycle = load_saved_lifecycle(
+                    rev.saved_revision.payload,
+                    run_id=state.run_id,
+                    branch_id=state.branch_id,
+                )
+                saved_health = load_saved_health(
+                    rev.saved_revision.payload,
+                    run_id=state.run_id,
+                    branch_id=state.branch_id,
+                )
             native = prepare_native_tour_week(
                 state=state,
                 checkpoint=cp,
                 world=world,
                 source=source,
-                lifecycle=load_saved_lifecycle(
-                    rev.saved_revision.payload,
-                    run_id=state.run_id,
-                    branch_id=state.branch_id,
-                ),
-                health=load_saved_health(
-                    rev.saved_revision.payload,
-                    run_id=state.run_id,
-                    branch_id=state.branch_id,
-                ),
+                lifecycle=lifecycle,
+                health=saved_health,
                 clock=clock,
                 knockout=getattr(evidence, "knockout", evidence),
                 command=command.model_dump(mode="json"),

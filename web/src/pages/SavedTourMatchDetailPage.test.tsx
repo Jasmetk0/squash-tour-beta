@@ -222,6 +222,55 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.getByRole('button',{name:'Game 1 · end · #30'})).toBeEnabled()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
   })
+  it('builds whole-archive counts only after consecutive verified pages have been read',async()=>{
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const nav=screen.getByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(screen.getByText('Complete archive statistics require all consecutive verified pages to be loaded.')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button',{name:'Previous rally page'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Next rally page'}))
+    const complete=await screen.findByRole('region',{name:'Complete archive statistics'})
+    expect(complete).toHaveTextContent('Rallies won by A (A)30')
+    expect(complete).toHaveTextContent('Rallies won by B (B)0')
+    expect(complete).toHaveTextContent('No recorded rally winner0')
+    expect(screen.getByRole('button',{name:'Next rally page'})).toBeDisabled()
+    const games=within(complete).getByRole('table',{name:'Recorded completed games'})
+    expect(within(games).getAllByRole('row')).toHaveLength(2)
+    await userEvent.click(within(games).getByRole('button',{name:'#30'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
+  it('does not treat an isolated later page as the complete archive',async()=>{
+    mount(url+'&rally=26')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Statistics'}))
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([25])
+  })
+  it('rejects complete statistics when two cached pages do not join',async()=>{
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>{
+      const original=fixture(offset)
+      return Promise.resolve(offset!==25?original:{
+        ...original,rallies:original.rallies.map(frame=>({
+          ...frame,score_a_before:frame.score_a_before+100,
+          score_a_after:frame.score_a_after+100
+        }))
+      })
+    })
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Statistics'}))
+    await userEvent.click(screen.getByRole('button',{name:'Next rally page'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
   it('rejects two independently valid but discontinuous cached archive pages',async()=>{
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,

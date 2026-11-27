@@ -155,6 +155,73 @@ describe('exact historical Edition match replay',()=>{
     expect(screen.queryByRole('navigation',{name:'Match sections'})).not.toBeInTheDocument()
     expect(screen.queryByRole('region',{name:'Statistics'})).not.toBeInTheDocument()
   })
+  it('plays verified rallies across the 25/26 boundary and stops on an explicit pause',async()=>{
+    mount(url+'&rally=25')
+    expect(await screen.findByText('Rally 25/30')).toBeInTheDocument()
+    const playback=screen.getByRole('region',{name:'Replay playback'})
+    await userEvent.selectOptions(within(playback).getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(within(playback).getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Pause replay'}))
+    expect(screen.getByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
+  it('stops at a recorded game end and jumps only to proven game landmarks',async()=>{
+    // Two 15-event games: four neutral rallies then eleven scoring rallies.
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>{
+      const frames=Array.from({length:30},(_,i)=>{
+        const game=Math.floor(i/15)+1,withinGame=i%15
+        const end=withinGame===14
+        return {rally_index:i+1,set_number:game,server_player_id:'A',
+          winner_player_id:withinGame<4?null:'A',
+          score_a_before:Math.max(0,withinGame-4),score_b_before:0,
+          score_a_after:Math.max(0,withinGame-3),score_b_after:0,
+          sets_a_after:game-1+Number(end),sets_b_after:0,
+          set_complete:end,match_complete:i===29}
+      })
+      const original=fixture(offset)
+      return Promise.resolve({...original,match:{...original.match,scoreline:'2-0'},
+        rallies:frames.slice(offset,offset+25)})
+    })
+    mount(url+'&rally=14')
+    expect(await screen.findByText('Rally 14/30')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(screen.getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByText('Rally 15/30')).toBeInTheDocument()
+    expect(await screen.findByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(screen.getByRole('button',{name:'Game 1 · end · #15'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Game 2 · start · #16'}))
+    expect(screen.getByText('Rally 16/30')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Game 2 · end · #30'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('cancels playback after a failed page read and does not restart on retry',async()=>{
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>offset===25?Promise.reject(new Error('offline')):Promise.resolve(fixture(offset)))
+    mount(url+'&rally=25')
+    expect(await screen.findByText('Rally 25/30')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(screen.getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Pause replay'})).not.toBeInTheDocument()
+    api.getSavedTourMatchDetail.mockResolvedValueOnce(fixture(25))
+    await userEvent.click(screen.getByRole('button',{name:'Retry match / archive read'}))
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(screen.queryByRole('button',{name:'Pause replay'})).not.toBeInTheDocument()
+  })
+  it('does not offer an unproven game start on a direct later-page bookmark',async()=>{
+    mount(url+'&rally=26')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:/Game 1 · start/})).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Game 1 · end · #30'})).toBeEnabled()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
   it('rejects two independently valid but discontinuous cached archive pages',async()=>{
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,

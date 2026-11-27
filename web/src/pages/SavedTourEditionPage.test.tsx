@@ -334,6 +334,107 @@ describe('Saved Edition detail',()=>{
     expect(back).not.toContain('drawView')
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
   })
+  it('shows planned group membership without inventing ranks or a match result',async()=>{
+    const source=fixture(false)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:2,
+      match_day_count:1,matches:[{
+        match_id:'group-one',group_index:1,match_day_ordinal:1,match_order:1,
+        top_player_id:'P1',bottom_player_id:'P2',best_of:3
+      }]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    await userEvent.click(screen.getByRole('button',{name:'Visual overview'}))
+    const overview=screen.getByRole('region',{name:'Visual group overview'})
+    const group=within(overview).getByRole('region',{name:'Group 1'})
+    expect(group).toHaveTextContent('Published matches: 0/1')
+    expect(group).toHaveTextContent('Participants from saved schedule (unranked)')
+    expect(group).toHaveTextContent('Verified final standings are unavailable.')
+    expect(within(group).queryByRole('table')).not.toBeInTheDocument()
+    await userEvent.click(within(group).getByText('Saved group fixtures (1)'))
+    expect(group).toHaveTextContent('Not canonically published')
+    expect(within(group).queryByRole('link',{name:'Match detail'})).not.toBeInTheDocument()
+    expect(overview).toHaveTextContent('does not expose advancement mappings')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('shows saved final group standings and W/O separately from published fixture coverage',async()=>{
+    const source=fixture(false)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:2,
+      match_day_count:1,matches:[{
+        match_id:'group-one',group_index:1,match_day_ordinal:1,match_order:1,
+        top_player_id:'P1',bottom_player_id:'P2',best_of:3
+      }]
+    }
+    const row=(position:number,player_id:string,winner:boolean)=>({
+      position,player_id,wins:winner?1:0,losses:winner?0:1,
+      group_points:winner?4:0,played_matches:0,
+      walkovers_received:winner?1:0,walkovers_conceded:winner?0:1,
+      games_won:0,games_lost:0,points_won:0,points_lost:0
+    })
+    source.group_standings={
+      schema_version:'run_saved_tour_group_standings.v1',
+      source:'saved_tournament_group_standings_authority',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'c'.repeat(64),group_schedule_fingerprint:'b'.repeat(64),
+      groups:[{group_index:1,rows:[row(1,'P2',true),row(2,'P1',false)]}],
+      tie_decisions:[]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    await userEvent.click(screen.getByRole('button',{name:'Visual overview'}))
+    const group=screen.getByRole('region',{name:'Group 1'})
+    const table=within(group).getByRole('table',{name:'Final standings for group 1'})
+    const rows=within(table).getAllByRole('row')
+    expect(rows[1]).toHaveTextContent('P2')
+    expect(rows[1]).toHaveTextContent('1–0')
+    expect(rows[1]).toHaveTextContent('1/0')
+    expect(rows[2]).toHaveTextContent('P1')
+    expect(group).toHaveTextContent('Published matches: 0/1')
+    expect(screen.getByRole('region',{name:'Visual group overview'})).toHaveTextContent(
+      'Group points are not Official Ranking points.')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('links published group matches back to the visual Draw view without a new read',async()=>{
+    const source=fixture(true)
+    source.group_schedule={
+      schema_version:'run_saved_tour_group_schedule.v1',
+      source:'saved_tournament_group_match_schedule_authority.v1',
+      run_id:'run-a',revision_branch_id:'ancestor',event_id:'event-x',
+      authority_fingerprint:'b'.repeat(64),group_count:1,group_size:2,
+      match_day_count:1,matches:[{
+        match_id:'group-one',group_index:1,match_day_ordinal:1,match_order:1,
+        top_player_id:'P1',bottom_player_id:'P2',best_of:3
+      }]
+    }
+    source.published_result!.matches.push({
+      match_id:'group-one',draw_type:'group',round_number:1,bracket_position:1,
+      winner_player_id:'P2',loser_player_id:'P1',scoreline:'2-0'
+    })
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=draw&drawView=visual&country=CZE')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    const group=screen.getByRole('region',{name:'Group 1'})
+    expect(group).toHaveTextContent('Published matches: 1/1')
+    await userEvent.click(within(group).getByText('Saved group fixtures (1)'))
+    const link=within(group).getByRole('link',{name:'Match detail'})
+    expect(link).toHaveAttribute('href',expect.stringContaining('/matches/group-one?'))
+    for(const value of ['drawView=visual','tab=draw','revision=rev-old','country=CZE'])
+      expect(link).toHaveAttribute('href',expect.stringContaining(value))
+    expect(within(group).queryByRole('table')).not.toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('fails closed for cross-revision and mismatched event',async()=>{
     api.getSavedTourEdition.mockResolvedValue({...fixture(),saved_revision_id:'new-rev'})
     mount()

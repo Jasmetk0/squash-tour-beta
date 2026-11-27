@@ -127,10 +127,10 @@ export function taskCalendarHandoff(task:ServerTask):string|null{
  const source=supportedCalendarSeason(`${startYear}-${startYear+1}`)
  return source ? base+`&calendarSeason=${encodeURIComponent(source)}` : base
 }
-function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
+function TaskCard({task,focused=false,summaryRequested=false}:{task:ServerTask;focused?:boolean;summaryRequested?:boolean}){
  const {language}=useLanguage();const t=copy[language];const client=useQueryClient()
  const [operator,setOperator]=useState('');const [reason,setReason]=useState('');const [pending,setPending]=useState<{target:ServerTask;body:ContinueTask}|null>(null)
- const [summaryOpen,setSummaryOpen]=useState(false)
+ const [summaryOpen,setSummaryOpen]=useState(focused&&summaryRequested&&['stopped','target_reached','complete'].includes(task.state))
  // An editable, not-yet-submitted audit reason belongs to one observed task
  // revision/checkpoint only. Polling into a different decision must never
  // inherit that text. Once submitted, the frozen request is authoritative.
@@ -161,6 +161,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
  })
  const clockPosition=task.current_week?taskCalendarPosition(task,task.current_week):null
  const terminal=['stopped','target_reached','complete'].includes(task.state)
+ useEffect(()=>{if(focused&&summaryRequested&&terminal)setSummaryOpen(true)},[focused,summaryRequested,terminal])
  return <li className="server-simulation-tasks__item" data-task-id={task.task_id} aria-current={focused?'location':undefined}>
   {focused&&<p role="status">{t.selected}: <code>{task.task_id}</code></p>}
   <strong>{task.run_name} / {task.branch_name}</strong> · <span>{t[task.state as keyof typeof t]??task.state}</span>
@@ -218,7 +219,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {mutation.error && <p role="alert">{formatApiError(mutation.error)}</p>}
   {requiresNewWeekReview && <FullSimulationWeekScheduleReview runId={task.run_id} branchId={task.branch_id} taskId={task.task_id} taskRevision={task.revision}/>}
   <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}`}>{t.open}</Link>
-  {terminal && <details onToggle={e=>setSummaryOpen(e.currentTarget.open)}><summary>{t.detail}</summary>
+  {terminal && <details open={summaryOpen} onToggle={e=>setSummaryOpen(e.currentTarget.open)}><summary>{t.detail}</summary>
    {summaryOpen&&(!('schema_version' in task.original_command)||task.original_command.schema_version!=='authoritative_full_simulation_command.v2')&&<FullSimulationSummary runId={task.run_id} branchId={task.branch_id} commandId={task.parent_command_id}/>}
    {summaryOpen&&'schema_version' in task.original_command&&task.original_command.schema_version==='authoritative_full_simulation_command.v2'&&<NativeTaskSummary task={task}/>}
   </details>}
@@ -229,6 +230,7 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
  const incompleteScope=(runId!==undefined||branchId!==undefined)&&!(runId&&branchId)
  const [searchParams]=useSearchParams()
  const focusedTaskId=runId&&branchId?searchParams.get('task'):null
+ const summaryRequested=Boolean(focusedTaskId&&searchParams.get('summary')==='1')
  const [search,setSearch]=useState('')
  const [category,setCategory]=useState<'all'|'attention'|'live'|'other'>('all')
  // A filter from a different Run/Branch must not hide this scope's tasks.
@@ -269,6 +271,6 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
   {!incompleteScope&&query.isSuccess&&focusedTaskId&&!query.data.some(task=>task.task_id===focusedTaskId)&&<p role="alert">{t.missing} <code>{focusedTaskId}</code></p>}
   {!incompleteScope&&query.isSuccess&&filtered&&<p className="status">{t.shown}: {displayed?.length??0} / {tasks?.length??0}</p>}
   {!incompleteScope&&query.isSuccess&&filtered&&focusedTaskId&&displayed?.some(task=>task.task_id===focusedTaskId)&&<p className="status">{t.pinned}</p>}
-  {!incompleteScope&&query.isSuccess && (displayed?.length?<ul className="server-simulation-tasks__list">{displayed.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId}/>)}</ul>:<p>{tasks?.length?t.noMatches:t.empty}</p>)}
+  {!incompleteScope&&query.isSuccess && (displayed?.length?<ul className="server-simulation-tasks__list">{displayed.map(task=><TaskCard key={JSON.stringify([task.run_id,task.branch_id,task.task_id])} task={task} focused={task.task_id===focusedTaskId} summaryRequested={summaryRequested&&task.task_id===focusedTaskId}/>)}</ul>:<p>{tasks?.length?t.noMatches:t.empty}</p>)}
  </section>
 }

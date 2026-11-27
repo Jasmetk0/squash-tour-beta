@@ -234,6 +234,14 @@ describe('Run Home V1 canonical projections', () => {
     mount()
     expect(await screen.findByText('Saved Autumn Open')).toBeInTheDocument()
     expect(screen.getByText('Saved Summer Cup')).toBeInTheDocument()
+    const expected=new URLSearchParams({branch:branchId,revision:'saved-1',season:'2',tab:'overview'})
+    expect(screen.getByRole('region',{name:'2002/03 W5'})).toHaveTextContent('Saved Autumn Open')
+    expect(screen.getByRole('link',{name:/Detail uložené edice/})).toHaveAttribute('href',
+      '/admin/runs/'+runId+'/tour/calendar/EVT-2?'+expected.toString())
+    expected.set('tab','results')
+    expect(screen.getByRole('link',{name:/Výsledky uložené edice/})).toHaveAttribute('href',
+      '/admin/runs/'+runId+'/tour/calendar/EVT-1?'+expected.toString())
+    expect(screen.getByText(/Publikované výsledky v projekci: 1/)).toBeInTheDocument()
     expect(screen.getByText(/p-real/)).toBeInTheDocument()
     expect(screen.queryByText(/fake champion/i)).not.toBeInTheDocument()
   })

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import type { RankingCandidateHistory, RankingCandidateSources, RankingCandidateInputs } from '../api/rankingCandidates'
 import { storedValue } from './rankingCandidateReadOnly'
@@ -52,6 +52,33 @@ it('opens a week, counted awards and provenance through read-only controls', asy
   await userEvent.click(screen.getByText('Technical provenance'))
   expect(screen.getByText('Commands: command-1')).toBeVisible()
   expect(screen.queryByRole('button', { name: /publish|save|simulate/i })).not.toBeInTheDocument()
+})
+it('reviews all candidate points while paging and searching only the visible rows',async()=>{
+  const source=populated.candidates[0]
+  const rows=Array.from({length:55},(_,i)=>({...source.snapshot.rows[0],
+    player_id:'candidate-player-'+String(i+1).padStart(2,'0'),rank:i+1}))
+  fetchHistory.mockResolvedValue({...populated,candidates:[{...source,snapshot:{...source.snapshot,rows}}]})
+  show('/0/2')
+  const panel=await screen.findByRole('region',{name:'Unpublished candidate review'})
+  expect(panel).toHaveTextContent('Candidate ranked rows: 55')
+  expect(panel).toHaveTextContent('Total points across all rows6600 pts')
+  expect(panel).toHaveTextContent('Counted qualification points1100 pts')
+  expect(panel).toHaveTextContent('Counted main points5500 pts')
+  expect(panel).toHaveTextContent('not Official Ranking')
+  const table=within(panel).getByRole('region',{name:'Candidate ranking table'})
+  expect(within(table).getAllByRole('row')).toHaveLength(51)
+  await userEvent.click(within(panel).getByRole('button',{name:'Next'}))
+  expect(within(table).getAllByRole('row')).toHaveLength(6)
+  expect(within(table).getByText('candidate-player-55')).toBeInTheDocument()
+  await userEvent.type(within(panel).getByRole('searchbox'),'candidate-player-01')
+  expect(within(table).getAllByRole('row')).toHaveLength(2)
+  expect(within(table).getByText('candidate-player-01')).toBeInTheDocument()
+  expect(panel).toHaveTextContent('Matching rows: 1 / 55')
+  await userEvent.click(within(panel).getByRole('checkbox',{name:'Only rows with disciplinary zeros'}))
+  expect(panel).toHaveTextContent('No rows match the filter.')
+  expect(panel).toHaveTextContent('Total points across all rows6600 pts')
+  expect(fetchHistory).toHaveBeenCalledTimes(1)
+  expect(getRankingCandidateSources).not.toHaveBeenCalled()
 })
 it('hides the previous branch while the next scope loads', async () => {
   fetchHistory.mockResolvedValueOnce(populated)

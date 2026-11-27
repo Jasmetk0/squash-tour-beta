@@ -30,8 +30,8 @@ export function SavedStatesComparePage():JSX.Element{
     queryKey:['run-branches',runId],queryFn:()=>listRunBranches(runId),
     enabled:Boolean(runId),retry:false,
   })
-  const branches=branchesQuery.data?.run_branches??[]
-  const validBranches=branches.every(b=>b.run_id===runId&&b.branch_id)&&
+  const branches=branchesQuery.isSuccess&&!branchesQuery.isFetching?branchesQuery.data?.run_branches??[]:[]
+  const validBranches=branchesQuery.isSuccess&&!branchesQuery.isFetching&&branches.every(b=>b.run_id===runId&&b.branch_id)&&
     new Set(branches.map(b=>b.branch_id)).size===branches.length
   const branchId=requestedBranch===null?branches[0]?.branch_id??'':
     branches.some(b=>b.branch_id===requestedBranch)?requestedBranch:''
@@ -45,19 +45,24 @@ export function SavedStatesComparePage():JSX.Element{
     getNextPageParam:last=>last.has_more_older?last.next_before_sequence??undefined:undefined,
     enabled:Boolean(branchId&&validBranches),retry:false
   })
-  const history=historyQuery.data&&validBranches?
+  const history=historyQuery.isSuccess&&(!historyQuery.isFetching||historyQuery.isFetchingNextPage)&&historyQuery.data&&validBranches?
     validateReachableCompareHistory(runId,branchId,historyQuery.data.pages):null
   const a=history?.entries.find(x=>x.revision_id===requestedA)
   const b=history?.entries.find(x=>x.revision_id===requestedB)
   const canCompare=Boolean(a&&b&&a.revision_id!==b.revision_id)
   const comparisonQuery=useQuery({
-    queryKey:['saved-states-compare',runId,branchId,requestedA,requestedB],
+    queryKey:['saved-states-compare',runId,branchId,requestedA,requestedB,history?.head],
     queryFn:()=>compareSavedRevisions(runId,branchId,requestedA,requestedB),
     enabled:canCompare,retry:false
   })
-  const compared=canCompare&&comparisonQuery.data&&history&&a&&b?
+  const compared=canCompare&&comparisonQuery.isSuccess&&!comparisonQuery.isFetching&&comparisonQuery.data&&history&&a&&b?
     projectSavedStateComparison(comparisonQuery.data,runId,branchId,a,b,history.head):null
-  const rows=compared?.rows.filter(r=>view==='all'||r.status!=='unchanged')??[]
+  const sectionFilter=params.get('compareSection')??''
+  const statusFilter=params.get('compareStatus')??''
+  const search=params.get('compareSearch')??''
+  const baseRows=compared?.rows.filter(r=>view==='all'||r.status!=='unchanged')??[]
+  const rows=baseRows.filter(r=>(!sectionFilter||r.section===sectionFilter)&&(!statusFilter||r.status===statusFilter)&&r.key.toLowerCase().includes(search.trim().toLowerCase()))
+  const cs=language==='cs'
   const selectedRow=detail?.type==='row'?compared?.rows.find(x=>x.id===detail.id):null
   const stateEntry:SavedRevisionHistoryEntry|undefined=detail?.type==='state'?
     detail.side==='a'?a:b:undefined
@@ -66,7 +71,7 @@ export function SavedStatesComparePage():JSX.Element{
     queryFn:()=>getSavedRevision(runId,branchId,stateEntry!.revision_id),
     enabled:Boolean(stateEntry&&canCompare&&compared),retry:false
   })
-  const state=stateEntry&&stateQuery.data&&
+  const state=stateEntry&&stateQuery.isSuccess&&!stateQuery.isFetching&&stateQuery.data&&
     stateQuery.data.run_id===runId&&stateQuery.data.branch_id===branchId&&
     stateQuery.data.revision_id===stateEntry.revision_id&&
     stateQuery.data.content_hash===stateEntry.content_hash&&
@@ -85,7 +90,7 @@ export function SavedStatesComparePage():JSX.Element{
   const open=(r:CompareRow)=>setDetail({type:'row',id:r.id})
   const close=()=>setDetail(null)
   const back='/admin/runs/'+encodeURIComponent(runId)+'/branches'
-  return <main className="saved-compare-page">
+  return <main className="saved-compare-page" data-run-navigation-readonly>
     <header className="page-intro">
       <p className="eyebrow">{T("RUN → HISTORY & BRANCHES → COMPARE")}</p>
       <h2>{T("Compare States A/B · Porovnání uložených stavů")}</h2>
@@ -95,11 +100,11 @@ export function SavedStatesComparePage():JSX.Element{
     <section className="panel" aria-label={T("Compare Saved Revision selection")}>
       <h3>{T("States A → B")}</h3>
       <p className="status">{T('Run:')} <code>{runId}</code> {T('· Both states must be reachable through the same selected Branch. Cross-Branch Compare is not supported by this Saved API. Saved timestamps are not simulation positions.')}</p>
-      {branchesQuery.isPending&&<p role="status">{T("Loading Run Branches…")}</p>}
+      {(branchesQuery.isPending||branchesQuery.isFetching)&&<p role="status">{T("Loading Run Branches…")}</p>}
       {branchesQuery.error&&<p role="alert">{formatApiError(branchesQuery.error)}</p>}
-      {branchesQuery.isSuccess&&!validBranches&&<p role="alert">
+      {branchesQuery.isSuccess&&!branchesQuery.isFetching&&!validBranches&&<p role="alert">
         {T("Branch list has inconsistent Run identities.")}</p>}
-      {branchesQuery.isSuccess&&requestedBranch!==null&&!selectedBranch&&
+      {branchesQuery.isSuccess&&!branchesQuery.isFetching&&requestedBranch!==null&&!selectedBranch&&
         <p role="alert">{T("Selected Compare Branch does not belong to this Run.")}</p>}
       {validBranches&&branches.length===0&&<p role="status">{T("No saved Run Branch available.")}</p>}
       {validBranches&&selectedBranch&&<div className="saved-compare-selectors">
@@ -124,9 +129,9 @@ export function SavedStatesComparePage():JSX.Element{
           </select>
         </label>)}
       </div>}
-      {historyQuery.isPending&&selectedBranch&&<p role="status">{T("Loading reachable Saved Revisions…")}</p>}
+      {(historyQuery.isPending||historyQuery.isFetching&&!historyQuery.isFetchingNextPage)&&selectedBranch&&<p role="status">{T("Loading reachable Saved Revisions…")}</p>}
       {historyQuery.error&&<p role="alert">{formatApiError(historyQuery.error)}</p>}
-      {historyQuery.isSuccess&&selectedBranch&&!history&&<p role="alert">
+      {historyQuery.isSuccess&&!historyQuery.isFetching&&selectedBranch&&!history&&<p role="alert">
         {T("Invalid reachable Saved Revision history; Compare disabled.")}</p>}
       {history&&<p className="status">{T('Loaded')} {history.entries.length} {T('reachable revisions.')}
         {' '}{historyQuery.hasNextPage?T("Older pages remain unloaded; Compare only loaded revisions."):
@@ -153,15 +158,15 @@ export function SavedStatesComparePage():JSX.Element{
         <h3>{T("Actual saved differences")}</h3>
         <label>{T("Show")}
           <select aria-label={T("Compare display filter")} value={view}
-            onChange={event=>change('filter',event.target.value)}>
+            onChange={event=>{const next=new URLSearchParams(params);next.set('filter',event.target.value);if(event.target.value!=='all'&&statusFilter==='unchanged')next.delete('compareStatus');setDetail(null);setParams(next,{replace:true})}}>
             <option value="differences">{T("Differences only · Jen rozdíly")}</option>
             <option value="all">{T("All · Vše")}</option>
           </select>
         </label>
       </div>
-      {comparisonQuery.isPending&&<p role="status">{T("Comparing canonical Saved Revisions…")}</p>}
+      {(comparisonQuery.isPending||comparisonQuery.isFetching)&&<p role="status">{T("Comparing canonical Saved Revisions…")}</p>}
       {comparisonQuery.error&&<p role="alert">{formatApiError(comparisonQuery.error)}</p>}
-      {comparisonQuery.isSuccess&&!compared&&<p role="alert">
+      {comparisonQuery.isSuccess&&!comparisonQuery.isFetching&&!compared&&<p role="alert">
         {T("Comparison identity/content hashes disagree with the selected states.")}</p>}
       {compared&&<>
         <p className="status">{T("State A:")} <code>{a!.revision_id}</code> →
@@ -180,7 +185,28 @@ export function SavedStatesComparePage():JSX.Element{
           <button type="button" onClick={()=>setDetail({type:'state',side:'b'})}>
             {T("Inspect state B read-only")}</button>
         </div>
-        {rows.length===0?<p role="status">{view==='differences'?
+        <section aria-label={cs?'Filtry rozdílů':'Difference filters'}>
+          <div className="grid">
+            <label>{cs?'Oblast':'Section'} <select value={sectionFilter} onChange={e=>change('compareSection',e.target.value)}>
+              <option value="">{cs?'Všechny oblasti':'All sections'}</option>
+              <option value="run">{T('Run metadata')}</option><option value="branch">{T('Branch metadata')}</option>
+              <option value="component">{T('Saved component')}</option>
+            </select></label>
+            <label>{cs?'Typ změny':'Change status'} <select value={statusFilter} onChange={e=>change('compareStatus',e.target.value)}>
+              <option value="">{cs?'Všechny typy':'All statuses'}</option>
+              {['added','removed','changed',...(view==='all'?['unchanged']:[])].map(s=><option key={s} value={s}>{T(s)}</option>)}
+            </select></label>
+            <label>{cs?'Hledat klíč':'Find field key'} <input type="search" value={search}
+              onChange={e=>change('compareSearch',e.target.value)}/></label>
+          </div>
+          <p>{cs?'Odpovídající řádky':'Matching rows'}: {rows.length} / {baseRows.length}</p>
+          <button type="button" disabled={!sectionFilter&&!statusFilter&&!search} onClick={()=>{
+            const next=new URLSearchParams(params)
+            for(const key of ['compareSection','compareStatus','compareSearch'])next.delete(key)
+            setDetail(null);setParams(next,{replace:true})
+          }}>{cs?'Vymazat filtry rozdílů':'Clear difference filters'}</button>
+        </section>
+        {rows.length===0?<p role="status">{baseRows.length>0?(cs?'Filtrům neodpovídá žádný řádek.':'No rows match the difference filters.'):view==='differences'?
           T("No differences in the supported Saved Revision comparison scope."):
           T("Both Saved Revisions have no exposed comparable fields or components.")}</p>:
           <div className="table-responsive">
@@ -223,9 +249,9 @@ export function SavedStatesComparePage():JSX.Element{
       </>}
       {detail.type==='state'&&<>
         <h4>{T('State')} {detail.side.toUpperCase()} · <code>{stateEntry?.revision_id}</code></h4>
-        {stateQuery.isPending&&<p role="status">{T("Loading immutable Saved Revision…")}</p>}
+        {(stateQuery.isPending||stateQuery.isFetching)&&<p role="status">{T("Loading immutable Saved Revision…")}</p>}
         {stateQuery.error&&<p role="alert">{formatApiError(stateQuery.error)}</p>}
-        {stateQuery.isSuccess&&!state&&<p role="alert">
+        {stateQuery.isSuccess&&!stateQuery.isFetching&&!state&&<p role="alert">
           {T("Read-only Saved Revision identity or hash does not match selected state.")}</p>}
         {state&&<>
           <p>{T('Source Branch:')} <code>{state.revision_branch_id}</code></p>

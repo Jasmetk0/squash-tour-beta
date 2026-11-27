@@ -80,6 +80,198 @@ describe('exact historical Edition match replay',()=>{
       'run-a','branch-a','old-rev',2,'event-x','final',25,25
     )
   })
+  it('shows the verified post-rally scores in source A/B order and advances without an extra read',async()=>{
+    mount()
+    const board=await screen.findByRole('region',{name:'Archived rally scoreboard'})
+    expect(board.closest('[data-run-navigation-readonly]')).not.toBeNull()
+    expect(board).toHaveTextContent('Player A: A')
+    expect(board).toHaveTextContent('Player B: B')
+    expect(within(board).getAllByText('Game points:',{exact:false}).map(node=>node.textContent))
+      .toEqual(['Game points: 1','Game points: 0'])
+    expect(within(board).getByRole('progressbar')).toHaveAttribute('value','1')
+    expect(within(board).getByRole('progressbar')).toHaveAttribute('max','30')
+    await userEvent.click(screen.getByRole('button',{name:'Next rally →'}))
+    expect(await screen.findByText('Rally 2/30')).toBeInTheDocument()
+    const nextBoard=screen.getByRole('region',{name:'Archived rally scoreboard'})
+    expect(within(nextBoard).getAllByText('Game points:',{exact:false}).map(node=>node.textContent))
+      .toEqual(['Game points: 2','Game points: 0'])
+    expect(within(nextBoard).getByRole('progressbar')).toHaveAttribute('value','2')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('localizes the scoreboard and hides it when the historical scope is invalid',async()=>{
+    const view=mount()
+    expect(await screen.findByRole('region',{name:'Archived rally scoreboard'})).toBeInTheDocument()
+    state.language='cs';view.refresh()
+    const board=screen.getByRole('region',{name:'Skóre archivované výměny'})
+    expect(within(board).getByRole('progressbar',{name:'Pozice v archivu výměn'})).toHaveAttribute('value','1')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    state.mode='checkpoint';view.refresh()
+    expect(screen.queryByRole('region',{name:'Skóre archivované výměny'})).not.toBeInTheDocument()
+  })
+  it('separates match sections without changing the exact replay bookmark or refetching',async()=>{
+    mount(url+'&rally=26&q=keep')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    const nav=screen.getByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    const stats=screen.getByRole('region',{name:'Statistics'})
+    expect(stats).toHaveTextContent('Total archived rallies: 30')
+    expect(stats).toHaveTextContent('Verified page range: 26–30 / 30')
+    expect(stats).toHaveTextContent('These are not whole-match statistics.')
+    expect(stats).toHaveTextContent('Rallies won by A (A)5')
+    expect(stats).toHaveTextContent('Rallies won by B (B)0')
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole('button',{name:'Overview'}))
+    expect(screen.getByRole('region',{name:'Overview'})).toHaveTextContent(
+      'Verified rally archive is available.')
+    expect(screen.getByText('3-2')).toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole('button',{name:'Course & Replay'}))
+    expect(screen.getByText('Rally 26/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    const href=screen.getByRole('link',{name:'Back to Edition results'}).getAttribute('href')!
+    expect(href).toContain('q=keep')
+    expect(href).toContain('revision=old-rev')
+    expect(href).not.toContain('rally=')
+  })
+  it('keeps localized statistics unavailable when no archive is recorded',async()=>{
+    state.language='cs'
+    api.getSavedTourMatchDetail.mockResolvedValue({
+      ...fixture(0),replay_status:'unavailable',total_rallies:0,
+      has_more:false,rallies:[],player_a_id:null,player_b_id:null
+    })
+    mount()
+    const nav=await screen.findByRole('navigation',{name:'Oddíly zápasu'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistiky'}))
+    const stats=screen.getByRole('region',{name:'Statistiky'})
+    expect(stats).toHaveTextContent('Pro tuto stránku nejsou ověřené výměny dostupné.')
+    expect(stats).not.toHaveTextContent('Archivovaných výměn celkem')
+    expect(stats).not.toHaveTextContent('Výměny s vítězem A')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('hides all match sections when source context becomes invalid',async()=>{
+    const view=mount()
+    const nav=await screen.findByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    expect(screen.getByRole('region',{name:'Statistics'})).toBeInTheDocument()
+    state.mode='checkpoint';view.refresh()
+    expect(screen.queryByRole('navigation',{name:'Match sections'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Statistics'})).not.toBeInTheDocument()
+  })
+  it('plays verified rallies across the 25/26 boundary and stops on an explicit pause',async()=>{
+    mount(url+'&rally=25')
+    expect(await screen.findByText('Rally 25/30')).toBeInTheDocument()
+    const playback=screen.getByRole('region',{name:'Replay playback'})
+    await userEvent.selectOptions(within(playback).getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(within(playback).getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Pause replay'}))
+    expect(screen.getByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
+  it('stops at a recorded game end and jumps only to proven game landmarks',async()=>{
+    // Two 15-event games: four neutral rallies then eleven scoring rallies.
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>{
+      const frames=Array.from({length:30},(_,i)=>{
+        const game=Math.floor(i/15)+1,withinGame=i%15
+        const end=withinGame===14
+        return {rally_index:i+1,set_number:game,server_player_id:'A',
+          winner_player_id:withinGame<4?null:'A',
+          score_a_before:Math.max(0,withinGame-4),score_b_before:0,
+          score_a_after:Math.max(0,withinGame-3),score_b_after:0,
+          sets_a_after:game-1+Number(end),sets_b_after:0,
+          set_complete:end,match_complete:i===29}
+      })
+      const original=fixture(offset)
+      return Promise.resolve({...original,match:{...original.match,scoreline:'2-0'},
+        rallies:frames.slice(offset,offset+25)})
+    })
+    mount(url+'&rally=14')
+    expect(await screen.findByText('Rally 14/30')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(screen.getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByText('Rally 15/30')).toBeInTheDocument()
+    expect(await screen.findByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(screen.getByRole('button',{name:'Game 1 · end · #15'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Game 2 · start · #16'}))
+    expect(screen.getByText('Rally 16/30')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Game 2 · end · #30'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('cancels playback after a failed page read and does not restart on retry',async()=>{
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>offset===25?Promise.reject(new Error('offline')):Promise.resolve(fixture(offset)))
+    mount(url+'&rally=25')
+    expect(await screen.findByText('Rally 25/30')).toBeInTheDocument()
+    await userEvent.selectOptions(screen.getByRole('combobox',{name:'Playback speed'}),'4')
+    await userEvent.click(screen.getByRole('button',{name:'Play replay'}))
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Pause replay'})).not.toBeInTheDocument()
+    api.getSavedTourMatchDetail.mockResolvedValueOnce(fixture(25))
+    await userEvent.click(screen.getByRole('button',{name:'Retry match / archive read'}))
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Play replay'})).toBeEnabled()
+    expect(screen.queryByRole('button',{name:'Pause replay'})).not.toBeInTheDocument()
+  })
+  it('does not offer an unproven game start on a direct later-page bookmark',async()=>{
+    mount(url+'&rally=26')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:/Game 1 · start/})).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Game 1 · end · #30'})).toBeEnabled()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('builds whole-archive counts only after consecutive verified pages have been read',async()=>{
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    const nav=screen.getByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(screen.getByText('Complete archive statistics require all consecutive verified pages to be loaded.')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    expect(screen.getByRole('button',{name:'Previous rally page'})).toBeDisabled()
+    await userEvent.click(screen.getByRole('button',{name:'Next rally page'}))
+    const complete=await screen.findByRole('region',{name:'Complete archive statistics'})
+    expect(complete).toHaveTextContent('Rallies won by A (A)30')
+    expect(complete).toHaveTextContent('Rallies won by B (B)0')
+    expect(complete).toHaveTextContent('No recorded rally winner0')
+    expect(screen.getByRole('button',{name:'Next rally page'})).toBeDisabled()
+    const games=within(complete).getByRole('table',{name:'Recorded completed games'})
+    expect(within(games).getAllByRole('row')).toHaveLength(2)
+    await userEvent.click(within(games).getByRole('button',{name:'#30'}))
+    expect(await screen.findByText('Rally 30/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
+  it('does not treat an isolated later page as the complete archive',async()=>{
+    mount(url+'&rally=26')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Statistics'}))
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([25])
+  })
+  it('rejects complete statistics when two cached pages do not join',async()=>{
+    api.getSavedTourMatchDetail.mockImplementation((
+      _run:string,_branch:string,_rev:string,_season:number,
+      _event:string,_match:string,offset:number
+    )=>{
+      const original=fixture(offset)
+      return Promise.resolve(offset!==25?original:{
+        ...original,rallies:original.rallies.map(frame=>({
+          ...frame,score_a_before:frame.score_a_before+100,
+          score_a_after:frame.score_a_after+100
+        }))
+      })
+    })
+    mount()
+    expect(await screen.findByText('Rally 1/30')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Statistics'}))
+    await userEvent.click(screen.getByRole('button',{name:'Next rally page'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
+    expect(screen.queryByRole('region',{name:'Complete archive statistics'})).not.toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail.mock.calls.map(call=>call[6])).toEqual([0,25])
+  })
   it('rejects two independently valid but discontinuous cached archive pages',async()=>{
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,
@@ -99,6 +291,7 @@ describe('exact historical Edition match replay',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
     expect(screen.queryByText('Rally 30/30')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
     expect(screen.queryByRole('table',{name:'Verified archived rally page'}))
       .not.toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
@@ -135,6 +328,7 @@ describe('exact historical Edition match replay',()=>{
     expect(await screen.findByText(/No verified rally archive exists/)).toBeInTheDocument()
     expect(screen.getByText('3-2')).toBeInTheDocument()
     expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
   })
   it('hides a loaded replay on checkpoint, loading and failed context without remount',async()=>{
     const view=mount()

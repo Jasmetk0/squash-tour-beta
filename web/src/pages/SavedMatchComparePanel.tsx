@@ -35,18 +35,18 @@ export function SavedMatchComparePanel({
     queryFn:()=>getSavedTourEdition(runId,branchId,b.revision_id,seasonIndex,eventId),
     retry:false
   })
-  const compared=queryA.data&&queryB.data?comparePublishedSavedMatches(
+  const compared=queryA.isSuccess&&queryB.isSuccess&&!queryA.isFetching&&!queryB.isFetching&&queryA.data&&queryB.data?comparePublishedSavedMatches(
     runId,branchId,seasonIndex,eventId,a,b,calendarA,calendarB,queryA.data,queryB.data
   ):null
   const rows=compared?.rows.filter(r=>filter==='all'||r.status!=='unchanged')??[]
   const selected=compared?.rows.find(r=>r.matchId===inspected)
-  return <section className="section-subtle" aria-label={T("Compare exact published Saved matches")}>
+  return <section className="section-subtle" data-run-navigation-readonly aria-label={T("Compare exact published Saved matches")}>
     <h5>{T("Published match results · skutečné výsledky A/B")}</h5>
     <p className="status">{T("Only the canonical published Match IDs and recorded winner, loser, scoreline, round and bracket position from these two immutable Saved Editions. Missing publication is not proof of an unplayed or removed match.")}</p>
-    {(queryA.isPending||queryB.isPending)&&<p role="status">{T("Reading exact Saved match evidence…")}</p>}
+    {(queryA.isPending||queryB.isPending||queryA.isFetching||queryB.isFetching)&&<p role="status">{T("Reading exact Saved match evidence…")}</p>}
     {queryA.error&&<p role="alert">{T("State A match source:")} {formatApiError(queryA.error)}</p>}
     {queryB.error&&<p role="alert">{T("State B match source:")} {formatApiError(queryB.error)}</p>}
-    {queryA.isSuccess&&queryB.isSuccess&&!compared&&<p role="alert">
+    {queryA.isSuccess&&queryB.isSuccess&&!queryA.isFetching&&!queryB.isFetching&&!compared&&<p role="alert">
       {T("Saved match comparison rejected: Revision, original owner, Edition or published Match IDs differ from the selected immutable evidence.")}</p>}
     {compared?.availability==='unpublished'&&<p role="status">
       {T("At least one selected Saved Edition has no published Tournament Result. Individual match differences cannot be established from the available published evidence.")}</p>}

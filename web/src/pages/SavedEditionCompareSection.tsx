@@ -35,7 +35,7 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
     queryFn:()=>getSavedTourCalendar(runId,branchId,b.revision_id,seasonIndex),
     enabled:validSeason,retry:false
   })
-  const compared=validSeason&&qA.data&&qB.data?
+  const compared=validSeason&&qA.isSuccess&&qB.isSuccess&&!qA.isFetching&&!qB.isFetching&&qA.data&&qB.data?
     compareSavedSeasonEditions(runId,branchId,seasonIndex,a,b,qA.data,qB.data):null
   const rows=compared?.rows.filter(r=>view==='all'||r.status!=='unchanged')??[]
   const selected=detail?compared?.rows.find(x=>x.eventId===detail):undefined
@@ -47,7 +47,7 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
   const label=2000+seasonIndex+'/'+String(2001+seasonIndex)
   const diff=(r:SavedEditionDiff)=>r.changedFields.length?
     r.changedFields.join(', '):r.status==='unchanged'?T('None'):T('Whole Edition')
-  return <section className="panel" aria-label={T("Compare saved season Editions")}>
+  return <section className="panel" data-run-navigation-readonly aria-label={T("Compare saved season Editions")}>
     <h3>{T("Saved Tournament Editions · skutečné změny turnajů")}</h3>
     <p className="status">{T("Read-only comparison of the full canonical Saved Calendar for one explicit sporting season; each side uses its own immutable A/B Revision and original owner Branch. This is not a historical match or ranking comparison.")}</p>
     <div className="actions">
@@ -67,11 +67,11 @@ export function SavedEditionCompareSection({runId,branchId,a,b}:Props):JSX.Eleme
         </select></label>
     </div>
     {!validSeason&&<p role="alert">{T("Invalid Saved Edition sporting season. Select a valid season.")}</p>}
-    {validSeason&&(qA.isPending||qB.isPending)&&<p role="status">
+    {validSeason&&(qA.isPending||qB.isPending||qA.isFetching||qB.isFetching)&&<p role="status">
       {T("Reading exact")} {label} {T("Saved Calendars A/B…")}</p>}
     {qA.error&&<p role="alert">{T("State A:")} {formatApiError(qA.error)}</p>}
     {qB.error&&<p role="alert">{T("State B:")} {formatApiError(qB.error)}</p>}
-    {validSeason&&qA.isSuccess&&qB.isSuccess&&!compared&&<p role="alert">
+    {validSeason&&qA.isSuccess&&qB.isSuccess&&!qA.isFetching&&!qB.isFetching&&!compared&&<p role="alert">
       {T("Saved Edition identity, source Branch or calendar evidence is inconsistent. No tournament differences will be inferred.")}</p>}
     {compared&&<>
       <p className="status">{T("Season")} {label} · {T('Selected Branch')} <code>{branchId}</code>

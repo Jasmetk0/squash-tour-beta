@@ -47,6 +47,12 @@ export function SavedPlayerIdentityPage(): JSX.Element {
     q.data.saved_revision_id === savedHead && q.data.player_id === playerId
   const profile = scoped ? q.data : null
   const player = profile?.identity
+  // The career timeline can be bounded to an earlier ordinal, but the
+  // profile finals and paginated match endpoint are always current HEAD.
+  // Never mix those later results into the historical career selection.
+  const careerScope=JSON.stringify([runId,branchId,savedHead,playerId])
+  const historicalCareer=searchParams.get('career_scope')===careerScope
+    &&Boolean(searchParams.get('career_asof'))
   const countryReturn = safeCountryRosterReturn(searchParams.get('fromCountry'),
     runId,player?.country_code??null,branchId,savedHead??null)
   return <section className="panel run-home">
@@ -107,6 +113,16 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             <p><strong>{cs ? 'Původ identity' : 'Identity source'}:</strong> {player.identity_source}</p>
             <p><strong>{cs ? 'Uložená revize' : 'Saved Revision'}:</strong> <code>{profile.saved_revision_id}</code></p>
           </div>
+          <section aria-label={cs?'Souhrn uloženého profilu':'Saved profile summary'}>
+            <h3>{cs?'Kariérní přehled':'Career overview'}</h3>
+            <div className="grid">
+              <div className="section-subtle"><p>{cs?'Evidované tituly':'Recorded titles'}</p><h3>{profile.titles}</h3></div>
+              <div className="section-subtle"><p>{cs?'Evidované finálové účasti':'Recorded final appearances'}</p><h3>{profile.final_appearances}</h3></div>
+            </div>
+            <p className="status">{cs?'Pouze publikované finálové výsledky v této uložené revizi; předchozí neznámá historie není nula.':
+              'Published final results in this Saved Revision only; earlier unknown history is not zero.'}</p>
+            <button type="button" onClick={()=>setTab('career')}>{cs?'Otevřít kariéru':'Open career'}</button>
+          </section>
           <h3>{cs ? 'Oficiální žebříček' : 'Official ranking'}</h3>
           {profile.ranking_status === 'unpublished' && <p className="status">{cs
             ? 'Žádný oficiální týdenní žebříček dosud nebyl publikován.'
@@ -127,12 +143,31 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             <p className="status">{cs
               ? 'Autoritativní 0–200 OVR, Potential OVR a sada atributů zatím nejsou v tomto saved-player read kontraktu dostupné. Z legacy stupnice ani jiných branchí je nepřebíráme.'
               : 'Authoritative 0–200 OVR, Potential OVR and the attribute catalogue are not available in this saved-player read contract yet. Legacy scales and other Branches are not substituted.'}</p>
+            <section aria-label={cs?'Dostupnost sportovního profilu':'Sporting profile availability'}>
+              <h4>{cs?'Dostupnost údajů v uloženém profilu':'Saved profile data availability'}</h4>
+              <p>{cs?'Kanonický model enginu obsahuje 57 atributů v šesti skupinách. Tento čtecí kontrakt ale jejich hodnoty zatím nepředává.':
+                'The canonical engine model has 57 attributes in six groups. This read contract does not expose their values yet.'}</p>
+              <div className="table-responsive"><table>
+                <thead><tr><th>{cs?'Údaj':'Field'}</th><th>{cs?'Dostupnost v profilu':'Profile availability'}</th></tr></thead>
+                <tbody>{(cs?['Aktuální OVR','Potential OVR (skrytý potenciál)','Technika','Pohyb','Taktika','Mentální','Fyzické','Kreativita',
+                  'Forma, rozehranost a dlouhodobá únava','Historický vývoj atributů']:
+                  ['Current OVR','Potential OVR (hidden potential)','Technical','Move','Tactics','Mental','Physical','Creativity',
+                  'Form, sharpness and long-term fatigue','Historical attribute development']).map(name=><tr key={name}>
+                    <th scope="row">{name}</th><td>{cs?'Nedostupné z tohoto zdroje':'Unavailable from this source'}</td>
+                  </tr>)}</tbody>
+              </table></div>
+              <p className="status">{cs?'Nedostupnost hodnot neznamená nulovou schopnost. OVR se zde nepřepočítává; konečné váhy nejsou kalibrovány.':
+                'Unavailable values do not mean zero ability. OVR is not recomputed here; final weights are not calibrated.'}</p>
+            </section>
             <p className="status">{cs ? 'Režim: jen čtení. Úpravy se zpřístupní samostatným výslovným krokem.' :
               'Read-only mode. Editing will require a separate explicit action.'}</p>
           </section>}
           {tab==='career' && <section role="tabpanel" aria-label={cs ? 'Kariéra a výsledky' : 'Career & results'}>
           <SavedPlayerCareerTimeline key={branchId + ':' + savedHead + ':' + playerId}
             runId={runId} branchId={branchId!} savedHead={savedHead!} playerId={playerId} cs={cs} />
+          {historicalCareer?<p role="note">{cs?
+            'Výsledky a zápasy ze současné Saved HEAD jsou skryté, dokud je zvolen historický týden. Historická časová osa výše zůstává samostatným zdrojem.':
+            'Current Saved HEAD finals and matches are hidden while a historical week is selected. The historical timeline above remains a separate source.'}</p>:<>
           <h3>{cs ? 'Turnajová historie' : 'Tournament history'}</h3>
           <p><strong>{cs ? 'Tituly' : 'Titles'}:</strong> {profile.titles}
             {' · '}<strong>{cs ? 'Finálové účasti' : 'Final appearances'}:</strong> {profile.final_appearances}</p>
@@ -152,6 +187,7 @@ export function SavedPlayerIdentityPage(): JSX.Element {
           <SavedPlayerMatchesPanel key={branchId + ':' + savedHead + ':' + playerId}
             runId={runId} branchId={branchId!} savedHead={savedHead!}
             playerId={playerId} locale={language} />
+          </>}
           </section>}
           <p className="status">{tab==='health' ? (cs?'Zdraví zobrazuje současný pracovní stav v Adminu. Samostatné uložení vytvoří obnovitelnou revizi.':'Health shows the current Admin working state. A separate Save creates a recoverable revision.') : cs
             ? 'Zdroj: ověřená Saved Revision. Nezahrnuje nepublikované turnaje, legacy kariéru, atributy ani jinou branch.'

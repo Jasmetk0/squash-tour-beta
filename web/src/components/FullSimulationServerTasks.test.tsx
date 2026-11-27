@@ -24,6 +24,8 @@ describe('server task UI (mock HTTP)',()=>{
   await screen.findByText('task');expect(screen.getByText('parent')).toBeVisible()
   const op=screen.getByLabelText(language==='cs'?'Operátor úlohy':'Task operator')
   const reason=screen.getByLabelText(language==='cs'?'Důvod akce úlohy':'Task audit reason')
+  expect(reason.closest('[data-run-navigation-readonly]')).toBeNull()
+  expect(screen.getByRole('searchbox').closest('[data-run-navigation-readonly]')).not.toBeNull()
   fireEvent.change(op,{target:{value:'Auditor'}});fireEvent.change(reason,{target:{value:'Explicit recovery'}})
   fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Výslovně obnovit serverovou úlohu':'Explicitly recover server task'}))
   await screen.findByText('offline');expect(op).toBeDisabled()
@@ -39,6 +41,26 @@ describe('server task UI (mock HTTP)',()=>{
   fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Spustit jako serverovou úlohu':'Start as server task'}))
   await screen.findByText('offline');fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Zopakovat stejný požadavek':'Retry same request'}))
   await screen.findByText('task');expect(api.startServerTask.mock.calls[0]).toEqual(api.startServerTask.mock.calls[1])
+ })
+ it('opens only the explicitly linked terminal summary in the exact scoped task list',async()=>{
+  const a={...taskExample(),task_id:'completed-one',parent_command_id:'parent-one',
+    state:'complete',desired_state:'complete',needs_operator_action:false}
+  const b={...taskExample(),task_id:'completed-two',parent_command_id:'parent-two',
+    state:'stopped',desired_state:'stopped',needs_operator_action:false}
+  api.getServerTasks.mockResolvedValue([a,b])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>,'/?task=completed-two&summary=1')
+  await waitFor(()=>expect(summaryMock.render).toHaveBeenCalled())
+  expect(summaryMock.render.mock.calls.every(([props])=>(props as {commandId:string}).commandId==='parent-two')).toBe(true)
+  const card=document.querySelector('[data-task-id="completed-two"]')!
+  expect(card.querySelector('details[open]')).not.toBeNull()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
+ })
+ it('does not substitute another terminal summary for a missing linked task',async()=>{
+  api.getServerTasks.mockResolvedValue([{...taskExample(),task_id:'other',state:'complete',needs_operator_action:false}])
+  open('en',<FullSimulationServerTasks runId="run" branchId="branch"/>,'/?task=missing&summary=1')
+  await screen.findByText(/The linked task was not found/)
+  expect(summaryMock.render).not.toHaveBeenCalled()
+  expect(api.continueServerTask).not.toHaveBeenCalled()
  })
  it('does not fetch every terminal summary until an operator expands its evidence',async()=>{
   const a={...taskExample(),task_id:'completed-one',parent_command_id:'parent-one',

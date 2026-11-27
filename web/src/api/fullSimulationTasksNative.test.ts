@@ -1,6 +1,6 @@
 /** HTTP-client contracts only; no sporting execution claims. */
 import {afterEach,describe,expect,it,vi} from 'vitest'
-import {nativeClosureAction,previewNativeTask,type NativeTaskPreviewRequest} from './fullSimulationTasksNative'
+import {nativeClosureAction,previewNativeTask,nativeTaskSummary,nativeTaskCommand,type NativeTaskPreviewRequest} from './fullSimulationTasksNative'
 
 const request:NativeTaskPreviewRequest={schema_version:'authoritative_full_simulation_command.v2',run_id:'r',branch_id:'b',command_id:'c',
  seed:231,operator_label:'Admin',audit_reason:'Reviewed native scope',target_week:{season_index:1,week:80}}
@@ -29,5 +29,59 @@ describe('native Full Simulation client validation',()=>{
   const body={request_id:'approval',review_fingerprint:'c'.repeat(64),operator_label:'Admin',audit_reason:'Reviewed',explicit_confirmation:true as const}
   vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>({request:body,review:{run_id:'r',branch_id:'other',parent_command_id:'c',review_fingerprint:body.review_fingerprint}})}))
   await expect(nativeClosureAction('r','b','c','approve',body)).rejects.toThrow('acknowledgement')
+ })
+})
+
+import {calendarTaskExample} from './fullSimulationTasks.fixture'
+import type {TaskCalendar} from './fullSimulationTasksCalendar'
+
+function terminal(){
+ const original=calendarTaskExample(clock as TaskCalendar)
+ const command=nativeTaskCommand(response() as Awaited<ReturnType<typeof previewNativeTask>>)
+ const task={...original,run_id:'r',branch_id:'b',parent_command_id:'c',
+  original_command:command,calendar_revision_id:'source',state:'target_reached',
+  current_week:{season_index:1,week:80},
+  progress_evidence:{...original.progress_evidence,kind:'terminal_frozen' as const,
+   week:{season_index:1,week:80},weeks_advanced_since_start:81,
+   completed_slot_receipts_this_week:null,committed_group_receipts_this_week:null,receipt_scope:null}}
+ const summary={schema_version:'full_simulation_terminal_summary.v3',run_id:'r',branch_id:'b',command_id:'c',
+  status:'target_reached',start_week:command.expected_start_week,end_week:task.current_week,
+  original_final_week:{season_index:1,week:80},effective_target_week:command.target_week,
+  execution_calendar:clock,initial_saved_revision_id:'source',terminal_saved_revision_id:'terminal',
+  persisted_child_command_count:32,reason:'week_target_reached',target_reached:true,
+  completed_tournaments:['edition-a','edition-b'],summary_fingerprint:'a'.repeat(64)}
+ const envelope={schema_version:'full_simulation_terminal_summary_response.v2',run_id:'r',branch_id:'b',command_id:'c',
+  status:'target_reached',available:true,summary}
+ return {task,envelope}
+}
+describe('native terminal summary source validation',()=>{
+ it('returns frozen W80 start, end, target and exact confirmed Edition IDs',async()=>{
+  const {task,envelope}=terminal()
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>envelope}))
+  expect(await nativeTaskSummary(task)).toEqual(envelope.summary)
+ })
+ it.each(['scope','envelope-state','start','end','target','reason','duplicate','revision','progress'])(
+  'rejects inconsistent %s evidence',async change=>{
+   const {task,envelope}=terminal()
+   const s=envelope.summary
+   if(change==='scope')s.branch_id='other'
+   if(change==='envelope-state')envelope.status='stopped'
+   if(change==='start')s.start_week={season_index:0,week:78}
+   if(change==='end')s.end_week={season_index:1,week:79}
+   if(change==='target')s.effective_target_week={season_index:1,week:79}
+   if(change==='reason')s.reason='operator_stop'
+   if(change==='duplicate')s.completed_tournaments=['edition-a','edition-a']
+   if(change==='revision')s.terminal_saved_revision_id=''
+   if(change==='progress')task.progress_evidence.weeks_advanced_since_start=80
+   vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>envelope}))
+   await expect(nativeTaskSummary(task)).rejects.toThrow('Invalid native terminal summary')
+  })
+ it('distinguishes closing the Run from opening its last week',async()=>{
+  const {task,envelope}=terminal()
+  task.original_command.target_week=null
+  task.state='complete';envelope.status='complete';envelope.summary.status='complete'
+  envelope.summary.reason='run_completed';envelope.summary.target_reached=false
+  vi.stubGlobal('fetch',vi.fn().mockResolvedValue({ok:true,json:async()=>envelope}))
+  expect((await nativeTaskSummary(task)).reason).toBe('run_completed')
  })
 })

@@ -24,6 +24,8 @@ describe('server task UI (mock HTTP)',()=>{
   await screen.findByText('task');expect(screen.getByText('parent')).toBeVisible()
   const op=screen.getByLabelText(language==='cs'?'Operátor úlohy':'Task operator')
   const reason=screen.getByLabelText(language==='cs'?'Důvod akce úlohy':'Task audit reason')
+  expect(reason.closest('[data-run-navigation-readonly]')).toBeNull()
+  expect(screen.getByRole('searchbox').closest('[data-run-navigation-readonly]')).not.toBeNull()
   fireEvent.change(op,{target:{value:'Auditor'}});fireEvent.change(reason,{target:{value:'Explicit recovery'}})
   fireEvent.click(screen.getByRole('button',{name:language==='cs'?'Výslovně obnovit serverovou úlohu':'Explicitly recover server task'}))
   await screen.findByText('offline');expect(op).toBeDisabled()

@@ -1,16 +1,12 @@
-import type { ViewerCalendarEvent, ViewerRunCalendar, ViewerTournamentHistoryItem } from '../../../api/types'
+import type { ViewerCalendarEvent, ViewerTournamentHistoryItem } from '../../../api/types'
 import { compareTournamentHistoryEvents, compareTournamentSeasons, tournamentMatchesSearch, verifiedTournamentHistory } from './viewerTournamentHistoryBrowsing'
+
+import { verifiedSavedSeasonCalendar } from './savedCalendarBrowsing'
 
 // This is the existing viewer_run_calendar.v1 / viewer_tournament_history.v1
 // legacy W61 projection; calendar-native W52/W80 data needs a versioned adapter.
-const whole = (value: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): value is number =>
-  typeof value === 'number' && Number.isSafeInteger(value) && value >= min && value <= max
 const nonempty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
-const seasonKey = (value: unknown): string | null =>
-  (typeof value === 'string' && value.trim().length > 0) ||
-  (typeof value === 'number' && Number.isSafeInteger(value) && value >= 0)
-    ? String(value) : null
 
 export type SavedTournamentEntry = {
   event: ViewerCalendarEvent
@@ -34,47 +30,17 @@ export function tournamentViewerBranch(context: unknown, runId: string): string 
 export function verifiedTournamentCatalog(
   calendar: unknown, history: unknown, runId: string, branchId: string
 ): SavedTournamentCatalog | null {
-  if (!calendar || typeof calendar !== 'object') return null
+  const c = verifiedSavedSeasonCalendar(calendar, runId, branchId)
   const h = verifiedTournamentHistory(history, runId, branchId)
-  if (!h) return null
-  const c = calendar as Partial<ViewerRunCalendar>
-  if (c.schema_version !== 'viewer_run_calendar.v1' ||
-      c.product_run_id !== runId || c.viewer_branch_id !== branchId ||
-      !Array.isArray(c.seasons) || !whole(c.season_count) ||
-      c.season_count !== c.seasons.length || !whole(c.event_count) ||
-      c.event_count !== h.tournament_count) return null
+  if (!c || !h || c.eventCount !== h.tournament_count) return null
 
+  // One Calendar v1 shape/clock validator for every consuming view. History
+  // also requires a nonblank region and host code for its joined metadata.
   const byEvent = new Map<string, ViewerCalendarEvent>()
-  const seasons: string[] = []
-  const seenSeasons = new Set<string>()
-  for (const season of c.seasons) {
-    if (!season || typeof season !== 'object') return null
-    const key = seasonKey(season.season)
-    if (key === null || seenSeasons.has(key) ||
-        !Array.isArray(season.events) || !whole(season.event_count) ||
-        season.event_count !== season.events.length) return null
-    seenSeasons.add(key)
-    seasons.push(key)
-    for (const event of season.events) {
-      if (!event || !nonempty(event.event_id) || byEvent.has(event.event_id) ||
-          seasonKey(event.season) !== key ||
-          !whole(event.season_week, 1, 61) ||
-          !nonempty(event.template_id) ||
-          typeof event.event_name !== 'string' ||
-          typeof event.category !== 'string' ||
-          !nonempty(event.host_country) || event.host_country.length !== 3 ||
-          (event.host_city !== null && typeof event.host_city !== 'string') ||
-          !nonempty(event.region) ||
-          (event.tour_level !== null && event.tour_level !== 'WORLD_TOUR' && event.tour_level !== 'ELITE_TOUR') ||
-          !whole(event.main_draw_size, 0, 128) || !whole(event.qualification_draw_size) ||
-          !whole(event.seeds_count) || !whole(event.qualifier_spots) ||
-          !whole(event.wild_cards) || !whole(event.byes) ||
-          typeof event.status !== 'string' ||
-          !['planned', 'active', 'completed', 'cancelled', 'scheduled'].includes(event.status)) return null
-      byEvent.set(event.event_id, event)
-    }
+  for (const event of c.events) {
+    if (!nonempty(event.host_country) || !nonempty(event.region)) return null
+    byEvent.set(event.event_id, event)
   }
-  if (byEvent.size !== c.event_count) return null
 
   const matched = new Set<string>()
   const entries: SavedTournamentEntry[] = []
@@ -105,7 +71,7 @@ export function verifiedTournamentCatalog(
   }
   if (matched.size !== byEvent.size || publishedCount !== h.published_result_count) return null
 
-  return { seasons, entries, eventCount: c.event_count, publishedCount }
+  return { seasons: c.seasons, entries, eventCount: c.eventCount, publishedCount }
 }
 
 export function catalogSeasonsNewestFirst(catalog: SavedTournamentCatalog): string[] {

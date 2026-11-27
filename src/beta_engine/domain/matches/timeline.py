@@ -14,6 +14,7 @@ from beta_engine.domain.matches.content_hash import (
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
+    hash_verified_in_scope,
 )
 from beta_engine.domain.matches.timing import RestartDecisionFactor, RestartIntent
 
@@ -51,6 +52,8 @@ class MatchTimelineEventBase(BaseModel):
     def validate_event_hash(self) -> MatchTimelineEventBase:
         if hash_check_deferred(self):
             return self  # The engine factory hashes this validated value.
+        if hash_verified_in_scope(self):
+            return self  # Unchanged since the engine factory hashed it.
         if self.event_hash != self._event_hash(self):
             raise ValueError("match timeline event hash mismatch")
         return self

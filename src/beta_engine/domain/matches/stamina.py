@@ -13,6 +13,7 @@ from beta_engine.domain.matches.content_hash import (
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
+    hash_verified_in_scope,
 )
 from beta_engine.domain.matches.rallies import RallyEvent
 from beta_engine.domain.matches.timeline import MatchTimelineLog
@@ -362,6 +363,8 @@ class StaminaTransition(BaseModel):
                     raise ValueError("stamina transition delta does not match state")
         if hash_check_deferred(self):
             return self  # The engine factory hashes this validated value.
+        if hash_verified_in_scope(self):
+            return self  # Unchanged since the engine factory hashed it.
         payload = self._hash_payload(self)
         if self.transition_hash != self._content_hash(payload):
             raise ValueError("stamina transition hash mismatch")

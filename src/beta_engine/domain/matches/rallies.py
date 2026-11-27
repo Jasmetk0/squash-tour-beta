@@ -14,6 +14,7 @@ from beta_engine.domain.matches.content_hash import (
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
+    hash_verified_in_scope,
 )
 from beta_engine.domain.matches.gameplans import RallyGameplanContext
 from beta_engine.domain.matches.rally_rules import (
@@ -704,6 +705,8 @@ class RallyEvent(BaseModel):
             raise ValueError("legacy rally event cannot contain gameplan context")
         if hash_check_deferred(self):
             return self  # The engine factory hashes this validated value.
+        if hash_verified_in_scope(self):
+            return self  # Unchanged since the engine factory hashed it.
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(

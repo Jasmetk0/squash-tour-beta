@@ -97,7 +97,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     : 'The response does not match the selected Branch, Saved revision or player and was not displayed.'}</p></section>
   if (badAsOf) return <section aria-label={title}><h3>{title}</h3>
     <p role="alert">{cs ? 'Neplatný nebo budoucí týden. Zobrazení nebylo přepnuto na současnost.' : 'Invalid or future week. The view was not silently changed to the present.'}</p>
-    <button type="button" onClick={() => { url.set({ asof: null, page: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
+    <button type="button" onClick={() => { url.set({ asof: null, page: null, seasonpage: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
   if (asOf !== undefined && (query.isPending || query.isFetching)) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
@@ -146,6 +146,55 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const recent=validRecords?records.slice(-20):[]
   const worst=Math.max(2,...recent.map(e=>e.detail.rank as number))
   const chartTitle=cs?'Zaznamenaná rankingová maxima':'Recorded ranking highs'
+  // Season buckets describe recorded edition results, not calendar coverage.
+  // Never synthesize empty years, a season-end ranking, or a season best
+  // from a list containing only new lifetime personal records.
+  type SeasonRow={season:number;editions:number;titles:number;runnerUps:number;newHigh:number|null}
+  const seasons=new Map<number,SeasonRow>()
+  const getSeason=(season:number)=>{
+    let row=seasons.get(season)
+    if(!row){
+      row={season,editions:0,titles:0,runnerUps:0,newHigh:null}
+      seasons.set(season,row)
+    }
+    return row
+  }
+  const editionIds=new Set<string>()
+  let validEditions=true
+  for(const event of data.timeline){
+    if(event.kind!=='edition_result')continue
+    const week=event.effective_week
+    const id=event.detail.edition_id
+    const stage=event.detail.reached_stage
+    if(!week||!Number.isSafeInteger(week.season_index)
+      ||event.source.kind!=='played_edition'||typeof id!=='string'||!id.trim()
+      ||event.source.edition_id!==id||editionIds.has(id)
+      ||typeof stage!=='string'||!stage.trim()){
+      validEditions=false
+      break
+    }
+    editionIds.add(id)
+    const row=getSeason(week.season_index)
+    row.editions++
+    if(stage==='champion')row.titles++
+    if(stage==='finalist')row.runnerUps++
+  }
+  const totals=[...seasons.values()].reduce((sum,row)=>({
+    editions:sum.editions+row.editions,titles:sum.titles+row.titles,
+    runnerUps:sum.runnerUps+row.runnerUps
+  }),{editions:0,titles:0,runnerUps:0})
+  validEditions=validEditions&&totals.editions===o.editions_played
+    &&totals.titles===o.titles&&totals.runnerUps===o.finals
+  if(validEditions&&validRecords){
+    for(const event of records){
+      const row=getSeason(event.effective_week!.season_index)
+      row.newHigh=event.detail.rank as number
+    }
+  }
+  const seasonRows=validEditions?[...seasons.values()].sort((a,b)=>b.season-a.season):[]
+  const seasonPages=readerPageCount(seasonRows.length)
+  const seasonPage=Math.min(readerPage(url.get('seasonpage','1')),seasonPages)
+  const seasonTitle=cs?'Evidovaná kariéra podle sezon':'Recorded career by season'
   return <section aria-label={title} data-run-navigation-readonly>
     <h3>{title}</h3>
     <p>{cs
@@ -166,7 +215,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     </dl>
     <form onSubmit={ev => {
       ev.preventDefault()
-      url.set({ asof: draft.trim() === '' ? null : draft.trim(), page: null })
+      url.set({ asof: draft.trim() === '' ? null : draft.trim(), page: null, seasonpage: null })
     }}>
       <label>{cs ? 'Zobrazit k týdnu (pořadové číslo)' : 'View as of week (ordinal)'}{' '}
         <input inputMode="numeric" value={draft} placeholder={String(data.as_of_ordinal)}
@@ -175,7 +224,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
       <button type="submit">{cs ? 'Použít' : 'Apply'}</button>
     </form>
     <p role="status">{cs ? 'Zobrazeno k týdnu č.' : 'Shown as of week no.'} {data.as_of_ordinal}</p>
-    {asOf!==undefined&&<button type="button" onClick={()=>{url.set({asof:null,page:null});setDraft('')}}>
+    {asOf!==undefined&&<button type="button" onClick={()=>{url.set({asof:null,page:null,seasonpage:null});setDraft('')}}>
       {cs?'Zpět na současnost':'Return to present'}</button>}
     <section aria-label={chartTitle}>
       <h4>{chartTitle}</h4>
@@ -212,6 +261,35 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
         </details>
       </>:<p role="status">{cs?'Ověřená rankingová maxima pro graf nejsou dostupná.':
         'Verified ranking records for the chart are unavailable.'}</p>}
+    </section>
+    <section aria-label={seasonTitle}>
+      <h4>{seasonTitle}</h4>
+      <p className="status">{cs?
+        'Jen sezony s doloženými výsledky nebo novým osobním maximem do vybraného týdne. Nejde o úplné sezonní statistiky ani konečný ranking.':
+        'Only seasons with recorded results or a new personal best through the selected week. Not complete season statistics or season-end rankings.'}</p>
+      {seasonRows.length>0?<><div className="table-responsive">
+        <table aria-label={seasonTitle}>
+          <thead><tr><th>{cs?'Sezona Runu':'Run season'}</th>
+            <th>{cs?'Evidované edice':'Recorded Editions'}</th>
+            <th>{cs?'Tituly':'Titles'}</th>
+            <th>{cs?'Prohraná finále':'Runner-up finishes'}</th>
+            <th>{cs?'Nové osobní maximum':'New personal best'}</th></tr></thead>
+          <tbody>{readerSlice(seasonRows,seasonPage).map(row=><tr key={row.season}>
+            <th scope="row">{row.season+1}</th><td>{row.editions}</td><td>{row.titles}</td>
+            <td>{row.runnerUps}</td><td>{row.newHigh===null?'—':'#'+row.newHigh}</td>
+          </tr>)}</tbody>
+        </table></div>
+        <p className="status">{cs?'Nula označuje počet evidovaných výsledků, ne důkaz neúčasti. Pomlčka znamená, že nové ověřené osobní maximum není dostupné.':
+          'Zero counts recorded results, not proof of non-participation. A dash means no verified new personal best is available.'}</p>
+        {seasonPages>1&&<nav aria-label={cs?'Stránkování sezon':'Career season pagination'}>
+          <button type="button" disabled={seasonPage<=1} onClick={()=>url.set({seasonpage:String(seasonPage-1)})}>
+            {cs?'Předchozí':'Previous'}</button>
+          {' '}{cs?'Strana':'Page'} {seasonPage} / {seasonPages}{' '}
+          <button type="button" disabled={seasonPage>=seasonPages} onClick={()=>url.set({seasonpage:String(seasonPage+1)})}>
+            {cs?'Další':'Next'}</button>
+        </nav>}
+      </>:<p role="status">{cs?'Ověřený sezonní souhrn není dostupný.':
+        'Verified season summary is unavailable.'}</p>}
     </section>
     {data.retirement_summary && <section aria-label={cs ? 'Souhrn kariéry' : 'Career summary'}>
       <h4>{cs ? 'Souhrn kariéry při odchodu do důchodu' : 'Retirement career summary'}</h4>

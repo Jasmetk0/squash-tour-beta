@@ -28,7 +28,7 @@
 | Země / město | Spojené království, Londýn | S1 |
 | Hlavní areál | All England Lawn Tennis and Croquet Club, Church Road, London SW19 5AG | S1 |
 | Kvalifikační areál | Community Sport Centre Roehampton | S10 |
-| Povrch | Venkovní tráva (kvalifikace i Main) | S1, S3 §3.a |
+| Povrch | Venkovní tráva (kvalifikace i Main) | S1, S16 §3.a |
 | Míče | Slazenger | S1 |
 | Ředitel / rozhodčí | Jamie Baker / Denise Parnell | S1 |
 | Časové pásmo | Europe/London, v uvedených červnových a červencových dnech BST (UTC+01:00) | S11, zeměpisná identifikace |

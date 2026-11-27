@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 29 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 30 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -63,10 +63,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Miami](#miami-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Marrakech](#marrakech-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Estoril](#estoril-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Houston](#houston-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 29 zpracovaných ročníků; 26 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 30 zpracovaných ročníků; 27 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -101,7 +102,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 27 | Miami 2024 | HOTOVO (nominální rozsah) |
 | 28 | Marrakech 2024 | HOTOVO (nominální rozsah) |
 | 29 | Estoril 2024 | HOTOVO (nominální rozsah) |
-| 30 | Houston 2024 | NEZAHÁJENO |
+| 30 | Houston 2024 | HOTOVO (nominální rozsah) |
+| 31 | Monte-Carlo 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -148,6 +150,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#miami-2024) | Miami Open presented by Itaú | ATP Masters 1000 | 2024-03-18–2024-03-19 | 2024-03-20–2024-03-31 | HOTOVO v nominálním rozsahu; 30.3. bez mužské dvouhry |
 | [2024](#marrakech-2024) | Grand Prix Hassan II | ATP 250 | 2024-03-31–2024-04-01 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 1.4. |
 | [2024](#estoril-2024) | Millennium Estoril Open | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; dešťové odklady R32 odděleny |
+| [2024](#houston-2024) | Fayez Sarofim & Co. U.S. Men's Clay Court Championship | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu |
 
 ## Wimbledon 2024
 
@@ -3677,6 +3680,119 @@ I/T/D/B/P doloženy. H* původní R32 4+8 vizuálně ověřeno, R16 okno rekonst
 - EST24-18: [Tennis Explorer 2024](https://www.tennisexplorer.com/estoril/2024/atp-men/), [RTÉ Main denní výsledky](https://www.rte.ie/sport/results/tennis/estoril-open-men/888923/results/), kontrola QF/SF/F.
 - EST24-19: [ročníkový přehled dotace](https://web.kurzy.cz/wiki/Estoril_Open_2024); pravidla viz SCL24-18, LCB24-19, ROT24-16.
 
+
+## Houston 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/P/Z s omezeními). Rešerše 2026-11-27. Pořadatelský Media Guide vizuálně ověřen na straně Quick Facts; indexovaný předstartovní ATP Main los a ATP Day 1 textově. Q los a jeho plán prvního dne doloženy úplným dobovým přepisem, originální Q finanční tabulka zatím nezískána.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Fayez Sarofim & Co. U.S. Men's Clay Court Championship | HOU24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 717 | HOU24-1/4 |
+| Dějiště | River Oaks Country Club, Houston, Texas, USA | HOU24-1/2 |
+| Povrch | venkovní červená antuka, Lee Fast-Dry | HOU24-1/3 |
+| Míče | Dunlop ATP Regular Duty | HOU24-1 |
+| Časové pásmo | America/Chicago, CDT UTC−05:00 v průběhu soutěží | lokalita a DST |
+| Ředitelka | Bronwyn Greer | HOU24-1 |
+| Supervisor / referee | Hans-Jurgen Ochs / Zsolt Beda | HOU24-1/3 |
+| Tour manager | Denis Zvitkovic (pravopis podle pořadatelského dokumentu) | HOU24-1 |
+| Měna | USD | HOU24-2/3 |
+
+Pořadatel rozlišuje historii U.S. Clay od 1910, samostatnou tradici River Oaks od 1931 a 88. turnaj na River Oaks; nezaměňovat tyto počty za jediný pořadový ročník současné ATP série. Originální detail sheet nezískán. Historický povrch a míče převzaty z konkrétního ročníku, nikoli z aktuálního webu.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-04 | HOU24-5 |
+| Q rank date | 2024-03-11 | HOU24-5 |
+| Nominální Main deadline | 2024-03-04 11:00 CST (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-03-11 11:00 CDT (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální LE deadline | 2024-03-28 09:00 CDT (10:00 US Eastern) | odvozeno §7.04 |
+| Main a Q losy | zveřejněny nejpozději 2024-03-30 před Q1 | HOU24-6 |
+| Q | 2024-03-30–31 | HOU24-1/5/6/7 |
+| Main | 2024-04-01–07 | HOU24-2/3/4 |
+| Singlové finále | 2024-04-07, přesný původní čas neověřen | HOU24-4/7/8 |
+
+Přepis HOU24-5 uvádí původní cutoffs 92 Main / 211 Q; předstartovní ATP Main HOU24-3 má Bergs 122 v obou cutoff polích. Jde o různé publikované údaje/stavy. Q konečný cutoff, přesné okamžiky losování a originální acceptance lists neověřeny. Údaj 30.3. je mez zveřejnění přepisu, nikoli nutně den konání losovací ceremonie. Uzávěrky jsou pravidlová odvození. Změna amerického času 10.3. mezi uzávěrkami nemění hodinový rozdíl Houston–US Eastern.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-03-30 | 8 |
+| Q2 | 2024-03-31 | 4 |
+| R32 | 2024-04-01–02 | 12 (4+8) |
+| R16 | 2024-04-03–04 | 8 (4+4) |
+| QF | 2024-04-05 | 4 |
+| SF | 2024-04-06 | 2 |
+| F | 2024-04-07 | 1 |
+
+Pořadatelský Media Guide potvrzuje celé okno 30.3.–7.4. a dvě Q kola. Dobový Q1 OOP v úplném přepisu HOU24-6 uvádí osm dvojic na kurtech 3 a 7, start obou v 11:00 místně. Denní přehled HOU24-7 potvrzuje 8+4 Q zápasů, dokončení Q v neděli před Main. Main R32 4+8 podle denního soupisu; úterní plán osmi singlů potvrzuje předem publikovaný článek z 1.4. (HOU24-9). R16 4+4 podle dobového rozpisu/výsledků; u Thompson–Kovacevic zůstává v HOU24-7 na 4.4. uveden plán 20:00 místo výsledku, jiné databáze řadí výsledek pod 5.4. Bez originálního OOP a doložené příčiny nelze určit skutečný okamžik dokončení. Nominální R16 okno nepřepisovat zahraničním datem. QF/SF/F potvrzeny denním přehledem a ATP zprávou o finále. H*: okna a denní počty rekonstruovány z ročníkových dokladů; úplný původní Main OOP nezískán. Q 2 + Main 7 dní, celkem 9 kalendářních dní bez překryvu, 39 nominálních zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Dobový §7.08 B/E a přepis listiny HOU24-5: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28. Listina 18 DA, 0 SE/LE, 3 WC, 4 Q je mezistav; při uvolnění rezerv jde o 21 běžných vstupů. Pořadatel potvrzuje 28 hráčů a čtyři BYE. ATP předstartovní Main text a dobový úplný přepis potvrzují BYE 2/10/23/31, Q placeholdery 3/18/21/27 a WC 13/26/30 (Mmoh, Shapovalov, Kudla), osm seedů. Konečná jména kvalifikantů doložena výsledkovým přehledem HOU24-7 a HOU24-10. Main 12+8+4+2+1=27.
+
+Q 14 DA + 2 WC dle listiny i dobového pravidla, 16 účastníků a čtyři postupující dle pořadatele. Úplný předstartovní přepis HOU24-6 potvrzuje všech osm seedů (Diallo, Kypson, Vacherot, Yevseyev, Ritschard, Brouwer, Tabur, Damm), WC Pannu a Wu, dva Alt Rybakov a Kozlov. Čtyři sekce po čtyřech, 8+4=12 zápasů; čtyři vítězové Q Brouwer, Ritschard, Kypson, Wu. Skreč v Q2 nemění plánovanou geometrii. Originální Q PDF nezískáno.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 v únorové verzi (SCL24-18), se změnami LCB24-19 a upřesněním rozsahu challengerového §7.08 C.3 v SCL24. Dvě SE a jedna LE rezerva, čtyři Q sekce, osm seedů, BO3 tiebreak, první čtyři Main seedy BYE. ATP Preview HOU24-2 přímo potvrzuje nula bodů při první prohře po BYE; Q 13/7/0 dle dobového předpisu, nikoli odvození z výše peněz.
+
+Týden Marrakech/Estoril/Houston: HOU24-5 obsahuje Michelsena v běžné Main DA listině, Damma v běžné Q listině; přítomnost mladých hráčů není sama o sobě dokladem Next Gen programové rezervy. Ani ve všech třech zpracovaných ročnících nebyl získán původní administrativní doklad o skutečném přidělení/propadu týdenních NG příležitostí. Zůstává společná otevřená položka R*, nominální kapacity 28/16 se nemění.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 100635 |
+| Finalista | 1 | 165 | 58700 |
+| SF | 2 | 100 | 34510 |
+| QF | 4 | 50 | 19995 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 11610 |
+| R32 | 12 | 0 | 7095 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3550 |
+| Q1 prohra | 8 | 0 | 1935 |
+
+Main ceny a body v ATP Day 1 a indexovaném předstartovním originálním ATP Main (HOU24-2/3) souhlasí; obrazové vykreslení těchto PDF se nezdařilo. Q 3550/1935 USD souhlasí v ročníkovém sloupci TennisCompanion a explicitním oddílu 2024 Canal Tenis (HOU24-11/12). Stevegtennis uvádí shodné částky, ale nesprávnou značku A$; měnu nepřebírat. P* Q sekundární shoda, originální Q tabulka nezískána. Nominální Main 486355 USD, Q 29680 USD, celkem 516035 USD. Financial commitment 742350 USD z ATP losu a celková dotace 661585 USD z ročníkových přehledů jsou jiné veličiny; nevydávat je za singlový součet. Houston Main tabulka je stejná jako v ATP notes Santiago; sama o sobě neřeší ročníkový rozpor Santiago. Q postupující pobírají Main odměnu podle výsledku, bez samostatné nominální Q odměny.
+
+### 7. Kontrola a mezery
+
+I/T/D/B doloženy. H* úplný původní Main OOP a hodina finále chybí; E* původní acceptance listy/DS, časy losování a Q cutoff neověřeny, uzávěrky odvozené. R* individuální týdenní NG alokace neověřena. P* Main primární text, Q sekundární shoda. Z*: Media Guide str. 2 vizuálně; ATP notes screenshot 403, indexovaný ATP Main screenshot 404; verze stejné URL bez www již odpovídá 2025, proto ji nelze zaměnit za historický dokument. Přímé ATP Main/Q PDF 2024 nedostupné. Žádný tvrzený PDF hash. Kontrola kvót, 28/16, 8/8 seedů, 4/0 BYE, 27/12 utkání, denních součtů a nominálních finančních částek prošla. Další Monte-Carlo 2024, před zahájením ověřit odlišnou velikost losu a nedělní start. Bez runtime změn.
+
+### 8. Zdroje (HOU24)
+
+- HOU24-1: [oficiální 2024 US Clay Media Guide](https://mensclaycourt.com/web/DATA/2024%20US%20Clay%20Media%20Guide.pdf), str. 2 (Quick Facts) vizuálně, historie textově; povrch, míče, velikosti losů a organizace.
+- HOU24-2: [ATP Preview & Day 1, 1.4.2024](https://www.atptour.com/-/media/5dc15d0d4b0d41f7863596d871d7a31a.pdf), Main body a ceny, text, screenshot 403.
+- HOU24-3: [indexovaný předstartovní ATP Main 2024](https://www.mensclaycourt.com/web/files/6968/MDS.pdf), text s datem 1.–7.4.2024, screenshot 404; URL bez www indexována už s ročníkem 2025, neověřené bajty a nestabilní URL.
+- HOU24-4: [ATP Tennis TV 717_2024](https://www.tennistv.com/tournaments/717_2024/houston), [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024).
+- HOU24-5: [dobový přepis entry listů](https://www.tennisteen.it/entry-list/atp/24142-atp-entry-list-1-7-aprile-2024.html), řádky 125–181, kvóty a rank dates.
+- HOU24-6: [dobový úplný přepis Main/Q losů a Q1 programu 30.3.2024](https://www.livetennis.it/post/410028/atp-250-houston-il-tabellone-principale-e-di-qualificazione-presenza-di-luciano-darderi-nel-md/), datum publikace, všechny seedy, WC a Q1 start.
+- HOU24-7: [dobový denní přehled obou fází](https://canaltenis.com/resultados-atp-houston-2024/), dny a kola; jeden R16 řádek obsahuje plán namísto výsledku.
+- HOU24-8: [ATP finále 7.4.2024](https://www.atptour.com/en/news/shelton-tiafoe-houston-2024-final), datum výsledku.
+- HOU24-9: [dobový úterní preview publikovaný 1.4.](https://lastwordonsports.com/tennis/2024/04/01/atp-houston-day-2-predictions-shapovalov-giron/), osm plánovaných singlů; [ATP pondělní zpráva](https://www.atptour.com/en/news/eubanks-hijikata-nakashima-houston-2024-monday).
+- HOU24-10: [Tennis Abstract Main/Q](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024-0717%2FHouston), [TennisPortal Q](https://www.tenisportal.cz/houston/2024/atp-muzi/?phase=qualification), nezávislá výsledková kontrola.
+- HOU24-11: [TennisCompanion USD ročníkový sloupec 2024](https://tenniscompanion.org/prize-money/houston/), Q 3550/1935.
+- HOU24-12: [Canal Tenis explicitní oddíl 2024](https://canaltenis.com/prize-money-atp-houston/), Main a Q shoda; [Stevegtennis 2024](https://www.stevegtennis.com/draw-results/atp/US%20Men%27s%20Clay%20Court%20Championship%20-%20Houston/2024), shoda čísel, chybná měna.
+- [Původní ATP Main](https://www.protennislive.com/posting/2024/717/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/717/qs.pdf) nedostupné. Dobová pravidla viz SCL24-18, LCB24-19, ROT24-16; další Monte-Carlo podle dobového ATP kalendáře.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3702,3 +3818,4 @@ I/T/D/B/P doloženy. H* původní R32 4+8 vizuálně ověřeno, R16 okno rekonst
 | Miami 2024 | H*/E*/Z* | původní acceptance listy/DS a čas Q losu, kompletní první OOP a denní R64/R32 splity před deštěm; obě finanční tabulky primárně vizuálně ověřeny |
 | Marrakech 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance listy, časy losů, původní OOP, skutečná alokace NG v týdnu Marrakech/Estoril/Houston; Q 3105/1695 EUR sekundární shoda 2024, 3020/1645 přesně odpovídá roku 2023, nikoli rovnocenný ročníkový doklad |
 | Estoril 2024 | H*/E*/R*/Z* | původní R16 OOP před deštěm, acceptance listy/DS, časy losování a NG alokace; Main i Q finanční tabulky primárně vizuálně ověřeny |
+| Houston 2024 | H*/E*/R*/P*/Z* | originální Q PDF/DS a acceptance listy, přesné časy losů a finále, úplný Main OOP a vizuální kontrola Main, NG alokace týdne Marrakech/Estoril/Houston; Q 3550/1935 USD sekundární shoda |

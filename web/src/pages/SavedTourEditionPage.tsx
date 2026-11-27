@@ -1,5 +1,4 @@
 import {useQuery} from '@tanstack/react-query'
-import {useState} from 'react'
 import type {KeyboardEvent} from 'react'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourEdition} from '../api/client'
@@ -36,9 +35,25 @@ export function SavedTourEditionPage():JSX.Element {
   const model=eligible&&query.isSuccess&&!query.isFetching&&query.data&&validSavedTourEdition(query.data,runId,branch!,revision!,season!,eventId)
     ?query.data:null
   const tab=tabs.includes(params.get('tab') as Tab)?params.get('tab') as Tab:'overview'
-  const [selectedPhase,setPhase]=useState<'main'|'qualification'>('main')
+  // Preserve the actual Draw view when returning from a historical Match.
+  const selectedPhase=params.get('drawPhase')==='qualification'?'qualification':'main'
+  const visualDraw=params.get('drawView')==='visual'
+  const setPhase=(next:'main'|'qualification')=>{
+    const p=new URLSearchParams(params)
+    if(next==='qualification')p.set('drawPhase',next)
+    else p.delete('drawPhase')
+    setParams(p)
+  }
+  const setVisualDraw=(next:boolean)=>{
+    const p=new URLSearchParams(params)
+    if(next)p.set('drawView','visual')
+    else p.delete('drawView')
+    setParams(p)
+  }
   const changeTab=(next:Tab)=>{
-    const p=new URLSearchParams(params);p.set('tab',next);setParams(p)
+    const p=new URLSearchParams(params);p.set('tab',next)
+    if(next!=='draw'){p.delete('drawPhase');p.delete('drawView')}
+    setParams(p)
   }
   const onTabKeyDown=(event:KeyboardEvent<HTMLButtonElement>,current:Tab)=>{
     const at=tabs.indexOf(current)
@@ -66,7 +81,7 @@ export function SavedTourEditionPage():JSX.Element {
     value==='champion'?(cs?'vítěz':'champion'):
     value==='finalist'||value==='runner_up'?(cs?'finalista':'finalist'):
     value==='bye'?(cs?'volný los':'bye'):value
-  const back=new URLSearchParams(params);back.delete('tab')
+  const back=new URLSearchParams(params);back.delete('tab');back.delete('drawPhase');back.delete('drawView')
   const returnTo='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+back.toString()
   const returnCountry=verifiedCountryReturn(params.get('fromCountry'),runId,revision)
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
@@ -226,17 +241,74 @@ export function SavedTourEditionPage():JSX.Element {
     <h4>{label} ({ids.length})</h4>
     {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p role="status">{cs?'Žádní uložení účastníci v této části.':'No saved participants in this section.'}</p>}
   </section>
+  const visualSlots=(bracket:SavedTourDrawBracket)=>{
+    const slots=[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index)
+    const pairable=slots.length>=2&&slots.length<=128
+      &&(slots.length&(slots.length-1))===0
+      &&slots.every((slot,i)=>slot.slot_index===i+1)
+    // Canonical draw builder pairs slots 1/2, 3/4, etc. The projected
+    // response does not include feeder nodes: do not invent later edges.
+    if(!pairable)return <p role="status">{cs?'Dvojice prvního kola nelze bezpečně zobrazit.':
+      'First-round pairings cannot be displayed safely.'}</p>
+    return <section aria-label={cs?'Dvojice prvního kola':'First-round pairings'}>
+      <div className="grid">
+        {slots.filter((_,i)=>i%2===0).map((top,i)=><section key={top.slot_index} className="section-subtle"
+          aria-label={(cs?'Dvojice ':'Pair ')+(i+1)}>
+          <h5>{cs?'Pozice':'Slots'} {top.slot_index} / {slots[i*2+1].slot_index}</h5>
+          {[top,slots[i*2+1]].map(slot=><div key={slot.slot_index}
+            style={{border:'1px solid currentColor',borderRadius:6,padding:'0.45rem',margin:'0.3rem 0',overflowWrap:'anywhere'}}>
+            <small>#{slot.slot_index}{slot.seed_number!==null?' · '+(cs?'Nasazení':'Seed')+' '+slot.seed_number:''}</small>
+            <div><strong>{slot.player_id?playerRef(slot.player_id):slot.placeholder_id??
+              (slot.entrant_kind==='bye'?'BYE':'—')}</strong></div>
+            <small>{presentEntry(slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind))}</small>
+          </div>)}
+        </section>)}
+      </div>
+      <p className="status">{cs?'Dvojice vychází z uložených pozic losu, nikoli z odhadovaných výsledků.':
+        'Pairings follow saved draw slots, not inferred outcomes.'}</p>
+    </section>
+  }
+  const visualResults=(records:typeof matches)=>{
+    const kinds=[...new Set(records.map(m=>m.draw_type))]
+    return records.length?<section aria-label={cs?'Výsledky podle kol':'Published results by round'}>
+      <p className="status">{cs?'Sloupce zobrazují pouze publikované zápasy. Vazby postupu ani chybějící zápasy nejsou dopočítávány.':
+        'Columns show published matches only. Feeder links and missing matches are not reconstructed.'}</p>
+      {kinds.map(kind=>{
+        const rows=records.filter(m=>m.draw_type===kind)
+        const rounds=[...new Set(rows.map(m=>m.round_number))].sort((a,b)=>a-b)
+        return <section key={kind}><h5>{presentPhase(kind)}</h5>
+          <div style={{display:'flex',gap:'0.75rem',overflowX:'auto',paddingBottom:'0.5rem'}}>
+            {rounds.map(round=><section key={round} style={{flex:'0 0 14rem',minWidth:0}}
+              aria-label={(cs?'Kolo ':'Round ')+round}>
+              <h5>{cs?'Kolo':'Round'} {round}</h5>
+              {rows.filter(m=>m.round_number===round)
+                .sort((a,b)=>a.bracket_position-b.bracket_position||a.match_id.localeCompare(b.match_id))
+                .map(m=><div key={m.match_id} className="section-subtle"
+                  style={{marginBottom:'0.5rem',overflowWrap:'anywhere'}}>
+                  <small>{cs?'Pozice':'Position'} {m.bracket_position}</small>
+                  <p><strong>{playerRef(m.winner_player_id)}</strong> <small>· {cs?'vítěz':'winner'}</small></p>
+                  <p>{m.loser_player_id?playerRef(m.loser_player_id):'—'}</p>
+                  <p>{m.scoreline}{m.loser_player_id&&<>
+                    {' · '}<Link to={matchHref(m.match_id,'draw')}>{cs?'Detail zápasu':'Match detail'}</Link>
+                  </>}</p>
+                </div>)}
+            </section>)}
+          </div>
+        </section>
+      })}
+    </section>:<p>{cs?'Nejsou dostupné doložené zápasy.':'No evidenced matches available.'}</p>
+  }
   const bracketView=(bracket:SavedTourDrawBracket)=><section key={bracket.section_id??bracket.draw_type}>
     <h4>{bracket.section_id??(cs?'Hlavní pavouk':'Main draw')} · {bracket.bracket_size}
       {' '}{cs?'pozic':'slots'}</h4>
-    <div className="table-responsive"><table aria-label={'Saved draw '+(bracket.section_id??bracket.draw_type)}>
+    {visualDraw?visualSlots(bracket):<div className="table-responsive"><table aria-label={'Saved draw '+(bracket.section_id??bracket.draw_type)}>
       <thead><tr><th>{cs?'Pozice':'Slot'}</th><th>{cs?'Účastník / pozice':'Entrant / placeholder'}</th>
         <th>{cs?'Nasazení':'Seed'}</th><th>{cs?'Vstup':'Entry'}</th></tr></thead>
       <tbody>{[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index).map(slot=><tr key={slot.slot_index}>
         <td>{slot.slot_index}</td><td>{slot.player_id??slot.placeholder_id??(slot.entrant_kind==='bye'?'BYE':'—')}</td>
         <td>{slot.seed_number??'—'}</td>
         <td>{presentEntry(slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind))}</td>
-      </tr>)}</tbody></table></div>
+      </tr>)}</tbody></table></div>}
   </section>
   return <section className="panel">
     {returnCountry&&<p><Link to={returnCountry}>
@@ -328,13 +400,20 @@ export function SavedTourEditionPage():JSX.Element {
           onClick={()=>setPhase('main')}>{cs?'Hlavní část':'Main'}</button>
           <button type="button" aria-pressed={phase==='qualification'}
           onClick={()=>setPhase('qualification')}>{qualificationLabel}</button></div>}
+        <div className="grid" aria-label={cs?'Zobrazení pavouku':'Draw presentation'}>
+          <button type="button" aria-pressed={!visualDraw} onClick={()=>setVisualDraw(false)}>
+            {cs?'Tabulka':'Table view'}</button>
+          <button type="button" aria-pressed={visualDraw} onClick={()=>setVisualDraw(true)}>
+            {cs?'Grafický přehled':'Visual overview'}</button>
+        </div>
         {draw?(phase==='main'?bracketView(draw.main):draw.qualification_sections.length?
           draw.qualification_sections.map(bracketView):<p>{cs?'Uložený kvalifikační pavouk není dostupný.':
             'No saved qualification bracket is available.'}</p>):
           <p role="status">{cs?'V této revizi není uložená Draw authority.':
             'No saved Draw authority exists in this revision.'}</p>}
         {result&&<><h4>{cs?'Publikované výsledky zápasů':'Published match results'}</h4>
-          {matchTable(phase==='main'?main:qualification)}</>}
+          {visualDraw?visualResults(phase==='main'?main:qualification):
+            matchTable(phase==='main'?main:qualification)}</>}
         {draw&&sameHead&&<SavedDrawNativeReadiness key={[runId,branch,revision,eventId].join('|')}
           runId={runId} branchId={branch!} revisionId={revision!} eventId={eventId}
           season={e!.season} cs={cs} renderPlayer={playerRef}/>}

@@ -1,0 +1,82 @@
+{
+ "single": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "7ef71261c0027218d76b9bc507bb637634871d73138382bbf29e2f424fca29cc",
+  "engine_results": 1,
+  "rallies": 57,
+  "components_per_result": 19
+ },
+ "set": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "2cad1b21a6f57587f2517756bf784f7caf653df237d63b605fce3ee3486bedf4",
+  "engine_results": 24,
+  "rallies": 1343,
+  "components_per_result": 19
+ },
+ "lab": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "7a84fa141bbe76d88fd4798414d04cf290be056d93c2fb3a9f927c8fb92b53db",
+  "engine_results": 24,
+  "rallies": 1343,
+  "components_per_result": 19
+ },
+ "cases": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "70b082cb3046a6b4d9e46fdb012e266fd1c7001d993a7eb73eaf56fa96e00a69",
+  "engine_results": 10,
+  "rallies": 364,
+  "components_per_result": 19
+ },
+ "corpus": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+  "engine_results": 12,
+  "rallies": 697,
+  "components_per_result": 19
+ },
+ "restart": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "5736f4e1a1f1154cbb40305ef01657a3d6f5c11ac6f9994403fabacfbe5c0211",
+  "engine_results": 4,
+  "rallies": 283,
+  "components_per_result": 19
+ },
+ "ko32": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "6fbdfd28d4aa72208651635b5e868f8fcb50f2593ef1b0adc5d3775ce72a143a",
+  "engine_results": 31,
+  "rallies": 1610,
+  "components_per_result": 19
+ },
+ "ko64": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+  "engine_results": 63,
+  "rallies": 3382,
+  "components_per_result": 19
+ },
+ "ko128": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "795da202c5158ef4d4f25045ad341a387e4e37805f1bf36cefab1116d087f3e4",
+  "engine_results": 127,
+  "rallies": 6779,
+  "components_per_result": 19
+ },
+ "http64": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "ea1506df7ba28ad942351c9126cfad0b6bdb0d0aeb4d17072ff2b0fe781c09f4",
+  "engine_results": 63,
+  "rallies": 3318,
+  "components_per_result": 19
+ }
+}

@@ -1,0 +1,141 @@
+{
+ "tool": "valgrind-3.22 callgrind, whole process, warm .pyc (python -m compileall src scripts in every tree first)",
+ "command": "MATCH_BENCH_SOURCE_ROOT=<tree> PYTHONHASHSEED=0 valgrind --tool=callgrind --callgrind-out-file=<out> <venv>/bin/python <#1916 1935e535>/scripts/benchmark_match_engine.py <ko64|corpus> --repeats 1 --in-process",
+ "runs": [
+  {
+   "scenario": "corpus",
+   "tree": "buuk",
+   "commit": "29784d51d01d9d747705be8abae30f0c82706c1e",
+   "instructions_Ir": 14853411473,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "buuk2",
+   "commit": "29784d51d01d9d747705be8abae30f0c82706c1e",
+   "instructions_Ir": 14853437426,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "cand",
+   "commit": "61f6ee3 (first implementation commit)",
+   "instructions_Ir": 14435974914,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "combo",
+   "commit": "1935e535 + 61f6ee3 (local)",
+   "instructions_Ir": 11792180883,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "pin",
+   "commit": "1935e53555c1f6d3d11481d3e83cb9687bceb3cd (#1916 pin)",
+   "instructions_Ir": 12209312620,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "varB",
+   "commit": "c4d5d946b7ea0fd4cfd612c69a340f41c83a506e (local, rejected variant B)",
+   "instructions_Ir": 14408580510,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "ko64",
+   "tree": "buuk",
+   "commit": "29784d51d01d9d747705be8abae30f0c82706c1e",
+   "instructions_Ir": 71107506584,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "ko64",
+   "tree": "cand",
+   "commit": "61f6ee3 (first implementation commit)",
+   "instructions_Ir": 69046657975,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "ko64",
+   "tree": "combo",
+   "commit": "1935e535 + 61f6ee3 (local)",
+   "instructions_Ir": 56046833343,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "ko64",
+   "tree": "pin",
+   "commit": "1935e53555c1f6d3d11481d3e83cb9687bceb3cd (#1916 pin)",
+   "instructions_Ir": 58105527147,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "ko64",
+   "tree": "varB",
+   "commit": "c4d5d946b7ea0fd4cfd612c69a340f41c83a506e (local, rejected variant B)",
+   "instructions_Ir": 68935858738,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "corpus",
+   "tree": "final-cand",
+   "commit": "201be5f (final src)",
+   "instructions_Ir": 14438523342,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "corpus",
+   "tree": "final-combo",
+   "commit": "02e530e (local: 1935e535 + 61f6ee3 + 201be5f)",
+   "instructions_Ir": 11781605966,
+   "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+   "rallies": 697,
+   "matches": 12
+  },
+  {
+   "scenario": "ko64",
+   "tree": "final-cand",
+   "commit": "201be5f (final src)",
+   "instructions_Ir": 69075018269,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  },
+  {
+   "scenario": "ko64",
+   "tree": "final-combo",
+   "commit": "02e530e (local: 1935e535 + 61f6ee3 + 201be5f)",
+   "instructions_Ir": 56037534743,
+   "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+   "rallies": 3382,
+   "matches": 63
+  }
+ ]
+}

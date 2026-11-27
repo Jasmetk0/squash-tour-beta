@@ -1,0 +1,384 @@
+{
+ "all_equal": true,
+ "command": "PYTHONHASHSEED=<h> <python> scripts/rng_differential_corpus.py --source <tree> --emit <file>",
+ "runs": [
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "0",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "1917",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "random",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "0",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "1917",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "random",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "0",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "1917",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "random",
+   "rng_sha256": "bbfb6cc6e697f3ca7d20d2fe8c180e0bb2d696587cd5922859c1fd78ac40a1f6",
+   "tree": "buuk 29784d5"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "0",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "1917",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 1,
+     "sha256": "f70e2e0f0225f7b989312188b8b42467d4f411efef807a2b3fb13128d0115380"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.11.18",
+   "pythonhashseed": "random",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "0",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "1917",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.12.3",
+   "pythonhashseed": "random",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "0",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "1917",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  },
+  {
+   "digests": {
+    "api": {
+     "records": 11086,
+     "sha256": "3a7c2f569cea7be07d449879c33f6ea42b79b09c28ad234ba824f3414da39b08"
+    },
+    "population": {
+     "records": 6,
+     "sha256": "8a057a56a0af5c7fc10c78b0097d8991186cce658a598e90657348e1d8cf376d"
+    },
+    "random_corpus": {
+     "records": 37503,
+     "sha256": "96aaba6837c7bdb509a2ffaea9f20b78f47f66e0cc02383e06065a54a73448bc"
+    }
+   },
+   "equal_to_buuk_hashseed0_same_python": true,
+   "python": "3.13.18",
+   "pythonhashseed": "random",
+   "rng_sha256": "82ccd9ca02e353719ffaf6e08d454ead4ff3dace7ef86af94a9147253f4dae62",
+   "tree": "candidate 201be5f"
+  }
+ ]
+}

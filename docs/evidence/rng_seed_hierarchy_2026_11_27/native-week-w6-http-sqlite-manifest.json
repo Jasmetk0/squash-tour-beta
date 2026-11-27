@@ -1,0 +1,47 @@
+{
+  "schema": 3,
+  "commits": {
+    "A": "29784d51d01d9d747705be8abae30f0c82706c1e",
+    "B": "201be5fc93ac0b6df8e0fc579dd5a58ff7c6684c"
+  },
+  "scenario": "w6",
+  "input_sha256": "2e7c7884a49fd51736e625cd94b90cd28a63f2c232656abf8b4c330df2367dce",
+  "repetitions": 1,
+  "profile_cpu": false,
+  "worker_timeout_s": 600,
+  "cases": [
+    {
+      "trial": 1,
+      "case": "A-normal",
+      "report": "A-normal.json",
+      "phase_log": "A-normal.phases.jsonl",
+      "status": "ok",
+      "returncode": 0
+    },
+    {
+      "trial": 1,
+      "case": "B-normal",
+      "report": "B-normal.json",
+      "phase_log": "B-normal.phases.jsonl",
+      "status": "ok",
+      "returncode": 0
+    },
+    {
+      "trial": 1,
+      "case": "B-retry",
+      "report": "B-retry.json",
+      "phase_log": "B-retry.phases.jsonl",
+      "status": "ok",
+      "returncode": 0
+    },
+    {
+      "trial": 1,
+      "case": "A-retry",
+      "report": "A-retry.json",
+      "phase_log": "A-retry.phases.jsonl",
+      "status": "ok",
+      "returncode": 0
+    }
+  ],
+  "status": "equal"
+}

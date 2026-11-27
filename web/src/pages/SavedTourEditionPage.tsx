@@ -238,7 +238,7 @@ export function SavedTourEditionPage():JSX.Element {
   // Group cards join only the frozen schedule and completed standings.
   // Group points are not Official Ranking points; the DTO contains no
   // configured crossing/advancement mapping.
-  const groupVisual=groupSchedule&&<section aria-label={cs?'Grafický přehled skupin':'Visual group overview'}>
+  const groupVisual=tab==='draw'&&phase==='main'&&visualDraw&&groupSchedule&&<section aria-label={cs?'Grafický přehled skupin':'Visual group overview'}>
     <h4>{cs?'Uložené skupiny':'Saved groups'}</h4>
     <p className="status">{cs?'Skupinové body nejsou body Official Rankingu. Postupové vazby tento historický zdroj neposkytuje.':
       'Group points are not Official Ranking points. This historical source does not expose advancement mappings.'}</p>

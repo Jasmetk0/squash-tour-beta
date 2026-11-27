@@ -80,6 +80,33 @@ describe('exact historical Edition match replay',()=>{
       'run-a','branch-a','old-rev',2,'event-x','final',25,25
     )
   })
+  it('shows the verified post-rally scores in source A/B order and advances without an extra read',async()=>{
+    mount()
+    const board=await screen.findByRole('region',{name:'Archived rally scoreboard'})
+    expect(board).toHaveTextContent('Player A: A')
+    expect(board).toHaveTextContent('Player B: B')
+    expect(within(board).getAllByText('Game points:',{exact:false}).map(node=>node.textContent))
+      .toEqual(['Game points: 1','Game points: 0'])
+    expect(within(board).getByRole('progressbar')).toHaveAttribute('value','1')
+    expect(within(board).getByRole('progressbar')).toHaveAttribute('max','30')
+    await userEvent.click(screen.getByRole('button',{name:'Next rally →'}))
+    expect(await screen.findByText('Rally 2/30')).toBeInTheDocument()
+    const nextBoard=screen.getByRole('region',{name:'Archived rally scoreboard'})
+    expect(within(nextBoard).getAllByText('Game points:',{exact:false}).map(node=>node.textContent))
+      .toEqual(['Game points: 2','Game points: 0'])
+    expect(within(nextBoard).getByRole('progressbar')).toHaveAttribute('value','2')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('localizes the scoreboard and hides it when the historical scope is invalid',async()=>{
+    const view=mount()
+    expect(await screen.findByRole('region',{name:'Archived rally scoreboard'})).toBeInTheDocument()
+    state.language='cs';view.refresh()
+    const board=screen.getByRole('region',{name:'Skóre archivované výměny'})
+    expect(within(board).getByRole('progressbar',{name:'Pozice v archivu výměn'})).toHaveAttribute('value','1')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    state.mode='checkpoint';view.refresh()
+    expect(screen.queryByRole('region',{name:'Skóre archivované výměny'})).not.toBeInTheDocument()
+  })
   it('rejects two independently valid but discontinuous cached archive pages',async()=>{
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,
@@ -99,6 +126,7 @@ describe('exact historical Edition match replay',()=>{
     await userEvent.click(screen.getByRole('button',{name:'Last rally'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('does not match')
     expect(screen.queryByText('Rally 30/30')).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
     expect(screen.queryByRole('table',{name:'Verified archived rally page'}))
       .not.toBeInTheDocument()
     expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(2)
@@ -135,6 +163,7 @@ describe('exact historical Edition match replay',()=>{
     expect(await screen.findByText(/No verified rally archive exists/)).toBeInTheDocument()
     expect(screen.getByText('3-2')).toBeInTheDocument()
     expect(screen.queryByRole('button',{name:'Next rally →'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
   })
   it('hides a loaded replay on checkpoint, loading and failed context without remount',async()=>{
     const view=mount()

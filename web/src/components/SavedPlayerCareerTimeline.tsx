@@ -66,6 +66,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const kindValue = url.get('kind', 'all')
   const kind = kindValue === 'all' || CAREER_KINDS.some(k => k === kindValue) ? kindValue : 'all'
   const search = url.get('search')
+  const seasonFilter=url.get('season','all')
   const order = url.get('order', 'asc')
   const page = readerPage(url.get('page', '1'))
   const [draft, setDraft] = React.useState(requested)
@@ -97,7 +98,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     : 'The response does not match the selected Branch, Saved revision or player and was not displayed.'}</p></section>
   if (badAsOf) return <section aria-label={title}><h3>{title}</h3>
     <p role="alert">{cs ? 'Neplatný nebo budoucí týden. Zobrazení nebylo přepnuto na současnost.' : 'Invalid or future week. The view was not silently changed to the present.'}</p>
-    <button type="button" onClick={() => { url.set({ asof: null, page: null, seasonpage: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
+    <button type="button" onClick={() => { url.set({ asof: null, page: null, seasonpage: null, season: null }); setDraft('') }}>{cs ? 'Zpět na současnost' : 'Return to present'}</button></section>
   if (asOf !== undefined && (query.isPending || query.isFetching)) {
     return <section aria-label={title}><h3>{title}</h3>
       <p role="status">{cs ? 'Načítám kariéru…' : 'Loading career…'}</p></section>
@@ -118,6 +119,8 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
   const label = (k: string) => (LABEL[k] ?? [k, k])[cs ? 0 : 1]
   const rows = data.timeline.map((event, index) => ({ event, index }))
     .filter(({ event }) => (kind === 'all' || event.kind === kind) &&
+      (seasonFilter==='all'||(event.effective_week!==null
+        &&String(event.effective_week.season_index)===seasonFilter)) &&
       [label(event.kind), weekText(event, cs), detailText(event, cs),
         sourceText(event, cs), labelSearch(event)].join(' ')
         .toLocaleLowerCase().includes(search.trim().toLocaleLowerCase()))
@@ -129,6 +132,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
           : (aw.season_index - bw.season_index || aw.week - bw.week)
       return (order === 'desc' ? -diff : diff) || a.index - b.index
     })
+  const timelineSeasons=[...new Set(data.timeline.flatMap(event=>event.effective_week?[event.effective_week.season_index]:[]))].sort((a,b)=>b-a)
   const pages = readerPageCount(rows.length)
   const current = Math.min(page, pages)
   const visible = readerSlice(rows, current)
@@ -215,7 +219,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     </dl>
     <form onSubmit={ev => {
       ev.preventDefault()
-      url.set({ asof: draft.trim() === '' ? null : draft.trim(), page: null, seasonpage: null })
+      url.set({ asof: draft.trim() === '' ? null : draft.trim(), page: null, seasonpage: null, season: null })
     }}>
       <label>{cs ? 'Zobrazit k týdnu (pořadové číslo)' : 'View as of week (ordinal)'}{' '}
         <input inputMode="numeric" value={draft} placeholder={String(data.as_of_ordinal)}
@@ -224,7 +228,7 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
       <button type="submit">{cs ? 'Použít' : 'Apply'}</button>
     </form>
     <p role="status">{cs ? 'Zobrazeno k týdnu č.' : 'Shown as of week no.'} {data.as_of_ordinal}</p>
-    {asOf!==undefined&&<button type="button" onClick={()=>{url.set({asof:null,page:null,seasonpage:null});setDraft('')}}>
+    {asOf!==undefined&&<button type="button" onClick={()=>{url.set({asof:null,page:null,seasonpage:null,season:null});setDraft('')}}>
       {cs?'Zpět na současnost':'Return to present'}</button>}
     <section aria-label={chartTitle}>
       <h4>{chartTitle}</h4>
@@ -273,10 +277,12 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
             <th>{cs?'Evidované edice':'Recorded Editions'}</th>
             <th>{cs?'Tituly':'Titles'}</th>
             <th>{cs?'Prohraná finále':'Runner-up finishes'}</th>
-            <th>{cs?'Nové osobní maximum':'New personal best'}</th></tr></thead>
+            <th>{cs?'Nové osobní maximum':'New personal best'}</th><th>{cs?'Záznamy':'Entries'}</th></tr></thead>
           <tbody>{readerSlice(seasonRows,seasonPage).map(row=><tr key={row.season}>
             <th scope="row">{row.season+1}</th><td>{row.editions}</td><td>{row.titles}</td>
             <td>{row.runnerUps}</td><td>{row.newHigh===null?'—':'#'+row.newHigh}</td>
+            <td><button type="button" onClick={()=>url.set({season:String(row.season),kind:null,search:null,page:null})}>
+              {cs?'Záznamy sezony':'Season entries'} {row.season+1}</button></td>
           </tr>)}</tbody>
         </table></div>
         <p className="status">{cs?'Nula označuje počet evidovaných výsledků, ne důkaz neúčasti. Pomlčka znamená, že nové ověřené osobní maximum není dostupné.':
@@ -315,6 +321,14 @@ export function SavedPlayerCareerTimeline({ runId, branchId, savedHead, playerId
     <p>{cs ? 'Zranění a návraty zatím nemají podporovaný zdroj, proto se nezobrazují.'
       : 'Injuries and returns have no supported source yet and are not shown.'}</p>
     <h4>{cs ? 'Časová osa' : 'Timeline'}</h4>
+    <label>{cs?'Sezona záznamů':'Entry season'}{' '}
+      <select value={seasonFilter} onChange={ev=>url.set({season:ev.target.value==='all'?null:ev.target.value,page:null})}>
+        <option value="all">{cs?'Všechny sezony':'All seasons'}</option>
+        {seasonFilter!=='all'&&!timelineSeasons.some(s=>String(s)===seasonFilter)&&
+          <option value={seasonFilter}>{cs?'Nedostupná sezona':'Unavailable season'}</option>}
+        {timelineSeasons.map(s=><option key={s} value={String(s)}>{cs?'Sezona':'Season'} {s+1}</option>)}
+      </select>
+    </label>
     <label>{cs ? 'Typ' : 'Type'}{' '}
       <select value={kind} onChange={ev => url.set({ kind: ev.target.value === 'all' ? null : ev.target.value, page: null })}>
         <option value="all">{cs ? 'Vše' : 'All'}</option>

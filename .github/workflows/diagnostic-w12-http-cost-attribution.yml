@@ -1,0 +1,73 @@
+name: Diagnostic W12 Real Client HTTP Cost Attribution
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/profile_w12_real_client_http_attribution.py'
+      - 'tests/application/test_w12_http_attribution_helpers.py'
+      - '.github/workflows/diagnostic-w12-http-cost-attribution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: w12-actual-harness-http-cost-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  original-256-player-real-week:
+    name: A-B-B-A exact W12 native week, attribute redundant harness GET/POST
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install backend and controlled test transport
+        run: python -m pip install -e . pytest
+      - name: Verify route operation classification, no duplicate production code
+        run: PYTHONPATH="$PWD/src:$PWD" python -m pytest tests/application/test_w12_http_attribution_helpers.py -q --maxfail=1
+      - name: Download original successfully played W12/256/8-Edition/24-match SQLite
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/real-original-w12
+      - name: Run four fresh-process real weeks with identical actual old Saved source
+        env:
+          PYTHONUNBUFFERED: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t databases < <(find "$RUNNER_TEMP/real-original-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#databases[@]}" -ne 1 ]; then
+            echo "::error::Expected exactly one original completed W12 SQLite state"
+            exit 1
+          fi
+          mkdir -p "$RUNNER_TEMP/w12-http-cost-evidence"
+          for case in A1 B1 B2 A2; do
+            cp "${databases[0]}" "$RUNNER_TEMP/native-case.sqlite"
+            PYTHONPATH="$PWD/src:$PWD" python scripts/profile_w12_real_client_http_attribution.py \
+              --case "$case" \
+              --database "$RUNNER_TEMP/native-case.sqlite" \
+              --out "$RUNNER_TEMP/w12-http-cost-evidence/$case.json"
+            rm -f "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-case.sqlite-wal" "$RUNNER_TEMP/native-case.sqlite-shm"
+          done
+          PYTHONPATH="$PWD/src:$PWD" python scripts/profile_w12_real_client_http_attribution.py \
+            --summarize "$RUNNER_TEMP/w12-http-cost-evidence"
+      - name: Retain only small operation metrics; never the original private database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: original-w12-http-harness-attribution-${{ github.run_id }}
+          path: ${{ runner.temp }}/w12-http-cost-evidence/
+          if-no-files-found: warn
+          retention-days: 7

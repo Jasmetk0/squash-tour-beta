@@ -230,8 +230,15 @@ persistence, which this branch does not touch.
   `StopIteration`, unknown-dimension `KeyError`, str-valued dimension; tampered
   stamina after-state; wrong control transition kind; two-level effort jump.
 - Authoritative replay (stored-history re-simulation that compares stored bytes) sees
-  byte-identical engine output, so it is unaffected; the black-box native week below
-  exercises it through real HTTP/SQLite.
+  byte-identical engine output, so it is unaffected.
+- **Real server path, black box.** `scripts/profile_native_week_ab.py` (unchanged,
+  shared driver) `prepare` + `ab --scenario w6 --a 29784d5 --b 5a3308b` with
+  `BETA_ENGINE_NEW_RUN_SAVED_STORAGE=saved_v2`: a real uvicorn/SQLite native Tour week
+  with 16 measured HTTP requests (18 in the deliberate-retry path), three matches,
+  result confirmation, three explicit Saves and S1W4 → S1W5. Verdict `equal` for the
+  normal and the retry path (full inspection, logical history, request digests,
+  SQLite integrity); the input backup's SHA-256 was unchanged afterwards. One trial:
+  34.6 vs 33.3 s wall, not a performance claim (three matches per week).
 
 ## 6. Reproduce
 
@@ -245,7 +252,7 @@ b=5a3308b4111eb4f6d3aca2e0a27c6df7d34b10be
 .venv/bin/python scripts/ab_match_kernel.py --a $a --b $b --out work/ab --rounds 6 \
   --python .venv/bin/python ko64 ko128 corpus          # equality pass first, exit 1 on any difference
 .venv/bin/python scripts/ab_match_kernel.py --a $a --b $b --out work/ab-wide --rounds 3 \
-  --python .venv/bin/python ko32 http64 restart cases single
+  --python .venv/bin/python ko32 ko64 ko128 corpus http64 restart   # the earlier 3-round run
 MATCH_BENCH_SOURCE_ROOT=<tree> .venv/bin/python scripts/profile_match_engine_phases.py set --json
 ```
 

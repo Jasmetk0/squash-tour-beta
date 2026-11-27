@@ -1,5 +1,9 @@
 # MatchEngine performance (25 November 2026)
 
+> Follow-up (27 November 2026, task #1911): `docs/MATCHENGINE_WIDE_DRAW_PERFORMANCE_2026_11_27.md`
+> applies the log-entry rehash skip rejected below with a scoped, field-identity guard
+> and measures 32/64/128 draws with A/A and pinned A/B.
+
 Branch `claude/awesome-maxwell-m305sa` from `buuk 8af660d`. Scope:
 `domain/matches`, the directly used `core/rng.py`, focused tests and benchmark
 tools. No sporting rule, probability, RNG draw order, seed, schema, hash

@@ -149,6 +149,17 @@ class RallyEffortChangeReason(str, Enum):
     TACTICAL_VARIATION = "TACTICAL_VARIATION"
 
 
+# Built once instead of on every validator run (same members and order).
+_EFFORT_ORDER: tuple[RallyEffortLevel, ...] = tuple(RallyEffortLevel)
+_CONTROL_VALUES: dict[RallyControlState, int] = {
+    RallyControlState.STRONG_CONTROL_A: 2,
+    RallyControlState.SLIGHT_CONTROL_A: 1,
+    RallyControlState.NEUTRAL: 0,
+    RallyControlState.SLIGHT_CONTROL_B: -1,
+    RallyControlState.STRONG_CONTROL_B: -2,
+}
+
+
 class RallyEffortChange(BaseModel):
     player_id: str = Field(min_length=1)
     from_level: RallyEffortLevel
@@ -157,7 +168,7 @@ class RallyEffortChange(BaseModel):
 
     @model_validator(mode="after")
     def validate_change(self) -> RallyEffortChange:
-        order = list(RallyEffortLevel)
+        order = _EFFORT_ORDER
         if abs(order.index(self.to_level) - order.index(self.from_level)) != 1:
             raise ValueError("within-rally effort changes must move exactly one level")
         return self
@@ -187,13 +198,7 @@ class RallyControlSegment(BaseModel):
 
     @model_validator(mode="after")
     def validate_transition(self) -> RallyControlSegment:
-        values = {
-            RallyControlState.STRONG_CONTROL_A: 2,
-            RallyControlState.SLIGHT_CONTROL_A: 1,
-            RallyControlState.NEUTRAL: 0,
-            RallyControlState.SLIGHT_CONTROL_B: -1,
-            RallyControlState.STRONG_CONTROL_B: -2,
-        }
+        values = _CONTROL_VALUES
         distance = abs(values[self.state_after] - values[self.state_before])
         expected = (
             RallyControlTransitionKind.STAY

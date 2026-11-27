@@ -35,6 +35,12 @@ class StaminaDimension(str, Enum):
     MATCH = "MATCH"
 
 
+# Iterating an Enum class rebuilds a generator over its members on every call;
+# the hot stamina paths use this tuple (same members, same definition order).
+_DIMENSIONS: tuple[StaminaDimension, ...] = tuple(StaminaDimension)
+_DIMENSION_SET: frozenset[StaminaDimension] = frozenset(_DIMENSIONS)
+
+
 class StaminaTransitionCause(str, Enum):
     RALLY_WORKLOAD = "RALLY_WORKLOAD"
     BETWEEN_RALLY_RECOVERY = "BETWEEN_RALLY_RECOVERY"
@@ -56,14 +62,17 @@ class PlayerStaminaProfile(BaseModel):
 
     @model_validator(mode="after")
     def validate_dimensions(self) -> PlayerStaminaProfile:
-        if {bar.dimension for bar in self.bars} != set(StaminaDimension):
+        if {bar.dimension for bar in self.bars} != _DIMENSION_SET:
             raise ValueError("stamina profile requires every physical dimension once")
-        if len(self.bars) != len(StaminaDimension):
+        if len(self.bars) != len(_DIMENSIONS):
             raise ValueError("stamina profile contains duplicate dimensions")
         return self
 
     def bar(self, dimension: StaminaDimension) -> StaminaBarProfile:
-        return next(bar for bar in self.bars if bar.dimension == dimension)
+        for bar in self.bars:
+            if bar.dimension == dimension:
+                return bar
+        raise StopIteration  # as next() on the exhausted search did
 
 
 class EffectiveMatchStaminaSnapshot(BaseModel):
@@ -253,14 +262,23 @@ class PlayerStaminaState(BaseModel):
 
     @model_validator(mode="after")
     def validate_dimensions(self) -> PlayerStaminaState:
-        if len(self.bars) != len(StaminaDimension) or {
+        if len(self.bars) != len(_DIMENSIONS) or {
             bar.dimension for bar in self.bars
-        } != set(StaminaDimension):
+        } != _DIMENSION_SET:
             raise ValueError("stamina state requires every physical dimension once")
         return self
 
     def current(self, dimension: StaminaDimension) -> float:
-        return next(bar.current for bar in self.bars if bar.dimension == dimension)
+        for bar in self.bars:
+            if bar.dimension == dimension:
+                return bar.current
+        raise StopIteration  # as next() on the exhausted search did
+
+    def capacity(self, dimension: StaminaDimension) -> float:
+        for bar in self.bars:
+            if bar.dimension == dimension:
+                return bar.capacity
+        raise StopIteration  # as next() on the exhausted search did
 
 
 class PlayerStaminaDelta(BaseModel):
@@ -270,11 +288,14 @@ class PlayerStaminaDelta(BaseModel):
     match: float
 
     def for_dimension(self, dimension: StaminaDimension) -> float:
-        return {
-            StaminaDimension.EXPLOSIVE: self.explosive,
-            StaminaDimension.RALLY: self.rally,
-            StaminaDimension.MATCH: self.match,
-        }[dimension]
+        return getattr(self, _DELTA_FIELDS[dimension])
+
+
+_DELTA_FIELDS: dict[StaminaDimension, str] = {
+    StaminaDimension.EXPLOSIVE: "explosive",
+    StaminaDimension.RALLY: "rally",
+    StaminaDimension.MATCH: "match",
+}
 
 
 class PlayerStaminaWorkload(BaseModel):
@@ -346,16 +367,12 @@ class StaminaTransition(BaseModel):
         for before, delta, after in zip(
             self.states_before, self.deltas, self.states_after, strict=True
         ):
-            for dimension in StaminaDimension:
+            for dimension in _DIMENSIONS:
                 expected = _round(
                     _clamp(
                         before.current(dimension) + delta.for_dimension(dimension),
                         0,
-                        next(
-                            bar.capacity
-                            for bar in before.bars
-                            if bar.dimension == dimension
-                        ),
+                        before.capacity(dimension),
                     )
                 )
                 if after.current(dimension) != expected:
@@ -598,7 +615,7 @@ class MatchStaminaLog(BaseModel):
         match_stamina_limits_recovery: bool,
     ) -> PlayerStaminaDelta:
         values: dict[StaminaDimension, float] = {}
-        for dimension in StaminaDimension:
+        for dimension in _DIMENSIONS:
             bar = profile.bar(dimension)
             if cause == StaminaTransitionCause.RALLY_WORKLOAD:
                 value = -workload_units * bar.workload_cost_factor

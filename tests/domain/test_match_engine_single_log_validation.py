@@ -218,3 +218,77 @@ def test_every_stored_event_hash_equals_the_historical_json_dumps_hash():
         assert transition.transition_hash == _reference_sha256(
             StaminaTransition._hash_payload(transition)
         )
+
+
+# --- stamina and control validators with prebuilt member tables ---------------------
+
+
+def test_stamina_lookups_keep_their_results_and_missing_dimension_behaviour(engine_result):
+    from beta_engine.domain.matches.stamina import (
+        PlayerStaminaDelta,
+        PlayerStaminaState,
+        StaminaDimension,
+    )
+
+    state = engine_result.stamina_log.transitions[4].states_after[0]
+    for bar in state.bars:
+        assert state.current(bar.dimension) == bar.current
+        assert state.capacity(bar.dimension) == bar.capacity
+        assert state.current(bar.dimension.value) == bar.current  # str-valued enum
+    partial = PlayerStaminaState.model_construct(player_id="X", bars=state.bars[:2])
+    with pytest.raises(StopIteration):
+        partial.current(StaminaDimension.MATCH)
+    with pytest.raises(StopIteration):
+        partial.capacity(StaminaDimension.MATCH)
+    delta = PlayerStaminaDelta(player_id="X", explosive=-0.1, rally=-0.2, match=-0.3)
+    assert [delta.for_dimension(d) for d in StaminaDimension] == [-0.1, -0.2, -0.3]
+    assert delta.for_dimension("RALLY") == -0.2
+    with pytest.raises(KeyError):
+        delta.for_dimension("BALANCE")
+    payload = state.model_dump()
+    with pytest.raises(ValueError, match="every physical dimension once"):
+        PlayerStaminaState.model_validate({**payload, "bars": payload["bars"][:2]})
+    with pytest.raises(ValueError, match="every physical dimension once"):
+        PlayerStaminaState.model_validate(
+            {**payload, "bars": [payload["bars"][0]] * 2 + list(payload["bars"][2:])}
+        )
+    profile = engine_result_profile()
+    with pytest.raises(StopIteration):
+        type(profile).model_construct(player_id="X", initial_readiness_factor=1.0,
+                                      bars=profile.bars[:1]).bar(StaminaDimension.MATCH)
+    duplicate = profile.model_dump()
+    duplicate["bars"] = [duplicate["bars"][0]] * 3
+    with pytest.raises(ValueError, match="every physical dimension once"):
+        type(profile).model_validate(duplicate)
+
+
+def engine_result_profile():
+    from beta_engine.domain.matches.stamina import EffectiveMatchStaminaSnapshot
+
+    return EffectiveMatchStaminaSnapshot.create(context=_context()).player_profiles[0]
+
+
+def test_tampered_stamina_after_state_and_control_segments_are_rejected(engine_result):
+    from beta_engine.domain.matches.rallies import (
+        RallyControlSegment,
+        RallyEffortChange,
+        RallyEffortChangeReason,
+    )
+
+    transition = engine_result.stamina_log.transitions[2]
+    payload = transition.model_dump()
+    payload["states_after"][1]["bars"][2]["current"] -= 0.0001
+    with pytest.raises(ValueError, match="delta does not match state"):
+        StaminaTransition.model_validate(payload)
+    segment = next(
+        s for e in engine_result.rally_log.events if e.control_trace
+        for s in e.control_trace.segments if s.state_before != s.state_after
+    )
+    wrong_kind = segment.model_dump()
+    wrong_kind["transition_kind"] = "STAY"
+    with pytest.raises(ValueError, match="does not match its distance"):
+        RallyControlSegment.model_validate(wrong_kind)
+    assert RallyControlSegment.model_validate(segment.model_dump()) == segment
+    with pytest.raises(ValueError, match="exactly one level"):
+        RallyEffortChange(player_id="SV-A", from_level="CONSERVE", to_level="INCREASED",
+                          reason=next(iter(RallyEffortChangeReason)))

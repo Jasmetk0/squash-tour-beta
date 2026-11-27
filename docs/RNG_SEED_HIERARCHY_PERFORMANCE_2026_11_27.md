@@ -126,10 +126,12 @@ cumulative workloads). The only exact repeat found is D, and it is below the noi
   every case in a new process from the Saved fixture. Verdict **equal** for normal and
   retry. The input SHA-256 `2e7c7884…` is unchanged afterwards.
 - **Tests** (`tests/core/test_rng_byte_equivalence.py`, 8 tests): compare against the
-  verbatim `buuk` class. Mutants are caught: missing `gauss_next`, `repr` instead of
-  `str`, field order, a stale child prefix, caching of a foreign scope. One equivalent
-  mutant survives (`isinstance` instead of `type is int` takes the same C path). The
-  fast path is restricted to exact `int` on purpose.
+  verbatim `buuk` class. Mutation run on `201be5f` in a separate worktree with
+  `python -B`/`PYTHONDONTWRITEBYTECODE=1`: 8 of 9 mutants are caught (a cached foreign
+  scope, `==` instead of `is`, a stale child prefix, missing `gauss_next`, `repr`
+  instead of `str`, field order, little-endian digest, uncached `Seed` identity). The
+  survivor is an equivalent mutant: `isinstance` instead of `type is int` takes the same
+  C path. The fast path is restricted to exact `int` on purpose.
 
 No new cache proof over Saved history; nothing stored changes.
 
@@ -208,9 +210,14 @@ Input fingerprints: ko64 `3f08eb6f…`, ko128 `795da202…`, corpus `c66519d3…
 
 ## 7. Tests run (final `src` `201be5f`, unless stated)
 
-- `tests/core`: 12 pass, 8 of them new. Mutants of the final code are caught: foreign
-  scope cached, `==` instead of `is`, a stale child prefix, missing `gauss_next`,
-  `repr` parts, field order.
+- `tests/core`: 12 pass, 8 of them new. Mutation result: see §4.
+- Process note: my first mutation runs edited the main checkout in place. A mutant of
+  the same size, restored within the same second, left a stale `rng.cpython-312.pyc`
+  there, and the HEAD check then failed. The committed source was correct
+  (`wt/cand` at `201be5f` was identical byte for byte and passed). Every measurement
+  and equality run used separate worktrees compiled from their own sources. After
+  `__pycache__` was deleted, HEAD passes, and the mutants were rerun without bytecode
+  as described in §4.
 - `-m pr_critical tests/core tests/domain`: 1,069 pass, 1 fail. `buuk` (`29784d5`) has
   1,068 pass and the same failure
   (`test_calendar_postseason_knockout_version::test_season_reducer_rejects_foreign_sources_before_replay`,

@@ -59,7 +59,7 @@ function sources(events: Event[] = examples, run = active.run ?? '', branch = ac
       viewer_branch_id: branch, season_count: bySeason.size,
       event_count: events.length,
       seasons: [...bySeason].map(([season, es]) => ({
-        season, event_count: es.length, events: es,
+        season, event_count: es.length, events: es.map(({ winner: _winner, ...publicEvent }) => publicEvent),
       })),
     },
     history: {

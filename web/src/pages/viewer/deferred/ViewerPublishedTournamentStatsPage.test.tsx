@@ -56,7 +56,7 @@ function saved(events: Event[] = examples, run = active.run ?? '', branch = acti
       schema_version: 'viewer_run_calendar.v1',
       product_run_id: run, viewer_branch_id: branch,
       season_count: groups.size, event_count: events.length,
-      seasons: [...groups].map(([season, es]) => ({ season, event_count: es.length, events: es })),
+      seasons: [...groups].map(([season, es]) => ({ season, event_count: es.length, events: es.map(({ winner: _winner, ...publicEvent }) => publicEvent) })),
     },
     history: {
       schema_version: 'viewer_tournament_history.v1',

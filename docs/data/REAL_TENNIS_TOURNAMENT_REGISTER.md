@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 35 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 36 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -69,10 +69,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Munich](#munich-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Bucharest](#bucharest-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Madrid](#madrid-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Rome](#rome-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 35 zpracovaných ročníků; 32 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 36 zpracovaných ročníků; 33 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -113,7 +114,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 33 | Munich 2024 | HOTOVO (nominální rozsah) |
 | 34 | Bucharest 2024 | HOTOVO (nominální rozsah) |
 | 35 | Madrid 2024 | HOTOVO (nominální rozsah) |
-| 36 | Rome 2024 | NEZAHÁJENO |
+| 36 | Rome 2024 | HOTOVO (nominální rozsah) |
+| 37 | Geneva 2024 | NEZAHÁJENO |
+| 38 | Lyon 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -166,6 +169,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#munich-2024) | BMW Open | ATP 250 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; poslední ročník ATP 250 |
 | [2024](#bucharest-2024) | Țiriac Open | ATP 250 | 2024-04-14–2024-04-15 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 15.4. |
 | [2024](#madrid-2024) | Mutua Madrid Open | ATP Masters 1000 | 2024-04-22–2024-04-23 | 2024-04-24–2024-05-05 | HOTOVO v nominálním rozsahu; 4.5. bez mužské dvouhry |
+| [2024](#rome-2024) | Internazionali BNL d'Italia | ATP Masters 1000 | 2024-05-06–2024-05-07 | 2024-05-08–2024-05-19 | HOTOVO v nominálním rozsahu; 18.5. bez mužské dvouhry |
 
 ## Wimbledon 2024
 
@@ -4386,6 +4390,129 @@ I/T/D/R/B/P doloženy. H* přesné původní denní splity R128/R64/R32 chyběj�
 - MAD24-12: [Sporting News dobový program a ceny](https://www.sportingnews.com/uk/tennis/news/watch-madrid-open-2024-schedule-channel-stream-prize-money/6fc48773e50b2528826a3afd), chybných 30255 EUR R64, přednost originálu.
 - MAD24-13: [TenisPortal ročníkový přehled](https://www.tenisportal.cz/madrid/2024/atp-muzi/), shoda 30225 EUR. Dobový předpis viz IW24-11/14 a SCL24-18.
 
+
+## Rome 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/P/Z s označenými mezerami). Rešerše 2026-11-27. Předstartovní a výsledkový originální ATP Main (obě strany každého), první strana originální ATP Main acceptance list a tři původní OOP vizuálně ověřeny. Originální Q finanční tabulka nezískána, Q ceny sekundárně doloženy. Samostatná pořadatelská předkvalifikace přiděluje dvě z pěti WC do ATP Q.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Internazionali BNL d'Italia, mužská dvouhra | ROM24-1/2/4 |
+| Kategorie / ATP ID | ATP Masters 1000 / 416 | ROM24-2/12 |
+| Ročník | 81. ročník společné akce v dobovém přehledu | ROM24-12/13 |
+| Dějiště | Foro Italico, Řím, Itálie | ROM24-4/12 |
+| Povrch | venkovní červená antuka | ROM24-1/2 |
+| Časové pásmo | Europe/Rome, CEST UTC+02:00 během soutěže | lokalita a datum |
+| Ředitel | Paolo Lorenzi | ROM24-5/6/7 |
+| ATP supervisors | Carlos Sanches, Roland Herfel, Andrei Kornilov, Carmelo Di Dio | ROM24-1/2/5 |
+| Tour managers / referee | Konstantin Haerle, Denis Zivkovic / Riccardo Ragazzini | ROM24-5/6 |
+| Měna | EUR | ROM24-1/2 |
+
+Míče a detail sheet nezískány. Nezaměňovat s WTA nebo s Rome Challenger. Záhlaví společných OOP obsahující EUR 4791105 patří ženské dotaci, nikoli ATP singlovým cenám.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-04-08 | ROM24-3, originál |
+| Q rank date | 2024-04-15, pravidlový referenční den | odvozeno §7.03 |
+| Nominální Main deadline | 2024-04-08 18:00 CEST (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-04-15 18:00 CEST (12:00 US Eastern) | odvozeno §7.03 |
+| Main los | 2024-05-06, přesný čas neověřen | ROM24-8 |
+| Q los | nejpozději 2024-05-05 19:38 CEST (vydání OOP), hodina losu neověřena | ROM24-5 |
+| Q1 Alt sign-in deadline | 2024-05-06 09:30 CEST | ROM24-5 |
+| Q | 2024-05-06–07 od 10:00 CEST | ROM24-4/5/6 |
+| Main | 2024-05-08–19 | ROM24-4/7/9 |
+| Main LL sign-in 8.5. | 10:30 CEST | ROM24-7 |
+| Singlové finále | 2024-05-19 17:00 CEST, dobový plán | ROM24-9 |
+
+Získán skutečný **Official Player Acceptance List**, označený Original, ze dne 8.4.2024, str. 1/3, timestamp 12:23:51 bez uvedeného časového pásma (ROM24-3). První strana vizuálně, zbylé strany alternates textově; Main 79 DA, 5 WC, 12 Q, 0 SE, původní cutoff 77 a rankings date 8.4. Konečný Main originál uvádí Daniel Galan 85 v obou cutoff polích. Oba údaje uchovat odděleně: původní acceptance cutoff a údaj v pozdějším losu nejsou totéž. Dobový přepis Q listu ROM24-10 uvádí cutoff 127 a datum listiny 16.4.; datum listiny není rank date. Q originální acceptance list a konečný cutoff chybějí. Uzávěrky odvozené, neztotožňovat s časem exportu listiny. Původní OOP před zahájením Q je vydán v neděli večer, neprokazuje přesný čas losování.
+
+### 3. Nominální harmonogram
+
+| Kolo / den | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-05-06 | 24 |
+| Q2 | 2024-05-07 | 12 |
+| R128 | 2024-05-08–09 | 32 (16+16) |
+| R64 | 2024-05-10–11 | 32 |
+| R32 | 2024-05-12–13 | 16 |
+| R16 | 2024-05-14 | 8 |
+| QF | 2024-05-15–16 | 4 (2+2 pozorováno) |
+| SF | 2024-05-17 | 2 |
+| bez mužské dvouhry | 2024-05-18 | 0 |
+| F | 2024-05-19 | 1 |
+
+ATP předturnajový přehled ROM24-4 a dobový program Sky 5.5. ROM24-9 potvrzují všechna okna Main a kvalifikaci 6.–7.5. Originální společný OOP 6.5. vydaný 5.5. 19:38 obsahuje 24 mužských Q1 (počítány pouze ATP buňky), OOP 7.5. vydaný 6.5. 21:40 obsahuje 12 mužských Q2, z nich dvě s dosud neurčenými účastníky po neuzavřeném Q1; to není důvod zvýšit počet Q kol. Přesný důvod a okamžik dokončení těchto Q1 uzlů neověřen. Originální OOP 8.5. vydaný 7.5. 19:46 obsahuje 16 R128 (2+2+3+3+2+4 na šesti kurtech), zbývajících 16 nominálně 9.5. Přesné původní denní splity R64/R32 bez dalších OOP neověřeny. R16 14.5., QF 15.–16.5. po dvou (dobový plán oken, výsledková kontrola ROM24-11), SF 17.5., sobota bez mužské dvouhry, F v neděli 19.5. v 17:00 podle předturnajového programu. Původní OOP závěrečných kol nezískány. Q 2 + Main 12 dní bez překryvu, 11 singlových hracích dní Main, 14 kalendářních dní celkem, 95+36=131 nominálních zápasů. OOP jsou kombinované s WTA; nepočítat ženské zápasy ani jiné disciplíny.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 128 / 96 | 48 / 48 (12 sekcí po 4) |
+| DA | 79 ročníkově; 78–79 podle SE | 43 |
+| SE | 0 ročníkově; obecně 0–1 | 0 |
+| WC | 5 | 5 |
+| Řádné Q postupy | 12 | 12 |
+| Nasazení | 32 | 24 |
+| BYE | 32, všichni nominální seedy | 0 |
+| Kola / zápasy | 7 / 95 | 2 / 36 |
+| Formát | BO3 setů | BO3 setů |
+
+Ročníkový originální acceptance list ROM24-3 explicitně 79+5+12+0=96, obecný §7.08 B/E a §7.10 B viz IW24-11. Obě strany předstartovního Main ROM24-1 potvrzují 32 seedů a BYE, pět WC Gigante, Zeppieri, Fognini, Napolitano, Vavassori (11/12/52/83/118), 12 Q placeholderů (3/27/30/35/44/53/60/76/91/99/102/124). PR Nadal a Shapovalov jsou součástí DA. Výsledkový originál ROM24-2 eviduje čtyři LL: Moutet na původním Q místě 3, Shang na původní seed pozici 81 po odstoupení Humberta s BYE, Wolf a Mayot po dalších odstoupeních. Počet skutečně označených Q/seedů ve výsledkovém pavouku není plánovaný počet. Main 32+32+16+8+4+2+1=95.
+
+Q 43 DA+5 WC, 24 seedů, 12 čtyřčlenných sekcí. Dobový úplný Q přehled ROM24-14 potvrzuje všechny seedy 1–24, WC Passaro, Maestrelli, Vincent Ruggeri, Picchione, Oradini a dva Alt Fatic/Mpetshi Perricard. Původní OOP Q1 nezávisle obsahuje těchto pět WC a 24 mužských utkání. Q 24+12=36 uzlů a 12 vítězů; LL přechody nezvyšují nominální počet Q postupových míst.
+
+**Předkvalifikace pořadatele:** dobové zdroje ROM24-15 potvrzují finální národní předkvalifikační soutěž 30.4.–3.5. a dvě mužské WC do ATP Q. Picchione a Oradini získali WC touto cestou, další tři WC byly přímo oznámené pořadatelem (Maestrelli, Passaro, Vincent Ruggeri). Jde o způsob rozdělení pěti existujících WC, nikoli třetí kolo ATP Q, další dvě WC nebo ATP rankingový turnaj. Předkvalifikační lokální série není zahrnuta do 131 uzlů; úplná samostatná geometrie této série není předmětem této edice ATP Main/Q.
+
+### 5. Dobová pravidla
+
+§7.03/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle IW24-11/14 a SCL24-18. Obecně 78–79 DA a 0–1 SE; konkrétní originální Main listina Říma potvrzuje 79 DA a 0 SE. Main 32 seedů a 32 BYE, Q 24 seedů, BO3 tiebreak. Bez ATP 250 LE a ATP 500 A+ WC. Main první prohra po BYE 10 bodů místo 30, držitel WC při prohře R128 0 místo 10, Q 20/10/0 podle dobového předpisu, Q body navíc k Main výsledku. Bodové výjimky nejsou změnou nominální finanční tabulky. Předkvalifikační WC výše jsou pořadatelský mechanismus uvnitř běžné WC kapacity.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 1000 | 963225 |
+| Finalista | 1 | 650 | 512260 |
+| SF | 2 | 400 | 284590 |
+| QF | 4 | 200 | 161995 |
+| R16 | 8 | 100 | 88440 |
+| R32 | 16 | 50 | 51665 |
+| R64 | 32 | 30 (10 při první prohře po BYE) | 30255 |
+| R128 | 32 | 10 (WC 0) | 20360 |
+| Q postupující | 12 | 20 | 0 samostatně |
+| Q2 prohra | 12 | 10 | 11820 |
+| Q1 prohra | 24 | 0 | 6130 |
+
+Main ceny včetně R64 **30255 EUR** přímo vizuálně v předstartovním i výsledkovém originálu (vždy obě strany). V registru Madrid 2024 je doloženo 30225 EUR, tedy nepřebírat částku pouze ze stejné kategorie či celkové dotace. Q 11820/6130 EUR souhlasí v dobové Borsa&Finanza a ročníkových tabulkách ROM24-16/17; původní Q finanční tabulka nedostupná, P*. Nezávislost vzniku sekundárních tabulek neprokázána. Nominální Main 5846485 EUR, Q 288960 EUR, celkem 6135445 EUR; 96 Main příjemců a 36 nepostupujících Q příjemců. Financial commitment 9094379 EUR a prize money 7877020 EUR dle ATP nejsou mužský singlový součet. Q vítězové nemají samostatnou nominální Q odměnu, historické LL/withdrawal payout nezahrnuty.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B doloženy. H* Q1/Q2, první den Main a okna kol potvrzeny, původní R64/R32 a QF denní OOP nezískány; QF 2+2 výsledkově. E* originální Main listina získána, ale Q acceptance list, detail sheet, přesné časy losů a konečný Q cutoff chybějí; uzávěrky odvozené. P* Main primární, Q sekundární shoda. Z* oba Main originály v archivních kopiích po dvou stranách, Main acceptance list první strana a OOP 6./7./8.5. po jedné straně vizuálně; přímé ATP Main/Q PDF nedostupné, ATP preview indexovaný text, otevření 403. Nevymýšlet SHA-256. Aritmetická kontrola kvót, 96/48, 32/24 seedů, 32/0 BYE, 12 postupů, 95/36 zápasů a peněz prošla. Další pracovní fronta Geneva a Lyon 2024, pořadí a data ještě ověřit v dobovém kalendáři. Bez runtime změn.
+
+### 8. Zdroje (ROM24)
+
+- ROM24-1: [předstartovní ATP Main archiv Fantatennis](https://www.fantatennis.net/_downloads/b47e0a21292755a5a02c06292eb01310), obě strany vizuálně; [FITP kopie](https://www.fitp.it/media/ibi_repository/2024/20240506_MDSatp.pdf) textově.
+- ROM24-2: [výsledkový ATP Main archiv tenislosalcazares](https://tenislosalcazares.com/cuadros/masters/roma24.pdf), obě strany vizuálně. [Přímý ATP Main](https://www.protennislive.com/posting/2024/416/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/416/qs.pdf) nedostupné.
+- ROM24-3: [originální ATP Official Player Acceptance List 8.4.](https://www.supertennis.tv/media/REDAZIONE_APRILE_2024/20240408_Rome_1000_MDS.pdf), str. 1 vizuálně, všechny 3 textově; původní cutoff 77 a rank date 8.4.
+- ROM24-4: [ATP předturnajový přehled 2024](https://www.atptour.com/en/news/rome-2024-atp-masters-1000-history-draw-schedule), indexovaný text, otevření 403.
+- ROM24-5: [FITP originální OOP Q1 6.5.](https://www.fitp.it/media/ibi_repository/2024/20240505_OP.pdf), vizuálně, 24 ATP Q1.
+- ROM24-6: [FITP originální OOP Q2 7.5.](https://www.fitp.it/media/ibi_repository/2024/20240506_OP.pdf), vizuálně, 12 ATP Q2.
+- ROM24-7: [FITP originální OOP Main 8.5.](https://www.fitp.it/media/ibi_repository/2024/20240507_OPmercoled__.pdf), vizuálně, 16 ATP R128.
+- ROM24-8: [Sky Sport 6.5., Main los](https://sport.sky.it/tennis/2024/05/06/atp-roma-2024-tabellone).
+- ROM24-9: [Sky předturnajový kalendář 5.5.](https://sport.sky.it/tennis/2024/05/05/atp-roma-2024-calendario-guida), okna kol a finále 17:00.
+- ROM24-10: [LiveTennis aktualizace listin 5.5.](https://www.livetennis.it/post/411508/masters-1000-roma-la-situazione-aggiornata-md-e-qualificazioni-entra-matteo-berrettini-nel-md-wild-card-md-a-stefano-napolitano/), Q cutoff 127, datum listiny 16.4.; [OA Sport Q listina 18.4.](https://www.oasport.it/2024/04/atp-roma-annunciata-lentry-list-delle-qualificazioni-al-via-un-solo-azzurro-in-attesa-delle-wild-card/amp/).
+- ROM24-11: [RTÉ denní výsledky](https://www.rte.ie/sport/results/tennis/internazionali-bnl-ditalia-men/888935/results/), [Stat Pick 2024](https://www.statpick.ai/tournaments/tennis/rome-atp/2024), QF 2+2.
+- ROM24-12: [ročníkový přehled](https://en.wikipedia.org/wiki/2024_Italian_Open_(tennis)), [německá ročníková identita ATP 416](https://de.wikipedia.org/wiki/Internazionali_BNL_d%E2%80%99Italia_2024/Herren).
+- ROM24-13: [dobový přehled 81. ročníku](https://reteoro.tv/blog-detail?post=274124&slug=internazionali-bnl-ditalia-a-roma-fino-al-19-maggio).
+- ROM24-14: [TennisTemple úplný Q pavouk](https://en.tennistemple.com/competitions/rome/2024/draw-qualifications), [Sportface dobový Q přehled](https://news.sportface.it/tennis/tabellone-qualificazioni-maschili-internazionali-ditalia-roma-2024-risultati-e-accoppiamenti/2539472).
+- ROM24-15: [ANSA 23.4. oznámení WC](https://www.ansa.it/sito/notizie/sport/tennis/2024/04/23/internazionali-wild-card-per-fognini-e-berrettini_94d5d959-cadb-4f60-aa54-86a2671ac998.html), [dobový rozsah předkvalifikace](https://www.livetennis.it/post/412459/pre-quali-roma-2024-i-risultati-completi-della-prima-giornata-prima-sorpresa-dalla-valle-n-1-del-seeding-si-ritira-alla-fine-del-primo-set-avanza-raul-brancaccio/), [OA Sport výsledné WC po změnách](https://www.oasport.it/2024/05/atp-roma-caos-ritiri-cosa-e-cambiato-per-le-wild-card-agli-italiani-tra-tabellone-principale-e-qualificazioni/).
+- ROM24-16: [Borsa&Finanza dobový kompletní rozpis cen a bodů](https://borsaefinanza.it/internazionali-roma-2024-quanto-guadagna-chi-vince/), Q 11820/6130, vložený nulový řádek Q3 není důkaz třetího kola.
+- ROM24-17: [ročníková finanční tabulka](https://en.wikipedia.org/wiki/2024_Italian_Open_(tennis)), [IA Tennis Academy 2024](https://iatennis.net/the-2024-italian-open-results/), shoda Q. Dobový ATP předpis viz IW24-11/14 a SCL24-18.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -4417,3 +4544,4 @@ I/T/D/R/B/P doloženy. H* přesné původní denní splity R128/R64/R32 chyběj�
 | Munich 2024 | H*/E*/R*/P*/Z* | původní Main/Q PDF, Q finanční originál (3105/1695 EUR sekundární shoda), acceptance lists/DS, Q rank date a cutoff, hodiny losů, předdešťové OOP a týdenní Q NG alokace; plánovaný Main NG Prižmić a využití LE Fritzem doloženy |
 | Bucharest 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance lists, Q rank date/cutoff a čas losu, původní R16 split/OOP, týdenní Q NG alokace; Main EUR ověřeno primárně, Q 3105/1695 EUR ze tří ročníkových přehledů, TennisTemple zastaralá tabulka |
 | Madrid 2024 | H*/E*/Z* | původní denní splity R128/R64/R32, acceptance lists/DS, časy losů a model míčů; Main/Q ceny primární, konflikt souhrnného commitment 9249713/9017445 EUR bez vlivu na singlové ceny |
+| Rome 2024 | H*/E*/P*/Z* | originální Q los/finanční tabulka (11820/6130 EUR sekundární shoda), Q acceptance list/DS, Q rank date/cutoff, časy losů, původní denní R64/R32/QF OOP; originální Main acceptance list a oba Main losy vizuálně ověřeny |

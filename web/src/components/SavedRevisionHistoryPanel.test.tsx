@@ -300,6 +300,7 @@ describe('SavedRevisionHistoryPanel', () => {
     api.listSavedRevisionHistory.mockResolvedValueOnce({
       ...history,
       saved_head_revision_id: 'revision-three',
+      total_count: 3,
       saved_revisions: [
         revisions[0],
         { ...revisions[1], is_branch_head: false },
@@ -557,6 +558,24 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
   })
 
+  it('rejects a preview with the right revision ID but a conflicting hash or owner',async()=>{
+    api.getSavedRevision.mockResolvedValueOnce({...detail,content_hash:'foreign-hash'})
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:/Revision 1:/}))
+    expect(await screen.findByText('The preview returned a mismatched Saved Revision identity.')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Restore current Branch from this revision'})).not.toBeInTheDocument()
+    expect(api.getSavedRevisionRestorePreflight).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+  it('rejects older pages with foreign branch identity even if the newest page is valid',async()=>{
+    api.listSavedRevisionHistory.mockResolvedValueOnce({...history,saved_revisions:[revisions[1]],has_more_older:true,next_before_sequence:2})
+      .mockResolvedValueOnce({...history,branch_id:'foreign',saved_revisions:[revisions[0]]})
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:'Load older revisions'}))
+    expect(await screen.findByText('Saved Revision history returned a mismatched Run or Branch identity.')).toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Saved Revision history table'})).not.toBeInTheDocument()
+    expect(api.getSavedRevision).not.toHaveBeenCalled()
+  })
   it('does not permit Branch creation from a read-only Run', async () => {
     renderPanel({ run: { ...run, read_only: true } })
     await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
@@ -707,7 +726,7 @@ describe('SavedRevisionHistoryPanel', () => {
         run_id: run.run_id,
         branch_id: branch.branch_id,
         saved_head_revision_id: 'revision-three',
-        saved_revisions: [revisions[1], revisionThree],
+        saved_revisions: [{...revisions[1],is_branch_head:false}, revisionThree],
         total_count: 3,
         has_more_older: true,
         next_before_sequence: 2

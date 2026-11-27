@@ -78,7 +78,7 @@ class InProcessExecutor(slot_batch.MatchBatchExecutor):
         responses = [slot_batch.run_encoded(r) for r in order]
         return self.mutate(responses) if self.mutate else responses
 
-    def discard(self):
+    def discard(self, batch=None):
         self.discarded += 1
 
 
@@ -178,27 +178,27 @@ def crash_worker(_request):
 
 
 class CrashingExecutor(match_workers.ProcessMatchExecutor):
-    crash = True
+    """The first batch's workers die; later batches run the real body."""
 
     def run(self, requests):
-        if self.crash:
-            self.crash = False
-            pool = self._ensure_pool()
-            futures = [pool.submit(crash_worker, r) for r in requests]
-            return [f.result(timeout=60) for f in futures]
+        if self.pools_started == 0:
+            self.work = crash_worker
+        else:
+            self.work = slot_batch.run_encoded
         return super().run(requests)
 
 
 def test_real_spawn_pool_matches_sequential_and_recovers_from_a_worker_crash(items, sequential, monkeypatch):
     # Workers deliberately get another hash seed than this parent process.
     monkeypatch.setenv("PYTHONHASHSEED", "424242")
-    executor = CrashingExecutor(2, timeout_seconds=90)
+    executor = CrashingExecutor(2)
     try:
         before = slot_batch.batch_counters()["fallback_batches"]
         crashed = slot_batch.simulate_batch(items[:4], executor=executor)
         assert crashed == sequential[:4]
         assert slot_batch.batch_counters()["fallback_batches"] == before + 1
-        assert executor._pool is None  # broken pool discarded
+        assert executor.current_generation() is None  # broken pool retired
+        assert executor.live_worker_pids() == []
         results = slot_batch.simulate_batch(items, executor=executor)
         assert results == sequential and _bytes(results) == _bytes(sequential)
         assert executor.pools_started == 2
@@ -208,8 +208,8 @@ def test_real_spawn_pool_matches_sequential_and_recovers_from_a_worker_crash(ite
         executor.close()
     if os.path.isdir("/proc"):
         assert not any(os.path.exists(f"/proc/{pid}") for pid in pids)
-    with pytest.raises(RuntimeError):
-        list(executor.run([]))
+    with pytest.raises(slot_batch.ExecutorUnavailable):
+        executor.run([])
 
 
 def test_install_from_environment_is_bounded_and_does_not_replace_an_installed_executor(monkeypatch):

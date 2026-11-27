@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import logging
 import threading
+import time
 from dataclasses import dataclass
 
 from beta_engine.core import DeterministicRng
@@ -116,21 +117,38 @@ def bind_response(response, request, context):
     return result
 
 
+class ExecutorUnavailable(Exception):
+    """The executor declined a batch (full, closed, replacing, cooling down).
+
+    Nothing was submitted; the batch is computed sequentially and nothing is
+    retired.
+    """
+
+
 class MatchBatchExecutor:
     """Interface: iterate ``run_encoded`` responses of every request, any order."""
 
     min_batch = 2
 
     def run(self, requests):  # pragma: no cover - interface
+        """Return an iterable of responses (may raise ``ExecutorUnavailable``)."""
         raise NotImplementedError
 
-    def discard(self):  # pragma: no cover - interface
-        """Drop a possibly broken pool; the next batch starts a fresh one."""
+    def discard(self, batch=None):  # pragma: no cover - interface
+        """Drop the possibly broken pool that served ``batch`` (and only it).
+
+        ``batch`` is the value ``run`` returned, or ``None`` when ``run``
+        itself raised.
+        """
 
 
 _executor_lock = threading.Lock()
 _executor: MatchBatchExecutor | None = None
-_counters = {"executor_batches": 0, "executor_matches": 0, "fallback_batches": 0}
+_counter_lock = threading.Lock()
+_counters = {
+    "executor_batches": 0, "executor_matches": 0, "fallback_batches": 0,
+    "unavailable_batches": 0, "executor_seconds": 0.0, "max_executor_batch_seconds": 0.0,
+}
 
 
 def install_executor(executor):
@@ -141,12 +159,41 @@ def install_executor(executor):
         return previous
 
 
+def install_executor_if_absent(executor):
+    """Install ``executor`` unless one is installed; returns the installed one."""
+    global _executor
+    with _executor_lock:
+        if _executor is None:
+            _executor = executor
+        return _executor
+
+
+def uninstall_executor(executor):
+    """Uninstall exactly ``executor`` (never a later replacement)."""
+    global _executor
+    with _executor_lock:
+        if _executor is executor:
+            _executor = None
+            return True
+        return False
+
+
 def installed_executor():
     return _executor
 
 
 def batch_counters():
-    return dict(_counters)
+    with _counter_lock:
+        return dict(_counters)
+
+
+def _count(**values):
+    with _counter_lock:
+        for name, value in values.items():
+            if name.startswith("max_"):
+                _counters[name] = max(_counters[name], value)
+            else:
+                _counters[name] += value
 
 
 def _sequential(items):
@@ -166,29 +213,36 @@ def simulate_batch(items, *, executor=None):
         encode_request(i, context, seed=seed, anchor=anchor, health=health)
         for i, (context, seed, anchor, health) in enumerate(items)
     ]
-    stream = None
+    started = time.monotonic()
+    batch = None
     try:
+        batch = executor.run(requests)
         # Responses may arrive in any order; each is decoded as soon as it
         # arrives (overlapping the remaining worker computation) and placed by
         # its own request index only.
         results = [None] * len(requests)
-        stream = executor.run(requests)
-        for response in stream:
+        for response in batch:
             index = getattr(response, "index", None)
             if not isinstance(index, int) or not 0 <= index < len(requests) or results[index] is not None:
                 raise ValueError("Duplicate or foreign worker result")
             results[index] = bind_response(response, requests[index], items[index][0])
         if any(result is None for result in results):
             raise ValueError("Incomplete worker batch")
+    except ExecutorUnavailable as error:
+        # Declined before anything was submitted: nothing to retire.
+        _count(unavailable_batches=1)
+        _log.info("Match worker batch declined; computing sequentially: %s", error)
+        return _sequential(items)
     except Exception as error:  # noqa: BLE001 - every failure takes the safe path
-        _counters["fallback_batches"] += 1
+        _count(fallback_batches=1)
         _log.warning("Match worker batch rejected; recomputing sequentially: %r", error)
         try:
-            getattr(stream, "close", lambda: None)()  # cancel unfinished work
-            executor.discard()
+            getattr(batch, "close", lambda: None)()  # cancel unfinished work
+            executor.discard(batch)  # only the pool generation that served it
         except Exception:  # noqa: BLE001
             _log.exception("Discarding the match worker pool failed")
         return _sequential(items)
-    _counters["executor_batches"] += 1
-    _counters["executor_matches"] += len(items)
+    elapsed = time.monotonic() - started
+    _count(executor_batches=1, executor_matches=len(items), executor_seconds=elapsed,
+           max_executor_batch_seconds=elapsed)
     return results

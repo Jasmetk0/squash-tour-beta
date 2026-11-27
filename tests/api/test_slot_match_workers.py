@@ -158,3 +158,37 @@ def test_invalid_worker_setting_fails_startup_and_installs_nothing(tmp_path, mon
         asyncio.run(start())
     assert slot_batch.installed_executor() is None
     assert app.state.match_workers is None
+
+
+def test_repeated_lifespans_start_and_close_their_own_pool_without_leftover_processes(
+    tmp_path, monkeypatch,
+):
+    # Lifespan component check (the app's own lifespan, no uvicorn), twice in
+    # one process: each start installs a fresh pool, each shutdown joins it.
+    import asyncio
+
+    from beta_engine.main import create_app
+    from tests.domain.test_slot_match_batch import corpus
+
+    items = corpus(4)
+    expected = slot_batch.simulate_batch(items)
+    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "2")
+    seen, pools = [], []
+    for round_ in range(2):
+        app = create_app(database_url=f"sqlite:///{tmp_path / f'lifespan-{round_}.db'}")
+
+        async def cycle():
+            async with app.router.lifespan_context(app):
+                pool = app.state.match_workers
+                assert pool is not None and slot_batch.installed_executor() is pool
+                assert slot_batch.simulate_batch(items) == expected
+                seen.extend(pool.live_worker_pids())
+                assert 1 <= len(pool.live_worker_pids()) <= 2
+                pools.append(pool)
+
+        asyncio.run(cycle())
+        assert slot_batch.installed_executor() is None
+        assert pools[-1].live_worker_pids() == []
+    assert pools[0] is not pools[1] and len(set(seen)) == len(seen)
+    if __import__("os").path.isdir("/proc"):
+        assert not [pid for pid in seen if __import__("os").path.exists(f"/proc/{pid}")]

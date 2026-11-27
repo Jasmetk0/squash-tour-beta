@@ -49,7 +49,7 @@ export function ATPSavedRunWeekDetails({runId, branchId, revisionId, years}: {
   const chronological = <T extends {source_start_date: string}>(rows: T[]) =>
     [...rows].sort((a,b) => a.source_start_date.localeCompare(b.source_start_date))
 
-  return <section className="package-apply-step">
+  return <section className="package-apply-step" data-run-navigation-readonly>
     <h3>{cs ? 'ATP kalendář v týdnech Runu (W52)' : 'ATP calendar in Run weeks (W52)'}</h3>
     <p>{cs
       ? 'Nejprve přidej a ulož ATP Setup do vybrané větve. Náhled pak načte uložené termíny pro kontrolu před plánováním zápasů.'

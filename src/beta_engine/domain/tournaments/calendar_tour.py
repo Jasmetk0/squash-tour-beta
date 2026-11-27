@@ -571,16 +571,19 @@ def effective_policy(state, week):
 
 
 def parse_tour_json(raw):
-    body = json.loads(raw)
-    if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v5":
+    from beta_engine.domain.json_schema_routing import schema_version_for_json
+
+    # The version only selects the original full strict JSON-mode validator.
+    version = schema_version_for_json(raw)
+    if version == "calendar_tour_authority.v5":
         from beta_engine.domain.tournaments.calendar_global_slots import GlobalTourState
         return GlobalTourState.model_validate_json(raw)
-    if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v3":
+    if version == "calendar_tour_authority.v3":
         from beta_engine.domain.tournaments.calendar_native_tour import (
             CalendarNativeTourState,
         )
         return CalendarNativeTourState.model_validate_json(raw)
-    if isinstance(body, dict) and body.get("schema_version") == "calendar_tour_authority.v4":
+    if version == "calendar_tour_authority.v4":
         from beta_engine.domain.tournaments.calendar_native_tour import (
             CalendarNativeCompetitionTourState,
         )

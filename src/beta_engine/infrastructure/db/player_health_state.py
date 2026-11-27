@@ -9,6 +9,7 @@ from itertools import pairwise
 from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
+from beta_engine.domain.json_schema_routing import schema_version_for_json
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.players.calendar_health import CalendarHealthState, CalendarHealthOrigin
 from beta_engine.domain.players.calendar_native_health_transition import (
@@ -29,21 +30,13 @@ PLAYER_HEALTH_COMPONENT_KEY = "player_health_state"
 
 
 def _parse_health_json(raw):
-    value = json.loads(raw)
-    if (
-        isinstance(value, dict)
-        and value.get("schema_version") == "calendar_initial_health_state.v1"
-    ):
+    # Dispatch only: every model still validates ALL original JSON bytes.
+    version = schema_version_for_json(raw)
+    if version == "calendar_initial_health_state.v1":
         return CalendarInitialHealthState.model_validate_json(raw)
-    if (
-        isinstance(value, dict)
-        and value.get("schema_version") == "player_health_calendar_state.v2"
-    ):
+    if version == "player_health_calendar_state.v2":
         return CalendarHealthState.model_validate_json(raw)
-    if (
-        isinstance(value, dict)
-        and value.get("schema_version") == "player_health_calendar_state.v3"
-    ):
+    if version == "player_health_calendar_state.v3":
         return CalendarNativeHealthTransitionState.model_validate_json(raw)
     return PlayerHealthWeekState.model_validate_json(raw)
 

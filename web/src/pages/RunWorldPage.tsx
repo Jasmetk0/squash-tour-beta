@@ -139,6 +139,7 @@ export function RunWorldPage():JSX.Element {
   const [params,setParams]=useSearchParams()
   const year=queryYear(params)
   const search=params.get('q')??''
+  const regionFilter=params.get('region')??''
   const branchId=selectedBranch?.run_id===runId?selectedBranch.branch_id:null
   // The data year is NOT a simulation checkpoint and a selected Saved Revision
   // is NOT the mutable current Saved HEAD. Keep all three contexts separate.
@@ -203,7 +204,8 @@ export function RunWorldPage():JSX.Element {
   const tournamentsError=calendarSource.error||tournamentProjection.error||
     (!tournamentSourceRevision?(cs?'Žádná uložená revize.':'No Saved Revision is available.'):
       calendarRevision.error&&!historicalRevision?formatApiError(calendarRevision.error):null)
-  const readState=historicalRevision?savedSource.source?.response:q.data
+  const settled=historicalRevision?revision.isSuccess&&!revision.isFetching:q.isSuccess&&!q.isFetching
+  const readState=settled?(historicalRevision?savedSource.source?.response:q.data):null
   const sourceBranchId=historicalRevision?savedSource.source?.revisionBranchId:branchId
   const readEnabled=Boolean(allowed&&readState&&sourceBranchId)
   const projection=useMemo(()=>{
@@ -217,7 +219,19 @@ export function RunWorldPage():JSX.Element {
     catch(error){return {history:null,error:formatApiError(error)}}
   },[readEnabled,readState,runId,sourceBranchId,countryCode,year])
   const world=projection.world
-  const visible=world?.countries.filter(c=>[c.code,c.name,c.region??''].some(v=>
+  const regionKey=(country:RunWorldCountry)=>country.region===null?'missing':'region:'+country.region
+  const regions=new Map<string,{label:string;countries:number;exact:number;estimated:number;missing:number}>()
+  for(const country of world?.countries??[]){
+    const key=regionKey(country)
+    const entry=regions.get(key)??{label:country.region??(cs?'Region neuveden':'Region missing'),
+      countries:0,exact:0,estimated:0,missing:0}
+    entry.countries++
+    if(country.population.value===null)entry.missing++
+    else if(country.population.kind==='exact')entry.exact++
+    else entry.estimated++
+    regions.set(key,entry)
+  }
+  const visible=world?.countries.filter(c=>(!regionFilter||regionKey(c)===regionFilter)&&[c.code,c.name,c.region??''].some(v=>
     v.toLocaleLowerCase().includes(search.trim().toLocaleLowerCase())))??[]
   const country=world?.countries.find(c=>c.code===countryCode)
   function changeParam(key:string,value:string):void {
@@ -273,12 +287,12 @@ export function RunWorldPage():JSX.Element {
     {allowed&&historicalRevision&&savedSource.source&&!savedSource.source.response&&<p role="alert">{cs
       ? 'Vybraná Saved Revision neobsahuje uloženou komponentu Run World. Současný World se nepoužije.'
       : 'The selected Saved Revision has no saved Run World component. Current World is not substituted.'}</p>}
-    {allowed&&!historicalRevision&&q.isSuccess&&!world&&!projection.error&&<section className="section-subtle">
+    {allowed&&!historicalRevision&&q.isSuccess&&!q.isFetching&&!world&&!projection.error&&<section className="section-subtle">
       <h3>{cs?'World zatím není přiřazen':'No World assigned yet'}</h3>
       <p>{cs?'Tato branch neobsahuje uložené země světového balíčku. Nejde o svět s nulovou populací.':'This Branch has no Run-owned World countries yet; this is not a zero-population world.'}</p>
       <Link to="/admin/packages">{cs?'Otevřít balíčky':'Open Packages'} →</Link>
     </section>}
-    {allowed&&historicalRevision&&savedSource.source?.response&&!world&&!projection.error&&<p role="alert">{cs
+    {allowed&&historicalRevision&&settled&&savedSource.source?.response&&!world&&!projection.error&&<p role="alert">{cs
       ? 'Tato uložená revize nemá kompletní World Package. Neukazuje se žádná současná náhrada.'
       : 'This Saved Revision has no complete World Package. No current fallback is displayed.'}</p>}
     {world&&<div>
@@ -288,7 +302,7 @@ export function RunWorldPage():JSX.Element {
           <p className="status">{cs?'Branch':'Branch'}: {selectedBranch?.display_name??branchId} · {cs?'Otisk Run snapshotu':'Run snapshot fingerprint'}: <code>{world.stateFingerprint.slice(0,14)}…</code></p>
           {historicalRevision&&<p className="status">Saved Revision: <code>{selectedRevisionId}</code> · {cs?'Původní branch':'Origin Branch'}: <code>{savedSource.source?.revisionBranchId??'—'}</code>{savedSource.source?.isShared?' · shared ancestor':''}</p>}</div>
         <label>{cs?'Rok dat':'Data year'}
-          <select aria-label="World data year" value={year} onChange={e=>changeParam('year',e.target.value)}>
+          <select data-run-navigation-readonly aria-label="World data year" value={year} onChange={e=>changeParam('year',e.target.value)}>
             {Array.from({length:96},(_,i)=>1955+i).map(y=><option key={y} value={y}>{y}</option>)}
           </select>
         </label>
@@ -314,6 +328,22 @@ export function RunWorldPage():JSX.Element {
           <div><span>{cs?'Země s neúplnými údaji':'Countries with incomplete data'}</span><strong>{world.missingCountryCount}</strong>
             <small>{cs?'Informační údaj, nikoliv blokující validace':'Informational only; not an operation blocker'}</small></div>
         </div>
+        <section aria-label={cs?'Regionální přehled zemí':'Regional country overview'} data-run-navigation-readonly>
+          <h4>{cs?'Regiony a pokrytí populačních údajů':'Regions and population coverage'}</h4>
+          <p className="status">{cs?'Počty zemí podle přiřazeného regionu a původu populace pro vybraný datový rok, nikoli sportovní síla regionu.':
+            'Country counts by assigned region and population evidence for the selected data year, not regional sporting strength.'}</p>
+          <div className="table-responsive"><table aria-label={cs?'Pokrytí populačních údajů':'Population evidence coverage'}>
+            <thead><tr><th>Region</th><th>{cs?'Země':'Countries'}</th><th>{cs?'Přesné':'Exact'}</th>
+              <th>{cs?'Náhradní údaj':'Fallback'}</th><th>{cs?'Chybí':'Missing'}</th></tr></thead>
+            <tbody>{[...regions.entries()].sort((a,b)=>a[1].label.localeCompare(b[1].label)).map(([key,row])=><tr key={key}>
+              <th scope="row"><button type="button" aria-pressed={regionFilter===key}
+                onClick={()=>changeParam('region',regionFilter===key?'':key)}>{row.label}</button></th>
+              <td>{row.countries}</td><td>{row.exact}</td><td>{row.estimated}</td><td>{row.missing}</td>
+            </tr>)}</tbody>
+          </table></div>
+          {regionFilter&&<p>{cs?'Vybraný region':'Selected region'}: {regions.get(regionFilter)?.label??(cs?'Nedostupný':'Unavailable')}
+            {' '}<button type="button" onClick={()=>changeParam('region','')}>{cs?'Všechny regiony':'All regions'}</button></p>}
+        </section>
         <div className="run-world-country-toolbar">
           <label>{cs?'Hledat zemi':'Search countries'}
             <input type="search" aria-label="Search Run World countries" value={search}

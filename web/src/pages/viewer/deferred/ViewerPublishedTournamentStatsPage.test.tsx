@@ -139,6 +139,8 @@ describe('Tournament Stats from verified Saved public tournament calendar and re
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/event%204')
     expect(screen.getByText('branch-a')).toBeInTheDocument()
     expect(screen.getByText(/Dokončený kalendářní turnaj a publikovaný výsledek/)).toBeInTheDocument()
+    expect(screen.getByText(/včetně zrušených turnajů/)).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Nejpozdější turnaj podle rozpisu' })).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
     expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
     expectNoForbiddenViewerActions()

@@ -6,7 +6,7 @@ import { getViewerRunCalendar, getViewerTournamentHistory } from '../../../api/c
 import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
-import { viewerPlayerProfilePath, viewerPlannedEventPath, viewerRunsPath } from '../../../viewer/viewerRoutes'
+import { viewerPlayerProfilePath, viewerTournamentDetailPath, viewerRunsPath } from '../../../viewer/viewerRoutes'
 import { catalogSeasonsNewestFirst, tournamentViewerBranch, verifiedTournamentCatalog, type SavedTournamentCatalog } from '../tour/viewerTournamentCatalog'
 
 const PAGE_SIZE = 25
@@ -14,8 +14,8 @@ const messages = {
   title: ['Vítězové podle publikovaných titulů', 'Leaders by published titles'],
   description: ['Pouze skutečné publikované turnaje aktuální uložené Viewer Branch.', 'Only real published tournaments in the current Saved Viewer Branch.'],
   scope: [
-    'Jde o počty doložených publikovaných vítězství, ne o úplný kariérní rekord ani historický pohled na libovolný zvolený týden. Chybějící výsledky se nedopočítávají.',
-    'These are counts of evidenced published wins, not complete career records or a snapshot at any arbitrarily selected week. Missing results are not extrapolated.',
+    'Jde o počty doložených publikovaných vítězství, ne o úplný kariérní rekord ani historický pohled na libovolný zvolený týden. Chybějící výsledky se nedopočítávají. Pořadí turnajů podle sezony a týdne rozpisu neprokazuje pořadí dokončení ani publikace.',
+    'These are counts of evidenced published wins, not complete career records or a snapshot at any arbitrarily selected week. Missing results are not extrapolated. Scheduled season and week order does not prove completion or publication order.',
   ],
   noRun: ['Nejprve vyber Product Run.', 'Select a Product Run first.'],
   runs: ['Seznam Runů', 'Run browser'],
@@ -39,7 +39,7 @@ const messages = {
   player: ['Hráč (historické ID)', 'Player (historical ID)'],
   titles: ['Publikované tituly', 'Published titles'],
   seasons: ['Sezony s vítězstvím', 'Seasons with a win'],
-  latest: ['Poslední doložené vítězství', 'Latest evidenced win'],
+  latest: ['Nejpozději plánovaný turnaj s doloženým titulem', 'Latest scheduled event with evidenced title'],
   noTitles: ['Zatím není publikován žádný vítěz.', 'No champions have been published yet.'],
   noMatch: ['Filtrům neodpovídá žádný publikovaný vítěz.', 'No published champion matches these filters.'],
   showing: ['Zobrazeno', 'Showing'],
@@ -176,7 +176,7 @@ function Leaderboard({ catalog, runId, branchId, t }: {
                   <td>{leader.titleCount}</td>
                   <td>{leader.seasonCount}</td>
                   <td>{leader.latestSeason} · W{leader.latestWeek} · {' '}
-                    <Link to={viewerPlannedEventPath(runId, leader.latestEventId)}>{leader.latestEventName}</Link>
+                    <Link to={viewerTournamentDetailPath(runId, leader.latestEventId)}>{leader.latestEventName}</Link>
                   </td>
                 </tr>
               ))}</tbody>

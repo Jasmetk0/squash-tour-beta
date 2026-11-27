@@ -15,6 +15,7 @@ import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProd
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
 import type { ViewerCountries, ViewerPlayers } from '../../../api/types'
 import { playerViewerBranch, verifiedViewerPlayers } from '../people/viewerPlayerDirectory'
+import { joinedCountryRoster } from '../people/viewerCountryRosterJoin'
 import { verifiedTournamentCatalog, type SavedTournamentEntry } from '../tour/viewerTournamentCatalog'
 import { viewerRunsPath, viewerPlannedEventPath, viewerTournamentDetailPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
@@ -30,6 +31,9 @@ const searchCopy = {
   loading: ['Načítám výsledky vyhledávání z uložených dat…', 'Loading canonical search results…'],
   sourceError: ['Některá uložená data pro vyhledávání jsou dočasně nedostupná.', 'Some canonical searchable metadata is temporarily unavailable.'],
   query: ['Dotaz', 'Query'],
+  branch: ['Viewer Branch', 'Viewer Branch'],
+  savedWeek: ['Uložený týden hráčů a zemí', 'Saved player and country week'],
+  retry: ['Načíst znovu (GET)', 'Retry reads (GET)'],
   noResults: ['Nebyly nalezeny žádné odpovídající výsledky.', 'No matching Viewer results found.'],
   players: ['Hráči', 'Players'],
   noPlayers: ['Žádní odpovídající hráči.', 'No matching players.'],
@@ -124,43 +128,17 @@ function verifiedSearchCountries(raw: unknown, roster: ViewerPlayers): ViewerCou
       value.product_run_id !== roster.product_run_id || value.viewer_branch_id !== roster.viewer_branch_id ||
       value.season_index !== roster.season_index || value.week !== roster.week ||
       !Array.isArray(value.countries) || value.country_count !== value.countries.length) return null
-  const groups = new Map<string, { players: number; active: number; rated: number; sum: number; max: number }>()
-  const players = new Map(roster.players.map(player => [player.player_id, player]))
-  for (const player of roster.players) {
-    const row = groups.get(player.country_code) ?? { players: 0, active: 0, rated: 0, sum: 0, max: 0 }
-    row.players++
-    if (player.status === 'active') row.active++
-    if (player.current_ovr !== null) {
-      row.rated++
-      row.sum += player.current_ovr
-      row.max = Math.max(row.max, player.current_ovr)
-    }
-    groups.set(player.country_code, row)
-  }
-  const fields = new Set(['country_code', 'player_count', 'active_player_count', 'retired_player_count',
-    'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr'])
-  const seen = new Set<string>()
-  for (const country of value.countries) {
-    if (!country || typeof country !== 'object' || Object.keys(country).length !== fields.size ||
-        Object.keys(country).some(key => !fields.has(key)) ||
-        typeof country.country_code !== 'string' || !/^[A-Z]{3}$/.test(country.country_code) ||
-        seen.has(country.country_code)) return null
-    const group = groups.get(country.country_code)
-    if (!group || country.player_count !== group.players || country.active_player_count !== group.active ||
-        country.retired_player_count !== group.players - group.active) return null
-    const top = country.top_player_id === null ? null : players.get(country.top_player_id)
-    if (country.top_player_id === null) {
-      if (group.rated !== 0 || country.top_player_name !== null || country.top_player_current_ovr !== null ||
-          country.average_current_ovr !== null) return null
-    } else if (!top || top.country_code !== country.country_code || top.name !== country.top_player_name ||
-        top.current_ovr === null || top.current_ovr !== country.top_player_current_ovr ||
-        typeof country.average_current_ovr !== 'number' || !Number.isFinite(country.average_current_ovr) ||
-        country.average_current_ovr < 0 || country.average_current_ovr > top.current_ovr ||
-        top.current_ovr !== group.max || group.rated === 0 ||
-        Math.abs(country.average_current_ovr - group.sum / group.rated) > 0.00500001) return null
-    seen.add(country.country_code)
-  }
-  return seen.size === groups.size ? value as ViewerCountries : null
+  const rootFields = ['schema_version', 'product_run_id', 'viewer_branch_id', 'season_index', 'week', 'country_count', 'countries']
+  const rowFields = ['country_code', 'player_count', 'active_player_count', 'retired_player_count',
+    'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr']
+  const exact = (record: unknown, fields: string[]): boolean =>
+    !!record && typeof record === 'object' && !Array.isArray(record) &&
+    Object.keys(record).length === fields.length &&
+    fields.every(key => Object.prototype.hasOwnProperty.call(record, key))
+  if (!exact(raw, rootFields) || !value.countries.every(row => exact(row, rowFields))) return null
+  // Use the existing roster consistency rules, including deterministic top
+  // player ties and two-decimal mean precision. No extra GET is needed.
+  return joinedCountryRoster(raw, roster) ? value as ViewerCountries : null
 }
 
 export function ViewerSearchPage(): JSX.Element {
@@ -242,6 +220,13 @@ export function ViewerSearchPage(): JSX.Element {
     ? verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, productRunId ?? '', branchId ?? '') : null
   const verified = Boolean(roster && countrySource && catalog)
   const hasError = !isLoading && !verified
+  function retrySearch(): void {
+    if (!ready) {
+      void context.refetch()
+      return
+    }
+    void Promise.all([playersQuery.refetch(), countriesQuery.refetch(), calendarQuery.refetch(), historyQuery.refetch()])
+  }
   const tournaments = useMemo(() => {
     if (!verified || !catalog) return []
     return catalog.entries.filter(({ event }) => matches(urlQuery, [
@@ -289,11 +274,14 @@ export function ViewerSearchPage(): JSX.Element {
       <article className="viewer-active-run-card" aria-label={t('title')}>
         <span className="eyebrow">{t('selectedRun')}</span>
         <h3>{t('title')}: {urlQuery}</h3>
-        {isLoading ? <p className="status">{t('loading')}</p> : null}
-        {hasError ? <ViewerEmptyState>{t('sourceError')}</ViewerEmptyState> : null}
+        {isLoading ? <p className="status" role="status">{t('loading')}</p> : null}
+        {hasError ? <div role="alert"><p>{t('sourceError')}</p>
+          <button type="button" onClick={retrySearch}>{t('retry')}</button></div> : null}
         <dl className="metadata-list">
           <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
           <div><dt>{t('query')}</dt><dd>{urlQuery}</dd></div>
+          <div><dt>{t('branch')}</dt><dd>{verified ? branchId : '—'}</dd></div>
+          <div><dt>{t('savedWeek')}</dt><dd>{verified && roster ? 'S' + roster.season_index + ' W' + roster.week : '—'}</dd></div>
         </dl>
         {searchForm}
         <p className="status">{t('scope')}</p>

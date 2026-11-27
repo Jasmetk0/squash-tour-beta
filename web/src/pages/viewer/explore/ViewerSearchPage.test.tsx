@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   language: 'en',
   branch: 'branch-a',
   foreign: false,
+  refetchContext: vi.fn(),
   getViewerPlayers: vi.fn(),
   getViewerCountries: vi.fn(),
   getViewerRunCalendar: vi.fn(),
@@ -29,7 +30,7 @@ vi.mock('../../../viewer/useActiveViewerProductRunId', () => ({
 vi.mock('../../../viewer/useViewerOfficialRunContext', () => ({
   useViewerOfficialRunContext: (run: string | null) => ({
     data: { product_run_id: mocks.foreign ? 'foreign' : run, official_branch_id: mocks.branch },
-    isPending: false, isFetching: false, isError: false,
+    isPending: false, isFetching: false, isError: false, refetch: mocks.refetchContext,
   })
 }))
 vi.mock('../../../viewer/ViewerContext', () => ({
@@ -92,6 +93,7 @@ beforeEach(() => {
   mocks.language = 'en'
   mocks.branch = 'branch-a'
   mocks.foreign = false
+  mocks.refetchContext.mockReset()
   mocks.getViewerPlayers.mockReset().mockImplementation(async (run: string) => players(run))
   mocks.getViewerCountries.mockReset().mockImplementation(async (run: string) => countries(run))
   mocks.getViewerRunCalendar.mockReset().mockImplementation(async (run: string) => ({
@@ -309,6 +311,45 @@ describe('Viewer Search submission (mocked GET API)', () => {
     expect(within(section).getByText('W9')).toBeInTheDocument()
     expect(within(section).getByText('CZE · Plzeň')).toBeInTheDocument()
     expect(within(section).getAllByRole('link')).toHaveLength(1)
+  })
+
+  it('retries failed public sources without changing the query and displays only verified clock and branch', async () => {
+    const user = userEvent.setup()
+    mocks.getViewerCountries.mockRejectedValueOnce(new Error('internal read failure'))
+    mount('/viewer/search?q=Alice&keep=1')
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable')
+    expect(screen.queryByText('internal read failure')).not.toBeInTheDocument()
+    expect(screen.queryByText('S0 W1')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry reads (GET)' }))
+    expect(await screen.findByText('Alice', { selector: 'li' })).toBeInTheDocument()
+    expect(screen.getByText('S0 W1')).toBeInTheDocument()
+    expect(screen.getByText('branch-a')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL')).toHaveTextContent('/viewer/search?q=Alice&keep=1')
+    expect(mocks.getViewerCountries).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries only context while the current Branch cannot be verified', async () => {
+    const user = userEvent.setup()
+    mocks.foreign = true
+    mount('/viewer/search?q=Alice')
+    await user.click(await screen.findByRole('button', { name: 'Retry reads (GET)' }))
+    expect(mocks.refetchContext).toHaveBeenCalledTimes(1)
+    expect(mocks.getViewerPlayers).not.toHaveBeenCalled()
+  })
+
+  it('rejects a top-player tie inconsistent with the canonical roster identity order', async () => {
+    const roster = players('run-a')
+    mocks.getViewerPlayers.mockResolvedValue({
+      ...roster, players: roster.players.map(player => ({ ...player, current_ovr: 100 })),
+    })
+    const original = countries('run-a')
+    mocks.getViewerCountries.mockResolvedValue({
+      ...original, countries: [{ ...original.countries[0], average_current_ovr: 100,
+        top_player_id: 'bob', top_player_name: 'Bob', top_player_current_ovr: 100 }],
+    })
+    mount('/viewer/search?q=Alice')
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable')
+    expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
   })
 
 })

@@ -27,17 +27,18 @@ RUN_PROSPECT_EPOCH_SCHEMA = "run_prospect_source_epochs.v2"
 
 def native_birth_requires_source_epochs(session, *, run_id):
     """Run-shared source changes cannot invalidate another Branch's birth proof."""
+    from beta_engine.infrastructure.db.player_lifecycle_state import (
+        _load, lifecycle_schema_version,
+    )
+
     for row in session.scalars(
         select(PlayerLifecycleWeekStateModel).where(
             PlayerLifecycleWeekStateModel.run_id == run_id
         )
     ):
-        if (
-            json.loads(row.payload_json).get("schema_version")
-            == "player_lifecycle_calendar_state.v4"
-        ):
-            from beta_engine.infrastructure.db.player_lifecycle_state import _load
-
+        if lifecycle_schema_version(row.payload_json) == "player_lifecycle_calendar_state.v4":
+            # The projection only routes. Authenticate the complete original
+            # row before concluding another Branch requires immutable epochs.
             _load(row, run_id, row.branch_id, row.week_ordinal)
             return True
     return False

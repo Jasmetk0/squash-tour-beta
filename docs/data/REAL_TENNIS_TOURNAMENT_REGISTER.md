@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 1 ročník, Wimbledon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 2 ročníky, Wimbledon 2024 a 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -35,17 +35,18 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | Ročník | Turnaj | I | T | H | E | D | R | B | P | Z | Stav |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 2024 | [Wimbledon](#wimbledon-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [Wimbledon](#wimbledon-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
-`*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno.
+`*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; R*: ATP rankingový PDF dostupný indexovaným textem, ne novým vizuálním přístupem.
 
-**Součet registru:** 1 zpracovaný ročník; 1 hotový v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 2 zpracované ročníky; 2 hotové v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
 | Pořadí | Ročník a turnaj | Stav |
 |---|---|---|
 | 1 | Wimbledon 2024 | HOTOVO (nominální rozsah) |
-| 2 | Wimbledon 2025 | NEZAHÁJENO |
+| 2 | Wimbledon 2025 | HOTOVO (nominální rozsah) |
 | 3 | Australian Open 2024 | NEZAHÁJENO |
 | 4 | Roland Garros 2024 | NEZAHÁJENO |
 | 5 | US Open 2024 | NEZAHÁJENO |
@@ -66,6 +67,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | Ročník | Soutěž | Kategorie | Kvalifikace (místně) | Main (místně) | Stav |
 |---|---|---|---|---|---|
 | [2024](#wimbledon-2024) | Wimbledon | Grand Slam | 2024-06-24–2024-06-27 | 2024-07-01–2024-07-14 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
+| [2025](#wimbledon-2025) | Wimbledon | Grand Slam | 2025-06-23–2025-06-26 | 2025-06-30–2025-07-13 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 
 ## Wimbledon 2024
 
@@ -274,3 +276,137 @@ Závěr: Wimbledon 2024 je uzavřen v definovaném nominálním rozsahu (I/T/H/E
 - S20: [ITF — Wimbledon 2024 men's tournament preview](https://www.itftennis.com/media/12685/2024-wimbledon-mens-tournament-preview.pdf) a [Grand Slam Board — společná změna rozhodujícího tiebreaku 2022](https://ausopen.com/articles/news/grand-slams-jointly-adopt-10-point-final-set-tiebreak).
 
 - S21: [The Standard — předturnajový rozpis mužské dvouhry Wimbledon 2024](https://www.standard.co.uk/sport/tennis/wimbledon-2024-tennis-dates-schedule-ticket-information-b1160804.html); potvrzuje okna všech sedmi kol; [Sky Sports — 26. 6. 2024](https://www.skysports.com/tennis/scores-schedule/26-06-2024), [27. 6. 2024](https://www.skysports.com/tennis/scores-schedule/27-06-2024) nezávislá kontrola označení kol Q2/Q3. Opětovná kontrola 2026-11-27: S1 str. 1–2 vizuálně; S7a/b první strany vizuálně; S16 text dohledán, screenshot vrací 404.
+
+## Wimbledon 2025
+
+**Stav:** HOTOVO v nominálním rozsahu I/T/H/E/D/R/B/P/Z, s výslovnými omezeními níže. Rešerše 2026-11-27. Nejde o převod do squashového enginu.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Oficiální název | The Championships, Wimbledon | W25-1, W25-2 |
+| Rok / disciplína | 2025 / mužská dvouhra | W25-2, W25-3 |
+| Kategorie / ATP ID | Grand Slam / 540 (identita turnaje) | W25-1, W25-15 |
+| Místo Main | All England Lawn Tennis Club, Londýn, UK | W25-1 |
+| Místo Q | Community Sport Centre, Roehampton, Londýn | W25-9 |
+| Povrch Main a Q | venkovní tráva | W25-1, W25-4 str. 30 |
+| Časové pásmo | Europe/London; po dobu Q a Main BST, UTC+01:00 | W25-10 |
+| Ředitel | Jamie Baker | W25-1 |
+| Měna | GBP | W25-5 |
+
+Míče, jméno rozhodčího a adresní detail konkrétní edice nebyly samostatně ověřeny: nevyplňujeme z 2024. Nejde o povinná data I.
+
+### 2. Termíny, vstupní uzávěrky a nominální harmonogram
+
+| Událost | Lokální údaj | Povaha / zdroj |
+|---|---|---|
+| Uzávěrka Main | 2025-05-19 | odvozeno z 42 dnů před prvním pondělím Main (30. 6.); W25-4 str. 24 |
+| Uzávěrka Q | 2025-06-02 | odvozeno z 28 dnů před prvním pondělím Main; W25-4 str. 24 |
+| Los Q | přesné datum a hodina NEOVĚŘENY | existoval před Q1 23. 6.; neodvozovat datum/hodinu z 2024 |
+| Q | 2025-06-23 až 2025-06-26, od 11:00 | W25-1, W25-6 |
+| Main los | 2025-06-27 10:00 | plán W25-1 |
+| Main | 2025-06-30 až 2025-07-13 | W25-1, W25-2, W25-7 |
+| Plánované finále | 2025-07-13, 16:00 | pořadatel W25-8; nezávisle W25-7/W25-11 |
+| Začátky běžných dnů | venkovní kurty 11:00, No.1 13:00, Centre 13:30 | dobový přehled W25-12; nejsou to skutečné starty všech zápasů |
+
+**Nominální rozložení všech kol mužské dvouhry.**
+
+| Fáze | Místní data | Nominální uzly | Zdroj |
+|---|---|---:|---|
+| Q1 | 2025-06-23 | 64 | W25-6a |
+| Q bez plánovaného mužského kola | 2025-06-24 | 0 | ženské Q1, W25-6d; ne tvrzení o žádném zápase areálu |
+| Q2 | 2025-06-25 | 32 | W25-6b |
+| Q3 | 2025-06-26 | 16 | W25-6c |
+| Přestávka mezi Q a Main | 2025-06-27–2025-06-29 | 0 | W25-1 |
+| R128 | 2025-06-30–2025-07-01 | 64 | W25-7, W25-11 |
+| R64 | 2025-07-02–2025-07-03 | 32 | W25-7, W25-11 |
+| R32 | 2025-07-04–2025-07-05 | 16 | W25-7, W25-11 |
+| R16 | 2025-07-06–2025-07-07 | 8 | W25-7, W25-11 |
+| QF | 2025-07-08–2025-07-09 | 4 | W25-7, W25-11 |
+| Bez plánovaného kola mužské dvouhry | 2025-07-10 | 0 | W25-7, W25-11 |
+| SF | 2025-07-11 | 2 | W25-7, W25-11 |
+| Bez plánovaného kola mužské dvouhry | 2025-07-12 | 0 | W25-7, W25-11 |
+| F | 2025-07-13 | 1 | W25-8, W25-11 |
+
+Q1/Q2/Q3 doloženy dobovými denními programy; celkový Q plán potvrzuje ATP. U vícedenních Main kol není doloženo plánované rozdělení počtu uzlů mezi dny a není doplněno předpokladem 50/50. 4 kalendářní dny Q, 14 kalendářních dnů Main, 21 dnů celého okna včetně mezery. Počty uzlů jsou aritmetika nominálního pavouka, ne statistika přerušení.
+
+### 3. Struktura turnaje
+
+| Nominální parametr | Main | Q | Důkaz |
+|---|---:|---:|---|
+| Kapacita | 128 | 128 | W25-2, W25-3, W25-4 |
+| Počet účastníků | 128 | 128 | W25-2, W25-3 |
+| Přímé akceptace | 104 | 119 | W25-4 str. 26,31 |
+| WC | 8 | 9 | W25-4 str. 26,31 |
+| Postupující z Q | 16 | 16 vítězů sekcí | W25-4 str. 26,31; W25-13 |
+| Nasazených | 32 | 32 | W25-2, W25-3, W25-4 str. 28,31–32 |
+| BYE | 0 | 0 | W25-2, W25-3 |
+| Sekce | jeden vyřazovací pavouk | 16 skupin po 8 (vyřazovací sekce) | W25-2, W25-3 |
+| Počet kol | 7 | 3 | W25-2, W25-3 |
+| Nominální uzly | 127 | 112 | odvozeno |
+
+Aritmetika: 104+16+8=128; 119+9=128; 127+112=239 uzlů. Není to tvrzení o počtu unikátních hráčů v obou fázích dohromady.
+
+**Oddělený kontrolní kontext konečného losu:** vizuálně přečteny všechny čtyři stránky W25-2/3. Main: 8 W (6,15,44,61,62,74,92,108), 16 Q (18,29,31,37,42,51,54,85,86,94,98,117,119,124,125,126), 3 L (22,84,93), 101 neoznačených. Q: 9 W (19,30,34,53,63,78,91,106,125), 1 A (126), 118 neoznačených. Main i Q všech 32 seedů a žádný BYE. Označení nejsou rekonstrukce individuální přímé akceptace. Tři LL, kteří reálně nastoupili v Main, nejsou nominální kvóta a nemění 16 Q postupů. Nepřepisujeme jména ani výsledky všech zápasů.
+
+### 4. Dobová pravidla
+
+- Grand Slam Rule Book 2025, tištěné str. 24–32 (W25-4, vizuálně ověřeno): vstupní termíny 42/28 dnů, automatické přihlášení způsobilých hráčů, hlavní přímé akceptace podle rankingu přibližně 42 dnů před turnajem, nasazení podle rankingu přibližně sedm dnů před turnajem; seed 1/2 na krajích, ostatní v příslušných skupinách losované podle tabulky pro 128/32. Q nasazení podle nejnovějšího dostupného rankingu, prvních 16 seedů na začátcích sekcí, druhá skupina 16 náhodně na konce sekcí. Před vydáním OOP se uvolněné Q seed místo obsadí dalším seedem, po vydání OOP alternatem.
+- Q vítězové se losují do Main po ukončení Q; žádná předem pevná vazba mezi sekcí Q a konkrétní pozicí Main. LL přednostně z poražených Q3, případně nižších kol. Los pořadí čtyř nejvýše postavených podle rankingu pro Q seeding; pokud při skončení Q více než dvě odhlášení z Main, velikost skupiny je počet odhlášení + 2. Další v pořadí podle rankingu. Náhrada do prvního bodu prvního zápasu odstoupivšího, LL sign-in půl hodiny před začátkem prvního zápasu dne.
+- Main best of 5 setů, Q1/Q2 best of 3, Q3 best of 5 (W25-4 str. 7, W25-3, W25-6, W25-14). Rozhodující set při 6:6 tiebreak na 10 s rozdílem 2. Pro Q3 pěti-setový formát nezávisle potvrzen dobovým výsledkem 26. 6.
+- Dle ATP Ranking Rulebook 2025 (W25-15, indexovaný text, přímé PDF 403): body za kvalifikaci se přičítají k dosaženému Main výsledku; divoká karta při prohře v prvním kole Main nezíská standardních 10 bodů. Individuální výpočet LL a ostatních výjimek není zde řešen.
+- Novinka pořadatele 2025: elektronické hlášení čar na všech kurtech včetně Q a plánované přesunutí obou singlových finále na 16:00 (W25-8); jde o změnu plánovaných pravidel/programu, nikoli náhodnou historickou odchylku.
+
+### 5. Bodování a prize money
+
+Body za dosaženou fázi podle W25-15 (stejné jako v 2024, ověřeno proti dobovému předpisu), odměny za dosaženou fázi v GBP podle W25-5 (originální tabulka vizuálně ověřena).
+
+| Výsledek | Počet příjemců | Body | GBP 2025 | GBP 2024 pro srovnání |
+|---|---:|---:|---:|---:|
+| Vítěz | 1 | 2000 | 3000000 | 2700000 |
+| Finalista | 1 | 1300 | 1520000 | 1400000 |
+| SF | 2 | 800 | 775000 | 715000 |
+| QF | 4 | 400 | 400000 | 375000 |
+| R16 | 8 | 200 | 240000 | 226000 |
+| R32 | 16 | 100 | 152000 | 143000 |
+| R64 | 32 | 50 | 99000 | 93000 |
+| R128 | 64 | 10 | 66000 | 60000 |
+| Q postupující | 16 | 30 | samostatná odměna neuvedena | samostatná odměna neuvedena |
+| Q3 prohra | 16 | 16 | 41500 | 40000 |
+| Q2 prohra | 32 | 8 | 26000 | 25000 |
+| Q1 prohra | 64 | 0 | 15500 | 15000 |
+
+Kontrola součtů: Main 19414000 GBP, Q 2488000 GBP, obě fáze mužské dvouhry 21902000 GBP. Oficiální celkové odměny za všechny soutěže 52 000 000 GBP, odhad diet 1 500 000 GBP, celkem 53 500 000 GBP (W25-5; nepoužít některé mediální součty 53,55 mil.). Diety na osobu nebyly ověřeny. Prize money vítězů Q není samostatnou další položkou; nevyplňovat nulou jako doloženou platbu. Všechny částky se oproti roku 2024 zvýšily.
+
+### 6. Kontrola pokrytí a zbývající mezery
+
+| Oblast | Stav / podmínky |
+|---|---|
+| I/T/D/B/P | doloženy plánované údaje, kvóty a tabulky; čtyři stránky originálních losů a oficiální tabulka peněz zkontrolovány |
+| H | doložena všechna okna kol, Q denní programy; nerozdělovat vícedenní kola odhadem |
+| E | uzávěrky odvozeny z výslovné lhůty, Main los doložen; přesné datum a hodina Q losu, případné výjimky lhůt, individuální cutoffs a původní ATP Detail Sheet nedostupné/NEOVĚŘENY |
+| R | Grand Slam předpis 2025 vizuálně ověřen na str. 7,24–32, ATP rankingová pravidla dohledána indexovaným textem (PDF 403); individuální historické výjimky mimo povinný rozsah |
+| Z | dohledatelné dobové zdroje; některé indexované, SHA-256 všech originálů zatím nezískány |
+| Další doplňky | jména rozhodčího/míče, přesné hodiny jednotlivých zápasů, vývoj všech náhrad nejsou ověřeny; nejsou podmínkou nominálního rozsahu |
+
+Vizuální podklady potvrzují stejnou plánovanou geometrii jako 2024. Nominální kvóty a body se shodují také s dříve uloženými zdrojovými údaji Grand Slam Draft #1903; zde jde o samostatně ověřený záznam, nikoli nový runtime profil. Další ročník v pořadí Australian Open 2024.
+
+### 7. Zdroje (W25)
+
+- W25-1: [ATP 2025 Wimbledon preview](https://www.atptour.com/en/news/wimbledon-2025-history-draw-schedule), dobový indexovaný text: identita, plán Q/Main, los Main.
+- W25-2: [originální Main los 2025](https://www.wimbledon.com/en_GB/scores/draws/2025_MS_draw.pdf), obě strany vizuálně ověřeny, aktualizace 13. 7. 2025.
+- W25-3: [originální Q los 2025](https://www.wimbledon.com/en_GB/scores/draws/2025_QS_draw.pdf), obě strany vizuálně ověřeny, aktualizace 3. 7. 2025.
+- W25-4: [Grand Slam Rule Book 2025](https://www.wimbledon.com/pdf/Grand_Slam_Rulebook_2025.pdf), tištěné str. 7 a 24–32 (PDF indexy 12,29–37), vizuálně ověřeny.
+- W25-5: [Wimbledon Prize Money 2025](https://www.wimbledon.com/pdf/Wimbledon_Prize_Money_2025.pdf), první strana vizuálně ověřena; [ATP prize money](https://www.atptour.com/en/news/wimbledon-2025-prize-money).
+- W25-6: oficiální Q OOP: [a 23. 6.](https://www.wimbledon.com/en_GB/scores/2025/schedule/pdf/schedulePDF1.pdf), [b 25. 6.](https://www.wimbledon.com/en_GB/scores/2025/schedule/pdf/schedulePDF3.pdf), [c 26. 6.](https://www.wimbledon.com/en_GB/scores/2025/schedule/pdf/schedulePDF4.pdf), [d 24. 6.](https://www.wimbledon.com/en_GB/scores/2025/schedule/pdf/schedulePDF2.pdf) (u d viz další kontrolu; neověřený přesný počet zápasů); a/b/c první strany vizuálně ověřeny.
+- W25-7: [dobový plán vysílání ESPN](https://espnpressroom.com/press-release/espn-presents-first-ball-to-last-ball-of-the-championships-wimbledon-2025-june-30-july-13-2025/) a [předturnajový rozpis](https://www.business-standard.com/sports/other-sports-news/wimbledon-2025-schedule-live-timings-ist-live-streaming-telecast-125062900210_1.html).
+- W25-8: [oficiální Wimbledon Debenture Handbook 2025](https://www.wimbledon.com/pdf/2025_Debenture_Handbook.pdf), oddíl New for 2025, indexovaný text; změna finále a ELC.
+- W25-9: [BBC dobový přehled](https://bbc.com.im/sport/tennis/articles/c056ly89q6go), termíny a Roehampton (indexovaný text).
+- W25-10: [GOV.UK BST](https://www.gov.uk/when-do-the-clocks-change).
+- W25-11: [Radio Times denní harmonogram](https://www.radiotimes.com/tv/sport/tennis/wimbledon-2025-order-of-play/), 13. 7. 2025, všechna okna kol a plán finále.
+- W25-12: [Tennis365 předturnajový přehled](https://www.tennis365.com/tennis-features/wimbledon-2025-dates-when-is-draw-prize-money-emma-raducanu-seeded), dobový běžný časový program.
+- W25-13: [ATP poslední přímé akceptace 24. 6.](https://www.atptour.com/en/news/wimbledon-2025-last-direct-entries), 16 Q postupových míst.
+- W25-14: [BBC kvalifikační finále 26. 6.](https://www.bbc.co.uk/sport/tennis/articles/ckgj184pdrno), pětisetový formát.
+- W25-15: [ATP Ranking Rulebook 2025 §IX.G](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf), tištěná str. 264, indexovaný text (403 při přímém načtení); [ATP turnaj 540](https://www.atptour.com/en/tournaments/wimbledon/540/overview). [ATP Detail Sheet 2025](https://www.protennislive.com/posting/2025/540/ds.pdf) nedostupný při přímém načtení; neoznačovat za ověřený.
+

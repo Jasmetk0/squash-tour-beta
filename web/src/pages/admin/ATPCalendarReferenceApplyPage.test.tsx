@@ -6,8 +6,9 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { LanguageProvider } from '../../i18n/LanguageContext'
 import { ATPCalendarReferenceApplyPage } from './ATPCalendarReferenceApplyPage'
 import {
-  validATPCalendarCatalog, validSavedATPRunWeekPreview,
+  reviewedATPCalendarReference, validATPCalendarCatalog, validSavedATPRunWeekPreview,
 } from '../../api/atpCalendarReferencePackages'
+import type { ATPReferencePreview } from '../../api/atpCalendarReferencePackages'
 
 const hash=(s:string)=>s.repeat(64)
 const ctx=vi.hoisted(()=>({
@@ -60,7 +61,7 @@ function source(){
     ]
   }
 }
-function preview(){
+function preview():ATPReferencePreview {
   return {
     run_id:'run/1',branch_id:'branch/1',saved_head_revision_id:ctx.previewHead,
     draft_version:ctx.draftVersion,current_state_fingerprint:ctx.stateFingerprint,
@@ -230,7 +231,7 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     expect(api.previewATPCalendarReference).not.toHaveBeenCalled()
   })
 
-  it('accepts version 2 only with its separate frozen sporting Category',()=>{
+  it('accepts new source revisions with the same frozen sporting Category contract',()=>{
     const original=source()
     const current={...original,source_version:2,
       usage:'saved_reference_calendar_with_explicit_squash_sporting_profiles',
@@ -239,8 +240,17 @@ describe('ATP reference Apply UI — guarded, explicit Run Save',()=>{
     expect(validATPCalendarCatalog(current)).toBe(true)
     expect(validATPCalendarCatalog({...current,source_version:3,children:[...original.children,
       {...current.children[3],source_version:2,entity_count:3}]})).toBe(true)
+    const expanded={...current,source_version:7,children:[...original.children,
+      {...current.children[3],source_version:6,entity_count:23}]}
+    if(!validATPCalendarCatalog(expanded))throw new Error('Expanded ATP Setup was not accepted.')
+    const review=preview()
+    expect(reviewedATPCalendarReference(expanded,review,'run/1','branch/1')).toBe(false)
+    review.document_identity.source_version=7
+    expect(reviewedATPCalendarReference(expanded,review,'run/1','branch/1')).toBe(true)
     expect(validATPCalendarCatalog({...current,children:original.children})).toBe(false)
     expect(validATPCalendarCatalog({...current,source_version:'2'})).toBe(false)
+    expect(validATPCalendarCatalog({...current,source_version:0})).toBe(false)
+    expect(validATPCalendarCatalog({...current,source_version:7.5})).toBe(false)
     expect(validATPCalendarCatalog({...current,usage:original.usage})).toBe(false)
   })
 

@@ -12,6 +12,11 @@ import { formatApiError } from '../utils/apiErrors'
 const PAGE_SIZE = 50
 
 export function PlayersPage(): JSX.Element {
+  const {runId}=useParams(),{selectedBranch}=useAdminBranch(),time=useAdminTime()
+  return <PlayersInventory key={JSON.stringify([runId,selectedBranch?.branch_id,selectedBranch?.saved_head_revision_id,time.mode,time.viewCheckpointId])}/>
+}
+
+function PlayersInventory(): JSX.Element {
   const { runId = '' } = useParams()
   const { language } = useLanguage()
   const cs = language === 'cs'
@@ -22,14 +27,16 @@ export function PlayersPage(): JSX.Element {
   const [search, setSearch] = useState('')
   const [country, setCountry] = useState('')
   const [status, setStatus] = useState('')
+  const [rankingFilter,setRankingFilter]=useState<''|'ranked'|'unranked'|'unpublished'>('')
   const [includePrepared, setIncludePrepared] = useState(false)
   const [page, setPage] = useState(0)
   const filters = {
     search: search.trim(), country_code: country.trim().toUpperCase(),
     status_filter: status.trim(), include_prepared: includePrepared,
+    ...(rankingFilter?{ranking_status_filter:rankingFilter}:{}),
     offset: page * PAGE_SIZE, limit: PAGE_SIZE,
   }
-  const ready = Boolean(runId && branchId && savedHead && !isLoading && !error && time.mode === 'present')
+  const ready = Boolean(runId && branchId && savedHead && !isLoading && !error && time.mode === 'present' && !time.isLoading && !time.error)
   const q = useQuery({
     queryKey: ['canonical-saved-players', runId, branchId, savedHead,
       time.mode, time.viewCheckpointId, filters],
@@ -37,10 +44,16 @@ export function PlayersPage(): JSX.Element {
     enabled: ready,
     retry: false,
   })
-  const scoped = q.data?.run_id === runId && q.data?.branch_id === branchId &&
+  const scoped = ready && q.data?.run_id === runId && q.data?.branch_id === branchId &&
     q.data?.saved_revision_id === savedHead && q.data?.time_context === 'present' &&
-    q.data?.offset === filters.offset && q.data?.limit === PAGE_SIZE
-  const data = scoped ? q.data : null
+    q.data?.offset === filters.offset && q.data?.limit === PAGE_SIZE &&
+    q.data.search===filters.search&&q.data.country_code===filters.country_code&&
+    q.data.status_filter===filters.status_filter&&q.data.include_prepared===filters.include_prepared&&
+    (q.data.ranking_status_filter??'')===rankingFilter
+  const data = scoped && q.isSuccess && !q.isFetching ? q.data : null
+  const rankingCounts=data?(['ranked','unranked','unpublished'] as const).map(value=>({
+    value,count:data.players.filter(p=>p.ranking_status===value).length
+  })):[]
   const update = (setter: (value: string) => void, value: string) => {
     setter(value)
     setPage(0)
@@ -98,15 +111,27 @@ export function PlayersPage(): JSX.Element {
                 value={status} maxLength={80} onChange={e=>update(setStatus,e.target.value)} />
             </label>
           </div>
+          <label data-run-navigation-readonly>{cs?'Stav rankingu':'Ranking status'}
+            <select aria-label="Ranking status filter" value={rankingFilter} onChange={e=>{
+              setRankingFilter(e.target.value as typeof rankingFilter);setPage(0)
+            }}>
+              <option value="">{cs?'Všechny stavy':'All statuses'}</option>
+              <option value="ranked">{cs?'V rankingu':'Ranked'}</option>
+              <option value="unranked">{cs?'Mimo ranking po publikaci':'Unranked after publication'}</option>
+              <option value="unpublished">{cs?'Ranking nepublikován':'Ranking unpublished'}</option>
+            </select>
+          </label>
+          <button type="button" onClick={()=>{setSearch('');setCountry('');setStatus('');setRankingFilter('');setIncludePrepared(false);setPage(0)}}>
+            {cs?'Obnovit výchozí filtry':'Reset filters'}</button>
           <label><input type="checkbox" data-run-navigation-readonly
             checked={includePrepared} onChange={e=>{setIncludePrepared(e.target.checked);setPage(0)}} />
             {' '}{cs ? 'Admin: výslovně zobrazit i uložené připravené prospekty (mohou být z budoucnosti)'
               : 'Admin: explicitly reveal saved prepared prospects (may include future players)'}
           </label>
         </section>
-        {q.isPending && ready && <p role="status">{cs ? 'Načítám hráče…' : 'Loading players…'}</p>}
+        {(q.isPending||q.isFetching) && ready && <p role="status">{cs ? 'Načítám hráče…' : 'Loading players…'}</p>}
         {q.error && <p role="alert" className="error">{formatApiError(q.error)}</p>}
-        {q.isSuccess && !scoped && <p role="alert" className="error">{cs
+        {ready && q.isSuccess && !q.isFetching && !scoped && <p role="alert" className="error">{cs
           ? 'Odpověď nepatří zvolené branchi nebo revizi.' : 'Response does not belong to selected Branch or revision.'}</p>}
         {data && <>
           <p role="status">{cs ? 'Celkový počet odpovídajících hráčů' : 'Total matching players'}:
@@ -114,6 +139,16 @@ export function PlayersPage(): JSX.Element {
             {' · '}{cs ? 'Zobrazeno' : 'Showing'} {data.players.length}
             {data.ranking_week_ordinal != null ? ` · ${cs ? 'Publikace žebříčku · index týdne' : 'Ranking publication · week index'} ${data.ranking_week_ordinal}` : ''}
           </p>
+          {data.players.length>0&&<section aria-label={cs?'Přehled načtené stránky':'Loaded page overview'}>
+            <h4>{cs?'Ranking na této stránce':'Ranking on this page'}</h4>
+            <div className="grid">{rankingCounts.map(item=><div key={item.value} className="section-subtle">
+              <p>{item.value==='ranked'?(cs?'V rankingu':'Ranked'):
+                item.value==='unranked'?(cs?'Mimo ranking':'Unranked'):(cs?'Nepublikováno':'Unpublished')}</p>
+              <strong>{item.count} / {data.players.length}</strong>
+            </div>)}</div>
+            <p className="status">{cs?'Počty platí pouze pro načtenou stránku, nikoli celý Run.':
+              'Counts cover this loaded page only, not the entire Run.'}</p>
+          </section>}
           <div className="table-responsive">
             <table>
               <thead><tr>

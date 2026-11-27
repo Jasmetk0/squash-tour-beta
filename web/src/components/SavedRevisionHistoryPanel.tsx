@@ -24,6 +24,7 @@ import { EmptyState, JsonPayloadBlock, MetadataList, SectionCard } from './RunSc
 import { SavedBranchMap } from './SavedBranchMap'
 import {useLanguage} from '../i18n/LanguageContext'
 import {historyText} from '../i18n/historyText'
+import {validateReachableCompareHistory} from '../pages/savedCompareStates'
 
 type ForkReview = {
   commandId: string
@@ -72,9 +73,13 @@ export function SavedRevisionHistoryPanel({
 }: SavedRevisionHistoryPanelProps): JSX.Element {
   const {language}=useLanguage()
   const T=(english:string)=>historyText(english,language)
+  const L=(cs:string,en:string)=>language==='cs'?cs:en
   const queryClient = useQueryClient()
   const [requestedBranchId, setRequestedBranchId] = useState('')
   const [selectedRevisionId, setSelectedRevisionId] = useState('')
+  const [historySearch,setHistorySearch]=useState('')
+  const [historyKind,setHistoryKind]=useState('')
+  const [historyOrigin,setHistoryOrigin]=useState('')
   const [comparisonRevisionId, setComparisonRevisionId] = useState('')
   const [newBranchName, setNewBranchName] = useState('')
   const [forkReview, setForkReview] = useState<ForkReview | null>(null)
@@ -102,6 +107,14 @@ export function SavedRevisionHistoryPanel({
       lastPage.has_more_older ? lastPage.next_before_sequence ?? undefined : undefined,
     enabled: Boolean(runId && branchId)
   })
+  const pages=historyQuery.data?.pages??[]
+  const verifiedHistory=pages.length>0&&pages[0].saved_revisions?.length>0?
+    validateReachableCompareHistory(runId,branchId,pages):null
+  // An empty legacy history has no action authority. A nonempty history must
+  // prove every page, not merely the identity of the first response.
+  const emptyHistory=pages.length===1&&pages[0].run_id===runId&&pages[0].branch_id===branchId&&
+    Array.isArray(pages[0].saved_revisions)&&pages[0].saved_revisions.length===0&&
+    !pages[0].has_more_older&&(pages[0].total_count===undefined||pages[0].total_count===0)
   const history: SavedRevisionHistoryResponse | undefined = historyQuery.data
     ? {
         run_id: historyQuery.data.pages[0].run_id,
@@ -113,8 +126,18 @@ export function SavedRevisionHistoryPanel({
       }
     : undefined
   const historyIdentityIsValid = Boolean(
-    history && history.run_id === runId && history.branch_id === branchId
+    history && historyQuery.isSuccess && (!historyQuery.isFetching||historyQuery.isFetchingNextPage) &&
+      (verifiedHistory||emptyHistory) && history.run_id === runId && history.branch_id === branchId
   )
+  const loaded=historyIdentityIsValid&&history&&!historyQuery.isError?history.saved_revisions:[]
+  const visibleHistory=loaded.filter(revision=>
+    (!historyKind||revision.kind===historyKind)&&
+    (!historyOrigin||(historyOrigin==='shared'?revision.is_shared_revision:!revision.is_shared_revision))&&
+    [revision.revision_id,revision.kind,revision.revision_branch_id,revision.parent_revision_id??'',
+      typeof revision.change_summary?.summary==='string'?revision.change_summary.summary:'',String(revision.sequence)]
+      .some(value=>value.toLowerCase().includes(historySearch.trim().toLowerCase())))
+  const kindOptions=[...new Set(loaded.map(revision=>revision.kind))].sort()
+  const sharedCount=loaded.filter(revision=>revision.is_shared_revision).length
   const recoveryActivityQuery = useQuery({
     queryKey: ['saved-revision-recovery-activity', runId, branchId],
     queryFn: () => getSavedRevisionRecoveryActivity(runId, branchId),
@@ -149,6 +172,9 @@ export function SavedRevisionHistoryPanel({
     (revision) => revision.revision_id === selectedRevisionId
   )
 
+  const loadedParent=selectedEntry?.parent_revision_id&&loaded.filter(revision=>revision.revision_id===selectedEntry.parent_revision_id)
+  const parent=loadedParent&&loadedParent.length===1&&selectedEntry&&loadedParent[0].sequence<selectedEntry.sequence?
+    loadedParent[0]:null
   const detailQuery = useQuery({
     queryKey: ['saved-revision-detail', runId, branchId, selectedRevisionId],
     queryFn: () => getSavedRevision(runId, branchId, selectedRevisionId),
@@ -156,7 +182,10 @@ export function SavedRevisionHistoryPanel({
   })
   const detail = detailQuery.data
   const detailIdentityIsValid = Boolean(
-    detail &&
+    detail && detailQuery.isSuccess && !detailQuery.isFetching && historyIdentityIsValid && selectedEntry &&
+      detail.content_hash===selectedEntry.content_hash && detail.content_hash_algorithm===selectedEntry.content_hash_algorithm &&
+      detail.revision_branch_id===selectedEntry.revision_branch_id && detail.sequence===selectedEntry.sequence &&
+      detail.parent_revision_id===selectedEntry.parent_revision_id &&
       detail.run_id === runId &&
       detail.branch_id === branchId &&
       detail.revision_id === selectedRevisionId
@@ -189,7 +218,12 @@ export function SavedRevisionHistoryPanel({
   })
   const comparison = comparisonQuery.data
   const comparisonIdentityIsValid = Boolean(
-    comparison &&
+    comparison && comparisonQuery.isSuccess && !comparisonQuery.isFetching && detailIdentityIsValid &&
+      comparisonEntry && comparison.saved_head_revision_id===history?.saved_head_revision_id &&
+      comparison.from_revision.content_hash===comparisonEntry.content_hash &&
+      comparison.to_revision.content_hash===selectedEntry?.content_hash &&
+      comparison.from_revision.revision_branch_id===comparisonEntry.revision_branch_id &&
+      comparison.to_revision.revision_branch_id===selectedEntry?.revision_branch_id &&
       comparison.run_id === runId &&
       comparison.branch_id === branchId &&
       comparison.from_revision.revision_id === comparisonRevisionId &&
@@ -203,7 +237,10 @@ export function SavedRevisionHistoryPanel({
   })
   const restorePreflight = restorePreflightQuery.data
   const restorePreflightIdentityIsValid = Boolean(
-    restorePreflight &&
+    restorePreflight && restorePreflightQuery.isSuccess && !restorePreflightQuery.isFetching &&
+      detailIdentityIsValid && historyIdentityIsValid && branch &&
+      restorePreflight.saved_head_revision_id===history?.saved_head_revision_id &&
+      restorePreflight.saved_head_revision_id===branch.saved_head_revision_id &&
       restorePreflight.run_id === runId &&
       restorePreflight.branch_id === branchId &&
       restorePreflight.target_saved_revision_id === selectedRevisionId
@@ -339,7 +376,7 @@ export function SavedRevisionHistoryPanel({
   }
 
   const reviewStillCurrent = Boolean(
-    restoreReview &&
+    restoreReview && detailIdentityIsValid && historyIdentityIsValid &&
       restorePreflightIdentityIsValid &&
       restorePreflight?.can_restore &&
       restorePreflight.saved_head_revision_id === restoreReview.expectedHeadSavedRevisionId &&
@@ -356,6 +393,7 @@ export function SavedRevisionHistoryPanel({
 
   function selectBranch(nextBranchId: string): void {
     setRequestedBranchId(nextBranchId)
+    setHistorySearch('');setHistoryKind('');setHistoryOrigin('')
     setSelectedRevisionId('')
     setComparisonRevisionId('')
     setNewBranchName('')
@@ -462,7 +500,7 @@ export function SavedRevisionHistoryPanel({
       {historyQuery.error && (
         <p className="error">{T("Failed to load Saved Revision history:")} {formatApiError(historyQuery.error)}</p>
       )}
-      {history && !historyIdentityIsValid && (
+      {history && !historyIdentityIsValid && !historyQuery.isFetching && !historyQuery.isError && (
         <p className="error">{T("Saved Revision history returned a mismatched Run or Branch identity.")}</p>
       )}
       {historyIdentityIsValid && history?.saved_revisions.length === 0 && (
@@ -472,11 +510,40 @@ export function SavedRevisionHistoryPanel({
         <div className="saved-revision-layout">
           <div className="table-responsive" aria-label={T("Reachable Saved Revisions table")}>
             <p className="status">{T("Reachable Saved Revision history, including shared ancestors. Only loaded pages are shown; older entries can be loaded explicitly. Saved at is wall-clock time, not sporting simulation time.")}</p>
+            <section aria-label={L('Filtry načtené historie','Loaded history filters')} data-run-navigation-readonly>
+              <div className="grid">
+                <div className="section-subtle"><p>{L('Načtené revize','Loaded revisions')}</p><strong>{loaded.length}</strong></div>
+                <div className="section-subtle"><p>{L('Vlastní revize','Own revisions')}</p><strong>{loaded.length-sharedCount}</strong></div>
+                <div className="section-subtle"><p>{L('Sdílení předci','Shared ancestors')}</p><strong>{sharedCount}</strong></div>
+              </div>
+              <p className="status">{L('Součty a filtry platí jen pro načtené stránky, nikoli celou historii.',
+                'Counts and filters cover loaded pages only, not the entire history.')}</p>
+              <div className="grid">
+                <label>{L('Hledat revizi','Find revision')}<input type="search" value={historySearch}
+                  onChange={e=>setHistorySearch(e.target.value)}/></label>
+                <label>{L('Druh revize','Revision kind')}<select value={historyKind} onChange={e=>setHistoryKind(e.target.value)}>
+                  <option value="">{L('Všechny druhy','All kinds')}</option>
+                  {kindOptions.map(kind=><option key={kind} value={kind}>{kind}</option>)}
+                </select></label>
+                <label>{L('Původ revize','Revision origin')}<select value={historyOrigin} onChange={e=>setHistoryOrigin(e.target.value)}>
+                  <option value="">{L('Všechny revize','All revisions')}</option>
+                  <option value="own">{L('Vlastní revize','Own revisions')}</option>
+                  <option value="shared">{L('Sdílení předci','Shared ancestors')}</option>
+                </select></label>
+              </div>
+              <p>{L('Odpovídající revize','Matching revisions')}: {visibleHistory.length} / {loaded.length}</p>
+              <button type="button" disabled={!historySearch&&!historyKind&&!historyOrigin}
+                onClick={()=>{setHistorySearch('');setHistoryKind('');setHistoryOrigin('')}}>{L('Vymazat filtry historie','Clear history filters')}</button>
+              {loaded.length>0&&visibleHistory.length===0&&<p>{L('Žádná načtená revize neodpovídá filtrům.','No loaded revision matches the filters.')}</p>}
+              {selectedEntry&&!visibleHistory.some(r=>r.revision_id===selectedEntry.revision_id)&&
+                <p className="status">{L('Otevřený detail je mimo filtr; výběr revize se nemění.',
+                  'The open detail is outside the filter; revision selection is unchanged.')}</p>}
+            </section>
             <table aria-label={T("Saved Revision history table")} className="saved-revision-table">
               <thead><tr><th>{T("# / Revision")}</th><th>{T("Saved at")}</th>
                 <th>{T("Actual change summary")}</th><th>{T("Source Branch")}</th>
                 <th>{T("Parent")}</th><th>{T("Reachability")}</th></tr></thead>
-              <tbody>{history.saved_revisions.map((revision) => (
+              <tbody>{visibleHistory.map((revision) => (
                 <tr key={revision.revision_id}
                   className={selectedRevisionId === revision.revision_id ? 'is-selected' : ''}>
                   <td><button type="button"
@@ -518,7 +585,7 @@ export function SavedRevisionHistoryPanel({
             {detailQuery.error && (
               <p className="error">{T("Failed to load Saved Revision preview:")} {formatApiError(detailQuery.error)}</p>
             )}
-            {detail && !detailIdentityIsValid && (
+            {detail && !detailIdentityIsValid && !detailQuery.isFetching && !detailQuery.isError && (
               <p className="error">{T("The preview returned a mismatched Saved Revision identity.")}</p>
             )}
             {detailIdentityIsValid && detail && (
@@ -553,6 +620,15 @@ export function SavedRevisionHistoryPanel({
 
                 <section aria-label={T("Saved Revision comparison")}>
                   <h4>{T("Compare revisions")}</h4>
+                  {parent&&detail.parent_revision_id===parent.revision_id&&detail.content_hash===selectedEntry?.content_hash&&
+                    detail.revision_branch_id===selectedEntry?.revision_branch_id&&
+                    <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
+                      new URLSearchParams({branch:branchId,a:parent.revision_id,b:selectedRevisionId}).toString()}>
+                      {L('Porovnat s evidovaným rodičem','Compare with recorded parent')} · #{parent.sequence}
+                    </Link></p>}
+                  {selectedEntry?.parent_revision_id&&!parent&&<p className="status">{L(
+                    'Rodič není jednoznačně doložen v načtené historii. Zkus načíst starší revize.',
+                    'Parent is not uniquely established in loaded history. Try loading older revisions.')}</p>}
                   <p><Link to={'/admin/runs/'+encodeURIComponent(runId)+'/branches/compare?'+
                     new URLSearchParams({branch:branchId,
                       b:selectedRevisionId,...(comparisonRevisionId?{a:comparisonRevisionId}:{})}).toString()}>
@@ -561,7 +637,7 @@ export function SavedRevisionHistoryPanel({
                   <label>
                     {T("Compare from")}
                     <select
-                      aria-label={T("Compare selected revision with")}
+                      data-run-navigation-readonly aria-label={T("Compare selected revision with")}
                       value={comparisonRevisionId}
                       onChange={(event) => setComparisonRevisionId(event.target.value)}
                     >

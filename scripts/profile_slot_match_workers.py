@@ -451,6 +451,73 @@ def ab(args):
         raise SystemExit("A and B outputs differ")
 
 
+# ----------------------------------------------------------------- isolated (Lab)
+def _isolated_items(root, corpus, count):
+    sys.path[:0] = [str(Path(root).resolve() / "scripts")]
+    import benchmark_match_engine as bench
+    from beta_engine.domain.matches import MatchContext, MatchParticipantContext
+    from beta_engine.domain.matches.health import EffectiveMatchHealthSnapshot
+    from beta_engine.domain.players.health import PlayerHealthProfile
+
+    def healthy(context):
+        return EffectiveMatchHealthSnapshot.from_profiles(
+            player_a=PlayerHealthProfile(player_id=context.player_a.player.player_id),
+            player_b=PlayerHealthProfile(player_id=context.player_b.player.player_id))
+
+    items = []
+    if corpus == "ko128":
+        # First round of the ko128 Lab scenario: 64 independent matches, 1 v 128 ...
+        players = [bench._player(f"P{i:03d}", 95 - (i * 50) // 128, style=bench.STYLES[i % 5],
+                                 archetype=bench.ARCHETYPES[(i * 3) % 5], spread=i % 6)
+                   for i in range(1, 129)]
+        for k in range(64):
+            context = MatchContext(match_id=f"ko128-r1-m{k + 1:02d}",
+                                   player_a=MatchParticipantContext(player=players[k]),
+                                   player_b=MatchParticipantContext(player=players[127 - k]))
+            items.append((context, 2701 + k * 7919, f"{k + 1:064x}", healthy(context)))
+    else:
+        for label, context, seed, health, _ in bench.edge_cases():
+            if label.startswith(("lab-", "step-")):
+                continue
+            snapshot = (bench._health(context.player_a.player.player_id, context.player_b.player.player_id)
+                        if health == "injured" else healthy(context))
+            items.append((context, seed, f"{len(items) + 1:064x}", snapshot))
+    return [items[i % len(items)] for i in range(count)] if count else items
+
+
+def isolated(args):
+    target_imports(args.root)
+    from beta_engine.domain.matches import slot_batch
+    from beta_engine.infrastructure.match_workers import ProcessMatchExecutor
+
+    items = _isolated_items(args.root, args.corpus, args.matches)
+    sampler = GroupSampler()
+    sampler.start()
+    sampler.window()
+    executor = ProcessMatchExecutor(args.workers) if args.workers else None
+    rows = []
+    try:
+        for label in ("first batch (cold pool)", "warm batch"):
+            w, c = time.perf_counter(), time.process_time()
+            results = slot_batch.simulate_batch(items, executor=executor)
+            wall, cpu = time.perf_counter() - w, time.process_time() - c
+            peak, child_cpu, _ = sampler.window()
+            rows.append({"step": label, "wall": round(wall, 4), "parent_cpu": round(cpu, 4),
+                         "children_cpu_total": round(child_cpu, 3),
+                         "group_peak_rss_mib": round(peak / 2 ** 20, 1) if sampler.supported else None,
+                         "digest": digest([r.model_dump(mode="json") for r in results])})
+    finally:
+        if executor is not None:
+            executor.close()
+        sampler.stop()
+    report = {"schema_version": "slot_match_workers_isolated.v1", "corpus": args.corpus,
+              "matches": len(items), "workers": args.workers, "commit": _git(args.root, "rev-parse", "HEAD"),
+              "python": sys.version.split()[0], "cpu_count": os.cpu_count(),
+              "rallies": sum(r.rally_log.total_rallies for r in results),
+              "counters": slot_batch.batch_counters(), "rows": rows}
+    print(json.dumps(report))
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
@@ -476,8 +543,13 @@ def main(argv=None):
         q.add_argument("--sha256", required=True)
         q.add_argument("--steps", type=int, default=1)
         q.add_argument("--prestart", action="store_true")
+    i = sub.add_parser("isolated", help="Lab/isolated batch: no HTTP, SQLite or Run state")
+    i.add_argument("--root", default=str(DRIVER.parents[1]))
+    i.add_argument("--corpus", choices=("ko128", "cases"), default="ko128")
+    i.add_argument("--matches", type=int, default=0, help="first N items (cycled); 0 = all")
+    i.add_argument("--workers", type=int, default=0)
     args = parser.parse_args(argv)
-    {"prepare": prepare, "run": run, "ab": ab}[args.command](args)
+    {"prepare": prepare, "run": run, "ab": ab, "isolated": isolated}[args.command](args)
 
 
 if __name__ == "__main__":

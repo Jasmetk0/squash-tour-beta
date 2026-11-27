@@ -48,9 +48,10 @@ def create_app(
         from beta_engine.application.full_simulation_tasks import FullSimulationTaskWorker
         app.state.full_simulation_worker = FullSimulationTaskWorker(app.state.runtime.repository._session_factory)
         from beta_engine.infrastructure import match_workers
-        # Opt-in only (BETA_ENGINE_MATCH_WORKERS); results never depend on it.
-        app.state.match_workers = match_workers.install_from_environment()
+        app.state.match_workers = None
         try:
+            # Opt-in only (BETA_ENGINE_MATCH_WORKERS); results never depend on it.
+            app.state.match_workers = match_workers.install_from_environment()
             yield
         finally:
             app.state.full_simulation_worker.close()

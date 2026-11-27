@@ -139,3 +139,22 @@ def test_concurrent_independent_runs_share_one_bounded_pool(tmp_path, prepared_s
         assert len(pool.worker_pids()) <= 2
     assert actual == expected
     assert slot_batch.installed_executor() is None
+
+
+def test_invalid_worker_setting_fails_startup_and_installs_nothing(tmp_path, monkeypatch):
+    # Lifespan component check (the app's own lifespan, no uvicorn).
+    import asyncio
+
+    from beta_engine.main import create_app
+
+    monkeypatch.setenv(ENVIRONMENT_VARIABLE, "many")
+    app = create_app(database_url=f"sqlite:///{tmp_path / 'invalid-workers.db'}")
+
+    async def start():
+        async with app.router.lifespan_context(app):
+            pytest.fail("startup must fail")
+
+    with pytest.raises(ValueError, match=ENVIRONMENT_VARIABLE):
+        asyncio.run(start())
+    assert slot_batch.installed_executor() is None
+    assert app.state.match_workers is None

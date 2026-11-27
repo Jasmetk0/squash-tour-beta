@@ -258,3 +258,13 @@ The commands above are the real acceptance procedure, not a claim that
 Windows or a new A/A run has already passed. The merged #1876 Linux A/A
 evidence predates the Windows port; obtain fresh final-head evidence before
 treating this as accepted on the Windows reference PC.
+
+## Slot matches on several cores — 26 November 2026
+
+`scripts/profile_slot_match_workers.py` compares sequential slot matches with
+the opt-in spawn workers (`BETA_ENGINE_MATCH_WORKERS`) through production
+HTTP/SQLite: A B B A in fresh processes from one pinned SQLite fixture, with
+process-group CPU and peak RSS (Linux) and required output equality. Its
+`isolated` mode is the Lab-only upper bound. Procedure, Linux results and
+limitations: `docs/SLOT_MATCH_WORKERS_2026_11_26.md`. Windows reference-PC
+numbers are not yet measured.

@@ -1,10 +1,10 @@
 /** Exact historical Run Tour Edition match detail and archived rally replay. */
-import {useState} from 'react'
+import {useCallback,useEffect,useState} from 'react'
 import {useQuery,useQueryClient} from '@tanstack/react-query'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourMatchDetail} from '../api/client'
 import {validSavedTourMatchDetail,validSavedTourRallyPagePair} from '../api/savedTour'
-import type {SavedTourMatchDetail} from '../api/savedTour'
+import type {SavedTourMatchDetail,SavedTourRallyFrame} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
@@ -43,12 +43,20 @@ function HistoricalMatchReplay():JSX.Element{
   const linkedRally=requestedRally===null?1:parseSavedReplayRally(requestedRally,MAX_LINKED_RALLY)
   const index=(linkedRally??1)-1
   const [rallyInput,setRallyInput]=useState('')
-  const moveToRally=(oneBased:number)=>{
+  // Presentation only. Existing rally bookmarks continue opening Replay.
+  const [section,setSection]=useState<'overview'|'statistics'|'replay'>('replay')
+  const [playing,setPlaying]=useState(false)
+  const [speed,setSpeed]=useState<1|2|4>(1)
+  const advanceToRally=useCallback((oneBased:number)=>{
     const next=new URLSearchParams(params)
     if(oneBased===1)next.delete('rally')
     else next.set('rally',String(oneBased))
     setRallyInput('')
     setParams(next,{replace:true})
+  },[params,setParams])
+  const moveToRally=(oneBased:number)=>{
+    setPlaying(false)
+    advanceToRally(oneBased)
   }
   const offset=Math.floor(index/PAGE)*PAGE
   const ready=Boolean(branch&&explicitBranch===branch&&revision&&revision.trim()===revision
@@ -87,6 +95,78 @@ function HistoricalMatchReplay():JSX.Element{
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const target=parseSavedReplayRally(rallyInput,data?.total_rallies??0)
+  const canAdvance=Boolean(frame&&data&&index+1<data.total_rallies
+    &&index+1<MAX_LINKED_RALLY&&!frame.match_complete)
+  // Only advance the existing URL cursor. A page crossing waits for the same
+  // verified reader; failures and scope changes cancel playback, never retry it.
+  useEffect(()=>{
+    if(!playing)return
+    if(!ready||invalid||q.isError||section!=='replay'){
+      setPlaying(false)
+      return
+    }
+    if(q.isFetching||q.isPending)return
+    if(!frame||!canAdvance||frame.set_complete){
+      setPlaying(false)
+      return
+    }
+    const timer=window.setTimeout(()=>advanceToRally(index+2),1000/speed)
+    return ()=>window.clearTimeout(timer)
+  },[playing,ready,invalid,q.isError,q.isFetching,q.isPending,section,frame,
+    canAdvance,index,speed,advanceToRally])
+  const startPlayback=()=>{
+    if(!canAdvance||!frame)return
+    // Explicit restart at a completed game may enter the next one.
+    if(frame.set_complete)advanceToRally(index+2)
+    setPlaying(true)
+  }
+  // Expose exact starts and ends only when the verified page proves them.
+  // A first frame on page 2+ is not necessarily the start of its game.
+  const landmarks=data?.rallies.flatMap((r,i)=>{
+    const prior=i>0?data.rallies[i-1]:
+      previous?.rallies[previous.rallies.length-1]
+    const start=r.rally_index===1||Boolean(prior?.set_complete
+      &&prior.set_number+1===r.set_number&&prior.rally_index+1===r.rally_index)
+    return [
+      ...(start?[{rally:r.rally_index,game:r.set_number,kind:'start'}]:[]),
+      ...(r.set_complete?[{rally:r.rally_index,game:r.set_number,kind:'end'}]:[]),
+    ]
+  })??[]
+  const sections=['overview','statistics','replay'] as const
+  const sectionLabels=cs?['Přehled','Statistiky','Průběh a Replay']:
+    ['Overview','Statistics','Course & Replay']
+  // Count only explicitly recorded rally winners on this validated page.
+  // A rally winner is not necessarily equivalent to one scored point.
+  const counts=data?.replay_status==='available'&&data.rallies.length>0?{
+    a:data.rallies.filter(r=>r.winner_player_id===data.player_a_id).length,
+    b:data.rallies.filter(r=>r.winner_player_id===data.player_b_id).length,
+    none:data.rallies.filter(r=>r.winner_player_id===null).length,
+  }:null
+  // Whole-archive statistics are an opt-in view of already read pages only.
+  // Never fan out GETs or call the MatchEngine to fill missing history.
+  let completeArchive:SavedTourRallyFrame[]|null=null
+  if(section==='statistics'&&data?.replay_status==='available'
+    &&data.rallies.length>0&&data.total_rallies<=MAX_LINKED_RALLY){
+    const frames:SavedTourRallyFrame[]=[]
+    let priorPage:SavedTourMatchDetail|undefined
+    for(let pageOffset=0;pageOffset<data.total_rallies;pageOffset+=PAGE){
+      const cached=queryClient.getQueryState<SavedTourMatchDetail>([...queryScope,pageOffset])
+      const page=cached?.data
+      if(cached?.status!=='success'||cached.fetchStatus!=='idle'||!page
+        ||!validSavedTourMatchDetail(page,runId,branch!,revision!,season!,eventId,matchId,pageOffset,PAGE)
+        ||page.total_rallies!==data.total_rallies||page.replay_status!=='available'
+        ||(priorPage&&!validSavedTourRallyPagePair(priorPage,page)))break
+      frames.push(...page.rallies)
+      priorPage=page
+    }
+    if(frames.length===data.total_rallies)completeArchive=frames
+  }
+  const archiveCounts=completeArchive&&data?{
+    a:completeArchive.filter(r=>r.winner_player_id===data.player_a_id).length,
+    b:completeArchive.filter(r=>r.winner_player_id===data.player_b_id).length,
+    none:completeArchive.filter(r=>r.winner_player_id===null).length,
+  }:null
+  const completedGames=completeArchive?.filter(r=>r.set_complete)??[]
   // Player profile is current-HEAD-only. Never substitute it for a prior Saved match.
   const sameHead=Boolean(data&&revision&&selectedBranch?.run_id===runId
     &&selectedBranch?.saved_head_revision_id===revision)
@@ -103,7 +183,7 @@ function HistoricalMatchReplay():JSX.Element{
   parentParams.delete('rally')
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
-  return <section className="panel">
+  return <section className="panel" data-run-navigation-readonly>
     <Link to={back} aria-label={tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
       cs?'Zpět na výsledky edice':'Back to Edition results'}>
       ← {tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
@@ -126,7 +206,9 @@ function HistoricalMatchReplay():JSX.Element{
     {ready&&(q.isPending||q.isFetching)&&<p role="status">{cs?'Načítám ověřený zápas…':'Loading canonical match…'}</p>}
     {ready&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
     <button type="button" disabled={!ready||q.isFetching}
-      onClick={()=>{void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
+      onClick={()=>{setPlaying(false);void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
+    {playing&&!data&&<button type="button" onClick={()=>setPlaying(false)}>
+      {cs?'Pozastavit přehrávání':'Pause replay'}</button>}
     {invalid&&<p role="alert">{cs?
       'Archivovaný zápas neodpovídá vybrané Run/Branch/revizi nebo stránce výměn.':
       'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
@@ -151,6 +233,71 @@ function HistoricalMatchReplay():JSX.Element{
         {' · '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
           season={season!} playerId={data.match.loser_player_id!} params={params} cs={cs}/></p>
     </div>
+    <nav className="saved-tour-edition-tabs" aria-label={cs?'Oddíly zápasu':'Match sections'}>
+      {sections.map((name,i)=><button key={name} type="button"
+        aria-current={section===name?'page':undefined} className={section===name?'active':''}
+        onClick={()=>{setPlaying(false);setSection(name)}}>{sectionLabels[i]}</button>)}
+    </nav>
+    {section==='overview'&&<section aria-label={sectionLabels[0]}>
+      <h3>{sectionLabels[0]}</h3>
+      <p>{data.replay_status==='available'?
+        (cs?'Ověřený archiv výměn je dostupný.':'Verified rally archive is available.'):
+        (cs?'Ověřený archiv výměn není dostupný.':'Verified rally archive is unavailable.')}</p>
+      <p className="status">{cs?
+        'Předzápasové stavy a případný důvod nestandardního ukončení tento uložený detail neposkytuje.':
+        'This Saved detail does not expose pre-match states or any nonstandard termination reason.'}</p>
+    </section>}
+    {section==='statistics'&&<section aria-label={sectionLabels[1]}>
+      <h3>{sectionLabels[1]}</h3>
+      {counts?<><p>{cs?'Archivovaných výměn celkem':'Total archived rallies'}: {data.total_rallies}</p>
+        <p className="status">{cs?'Rozsah ověřené stránky':'Verified page range'}:
+          {' '}{data.rallies[0].rally_index}–{data.rallies[data.rallies.length-1].rally_index}
+          {' / '}{data.total_rallies}. {cs?'Nejde o statistiky celého zápasu.':
+            'These are not whole-match statistics.'}</p>
+        <dl>
+          <dt>{cs?'Výměny s vítězem A':'Rallies won by A'} ({data.player_a_id})</dt><dd>{counts.a}</dd>
+          <dt>{cs?'Výměny s vítězem B':'Rallies won by B'} ({data.player_b_id})</dt><dd>{counts.b}</dd>
+          <dt>{cs?'Bez zaznamenaného vítěze výměny':'No recorded rally winner'}</dt><dd>{counts.none}</dd>
+        </dl>
+        <div className="grid">
+          <button type="button" disabled={offset===0}
+            onClick={()=>moveToRally(offset-PAGE+1)}>
+            {cs?'Předchozí stránka výměn':'Previous rally page'}</button>
+          <button type="button" disabled={!data.has_more||offset+PAGE+1>MAX_LINKED_RALLY}
+            onClick={()=>moveToRally(offset+PAGE+1)}>
+            {cs?'Další stránka výměn':'Next rally page'}</button>
+        </div>
+        {archiveCounts?<section aria-label={cs?'Statistiky úplného archivu':'Complete archive statistics'}>
+          <h4>{cs?'Statistiky úplného archivu':'Complete archive statistics'}</h4>
+          <p>{cs?'Všechny uložené výměny byly načteny a jejich návaznost ověřena.':
+            'All stored rallies have been read and their continuity verified.'}</p>
+          <dl>
+            <dt>{cs?'Výměny s vítězem A':'Rallies won by A'} ({data.player_a_id})</dt><dd>{archiveCounts.a}</dd>
+            <dt>{cs?'Výměny s vítězem B':'Rallies won by B'} ({data.player_b_id})</dt><dd>{archiveCounts.b}</dd>
+            <dt>{cs?'Bez zaznamenaného vítěze výměny':'No recorded rally winner'}</dt><dd>{archiveCounts.none}</dd>
+          </dl>
+          {completedGames.length>0&&<div className="table-responsive">
+            <table aria-label={cs?'Doložené dokončené gamy':'Recorded completed games'}>
+              <thead><tr><th>Game</th><th>{data.player_a_id}</th><th>{data.player_b_id}</th>
+                <th>{cs?'Poslední výměna':'Final rally'}</th></tr></thead>
+              <tbody>{completedGames.map(r=><tr key={r.rally_index}>
+                <td>{r.set_number}</td><td>{r.score_a_after}</td><td>{r.score_b_after}</td>
+                <td><button type="button" onClick={()=>{moveToRally(r.rally_index);setSection('replay')}}>
+                  #{r.rally_index}</button></td>
+              </tr>)}</tbody>
+            </table>
+          </div>}
+          <p className="status">{cs?'Počty vítězů výměn nejsou počty získaných bodů. Nedokončené gamy nejsou mezi dokončenými.':
+            'Rally winner counts are not point totals. Unfinished games are not listed as completed.'}</p>
+        </section>:<p className="status">{cs?
+          'Úplné statistiky archivu budou dostupné po načtení všech navazujících ověřených stránek.':
+          'Complete archive statistics require all consecutive verified pages to be loaded.'}</p>}
+      </>:<p role="status">{cs?'Pro tuto stránku nejsou ověřené výměny dostupné.':
+        'No verified rallies are available for this page.'}</p>}
+      <p className="status">{cs?'Délka, fyzické stavy a další statistiky nejsou v tomto čtecím rozhraní dostupné.':
+        'Duration, physical states and other statistics are unavailable in this reader.'}</p>
+    </section>}
+    {section==='replay'&&<>
     <h3>{cs?'Archivovaný průběh výměn':'Archived rally replay'}</h3>
     {data.replay_status==='unavailable'&&<p role="status">{cs?
       'Ověřený archiv výměn pro tuto uloženou revizi neexistuje. Výsledek je doložen, průběh nevytváříme.':
@@ -161,8 +308,29 @@ function HistoricalMatchReplay():JSX.Element{
       {frame?<div className="run-home-status-block">
         <p><strong>{cs?'Výměna':'Rally'} {frame.rally_index}/{data.total_rallies}</strong>
           {' · '}{cs?'Set':'Game'} {frame.set_number}</p>
-        <p>{frame.score_a_before} : {frame.score_b_before} → <strong>
-          {frame.score_a_after} : {frame.score_b_after}</strong></p>
+        {/* Scoreboard is a projection of this verified post-rally frame only.
+            Keep A/B source order even when B is the published match winner. */}
+        <section aria-label={cs?'Skóre archivované výměny':'Archived rally scoreboard'}>
+          <div className="grid">
+            <div className="section-subtle">
+              <p>{cs?'Hráč A':'Player A'}: <strong>{data.player_a_id}</strong></p>
+              <p>{cs?'Body v gamu':'Game points'}: <strong>{frame.score_a_after}</strong></p>
+              <p>{cs?'Vyhrané gamy':'Games won'}: {frame.sets_a_after}</p>
+            </div>
+            <div className="section-subtle">
+              <p>{cs?'Hráč B':'Player B'}: <strong>{data.player_b_id}</strong></p>
+              <p>{cs?'Body v gamu':'Game points'}: <strong>{frame.score_b_after}</strong></p>
+              <p>{cs?'Vyhrané gamy':'Games won'}: {frame.sets_b_after}</p>
+            </div>
+          </div>
+          <p className="status">{cs?'Skóre před a po výměně':'Score before and after rally'}:
+            {' '}{frame.score_a_before} : {frame.score_b_before} → <strong>
+            {frame.score_a_after} : {frame.score_b_after}</strong></p>
+          <progress aria-label={cs?'Pozice v archivu výměn':'Position in rally archive'}
+            value={frame.rally_index} max={data.total_rallies}/>
+          <p className="status">{cs?'Pozice v uloženém záznamu; nejde o uplynulý čas zápasu.':
+            'Position in the stored archive, not elapsed match time.'}</p>
+        </section>
         <p>{cs?'Stav setů':'Games'}: {frame.sets_a_after} : {frame.sets_b_after}</p>
         <p>{cs?'Podává':'Server'}: {frame.server_player_id}
           {' · '}{cs?'Vítěz výměny':'Rally winner'}: {frame.winner_player_id??'—'}</p>
@@ -181,6 +349,37 @@ function HistoricalMatchReplay():JSX.Element{
         <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
           onClick={()=>moveToRally(data.total_rallies)}>{cs?'Poslední výměna':'Last rally'}</button>
       </div>
+      {frame&&<section aria-label={cs?'Ovládání přehrávání':'Replay playback'}>
+        <div className="grid">
+          <button type="button" disabled={!playing&&!canAdvance}
+            onClick={()=>playing?setPlaying(false):startPlayback()}>
+            {playing?(cs?'Pozastavit přehrávání':'Pause replay'):
+              (cs?'Přehrát archiv':'Play replay')}</button>
+          <label>{cs?'Rychlost zobrazení':'Playback speed'}
+            <select value={speed} onChange={event=>{
+              const next=Number(event.target.value)
+              if(next===1||next===2||next===4)setSpeed(next)
+            }}>
+              <option value={1}>1×</option><option value={2}>2×</option>
+              <option value={4}>4×</option>
+            </select></label>
+        </div>
+        <p className="status">{cs?
+          'Automatický postup zastaví na konci gamu či zápasu nebo při chybě čtení. Rychlost je pouze rychlost zobrazení; zdravotní a jiné mimořádné události tento archiv neposkytuje.':
+          'Playback stops at game or match end or on a read error. Speed controls display only; health and other exceptional events are not exposed by this archive.'}</p>
+        <h4>{cs?'Ověřené hranice gamů na stránce':'Verified game landmarks on this page'}</h4>
+        {landmarks.length>0?<div className="grid">
+          {landmarks.map(mark=><button key={mark.rally+':'+mark.kind} type="button"
+            disabled={mark.rally===index+1||mark.rally>MAX_LINKED_RALLY}
+            onClick={()=>moveToRally(mark.rally)}>
+            {cs?'Game':'Game'} {mark.game} · {mark.kind==='start'?
+              (cs?'začátek':'start'):(cs?'konec':'end')} · #{mark.rally}
+          </button>)}
+        </div>:<p className="status">{cs?'Na této stránce není doložený začátek ani konec gamu.':
+          'No verified game start or end on this page.'}</p>}
+        <p className="status">{cs?'Další hranice se zobrazí po načtení příslušné stránky archivu.':
+          'Other landmarks appear when their archive page is loaded.'}</p>
+      </section>}
       <form className="grid" onSubmit={event=>{
         event.preventDefault()
         if(frame&&target!==null){
@@ -221,6 +420,7 @@ function HistoricalMatchReplay():JSX.Element{
       </details>}
       <p className="status">{cs?'Přehrání jen čte archiv, simulaci znovu neprovádí.':
         'The replay reads archived events only; it never reruns the simulation.'}</p>
+    </>}
     </>}
     </>}
     <Link to={back}>← {cs?'Zpět na edici':'Back to Edition'}</Link>

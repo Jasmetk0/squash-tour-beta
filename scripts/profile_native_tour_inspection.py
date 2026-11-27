@@ -585,7 +585,9 @@ def deterministic_ids(seed: str):
 def serve(database: Path, args, *, stage: str):
     from tests.api.test_saved_revision_history_api import ApiServer
 
-    deterministic_ids(f"{args.sha256}:{args.scenario}:{args.variant}:{stage}")
+    # Same sequence for both variants: they issue the same Saves in the same
+    # order, so equal history digests prove equal sporting results.
+    deterministic_ids(f"{args.sha256}:{args.scenario}:{stage}")
     log = []
     profiler = None
     if args.mode in {"profile", "alloc"}:

@@ -13,7 +13,9 @@ const stateText:Record<string,[string,string]>={
   queued:['Ve frontě','Queued'],
   active:['Aktivní stav úlohy','Active task state'],
   pause_requested:['Požadována pauza','Pause requested'],
-  ownership_unverified:['Vlastnictví nepotvrzeno','Ownership unverified']
+  ownership_unverified:['Vlastnictví nepotvrzeno','Ownership unverified'],
+  paused:['Pozastaveno','Paused'],awaiting_operator:['Čeká na operátora','Waiting for operator'],
+  recoverable:['Vyžaduje výslovné obnovení','Explicit recovery required'],failed:['Selhalo','Failed']
 }
 
 /** Opt-in, foreground-only reader. The global inventory can be expensive.
@@ -39,7 +41,7 @@ export function AdminSimulationMonitor():JSX.Element{
   // Do not choose between conflicting task claims or infer a running process.
   const selected=candidates.length===1?candidates[0]:
     candidates.length===0&&needsAction.length===1?needsAction[0]:null
-  return <section aria-label={cs?'Sledování simulací':'Simulation monitor'} className="app-header__tasks">
+  return <section aria-label={cs?'Sledování simulací':'Simulation monitor'} className="app-header__tasks" style={{maxWidth:"20rem",whiteSpace:"normal",overflowWrap:"anywhere"}}>
     <button type="button" aria-pressed={watching} onClick={toggle}>
       {watching?(cs?'Vypnout sledování':'Disable monitoring'):(cs?'Sledovat simulace':'Monitor simulations')}
     </button>

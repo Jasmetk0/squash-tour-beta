@@ -284,6 +284,14 @@ describe('Saved Edition detail',()=>{
   })
   it('shows actual first-round pairs, placeholders and published rounds without invented links',async()=>{
     const source=fixture(true)
+    // The Saved Draw contract requires its matching Entry Field authority.
+    source.entry_field={
+      schema_version:'viewer_tournament_entry_field.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',field_sequence:1,
+      mode:'initial',main_draw_capacity:4,active_main_entrant_count:2,
+      effective_main_bye_count:1,direct_main_player_ids:['P1','P2'],
+      qualification_player_ids:['Q1','Q2'],alternate_player_ids:[],withdrawn_player_ids:[]
+    }
     source.draw={
       schema_version:'viewer_tournament_draw.v1',product_run_id:'run-a',
       viewer_branch_id:'ancestor',event_id:'event-x',revision_count:0,

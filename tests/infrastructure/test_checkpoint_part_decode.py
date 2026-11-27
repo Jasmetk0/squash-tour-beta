@@ -139,3 +139,39 @@ def test_a_context_dependent_validation_never_uses_or_fills_the_cache():
         content_hash._deferred.reset(token)
     assert key is None and value.values == {'a': 1} and len(calls) == 3
     assert parts.stats()['entries'] == 1
+
+
+def test_a_known_oversize_declared_value_skips_only_the_cache_key(monkeypatch):
+    from types import SimpleNamespace
+
+    from beta_engine.infrastructure.db import native_fork_source_projection as projection
+
+    repository = SimpleNamespace(_revision_validation_lock=threading.Lock())
+    encoded, decoded = [], []
+    real = projection.canonical_json
+    monkeypatch.setattr(projection, 'canonical_json', lambda value: encoded.append(1) or real(value))
+    monkeypatch.setattr(projection, 'MAX_GLOBAL_TOUR_BYTES', 8)
+
+    def component(fingerprint):
+        return {'fingerprint': fingerprint, 'state': {'schema_version': 'calendar_sporting_checkpoint.v13'}}
+
+    def decode(raw):
+        decoded.append(raw)
+        return SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13', run_id='run',
+                               branch_id='branch', fingerprint=raw['fingerprint'])
+
+    for _ in range(3):
+        value = projection.decoded_global_checkpoint_component(
+            repository, component('f' * 64), run_id='run', branch_id='branch', decode=decode)
+        assert value.fingerprint == 'f' * 64
+    assert len(encoded) == 1 and len(decoded) == 3       # strict decode every time, key once
+    # Another declared value, Run or Branch is measured again.
+    projection.decoded_global_checkpoint_component(
+        repository, component('e' * 64), run_id='run', branch_id='branch', decode=decode)
+    assert len(encoded) == 2
+    # A lying hint cannot authorize anything: the decoded value is still checked.
+    with pytest.raises(ValueError):
+        projection.decoded_global_checkpoint_component(
+            repository, component('f' * 64), run_id='run', branch_id='branch',
+            decode=lambda raw: SimpleNamespace(schema_version='calendar_sporting_checkpoint.v13',
+                                               run_id='run', branch_id='branch', fingerprint='0' * 64))

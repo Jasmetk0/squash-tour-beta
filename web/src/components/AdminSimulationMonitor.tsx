@@ -1,8 +1,9 @@
-import { useState } from 'react'
+import { useEffect,useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getServerTasks } from '../api/fullSimulationTasks'
 import { useLanguage } from '../i18n/LanguageContext'
+import {clearMonitorNotices,dismissMonitorNotice,isTerminalTask,loadMonitorNotices,observeMonitorTasks,storeMonitorNotices,taskNoticeKey} from './simulationMonitorNotices'
 
 const preferenceKey='squash-engine-simulation-monitor-v1'
 const readPreference=()=>{
@@ -24,6 +25,7 @@ const stateText:Record<string,[string,string]>={
 export function AdminSimulationMonitor():JSX.Element{
   const {language}=useLanguage(),cs=language==='cs'
   const [watching,setWatching]=useState(readPreference)
+  const [ledger,setLedger]=useState(loadMonitorNotices)
   const q=useQuery({
     queryKey:['server-simulation-tasks',null,null],
     queryFn:()=>getServerTasks(),
@@ -33,9 +35,17 @@ export function AdminSimulationMonitor():JSX.Element{
   function toggle(){
     const next=!watching
     try{sessionStorage.setItem(preferenceKey,next?'on':'off')}catch{/* local session only */}
+    if(!next)setLedger(clearMonitorNotices())
     setWatching(next)
   }
   const observed=watching&&q.isSuccess?q.data:null
+  // Only successful observations can produce notices. No additional poll or
+  // terminal-summary read happens until the operator follows the exact link.
+  useEffect(()=>{
+    if(observed&&!q.isFetching)setLedger(previous=>observeMonitorTasks(previous,observed))
+  },[observed,q.isFetching])
+  useEffect(()=>{if(watching)storeMonitorNotices(ledger)},[ledger,watching])
+  const terminalNotices=observed?.filter(task=>isTerminalTask(task)&&ledger.notices.includes(taskNoticeKey(task)))??[]
   const candidates=observed?.filter(t=>candidateStates.has(t.state))??[]
   const needsAction=observed?.filter(t=>t.needs_operator_action)??[]
   // Do not choose between conflicting task claims or infer a running process.
@@ -65,6 +75,22 @@ export function AdminSimulationMonitor():JSX.Element{
         {needsAction.length>0&&<p>{cs?'Úlohy vyžadující zásah':'Tasks requiring action'}: {needsAction.length}</p>}
         {candidates.length===0&&needsAction.length===0&&<p>{cs?'Poslední čtení neobsahuje aktivní ani zásah vyžadující serverové úlohy.':
           'Last read contains no active or action-required server tasks.'}</p>}
+        {terminalNotices.length>0&&<div aria-label={cs?'Oznámení simulací':'Simulation notices'} role="region">
+          <p role="status">{cs?'Nově pozorované ukončené úlohy':'Newly observed terminal tasks'}: {terminalNotices.length}</p>
+          {terminalNotices.slice(0,3).map(task=><div key={taskNoticeKey(task)}>
+            <strong>{task.run_name} / {task.branch_name}</strong>
+            <p>{task.state==='complete'?(cs?'Simulace dokončena':'Simulation completed'):
+              task.state==='target_reached'?(cs?'Dosažen cíl simulace':'Simulation target reached'):
+              (cs?'Simulace ukončena':'Simulation stopped')}</p>
+            <Link to={`/admin/runs/${encodeURIComponent(task.run_id)}/simulate?branch=${encodeURIComponent(task.branch_id)}&task=${encodeURIComponent(task.task_id)}&summary=1`}>
+              {cs?'Zobrazit souhrn':'View summary'}
+            </Link>{' '}
+            <button type="button" aria-label={(cs?'Skrýt oznámení ':'Dismiss notice ')+task.task_id}
+              onClick={()=>setLedger(previous=>dismissMonitorNotice(previous,taskNoticeKey(task)))}>
+              {cs?'Skrýt':'Dismiss'}</button>
+          </div>)}
+          {terminalNotices.length>3&&<p>{cs?'Další ukončené úlohy najdeš v centru úloh.':'See more terminal tasks in Task Center.'}</p>}
+        </div>}
         <small>{cs?'Poslední načtení':'Last read'}: {new Date(q.dataUpdatedAt).toLocaleTimeString(language)}
           {q.isFetching&&<> · {cs?'Obnovuji…':'Refreshing…'}</>}</small>
       </>}

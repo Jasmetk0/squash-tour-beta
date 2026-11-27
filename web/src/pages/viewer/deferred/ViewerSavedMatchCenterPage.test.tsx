@@ -396,4 +396,31 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
   })
 
+  it('restores tournament directory filters from URL and preserves unrelated parameters', async () => {
+    const user = userEvent.setup()
+    mount('/viewer/tour/matches?eventSearch=Source&keep=1')
+    expect(await screen.findByRole('table', { name: 'Turnaje s publikovanými výsledky' })).toHaveTextContent('Source Open')
+    expect(screen.getByLabelText('Hledat název nebo ID turnaje')).toHaveValue('Source')
+    await user.click(screen.getAllByRole('button', { name: 'Vymazat filtry' })[0])
+    const params = new URLSearchParams(screen.getByTestId('search-params').textContent ?? '')
+    expect(params.has('eventSearch')).toBe(false)
+    expect(params.get('keep')).toBe('1')
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+  })
+
+  it('rejects a tournament link from a different branch before requesting result details', async () => {
+    const user = userEvent.setup()
+    mount('/viewer/tour/matches?event=EVENT%2F1&eventRun=run+alpha&eventBranch=foreign&keep=1')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Odkaz na turnaj patří jinému Runu')
+    expect(api.getViewerTournamentResult).not.toHaveBeenCalled()
+    await user.click(screen.getByRole('button', { name: 'Skrýt zápasy' }))
+    await user.click(screen.getByRole('button', { name: 'Zobrazit zápasy' }))
+    expect(await screen.findByRole('table', { name: 'Publikované zápasy vybraného turnaje' })).toBeInTheDocument()
+    const params = new URLSearchParams(screen.getByTestId('search-params').textContent ?? '')
+    expect(params.get('eventRun')).toBe('run alpha')
+    expect(params.get('eventBranch')).toBe('viewer-branch')
+    expect(params.get('keep')).toBe('1')
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+  })
+
 })

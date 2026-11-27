@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -52,6 +52,8 @@ const messages = {
   noPublished: ['Zatím není publikován žádný turnajový výsledek.', 'No tournament results have been published yet.'],
   noMatchEvent: ['Filtrům neodpovídá žádný publikovaný turnaj.', 'No published tournament matches these filters.'],
   wrongEvent: ['Požadovaný turnaj nemá výsledek publikovaný ve zvolené Viewer Branch.', 'Requested tournament has no published result in this Viewer Branch.'],
+  wrongEventScope: ['Odkaz na turnaj patří jinému Runu nebo Viewer Branch, případně je neúplný.', 'The tournament link belongs to a different Run or Viewer Branch, or is incomplete.'],
+  unknownSeason: ['Nedostupná sezona', 'Unavailable season'],
   eventLoading: ['Načítám publikovaný výsledek vybraného turnaje…', 'Loading the selected published tournament result…'],
   eventError: ['Publikovaný turnajový výsledek není dostupný.', 'Published tournament result is unavailable.'],
   eventMismatch: ['Detail zápasů neodpovídá publikovanému turnaji nebo obsahuje nepovolené údaje.', 'Match detail disagrees with the published tournament or contains forbidden data.'],
@@ -272,9 +274,25 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
   catalog: SavedTournamentCatalog; runId: string; branchId: string; t: T
 }): JSX.Element {
   const [urlParams, setUrlParams] = useSearchParams()
-  const [season, setSeason] = useState('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const season = uniqueParam(urlParams, 'eventSeason') ?? 'all'
+  const search = uniqueParam(urlParams, 'eventSearch') ?? ''
+  const page = readPage(urlParams, 'eventPage')
+  function changeCatalog(key: string, value: string, fallback: string, replace = false): void {
+    setUrlParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (key !== 'eventPage') next.delete('eventPage')
+      if (value === fallback) next.delete(key)
+      else next.set(key, value)
+      return next
+    }, { replace })
+  }
+  function clearCatalog(): void {
+    setUrlParams(previous => {
+      const next = new URLSearchParams(previous)
+      for (const key of ['eventSeason', 'eventSearch', 'eventPage']) next.delete(key)
+      return next
+    })
+  }
   const published = useMemo(
     () => catalog.entries.filter(entry => entry.publication.result_published).sort(sortEvents),
     [catalog],
@@ -294,13 +312,23 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
   const visible = filtered.slice(offset, offset + EVENTS_PAGE_SIZE)
   const eventParams = urlParams.getAll('event')
   const requestedEventId = eventParams.length === 1 ? eventParams[0] : null
-  const selected = published.find(item => item.event.event_id === requestedEventId) ?? null
+  const hasEventScope = urlParams.has('eventRun') || urlParams.has('eventBranch')
+  const wrongEventScope = hasEventScope && (!requestedEventId ||
+    uniqueParam(urlParams, 'eventRun') !== runId ||
+    uniqueParam(urlParams, 'eventBranch') !== branchId)
+  const selected = wrongEventScope ? null :
+    published.find(item => item.event.event_id === requestedEventId) ?? null
   function selectEvent(eventId: string | null): void {
     setUrlParams(previous => {
       const next = new URLSearchParams(previous)
       resultFilterKeys.forEach(key => next.delete(key))
-      if (eventId) next.set('event', eventId)
-      else next.delete('event')
+      if (eventId) {
+        next.set('event', eventId)
+        next.set('eventRun', runId)
+        next.set('eventBranch', branchId)
+      } else {
+        for (const key of ['event', 'eventRun', 'eventBranch']) next.delete(key)
+      }
       return next
     })
   }
@@ -316,14 +344,16 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
         <div className="viewer-filters">
           <label htmlFor="viewer-match-season">{t('season')}</label>
           <select id="viewer-match-season" value={season}
-            onChange={e => { setSeason(e.target.value); setPage(1) }}>
+            onChange={e => changeCatalog('eventSeason', e.target.value, 'all')}>
             <option value="all">{t('allSeasons')}</option>
+            {season !== 'all' && !seasons.includes(season) ?
+              <option value={season}>{t('unknownSeason')}: {season}</option> : null}
             {seasons.map(value => <option key={value} value={value}>{value}</option>)}
           </select>
           <label htmlFor="viewer-match-events-search">{t('searchEvent')}</label>
           <input id="viewer-match-events-search" type="search" value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }} />
-          <button type="button" onClick={() => { setSeason('all'); setSearch(''); setPage(1) }}>
+            onChange={e => changeCatalog('eventSearch', e.target.value, '', true)} />
+          <button type="button" onClick={clearCatalog}>
             {t('clear')}
           </button>
         </div>
@@ -348,18 +378,18 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
           {filtered.length ? offset + visible.length : 0} {t('of')} {filtered.length}</p>
         {pages > 1 ? <nav aria-label={t('page')}>
           <button type="button" disabled={current === 1}
-            onClick={() => setPage(n => Math.max(1, n - 1))}>{t('previous')}</button>
+            onClick={() => changeCatalog('eventPage', String(current - 1), '1')}>{t('previous')}</button>
           <span>{t('page')} {current} / {pages}</span>
           <button type="button" disabled={current === pages}
-            onClick={() => setPage(n => Math.min(pages, n + 1))}>{t('next')}</button>
+            onClick={() => changeCatalog('eventPage', String(current + 1), '1')}>{t('next')}</button>
         </nav> : null}
       </>}
-    {eventParams.length > 0 && !selected ? <div role="alert">
-      <p>{t('wrongEvent')}</p>
+    {(eventParams.length > 0 || hasEventScope) && !selected ? <div role="alert">
+      <p>{t(wrongEventScope ? 'wrongEventScope' : 'wrongEvent')}</p>
       <button type="button" onClick={() => selectEvent(null)}>{t('clearSelection')}</button>
     </div> : null}
     {selected ? <section aria-label={t('selected')} className="viewer-active-run-card">
-      <h3>{selected.event.event_name || selected.event.event_id} · W{selected.event.season_week}</h3>
+      <h3>{selected.event.event_name || selected.event.event_id} · {String(selected.event.season)} · W{selected.event.season_week}</h3>
       <p><Link to={viewerTournamentDetailPath(runId, selected.event.event_id)}>
         {t('detail')}</Link></p>
       <button type="button" onClick={() => selectEvent(null)}>{t('clearSelection')}</button>

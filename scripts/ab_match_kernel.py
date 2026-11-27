@@ -11,9 +11,12 @@ same deterministic inputs and the report proves which source was measured.
    ``MatchResult``; rally, timeline and stamina chains; gameplan, rules and
    control contexts; rally numbers/times; bracket/HTTP output; step and restart
    states) must be identical, or the run stops with exit 1.
-2. Timing pass: ``--rounds`` rounds, each A B B A in a fresh process with
-   ``PYTHONHASHSEED=0`` and no instrumentation. Each child's peak RSS and CPU
-   come from ``os.wait4``; the output fingerprint must equal the equality pass.
+2. Timing pass: ``--rounds`` rounds in fresh processes with ``PYTHONHASHSEED=0``
+   and no instrumentation, A B B A in even and B A A B in odd rounds so that a
+   position effect cancels. Each child's peak RSS and CPU come from
+   ``os.wait4``; the output fingerprint must equal the equality pass. Besides
+   medians, the summary gives per-round paired ratios (sum of the round's two B
+   samples over its two A samples), which are robust to slow host drift.
 
     a=$(git rev-parse origin/buuk); b=$(git rev-parse HEAD)
     python scripts/ab_match_kernel.py --a "$a" --b "$a" --out work/aa --rounds 3 ko64 ko128
@@ -143,7 +146,8 @@ def main(argv=None) -> int:
             "machine": {"cpu_model": _cpu_model(), "logical_cpus": os.cpu_count(),
                         "affinity": len(os.sched_getaffinity(0))
                         if hasattr(os, "sched_getaffinity") else None},
-            "scenarios": args.scenarios, "rounds": args.rounds, "order": "A B B A per round",
+            "scenarios": args.scenarios, "rounds": args.rounds,
+            "order": "A B B A in even rounds, B A A B in odd rounds",
             "pythonhashseed": "0",
         }
         (out / "manifest.json").write_text(json.dumps(manifest, indent=1))
@@ -183,7 +187,7 @@ def main(argv=None) -> int:
         with (out / "samples.jsonl").open("w") as log:
             for round_index in range(args.rounds):
                 for scenario in args.scenarios:
-                    for side in ("A", "B", "B", "A"):
+                    for side in ("A", "B", "B", "A") if round_index % 2 == 0 else ("B", "A", "A", "B"):
                         report, usage = _child(args.python, trees[side],
                                                [scenario, "--repeats", "1", "--in-process"])
                         expected = fingerprints.setdefault(scenario, report["fingerprint"])
@@ -212,11 +216,22 @@ def main(argv=None) -> int:
                 stats["change_of_medians"] = round(b_med / a_med - 1, 4) if a_med else None
                 stats["ranges_overlap"] = not (stats["B"]["max"] < stats["A"]["min"]
                                                or stats["A"]["max"] < stats["B"]["min"])
+                ratios = []
+                for round_index in range(args.rounds):
+                    pair = {side: sum(
+                        s[key][0] if isinstance(s[key], list) else s[key]
+                        for s in by_side[side] if s["round"] == round_index) for side in ("A", "B")}
+                    if pair["A"]:
+                        ratios.append(round(pair["B"] / pair["A"] - 1, 4))
+                stats["paired_round_change"] = {
+                    "values": ratios, "median": round(statistics.median(ratios), 4),
+                    "min": min(ratios), "max": max(ratios)} if ratios else None
                 row[metric] = stats
             summary[scenario] = row
             print(json.dumps({"scenario": scenario,
                               **{m: {"A": row[m]["A"]["median"], "B": row[m]["B"]["median"],
                                      "change": row[m]["change_of_medians"],
+                                     "paired": row[m]["paired_round_change"]["median"],
                                      "overlap": row[m]["ranges_overlap"]}
                                  for m in (*METRICS, "peak_rss_mb")}}), flush=True)
         (out / "summary.json").write_text(json.dumps(summary, indent=1))

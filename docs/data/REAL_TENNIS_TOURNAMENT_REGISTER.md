@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 13 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 14 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -47,10 +47,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Adelaide](#adelaide-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Auckland](#auckland-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: Q odměny) |
 | 2024 | [Montpellier](#montpellier-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Córdoba](#córdoba-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 13 zpracovaných ročníků; 12 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 14 zpracovaných ročníků; 13 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -69,7 +70,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 11 | Adelaide 2024 | HOTOVO (nominální rozsah) |
 | 12 | Auckland 2024 | ROZPRACOVÁNO (P: rozpor odměn Q) |
 | 13 | Montpellier 2024 | HOTOVO (nominální rozsah) |
-| 14 | Córdoba 2024 | NEZAHÁJENO |
+| 14 | Córdoba 2024 | HOTOVO (nominální rozsah) |
 | 15 | Dallas 2024 | NEZAHÁJENO |
 | 16 | Marseille 2024 | NEZAHÁJENO (ověřit mapování katalogu) |
 
@@ -102,6 +103,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#adelaide-2024) | Adelaide International | ATP 250 | 2024-01-07–2024-01-08 | 2024-01-08–2024-01-13 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#auckland-2024) | ASB Classic | ATP 250 | 2024-01-06–2024-01-07 | 2024-01-08–2024-01-13 | ROZPRACOVÁNO: Q odměny |
 | [2024](#montpellier-2024) | Open Sud de France | ATP 250 | 2024-01-28–2024-01-29 | 2024-01-29–2024-02-04 | HOTOVO v nominálním rozsahu; Q/Main překryv |
+| [2024](#córdoba-2024) | Córdoba Open | ATP 250 | 2024-02-03–2024-02-04 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 
 ## Wimbledon 2024
 
@@ -1723,6 +1725,120 @@ I/T/H/D/B doloženy dobovým ATP, předem zveřejněným rozpisem a úplnými ar
 - MPL24-13: [TennisCompanion historická tabulka v EUR](https://tenniscompanion.org/prize-money/montpellier/), řádek 2024 Main a Q; odlišné celkové prize money nepoužívat jako autoritu.
 - MPL24-14: [Stevegtennis Main/Q archiv](https://www.stevegtennis.com/draw-results/atp/Open%20Sud%20de%20France%20-%20Montpellier/2024), potvrzuje sportovní strukturu, nikoli měnu či záporné sentinel hodnoty.
 
+
+## Córdoba 2024
+
+**Stav:** HOTOVO v nominálním rozsahu I/T/H/E/D/R/B/P/Z, s vyznačenými omezeními H/E/R/Z. Rešerše 2026-11-27. Primární ročníkové Main i Q finanční tabulky doloženy textem původních ATP losů zveřejněných pořadatelem; předstartovní Main kopie vizuálně. Pouze reálný tenis.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název / disciplína | Córdoba Open 2024, mužská dvouhra | COR24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 9158 | COR24-2/4 |
+| Areál | Polo Deportivo Kempes, Córdoba, Argentina | COR24-3/5 |
+| Povrch | venkovní červená antuka | COR24-1/2/3 |
+| Časové pásmo | America/Argentina/Cordoba, ART UTC−03:00 | lokalita, místní civilní datum |
+| Organizace | Torneos a Octagon s vládou provincie Córdoba | COR24-3 |
+| ATP supervisor | Carlos Sanches | COR24-1/2/6 |
+| Měna | USD; nikoli ARS, měna vstupenek není měna prize money | COR24-1/2/7 |
+| Míče, rozhodčí, individuální diety | NEOVĚŘENO | doplňkové údaje |
+
+### 2. Přihlášky a termíny
+
+| Pole | Hodnota | Důkaz / význam |
+|---|---|---|
+| Main rank date | 2024-01-08 | dobový přepis acceptance listu 20.1. COR24-8 |
+| Q rank date dle přepisu | 2024-01-08 | COR24-8; rozpor s obecným pravidlem cca 21 dní před pondělím (15.1.); neměnit záznam zdroje na odvozený údaj |
+| Nominální Main deadline | 2024-01-08 12:00 US Eastern = 14:00 ART | odvozeno z §7.03, 28 dní před 5.2. |
+| Nominální Q deadline | 2024-01-15 12:00 US Eastern = 14:00 ART | odvozeno z §7.03, 21 dní před 5.2.; skutečný ročníkový deadline neověřen |
+| Nominální LE deadline | 2024-02-01 10:00 US Eastern = 12:00 ART | §7.04, odvozeno |
+| Q los | zveřejněn nejpozději 2024-02-03 | COR24-9; přesný čas neověřen |
+| Main los | 2024-02-03, sobota | výslovně pořadatel COR24-3, hodina nepublikována |
+| Q | 2024-02-03–04 | COR24-3/5/10 |
+| Main | 2024-02-05–11 | COR24-1/2/3/4 |
+| Finále singlu | 2024-02-11 19:00 ART | pořadatel COR24-5; čtyřhra 16:00 odděleně |
+
+Detail Sheet nezískán. Původní Main cutoff 93 a Q 180 z COR24-8 jsou historické ranky, nikoli kvóty; konečný los uvádí Main 111 a Q 253, odlišné okamžiky a záznamy. Nepřebírat z přepisu Q rank date jako potvrzenou uzávěrku. Turnajové datum 5.–11.2. v záhlaví Q losu není datum samotné Q; kvalifikace 3.–4.2. přímo podle pořadatele.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální datum / okno | Nominální zápasy | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-02-03 | 8 | COR24-5/9, plán od 11:00 |
+| Q2 | 2024-02-04 | 4 | COR24-5/10, plán od 14:00 |
+| R32 | 2024-02-05–06 (konkrétní mužský program); veřejný plán označuje R1 i 7.2. | 12 | COR24-7/11/12/13 |
+| R16 | 2024-02-07–08 | 8 | COR24-12/13/14 |
+| QF | 2024-02-09 | 4 | COR24-5 |
+| SF | 2024-02-10 | 2 | COR24-5, od 15:30; poslední SF ne před 18:00 |
+| F | 2024-02-11 | 1 | COR24-5, 19:00 |
+
+Q 2 dny, Main 7 dní, celé okno 9 dní bez překryvu fází. Pozor na dvojí úroveň programu: veřejný harmonogram pořadatele COR24-5 uvádí obecně první kolo 5.–7.2. a osmifinále 8.2.; konkrétní denní ATP notes 5./6.2. jsou R32, notes vydané pro 7.2. výslovně označují čtyři mužské singlové dvojice jako R16. Pořadatel 8.2. potvrzuje zahájení R16 ve středu 7.2. a současně první kolo čtyřhry. Proto zachováváme obě zdrojové vrstvy: obecný předturnajový plán a upřesněné mužské okno dle denního programu. Nominálně R16 čtyři zápasy 7.2. a čtyři 8.2., nikoli 7.–9.2. (déšť). ATP 8./9.2. potvrzuje odložení tří zbývajících R16 na 9.2.; jeden R16 se 8.2. dohrál. Tato mimořádnost nemění plán QF 9.2. Denní počet R32 5./6.2. se neodhaduje. H* kvůli rozdílu veřejné a specifické vrstvy, nikoli chybějící fázi.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Účastníci | 28 | 16 |
+| Základní přímé akceptace | 18 | 14 |
+| SE rezervy | 2 | nevztahuje se |
+| LE rezerva | 1 | nevztahuje se |
+| DA při nulovém SE/LE | 21 | 14 |
+| WC | 3 | 2 |
+| Q postupy | 4 | 4 vítězové sekcí |
+| Nasazení | 8 | 8 |
+| BYE | 4 (top 4) | 0 |
+| Kola / nominální hrané zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 | BO3 |
+
+18+2+1+3+4=28; 14+2=16. Dobový přepis COR24-8 uvádí 18 DA, 3 WC, 4 Q, SE/LE nula; součet je neúplný bez uvolnitelných rezerv. Ročníkový standard §7.04/7.08 (MPL24-7) vysvětluje 2 SE a 1 LE. Předstartovní Main los (COR24-6, vizuálně) má 32 pozic, BYE 2/10/23/31, Q placeholders 5/19/21/28, WC 6/7/26, všech 8 seedů. Q originální textový los (COR24-1) má 16 účastníků, všechny 8 seedů, WC 2 a 14, Alt 10 a 11, PR 15; čtyři sekce po čtyřech, bez BYE. Konečný Main textový los označuje LL na místě původního seedu č. 6, který odstoupil; neznamená to plánovaný devátý typ vstupu ani změnu nominálních 8 seedů. Extrakce konečného Main pavouka vykazuje místy posunuté štítky/jména a výsledkové cesty, proto pro geometrii a nominální kvóty má přednost vizuálně zkontrolovaný předstartovní los a přímá zpráva pořadatele. Nepřepisujeme výsledky z vadného textového výtahu. BO3 potvrzují Q výsledky a nezávislý singlový archiv. 12+8+4+2+1=27 Main, Q 8+4=12; celkem 39 zápasů.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.04/7.08/7.10/7.12/7.15–16/7.20, lednová verze 2024 (MPL24-7, COR24-15): 8 Main seedů, 4 BYE pro top 4, 8 Q seedů, 4 sekce. LE pozice pro způsobilého hráče nad původním cut-off, nevyužité místo vráceno entry listu; nevyužité SE rezervy doplněny DA. Q vítězové losem do volných Main míst, LL postup podle ATP §7.20, nikoli Grand Slam. BO3 v obou fázích. Prohra prvního hraného zápasu po BYE = nula bodů (COR24-7, výslovná poznámka), odměna za dosažené kolo podle finančního předpisu. Body Q přičteny k Main dle dobového předpisu. Nový kontext: v týdnu 5.2. jsou tři ATP Tour turnaje Córdoba, Dallas a Marseille (COR24-8/16). ATP oznámení z 20.12.2023 a ročníkový §7.04 zavádějí Next Gen příležitosti pro způsobilé U20 v top 250 v takových týdnech (COR24-17): jedna Main a dvě Q příležitosti, nevyužité rezervy uvolněné dalším hráčům. Konkrétní distribuce/využití mezi turnaji tohoto týdne není z dostupných ročníkových listin doložena; evidovat jako programové pravidlo týdne, **ne přidat automaticky jedno Main a dvě Q místa každému turnaji navíc**. Nominální kapacita 28/16 zůstává pevná. Přesné přiřazení těchto rezerv k jednotlivým akcím otevřeno pro společný audit týdne.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 85535 |
+| Finalista | 1 | 165 | 49900 |
+| SF | 2 | 100 | 29335 |
+| QF | 4 | 50 | 16995 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 9870 |
+| R32 | 12 | 0 | 6030 |
+| Q postupující | 4 | 13 | 0 (výslovně v Q tabulce) |
+| Q2 prohra | 4 | 7 | 3015 |
+| Q1 prohra | 8 | 0 | 1645 |
+
+Main všech šest částek a body přímo ATP předstartovní los COR24-6 (vizuálně), originální konečný los COR24-2 (text) a ATP Media Notes COR24-7 (text). Q všechny tři hodnoty a body přímo originální ATP Q los na webu pořadatele COR24-1 (text; screenshot timeout), nezávislá sekundární tabulka COR24-18 potvrzuje částky. Stevegtennis nesprávně označuje měnu A$, originální dokument a ATP poznámka USD mají přednost. Nominální Main 413405 USD, Q 25220 USD, celkem 438625 USD. Záhlaví originálních losů uvádí total financial commitment 640705 USD; některé sekundární přehledy nesprávně nazývají tento údaj prize money nebo uvádějí jiný součet. Nezaměňovat s nominálním součtem singlových odměn.
+
+### 7. Kontrola a mezery
+
+I/T/D/B/P doloženy, H* obecný veřejný plán vs konkrétní mužské OOP/notes a dešťové odklady odděleny; E* přepis Q rank date v rozporu s očekávaným datem, deadline pouze odvozen, Q/LE/SE skutečné administrativní časové záznamy a DS chybí; R* dobová pravidla textově a týdenní Next Gen pravidlo doloženo, konkrétní rezervace mezi třemi akcemi otevřena; Z* původní Main/Q los pořadatele textově, screenshoty timeout, předstartovní Main kopie vizuálně, ATP Media Notes textově, screenshoty 403. Žádné SHA-256 originálních PDF nezískány. Žádný runtime převod. Další Dallas 2024 a následně Marseille 2024; společně ověřit týdenní Next Gen rozdělení.
+
+### 8. Zdroje (COR24)
+
+- COR24-1: [pořadatel, originální ATP Q los](https://www.cordobaopen.com/media/d/91/2b/912b749624c08459144dbca08e4263a8658f7bfe.pdf), text zápatí a všech 16 míst; screenshot timeout.
+- COR24-2: [pořadatel, originální ATP konečný Main los](https://www.cordobaopen.com/media/d/da/49/da49108eac6b3776beb8191cfddeab0cacd9ca78.pdf), text zápatí, pozor na nekonzistentní extrakci výsledkových cest; screenshot timeout.
+- COR24-3: [pořadatel, Main los 3.2.](https://www.cordobaopen.com/articulo/1051/32835/cachin-y-ramos-viniolas-se-enfrentaran-en-la-primera-ronda-del-cordoba-open), datum losu, Q fáze, všechny nominální pozice a organizace.
+- COR24-4: [ATP ročník 9158](https://www.atptour.com/es/tournaments/cordoba/9158/overview).
+- COR24-5: [pořadatel, Horarios 2024](https://www.cordobaopen.com/horarios), úplný indexovaný text veřejného programu, přímý přístup 502.
+- COR24-6: [archiv předstartovního ATP Main losu](https://www.fantatennis.net/_downloads/087503cf1f010607413b89db9befce60), str. 1 vizuálně zkontrolována.
+- COR24-7: [ATP Preview & Day 1 5.2.](https://www.atptour.com/-/media/59fd914f0b9c4f049bbebe248ccf09d6.pdf), text tabulky bodů/odměn a BYE poznámky; screenshot 403.
+- COR24-8: [dobový přepis acceptance listů 20.1.](https://www.tennisteen.it/entry-list/atp/24110-atp-entry-list-5-11-febbraio-2024.html), odděleně Córdoba Main/Q.
+- COR24-9: [pořadatel, Q los 3.2.](https://www.cordobaopen.com/articulo/1051/32834/bagnis-%E2%80%93-rodriguez-taverna-partido-destacado-en-la-primera-ronda-de-la-qualy), indexovaný text; [Sky Q1 3.2.](https://videos.sport.sky.de/tennis/spielplan-ergebnisse/03-02-2024).
+- COR24-10: [ATP Q postupy před Main 5.2.](https://www.atptour.com/es/news/cordoba-2024-previa-bagnis-gomez-burruchaga), [dobová Q entry zpráva 16.1.](https://www.cba24n.com.ar/deportes/las-promesas-argentinas-sobresalen-la-lista-de-la-clasificacion-del-cordoba-open-2024_a65a5b1172541f95bcbf5f486).
+- COR24-11: [ATP Day 2 6.2.](https://www.atptour.com/-/media/28dc2cb03db94d56938a2f34e9e10657.pdf), text; [pořadatel první den](https://www.cordobaopen.com/articulo/1051/32837/bagnis-y-diaz-acostan-avanzan-en-cordoba), [druhý den](https://www.cordobaopen.com/articulo/1051/32838/roman-burruchaga-vivio-un-debut-soniado-en-el-cordoba-open).
+- COR24-12: [ATP Day 3 7.2., druhé kolo](https://www.atptour.com/-/media/3903551e6b6c4f30931710401653d4fa.pdf), indexovaný text, screenshot 403.
+- COR24-13: [pořadatel 8.2., středeční R16](https://www.cordobaopen.com/articulo/1051/32840/etcheverry-debuto-con-solvencia-en-el-atp-250-cordoba-open), čtyři R16 a první kolo čtyřhry výslovně oddělené.
+- COR24-14: [ATP déšť 8.2.](https://www.atptour.com/en/news/darderi-ofner-cordoba-2024-thursday), [ATP dohánění R16/QF 9.2.](https://www.atptour.com/en/news/baez-dellien-cordoba-2024-friday).
+- COR24-15: [ATP Competition 22.1.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_22jan.pdf), indexovaný text; viz též MPL24-7. [ATP Competition 2.8.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_02aug.pdf) potvrzuje obecné 28/21denní lhůty, nikoli skutečný Q deadline ročníku.
+- COR24-16: [ATP results archive 2024](https://www.atptour.com/en/scores/results-archive?year=2024), týdenní inventura.
+- COR24-17: [ATP Next Gen oznámení 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024), [ročníkový ATP Competition 2.7.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_02jul.pdf), indexovaný text pravidla účinného od 1.1.2024; konkrétní rozdělení akcím nedoloženo.
+- COR24-18: [historická finanční tabulka](https://tenniscompanion.org/prize-money/cordoba/), [sekundární Q přehled](https://de.wikipedia.org/wiki/C%C3%B3rdoba_Open_2024), [TennisTemple Q pavouk](https://en.tennistemple.com/competition/cordoba-2024/62848/draw-qualifications). Originální ATP URL [Q](https://www.protennislive.com/posting/2024/9158/qs.pdf) nedostupná; alternativní primární pořadatelská kopie COR24-1 dostupná textově.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -1731,3 +1847,4 @@ I/T/H/D/B doloženy dobovým ATP, předem zveřejněným rozpisem a úplnými ar
 | Hong Kong 2024 | P* – sekundární Q prize money | originální Q tabulka; kandidát 3550/1935 USD doložen sekundární shodou |
 | Montpellier 2024 | P* – sekundární Q prize money | originální Q tabulka, kandidát 3105/1695 EUR doložen sekundární shodou |
 | Marseille 2024 | inventura – mapování identity v katalogu | před zpracováním potvrdit skutečnou akci proti původnímu kalendáři, neměnit runtime |
+| Córdoba/Dallas/Marseille 2024 | R* – Next Gen rezervy v týdnu tří ATP akcí | ověřit přesnou alokaci mezi akcemi a případné individuální využití, nepřidávat mimo pevnou kapacitu; COR24-17 |

@@ -66,6 +66,42 @@ describe('Admin simulation monitor',()=>{
       '/admin/runs/run%2FA/simulate?branch=branch%20B&task=task%3A1')
     expect(screen.queryByText(/Active task state/)).not.toBeInTheDocument()
   })
+  it('notifies only observed terminal transitions and remembers dismissal in this session',async()=>{
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    const historical={...active(),task_id:'old',state:'complete'}
+    api.getServerTasks.mockResolvedValue([active(),historical])
+    const view=mount(client)
+    await userEvent.click(screen.getByRole('button',{name:'Monitor simulations'}))
+    await screen.findByText('Simulation world / Simulation branch')
+    expect(screen.queryByRole('region',{name:'Simulation notices'})).not.toBeInTheDocument()
+    api.getServerTasks.mockResolvedValue([{...active(),state:'target_reached'},historical])
+    await client.invalidateQueries({queryKey:['server-simulation-tasks',null,null]})
+    const notices=await screen.findByRole('region',{name:'Simulation notices'})
+    expect(notices).toHaveTextContent('Newly observed terminal tasks: 1')
+    expect(notices).toHaveTextContent('Simulation target reached')
+    expect(within(notices).getByRole('link',{name:'View summary'})).toHaveAttribute('href',
+      '/admin/runs/run%2FA/simulate?branch=branch%20B&task=task%3A1&summary=1')
+    await userEvent.click(within(notices).getByRole('button',{name:'Dismiss notice task:1'}))
+    expect(screen.queryByRole('region',{name:'Simulation notices'})).not.toBeInTheDocument()
+    await client.invalidateQueries({queryKey:['server-simulation-tasks',null,null]})
+    view.unmount()
+    mount(client)
+    await waitFor(()=>expect(screen.getByText(/Last read contains no active/)).toBeInTheDocument())
+    expect(screen.queryByRole('region',{name:'Simulation notices'})).not.toBeInTheDocument()
+    expect(api.getServerTasks).toHaveBeenCalledTimes(3)
+  })
+  it('does not notify a different task or treat failed recovery as terminal completion',async()=>{
+    const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
+    mount(client)
+    await userEvent.click(screen.getByRole('button',{name:'Monitor simulations'}))
+    await screen.findByText('Simulation world / Simulation branch')
+    api.getServerTasks.mockResolvedValue([
+      {...active(),state:'failed',needs_operator_action:true},
+      {...active(),task_id:'different',state:'complete'}])
+    await client.invalidateQueries({queryKey:['server-simulation-tasks',null,null]})
+    await screen.findByText('Tasks requiring action: 1')
+    expect(screen.queryByRole('region',{name:'Simulation notices'})).not.toBeInTheDocument()
+  })
   it('reuses the existing global cache and hides evidence after a failed refresh',async()=>{
     const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
     client.setQueryData(['server-simulation-tasks',null,null],[active()])

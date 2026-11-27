@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 32 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 33 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -66,10 +66,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Houston](#houston-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Monte-Carlo](#monte-carlo-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Barcelona](#barcelona-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Munich](#munich-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 32 zpracovaných ročníků; 29 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 33 zpracovaných ročníků; 30 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -107,7 +108,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 30 | Houston 2024 | HOTOVO (nominální rozsah) |
 | 31 | Monte-Carlo 2024 | HOTOVO (nominální rozsah) |
 | 32 | Barcelona 2024 | HOTOVO (nominální rozsah) |
-| 33 | Munich 2024 | NEZAHÁJENO |
+| 33 | Munich 2024 | HOTOVO (nominální rozsah) |
 | 34 | Bucharest 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -158,6 +159,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#houston-2024) | Fayez Sarofim & Co. U.S. Men's Clay Court Championship | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu |
 | [2024](#monte-carlo-2024) | Rolex Monte-Carlo Masters | ATP Masters 1000 | 2024-04-06–2024-04-07 | 2024-04-07–2024-04-14 | HOTOVO v nominálním rozsahu; souběh Q2/R64 a R64/R32 |
 | [2024](#barcelona-2024) | Barcelona Open Banc Sabadell | ATP 500 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; souběh R64/R32 16.4. |
+| [2024](#munich-2024) | BMW Open | ATP 250 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; poslední ročník ATP 250 |
 
 ## Wimbledon 2024
 
@@ -4026,6 +4028,127 @@ I/T/D/B/P doloženy. H* původní denní rozpisy mimo finále nedohledány; okna
 - BCN24-11: [ATP Competition VII 16.2.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_16feb.pdf), §7.08 B/E, §7.09, tištěné str. 146/149–150, text, screenshot 403.
 - BCN24-12: [ATP ranking update 2024](https://www.atptour.com/en/news/2024-rankings-points-update), zvláštní řádek ATP 500 48 Draw, shoda s Q originálem.
 
+
+## Munich 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/P/Z s doplňkovými omezeními). Rešerše 2026-11-27. Poslední ročník ATP 250 před povýšením na ATP 500 v roce 2025. Main odměny z dobových oficiálních ATP Media Notes, Q ze shodných ročníkových sekundárních tabulek. Originální historické Main/Q PDF se nepodařilo otevřít; finálový ATP OOP vizuálně ověřen. Dobová listina obsahuje plánovanou NG akceptaci a využití LE rezervy.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | BMW Open (v kalendáři též BMW Open by American Express) | MUC24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 308 | MUC24-1/2/3 |
+| Ročník | 55. podle ATP Media Notes (otevřená éra), 108. podle širší historické chronologie | MUC24-1/4 |
+| Dějiště | MTTC Iphitos, Mnichov, Německo | MUC24-1/5 |
+| Povrch | venkovní antuka | MUC24-5/6 |
+| Časové pásmo | Europe/Berlin, CEST UTC+02:00 během soutěže | lokalita a datum |
+| Ředitel | Patrik Kühnen | MUC24-2/7 |
+| ATP supervisor / referee | Roland Herfel / Norbert Peick | MUC24-2 |
+| Tour manager | Nicolas Rakitin | MUC24-2 |
+| Měna | EUR | MUC24-1 |
+
+Pořadatel 12.4. výslovně označuje ročník jako poslední ATP 250. Nepřenášet kategorii ATP 500 ani její pozdější kapacitu a odměny do 2024. Přesný výrobek povrchu, míče a detail sheet nezískány. Pořadatel navíc oznámil věcnou výhru pro vítěze, BMW i5 M60; oddělit od peněžních odměn a nepřičítat odhadovanou hodnotu automobilu k prize money.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-18 | MUC24-8 |
+| Q rank date | 2024-03-25, odvozený referenční den | §7.03, originální Q listina nezískána |
+| Nominální Main deadline | 2024-03-18 17:00 CET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-03-25 17:00 CET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální LE deadline | 2024-04-11 16:00 CEST (10:00 US Eastern) | odvozeno §7.04 |
+| Main los | 2024-04-13, hodina neověřena | MUC24-9/10 |
+| Q los | nejpozději před Q1 2024-04-13, čas a den losu neověřeny | MUC24-11/12 |
+| Q | 2024-04-13–14 | MUC24-5/11/12 |
+| Main | 2024-04-15–21 | MUC24-1/2/3/5 |
+| Singlové finále | 2024-04-21 13:30 CEST | MUC24-1/2/7 |
+
+Přepis listiny 11.4. uvádí původní Main cutoff 84, 18 DA, 3 WC, 4 Q, SE 0 a LE 1; konečný cutoff Main/Q neověřen. Rank date není nezávislý doklad okamžiku uzávěrky; časy odvozeny z pravidla, s ohledem na odlišné datum přechodu na letní čas v USA a Evropě. Pořadatel 14.4. retrospektivně potvrzuje sobotní losování Main, nikoli jeho hodinu. Finálový čas potvrzuje dobové oznámení z 12.4., ATP Preview z 15.4. i poslední OOP z 20.4. Rozpis čtyřhry se mezitím změnil (ATP Preview uvádí 11:00, finálový OOP až po singlu), což nemění plán mužského singlového finále.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-04-13 | 8 |
+| Q2 | 2024-04-14 | 4 |
+| R32 | 2024-04-15–16 | 12 (4+8 rekonstruováno) |
+| R16 | 2024-04-17–18 | 8 |
+| QF | 2024-04-19 | 4 |
+| SF | 2024-04-20 | 2 |
+| F | 2024-04-21 | 1 |
+
+Dobový přehled kol MUC24-5 uvádí všechna okna v tabulce. Q 8+4 doloženo výsledkovým přehledem MUC24-11/12. Zpráva z 15.4. MUC24-13 jmenuje čtyři pondělní R32 zápasy, které byly naplánovány a nakonec dokončeny i po dlouhé dešťové pauze; osm dalších R32 tedy připadá na plánované úterý, úplný původní OOP obou dnů nezískán. R16 nominální okno 17.–18.4. doloženo, přesné původní denní dělení před deštěm nezjištěno. Výsledkové zdroje a ATP potvrzují opakované dešťové a kroupové pauzy. Páteční QF Struff–Auger-Aliassime byl přerušen počasím a tmou, dohrán v sobotu před SF (MUC24-5/14); nominálně zůstává v pátek, nepřidávat sobotní QF. Poslední originální OOP vydán 20.4. 18:33, neděle 21.4. 13:30 singlové finále, později doubles; finále samostatné Rudi Berger Cup na vedlejším kurtu není zápas ATP Main. Q 2 dny + Main 7 dní bez plánovaného překryvu, 9 kalendářních dní, 39 nominálních singlových zápasů. Kvalifikace se koná během závěrečného víkendu Monte-Carlo.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA (včetně NG) | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+§7.08 B/E pro ATP 250: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28. Dobový přepis Main listiny MUC24-8 obsahuje 18 DA (17 běžných a Prižmić NG), 3 WC, 4 Q, SE 0, LE 1; dvě neobsazené SE rezervy nejsou zmenšení pavouku. Konečný Main podle ATP Media Notes a sekundárního výsledkového pavouku má osm seedů, čtyři BYE, tři WC Molleker, Rehberg a Topo, čtyři řádné Q Gakhov, Hüsler, Moro Cañas a Passaro. Main 12+8+4+2+1=27. Původní příslib WC Thiemovi a Berrettinimu v březnové listině nepřebírat jako konečný WC stav; dobová ORF zpráva potvrzuje, že Thiem nakonec vstoupil bez WC.
+
+Q 14 DA+2 WC dle dobového §7.08 E.1, osm nominálních seedů. Sekundární ročníkový pavouk MUC24-12/15 označuje seed 2 Molleker jako přesunutého do Main WC, skutečný Q pavouk má sedm označených seedů a Alt Naw a Masur; zachovat osm nominálně nasazených, nikoli sedm. Dva WC Kelm a Haupt v úplném Q výsledkovém pavouku. Čtyři sekce po čtyřech, 8+4=12 utkání, čtyři postupující. Originální Q PDF ani předstartovní Q acceptance list nedostupné, nejde o vizuální ověření originálu.
+
+### 5. Dobová pravidla a vstupní návaznosti
+
+§7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 v únorové verzi (SCL24-18), změny LCB24-19 v příslušném rozsahu. Dvě SE a jedna LE rezerva; nevyužitá místa přecházejí do DA. BO3 tiebreak, osm seedů, čtyři Main BYE, čtyři Q sekce. Main první prohra po BYE v R16 znamená nula bodů, ATP Media Notes MUC24-1; Q 13/7/0 podle dobového ATP rankingového předpisu. Q body se přičtou k Main výsledku.
+
+**LE a NG v konkrétním ročníku:** MUC24-8 explicitně uvádí LE 1 a Prižmiće na 18. DA pozici s NG označením; nezávislý dobový přepis MUC24-16 má rovněž Prižmić NG. Pořadatel 28.3. oznámil jeho účast, v konečném pavouku není; sekundární ročníkový přehled uvádí náhradu Ugo Carabellim. Jde o důkaz plánované NG Main akceptace, nikoli skutečně odehraného zápasu ani detailního administrativního propadu rezervy. Pořadatel 12.4. oznámil dodatečné potvrzení Fritze; ročníková listina uvádí LE 1, retrospektivní článek z dubna 2025 (MUC24-17) výslovně potvrzuje, že Fritz využil v roce 2024 Late Entry místo. Silná kombinace dokladů, nikoli originální LE formulář nebo potvrzený individuální timestamp. NG je uvnitř DA kapacity, LE má vlastní rezervu, žádné místo nad 28. Q NG alokace pro týden Barcelona/Munich/Bucharest zůstává neověřena; Michelsenova běžná DA účast je potvrzena pořadatelem, samotné označení #NextGenATP v ATP notes není jiný vstupní mechanismus.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 88125 |
+| Finalista | 1 | 165 | 51400 |
+| SF | 2 | 100 | 30220 |
+| QF | 4 | 50 | 17510 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 10165 |
+| R32 | 12 | 0 | 6215 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3105 |
+| Q1 prohra | 8 | 0 | 1695 |
+
+Main tabulka oficiální ATP Media Notes (MUC24-1, text, screenshot 403), Q ceny shodně v ročníkovém sloupci 2024 TennisCompanion a tabulce ATP München (MUC24-18/19), sekundární shoda, nezávislost jejich vzniku neprokázána. P*; dobové Q body z rankingového předpisu. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Turnajová dotace 579320 EUR z dobového SuperTennis a commitment 651865 EUR z kalendáře nejsou singlový součet. Věcný automobilový bonus evidován odděleně, bez přičtení k finanční tabulce. Q postupující získávají Main odměnu podle výsledku, skutečné LL payout nezahrnuty.
+
+### 7. Kontrola a mezery
+
+I/T/D/B doloženy. H* úplný původní OOP mimo finále a předdešťový denní R16 split nezískány. E* originální acceptance listy/DS, Q rank date, cutoffs, hodiny losů a individuální LE administrativní doklad chybí, termíny odvozené. R* Q NG alokace otevřena; plánovaná Main NG akceptace Prižmiće a Fritzův LE doloženy výše. P* Q sekundární shoda; Z* poslední ATP OOP str. 1 vizuálně, ATP Preview str. 1 textově (screenshot 403); přímé historické Main/Q originály nedostupné. V indexovaném vyhledávání nalezen Main soubor jiného ročníku s Altmaierem WC, proto nepoužit jako 2024. Bez neověřených hashů. Aritmetická kontrola kvót, 28/16 účastníků, 8/8 seedů, 4/0 BYE, 27/12 utkání, počtu příjemců a odměn prošla. Další Bucharest 2024. Bez runtime změn.
+
+### 8. Zdroje (MUC24)
+
+- MUC24-1: [ATP Preview & Day 1 15.4.2024](https://www.atptour.com/-/media/a6851118613048b89893756911626a7b.pdf), str. 1 text, screenshot 403, Main ceny/body, WC/Q, 55. ročník, singlové finále.
+- MUC24-2: [originální ATP OOP finále 21.4.](https://www.protennislive.com/posting/2024/308/op.pdf), str. 1 vizuálně, vydání 20.4. 18:33.
+- MUC24-3: [Tennis Europe BMW Open by American Express 2024](https://www.tenniseurope.org/calendarevent/73812/BMW-Open-by-American-Express), identita ATP 308; [dobový ATP kalendář 8.3.](https://www.atptour.com/-/media/files/calendar-pdfs/2024/2024-atp-challenger-calendar-as-of-8-march-2024.pdf), indexovaný řádek 28/ATP 250.
+- MUC24-4: [ročníkový přehled 2024](https://en.wikipedia.org/wiki/2024_BMW_Open), 108. ročník a místo.
+- MUC24-5: [tennis MAGAZIN, dobový program všech dnů](https://www.tennismagazin.de/news/bmw-open-2024-spielplan-nicht-verpassen/), okna kol, průběžné aktualizace a dešťová QF dohrávka.
+- MUC24-6: [SuperTennis Q1 13.4.](https://www.supertennis.tv/News/Atp/Monaco-di-Baviera-risultati-primo-turno-qualificazioni-italiani), červená antuka a 579320 EUR.
+- MUC24-7: [pořadatel 12.4.2024, Fritz, poslední ATP250, věcná výhra a finálový čas](https://www.bmwopen.de/2024/04/12/bmw-open-2024-taylor-fritz-gibt-zusage-bmw-siegerfahrzeug-enthuellt-erstmalig-alle-neun-tage-ausverkauft/).
+- MUC24-8: [dobový přepis Main listiny 11.4.](https://www.tennisteen.it/entry-list/atp/24150-atp-entry-list-15-21-aprile-2024.html), řádky 127–159, kvóty, rank date, LE a NG.
+- MUC24-9: [pořadatel 14.4., sobotní los a Q dokončení](https://www.bmwopen.de/2024/04/14/alles-bereit-fuer-das-hauptfeld/).
+- MUC24-10: [dobová publikace Main losu 13.4.](https://tennisuptodate.com/atp/2024-bmw-open-munich-atp-draw-featuring-alexander-zverev-holger-rune-and-taylor-fritz-as-top-seeds), [ORF 13.4., Thiem bez WC](https://sport.orf.at/stories/3124409/).
+- MUC24-11: [Tennis Explorer Q 2024](https://www.tennisexplorer.com/munich/2024/atp-men/?phase=qualification), 8+4 utkání, výsledkové dny.
+- MUC24-12: [TennisTemple Q 2024](https://fr.tennistemple.com/competitions/munich/2024/draw-qualifications), sedm skutečně označených seedů, 2 WC, 2 Alt.
+- MUC24-13: [tz 15.–16.4., pondělní plán a výsledky](https://www.tz.de/muenchen/stadt/bmw-open-muenchen-regenpause-match-atp-tennis-turnier-regen-sandplatz-wetter-93011779.html), čtyři R32.
+- MUC24-14: [Tennis Explorer Main 2024](https://www.tennisexplorer.com/munich/2024/atp-men/), sobotní QF dokončení; [ATP 17.4. o kroupách](https://www.atptour.com/en/news/zverev-draper-munich-2024-wednesday).
+- MUC24-15: [ročníkový Main/Q pavouk](https://en.wikipedia.org/wiki/2024_BMW_Open_%E2%80%93_Singles), seed 2 Q přesunut do Main, [německý Q přehled](https://de.wikipedia.org/wiki/BMW_Open_2024/Qualifikation).
+- MUC24-16: [dobový přepis vstupů s NG označením](https://tennisuptodate.com/atp/atp-entry-list-2024-bmw-open-munich-headlined-by-alexander-zverev-holger-rune-and-jan-lennard-struff), [pořadatel 28.3.](https://www.bmwopen.de/2024/03/28/grose-namen-bei-den-bmw-open-2024/).
+- MUC24-17: [tz retrospektiva LE Fritze 2024 v článku 2025](https://www.tz.de/sport/zwei-heisse-wildcard-eisen-fuer-die-bmw-open-in-muenchen-zr-93667223.html), doplňuje dobové MUC24-7/8.
+- MUC24-18: [TennisCompanion, historické EUR sloupce](https://tenniscompanion.org/prize-money/munich/), 2024 Q 3105/1695.
+- MUC24-19: [ATP München, ročníková finanční tabulka](https://de.wikipedia.org/wiki/ATP_M%C3%BCnchen), 2024 shoda Q.
+- [Původní ATP Main](https://www.protennislive.com/posting/2024/308/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/308/qs.pdf) při kontrole nedostupné. Dobová pravidla viz SCL24-18, LCB24-19, ROT24-16.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -4054,3 +4177,4 @@ I/T/D/B/P doloženy. H* původní denní rozpisy mimo finále nedohledány; okna
 | Houston 2024 | H*/E*/R*/P*/Z* | originální Q PDF/DS a acceptance listy, přesné časy losů a finále, úplný Main OOP a vizuální kontrola Main, NG alokace týdne Marrakech/Estoril/Houston; Q 3550/1935 USD sekundární shoda |
 | Monte-Carlo 2024 | E*/Z* | originální acceptance lists/DS, přesný čas Q losu a model míčů; Main/Q finanční tabulky a všech 9 OOP primárně vizuálně ověřeny |
 | Barcelona 2024 | H*/E*/R*/Z* | originální denní OOP mimo finále, acceptance lists/DS, Q rank date a časy losů, týdenní NG alokace; Main/Q ceny primárně ověřeny, chybný $ v Main vyřešen explicitním ATP EUR rozpisem |
+| Munich 2024 | H*/E*/R*/P*/Z* | původní Main/Q PDF, Q finanční originál (3105/1695 EUR sekundární shoda), acceptance lists/DS, Q rank date a cutoff, hodiny losů, předdešťové OOP a týdenní Q NG alokace; plánovaný Main NG Prižmić a využití LE Fritzem doloženy |

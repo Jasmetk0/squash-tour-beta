@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 3 ročníky, Wimbledon 2024 a 2025, Australian Open 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 4 ročníky, Wimbledon 2024 a 2025, Australian Open 2024, Roland Garros 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -37,10 +37,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Wimbledon](#wimbledon-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Wimbledon](#wimbledon-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Australian Open](#australian-open-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Roland Garros](#roland-garros-2024) | ✓ | ✓ | ? | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | ROZPRACOVÁNO (H: původní Q2) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 3 zpracované ročníky; 3 hotové v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 4 zpracované ročníky; 3 hotové v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -49,7 +50,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 1 | Wimbledon 2024 | HOTOVO (nominální rozsah) |
 | 2 | Wimbledon 2025 | HOTOVO (nominální rozsah) |
 | 3 | Australian Open 2024 | HOTOVO (nominální rozsah) |
-| 4 | Roland Garros 2024 | NEZAHÁJENO |
+| 4 | Roland Garros 2024 | ROZPRACOVÁNO (původní denní okno Q2) |
 | 5 | US Open 2024 | NEZAHÁJENO |
 | 6 | Australian Open 2025 | NEZAHÁJENO |
 | 7 | Roland Garros 2025 | NEZAHÁJENO |
@@ -70,6 +71,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#wimbledon-2024) | Wimbledon | Grand Slam | 2024-06-24–2024-06-27 | 2024-07-01–2024-07-14 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 | [2025](#wimbledon-2025) | Wimbledon | Grand Slam | 2025-06-23–2025-06-26 | 2025-06-30–2025-07-13 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 | [2024](#australian-open-2024) | Australian Open | Grand Slam | 2024-01-08–2024-01-11 (plán) | 2024-01-14–2024-01-28 | HOTOVO v nominálním rozsahu; skutečné Q 9.–12. 1. odděleně |
+| [2024](#roland-garros-2024) | Roland Garros | Grand Slam | 2024-05-20–2024-05-24 | 2024-05-26–2024-06-09 | ROZPRACOVÁNO: původní denní plán Q2 |
 
 ## Wimbledon 2024
 
@@ -547,3 +549,136 @@ Závěr: nominální profil pokrývá všech 9 oblastí s vyznačenými omezení
 - AO24-17: [Grand Slam Board — rozhodující tiebreak](https://ausopen.com/articles/news/grand-slams-jointly-adopt-10-point-final-set-tiebreak).
 - AO24-18: [ATP oznámení bodů pro 2024](https://www.atptour.com/en/news/2024-rankings-points-update); [ATP Rulebook IX 19. 3. 2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pif-atp-rankings_19mar.pdf) (indexovaný text); [dobový přehled pravidel](https://openerarankings.com/RankingRules2024).
 
+
+## Roland Garros 2024
+
+**Stav:** ROZPRACOVÁNO, 8/9 oblastí. Chybí jedno přesné rozlišení původního okna Q2 od pozdějšího denního programu. Nezávislá rešerše 2026-11-27. Referencí zůstává nominální plán, ne historické odklady.
+
+### 1. Identita a místo
+
+| Pole | Historická hodnota | Důkaz |
+|---|---|---|
+| Název | Roland-Garros / French Open | RG24-1, RG24-2 |
+| Rok / disciplína / kategorie | 2024 / mužská dvouhra / Grand Slam | RG24-1 |
+| ATP tournament ID | 520 | RG24-16 |
+| Dějiště Main a Q | Stade Roland-Garros, Paříž, Francie | RG24-2, RG24-3 |
+| Povrch | venkovní antuka | RG24-1, RG24-2 |
+| Časové pásmo | Europe/Paris; CEST UTC+02:00 v květnu a červnu | RG24-2, RG24-3 |
+| Míče | Wilson Roland Garros | RG24-2 |
+| Pořadatel | Fédération Française de Tennis (FFT) | RG24-4 |
+| Ředitelka | Amélie Mauresmo | RG24-4 |
+| Měna | EUR | RG24-1 |
+| Rozhodčí a individuální diety | NEOVĚŘENO | doplňková metadata |
+
+### 2. Termíny, přihlášky a losování
+
+| Událost | Plánované datum/čas, místní (není-li uvedeno jinak) | Důkaz |
+|---|---|---|
+| Main vstupní datum žebříčku / uzávěrka | 2024-04-15 | odvozeno z 42 dnů před pondělím 27. 5.; mužská entry list zveřejněna 16.–17. 4. a přehled WTA potvrzuje toto datum pro stejný turnaj. Přesnou hodinu ani výjimku neověřujeme. RG24-5, RG24-6, RG24-14 |
+| Q vstupní datum žebříčku / uzávěrka | 2024-04-29 | odvozeno z 28 dnů před pondělím 27. 5.; WTA přehled téhož turnaje jako podpůrný doklad, nikoli mužský originál. RG24-5, RG24-14 |
+| Oznámení WC | 2024-05-14 | RG24-4 |
+| Los Q | 2024-05-19, ne před 14:00 | RG24-7; archivní kopie losu označena 19. 5. 14:27, RG24-8 |
+| Q alternate sign-in první den | 2024-05-20 09:30 | dobový OOP RG24-9 |
+| Q | 2024-05-20–2024-05-24 | RG24-3, RG24-4, RG24-7 |
+| Main los | 2024-05-23 14:00 | pořadatel RG24-10 |
+| Main | 2024-05-26–2024-06-09 | RG24-1, RG24-2, RG24-4, RG24-7 |
+| Mužské finále | 2024-06-09 15:00 oznámený čas; 15:10 plán první výměny | dubnový časový plán RG24-3; ne tvrzení o skutečném prvním bodu |
+
+Časový plán RG24-3 explicitně označuje všechny časy jako pařížské GMT+2. První tři Q dny mají veřejný začátek 10:00, 23.–24. 5. venkovní kurty 11:00, Suzanne-Lenglen 13:00; veřejný čas pro diváky může být dřívější než příchod hráčů. Běžné hlavní dny 26.–28. 5. na Philippe-Chatrier denní program 12:00, noční veřejný čas 20:15 / plánovaný první míč 20:30; jiné kurty zpravidla 11:00. Toto jsou časy programu, nikoli začátky každého zápasu.
+
+### 3. Nominální harmonogram
+
+| Kolo / fáze | Místní datum | Nominální uzly | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-05-20–21 | 64 | RG24-9, RG24-11 |
+| Q2 | 2024-05-22 doloženo; 23. 5. další zápasy v denním OOP | 32 | RG24-9, RG24-11; původní předturnajové rozložení Q2 mezi 22.–23. 5. NEOVĚŘENO |
+| Q3 | 2024-05-23–24 | 16 | RG24-3, RG24-7, RG24-9, RG24-11; denní program a konec Q |
+| Mezera mezi Q/Main | 2024-05-25 | 0 | RG24-4 |
+| R128 | 2024-05-26–28 | 64 | RG24-12, RG24-13 |
+| R64 | 2024-05-29–30 | 32 | RG24-12, RG24-13 |
+| R32 | 2024-05-31–06-01 | 16 | RG24-12 |
+| R16 | 2024-06-02–03 | 8 | RG24-12 |
+| QF | 2024-06-04–05 | 4 | RG24-12 |
+| Bez mužské dvouhry | 2024-06-06 | 0 | RG24-12 |
+| SF | 2024-06-07 | 2 | RG24-12 |
+| Bez mužské dvouhry | 2024-06-08 | 0 | RG24-12 |
+| F | 2024-06-09 | 1 | RG24-3, RG24-12 |
+
+Q 5 kalendářních dnů; Main 15 dnů; celé okno 21 dnů. Celkově Q 112 + Main 127 = 239 nominálních uzlů. H je zatím otevřeno kvůli nejasnosti Q2: dobový OOP 23. 5. obsahuje Q2 i Q3, avšak neprokazuje sám o sobě, zda bylo Q2 na 23. 5. naplánováno už před turnajem, nebo šlo o přesun. Nevydávat skutečný program za původní plán. U Main kola zůstávají původní okna, navzdory dešti 29.–30. 5. (RG24-13). Předturnajový článek Sky Sports obsahuje posunuté číselné datum u prvních dnů (např. neděle 25. 5., což byl ve skutečnosti sobotní den); jako důkaz těchto dnů používáme konzistentní předturnajový kalendář a datované ATP notes, nikoli chybná čísla Sky. Neodhadovat rozložení všech uzlů rovnoměrně na dny.
+
+### 4. Nominální struktura a pravidla
+
+| Parametr | Main | Q | Důkaz |
+|---|---:|---:|---|
+| Kapacita / cíloví účastníci | 128 | 128 | RG24-8, RG24-15 |
+| Přímé akceptace | 104 | 119 | dobový Grand Slam předpis RG24-5 a kontrola součtu |
+| WC | 8 | 9 | přímo mužské oznámení pořadatele RG24-4 |
+| Q postupová místa | 16 | 16 vítězů sekcí | RG24-1, RG24-8 |
+| Nasazených | 32 | 32 | RG24-1, RG24-8, RG24-15 |
+| BYE | 0 | 0 | obě strany obou losů RG24-8, RG24-15 |
+| Kola | 7 | 3 | RG24-8, RG24-15 |
+| Struktura | vyřazovací pavouk | 16 vyřazovacích sekcí po 8 | RG24-8 |
+| Uzly | 127 | 112 | odvozeno |
+| Formát | BO5 setů | BO3 setů ve všech kolech | RG24-5, RG24-11 |
+
+Kontrolní součty Main 104+8+16=128 a Q 119+9=128. Dobový Grand Slam předpis 2024 (RG24-5): Main seed 1 a 2 na protilehlých krajích a ostatní ve skupinách podle tabulky 128/32, Q seedy 1–16 na horní a 17–32 losované na spodní pozice sekcí. Přímá akceptace podle příslušného rankingu při uzávěrce, Main nasazení zpravidla podle žebříčku 7 dnů před turnajem. Před zveřejněním prvního Q OOP uvolněný seed nahradí další způsobilý seed, poté alternate. Q vítězové se losují do volných Main míst po skončení Q. LL přednostně z poražených Q3 (poté podle potřeby dřívější kola), losování mezi čtyřmi nejvýše postavenými způsobilými hráči, při více než dvou Main odhlášeních při skončení Q velikost losované skupiny = odhlášení + 2. Další dle rankingu. Sign-in půl hodiny před prvním zápasem dne a náhrada před prvním bodem prvního zápasu odstoupivšího. Rozhodující set tiebreak na 10 s rozdílem 2 při 6:6 (RG24-5, RG24-17).
+
+Původní Q los 19. 5. 14:27 (kopie RG24-8, obě strany vizuálně): 128 pozic, 32 seedů, devět označených WC; pořadatelem oznámený seznam 14. 5. má rovněž 9 WC, ale jedno jméno se před losem změnilo. Počet se nemění. Main los aktualizovaný 4. 6. (RG24-15, obě strany vizuálně): 128 míst, 32 seedů, 8 WC, 16 Q, 3 LL, nulové BYE. ATP předturnajový přehled uváděl dva LL, pozdější los tři; jde o rozdíl okamžiku zveřejnění, nikoli strukturální rozpor. Původní los i pozdější stav mají svou hodnotu jako zdroj, nic z toho nepřepisuje nominální kvóty.
+
+### 5. Body a odměny
+
+| Výsledek | Příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 2000 | 2400000 |
+| Finalista | 1 | 1300 | 1200000 |
+| SF | 2 | 800 | 650000 |
+| QF | 4 | 400 | 415000 |
+| R16 | 8 | 200 | 250000 |
+| R32 | 16 | 100 | 158000 |
+| R64 | 32 | 50 | 110000 |
+| R128 | 64 | 10 | 73000 |
+| Q postupující | 16 | 30 | samostatná částka neuvedena |
+| Q3 prohra | 16 | 16 | 41000 |
+| Q2 prohra | 32 | 8 | 28000 |
+| Q1 prohra | 64 | 0 | 20000 |
+
+Main částky/body přímo dobový ATP přehled RG24-1 str. 5 (indexovaný text; screenshot 403). Q odměny z nezávislých přehledů RG24-18, Q3 potvrzuje dobový ATP článek RG24-19 a WTA článek uvádí rozdíl 32 000 mezi Q3 prohrou a Main R128. Q body dle mužského ATP předpisu RG24-20. Nezaměňovat odlišné ženské body ve WTA článcích. Řádné Q body přičteny k Main; WC prohra R128 bez bodů dle dobového ATP předpisu. Individuální LL bodové výjimky zde nepočítáme.
+
+Nominální aritmetické součty Main 19280000 EUR, Q 2832000 EUR, celkem 22112000 EUR (mužská dvouhra, nikoli celková dotace všech disciplín). Celoturnajová dotace 53 478 000 EUR podle dobových zpráv. Pozor: údaj 24 961 000 EUR v ATP preview není prostým součtem těchto dvou singlových tabulek; nerozšiřujeme jej bez doložení jeho rozsahu.
+
+### 6. Evidence a mezery
+
+| Oblast | Stav |
+|---|---|
+| I/T | ověřeno více dobovými zdroji včetně pořadatele |
+| H | 7 Main kol a přestávky doloženy; původní Q2 denní okno otevřené, necertifikovat |
+| E | nominální kvóty a losovací termíny doloženy, vstupní data odvozena z předpisu; originální mužský detail sheet chybí |
+| D | obě strany Main PDF a obě strany archivní kopie Q PDF vizuálně ověřeny; nominální struktura bez rozporu |
+| R/B | 2024 rulebook dostupný přes dříve doložený textový zdroj, ATP mužské body přímo v dobovém preview; Q výsledky a struktura potvrzují formát |
+| P | Main přímo ATP, Q shoda dostupných nezávislých tabulek, kontrola součtů; původní PDF dotace Q nebylo získáno |
+| Z | dobové zdroje doloženy; některé PDF screenshoty 403/500; žádné SHA-256 nepředstíráme |
+
+Další krok: uzavřít H (předturnajový plán Q2; při potvrzení odkladu oddělit původní a pozdější OOP), teprve potom US Open 2024. Do stávajících balíčků ani Grand Slam Draft #1903 se nezasahuje.
+
+### 7. Zdroje (RG24)
+
+- RG24-1: [ATP men's tournament preview 2024](https://www.atptour.com/-/media/5275ccac675646a0bb7f172776df7588.pdf), str. 3 (seeds, WC, Q, LL), str. 5 (body/odměny), text; screenshot 403.
+- RG24-2: [WTA dobové informace 22. 5.](https://www.wtatennis.com/news/4025655/roland-garros-2024-draws-dates-prize-money-and-what-you-need-to-know), lokalita, povrch, časové pásmo, míče a termíny; ženské body nepoužívat.
+- RG24-3: [FFT časový harmonogram z dubna 2024](https://rg-organisation.fft.fr/sites/default/files/2024-04/RG24%20-%20tableau%20des%20horaires.pdf), text tabulek získán, screenshot 500 (údržba).
+- RG24-4: [FFT oznámení mužských a ženských WC 14. 5.](https://www.rolandgarros.com/en-us/article/2024-wildcards-men-women-singles-qualifying-rounds).
+- RG24-5: dobový Grand Slam Rule Book 2024 §2/3 a scoring; viz AO24-5 / S16 v témže dokumentu; textové zrcadlo, ne nově vizuálně ověřený originál.
+- RG24-6: [ATP entry list 17. 4.](https://www.atptour.com/en/news/roland-garros-2024-entry-list), [pořadatel 16. 4.](https://www.rolandgarros.com/en-us/article/roland-garros-2024-entry-list-men-women-protected-ranking).
+- RG24-7: [ATP dobový přehled](https://www.atptour.com/en/news/roland-garros-2024-history-draw-schedule), indexovaný text, přímé 403; [pořadatel Q los 19. 5.](https://www.rolandgarros.com/en-us/article/qualifying-draws-unveiled-roland-garros-2024).
+- RG24-8: [kopie originálního Q losu 19. 5. 14:27](https://www.tiebreaktennis.it/wp-content/uploads/2024/05/Roland-Garros-2024-Qualificazioni-maschili.pdf), obě strany vizuálně; [originál aktualizovaný 20. 5.](https://rg-organisation.fft.fr/sites/default/files/2024-05/Mens_Qualifying_20240520220332.pdf), text dostupný, screenshot 500.
+- RG24-9: archivované dobové OOP: [20. 5.](https://tennisconnected.com/wp-content/uploads/2024/05/Schedule_EN_20240520_OF_1716134216.pdf), [21. 5.](https://tennisconnected.com/wp-content/uploads/2024/05/Schedule_EN_20240521_OF_1716224247.pdf), [22. 5.](https://tennisconnected.com/wp-content/uploads/2024/05/Schedule_EN_20240522_OF_1716314941.pdf), [23. 5.](https://tennisconnected.com/wp-content/uploads/2024/05/Schedule_EN_20240523_OF_1716404146.pdf), indexované texty denních plánů, ne původní týdenní plán Q2.
+- RG24-10: [pořadatel — los Main 23. 5. 14:00](https://www.rolandgarros.com/en-us/article/rg2024-watch-the-roland-garros-2024-draw-ceremony-live).
+- RG24-11: [pořadatel — Q výsledky 22. 5.](https://www.rolandgarros.com/en-us/order-of-play?annexeCourt=all&competition=all&country=all&date=2024-05-22&favoriteFilter=false&principalCourt=all&year=2024), [23. 5. Q3](https://www.rolandgarros.com/en-us/article/rg2024-qualifying-and-draw-day---thursday-may-23-live), [24. 5.](https://www.rolandgarros.com/en-us/order-of-play?annexeCourt=all&competition=all&country=ITA&date=2024-05-24&favoriteFilter=false&principalCourt=all&year=2024).
+- RG24-12: [předturnajový rozpis 2024](https://uk.sports.yahoo.com/news/french-open-2024-full-schedule-164350297.html), [provisional schedule kopie](https://static1.squarespace.com/static/5f1d6e50195f36727ee1723e/t/65e3375b69e1e96311a4b24d/1709389660028/French%2BOpen%2BTennis%2B2024.pdf) (indexovaný text); [Sky dobový program](https://www.skysports.com/tennis/news/13141712/french-open-2024-draw-schedule-for-men-s-women-s-singles-featuring-andy-murray-rafael-nadal-novak-djokovic-coco-gauff) použít jen konzistentní data druhého týdne.
+- RG24-13: [ATP den 1](https://www.atptour.com/-/media/039f1c8495c94cf29ab43a44b16341f3.pdf), [den 2](https://www.atptour.com/-/media/9e71a713ef744adabbb9aabc139d412a.pdf), [den 3](https://www.atptour.com/-/media/6cbd8d0cc0e84330b8f22f11c4d781b4.pdf), [déšť 29. 5.](https://www.atptour.com/en/news/rain-roland-garros-2024-wednesday), indexované texty.
+- RG24-14: [FFT/WTA Q acceptance list](https://rg-organisation.fft.fr/sites/default/files/2024-05/RolandGarrosQLF2024Update%20V2.pdf), podporuje data 15./29. 4., ale není mužský dokument; screenshot 500.
+- RG24-15: [FFT Main los aktualizovaný 4. 6. 22:54](https://rg-organisation.fft.fr/sites/default/files/2024-06/Mens_Singles_20240604225512.pdf), obě strany vizuálně ověřeny.
+- RG24-16: [ATP série 520](https://www.atptour.com/en/tournaments/roland-garros/520/overview) identifikátor.
+- RG24-17: Grand Slam Board změna rozhodujícího tiebreaku, viz AO24-17.
+- RG24-18: [nezávislá tabulka odměn](https://salarysport.com/tennis/roland-garros/2024/prize-money/), [přehled 2024](https://en.wikipedia.org/wiki/2024_French_Open), [dobové Reuters](https://www.reuters.com/sports/tennis/french-open-2024-prize-money-how-much-do-winners-mens-womens-doubles-finals-get-2024-05-21/).
+- RG24-19: [ATP odměny 2024](https://www.atptour.com/en/news/roland-garros-2024-prize-money) indexovaný text, 403; [WTA vysvětlení odměny Q3 vs Main](https://www.wtatennis.com/news/4027889/qualifying-at-roland-garros-the-grueling-journey-that-can-change-careers).
+- RG24-20: mužský ATP Rulebook IX a oznámení 2024 viz AO24-18 / S18.

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 2 ročníky, Wimbledon 2024 a 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 3 ročníky, Wimbledon 2024 a 2025, Australian Open 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -36,10 +36,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | 2024 | [Wimbledon](#wimbledon-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Wimbledon](#wimbledon-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Australian Open](#australian-open-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
-`*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264.
+`*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 2 zpracované ročníky; 2 hotové v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 3 zpracované ročníky; 3 hotové v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -47,7 +48,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 |---|---|---|
 | 1 | Wimbledon 2024 | HOTOVO (nominální rozsah) |
 | 2 | Wimbledon 2025 | HOTOVO (nominální rozsah) |
-| 3 | Australian Open 2024 | NEZAHÁJENO |
+| 3 | Australian Open 2024 | HOTOVO (nominální rozsah) |
 | 4 | Roland Garros 2024 | NEZAHÁJENO |
 | 5 | US Open 2024 | NEZAHÁJENO |
 | 6 | Australian Open 2025 | NEZAHÁJENO |
@@ -68,6 +69,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 |---|---|---|---|---|---|
 | [2024](#wimbledon-2024) | Wimbledon | Grand Slam | 2024-06-24–2024-06-27 | 2024-07-01–2024-07-14 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 | [2025](#wimbledon-2025) | Wimbledon | Grand Slam | 2025-06-23–2025-06-26 | 2025-06-30–2025-07-13 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
+| [2024](#australian-open-2024) | Australian Open | Grand Slam | 2024-01-08–2024-01-11 (plán) | 2024-01-14–2024-01-28 | HOTOVO v nominálním rozsahu; skutečné Q 9.–12. 1. odděleně |
 
 ## Wimbledon 2024
 
@@ -409,4 +411,139 @@ Vizuální podklady potvrzují stejnou plánovanou geometrii jako 2024. Nominál
 - W25-13: [ATP poslední přímé akceptace 24. 6.](https://www.atptour.com/en/news/wimbledon-2025-last-direct-entries), 16 Q postupových míst.
 - W25-14: [BBC kvalifikační finále 26. 6.](https://www.bbc.co.uk/sport/tennis/articles/ckgj184pdrno), pětisetový formát.
 - W25-15: [ATP Ranking Rulebook 2025 §IX.G](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf), tištěná str. 264, vizuálně ověřena (po počátečním 403); [ATP turnaj 540](https://www.atptour.com/en/tournaments/wimbledon/540/overview). [ATP Detail Sheet 2025](https://www.protennislive.com/posting/2025/540/ds.pdf) nedostupný při přímém načtení; neoznačovat za ověřený.
+
+
+## Australian Open 2024
+
+**Stav:** HOTOVO v nominálním rozsahu I/T/H/E/D/R/B/P/Z. Nezávislá rešerše 2026-11-27. Důležité: plánované Q 8.–11. ledna není skutečně odehrané Q 9.–12. ledna. Obě hodnoty mají odlišný význam; historický posun není náhradou za plán.
+
+### 1. Identita a místo
+
+| Pole | Historická hodnota | Důkaz |
+|---|---|---|
+| Název | Australian Open | AO24-1 |
+| Rok / disciplína / kategorie | 2024 / mužská dvouhra / Grand Slam | AO24-1, AO24-4 |
+| ATP tournament ID | 580 | AO24-13 (identita série) |
+| Místo Main i Q | Melbourne Park, Batman Avenue, Melbourne VIC 3000, Austrálie | AO24-1, AO24-7 |
+| Povrch | tvrdý, GreenSet Cushion | AO24-1 |
+| Míče | Dunlop Australian Open | AO24-1 |
+| Ředitel / rozhodčí | Craig Tiley / Wayne McKewen | AO24-1 |
+| Elektronické rozhodování | ELC Live na všech zápasových kurtech dle fact sheet | AO24-1 |
+| Časové pásmo | Australia/Melbourne, v lednu AEDT (UTC+11) | AO24-12 |
+| Měna | AUD | AO24-1, AO24-3 |
+
+### 2. Přihlášky, losování a plánované termíny
+
+Primární dobový dokument je AO24 Player Fact Sheet (publikace uvádí 17. 10. 2023), str. 1–2 vizuálně zkontrolovány. U vstupních uzávěrek dokument označuje časové pásmo „EST“, ale hodinu vůbec nepublikuje; zachováváme přesné uvedené datum bez převodu či domyšlené hodiny. Hodiny losování jsou místní program Melbourne.
+
+| Událost | Datum / čas | Důkaz |
+|---|---|---|
+| Main přihlášky | 2023-12-04, automatické přes ATP/WTA | AO24-1 |
+| Žádosti o WC | 2023-12-08 | AO24-1 |
+| Q přihlášky | 2023-12-18, Playerzone | AO24-1 |
+| Q los mužů | 2024-01-07 15:00 | AO24-1; oznámený plán |
+| Q začátek–konec | 2024-01-08–2024-01-11 | AO24-1, AO24-2, AO24-7 |
+| Main los | 2024-01-11 13:00 AEDT | AO24-8; fact sheet původně čas TBA |
+| Main začátek–konec | 2024-01-14–2024-01-28 | AO24-1, AO24-2, AO24-9 |
+| Běžné denní / večerní sessions | 11:00 / 19:00 | AO24-9; nikoli čas každého zápasu |
+| Mužské finále | 2024-01-28 večer, Rod Laver Arena | AO24-2; BBC předturnajový čas 19:30, AO24-14; přesný první bod není vyžadován |
+
+Skutečné Q se kvůli dešti uskutečnilo 9.–12. ledna (AO24-10, AO24-15). V Draftu Grand Slam #1903 je uložené skutečné Q 9.–12. 1. a původní 8.–11. 1. v doplňkovém poli; registr podle rozhodnutí vlastníka vybere **původní plán**. Žádný soubor #1903 se zde nemění.
+
+### 3. Nominální harmonogram
+
+| Kolo/fáze | Plánované lokální datum | Uzly | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-01-08–09 | 64 | AO24-2 |
+| Q2 | 2024-01-10 | 32 | AO24-2 |
+| Q3 | 2024-01-11 | 16 | AO24-2 |
+| Mezi fázemi, bez mužského kola dle plánu | 2024-01-12–13 | 0 | AO24-1, AO24-2 |
+| R128 | 2024-01-14–16 | 64 | AO24-2, AO24-11 |
+| R64 | 2024-01-17–18 | 32 | AO24-2, AO24-11 |
+| R32 | 2024-01-19–20 | 16 | AO24-2, AO24-11 |
+| R16 | 2024-01-21–22 | 8 | AO24-2, AO24-11 |
+| QF | 2024-01-23–24 | 4 | AO24-2, AO24-11 |
+| Bez plánovaného mužského kola | 2024-01-25 | 0 | AO24-2 |
+| SF | 2024-01-26 | 2 | AO24-2, AO24-11 |
+| Bez plánovaného mužského kola | 2024-01-27 | 0 | AO24-2 |
+| F | 2024-01-28 | 1 | AO24-2, AO24-11 |
+
+Kontrola Q 64+32+16=112, Main 64+32+16+8+4+2+1=127, dohromady 239. Q 4 dny, Main 15 dnů, celkově 21 kalendářních dnů. Třídenní R128 je vědomá novinka ročníku, nikoli důsledek odložených zápasů: pořadatel výslovně oznámil první nedělní zahájení 14. 1. (AO24-2). Přesná plánovaná distribuce zápasů po dnech vícedenních kol není doložena, proto se nedělí rovnoměrně odhadem. Širší označení Opening Week / Qualifying 8.–13. 1. v grafice AO24-2 zahrnuje i rezervní a jiné programové dny, ale konkrétní mužská Q3 je plánována 11. 1.; není důvod měnit konec sportovní fáze na 13. 1.
+
+Pozor na jinou publikaci Tennis Australia „What's new for AO24“: automatický textový výtah její grafiky posouvá některé Main sloupce o den, což odporuje explicitním datům článku pořadatele a původnímu kalendáři. Bez vizuálního ověření ji nepoužíváme jako alternativní autoritu.
+
+### 4. Nominální struktura a dobová pravidla
+
+| Parametr | Main | Q | Důkaz |
+|---|---:|---:|---|
+| Kapacita a cílový počet hráčů | 128 | 128 | AO24-1 |
+| Přímé akceptace | 104 | 119 | AO24-5; součet |
+| WC | 8 | 9 | AO24-5, AO24-4 str. 18, AO24-7 |
+| Q postupová místa | 16 | 16 vítězů sekcí | AO24-5, AO24-7 |
+| Nasazení | 32 | 32 | AO24-5, AO24-6, AO24-16 |
+| BYE | 0 | 0 | AO24-6, plné pavouky |
+| Formát | vyřazovací | 16 vyřazovacích sekcí po 8 | AO24-5, AO24-6 |
+| Kol | 7 | 3 | AO24-5, AO24-6 |
+| Zápasových uzlů | 127 | 112 | odvozeno |
+| Formát zápasů | best of 5 setů | best of 3 setů ve všech třech kolech | AO24-1 |
+
+Nominální počty: 104+16+8=128, 119+9=128. Všech devět Q divokých karet potvrzuje přímo dobový seznam pořadatele. Main 8 WC zahrnovalo i reciproční přidělení Francii a USA (AO24-4 str. 18). Pravidla Grand Slam 2024 §2/3 (AO24-5): Main nasazení podle rankingu přibližně 7 dnů před akcí, seed 1/2 na protilehlých koncích, ostatní skupiny dle tabulky 128/32; Q dva nasazení na sekci, prvních 16 na horní okraje, druhých 16 losováno na spodní okraje. Před zveřejněním prvního Q OOP se uvolněná pozice seedu obsadí dalším způsobilým seedem, po zveřejnění alternatem. Přímé akceptace dle žebříčku při vstupní uzávěrce. Po skončení Q se vítězové losují do volných Main pozic; sekce nemá předem určené místo. LL přednostně poražení Q3, při nedostatku i dřívější kola; los mezi čtyřmi nejvýše postavenými způsobilými hráči, při více než dvou Main odhlášeních při skončení Q počet odhlášení + 2, poté ranking. Sign-in a okamžik náhrady podle dobového předpisu. Rozhodující set tiebreak na 10 s náskokem 2 při 6:6 (AO24-17).
+
+**Podstatný rozdíl proti Wimbledonu:** Q3 je v Austrálii BO3, nikoli BO5. To není adaptace, jde o skutečný dobový tenisový formát.
+
+Kontrolní historický kontext: dostupné neoficiální vykreslené losy AO24-6 str. 2 a 4 (PDF indexy 1 a 3) mají 128 pozic v obou fázích, Main 8 WC/16 Q/3 LL, Q 9 WC, alternate na pozici 1 místo nasazeného č. 1, tedy 31 označených seedů. Nominální Q seeding zůstává 32; žádná jména ani výsledky se nepřepisují. ITF potvrzuje tři nahrazené Main hráče a osm WC. Přímý oficiální Main/Q PDF se nepodařilo nově získat; dřívější #1903 má Main zdroj, Q marker audit byl neúplný. Neoficiální los slouží jako kontrola geometrie, ne jako jediný důkaz plánovaných pravidel.
+
+### 5. Body a odměny
+
+| Výsledek | Počet příjemců | ATP body | AUD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 2000 | 3150000 |
+| Finalista | 1 | 1300 | 1725000 |
+| SF | 2 | 800 | 990000 |
+| QF | 4 | 400 | 600000 |
+| R16 | 8 | 200 | 375000 |
+| R32 | 16 | 100 | 255000 |
+| R64 | 32 | 50 | 180000 |
+| R128 | 64 | 10 | 120000 |
+| Q postupující | 16 | 30 | samostatná odměna neuvedena |
+| Q3 prohra | 16 | 16 | 65000 |
+| Q2 prohra | 32 | 8 | 44100 |
+| Q1 prohra | 64 | 0 | 31250 |
+
+Body: AO24-4 str. 1 (vizuálně), AO24-18 dobové ATP oznámení a předpis. Základní tabulka Main souhlasí s ITF. Q body se přičítají k výsledku Main; výjimka WC při prohře v prvním kole Main 0 bodů, nikoli 10. Individuální historické body LL a náhrad se zde nerekonstruují. Odměny AO24-3, potvrzené ITF pro Main. Aritmetika Main 29775000 AUD (přesná shoda s ITF), Q 4451200 AUD, celkem 34226200 AUD mužská dvouhra včetně Q. Celý turnaj všechny soutěže 86 500 000 AUD. Diety 330 AUD/den od prvního dne příslušné fáze do vyřazení plus 3 dny (AO24-1 str. 2), mimo tabulku odměn.
+
+### 6. Kontrola pokrytí a mezery
+
+| Oblast | Výsledek |
+|---|---|
+| I, T, E | dobový fact sheet vizuálně ověřen; pořadatel potvrzuje čas Main losu; plán vs skutečnost Q oddělen |
+| H | všechna okna kol z původního programu textově; vizualizace velkého PDF selhala, články potvrzují plán; denní počty u vícedenních kol nedopočítávány |
+| D | dobový předpis + fact sheet + skutečné losy z nezávislého archivního zobrazení, počet WC potvrzen pořadatelem a ITF |
+| R | dobový předpis dostupný v textovém zrcadle, přímé ITF PDF 404, ATP PDF 403; formát AO přímo fact sheet |
+| B, P | ITF hlavní tabulka vizuálně ověřena, Q body dobové ATP oznámení, odměny Q přímo pořadatel, kontrolní součty bez rozporu |
+| Z | zdroje dohledatelné, přímý originální ATP detail/draw PDF nedostupný; žádné SHA-256 nedoloženy |
+| Mimo nominální rozsah | individuální cutoffs, výsledky, přesné časy skutečných zápasů a kompletní změny obsazení |
+
+Závěr: nominální profil pokrývá všech 9 oblastí s vyznačenými omezeními důkazů. Nejde o stoprocentní historickou certifikaci. Rozdíl plán/skutečnost proti #1903 je věcně zdůvodněn, nikoli chyba skutečného data v #1903. Další ročník Roland Garros 2024.
+
+### 7. Zdroje (AO24)
+
+- AO24-1: [Tennis Australia — AO24 Player Fact Sheet](https://www.tennis.com.au/wp-content/uploads/2023/11/AO24-Player-Fact-Sheet.pdf), 17. 10. 2023, str. 1–2 vizuálně ověřeny.
+- AO24-2: [oficiální původní kalendář PDF](https://ausopen.com/sites/default/files/2023-10/ao24-provisional-schedule.pdf) (textový výtah, screenshot selhal kvůli velikosti); [článek pořadatele 9. 11. 2023](https://ausopen.com/articles/news/australian-open-2024-provisional-schedule-unveiled). Kontrola alternativy: [What's new for AO24](https://www.tennis.com.au/wp-content/uploads/2023/12/Whats-new-for-AO24-2912-1.pdf), neověřený grafický výtah neautoritativní.
+- AO24-3: [pořadatel — prize money](https://ausopen.com/articles/news/australian-open-prize-money-hits-record-high-10-million-increase-2024).
+- AO24-4: [ITF — Men's Tournament Preview 2024](https://www.world.tennis/media/11625/2024-australian-open-mens-tournament-preview-third-edition.pdf), str. 1 a 18 vizuálně.
+- AO24-5: [Grand Slam Rule Book 2024](https://www.itftennis.com/media/5986/grand-slam-rule-book-2024-f3.pdf) (přímé PDF 404); [textové zrcadlo dobového předpisu](https://www.scribd.com/document/807392104/grand-slam-rulebook-2024), tištěné str. 24–30. Důkaz z doplňkového zrcadla explicitně označen.
+- AO24-6: [nezávislý archiv losů](https://donald.au/tennis/2024/2024-australian-open-singles.pdf), str. 2 a 4 vizuálně; nejde o originální pořadatelský soubor. [Sky Sports Main draw](https://www.skysports.com/tennis/news/13046191/australian-open-mens-singles-draw-as-novak-djokovic-looks-to-win-11th-title-in-melbourne). [Dřívější oficiální Main odkaz #1903](https://ausopen.com/sites/default/files/2026-11/draw_ms_2024-01-28_2336.pdf) při této rešerši nedostupný; protennislive /posting/2024/580/{ds,mds,qs}.pdf rovněž nedostupné.
+- AO24-7: [pořadatel — Q wildcards](https://ausopen.com/articles/news/australian-open-qualifying-wildcards-announced), devět mužských WC, plán Q; [Q entry list](https://ausopen.com/articles/news/australian-open-2024-qualifying-events-set-thrill-fans).
+- AO24-8: [pořadatel — Main draw ceremony 11. 1.](https://ausopen.com/articles/news/where-watch-australian-open-2024-draw), 13:00 AEDT.
+- AO24-9: [ATP preview 2024](https://www.atptour.com/en/news/australian-open-2024-history-draw-schedule), indexovaný text, přímý přístup 403.
+- AO24-10: [pořadatel — začátek Q 9. 1.](https://ausopen.com/articles/news/goffin-leads-mens-winners-ao-2024-qualifying-begins); [konec Q 12. 1.](https://ausopen.com/articles/news/aussies-open-jasika-sweeny-hunter-complete-dream-qualifying-runs).
+- AO24-11: [Nine, předturnajový program 11. 1.](https://www.nine.com.au/sport/tennis/australian-open-2024-schedule-dates-players-draw-odds-prize-money-tickets-everything-need-to-know-ultimate-guide-20240111-p5j8yt.html).
+- AO24-12: [Victoria — daylight saving](https://business.vic.gov.au/business-information/daylight-saving), [Tourism Australia time zones](https://www.australia.com/en/facts-and-planning/about-australia/time-zones.html).
+- AO24-13: [ATP series 580](https://www.atptour.com/en/tournaments/australian-open/580/overview); identity series, not evidence of year-specific dates.
+- AO24-14: [BBC — předturnajový program](https://www.bbc.co.uk/sport/tennis/67863460).
+- AO24-15: [historický přehled Q, posun kvůli dešti](https://en.wikipedia.org/wiki/2024_Australian_Open_%E2%80%93_Men%27s_singles_qualifying), doplňkový zdroj potvrzených krajních dnů, ne primární plán.
+- AO24-16: [pořadatel — seed list 10. 1.](https://ausopen.com/articles/news/seed-list-confirmed-australian-open-2024).
+- AO24-17: [Grand Slam Board — rozhodující tiebreak](https://ausopen.com/articles/news/grand-slams-jointly-adopt-10-point-final-set-tiebreak).
+- AO24-18: [ATP oznámení bodů pro 2024](https://www.atptour.com/en/news/2024-rankings-points-update); [ATP Rulebook IX 19. 3. 2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pif-atp-rankings_19mar.pdf) (indexovaný text); [dobový přehled pravidel](https://openerarankings.com/RankingRules2024).
 

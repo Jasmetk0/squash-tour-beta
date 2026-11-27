@@ -1,9 +1,18 @@
 import type { ViewerCountries, ViewerCountry, ViewerPlayer, ViewerPlayers } from '../../../api/types'
 
+const pageFields = ['schema_version', 'product_run_id', 'viewer_branch_id', 'season_index', 'week', 'country_count', 'countries']
+const rowFields = ['country_code', 'player_count', 'active_player_count', 'retired_player_count',
+  'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr']
+function exactPublicFields(value: unknown, fields: readonly string[]): boolean {
+  return !!value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field))
+}
+
 // Cross-check the public projection against its roster, not private sporting
 // state. This is consistency checking, not cryptographic revision verification.
 export function joinedCountryRoster(value: unknown, roster: ViewerPlayers): Map<string, { country: ViewerCountry; players: ViewerPlayer[] }> | null {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  if (!exactPublicFields(value, pageFields)) return null
   const data = value as ViewerCountries
   if (data.schema_version !== 'viewer_countries.v1' || data.product_run_id !== roster.product_run_id ||
       data.viewer_branch_id !== roster.viewer_branch_id || data.season_index !== roster.season_index ||
@@ -17,7 +26,7 @@ export function joinedCountryRoster(value: unknown, roster: ViewerPlayers): Map<
   if (groups.size !== data.country_count) return null
   const result = new Map<string, { country: ViewerCountry; players: ViewerPlayer[] }>()
   for (const country of data.countries) {
-    if (!country || typeof country !== 'object' || result.has(country.country_code)) return null
+    if (!exactPublicFields(country, rowFields) || result.has(country.country_code)) return null
     const players = groups.get(country.country_code)
     if (!players || country.player_count !== players.length) return null
     let active = 0, sum = 0, rated = 0

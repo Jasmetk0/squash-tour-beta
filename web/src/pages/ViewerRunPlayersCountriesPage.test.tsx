@@ -790,6 +790,27 @@ describe('ViewerRunCountriesPage', () => {
     expect(screen.queryByRole('table')).not.toBeInTheDocument()
   })
 
+  it.each(['page', 'row', 'clock'])('rejects inconsistent or non-public country %s evidence before rendering', async kind => {
+    const original = {
+      schema_version: 'viewer_countries.v1', product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'branch-viewer', season_index: 2, week: 7, country_count: 2,
+      countries: [
+        { country_code: 'EGY', player_count: 5, active_player_count: 4, retired_player_count: 1,
+          average_current_ovr: 178.4, top_player_id: 'EGY-0001', top_player_name: 'Ali A', top_player_current_ovr: 191 },
+        { country_code: 'USA', player_count: 1, active_player_count: 1, retired_player_count: 0,
+          average_current_ovr: 150, top_player_id: 'USA-0001', top_player_name: 'US Player', top_player_current_ovr: 150 },
+      ],
+    }
+    const malformed = kind === 'page' ? { ...original, private_seed: 'hidden-page' } :
+      kind === 'row' ? { ...original, countries: [{ ...original.countries[0], private_seed: 'hidden-row' }, original.countries[1]] } :
+        { ...original, week: 8 }
+    api.getViewerCountries.mockResolvedValueOnce(malformed)
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved country and player sources do not match')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
+  })
+
   it('builds encoded Viewer-only country links from canonical identities', async () => {
     api.getViewerPlayers.mockResolvedValue(countryListRoster('run/alpha #1', [
       { id: 'P/1 #A', name: 'Encoded Player', code: 'CDE', rating: 188, status: 'active' },

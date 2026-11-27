@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 16 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 17 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -50,10 +50,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Córdoba](#córdoba-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Dallas](#dallas-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Marseille](#marseille-2024) | ✓ | ✓ | ✓ | ? | ✓ | ✓* | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: nominální Q WC) |
+| 2024 | [Buenos Aires](#buenos-aires-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 16 zpracovaných ročníků; 14 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 17 zpracovaných ročníků; 15 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -75,7 +76,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 14 | Córdoba 2024 | HOTOVO (nominální rozsah) |
 | 15 | Dallas 2024 | HOTOVO (nominální rozsah) |
 | 16 | Marseille 2024 | ROZPRACOVÁNO (E: nominální Q WC) |
-| 17 | Buenos Aires 2024 | NEZAHÁJENO |
+| 17 | Buenos Aires 2024 | HOTOVO (nominální rozsah) |
+| 18 | Rotterdam 2024 | NEZAHÁJENO |
+| 19 | Delray Beach 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -109,6 +112,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#córdoba-2024) | Córdoba Open | ATP 250 | 2024-02-03–2024-02-04 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 | [2024](#dallas-2024) | Dallas Open | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#marseille-2024) | Open 13 Provence | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | ROZPRACOVÁNO: nominální Q WC |
+| [2024](#buenos-aires-2024) | IEB+ Argentina Open | ATP 250 | 2024-02-10–2024-02-11 | 2024-02-12–2024-02-18 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 
 ## Wimbledon 2024
 
@@ -2083,6 +2087,132 @@ I/T/H/D/B/P doloženy. E otevřeno kvůli rozporu 12+4 versus 14+2 Q; nomináln�
 - MRS24-14: [ATP Rulebook 2024, 10.7., §7.04](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_10jul.pdf), text programu účinného od 1.1.2024; viz dřívější pokusy o screenshot AKL24-22; [ATP oznámení 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024).
 - MRS24-15: [ATP potvrzení Menšíkovy rezervy Doha 26.2.2024](https://www.atptour.com/en/news/mensik-michelsen-fonseca-next-gen-review-26-february-2024), nevztahovat na Marseille.
 
+
+### 9. Opakovaná kontrola E — 2026-11-27
+
+- MRS24-16: [ATP Rulebook, kapitola VII, 21.12.2023](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_21dec.pdf), §7.08 E.1, tištěné str. 149–150: řádek pro ATP 250 rozlišuje 16 míst, 14 DA a 2 WC; stejný předpis v [lednové verzi 22.1.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_22jan.pdf). Prosincová kapitola textově dostupná; screenshot 403. Lednová verze indexovaný text, přímý přístup 403.
+- MRS24-17: [press kit pořadatele 2025](https://www.open13.fr/wp-content/uploads/2025/02/DOSSIER-DE-PRESSE-202590.pdf), oddíl průběhu soutěže opakuje 12 DA + 4 WC a Main 19 DA + 2 SE + 4 Q + 3 WC; jde o jiný ročník, nikoli důkaz hodnoty pro 2024. Text dostupný, screenshot 502. Opakování zvyšuje podezření na šablonový popis, ale neprokazuje absenci schválené ročníkové výjimky.
+- Nová kontrola tedy zesiluje kandidáta 14+2 (dobový předpis i ročníkový přepis MRS24-10). Původní ročníkový Q acceptance list/DS ani výslovnou výjimku jsme nezískali. Rozpor nezamlčujeme, E zůstává otevřeno; po dokumentovaném opakování pokračujeme dalším ročníkem bez povýšení Marseille.
+
+## Buenos Aires 2024
+
+**Stav:** HOTOVO (nominální rozsah, 9/9; E/R/P/Z s označenými omezeními). Rešerše 2026-11-27. Plán a skutečný průběh odděleny; žádný převod do Squash Enginu.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | IEB+ Argentina Open, mužská dvouhra | BUE24-1/2 |
+| Kategorie / ATP ID | ATP 250 / 506 | BUE24-1/3 |
+| Dějiště | Buenos Aires Lawn Tennis Club, Buenos Aires, Argentina | BUE24-2/4 |
+| Povrch | venkovní červená antuka | BUE24-1/4/5 |
+| Časové pásmo | America/Argentina/Buenos_Aires, ART UTC−03:00 | lokalita a datum |
+| Ředitel | Martín Jaite | BUE24-6 |
+| ATP supervisor / referee | Carlos Sanches a Jorge Mandl / Damian Steiner | BUE24-1/6 |
+| Tour manager | Thomas Schrader | BUE24-6 |
+| Měna | USD | BUE24-1/2 |
+
+Nezaměňovat s lednovým a dalšími Challenger turnaji v Buenos Aires ani listopadovou WTA 125. ATP ročníkový identifikátor 506_2024 je potvrzen TennisTV. Míče a původní ATP detail sheet nedohledány.
+
+### 2. Vstup a losování
+
+| Událost | Datum / čas | Zdroj |
+|---|---|---|
+| Main rank date | 2024-01-15 | BUE24-7 |
+| Q rank date | 2024-01-22 | BUE24-7 |
+| Nominální Main deadline | 2024-01-15 12:00 US Eastern = 14:00 ART | odvozeno dle §7.03 |
+| Nominální Q deadline | 2024-01-22 12:00 US Eastern = 14:00 ART | odvozeno dle §7.03 |
+| Nominální LE deadline | 2024-02-08 10:00 US Eastern = 12:00 ART | odvozeno dle §7.04, lednová verze |
+| Q alternate sign-in v den Q1 | 2024-02-10 11:30 ART | originální OOP BUE24-6 |
+| Q/Main losování | před příslušnou fází; přesné datum a čas neověřeny | BUE24-1/6 |
+| Q | 2024-02-10–11 | BUE24-6/8/9 |
+| Main | 2024-02-12–18 | BUE24-1/2/3/4 |
+| Finále | 2024-02-18 ne před 16:00 ART | BUE24-9/10, denní program, ne skutečný čas prvního servisu |
+
+Přepis acceptance listu uvádí Main původní cutoff 78, Q 128. Předstartovní originální Main pavouk uvádí poslední přímou akceptaci při deadline i při losu Varillas 81. Jde o rozdílné zdrojové okamžiky/údaje; nelze je zaměnit ani vydávat za shodné bez originální acceptance listiny. Časy uzávěrek jsou pravidlové odvození, nikoli doložené publikované časy konkrétního ročníku.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-10 | 8 |
+| Q2 | 2024-02-11 | 4 |
+| R32 | 2024-02-12–13 | 12 |
+| R16 | 2024-02-14–15 | 8 |
+| QF | 2024-02-16 | 4 |
+| SF | 2024-02-17 | 2 |
+| F | 2024-02-18 | 1 |
+
+Předturnajový program BUE24-8 uvádí přesně tato okna. Originální Q1 OOP vydaný 9.2. ve 21:26 (BUE24-6) plánuje osm zápasů na dvou kurtech od 12:00; Q2 čtyři zápasy 11.2. potvrzeny místním rozpisem BUE24-9. BUE24-9/11 potvrzují denní Main rozdělení R32 4+8 a R16 4+4, QF/SF/F 4/2/1. Jde o dobové denní rozpisy, nikoli rekonstrukci prvního předturnajového plánu po jednotlivých zápasech. R32 se místně hraje 12.–13.2.; archiv BUE24-12 uvádí R32 až 14.2. bez jasného časového pásma, což nemění doložené místní okno. Ve skutečných výsledcích Q1 se Vavassoriho soupeř změnil z Martíneze uvedeného v předem vydaném OOP na Pellegrina (BUE24-9/13); nominální počty ani harmonogram se nemění. Q 2 dny, Main 7 dní, celé okno 9 dní, bez překryvu. 39 nominálních zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Účastníci | 28 | 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 (standard, nevyužita v doloženém losu) | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28, dle dobového lednového §7.08. Ročníkový přepis (BUE24-7) vykazuje 18 DA, 2 SE, 0 LE, 3 WC, 4 Q, tedy mezistav 27 míst. Předstartovní původní ATP Main los BUE24-1 vizuálně ověřen: BYE 2/10/23/31; Q placeholdery 4/5/14/28; WC 7/13/21; SE 27/30; osm nasazených. Zbývá 19 neoznačených míst, což souhlasí s uvolněním nevyužité LE rezervy, ale konkrétní administrativní důvod každého vstupu neodvozujeme jen ze štítku. Obě SE skutečně využity; nejsou dodatečnými místy mimo kapacitu.
+
+Q: 14 DA + 2 WC = 16 dle BUE24-7 a dobového §7.08 E.1. Oficiální Q1 OOP má dvě WC a dva Alt; výsledkový sekundární pavouk BUE24-13 má 16 hráčů, dvě WC, 4 sekce a 12 zápasů. Označeno jen sedm různých seedů (1,2,3,5,6,7,8), důvod chybějícího čtvrtého seedu bez původního Q losu neověřen. Nominál osm seedů zůstává, jak stanoví §7.15. Main 12+8+4+2+1=27, Q 8+4=12; BYE nejsou hrané zápasy.
+
+### 5. Dobová pravidla
+
+ATP §§7.03/7.04/7.08/7.09/7.10/7.15–18/7.20: pravidlové termíny, uvolnění nevyužitých SE/LE míst, pravidla vstupu náhradníků, losování čtyř kvalifikantů a lucky losers; osm nasazených v obou fázích; Q čtyři sekce po čtyřech, dva seedy v sekci; top čtyři Main BYE. Formát BO3 s tiebreakem podle ATP singles pravidel, také potvrzen dobovými výsledky. První prohra po BYE v R16 znamená 0 bodů, avšak odměnu za R16; ATP preview BUE24-2 a §7.18. Q body se přičítají dle dobového rankingového předpisu BUE24-15.
+
+Týden 12.2. má Rotterdam ATP 500, Buenos Aires a Delray Beach ATP 250. Dobový program NextGen pro týden tří akcí se uplatňuje v rámci pevné kapacity (viz MRS24-14/15, BUE24-7/14); konkrétní alokaci této rezervy mezi Buenos Aires a Delray Beach nemáme doloženou. Nepřidávat automaticky další místo. Jde o otevřený detail pravidel, nikoli důkaz jiné draw geometry.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 97745 |
+| Finalista | 1 | 165 | 57015 |
+| SF | 2 | 100 | 33520 |
+| QF | 4 | 50 | 19425 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 11280 |
+| R32 | 12 | 0 | 6890 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3445 |
+| Q1 prohra | 8 | 0 | 1880 |
+
+Main primární původní ATP los BUE24-1 a ATP preview BUE24-2 se shodují ve všech řádcích. Q hodnoty z ročníkového archivu TennisTemple a Canal Tenis BUE24-16/17; další sekundární shoda BUE24-18, vzájemná nezávislost neprokázána. TennisTemple označuje postup jako Q3, geometrie má však pouze dvě kola. Q body 13/7/0 odpovídají ATP 2024 předpisu. Main součet 472420 USD, Q 28820 USD, nominální singlový součet 501240 USD. Originální Main draw financial commitment 728185 USD a ITF prize pool 642615 USD (BUE24-5) jsou jiné veličiny než singlový součet. P* = originální Q finanční tabulka dosud chybí, sekundární shoda je výslovně označena.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/B doloženy; H denní okna a počty ověřeny dobovým místním rozpisem, původní kompletní Main OOP soubor nezískán. E*: ročníkový přepis listin a vizuální originální Main pavouk, nikoli originální acceptance listy, přesné časy losů neznámé. R*: NextGen alokace otevřena; P*: sekundární shoda Q odměn. Z*: vizuální kontrola celé strany originálního ATP Main draw v archivní kopii, ATP preview, Day 2 a pořadatelský Q1 OOP textově; jejich screenshoty 403/500. Původní Q draw/DS nedostupné, neuvádět hash. Nominální kontrola 28/16 hráčů, 4 BYE, 8/8 seedů, 4 postupující, 27/12 zápasů a finanční součty prošly aritmetickou kontrolou. Další ročník Rotterdam 2024, následně Delray Beach 2024. Žádný zásah do runtime.
+
+### 8. Zdroje (BUE24)
+
+- BUE24-1: [archiv originálního předstartovního ATP Main losu 2024](https://www.fantatennis.net/_downloads/2a1457afb7e7d6422cfe3810cb45f477), str. 1 vizuálně ověřena včetně zápatí; pozor na odlišný PDF ročníku 2025.
+- BUE24-2: [ATP Preview & Day 1, 12.2.2024](https://www.atptour.com/-/media/60a7ac1ed2b64f379fc58718445638b0.pdf), str. 1–2, body, USD ceny a BYE výjimka, text, screenshot 403.
+- BUE24-3: [ATP ID 506](https://www.atptour.com/en/tournaments/buenos-aires/506/overview?detailtab=pastresults), [TennisTV ročník 506_2024](https://www.tennistv.com/tournaments/506_2024/buenos-aires), [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024).
+- BUE24-4: [dobový přehled losu a povrchu](https://canaltenis.com/cuadro-argentina-open-2024/); [nezávislá kontrola Main pavouka](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024Buenos_Aires).
+- BUE24-5: [ITF Buenos Aires 2024](https://www.itftennis.com/en/tournament/buenos-aires/arg/2024/m-250-arg-2024-002/draws-and-results/), prize pool a termíny.
+- BUE24-6: [originální pořadatelský OOP Q1](https://argentinaopentennis.com/wp-content/uploads/2024/02/OP-1.pdf), vydán 9.2. 21:26, sign-in a osm zápasů, text, screenshot 500 po redirectu.
+- BUE24-7: [dobový přepis ATP entry listů týdne 12.–18.2.](https://www.tennisteen.it/entry-list/atp/24114-atp-entry-list-12-18-febbraio-2024.html), Buenos Aires Main/Q a týdenní sestava turnajů.
+- BUE24-8: [předturnajový program a vstupenky Canal Tenis](https://canaltenis.com/todo-lo-que-debes-saber-del-argentina-open/), Q 10.–11., kola Main 12.–18.2.
+- BUE24-9: [dobové místní termíny a rozpis všech dnů](https://www.sportingnews.com/es/tenis/news/argentina-open-2024-partidos-horarios-resultados-hoy-buenos-aires/c01a4570fb9aa72aafc83f91), místní hodiny, Q1 změna soupeře, Main 4+8 a 4+4.
+- BUE24-10: [dobová zpráva o čase finále](https://www.pagina12.com.ar/713611-argentina-open-2024-a-que-hora-es-la-final-este-domingo-y-co/), 16:00 ART.
+- BUE24-11: [ATP Day 2, 13.2.](https://www.atptour.com/-/media/b609c861894647bf9ebe0f1cb23318c4.pdf), text/screenshot 403; nezávislá kontrola denních Main rozpisů [12.2.](https://en.tennistemple.com/competitions/buenos-aires/2024/orderofplay/2024-02-12), [13.2.](https://en.tennistemple.com/competitions/buenos-aires/2024/orderofplay/2024-02-13), [14.2.](https://en.tennistemple.com/competitions/buenos-aires/2024/orderofplay/2024-02-14), [15.2.](https://en.tennistemple.com/competitions/buenos-aires/2024/orderofplay/2024-02-15).
+- BUE24-12: [Tennis Majors archiv Main](https://www.tennismajors.com/competitions/ieb-argentina-open-2024-mens-singles), odlišné koncové datum R32 bez určení časového pásma, nepřebírat jako lokální plán.
+- BUE24-13: [Tennis Explorer úplná Q struktura](https://www.tennisexplorer.com/buenos-aires/2024/atp-men/?phase=qualification), seed značky a čtyři postupy; časy nejsou prokázány jako místní.
+- BUE24-14: [ATP 2024 Rulebook, 22.1.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_22jan.pdf), indexovaný text, přímý přístup 403; prosincová kapitola VII MRS24-16, zejména §7.08, 7.15, 7.18; NextGen viz MRS24-14/15.
+- BUE24-15: [ATP předsezonní aktualizace rankingových bodů 2024](https://www.atptour.com/en/news/2024-rankings-points-update), ATP 250.
+- BUE24-16: [TennisTemple Q pavouk a prize table 2024](https://en.tennistemple.com/competitions/buenos-aires/2024/draw-qualifications), 3445/1880, 13/7/0.
+- BUE24-17: [Canal Tenis finanční rozpis 2024](https://canaltenis.com/el-prize-money-del-argentina-open/), oddíl výslovně 2024, nikoli aktuální ročník.
+- BUE24-18: [GoTennisRacquets ročníková tabulka](https://gotennisracquets.com/argentina-open/), indexovaná shoda Q, přímý přístup selhal. [TennisCompanion](https://tenniscompanion.org/prize-money/buenos-aires/) indexovaná shoda Q2, přímý přístup 403.
+- Originální ATP [Main](https://www.protennislive.com/posting/2024/506/mds.pdf), [Q](https://www.protennislive.com/posting/2024/506/qs.pdf) v tomto průchodu přímo nedostupné. Původní Main kopie BUE24-1 je vizuálně ověřená.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -2091,6 +2221,8 @@ I/T/H/D/B/P doloženy. E otevřeno kvůli rozporu 12+4 versus 14+2 Q; nomináln�
 | Hong Kong 2024 | P* – sekundární Q prize money | originální Q tabulka; kandidát 3550/1935 USD doložen sekundární shodou |
 | Montpellier 2024 | P* – sekundární Q prize money | originální Q tabulka, kandidát 3105/1695 EUR doložen sekundární shodou |
 | Marseille 2024 | inventura – historická identita doložena, interní series metadata neověřena | ATP 496 se přesunul do Lyonu 2026; samostatný Lyon 7694; historické místo Marseille, neměnit runtime; MRS24-4/7/8/9 |
-| Marseille 2024 | E – nominální Q WC, blokuje HOTOVO | pořadatelský press kit 12 DA+4 WC vs dobový přepis listiny 14 DA+2 WC; potřebný originální Q acceptance list/DS či výslovný předpis ročníku |
+| Marseille 2024 | E – nominální Q WC, blokuje HOTOVO | 12+4 press kit vs 14+2 dobový ATP předpis a přepis listiny; opakovaná kontrola MRS24-16/17 nezískala originální Q listinu/DS ani výjimku; kandidát 14+2, stále otevřeno |
 | Córdoba/Dallas/Marseille 2024 | R* – Next Gen rezervy v týdnu tří ATP akcí | ověřit přesnou alokaci mezi akcemi a případné individuální využití, nepřidávat mimo pevnou kapacitu; COR24-17 |
 | Dallas 2024 | P* – sekundární Q prize money | původní ATP Q PDF nebo Detail Sheet; 4055/2210 USD shoda sekundárních zdrojů, DAL24-17/19/20 |
+| Buenos Aires 2024 | P* – sekundární Q prize money | originální Q draw/DS; sekundární shoda 3445/1880 USD (BUE24-16/17/18) |
+| Buenos Aires/Delray Beach 2024 | R* – NextGen rezervy | alokace mezi dvěma ATP 250 v týdnu s Rotterdamem, bez navýšení kapacity; BUE24-7/14 |

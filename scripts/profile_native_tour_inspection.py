@@ -24,10 +24,10 @@ Scenarios (one fresh interpreter per invocation):
     used by ``giant_native_five_season_load.py`` (including its deliberate
     idempotency retry and the GETs before and after every Save).
     ``--variant minimal`` is the separate diagnostic arm: the same commands,
-    Previews, confirmations and Saves, but each GET only once per distinct
-    state, and ``include_inspection`` on Execute where its inspection covers
-    exactly the token read the next request needs. Its inspection cost is
-    therefore charged to Execute.
+    Previews, confirmations, idempotency retries and Saves, but each GET only
+    once per distinct state, and ``include_inspection`` on Execute where its
+    inspection covers exactly the token read the next request needs. Its
+    inspection cost is therefore charged to Execute.
 
 Modes: ``timing`` installs nothing. ``phases`` wraps named production
 functions with wall/CPU accumulators (no profiler). ``profile`` runs cProfile
@@ -390,8 +390,13 @@ class Flow:
             self.view = self.tour.inspect(label)
         return self.view
 
-    def run(self, action, *, name, edition_id=None, data=None):
-        view = self.current("inspect:before-" + action)
+    def run(self, action, *, name, edition_id=None, data=None, view=None):
+        # ``view``: the caller's own just-read inspection, exactly where the
+        # giant harness builds the command from it (plan, next-slot).
+        if self.variant == "harness":
+            view = view if view is not None else self.tour.inspect("inspect:before-" + action)
+        else:
+            view = self.current("inspect:before-" + action)
         cmd = command(view, action, name=name, edition_id=edition_id, data=data)
         preview = self.tour.preview(cmd)
         confirm = {"command": cmd, "expected_preview_fingerprint": preview["preview_fingerprint"],
@@ -406,6 +411,10 @@ class Flow:
             return result
         out = self.tour.execute(confirm, include_inspection=True, label=action)
         assert out["schema_version"] == "calendar_tour_execution_inspection.v1"
+        if action in {"play", "transition"}:
+            # Not a read: the same idempotency retry stays in this arm too.
+            again = self.tour.execute(confirm, label=action + ":idempotency-retry")
+            assert again == out["result"]
         self.view = out["inspection"]
         return out["result"]
 
@@ -501,7 +510,7 @@ def play_week(flow: Flow, season: int, week: int, initial_professionals: tuple[s
             "main_entrant_count": edition.size, "ranked": True,
             "validity_weeks": WEEKS_PER_SEASON, "point_table": edition.point_table,
         }
-        flow.run("create-edition", name=edition.edition_id + ":plan", data=payload)
+        flow.run("create-edition", name=edition.edition_id + ":plan", data=payload, view=view)
         flow.save()
     matches = 0
     if events:
@@ -529,7 +538,7 @@ def play_week(flow: Flow, season: int, week: int, initial_professionals: tuple[s
             assert not slot["conflicts"] and slot["matches"], slot
             slot_count += 1
             matches += len(slot["matches"])
-            flow.run("next-slot", name=f"load-s{season + 1}-w{week}-slot-{slot_count}")
+            flow.run("next-slot", name=f"load-s{season + 1}-w{week}-slot-{slot_count}", view=view)
             flow.save()
         for e in events:
             flow.tour.client.stage = "confirm:" + e.edition_id

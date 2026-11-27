@@ -256,7 +256,7 @@ export function FullSimulationServerTasks({runId,branchId}:{runId?:string;branch
  const filtered=Boolean(normalized||category!=='all')
  return <section className="server-simulation-tasks" aria-label={t.title}><h3>{t.title}</h3><p>{t.truth}</p>
   <button type="button" onClick={()=>{if(!incompleteScope)void query.refetch()}} disabled={query.isFetching||incompleteScope}>{t.refresh}</button>
-  {!incompleteScope&&<div className="server-simulation-tasks__filters">
+  {!incompleteScope&&<div className="server-simulation-tasks__filters" data-run-navigation-readonly>
    <label>{t.search}<input type="search" aria-label={t.search} placeholder={t.searchHint} value={search} onChange={e=>setSearch(e.target.value)}/></label>
    <label>{t.filter}<select aria-label={t.filter} value={category} onChange={e=>setCategory(e.target.value as 'all'|'attention'|'live'|'other')}>
     <option value="all">{t.allTasks}</option><option value="attention">{t.attentionTasks}</option>

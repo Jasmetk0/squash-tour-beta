@@ -168,11 +168,11 @@ export function RunWorldPage():JSX.Element {
     retry:false
   })
   const savedSource=useMemo(()=>{
-    if(!allowed||!historicalRevision||!revision.data||!branchId)
+    if(!allowed||!historicalRevision||!revision.isSuccess||revision.isFetching||!revision.data||!branchId)
       return {source:null,error:null}
     try {return {source:historicalRunWorldSnapshot(revision.data,runId,branchId,selectedRevisionId),error:null}}
     catch(error){return {source:null,error:formatApiError(error)}}
-  },[allowed,historicalRevision,revision.data,runId,branchId,selectedRevisionId])
+  },[allowed,historicalRevision,revision.isSuccess,revision.isFetching,revision.data,runId,branchId,selectedRevisionId])
   // The present World can include unsaved edits. Calendar reads are always from
   // immutable Saved HEAD (or the explicitly selected historical Saved Revision).
   const tournamentTab=Boolean(countryCode&&params.get('tab')==='tournaments')
@@ -187,11 +187,11 @@ export function RunWorldPage():JSX.Element {
   const calendarSource=useMemo(()=>{
     if(!allowed||!tournamentTab||!branchId)return {read:null,error:null}
     if(historicalRevision)return {read:savedSource.source,error:savedSource.error}
-    if(!calendarRevision.data||!tournamentSourceRevision)return {read:null,error:null}
+    if(!calendarRevision.isSuccess||calendarRevision.isFetching||!calendarRevision.data||!tournamentSourceRevision)return {read:null,error:null}
     try{return {read:historicalRunWorldSnapshot(calendarRevision.data,runId,branchId,tournamentSourceRevision),error:null}}
     catch(error){return {read:null,error:formatApiError(error)}}
   },[allowed,tournamentTab,branchId,historicalRevision,savedSource.source,savedSource.error,
-    calendarRevision.data,tournamentSourceRevision,runId])
+    calendarRevision.isSuccess,calendarRevision.isFetching,calendarRevision.data,tournamentSourceRevision,runId])
   const tournamentProjection=useMemo(()=>{
     if(!allowed||!tournamentTab||!countryCode||!calendarSource.read?.response)
       return {model:null,error:null}
@@ -200,7 +200,7 @@ export function RunWorldPage():JSX.Element {
     catch(error){return {model:null,error:formatApiError(error)}}
   },[allowed,tournamentTab,countryCode,calendarSource.read,runId])
   const tournamentsPending=Boolean(allowed&&tournamentTab&&tournamentSourceRevision&&
-    (historicalRevision?revision.isPending:calendarRevision.isPending))
+    (historicalRevision?revision.isPending||revision.isFetching:calendarRevision.isPending||calendarRevision.isFetching))
   const tournamentsError=calendarSource.error||tournamentProjection.error||
     (!tournamentSourceRevision?(cs?'Žádná uložená revize.':'No Saved Revision is available.'):
       calendarRevision.error&&!historicalRevision?formatApiError(calendarRevision.error):null)

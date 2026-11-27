@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -22,7 +22,7 @@ vi.mock('../admin/AdminBranchContext',()=>({
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
 
-function mountWorld(path:string):{refresh:()=>void} {
+function mountWorld(path:string):{refresh:()=>void;client:QueryClient} {
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
   const wrap=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}>
@@ -33,7 +33,7 @@ function mountWorld(path:string):{refresh:()=>void} {
     </MemoryRouter>
   </QueryClientProvider>
   const mounted=render(wrap())
-  return {refresh:()=>mounted.rerender(wrap())}
+  return {refresh:()=>mounted.rerender(wrap()),client}
 }
 
 type CountryFilters={
@@ -432,7 +432,7 @@ describe('Run-owned World overview navigation',()=>{
       payload:{run:{run_id:'run-a'},branch:{branch_id:'branch-a'},content:{
         run_package_state:{fingerprint:fixture.fingerprint,state:fixture.state}}}
     })
-    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020')
+    const view=mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020')
     expect(await screen.findByRole('table',{name:'Country tournament editions 2000/2001'}))
       .toHaveTextContent('Brno World Open')
     const panel=screen.getByLabelText('Country Run-owned tournaments')
@@ -447,6 +447,10 @@ describe('Run-owned World overview navigation',()=>{
     expect(url.searchParams.get('season')).toBe('0')
     expect(url.searchParams.get('fromCountry')).toContain('tab=tournaments&year=2020')
     expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
+    api.getSavedRevision.mockRejectedValueOnce(new Error('Saved tournament refresh failed'))
+    await act(async()=>{await view.client.invalidateQueries({queryKey:['run-world-saved-calendar','run-a','branch-a','head-a']})})
+    expect(panel).toHaveTextContent('Saved tournament refresh failed')
+    expect(within(panel).queryByRole('link',{name:'Brno World Open'})).not.toBeInTheDocument()
   })
 
   it('links second-season historical shared-ancestor Edition through selected Branch',async()=>{

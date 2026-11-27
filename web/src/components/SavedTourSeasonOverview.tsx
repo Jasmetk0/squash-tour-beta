@@ -13,7 +13,7 @@ export function SavedTourSeasonOverview({model,displayed,cs,selectedWeek,categor
     const week=weeks[edition.season_week-1]
     week.total++
     if(edition.result_published)week.published++
-    const category=typeof edition.category==='string'?edition.category.trim():''
+    const category=typeof edition.category==='string'?edition.category:''
     const counts=categories.get(category)??{total:0,published:0}
     counts.total++
     if(edition.result_published)counts.published++

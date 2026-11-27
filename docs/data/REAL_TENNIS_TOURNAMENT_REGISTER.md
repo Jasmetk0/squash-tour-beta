@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 12 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 13 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -46,10 +46,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Hong Kong](#hong-kong-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Adelaide](#adelaide-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Auckland](#auckland-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: Q odměny) |
+| 2024 | [Montpellier](#montpellier-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 12 zpracovaných ročníků; 11 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 13 zpracovaných ročníků; 12 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -67,11 +68,16 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 10 | Hong Kong 2024 | HOTOVO (nominální rozsah) |
 | 11 | Adelaide 2024 | HOTOVO (nominální rozsah) |
 | 12 | Auckland 2024 | ROZPRACOVÁNO (P: rozpor odměn Q) |
-| 13 | Montpellier 2024 | NEZAHÁJENO |
+| 13 | Montpellier 2024 | HOTOVO (nominální rozsah) |
+| 14 | Córdoba 2024 | NEZAHÁJENO |
+| 15 | Dallas 2024 | NEZAHÁJENO |
+| 16 | Marseille 2024 | NEZAHÁJENO (ověřit mapování katalogu) |
 
-Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
+Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
 ## Metodika evidence
+
+- **Late Entry (LE), nově doloženo pro Montpellier 2024:** ATP Rulebook, verze 22.1.2024, §7.04 a §7.08 B.1.c, stanoví jedno rezervované LE místo v ATP 250; pro 28 hráčů 18 základních DA + 2 rezervy SE + 1 LE + 4 Q + 3 WC. Nevyužité LE místo přechází na dalšího způsobilého hráče entry listu. Způsobilost se posuzuje podle rankingu 28 dní před pondělím turnaje a původního cut-off; deadline LE je čtvrtek 10:00 US Eastern před turnajem. Rozlišovat verze pravidel: konkrétní doklad pro Montpellier existuje již v listině zveřejněné 4.1.2024, nepovažovat však datum verze rulebooku za přesné datum účinnosti ani mechanicky nepřepisovat starší turnaje. Viz MPL24-5/6/7.
 
 - **Special Exempt (SE), doplněno při rešerši Adelaide 2024:** ATP §7.08/7.10 (verze 21.12.2023) pro ATP 250 uvádí dvě rezervy SE, podle potřeby 0–2 skutečně přidělených míst a doplnění nevyužitých míst přímými akceptacemi. Pro 28 hráčů standardně 19 základních DA + 2 rezervy SE + 4 Q + 3 WC. Rozlišovat rezervy, skutečné využití a konečnou kvótu přímých vstupů. Starší formulace Brisbane/Hong Kong „SE 0 v listině“ znamená stav přepisu listiny, nikoli důkaz nulové rezervované kapacity. Případné odlišné turnajové výjimky musejí mít vlastní důkaz. Viz ADL24-8/9. Nepřebírat SE mechanicky do Grand Slamů ani do engine.
 
@@ -95,6 +101,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#hong-kong-2024) | Bank of China Hong Kong Tennis Open | ATP 250 | 2023-12-31–2024-01-01 | 2024-01-01–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#adelaide-2024) | Adelaide International | ATP 250 | 2024-01-07–2024-01-08 | 2024-01-08–2024-01-13 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#auckland-2024) | ASB Classic | ATP 250 | 2024-01-06–2024-01-07 | 2024-01-08–2024-01-13 | ROZPRACOVÁNO: Q odměny |
+| [2024](#montpellier-2024) | Open Sud de France | ATP 250 | 2024-01-28–2024-01-29 | 2024-01-29–2024-02-04 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 
 ## Wimbledon 2024
 
@@ -1575,7 +1582,7 @@ Main šest hodnot a body shodně v obou vizuálně zkontrolovaných kopiích ori
 
 ### 7. Evidence / další krok
 
-I/T/D/B pokryty, H*: Q data rekonstruována z denních výsledků, Main plán doložen ATP OOP a notes; E*: deadline odvozeny, losovací časy a Q rank date neznámé; R*: společný dobový předpis a konkrétní Main BYE poznámka, ATP PDF screenshoty 403; Z*: dvě originální Main kopie vizuálně, Q los pouze nezávislé archivy, ATP originální Main/Q/DS URL nedostupné. P je otevřeno; neoznačovat za hotový profil ani za definitivní odměny. Doplnit přímé kvalifikační PDF, ročníkovou tabulku nebo spolehlivý finanční předpis s konkrétním rozpisem; potom znovu posoudit. Katalog `buuk` již uvádí Main 8.–13.1., v prověřeném sportovním katalogu není Auckland 2024. Žádný engine převod. Po uzavření P další Montpellier 2024.
+I/T/D/B pokryty, H*: Q data rekonstruována z denních výsledků, Main plán doložen ATP OOP a notes; E*: deadline odvozeny, losovací časy a Q rank date neznámé; R*: společný dobový předpis a konkrétní Main BYE poznámka, ATP PDF screenshoty 403; Z*: dvě originální Main kopie vizuálně, Q los pouze nezávislé archivy, ATP originální Main/Q/DS URL nedostupné. P je otevřeno; neoznačovat za hotový profil ani za definitivní odměny. Doplnit přímé kvalifikační PDF, ročníkovou tabulku nebo spolehlivý finanční předpis s konkrétním rozpisem; potom znovu posoudit. Katalog `buuk` již uvádí Main 8.–13.1., v prověřeném sportovním katalogu není Auckland 2024. Žádný engine převod. Po opakované rešerši P zůstává otevřeno, viz doplňkový audit AKL24-19–24; Montpellier zpracován samostatně, žádná změna stavu Aucklandu.
 
 ### 8. Zdroje (AKL24)
 
@@ -1598,3 +1605,129 @@ I/T/D/B pokryty, H*: Q data rekonstruována z denních výsledků, Main plán do
 - AKL24-17: [CanalTenis historická tabulka s konfliktem](https://canaltenis.com/el-prize-money-del-atp-auckland/), odstavec 2024.
 - AKL24-18: [TennisCompanion celková dotace](https://tenniscompanion.org/prize-money/auckland/), historický součet 2024; dostupná tabulka po kolech v této verzi neslouží jako mužský důkaz Q odměn.
 
+
+### 9. Auckland – doplňkový audit otevřené položky P (2026-11-27)
+
+Třetí kopie originálního ATP Main losu (AKL24-19, vizuálně str. 1) a dobový článek AKL24-20 nezávisle potvrzují všech šest Main částek, žádný Q rozpis. Dobový rozpis AKL24-21 potvrzuje Q/Main hranici a Main odměny; jeho sekundární tabulka čtyřhry dává 129 000 USD (1×35 000 + 1×18 800 + 2×11 000 + 4×6 100 + 8×3 600). Rozdíl 661 585 − 486 365 − 129 000 = 46 220 USD není doložená Q dotace: chybí primární rozpis všech složek. ATP Rulebook 10.7.2024, Exhibit J, odkazuje na schválenou distribuci v turnajovém Detail Sheet (AKL24-22), nikoli univerzální výpočet ze zveřejněné celkové dotace. Ani stejný financial commitment jako u Adelaide není důkaz stejného Q prize money. AKL24-23 potvrzuje data kvalifikačních kol, nikoli peníze. Další databáze a varianty ATP cest neodblokovaly Q tabulku (AKL24-24). Kandidát 3550/1935 USD se nemění; P zůstává otevřeno, bez povýšení stavu. Při novém dokladu nejprve porovnat přesný ročník, měnu, druh soutěže a kompletní tabulku.
+- AKL24-19: [třetí archivovaná ATP Main kopie](https://www.fantatennis.net/_downloads/e0f41f3209d87bb2a703d4d51a25b5d8), str. 1 vizuálně.
+- AKL24-20: [dobový Tennis Infinity, 7.1.2024](https://tennis-infinity.com/atp/2024-asb-classic-auckland-atp-prize-money-points-overview).
+- AKL24-21: [dobový Sportskeeda program a Main/čtyřhra](https://hindi3.sportskeeda.com/tennis/news-auckland-2024-men-s-draw-schedule-players-prize-money-breakdown-ranking-points-asb-classic), bez Q částek.
+- AKL24-22: [ATP Rulebook 2024, 10.7.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_10jul.pdf), Exhibit J, tištěná str. 326, indexovaný text, pokus o screenshot 403; pozdější verze se zde používá pouze jako vysvětlení, proč nedopočítávat neověřený rozpis.
+- AKL24-23: [MyKhel mužský denní archiv](https://www.mykhel.com/tennis/asb-classic-2024-mens-singles-scores-c10460/), potvrzení 8 Q1 a 4 Q2; zobrazené časy nejsou místní.
+- AKL24-24: původní /2024/301/qs.pdf, /2024/0301/qs.pdf, /2024/301/ds.pdf a /2024/301/mdd.pdf opakovaně nedostupné; zkoušeny též Matchstat a Stevegtennis (bez použitelného Q rozpisu). TennisCompanion aktuálně nezávisle nepotvrzuje mužskou Q tabulku, záměna s ženskými hodnotami možná.
+
+## Montpellier 2024
+
+**Stav:** HOTOVO v nominálním rozsahu 9/9 s omezeními E/R/P/Z. Rešerše 2026-11-27. Oproti předchozím ATP 250 doložena rezervace Late Entry. Bez převodu na engine.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název / kategorie | Open Sud de France 2024, ATP 250, mužská dvouhra | MPL24-1/2 |
+| ATP ID | 375 | MPL24-2/11 |
+| Dějiště | Sud de France Arena, Pérols, Montpellier, Francie | MPL24-1/3/10 |
+| Povrch | tvrdý, krytý | MPL24-2/3 |
+| Časové pásmo | Europe/Paris, CET UTC+01:00 v celém okně | lokalita, datum |
+| Měna | EUR | MPL24-1, primární tabulka výslovně € |
+| Míče / diety / přesný model povrchu | NEOVĚŘENO | doplňková metadata |
+
+### 2. Přihlášky, plán a losování
+
+| Pole | Údaj | Důkaz / význam |
+|---|---|---|
+| Main rank date | 2024-01-01 | MPL24-6, dobový přepis entry listu |
+| Q rank date | 2024-01-08 | MPL24-6 |
+| Nominální Main deadline | 2024-01-01 12:00 US Eastern = 18:00 CET | §7.03, 28 dní před 29.1., odvozeno |
+| Nominální Q deadline | 2024-01-08 12:00 US Eastern = 18:00 CET | §7.03, 21 dní před 29.1., odvozeno |
+| Nominální LE deadline | 2024-01-25 10:00 US Eastern = 16:00 CET | §7.04, čtvrtek před 29.1., odvozeno |
+| Q los | před 28.1., přesný čas NEOVĚŘEN | MPL24-8 |
+| Main los | zveřejněn nejpozději 27.1.; přesný okamžik NEOVĚŘEN | MPL24-9 |
+| Q | 2024-01-28–29 | MPL24-4/8 |
+| Main | 2024-01-29–02-04 | MPL24-1/2/4 |
+| Finále | 2024-02-04, plán 15:00 CET | MPL24-4; čtyřhra 12:30 odděleně |
+
+Přihlašovací listiny uvádějí historické rank cutoffs; nejsou pevnou vstupní hranicí pro jiný ročník. Uzávěrky jsou nominálně odvozeny, originální Detail Sheet se nepodařilo získat.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální datum | Nominální zápasy | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-01-28 | 8 | MPL24-4/8, plán dne od 10:30 |
+| Q2 | 2024-01-29 | 4 | MPL24-4/8, program dne od 12:00 |
+| R32 | 2024-01-29–31 | 12 | MPL24-4 |
+| R16 | 2024-01-31–02-01 | 8 | MPL24-4 |
+| QF | 2024-02-02 | 4 | MPL24-4 |
+| SF | 2024-02-03 | 2 | MPL24-4 |
+| F | 2024-02-04 | 1 | MPL24-4 |
+
+Dobový program zveřejněný 23.1. před turnajem výslovně rozlišuje kola a plánované denní časy. Q 2 dny, Main 7 dní, celé okno 8 dní; Q2/R32 překryv 29.1., R32/R16 překryv 31.1. Přesné počty jednotlivých vícedenních Main kol v každém dni nepublikované, neodhadovat rovnoměrně. Q 12 a Main 27 nominálně hraných zápasů, celkem 39. Čas začátku celého denního programu neznamená začátek každé mužské singlové dvojice.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Účastníci | 28 | 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | nevztahuje se |
+| LE rezerva | 1 | nevztahuje se |
+| DA při nulovém SE/LE | 21 | 14 |
+| WC | 3 | 2 |
+| Q postupy | 4 | 4 vítězové sekcí |
+| Nasazení | 8 | 8 |
+| BYE | 4 (první 4 seedy) | 0 |
+| Kola / nominální hrané zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 | BO3 |
+
+18+2+1+3+4=28; při nevyužití rezerv 21+3+4=28; Q 14+2=16, čtyři sekce po čtyřech. Přihlašovací listina zveřejněná 4.1. explicitně eviduje 18 DA a placeholdery 3 WC, 2 SE, 1 LE, 4 Q (MPL24-5). Aktualizovaná listina 11.1. uvádí 18 DA, 1 LE, 3 WC, 4 Q, SE 0; nevyužité rezervy nejsou nulová nominální kapacita (MPL24-6). Úplné sekundární pavouky potvrzují 4 BYE, 8 Main seedů, 4 Q, 16 Q hráčů, 2 Q WC, jeden alternate a 7 viditelných Q seedů (chybí #2); nominální Q seeding zůstává 8. ATP Media Notes uvádí WC Holger Rune, Harold Mayot a Lucas Pouille; některý sekundární pavouk WC u Rune neznačí, nemění to nominální kvótu. Výsledkový BO3 formát potvrzen v obou fázích. Nepřepisujeme historické nahrazení do plánu.
+
+### 5. Dobová pravidla
+
+ATP Rulebook verze 22.1.2024 §7.04, §7.08 B.1.c (MPL24-7): jedno LE místo v ATP 250, způsobilost hráče podle rankingu použitého pro původní vstup (28 dní před turnajem) a nad původním cut-off; LE do čtvrtka 10:00 US Eastern, nevyužité místo vráceno entry listu. Dvě SE rezervy; nevyužité SE se uvolní do DA. Pravidla přihlašování, nasazení, Q/SE placeholderů, náhradníků a LL viz ADL24-8, BRI24-15 a odpovídající verze §7.10/7.20. 4 top seedy BYE, 8 Q seedů, čtyři kvalifikační sekce, vítězové Q přiřazeni do volných Main míst po Q. Specifický NextGen slot pro týdny se třemi ATP turnaji nepřenášet na Montpellier (v tomto týdnu jediný běžný ATP Tour turnaj podle MPL24-2). BYE a prohra prvního skutečně hraného kola = 0 bodů, explicitně ATP Media Notes MPL24-1; odměna přitom odpovídá dosaženému kolu podle finančních pravidel. Q body přičíst podle ATP pravidel; žádné převody na squash.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR | Doklad |
+|---|---:|---:|---:|---|
+| Vítěz | 1 | 250 | 88125 | ATP |
+| Finalista | 1 | 165 | 51400 | ATP |
+| SF | 2 | 100 | 30220 | ATP |
+| QF | 4 | 50 | 17510 | ATP |
+| R16 | 8 | 25 (0 po BYE při první prohře) | 10165 | ATP |
+| R32 | 12 | 0 | 6215 | ATP |
+| Q postupující | 4 | 13 | bez samostatné Q odměny, Main samostatně | ročníkový standard |
+| Q2 prohra | 4 | 7 | 3105 | sekundární shoda |
+| Q1 prohra | 8 | 0 | 1695 | sekundární shoda |
+
+Main body, částky a výjimka po BYE v originálním ATP Preview & Day 1 (MPL24-1, indexovaný text, screenshot 403). Dobový MPL24-12 shodný Main rozpis. Q body z dobového ATP rulebooku (BRI24-17); Q částky shodně TennisCompanion EUR historický řádek 2024, německý ročníkový přehled a TennisTemple Q (MPL24-8/10/13). Není prokázána úplná vzájemná nezávislost sekundárních zdrojů. TennisTemple označuje částky jako $, Stevegtennis používá A$ i záporný sentinel; originální ATP výslovně EUR a dvě sekundární tabulky v EUR potvrzují správnou měnu. Nezaměňovat měnu převodů s původní denominací. Originální Q PDF nebyl získán, P* nikoli primární ověření. Main nominální součet 425905 EUR, Q 25980 EUR, dohromady 451885 EUR. Celková dotace se v sekundárních zdrojích liší (579320 vs 564835 EUR); nevyvozovat z ní singlovou tabulku ani skutečné individuální platby. Total financial commitment je jiná veličina.
+
+### 7. Kontrola a omezení
+
+I/T/H/D/B doloženy dobovým ATP, předem zveřejněným rozpisem a úplnými archivy; E*: rank dates/listiny doloženy, nominální deadlines odvozeny, přesné časy losů a DS chybí; R*: dobový rulebook textově, screenshot 403, LE potvrzen konkrétní listinou; P*: Main primární text, Q sekundární shoda tří zdrojů, při získání originálního Q PDF znovu ověřit; Z*: původní Main/Q PDF přímé odkazy nefungují, žádný hash nezískán. V katalogu `buuk` je Main 29.1.–4.2.2024, v prověřených sportovních profilech tento ročník není. Další Córdoba 2024; u následujícího týdne pracovní katalog uvádí položku Lyon s datem Marseille, ověřit správnou identitu proti původnímu ATP kalendáři, neprovádět zde zásah do enginu.
+
+### 8. Zdroje (MPL24)
+
+- MPL24-1: [ATP Preview & Day 1, 29.1.2024](https://www.atptour.com/-/media/a6fa4add53c54a5182670d5e0f6c230f.pdf), tabulka Main body/EUR a BYE poznámka, indexovaný text; screenshot 403. [Day 2, 30.1.](https://www.atptour.com/-/media/bcd637ed58c04b75a820c14443a57b45.pdf), text, screenshot 403.
+- MPL24-2: [oficiální ATP kalendář 2024](https://www.atptour.com/-/media/files/final-2024-atp-calendar.pdf), text; screenshot neproveditelný kvůli chybě vykreslení.
+- MPL24-3: [Tennis Europe kalendář ročníku](https://www.tenniseurope.org/calendarevent/73310/Open-Sud-De-France), kategorie, indoor hard, Main data.
+- MPL24-4: [dobový program publikovaný 23.1.](https://www.leguidemontpellier.fr/tennis-programme-open-sud-de-france-montpellier/4792/), plán před zahájením.
+- MPL24-5: [entry list zveřejněná 4.1.2024](https://tennisuptodate.com/atp/entry-list-2024-open-sud-de-france-montpellier-headlined-by-musetti-auger-aliassime-and-murray), explicitně LE a 2 SE.
+- MPL24-6: [dobový přepis Main/Q listin 11.1.](https://www.tennisteen.it/entry-list/atp/24106-atp-entry-list-29-gennaio-4-febbraio-2024.html).
+- MPL24-7: [ATP Rulebook 22.1.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_22jan.pdf), §7.04, §7.08 B.1.c, text; pokus screenshotu 403.
+- MPL24-8: [TennisTemple Q](https://en.tennistemple.com/competitions/montpellier-2024/12268/draw-qualifications), [Main](https://en.tennistemple.com/competitions/montpellier-2024/12268/draw); úplné sekundární pavouky, peněžní měna chybně označena.
+- MPL24-9: [dobová zpráva o losu 27.1.](https://tennisuptodate.com/atp/draw-2024-open-sud-de-france-montpellier-featuring-holger-rune-alexander-bublik-andy-murray-and-felix-auger-aliassime).
+- MPL24-10: [ročníkový přehled](https://de.wikipedia.org/wiki/Open_Sud_de_France_2024), sekundární Main/Q rozpis v EUR.
+- MPL24-11: [ATP původní Main](https://www.protennislive.com/posting/2024/375/mds.pdf), [Q](https://www.protennislive.com/posting/2024/375/qs.pdf); nedostupné, nepovažovat za vizuálně ověřené.
+- MPL24-12: [dobový Tennis Infinity prize/points](https://tennis-infinity.com/atp/2024-montpellier-open-atp-prize-money-points-overview).
+- MPL24-13: [TennisCompanion historická tabulka v EUR](https://tenniscompanion.org/prize-money/montpellier/), řádek 2024 Main a Q; odlišné celkové prize money nepoužívat jako autoritu.
+- MPL24-14: [Stevegtennis Main/Q archiv](https://www.stevegtennis.com/draw-results/atp/Open%20Sud%20de%20France%20-%20Montpellier/2024), potvrzuje sportovní strukturu, nikoli měnu či záporné sentinel hodnoty.
+
+## Otevřené položky k opakované kontrole
+
+| Ročník | Oblast | Priorita / další požadovaný doklad |
+|---|---|---|
+| Auckland 2024 | P – Q prize money, blokuje HOTOVO | originální ATP Q draw/Detail Sheet nebo ročníková spolehlivá tabulka potvrzující konkrétní hodnoty; kandidát 3550/1935 USD není certifikovaný |
+| Hong Kong 2024 | P* – sekundární Q prize money | originální Q tabulka; kandidát 3550/1935 USD doložen sekundární shodou |
+| Montpellier 2024 | P* – sekundární Q prize money | originální Q tabulka, kandidát 3105/1695 EUR doložen sekundární shodou |
+| Marseille 2024 | inventura – mapování identity v katalogu | před zpracováním potvrdit skutečnou akci proti původnímu kalendáři, neměnit runtime |

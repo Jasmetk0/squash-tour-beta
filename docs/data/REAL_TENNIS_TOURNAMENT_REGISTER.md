@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 24 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 25 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -58,10 +58,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Los Cabos](#los-cabos-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Acapulco](#acapulco-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Dubai](#dubai-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Santiago](#santiago-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: rozpor odměn Main) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 24 zpracovaných ročníků; 22 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 25 zpracovaných ročníků; 22 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -91,7 +92,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 22 | Los Cabos 2024 | HOTOVO (nominální rozsah) |
 | 23 | Acapulco 2024 | HOTOVO (nominální rozsah) |
 | 24 | Dubai 2024 | HOTOVO (nominální rozsah) |
-| 25 | Santiago 2024 | NEZAHÁJENO |
+| 25 | Santiago 2024 | ROZPRACOVÁNO (P: rozpor odměn Main) |
+| 26 | Indian Wells 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -133,6 +135,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#los-cabos-2024) | Mifel Tennis Open by Telcel Oppo | ATP 250 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-24 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 | [2024](#acapulco-2024) | Abierto Mexicano Telcel presentado por HSBC | ATP 500 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-02 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 | [2024](#dubai-2024) | Dubai Duty Free Tennis Championships | ATP 500 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-02 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
+| [2024](#santiago-2024) | Movistar Chile Open | ATP 250 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-03 | ROZPRACOVÁNO; finanční rozpor Main, termíny doloženy |
 
 ## Wimbledon 2024
 
@@ -3054,6 +3057,132 @@ I/T/H/D/R/B doloženy. E*: uzávěrky odvozené, původní acceptance lists/DS, 
 - DXB24-18: [ITF ročník](https://www.world.tennis/en/tournament/dubai/uae/2024/m-500-uae-2024-001/draws-and-results/), širší metadata termínu a financial commitment, přednost originálu ATP.
 - Pravidla ROT24-15/16, LCB24-19; [původní Q PDF](https://www.protennislive.com/posting/2024/495/qs.pdf) nedostupné. Detail sheet nezískán.
 
+
+## Santiago 2024
+
+**Stav:** ROZPRACOVÁNO (8/9; P blokuje HOTOVO). Rešerše 2026-11-27. Dobový oficiální ATP Preview a více ročníkových finančních přehledů se liší o 5 USD u vítěze i finalisty; původní Main/Q PDF nedostupné. Nominální geometrie, plán kol, vstupní kvóty a body doloženy nezávisle na tomto rozporu.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Movistar Chile Open, mužská dvouhra | SCL24-1/2 |
+| Kategorie / ATP ID | ATP 250 / 8996 | SCL24-1/2 |
+| Ročník | pátý od obnovení roku 2020 dle ATP; 26. celkový dle sekundární chronologie | SCL24-1/3 |
+| Dějiště | Club Deportivo Universidad Católica, San Carlos de Apoquindo, Court Central Jaime Fillol, Santiago, Chile | SCL24-1/4/5 |
+| Povrch | venkovní antuka | SCL24-3/6/7 |
+| Časové pásmo | America/Santiago, CLST UTC−03:00 | SCL24-8/9 |
+| Ředitelka | Catalina Fillol | SCL24-10 |
+| Měna | USD | SCL24-1/11/12 |
+
+Rozdílné počítání ročníků není rozpor identity: ATP počítá aktuální řadu od 2020, sekundární přehled zahrnuje předcházející chilské akce. Historické série Santiago/Viña del Mar nepřepisovat současným názvem ani místem. Konkrétní typ antuky, míče, supervisor, referee a detail sheet nezískány.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | referenční datum 2024-01-29, odvozené | §7.03; SCL24-7 |
+| Q rank date | referenční datum 2024-02-05, odvozené | §7.03 |
+| Nominální Main deadline | 2024-01-29 14:00 CLST (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-02-05 14:00 CLST (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální LE deadline | 2024-02-22 12:00 CLST (10:00 US Eastern) | odvozeno §7.04 |
+| Q los | nejpozději 2024-02-23; čas neověřen | SCL24-8 |
+| Main los | 2024-02-24 odpoledne; přesná hodina neověřena | SCL24-9/13 |
+| Q | 2024-02-24–25, plán od 12:00 | SCL24-4/5/8 |
+| Main | 2024-02-26–2024-03-03 | SCL24-1/2/4/5 |
+| Singlové finále | 2024-03-03 19:00 CLST, plán | SCL24-1/4/5 |
+
+Přepis Main entry listu SCL24-7 (31.1., aktualizace 2.2.) uvádí posledního z 18 vyjmenovaných DA Coriu s rankingem 103. Nejde o důkaz konečného cutoff nebo přesné hodiny původní akceptace. Q cutoff, originální acceptance lists, DS a přesné časy losování nedostupné. Datum Q losu nejpozději 23.2. vychází z večerní dobové zprávy se zveřejněnými dvojicemi, nikoli z odvozené kalendářní zvyklosti.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-24 | 8 |
+| Q2 | 2024-02-25 | 4 |
+| R32 | 2024-02-26–27 | 12 (4+8) |
+| R16 | 2024-02-28–29 | 8 (4+4 pozorováno) |
+| QF | 2024-03-01 | 4 |
+| SF | 2024-03-02 | 2 |
+| F | 2024-03-03 | 1 |
+
+Dobový plán zveřejněný 22.2. v SCL24-4 a shodný přehled SCL24-5 (pravděpodobný společný zdroj) stanoví dvoudenní Q, R32 pondělí/úterý, R16 středa/čtvrtek, páteční QF, sobotní SF a nedělní finále. Uvádí 6/11/8/7/6 denních zápasů po–pá včetně čtyřhry, nikoli počty mužských singlů; např. pondělní dobový program SCL24-14 explicitně má 4 singles a 2 doubles. Z 12 R32 tedy 4+8, potvrzeno celým výsledkovým denním soupisem SCL24-15. R16 4+4 podle skutečného soupisu; kompletní prvotní předturnajový singlový OOP středy a čtvrtka nebyl získán, takže přesné denní rozdělení R16 není nezávisle potvrzené jako původní plán. Okna kol jsou doložena. Q1 osm plánovaných dvojic a tři kurty v dobovém přepisu SCL24-16; Q2 čtyři postupy potvrzuje ATP SCL24-17. Pátek od 14:00, sobota singlové SF od 18:00 po doubles finále, neděle 19:00 pouze singlové finále. Nominál 2+7 dní bez plánovaného překryvu, 39 zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA (včetně případné NG rezervy) | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28 přímo v dobovém přepisu SCL24-7 a pravidlech ATP 16.2. SCL24-18. Nevyužité rezervy se vracejí do DA. Původní nominální tři WC včetně tehdy oznámeného Čiliće nebyly konečná jména: ATP Preview výslovně označuje Darderiho, Fonsecu a Passara jako WC. ATP Preview dále uvádí čtyři kvalifikanty, dva LL a jedno SE Navoneho; jeho současnou evidenci v předstartovním soupisu nelze vydávat za potvrzení skutečně odehraného utkání (viz oddíl 5). Výsledkový pavouk SCL24-19/20 potvrzuje osm seedů a čtyři BYE na pozicích 2/10/23/31, 28 účastníků a 27 utkání. 12+8+4+2+1=27.
+
+Q 14 DA + 2 WC podle §7.08 E.1 a předstartovního přepisu celého Q losu SCL24-16: všech osm seedů včetně Huga Delliena [4], WC Buse a Soto, Bagnis [6/Alt] a další Alt. Výsledkový soupis SCL24-19/21 má sedm označených seedů (Hugo Dellien v Main, Q místo obsadil Murkel Dellien). Tuto výjimku nelze převést na sedm nominálních seedů. Buse a Soto potvrzeni jako WC v dobovém přepisu; Tennis Abstract u Buse status neuvádí. Čtyři sekce po čtyřech, 8+4=12 zápasů, čtyři vítězové. Dva následní Main LL nejsou pátý a šestý řádný kvalifikant. Originální Q PDF není dostupné, geometrie doložena soudobým úplným přepisem a výsledky.
+
+### 5. Dobová pravidla a návaznosti
+
+ATP §7.03/7.04/7.08/7.09/7.10/7.14–18/7.20, verze kapitoly VII z 16.2.2024 SCL24-18, tištěné strany 129–150 a 164–165 pro vstupy, složení a nasazení; BO3 tiebreak sety. ATP Preview SCL24-1 přímo potvrzuje nulové body při první prohře po BYE v R16, nikoli zrušení R16 odměny. Q body podle ROT24-16 a opravy 16.2. z LCB24-19. V uvedeném rulebooku §7.08 C.3 výslovně náleží do challengerové sekce; předchozí zmínku o změně tohoto ustanovení v LCB24 nepovažovat automaticky za pravidlo ATP Tour. Pro ATP Tour používat §7.03, §7.04 a §7.08 E.1 a další příslušné články samostatně. Únorové novely a ES podle data účinnosti, ne retroaktivně.
+
+ATP zpráva 25.2. SCL24-13 výslovně potvrzuje plánovaný SE vstup Mariana Navoneho po Rio; očekávaný první zápas s Varillasem. Ve skutečném pavouku SCL24-19 se místo něj objevuje LL Comesaña; Navone neodehrál Main zápas. ATP Day 1 stále uvádí SE Navoneho spolu s LL Comesañou a Bagnisem; soupis národností na stejné straně již Navoneho nezahrnuje. Oddělit původní SE a konečnou účast, neodvozovat extra místo.
+
+**Next Gen:** v týdnu Acapulco/Dubai/Santiago byly tři ATP akce, pouze Santiago ATP 250. §7.04 (tištěná str. 137) a §7.08 B.1.c (str. 147) verze 16.2. výslovně upravují NG rezervy pro týdny se třemi akcemi, způsobilost hráčů narozených 2004 a později a rankingové hranice, nevyužité místo se vrací na dalšího podle rankingu. Jedno Main a dvě Q příležitosti pro způsobilé hráče Top 250 není důkaz, že právě v Santiago byly využity. Fonseca je v oficiálních ATP notes pořadatelská WC, nikoli doložený NG vstup. Q Buse je WC v předturnajovém přepisu. Originální listina s NG označením ani doklad o propadu rezervy nebyly získány; nominální počet zůstává 28 a 16, individuální alokace R* otevřená. Znovu prověřit při získání původní acceptance listiny.
+
+### 6. Body a odměny (USD) — rozpor P
+
+| Výsledek | Nominální příjemci | ATP body | ATP Preview SCL24-1 | Ročníkové přehledy SCL24-11/12/20/22 |
+|---|---:|---:|---:|---:|
+| Vítěz | 1 | 250 | 100635 | 100640 |
+| Finalista | 1 | 165 | 58700 | 58705 |
+| SF | 2 | 100 | 34510 | 34510 |
+| QF | 4 | 50 | 19995 | 19995 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 11610 | 11610 |
+| R32 | 12 | 0 | 7095 | 7095 |
+| Q postupující | 4 | 13 | v notes není Q tabulka | 0 samostatně |
+| Q2 prohra | 4 | 7 | v notes není Q tabulka | 3550 |
+| Q1 prohra | 8 | 0 | v notes není Q tabulka | 1935 |
+
+Main ATP Preview (str. 1) 100635/58700 USD. Dobové nezávisle publikované zprávy před i po turnaji SCL24-11/22, historické rozpisy SCL24-12 a výsledkový archiv SCL24-20 uvádějí 100640/58705. Nelze rozhodnout, zda ATP Preview obsahuje překlep či pozdější úpravu nebo sekundární zdroje používají jiný zaokrouhlený rozpis. Rozdíl je 5 USD u každé z prvních dvou cen, 10 USD celkem. ATP Preview je silný primární doklad původně publikovaného plánu, ale bez originálního losu/DS a při rozsáhlé ročníkové shodě proti němu nepovyšujeme P na HOTOVO. Nezaměňovat s Delray, které má originální Main 100635/58700, ani s Aucklandem, kde je jiný nevyřešený Q rozpor.
+
+Q 3550/1935 USD shodně v SCL24-12/20/22; Q body v dobovém předpisu. Q postupující nemají samostatnou nominální Q odměnu; LL může dostat Q odměnu navíc k Main (skutečný součet 10645 USD pro LL v SCL24-20), nepromítat historický dodatečný payout do nominálního modelu. Nominální Main varianta A 486355 USD, varianta B 486365 USD; Q kandidát 29680 USD; singlový součet A 516035 USD / B 516045 USD. Ani jeden celek dosud není certifikován. Turnajová dotace 661585 USD a total financial commitment 742350 USD jsou samostatné veličiny, ne singlový součet.
+
+### 7. Kontrola a mezery
+
+I/T/H/E*/D/R*/B/Z* doloženy; P zůstává blokující rozpor. H: všechny termíny kol doloženy, R16 denní split pouze výsledkový. E*: odvozené termíny uzávěrek, chybějí originální acceptance lists/DS a časy losování. R*: NG alokace nedoložena, předpis ano. Z*: ATP Preview a rulebook 16.2. textově ověřeny, screenshoty 403; žádný Main/Q originál nebyl získán ani vizuálně zkontrolován. Neuvádět neexistující SHA-256. Kontrola kvót, 8/8 seedů, 27/12 zápasů, denních součtů a obou finančních variant prošla. Opakovaná rešerše: přímé ATP PDF, dobové odkazy SuperTennis, ATP notes, více dobových a archivních finančních zdrojů, hledání alternativních Main PDF kopií bez získání ročníkového originálu. Vyžaduje další primární doklad; poté pokračovat Indian Wells 2024, první ATP Masters 1000 v registru. Bez runtime změn.
+
+### 8. Zdroje (SCL24)
+
+- SCL24-1: [ATP Preview & Day 1, 26.2.2024](https://www.atptour.com/-/media/0d8c7cea020848e1b5007515dbef1ab5.pdf), str. 1, text, screenshot 403; Main ceny/body, nedělní finále, WC/Q/LL/SE.
+- SCL24-2: [ATP série 8996](https://www.atptour.com/tournaments/santiago/8996/overview), [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), ročníková identita/termíny; aktuální název nepřenášet zpět.
+- SCL24-3: [ročníkový sekundární přehled](https://en.wikipedia.org/wiki/2024_Chile_Open), 26. historický ročník, venkovní antuka, dotace.
+- SCL24-4: [Mall Sport, předturnajový program 22.2.](https://www.mallsport.cl/noticias/se-viene-el-movistar-chile-open-2024-con-la-presencia-de-los-mejores-tenistas-del-mundo/), okna všech kol; součty včetně doubles.
+- SCL24-5: [Portal Metropolitano, předturnajový program](https://portalmetropolitano.cl/en-que-horarios-se-disputara-el-movistar-chile-open-2024/), stejné okno a session, pravděpodobně stejný původ jako SCL24-4.
+- SCL24-6: [TNT Sports 23.2.](https://tntsports.cl/institucional/Chile-Open-por-TNT-Sports--Se-inicia-la-accion-del-ATP-250-de-Santiago-20240223-0020.html), Q a Main, místo; [SuperTennis 24.2.](https://www.supertennis.tv/News/Atp/santiago-atp-qualificazionimain-draw-tabellone), povrch, financial commitment, odkazy na originální losy.
+- SCL24-7: [dobový Main entry list 31.1.](https://canaltenis.com/entry-list-chile-open-2024/), 18 DA, 3 WC, 2 SE, 1 LE, 4 Q.
+- SCL24-8: [ADN Radio 23.2., Q los](https://www.adnradio.cl/2024/02/23/este-sabado-comienza-la-qualy-del-chile-open-2024/), 16 hráčů a 4 postupy, CLST.
+- SCL24-9: [ADN Radio 24.2., Main los odpoledne](https://www.adnradio.cl/2024/02/24/con-todos-los-nacionales-en-el-mismo-lado-del-cuadro-asi-quedo-el-main-draw-del-chile-open-2024/).
+- SCL24-10: [La Tercera 2024, ředitelka Catalina Fillol](https://www.latercera.com/el-deportivo/noticia/la-particular-defensa-de-catalina-fillol-a-las-canchas-del-open-santiago-es-una-superficie-mas-desafiante-hace-que-los-partidos-sean-mas-entretenidos/6Q356BAHFNF77FF5KKKDTEA2EA/?outputType=base-amp-type).
+- SCL24-11: [T13 po finále](https://www.t13.cl/noticia/deportes13/el-millonario-premio-que-gano-alejandro-tabilo-tras-su-caida-en-la-final-del-chile-open-2024), obě rozdílné ceny; [24horas před turnajem 23.2.](https://www.24horas.cl/amp/deportes/tenis/el-millonario-premio-economico-que-entregara-el-chile-open), 100640.
+- SCL24-12: [Canal Tenis ročníkový rozpis](https://canaltenis.com/el-prize-money-del-chile-open/), [TennisCompanion 2024 USD sloupec](https://tenniscompanion.org/prize-money/chile/), Main alternativa, Q shoda.
+- SCL24-13: [ATP 25.2., Main los a Navone SE](https://www.atptour.com/es/news/santiago-2024-jarry-previa-cuadro).
+- SCL24-14: [ADN Radio 26.2., pondělní program](https://www.adnradio.cl/2024/02/26/este-lunes-comienza-el-chile-open-2024-quienes-juegan-a-que-hora-y-donde-ver-los-partidos-en-vivo/), 4 singles + 2 doubles.
+- SCL24-15: [dobový denní výsledkový soupis](https://canaltenis.com/resultados-atp-santiago-2024/), počty obou fází a dny; [ATP Day 6, 2.3.](https://www.atptour.com/-/media/561f52fa5131402e9829760e394c0866.pdf), text, screenshot 403.
+- SCL24-16: [dobový úplný Q los a program 24.2.](https://www.livetennis.it/post/407412/atp-500-acapulco-e-atp-250-santiago-il-tabellone-di-qualificazione-con-il-programma-completo-cinque-azzurri-al-via/), všech 8 seedů, 2 WC, Q1 tři kurty.
+- SCL24-17: [ATP 25.2., Q výsledky](https://www.atptour.com/es/news/santiago-2024-domingo-previa-burruchaga).
+- SCL24-18: [ATP Rulebook VII, revize 16.2.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_16feb.pdf), text, screenshoty 403; §7.03, §7.04, §7.08 B/E, §7.14–16 a NG, tištěné str. 137/147/149–150/165.
+- SCL24-19: [Tennis Abstract Main/Q 2024](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024Santiago), skutečný výsledkový stav a Alt/LL; [ročníkový pavouk](https://en.wikipedia.org/wiki/2024_Chile_Open_%E2%80%93_Singles).
+- SCL24-20: [Open Era Rankings, ročník 2024, Main a Q](https://openerarankings.com/Draws?DrawType=MS&Highlight=M00000085&Round=1&tID=24873), ceny, BYE a LL; sekundární.
+- SCL24-21: [Tennis Explorer Q](https://www.tennisexplorer.com/santiago/2024/atp-men/?phase=qualification), 7 skutečných označených seedů, oba WC, čtyři sekce, 12 utkání.
+- SCL24-22: [Tennis Infinity dobový finanční přehled](https://tennis-infinity.com/atp/2024-chile-open-santiago-atp-prize-money-points-overview), [TennisUpToDate dobový finanční přehled](https://tennisuptodate.com/atp/atp-prize-money-and-points-breakdown-2024-chile-open-santiago-with-661585-on-offer), alternativa Main; [český sekundární rozpis](https://web.kurzy.cz/wiki/Chile_Open_2024), indexovaný text 3550/1935 Q, otevření timeout.
+- [Původní Main PDF](https://www.protennislive.com/posting/2024/8996/mds.pdf) a [Q PDF](https://www.protennislive.com/posting/2024/8996/qs.pdf) nedostupné; DS nezískán.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3074,3 +3203,4 @@ I/T/H/D/R/B doloženy. E*: uzávěrky odvozené, původní acceptance lists/DS, 
 | Los Cabos 2024 | P* / E* / Z* | originální Q finanční tabulka (sekundární shoda 4910/2675 USD), acceptance list/DS, časy losování a pondělní OOP; Q NG alokace stále otevřená |
 | Acapulco 2024 | E*/P*/Z* | originální acceptance list/DS, čas losu, Q cutoff a primární Q finanční tabulka (sekundární shoda 8820/4945 USD); screenshot pořadatelských PDF nedostupný |
 | Dubai 2024 | E*/P*/Z* | originální Q PDF a jeho finanční tabulka (sekundární shoda 11760/6595 USD), acceptance list/DS, Q cutoff a čas losu; původní OOP Q1/R16 nezískán |
+| Santiago 2024 | P – Main prize money, blokuje HOTOVO | ATP Preview 100635/58700 vs více ročníkových zdrojů 100640/58705 USD; originální Main/Q los nebo DS; Q shoda 3550/1935 USD, NG alokace a hodiny losu také otevřeny |

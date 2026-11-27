@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 7 ročníků, všechny Grand Slamy 2024 a Wimbledon, Australian Open a Roland Garros 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 8 ročníků, všechny Grand Slamy 2024 a 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -41,10 +41,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [US Open](#us-open-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Australian Open](#australian-open-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Roland Garros](#roland-garros-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [US Open](#us-open-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 7 zpracovaných ročníků; 7 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 8 zpracovaných ročníků; 8 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -57,7 +58,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 5 | US Open 2024 | HOTOVO (nominální rozsah) |
 | 6 | Australian Open 2025 | HOTOVO (nominální rozsah) |
 | 7 | Roland Garros 2025 | HOTOVO (nominální rozsah) |
-| 8 | US Open 2025 | NEZAHÁJENO |
+| 8 | US Open 2025 | HOTOVO (nominální rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
 
@@ -78,6 +79,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#us-open-2024) | US Open | Grand Slam | 2024-08-19–2024-08-22 | 2024-08-26–2024-09-08 | HOTOVO v nominálním rozsahu |
 | [2025](#australian-open-2025) | Australian Open | Grand Slam | 2025-01-06–2025-01-09 | 2025-01-12–2025-01-26 | HOTOVO v nominálním rozsahu |
 | [2025](#roland-garros-2025) | Roland Garros | Grand Slam | 2025-05-19–2025-05-23 | 2025-05-25–2025-06-08 | HOTOVO v nominálním rozsahu |
+| [2025](#us-open-2025) | US Open | Grand Slam | 2025-08-18–2025-08-21 (plán) | 2025-08-24–2025-09-07 | HOTOVO v nominálním rozsahu; skutečné Q do 22. 8. |
 
 ## Wimbledon 2024
 
@@ -1026,3 +1028,111 @@ I/T/D/R/B/P doloženo, H* Q2 plán odvozen z dobového programu/odkladu, komplet
 - RG25-15: [FFT Q draw 19. 5. 21:05](https://rg-organisation.fft.fr/sites/default/files/2025-05/Mens_Qualifying_20250519210617.pdf), str. 1 vizuálně; str. 2 screenshot 500, indexovaný text.
 - RG25-16: [ATP Men's Tournament Preview 2025](https://www.atptour.com/-/media/8b317e663bf34fbba0bbb6fa013a76fa.pdf), tabulka bodů a Main prize textově, screenshot 403; [WTA preview](https://wtafiles.wtatennis.com/pdf/matchnotes/2025/903_preview.pdf), str. 1 vizuálně, pouze stejné peněžní částky.
 - RG25-17: [press kit FFT](https://fft-rg-commun-news.cdn.prismic.io/fft-rg-commun-news/aAEIrOvxEdbNPMke_DPROLANDGARROS2025UKVF1.pdf), přístup selhal kvůli velikosti 13 MB; [tabulka s odkazem na press kit](https://tennisprizemoney.com/french-open-prize-money/2025/), [dobový TennisTemple Q tabulka](https://en.tennistemple.com/actu/roland-garros-announces-prize-money-increase-for/F2du), [Reuters 6. 5. 2025](https://www.reuters.com/sports/tennis/french-open-2025-prize-money-how-much-do-winners-earn-2025-05-06/).
+
+## US Open 2025
+
+**Stav:** HOTOVO v nominálním rozsahu I/T/H/E/D/R/B/P/Z. Rešerše 2026-11-27. Nedělní začátek Main a původní čtyřdenní Q potvrzeny samostatně; déšť nemění nominální údaje.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název / disciplína | US Open 2025, mužská dvouhra | US25-1/2 |
+| Kategorie / ATP ID | Grand Slam / 560 | US25-1, US24-13 |
+| Dějiště Main i Q | USTA Billie Jean King National Tennis Center, Flushing Meadows, Queens, New York, USA | US25-2/3 |
+| Povrch | venkovní tvrdý | US25-1/4 |
+| Časové pásmo | America/New_York, EDT UTC−04:00 | US25-3/5 místní ET |
+| Pořadatel / měna | USTA / USD | US25-2/6 |
+| Míče a rozhodčí | NEOVĚŘENO | doplňkové, nevyplňovat z jiných ročníků |
+
+### 2. Přihlášky, losování a termíny
+
+| Událost | Místní údaj | Důkaz |
+|---|---|---|
+| Main vstupní ranking | 2025-07-14 | výslovně USTA US25-2; zveřejnění 15. 7. |
+| Main nominální uzávěrka | 2025-07-14 | 42 dnů před pondělím 25. 8.; souhlas s doloženým rank date, hodina neověřena |
+| Q nominální uzávěrka | 2025-07-28 | odvozeno z 28denního předpisu, ne nezávisle potvrzené mužské Q rank date ani skutečný deadline |
+| Oznámení WC | 2025-08-13 | USTA US25-7 |
+| Q los | před začátkem Q, přesný datum/čas NEOVĚŘEN | originální konečný los US25-9 neprokazuje okamžik losování |
+| Q | 2025-08-18–21, start 11:00 | US25-1/3 |
+| Main los | 2025-08-21 12:00 | US25-1/5 |
+| Main | 2025-08-24–09-07 | US25-1/2/4 |
+| Mužské SF | 2025-09-05, plán od 15:00 | US25-5 |
+| Mužské finále | 2025-09-07 14:00 | US25-5 |
+
+Mužský Main entry list z 14. 8. (US25-8, str. 1 vizuálně, text druhé strany) potvrzuje strukturu 104 přímých pozic a aktualizaci po odhlášeních. Pořadatel v červenci uváděl původní mužský cutoff 101 a ranking 14. 7. Nepovažovat pořadí posledního hráče za nominální kvótu. Originální Q acceptance list nezískán, takže 28. 7. pouze obecná lhůta, viz i poučení z RG25.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální uzly | Zdroj |
+|---|---|---:|---|
+| Q1 | 2025-08-18–19 | 64 | US25-3 |
+| Q2 | 2025-08-20 | 32 | US25-3 |
+| Q3 | 2025-08-21 | 16 | US25-3 |
+| Mezi fázemi | 2025-08-22–23 | 0 | US25-1/3 |
+| R128 | 2025-08-24–26 | 64 | US25-4/5 |
+| R64 | 2025-08-27–28 | 32 | US25-5 |
+| R32 | 2025-08-29–30 | 16 | US25-5 |
+| R16 | 2025-08-31–09-01 | 8 | US25-5 |
+| QF | 2025-09-02–03 | 4 | US25-5 |
+| Bez plánovaného mužského kola | 2025-09-04 | 0 | US25-5 |
+| SF | 2025-09-05 | 2 | US25-5 |
+| Bez plánovaného mužského kola | 2025-09-06 | 0 | US25-5 |
+| F | 2025-09-07 | 1 | US25-5 |
+
+Q 4 dny, Main 15 dnů, celé okno 21 dnů, 239 nominálních uzlů. Oproti 2024 se Main rozšířil na 15 dní s třídenním R128, což USTA oznámila již 29. 1. 2025 (US25-4). Další Main kola pořadatel neměnil. ESPN předturnajový plán 13. 8. rozlišuje všechny čtyři Q dny přímo. Skutečný průběh: 20. 8. déšť zrušil většinu programu, Q2 se přesunulo na 21. 8. a Q skončilo 22. 8. (US25-10). V referenčním plánu proto zůstává Q3 21. 8., nikoli 22. 8. Přesný denní počet vícedenních Main kol neodhadovat. Mixed doubles nově ve Fan Week, mimo rozsah mužské dvouhry.
+
+### 4. Nominální struktura a pravidla
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / plánovaný počet hráčů | 128 | 128 |
+| Přímé akceptace | 104 | 119 |
+| WC | 8 | 9 |
+| Nasazení | 32 | 32 |
+| Q postupová místa | 16 | 16 vítězů sekcí |
+| BYE | 0 | 0 |
+| Kola / uzly | 7 / 127 | 3 / 112 |
+| Formát | BO5 setů | BO3 setů ve všech kolech |
+
+Pořadatel potvrzuje 8 Main a 9 Q WC, 16 Q postupů; obě stránky originálního Main/Q losu vizuálně (US25-9). 104+16+8=128, 119+9=128; 16 vyřazovacích Q sekcí po osmi. BO3 Q všech kol kontrolováno na původním losu, BO5 Main podle dobového předpisu. Main seed 1/2 na krajích, ostatní skupiny podle tabulky 128/32, Q seedy 1–16 na horních a 17–32 losované na spodní pozice sekcí. Pravidla 2025 (RG25-9, W25-4) upravují náhradu seedu před/po prvním OOP, losování kvalifikantů do Main po skončení Q, přednost LL poražených Q3, los mezi čtyřmi nejvýše postavenými způsobilými (více než dvě odhlášení na konci Q: počet +2), další dle rankingu, sign-in 30 min před začátkem dne; náhrada před prvním bodem prvního zápasu odstoupivšího. Rozhodující set tiebreak na 10 při 6:6 s rozdílem 2.
+
+**Historický kontext oddělený od nominálního plánu:** Main 8 W (5,12,46,50,76,95,123,124), 16 Q (23,31,44,47,53,62,67,68,75,77,83,90,91,94,98,100), 4 LL (28,39,45,109), 100 bez W/Q/L; 32 seedů, nula BYE. Q 9 W (4,19,29,39,66,71,85,93,101), 1 alternate (16), 118 bez W/A, **31 viditelných seedů (č. 25 chybí)**, nula BYE. Konečný Q los ukazuje nahrazenou seed pozici, ne důvod ani okamžik výměny. Dřívější #1903 uvádí v poli seeds 32 bez rozlišení; nominální 32 je správně, skutečných 31 se zapíše pouze jako kontext. Main jedna pozdější WO (Bergs/Draper); žádný důvod měnit 127 nominálních uzlů.
+
+### 5. Body a prize money
+
+| Výsledek | Příjemci | ATP body | USD 2025 |
+|---|---:|---:|---:|
+| Vítěz | 1 | 2000 | 5000000 |
+| Finalista | 1 | 1300 | 2500000 |
+| SF | 2 | 800 | 1260000 |
+| QF | 4 | 400 | 660000 |
+| R16 | 8 | 200 | 400000 |
+| R32 | 16 | 100 | 237000 |
+| R64 | 32 | 50 | 154000 |
+| R128 | 64 | 10 | 110000 |
+| Q postupující | 16 | 30 | samostatná odměna neuvedena |
+| Q3 prohra | 16 | 16 | 57200 |
+| Q2 prohra | 32 | 8 | 41800 |
+| Q1 prohra | 64 | 0 | 27500 |
+
+Peněžní částky přímo USTA US25-6 (6. 8.), body dobový ATP rulebook US25-11 a specifický ATP mužský preview US25-12. **Rozpor:** obecný webový ATP preview US25-1 uvádí staré body (např. F 1200 a R16 180), ale dobový mužský turnajový PDF a ročníkový předpis potvrzují F 1300/R16 200. Předpis má přednost. Q body se přičítají k Main, WC prohra R128 bez 10 bodů; individuální LL historie mimo požadavek. Součty Main 31620000 USD, Q 4012800 USD, celkem 35632800 USD. Dvě Q soutěže nominálně 2×4012800 USD = 8 025 600 USD, pořadatel zaokrouhluje na 8 mil.; celková kompenzace 90 mil. USD zahrnuje další disciplíny i hotel a diety. USTA navíc oznámila cestovní příspěvek 1000 USD a dvě hotelové místnosti (alternativa 600 USD/den při jiném ubytování), ne součást singlového prize money.
+
+### 6. Evidence
+
+I/T/H/D/R/B/P pokryto; E*: Main rank date potvrzen přímo pořadatelem, Q deadline obecný výpočet, Q acceptance list a okamžik losu chybí; Z*: oba originální losy a Main list str. 1 vizuálně, ATP rulebook z předchozí rešerše a text z dobového dokumentu; SHA-256 nezískány. Historické odklady odděleny. Všech osm Grand Slamů 2024–2025 je nyní pokryto v nominálním rozsahu; další běžné ATP ročníky z dobového kalendáře, nejdříve první turnaj ATP 2024 (včetně týmových/formátově odlišných soutěží, pokud jsou v katalogu; neposuzovat je automaticky jako singlové vyřazovací pavouky).
+
+### 7. Zdroje (US25)
+
+- US25-1: [ATP US Open 2025 preview](https://www.atptour.com/en/news/us-open-2025-history-draw-schedule), indexovaný text, chybné staré body explicitně odmítnuty.
+- US25-2: [USTA Main entry announcement 15. 7.](https://www.usopen.org/amp/en_US/news/articles/2025-07-15/who_is_playing_in_the_2025_us_open_sabalenka_sinner_gauff_alcaraz_and_more.html).
+- US25-3: [ESPN předturnajový Q plán 13. 8.](https://espnpressroom.com/press-release/espn-begins-three-weeks-of-us-open-coverage-on-august-18/), jednotlivá kola a 128/16.
+- US25-4: [USTA oznámení nedělního startu 29. 1.](https://www.usopen.org/en_US/news/articles/2025-01-29/us_open_main_draw_expanding_to_sunday_start_in_2025.html), indexovaný text; [WTA preview](https://www.wtatennis.com/news/4345509/us-open-2025-draws-dates-stats-prize-money-and-what-you-need-to-know).
+- US25-5: [Sports Mole 20. 8., všechna Main kola a Main los](https://www.sportsmole.co.uk/tennis/us-open/feature/when-is-the-draw-how-can-i-watch-a-complete-guide-to-the-2025-us-open_579661.html), [ESPN Main plán 20. 8.](https://espnpressroom.com/press-release/all-of-the-2025-us-open-all-in-one-place/).
+- US25-6: [USTA oficiální prize money 6. 8.](https://www.usopen.org/amp/en_US/news/articles/2025-08-06/2025_us_open_prize_money_sets_record_for_largest_purse_in_tennis_history.html).
+- US25-7: [USTA oznámení WC 13. 8.](https://www.usopen.org/en_US/news/articles/2025-08-13/holt_nava_among_american_men_awarded_2025_us_open_wild_cards.html).
+- US25-8: [USTA mužský Main entry list 14. 8.](https://www.usopen.org/pdf/mens-2025-us-open-main-draw-entry-list.pdf), str. 1 vizuálně, další textově.
+- US25-9: [Main](https://www.usopen.org/en_US/scores/draws/2025_MS_draw.pdf), [Q](https://www.usopen.org/en_US/scores/draws/2025_MQ_draw.pdf), všechny čtyři stránky vizuálně.
+- US25-10: [ATP zrušení programu 20. 8.](https://www.atptour.com/en/news/us-open-2025-wednesday-qualifying-cancelled), [Tennis.com přesun Q2](https://www.tennis.com/news/articles/2025-us-open-qualifying-postponed-due-to-wednesday-rain), [USTA Q2 21. 8.](https://www.usopen.org/en_US/news/articles/2025-08-21/day_4_of_mens_and_womens_qualifying_at_the_2025_us_open.html), [USTA konec Q 22. 8.](https://www.usopen.org/en_US/news/articles/2025-08-22/day_5_of_mens_and_womens_qualifying_at_the_2025_us_open.html).
+- US25-11: [ATP Rulebook IX 2025](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf), indexovaný text / dříve vizuálně W25-15; [ITF hostovaný ATP 2025 ranking info](https://www.itftennis.com/media/13761/atp-2025-rankings-info.pdf), indexovaná bodová tabulka.
+- US25-12: [ATP mužský turnajový preview PDF](https://www.atptour.com/-/media/bbcfbd0dcbf94821998f4339a53cf8ab.pdf), indexovaný text odlišný od chybného webového článku.

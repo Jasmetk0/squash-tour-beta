@@ -33,6 +33,7 @@ describe('stored native summary',()=>{
   mount()
   expect(await screen.findByRole('heading',{name:'Stopped by operator'})).toBeInTheDocument()
   const region=screen.getByRole('region',{name:'Stored native summary'})
+  expect(region).toHaveAttribute('data-run-navigation-readonly')
   expect(region).toHaveTextContent('Actual startS1 W01')
   expect(region).toHaveTextContent('Actual endS1 W25')
   expect(region).toHaveTextContent('Target weekS2 W01')

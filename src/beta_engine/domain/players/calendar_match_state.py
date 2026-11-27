@@ -101,6 +101,7 @@ def advance_played_slot(states, matches, policy):
     updated = dict(roster)
     effects = []
     touched = set()
+    source_fingerprint = None  # of the unchanged input ``states``
     for match in matches:
         projections = []
         for ctx in (match.input_context.player_a, match.input_context.player_b):
@@ -119,13 +120,21 @@ def advance_played_slot(states, matches, policy):
                 form_modifier=ctx.form_modifier, sharpness_modifier=ctx.sharpness_modifier,
                 fatigue_modifier=ctx.fatigue_modifier,
             ))
-        for values in derive_match_effect_values(projections, match.result, policy=policy.effects):
+        derived = tuple(derive_match_effect_values(projections, match.result, policy=policy.effects))
+        if derived:
+            # Identical values as before, hashed once per match (not once per
+            # player): one result dump is a complete rally/timeline/stamina log.
+            input_fingerprint = canonical_hash(match.input_context.model_dump(mode='json'))
+            result_fingerprint = canonical_hash(match.result.model_dump(mode='json'))
+            if source_fingerprint is None:
+                source_fingerprint = checkpoint_fingerprint(states)
+        for values in derived:
             pid = values['player_id']
             effects.append(CalendarMatchEffect(
                 **values, match_id=match.input_context.match_id,
-                input_fingerprint=canonical_hash(match.input_context.model_dump(mode='json')),
-                result_fingerprint=canonical_hash(match.result.model_dump(mode='json')),
-                source_checkpoint_fingerprint=checkpoint_fingerprint(states),
+                input_fingerprint=input_fingerprint,
+                result_fingerprint=result_fingerprint,
+                source_checkpoint_fingerprint=source_fingerprint,
             ))
             updated[pid] = CalendarMatchPlayerState(
                 player_id=pid, current_form=values['form_after'],

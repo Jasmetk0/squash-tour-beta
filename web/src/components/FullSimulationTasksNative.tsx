@@ -143,7 +143,7 @@ export function NativeTaskSummary({task}:{task:ServerTask}){
   (cs?'Ukončeno operátorem':'Stopped by operator')
  const filtered=s?.completed_tournaments.filter(id=>id.toLowerCase().includes(search.trim().toLowerCase()))??[]
  const pageSize=20,pages=Math.max(1,Math.ceil(filtered.length/pageSize)),visiblePage=Math.min(page,pages)
- return <section aria-label={cs?'Uložený nativní souhrn':'Stored native summary'}>
+ return <section aria-label={cs?'Uložený nativní souhrn':'Stored native summary'} data-run-navigation-readonly>
   {(query.isPending||query.isFetching)&&<p role="status">{cs?'Načítám uložený souhrn…':'Loading stored summary…'}</p>}
   {query.error&&<p role="alert">{formatApiError(query.error)}</p>}
   <button type="button" disabled={query.isFetching} onClick={()=>{void query.refetch()}}>{cs?'Obnovit souhrn':'Refresh summary'}</button>

@@ -281,4 +281,21 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
   })
 
+  it('distinguishes intake at age 15 from birth and retired pre-Tour identities from active prospects', async () => {
+    setViewerActiveProductRunId('product run')
+    const source = page(0, ['Active prospect', 'Retired prospect'], 2)
+    api.getViewerVisibleProspects.mockResolvedValueOnce({
+      ...source, prospects: [source.prospects[0], { ...source.prospects[1], lifecycle_status: 'retired' }],
+    })
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    const active = (await screen.findByText('Active prospect')).closest('li')!
+    const retired = screen.getByText('Retired prospect').closest('li')!
+    expect(active).toHaveTextContent('Před vstupem na Tour')
+    expect(retired).toHaveTextContent('Ukončená kariéra bez vstupu na Tour')
+    expect(active).toHaveTextContent('ID hráče: prospect-1')
+    expect(active).toHaveTextContent('Rok narození: 1989')
+    expect(screen.getByText(/při dosažení 15 let, nikoli při narození/)).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
 })

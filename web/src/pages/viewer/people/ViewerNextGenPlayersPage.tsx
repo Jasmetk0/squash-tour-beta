@@ -15,8 +15,8 @@ const PAGE_SIZE = 50
 const copy = {
   title: ['Mladé talenty / Next Gen', 'Prospects / Next Gen'],
   description: [
-    'Zobrazeni jsou jen hráči, kteří se podle veřejné historie už narodili, ale dosud nevstoupili na Tour. Budoucí předgenerované ročníky zůstávají neveřejné.',
-    'Only players already visible since their birth week, but not yet on Tour, are listed. Future pregenerated cohorts are not public.',
+    'Zobrazeni jsou hráči zpřístupnění v uloženém světě, kteří dosud nevstoupili na Tour. Zpřístupnění běžného ročníku nastává při dosažení 15 let, nikoli při narození. Budoucí předgenerované ročníky zůstávají neveřejné.',
+    'Only players made visible in the Saved world who have not entered the Tour are listed. Regular intake becomes visible at age 15, not at birth. Future pregenerated cohorts remain private.',
   ],
   noRun: ['Nejprve vyber Product Run.', 'Select a Product Run first.'],
   resolving: ['Ověřuji uloženou Viewer Branch…', 'Verifying the Saved Viewer Branch…'],
@@ -53,9 +53,12 @@ const copy = {
   filteredCount: ['Odpovídající hráči na stránce', 'Matching players on this page'],
   clearFilter: ['Vymazat hledání', 'Clear search'],
   preTour: ['Před vstupem na Tour', 'Pre-Tour'],
+  retired: ['Ukončená kariéra bez vstupu na Tour', 'Retired without entering the Tour'],
+  playerId: ['ID hráče', 'Player ID'],
+  birthYear: ['Rok narození', 'Birth year'],
   scope: [
-    'Viditelnost od narození není vstup na Tour. Tento seznam nevypovídá o skrytém potenciálu ani budoucí kariéře hráče.',
-    'Birth-week visibility is not Tour entry. This list does not disclose hidden potential or predict future careers.',
+    'Zpřístupnění ve světě není narození ani vstup na Tour. Seznam může obsahovat také již ukončené pre-Tour kariéry. Nevyjadřuje skrytý potenciál ani budoucí kariéru hráče.',
+    'Visibility in the world is neither birth nor Tour entry. The list may also include retired pre-Tour careers. It does not disclose hidden potential or predict future careers.',
   ],
 } as const
 
@@ -186,8 +189,9 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
             <strong>{prospect.display_name}</strong>
             {' · '}{prospect.country_code}{prospect.country_name ? ' · ' + prospect.country_name : ''}
             {' · '}{t.age} {prospect.age}
-            {' · '}{t.preTour}{' · '}{t.since} {' '}
+            {' · '}{prospect.lifecycle_status === 'retired' ? t.retired : t.preTour}{' · '}{t.since} {' '}
             {weekLabel(prospect.visible_since_week.season_index, prospect.visible_since_week.week)}
+            <div>{t.playerId}: {prospect.player_id}{' · '}{t.birthYear}: {prospect.birth_year}</div>
           </li>)}
         </ul> : <ViewerEmptyState>{t.noFiltered}</ViewerEmptyState>}
         </> : <ViewerEmptyState>{t.emptyPage}</ViewerEmptyState>}

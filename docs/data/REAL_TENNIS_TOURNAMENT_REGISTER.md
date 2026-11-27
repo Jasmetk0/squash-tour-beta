@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 9 ročníků, všechny Grand Slamy 2024 a 2025 a Brisbane 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 10 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane a Hong Kong 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -43,10 +43,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Roland Garros](#roland-garros-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [US Open](#us-open-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Brisbane](#brisbane-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Hong Kong](#hong-kong-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 9 zpracovaných ročníků; 9 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 10 zpracovaných ročníků; 10 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -61,7 +62,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 7 | Roland Garros 2025 | HOTOVO (nominální rozsah) |
 | 8 | US Open 2025 | HOTOVO (nominální rozsah) |
 | 9 | Brisbane 2024 | HOTOVO (nominální rozsah) |
-| 10 | Hong Kong 2024 | NEZAHÁJENO |
+| 10 | Hong Kong 2024 | HOTOVO (nominální rozsah) |
 | 11 | Adelaide 2024 | NEZAHÁJENO |
 | 12 | Auckland 2024 | NEZAHÁJENO |
 
@@ -86,6 +87,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2025](#roland-garros-2025) | Roland Garros | Grand Slam | 2025-05-19–2025-05-23 | 2025-05-25–2025-06-08 | HOTOVO v nominálním rozsahu |
 | [2025](#us-open-2025) | US Open | Grand Slam | 2025-08-18–2025-08-21 (plán) | 2025-08-24–2025-09-07 | HOTOVO v nominálním rozsahu; skutečné Q do 22. 8. |
 | [2024](#brisbane-2024) | Brisbane International | ATP 250 | 2023-12-30–2023-12-31 | 2023-12-31–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
+| [2024](#hong-kong-2024) | Bank of China Hong Kong Tennis Open | ATP 250 | 2023-12-31–2024-01-01 | 2024-01-01–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 
 ## Wimbledon 2024
 
@@ -1256,4 +1258,114 @@ I/T/D/B/P doloženy. H*: rekonstruované okno R32/R16 z původních denních pro
 - BRI24-15: [ATP Rulebook 2024, Competition, verze 21.12.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_21dec.pdf), §7.03,7.08,7.10,7.12,7.15,7.16,7.20, indexovaný text, screenshot 403.
 - BRI24-16: [historická tabulka odměn](https://tenniscompanion.org/prize-money/brisbane/), řádek 2024, nezávislá kontrola.
 - BRI24-17: [ATP dobové oznámení bodů](https://www.atptour.com/en/news/2024-rankings-points-update), [ITF hostovaná bodová tabulka 2024](https://www.world.tennis/media/11555/2024-atp-rankings-section.pdf), [oprava 16.2.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pepperstone-atp-rankings_16feb.pdf), text ověřen, screenshot nedostupný.
+
+
+## Hong Kong 2024
+
+**Stav:** HOTOVO v nominálním rozsahu, H/E/R/P/Z s omezeními důkazů popsanými níže. Kontrola 2026-11-27. Nominální Q odměny podpořené dvěma shodnými sekundárními tabulkami, nikoli originálním Q PDF; při získání primárního důkazu znovu ověřit.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Bank of China Hong Kong Tennis Open | HK24-1/2 |
+| Ročník / disciplína / kategorie | sezona 2024 / mužská dvouhra / ATP 250 | HK24-1/2 |
+| ATP ID | 336 | HK24-12 |
+| Dějiště | Victoria Park Tennis Stadium, Causeway Bay, Hong Kong, Čína | HK24-3/4 |
+| Povrch | venkovní tvrdý, Greenset | HK24-1/3 |
+| Časové pásmo | Asia/Hong_Kong, HKT UTC+08:00, bez sezónní změny | místní lokalita |
+| ATP supervisor | Roland Herfel | HK24-1, vizuální kontrola zápatí |
+| Měna | USD (ne HKD; vstupenky v HKD nejsou prize money) | HK24-1/2/3 |
+| Míče, ředitel, individuální diety | NEOVĚŘENO | doplňková metadata |
+
+ATP oznámila přesun licence z Pune do Hongkongu v červnu 2023. Jde o ročník 2024, nikoli 2023, i když kvalifikace začala 31. prosince. Oficiální ATP kalendář rozlišuje Main 1.–7. ledna od celého pořadatelského okna 31. prosince–7. ledna.
+
+### 2. Přihlášky a losování
+
+| Pole | Údaj | Zdroj / význam |
+|---|---|---|
+| Main rank date | 2023-12-04 | HK24-5, dobový přepis mužské acceptance list |
+| Q rank date | 2023-12-11 | HK24-5 |
+| Nominální Main deadline | 2023-12-04 12:00 US Eastern = 2023-12-05 01:00 HKT | odvozeno z ATP §7.03, 28 dní před pondělím 1.1.; bez originálního detail sheet |
+| Nominální Q deadline | 2023-12-11 12:00 US Eastern = 2023-12-12 01:00 HKT | odvozeno z §7.03, 21 dní před pondělím; ne samostatně potvrzená uzávěrka |
+| Q los | před 2023-12-31; přesné datum/hodina NEOVĚŘENY | HK24-6 |
+| Main los | kopie původního losu se zástupnými Q pozicemi, přesný okamžik NEOVĚŘEN | HK24-1 |
+| Q | 2023-12-31–2024-01-01 | HK24-4/6/7 |
+| Main | 2024-01-01–07 | HK24-1/2/3 |
+| Otevírací ceremoniál | 2024-01-01 13:20 HKT, před prvními Main zápasy na Centre Court | HK24-13, plán |
+| Finále | 2024-01-07 | HK24-2/8; přesná hodina neověřena |
+
+Rank date není nutně deadline. Pro Main HK24-5 uvádí cutoff 70 k 13.12., zatímco předstartovní los má v zápatí Bonzi 73; oba údaje jsou historický kontext, ne nominální pravidlo. Main i Q se dne 1.1. překrývají. Není důvod předpokládat, že kvalifikace musí skončit o den dříve než Main.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální datum/okno | Nominální zápasy | Důkaz |
+|---|---|---:|---|
+| Q1 | 2023-12-31 | 8 | HK24-4/6/7 |
+| Q2 | 2024-01-01 | 4 | HK24-4/6/7 |
+| R32 | 2024-01-01–02 | 12 | HK24-4, předem publikované vstupenky pro první kolo |
+| R16 | 2024-01-03–04 | 8 | HK24-9, indexovaný pořadatelský booklet, podpůrný denní archiv HK24-8 |
+| QF | 2024-01-05 | 4 | HK24-9/8 |
+| SF | 2024-01-06 | 2 | HK24-8 |
+| F | 2024-01-07 | 1 | HK24-2/8 |
+
+Q 2 kalendářní dny, Main 7 dní, celý turnaj 8 dní. Q 8+4=12, Main 12+8+4+2+1=27. Pořadatel 14.12.2023 výslovně avizoval 12 Q a 27 Main singlových zápasů (HK24-10). BYE čtyři nejsou zápasy: kapacita 32 má 31 potenciálních uzlů, ale 27 nominálně hraných. R16 okno 3.–4.1. a QF 5.1. potvrzuje indexovaný booklet, jeho přímé PDF načtení skončilo 502; nelze tvrdit vizuální kontrolu. SF/F potvrzeny dobovým denním archivem, finále také ATP. Původní kompletní předturnajový OOP všech dnů nezískán; denní počty vícedenních kol neodhadovat.
+
+### 4. Struktura a pravidla
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Plánovaní účastníci | 28 | 16 |
+| Přímé akceptace | 21 | 14 |
+| WC | 3 | 2 |
+| Q postupy | 4 | 4 vítězové sekcí |
+| SE rezervace | 0 v dobovém seznamu | nevztahuje se |
+| Nasazení | 8 | 8 |
+| BYE | 4 (seedy 1–4) | 0 |
+| Kola | 5 | 2 |
+| Nominálně hrané zápasy | 27 | 12 |
+| Formát | BO3 setů | BO3 setů |
+
+HK24-5 přímo uvádí nominální kvóty. 21+3+4=28 a 14+2=16. Předstartovní ATP los HK24-1 vizuálně potvrzuje BYE na pozicích 2,10,23,31, Q placeholders 3,5,6,12; WC 13,15,26, 8 seedů. Pozice jsou skutečný konkrétní los, nikoli předem pevné budoucí rozmístění kvalifikantů. Konečný Main archiv HK24-11 a Q archiv HK24-6 potvrzují 4 řádné Q vítěze, 2 Q WC, 8 Q seedů, žádný Q BYE, čtyři čtyřčlenné sekce a 8+4 zápasů. BO3 potvrzují výsledky obou fází. Nominální počet SE 0 pouze pro tuto listinu.
+
+Použít dobová ATP pravidla §7.03/7.08/7.10/7.12/7.15–16/7.20 (BRI24-15), nikoli Grand Slam pravidla. Top 4 seeds dostávají BYE, další 4 hrají první kolo. Q dva seedy v každé sekci; vítězové Q se losují do volných Main pozic po Q. LL přednostně poražení posledního Q kola, teprve při nedostatku dřívější kola; při volném místě na konci Q los mezi nejvýše postavenými dvěma, při více místech počet +1, potom ranking; pokud nejsou na konci Q volná místa, pořadí podle rankingu pro Q seeding. Pravidla náhrad před/po OOP dle ATP předpisu. Hlavní singlová výjimka v bodování: hráč s BYE, který prohraje svůj první hraný zápas (R16), má 0 bodů, nikoli 25; přímo poznámka ATP HK24-2.
+
+### 5. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 100000 |
+| Finalista | 1 | 165 | 57845 |
+| SF | 2 | 100 | 34000 |
+| QF | 4 | 50 | 20000 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 11600 |
+| R32 | 12 | 0 | 7200 |
+| Q postupující | 4 | 13 | samostatná odměna neuvedena |
+| Q2 prohra | 4 | 7 | 3550 |
+| Q1 prohra | 8 | 0 | 1935 |
+
+Main tabulka vizuálně z kopie originálního ATP losu HK24-1, nezávisle totožné hodnoty dobový ATP Preview & Day 1, str. 2 (HK24-2, text; screenshot 403). Q body z dobového ATP rulebooku BRI24-17 a Q archivu HK24-6. Q prize 3550/1935 shodně TennisTemple a TennisCompanion historický řádek 2024 (HK24-6/14); originální Q PDF není dostupné. **Rozpor zdrojů:** CanalTenis tabulka HK24-15 uvádí pro 2024 přesně částky Brisbane, které odporují oběma primárním Main dokladům Hongkongu. SportsLite uvádí odměny odpovídající jiným ročníkům a chybně 13 bodů za Main R32 prohru; nepoužívat. Tato tabulka Q 3550/1935 je sekundárně doložený nejlepší kandidát, nikoli primárně ověřená hodnota. Pokud bude originální Q PDF získáno, znovu ověřit a případně opravit. Bodování po BYE má zvláštní pravidlo uvedené výše, Q body se přičítají dle ATP. Nominální součet Main 485045 USD; Q 29680 USD podle sekundárních částek; celkem 514725 USD (ne celoturnajová dotace). Total financial commitment 739945 USD dle Main losu, nelze zaměnit za prize pool.
+
+### 6. Evidence a porovnání s katalogem
+
+I/T/D/B pokryty. H*: booklet pouze indexovaný text a denní archivy, ne kompletní původní OOP; E*: nominální data uzávěrky odvozena, rank dates z dobového přepisu, losovací časy neznámé. R*: ATP rulebook doložen textově v BRI24-15/17, vizuální dostupnost omezená. P*: Main primárně potvrzen, Q sekundární shoda, konflikt zdrojů explicitně označen. Z*: Main kopie vizuálně, originál ATP Q/DS nedostupný a žádné PDF SHA-256 nezískány. V `buuk` (`29784d51d01d9d747705be8abae30f0c82706c1e`) již Main datum 1.–7.1.2024, ale tento ročník není ve sportovních profilech. Žádný převod nebo změna runtime. Další Adelaide 2024.
+
+### 7. Zdroje (HK24)
+
+- HK24-1: [kopie předstartovního originálního ATP Main losu](https://www.raquetc.com/wp-content/uploads/2023/12/ATP-250-Hong-Kong-2023-quadro-principal.pdf), str. 1 vizuálně ověřena; jméno souboru 2023 nemění datum 1.–7.1.2024 v hlavičce.
+- HK24-2: [ATP Preview & Day 1, 1.1.2024](https://www.atptour.com/-/media/85aa0b241ef349c6ad1c6e44f129e06b.pdf), str. 2 textově, screenshot 403.
+- HK24-3: [ATP oznámení návratu 12.6.2023](https://www.atptour.com/en/news/hong-kong-atp-250-2024), [HKCTA oznámení 22.8.2023](https://www.tennishk.org/en/press-release/bochk-named-title-sponsor-of-atp-mens-professional-tennis-tour-event-in-2024/).
+- HK24-4: [dobový prodejní program 2024](https://www.klook.com/event-detail/101022105-2024-bochk-tennis-open/), Q 31.12. a 1.1., Main R32 1.–2.1.
+- HK24-5: [dobový přepis Main/Q acceptance list 13.12.2023](https://www.tennisteen.it/entry-list/atp/24092-atp-entry-list-1-7-gennaio-2024.html).
+- HK24-6: [úplný Q pavouk a sekundární body/peníze](https://en.tennistemple.com/competitions/hong-kong-2024/37822/draw-qualifications), text.
+- HK24-7: [Sky výsledky Q1 31.12.2023](https://www.skysports.com/tennis/scores-schedule/31-12-2023); Q2 termín též předem HK24-4.
+- HK24-8: [dobový/archivní rozpis TNT](https://www.tntsports.co.uk/tennis/atp-hong-kong/2024/calendar-results.shtml), [ATP finále 7.1.](https://www.atptour.com/en/news/rublev-ruusuvuori-hong-kong-2024-final).
+- HK24-9: [pořadatelský booklet](https://livescores.hkmenstennisopen.com/livescores/uploaded/Booklet-web.pdf), indexovaný text s 3.–4.1. R16 a 5.1. QF; přímý přístup 502, obrazová kontrola nemožná.
+- HK24-10: [pořadatel 14.12.2023](https://www.hkmenstennisopen.com/en/news/news_v1i9gstbzelcqdrsp3g5jn1c9zkpfvpu/), indexovaný text 12 Q + 27 Main; aktuální JS stránka text historického článku nevykreslí.
+- HK24-11: [konečný Main pavouk](https://en.tennistemple.com/competitions/hong-kong-2024/37822/draw), text.
+- HK24-12: [TennisTV ročník 336_2024](https://www.tennistv.com/tournaments/336_2024/hong-kong), [ATP identita 336](https://www.atptour.com/en/tournaments/hong-kong/336/overview).
+- HK24-13: [SCMP předturnajový partnerský článek](https://www.scmp.com/presented/sport/topics/bank-china-tennis-open/article/3246462/top-10-things-do-bank-china-hong-kong-tennis-open-2024).
+- HK24-14: [TennisCompanion historické odměny](https://tenniscompanion.org/prize-money/hong-kong/), indexovaný řádek 2024, přímý přístup 403.
+- HK24-15: [CanalTenis tabulka s rozporem](https://canaltenis.com/el-prize-money-del-atp-hong-kong/), [SportsLite 31.12.2023 s rozporem](https://thesportslite.com/latest-sports-news/hong-kong-open-2024-prize-money-and-breakdown/); nepoužívat jako autoritu. [Originální ATP Main](https://www.protennislive.com/posting/2024/336/mds.pdf), [Q](https://www.protennislive.com/posting/2024/336/qs.pdf), [DS](https://www.protennislive.com/posting/2024/336/ds.pdf) v tomto průchodu nedostupné.
 

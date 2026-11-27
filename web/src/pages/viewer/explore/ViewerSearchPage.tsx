@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'react-router-dom'
 
@@ -40,8 +40,40 @@ const searchCopy = {
   noTournaments: ['Žádné odpovídající turnaje.', 'No matching tournaments.'],
   links: ['Odkazy', 'Links'],
   browseRuns: ['Otevřít přehled Runů', 'Open run browser'],
+  scope: ['Hledání v aktuálně dostupných uložených projekcích; nejde o historické hledání k libovolnému týdnu. Výsledky zápasů, mladí talenti a dřívější názvy sérií zde zatím nejsou pokryté.', 'Search covers the available Saved projections, not an arbitrary historical week. Match results, pre-Tour prospects and earlier series names are not yet covered.'],
+  results: ['Výsledky', 'Results'],
+  previous: ['Předchozí', 'Previous'],
+  next: ['Další', 'Next'],
+  page: ['Strana', 'Page'],
   routeNotice: ['Odkazy na výsledky používají kanonické cesty Product Runu.', 'Result links use canonical Product Run routes.'],
 } as const
+
+const SEARCH_PAGE_SIZE = 25
+
+function SearchResultsSection<T>({ title, empty, items, itemKey, renderItem, t }: {
+  title: string; empty: string; items: readonly T[]; itemKey: (item: T) => string;
+  renderItem: (item: T) => ReactNode; t: (key: keyof typeof searchCopy) => string;
+}): JSX.Element {
+  const [page, setPage] = useState(1)
+  const pages = Math.max(1, Math.ceil(items.length / SEARCH_PAGE_SIZE))
+  const current = Math.min(page, pages)
+  const offset = (current - 1) * SEARCH_PAGE_SIZE
+  return <section aria-label={title}>
+    <h4>{title}</h4>
+    {items.length ? <>
+      <p role="status">{t('results')}: {offset + 1}–{Math.min(offset + SEARCH_PAGE_SIZE, items.length)} / {items.length}</p>
+      <ul className="viewer-home-list">
+        {items.slice(offset, offset + SEARCH_PAGE_SIZE).map(item =>
+          <li key={itemKey(item)}>{renderItem(item)}</li>)}
+      </ul>
+      {pages > 1 ? <nav aria-label={title + ' – ' + t('page')}>
+        <button type="button" disabled={current === 1} onClick={() => setPage(current - 1)}>{t('previous')}</button>
+        <span>{t('page')} {current} / {pages}</span>
+        <button type="button" disabled={current === pages} onClick={() => setPage(current + 1)}>{t('next')}</button>
+      </nav> : null}
+    </> : <p className="status">{empty}</p>}
+  </section>
+}
 
 // Countries are a projection of the same public roster. Validate the exact
 // source and public-only shape before rendering metadata (including fallback fields).
@@ -170,7 +202,7 @@ export function ViewerSearchPage(): JSX.Element {
     ? verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, productRunId ?? '', branchId ?? '') : null
   const verified = Boolean(roster && countrySource && catalog)
   const hasError = !isLoading && !verified
-  const tournaments = useMemo<ViewerSearchTournamentResult[]>(() => {
+  const tournaments = useMemo<Array<ViewerSearchTournamentResult & { eventName: string }>>(() => {
     if (!verified || !catalog) return []
     return catalog.entries
       .filter(({ event }) => searchTextMatches(urlQuery, [
@@ -179,6 +211,7 @@ export function ViewerSearchPage(): JSX.Element {
       ]))
       .map(({ event, publication }) => ({
         eventId: event.event_id,
+        eventName: event.event_name,
         season: Number.parseInt(String(event.season).split('/')[0] ?? '', 10) || null,
         week: event.season_week,
         tour: event.tour_level,
@@ -234,46 +267,29 @@ export function ViewerSearchPage(): JSX.Element {
           <div><dt>{t('query')}</dt><dd>{urlQuery}</dd></div>
         </dl>
         {searchForm}
+        <p className="status">{t('scope')}</p>
         {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>{t('noResults')}</ViewerEmptyState> : null}
 
         {verified ? <>
-        <section aria-label={t('players')}>
-          <h4>{t('players')}</h4>
-          {players.length ? (
-            <ul className="viewer-home-list">
-              {players.map((player) => (
-                <li key={player.player_id}>{renderPlayerSampleMetadata({
-                  player_id: player.player_id, name: player.name, country_code: player.country_code,
-                  age: player.age, current_ovr: player.current_ovr, status: player.status,
-                  identity_source: player.identity_source,
-                }, productRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noPlayers')}</p>}
-        </section>
-
-        <section aria-label={t('countries')}>
-          <h4>{t('countries')}</h4>
-          {countries.length ? (
-            <ul className="viewer-home-list">
-              {countries.map((country) => (
-                <li key={country.country_code}>{renderCountrySampleMetadata(country, productRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noCountries')}</p>}
-        </section>
-
-        <section aria-label={t('tournaments')}>
-          <h4>{t('tournaments')}</h4>
-          {tournaments.length ? (
-            <ul className="viewer-home-list">
-              {tournaments.map((event) => (
-                <li key={event.eventId}>{renderSearchTournamentMetadata(productRunId, event)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noTournaments')}</p>}
-        </section>
-
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'players'])}
+          title={t('players')} empty={t('noPlayers')} items={players} t={t}
+          itemKey={player => player.player_id}
+          renderItem={player => renderPlayerSampleMetadata({
+            player_id: player.player_id, name: player.name, country_code: player.country_code,
+            age: player.age, current_ovr: player.current_ovr, status: player.status,
+            identity_source: player.identity_source,
+          }, productRunId)} />
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'countries'])}
+          title={t('countries')} empty={t('noCountries')} items={countries} t={t}
+          itemKey={country => country.country_code}
+          renderItem={country => renderCountrySampleMetadata(country, productRunId)} />
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'tournaments'])}
+          title={t('tournaments')} empty={t('noTournaments')} items={tournaments} t={t}
+          itemKey={event => event.eventId}
+          renderItem={event => <>
+            <strong>{event.eventName || event.eventId}</strong>
+            {renderSearchTournamentMetadata(productRunId, event)}
+          </>} />
         </> : null}
         <section aria-label={t('links')}>
           <h4>{t('links')}</h4>

@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
@@ -259,6 +259,29 @@ describe('Viewer Search submission (mocked GET API)', () => {
     mount('/viewer/search?q=Alice')
     expect(await screen.findByText('Some canonical searchable metadata is temporarily unavailable.')).toBeInTheDocument()
     expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
+  })
+
+  it('bounds broad result rendering, pages without new GETs, and resets on a new submitted query', async () => {
+    const names = Array.from({ length: 57 }, (_, i) => 'Player ' + String(i + 1).padStart(2, '0'))
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', names))
+    mocks.getViewerCountries.mockResolvedValue(countries('run-a', names.length))
+    const user = userEvent.setup()
+    mount('/viewer/search?q=Player')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getAllByRole('listitem')).toHaveLength(25)
+    expect(within(section).queryByText('Player 26')).not.toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'Next' }))
+    expect(within(section).getByText('Player 26')).toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'Next' }))
+    expect(within(section).getAllByRole('listitem')).toHaveLength(7)
+    expect(within(section).getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
+    await user.clear(screen.getByRole('searchbox'))
+    await user.type(screen.getByRole('searchbox'), 'Player 0{Enter}')
+    const nextSection = await screen.findByRole('region', { name: 'Players' })
+    expect(within(nextSection).getAllByRole('listitem')).toHaveLength(9)
+    expect(within(nextSection).getByText('Player 01')).toBeInTheDocument()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
   })
 
 })

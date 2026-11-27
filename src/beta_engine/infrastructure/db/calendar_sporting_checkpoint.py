@@ -64,19 +64,50 @@ def _parsed_global_part(body, cache, parse, proven=None):
     return value
 
 
-def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
+_JSON_SCALARS = (str, int, float, bool, type(None))
+
+
+def decoded_checkpoint_body(body):
+    """True iff the v13 parser reads ``body`` exactly like ``json.loads(json.dumps(body))``.
+
+    The v13 parser uses only the top level of the decoded body directly: it
+    re-encodes ``competition_root`` and every event with ``json.dumps`` before
+    its strict JSON validator, so nested values give byte-identical part texts
+    either way. A JSON round trip can change only the top level: non-string
+    keys, a non-list ``events`` container or a non-scalar remaining field. Any
+    such body keeps the original round trip.
+    """
+    return (type(body) is dict
+        and body.get('schema_version') == 'calendar_sporting_checkpoint.v13'
+        and all(type(key) is str for key in body)
+        and type(body.get('events', [])) is list
+        and all(type(value) in _JSON_SCALARS for key, value in body.items()
+                if key not in ('competition_root', 'events')))
+
+
+def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None, _decoded=None):
     """Strict checkpoint model of ``raw``.
 
     ``_proven`` may be a canonical_text.ProvenSpan whose ``value`` is the
     unmodified decode of exactly ``raw`` (the proven span of a just decoded
     Saved payload). It only replaces decoding ``raw`` again and re-encoding each
     part; every part still runs its strict model validator.
+
+    ``_decoded`` (with ``raw=None``) may only be a v13 body for which
+    ``json.loads(json.dumps(_decoded)) == _decoded`` holds at the top level
+    (see ``decoded_checkpoint_body``). It replaces only that JSON round trip;
+    every part is still encoded and strictly validated exactly as before.
     """
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
         CalendarNativeSportingCheckpoint,
     )
 
-    body = _proven.value if _proven is not None else json.loads(raw)
+    if _decoded is not None:
+        if raw is not None or _proven is not None or not decoded_checkpoint_body(_decoded):
+            raise TypeError('A decoded checkpoint body replaces only an exact JSON round trip')
+        body = _decoded
+    else:
+        body = _proven.value if _proven is not None else json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
@@ -98,7 +129,7 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
             # The original strict models allow their version field's default.
             # Preserve that noncanonical input contract through the original
             # Union validator; stored canonical histories take the fast path.
-            return GlobalCompetitionCheckpoint.model_validate_json(raw)
+            return GlobalCompetitionCheckpoint.model_validate_json(raw if raw is not None else json.dumps(body))
 
         from beta_engine.infrastructure.db.canonical_text import ProvenSpan
 

@@ -43,6 +43,8 @@ function HistoricalMatchReplay():JSX.Element{
   const linkedRally=requestedRally===null?1:parseSavedReplayRally(requestedRally,MAX_LINKED_RALLY)
   const index=(linkedRally??1)-1
   const [rallyInput,setRallyInput]=useState('')
+  // Presentation only. Existing rally bookmarks continue opening Replay.
+  const [section,setSection]=useState<'overview'|'statistics'|'replay'>('replay')
   const moveToRally=(oneBased:number)=>{
     const next=new URLSearchParams(params)
     if(oneBased===1)next.delete('rally')
@@ -87,6 +89,16 @@ function HistoricalMatchReplay():JSX.Element{
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const target=parseSavedReplayRally(rallyInput,data?.total_rallies??0)
+  const sections=['overview','statistics','replay'] as const
+  const sectionLabels=cs?['Přehled','Statistiky','Průběh a Replay']:
+    ['Overview','Statistics','Course & Replay']
+  // Count only explicitly recorded rally winners on this validated page.
+  // A rally winner is not necessarily equivalent to one scored point.
+  const counts=data?.replay_status==='available'&&data.rallies.length>0?{
+    a:data.rallies.filter(r=>r.winner_player_id===data.player_a_id).length,
+    b:data.rallies.filter(r=>r.winner_player_id===data.player_b_id).length,
+    none:data.rallies.filter(r=>r.winner_player_id===null).length,
+  }:null
   // Player profile is current-HEAD-only. Never substitute it for a prior Saved match.
   const sameHead=Boolean(data&&revision&&selectedBranch?.run_id===runId
     &&selectedBranch?.saved_head_revision_id===revision)
@@ -151,6 +163,38 @@ function HistoricalMatchReplay():JSX.Element{
         {' · '}<SavedFinalLookupLink runId={runId} branch={branch!} revision={revision!}
           season={season!} playerId={data.match.loser_player_id!} params={params} cs={cs}/></p>
     </div>
+    <nav className="saved-tour-edition-tabs" aria-label={cs?'Oddíly zápasu':'Match sections'}>
+      {sections.map((name,i)=><button key={name} type="button"
+        aria-current={section===name?'page':undefined} className={section===name?'active':''}
+        onClick={()=>setSection(name)}>{sectionLabels[i]}</button>)}
+    </nav>
+    {section==='overview'&&<section aria-label={sectionLabels[0]}>
+      <h3>{sectionLabels[0]}</h3>
+      <p>{data.replay_status==='available'?
+        (cs?'Ověřený archiv výměn je dostupný.':'Verified rally archive is available.'):
+        (cs?'Ověřený archiv výměn není dostupný.':'Verified rally archive is unavailable.')}</p>
+      <p className="status">{cs?
+        'Předzápasové stavy a případný důvod nestandardního ukončení tento uložený detail neposkytuje.':
+        'This Saved detail does not expose pre-match states or any nonstandard termination reason.'}</p>
+    </section>}
+    {section==='statistics'&&<section aria-label={sectionLabels[1]}>
+      <h3>{sectionLabels[1]}</h3>
+      {counts?<><p>{cs?'Archivovaných výměn celkem':'Total archived rallies'}: {data.total_rallies}</p>
+        <p className="status">{cs?'Rozsah ověřené stránky':'Verified page range'}:
+          {' '}{data.rallies[0].rally_index}–{data.rallies[data.rallies.length-1].rally_index}
+          {' / '}{data.total_rallies}. {cs?'Nejde o statistiky celého zápasu.':
+            'These are not whole-match statistics.'}</p>
+        <dl>
+          <dt>{cs?'Výměny s vítězem A':'Rallies won by A'} ({data.player_a_id})</dt><dd>{counts.a}</dd>
+          <dt>{cs?'Výměny s vítězem B':'Rallies won by B'} ({data.player_b_id})</dt><dd>{counts.b}</dd>
+          <dt>{cs?'Bez zaznamenaného vítěze výměny':'No recorded rally winner'}</dt><dd>{counts.none}</dd>
+        </dl>
+      </>:<p role="status">{cs?'Pro tuto stránku nejsou ověřené výměny dostupné.':
+        'No verified rallies are available for this page.'}</p>}
+      <p className="status">{cs?'Délka, fyzické stavy a další statistiky nejsou v tomto čtecím rozhraní dostupné.':
+        'Duration, physical states and other statistics are unavailable in this reader.'}</p>
+    </section>}
+    {section==='replay'&&<>
     <h3>{cs?'Archivovaný průběh výměn':'Archived rally replay'}</h3>
     {data.replay_status==='unavailable'&&<p role="status">{cs?
       'Ověřený archiv výměn pro tuto uloženou revizi neexistuje. Výsledek je doložen, průběh nevytváříme.':
@@ -242,6 +286,7 @@ function HistoricalMatchReplay():JSX.Element{
       </details>}
       <p className="status">{cs?'Přehrání jen čte archiv, simulaci znovu neprovádí.':
         'The replay reads archived events only; it never reruns the simulation.'}</p>
+    </>}
     </>}
     </>}
     <Link to={back}>← {cs?'Zpět na edici':'Back to Edition'}</Link>

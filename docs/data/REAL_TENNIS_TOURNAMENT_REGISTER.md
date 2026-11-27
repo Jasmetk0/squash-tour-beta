@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 4 ročníky, Wimbledon 2024 a 2025, Australian Open 2024, Roland Garros 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 5 ročníků, Wimbledon 2024 a 2025, Australian Open 2024, Roland Garros 2024, US Open 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -38,10 +38,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Wimbledon](#wimbledon-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Australian Open](#australian-open-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Roland Garros](#roland-garros-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [US Open](#us-open-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 4 zpracované ročníky; 4 hotové v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 5 zpracovaných ročníků; 5 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -51,7 +52,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2 | Wimbledon 2025 | HOTOVO (nominální rozsah) |
 | 3 | Australian Open 2024 | HOTOVO (nominální rozsah) |
 | 4 | Roland Garros 2024 | HOTOVO (nominální rozsah) |
-| 5 | US Open 2024 | NEZAHÁJENO |
+| 5 | US Open 2024 | HOTOVO (nominální rozsah) |
 | 6 | Australian Open 2025 | NEZAHÁJENO |
 | 7 | Roland Garros 2025 | NEZAHÁJENO |
 | 8 | US Open 2025 | NEZAHÁJENO |
@@ -72,6 +73,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2025](#wimbledon-2025) | Wimbledon | Grand Slam | 2025-06-23–2025-06-26 | 2025-06-30–2025-07-13 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 | [2024](#australian-open-2024) | Australian Open | Grand Slam | 2024-01-08–2024-01-11 (plán) | 2024-01-14–2024-01-28 | HOTOVO v nominálním rozsahu; skutečné Q 9.–12. 1. odděleně |
 | [2024](#roland-garros-2024) | Roland Garros | Grand Slam | 2024-05-20–2024-05-24 | 2024-05-26–2024-06-09 | HOTOVO v nominálním rozsahu; denní Q2 ověřeno |
+| [2024](#us-open-2024) | US Open | Grand Slam | 2024-08-19–2024-08-22 | 2024-08-26–2024-09-08 | HOTOVO v nominálním rozsahu |
 
 ## Wimbledon 2024
 
@@ -683,3 +685,113 @@ Nominální rozsah je uzavřen, s výše uvedenými omezeními zdrojů; další 
 - RG24-18: [nezávislá tabulka odměn](https://salarysport.com/tennis/roland-garros/2024/prize-money/), [přehled 2024](https://en.wikipedia.org/wiki/2024_French_Open), [dobové Reuters](https://www.reuters.com/sports/tennis/french-open-2024-prize-money-how-much-do-winners-mens-womens-doubles-finals-get-2024-05-21/).
 - RG24-19: [ATP odměny 2024](https://www.atptour.com/en/news/roland-garros-2024-prize-money) indexovaný text, 403; [WTA vysvětlení odměny Q3 vs Main](https://www.wtatennis.com/news/4027889/qualifying-at-roland-garros-the-grueling-journey-that-can-change-careers).
 - RG24-20: mužský ATP Rulebook IX a oznámení 2024 viz AO24-18 / S18.
+
+## US Open 2024
+
+**Stav:** HOTOVO v nominálním rozsahu I/T/H/E/D/R/B/P/Z. Kontrola 2026-11-27. Žádný převod na squash.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název / ročník | US Open 2024, mužská dvouhra | US24-1, US24-2 |
+| Kategorie / ATP ID | Grand Slam / 560 | US24-1, US24-13 |
+| Místo Main a Q | USTA Billie Jean King National Tennis Center, Flushing Meadows, Queens, New York, USA | US24-1, US24-3, US24-4 |
+| Povrch | venkovní tvrdý | US24-1 |
+| Časové pásmo | America/New_York; EDT UTC−04:00 v uvedeném období | místní ET v US24-4/5/6, letní offset |
+| Pořadatel / měna | USTA / USD | US24-4, US24-9 |
+| Míče, rozhodčí, diety | NEOVĚŘENO | doplňková metadata; nepřebírat z jiného ročníku |
+
+### 2. Přihlášky a plánované termíny
+
+| Událost | Místní údaj | Evidence |
+|---|---|---|
+| Main entry deadline | 2024-07-15 | 42 dnů před pondělím 26. 8.; oficiální mužská entry list označena 15. 7. (US24-7), hodina nedoložena |
+| Q entry deadline | 2024-07-29 | 28 dnů před 26. 8.; oficiální mužská entry list označena 29. 7. (US24-8), hodina nedoložena |
+| Oznámení WC | 2024-08-14 | US24-10 |
+| Q los | zveřejněn nejpozději 2024-08-18 | US24-11; přesná hodina a okamžik losování neověřeny |
+| Q | 2024-08-19–22, denní start 11:00 | US24-1, US24-4, US24-5 |
+| Main los | 2024-08-22 12:00 | US24-1 |
+| Main | 2024-08-26–09-08 | US24-1, US24-6 |
+| Mužské finále | 2024-09-08 14:00, oznámený program | US24-6, US24-12 |
+
+Entry listy nejsou konečné losy. Datum doloženo jejich zápatím a odvozením z 42/28denního pravidla; původní ATP Detail Sheet nebyl v této rešerši získán. Čas není uměle doplněn. Program běžného dne od 11:00 ET (US24-1/6); přesné začátky jednotlivých zápasů mimo rozsah.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální uzly | Důkaz |
+|---|---|---:|---|
+| Q1 | 2024-08-19–20 | 64 | US24-5 |
+| Q2 | 2024-08-21 | 32 | US24-5 |
+| Q3 | 2024-08-22 | 16 | US24-5 |
+| Mezi fázemi | 2024-08-23–25 | 0 | US24-1 |
+| R128 | 2024-08-26–27 | 64 | US24-6 |
+| R64 | 2024-08-28–29 | 32 | US24-6 |
+| R32 | 2024-08-30–31 | 16 | US24-6 |
+| R16 | 2024-09-01–02 | 8 | US24-6 |
+| QF | 2024-09-03–04 | 4 | US24-6 |
+| Bez plánované mužské dvouhry | 2024-09-05 | 0 | US24-6 |
+| SF | 2024-09-06 | 2 | US24-6 |
+| Bez plánované mužské dvouhry | 2024-09-07 | 0 | US24-6 |
+| F | 2024-09-08 | 1 | US24-6, US24-12 |
+
+Q 4 dny, Main 14 dnů, celé okno 21 dnů. Součty 112 Q a 127 Main = 239 nominálních uzlů. Denní rozdělení vícedenních kol není mechanicky 50/50. Předturnajový vysílací rozpis Q výslovně uvádí kola a ATP/ESPN potvrzují čtyřdenní plán; odklady jednotlivých zápasů nepřepisují nominální data.
+
+### 4. Nominální struktura a pravidla
+
+| Pole | Main | Q |
+|---|---:|---:|
+| Kapacita a účastníci | 128 | 128 |
+| Přímé akceptace | 104 | 119 |
+| WC | 8 | 9 |
+| Nasazení | 32 | 32 |
+| Q postupová místa | 16 | 16 |
+| BYE | 0 | 0 |
+| Kola | 7 | 3 |
+| Uzly | 127 | 112 |
+| Formát | BO5 setů | BO3 setů ve všech kolech |
+
+Dobový rulebook 2024 (S16/AO24-5) a originální losy US24-2/3; kvóty WC také přímo pořadatel US24-10. 104+16+8=128, 119+9=128. Q 16 vyřazovacích sekcí po osmi, dva seedy na sekci (prvních 16 horní pozice, dalších 16 los na spodní); Main 32 seedů dle dobové skupinové tabulky. Přímý vstup dle rankingu při uzávěrce včetně případného protected ranking; Main seeding dle příslušného rankingu přibližně týden před turnajem. Náhrada odstoupeného Q seedu před prvním OOP dalším seedem, potom alternatem; Q vítězové losováni na volné Main pozice po Q. LL přednostně poražení Q3, při nedostatku i dřívější kola, los nejvýše postavených čtyř (při více než dvou odstoupeních při skončení Q počet +2), dále ranking; náhrada před prvním bodem prvního zápasu odstoupivšího; sign-in 30 minut před prvním zápasem. Tiebreak na 10 při 6:6 rozhodujícího setu (S20). Q BO3 potvrzeno výsledky všech tří kol v originálním losu, ne extrapolací z Wimbledonu.
+
+**Kontrola označení původních losů:** vizuálně obě strany Main i Q. Main 7 viditelných W (6,10,21,58,59,93,99), 16 Q (3,5,12,30,34,51,52,63,66,68,69,101,102,111,124,127), 1 L (95). Na pozici 114 chybí W, ale pořadatel přímo potvrdil, že Dominic Thiem měl WC (US24-10/14). Rekonciliace: 8 WC + 16 Q + 1 LL + 103 ostatních = 128; samotné PDF 104 neoznačených pozic. Q devět W (27,34,38,59,71,90,94,98,124), žádná A značka; 119 neoznačených. Oba losy 32 seedů bez BYE. Jedna LL není plánovaná kvóta. Shoda s dřívějším Draft #1903, bez změny jeho souborů.
+
+### 5. Body a prize money
+
+| Výsledek | Počet příjemců | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 2000 | 3600000 |
+| Finalista | 1 | 1300 | 1800000 |
+| SF | 2 | 800 | 1000000 |
+| QF | 4 | 400 | 530000 |
+| R16 | 8 | 200 | 325000 |
+| R32 | 16 | 100 | 215000 |
+| R64 | 32 | 50 | 140000 |
+| R128 | 64 | 10 | 100000 |
+| Q postupující | 16 | 30 | samostatná odměna neuvedena |
+| Q3 prohra | 16 | 16 | 52000 |
+| Q2 prohra | 32 | 8 | 38000 |
+| Q1 prohra | 64 | 0 | 25000 |
+
+Odměny přímo pořadatel 7. 8. 2024, US24-9; body dobový ATP preview US24-1 a dříve doložený 2024 rankingový předpis S18. Q body přičíst k dosaženému Main výsledku; WC prohra v prvním kole Main 0, nikoli 10. Individuální body historických LL se nepočítají. Nominální součet Main 26440000 USD, Q 3648000 USD, celkem 30088000 USD; celoturnajová kompenzace 75 000 000 USD zahrnuje jiné soutěže a další položky, nikoli pouze mužskou dvouhru.
+
+### 6. Kontrola a mezery
+
+I/T/H/D/B/P pokryty dobovými zdroji. E: ověřeny první strany obou originálních entry listů a text zápatí, přesný čas Q losu neověřen. R: dobový předpis 2024 zdroj S16/AO24-5 (dřívější textové zrcadlo), nikoli nově získané originální bajty; výsledky Q potvrzují formát. Z: čtyři strany originálních losů vizuálně ověřeny, ATP preview indexovaný text (403), žádný hash není prohlašován za získaný. Všechna povinná nominální pole doložena; doplňková metadata otevřena. Další Australian Open 2025.
+
+### 7. Zdroje (US24)
+
+- US24-1: [ATP dobový preview](https://www.atptour.com/en/news/us-open-2024-history-draw-schedule), indexovaný text, přímé 403.
+- US24-2: [USTA originální Main los](https://www.usopen.org/en_US/scores/draws/2024_MS_draw.pdf), obě strany vizuálně ověřeny.
+- US24-3: [USTA originální Q los](https://www.usopen.org/en_US/scores/draws/2024_MQ_draw.pdf), obě strany vizuálně ověřeny.
+- US24-4: [ESPN čtyřdenní Q plán](https://espnpressroom.com/press-release/all-four-days-of-the-2024-us-open-qualifying-tournament-live-and-exclusively-on-espn-platforms-starts-monday-august-19/).
+- US24-5: [dobový plán Q jednotlivých kol](https://www.sportingnews.com/us/tennis/news/us-open-qualifying-schedule-2024-dates-channels-live-streams-tennis/95e7e59f1c1e9e4109a42b71).
+- US24-6: [TNT předturnajový plán všech Main kol](https://www.tntsports.co.uk/tennis/us-open/2024/when-start-draw-schedule-who-is-playing-prize-money-preview_sto20030307/story.shtml), [ESPN dobový vysílací plán](https://espnpressroom.com/press-release/espns-exclusive-first-ball-to-last-ball-coverage-of-the-2024-us-open-august-26-september-8/). TNT má nesouhlasný čas finále v úvodní větě, správný 19:00 UK v tabulce = 14:00 EDT; přímá potvrzení US24-12.
+- US24-7: [USTA Main entry list 15. 7.](https://www.usopen.org/pdf/2024_USO_men_MD_entry_list.pdf), str. 1 vizuálně, zápatí textově.
+- US24-8: [USTA Q entry list 29. 7.](https://www.usopen.org/pdf/mens-qualifying-2024-USO-entry-list.pdf), str. 1 vizuálně, zápatí textově.
+- US24-9: [USTA oficiální odměny 7. 8.](https://www.usopen.org/amp/en_US/news/articles/2024-08-07/2024_us_open_prize_money_will_be_largest_purse_in_tennis_history.html).
+- US24-10: [USTA oznámení Main a Q WC 14. 8.](https://www.usopen.org/en_US/news/articles/2024-08-14/former_mens_champions_thiem_wawrinka_among_2024_us_open_wild_cards.html).
+- US24-11: [USTA kvalifikační preview 18. 8.](https://www.usopen.org/en_US/news/articles/2024-08-18/can_the_next_generation_of_us_women_make_noise_in_2024_us_open_qualifying.html), odkazuje již na mužský los; přesný čas losování neznámý.
+- US24-12: [USTA finálový program 5. 9.](https://www.usopen.org/en_US/news/articles/2024-09-05/mickey_guyton_ruben_studdard_to_perform_during_2024_us_open_finals_weekend.html), 14:00 ET.
+- US24-13: [ATP série 560](https://www.atptour.com/en/tournaments/us-open/560/overview), identifikátor série.
+- US24-14: [USTA potvrzení Thiemovy WC 26. 8.](https://www.usopen.org/en_US/news/articles/2024-08-26/ben_shelton_defeats_former_us_open_champion_dominic_thiem_at_austrians_last_slam.html).
+

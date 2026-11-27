@@ -48,6 +48,11 @@ const searchCopy = {
   previous: ['Předchozí', 'Previous'],
   next: ['Další', 'Next'],
   page: ['Strana', 'Page'],
+  first: ['První', 'First'],
+  last: ['Poslední', 'Last'],
+  jump: ['Přejít na stránku', 'Jump to page'],
+  go: ['Přejít', 'Go'],
+  pageError: ['Zadej číslo dostupné stránky.', 'Enter an available page number.'],
   eventId: ['ID turnaje', 'Event ID'],
   season: ['Sezona', 'Season'],
   week: ['Týden rozpisu', 'Scheduled week'],
@@ -69,8 +74,10 @@ function folded(value: string | number | null | undefined): string {
   return String(value ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 function matches(query: string, values: Array<string | number | null | undefined>): boolean {
-  const needle = folded(query).trim()
-  return !!needle && values.some(value => folded(value).includes(needle))
+  const terms = folded(query).trim().split(/\s+/).filter(Boolean)
+  if (!terms.length) return false
+  const fields = values.map(folded)
+  return terms.every(term => fields.some(field => field.includes(term)))
 }
 
 function SearchTournamentRow({ entry, runId, t }: {
@@ -99,9 +106,26 @@ function SearchResultsSection<T>({ title, empty, items, itemKey, renderItem, t }
   renderItem: (item: T) => ReactNode; t: (key: keyof typeof searchCopy) => string;
 }): JSX.Element {
   const [page, setPage] = useState(1)
+  const [jump, setJump] = useState('')
+  const [invalidJump, setInvalidJump] = useState(false)
   const pages = Math.max(1, Math.ceil(items.length / SEARCH_PAGE_SIZE))
   const current = Math.min(page, pages)
   const offset = (current - 1) * SEARCH_PAGE_SIZE
+  function navigate(next: number): void {
+    setPage(next)
+    setJump('')
+    setInvalidJump(false)
+  }
+  function submitPage(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const value = jump.trim()
+    const next = Number(value)
+    if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(next) || next > pages) {
+      setInvalidJump(true)
+      return
+    }
+    navigate(next)
+  }
   return <section aria-label={title}>
     <h4>{title}</h4>
     {items.length ? <>
@@ -111,9 +135,17 @@ function SearchResultsSection<T>({ title, empty, items, itemKey, renderItem, t }
           <li key={itemKey(item)}>{renderItem(item)}</li>)}
       </ul>
       {pages > 1 ? <nav aria-label={title + ' – ' + t('page')}>
-        <button type="button" disabled={current === 1} onClick={() => setPage(current - 1)}>{t('previous')}</button>
+        <button type="button" disabled={current === 1} onClick={() => navigate(1)}>{t('first')}</button>
+        <button type="button" disabled={current === 1} onClick={() => navigate(current - 1)}>{t('previous')}</button>
         <span>{t('page')} {current} / {pages}</span>
-        <button type="button" disabled={current === pages} onClick={() => setPage(current + 1)}>{t('next')}</button>
+        <button type="button" disabled={current === pages} onClick={() => navigate(current + 1)}>{t('next')}</button>
+        <button type="button" disabled={current === pages} onClick={() => navigate(pages)}>{t('last')}</button>
+        <form aria-label={title + ' – ' + t('jump')} onSubmit={submitPage}>
+          <label>{t('jump')} <input inputMode="numeric" value={jump} aria-invalid={invalidJump}
+            onChange={event => { setJump(event.target.value); setInvalidJump(false) }} /></label>
+          <button type="submit">{t('go')}</button>
+          {invalidJump ? <p role="alert">{t('pageError')}</p> : null}
+        </form>
       </nav> : null}
     </> : <p className="status">{empty}</p>}
   </section>

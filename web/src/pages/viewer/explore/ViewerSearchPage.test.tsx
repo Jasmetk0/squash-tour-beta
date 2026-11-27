@@ -352,4 +352,33 @@ describe('Viewer Search submission (mocked GET API)', () => {
     expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
   })
 
+  it('matches terms across verified player fields rather than requiring a single combined field', async () => {
+    mount('/viewer/search?q=Alice+CZE')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getByText('Alice')).toBeInTheDocument()
+    expect(within(section).queryByText('Bob')).not.toBeInTheDocument()
+  })
+
+  it('jumps to a distant result page, rejects unavailable pages and avoids extra reads', async () => {
+    const names = Array.from({ length: 101 }, (_, i) => 'Player ' + String(i + 1).padStart(3, '0'))
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', names))
+    mocks.getViewerCountries.mockResolvedValue(countries('run-a', names.length))
+    const user = userEvent.setup()
+    mount('/viewer/search?q=Player')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    const field = within(section).getByLabelText('Jump to page')
+    await user.type(field, '6')
+    await user.click(within(section).getByRole('button', { name: 'Go' }))
+    expect(within(section).getByRole('alert')).toHaveTextContent('Enter an available page number.')
+    expect(within(section).getByText('Player 001')).toBeInTheDocument()
+    await user.clear(field)
+    await user.type(field, '5')
+    await user.click(within(section).getByRole('button', { name: 'Go' }))
+    expect(within(section).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(section).getByText('Player 101')).toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'First' }))
+    expect(within(section).getByText('Player 001')).toBeInTheDocument()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
 })

@@ -49,7 +49,7 @@ def configure_atp_run(page, base_url, api_url):
             expect(selector).to_have_value(identity)
             expect(selector).to_be_disabled()
 
-    def confirm_and_save(approval, previous_head):
+    def confirm_and_save(approval, success, previous_head):
         page.get_by_label(approval, exact=True).check()
         page.get_by_role("button", name="Confirm into Working Draft", exact=True).click()
         save = page.get_by_role("button", name="Save revision", exact=True)
@@ -59,7 +59,7 @@ def configure_atp_run(page, base_url, api_url):
         assert staged["base_saved_revision_id"] == previous_head
 
         save.click()
-        expect(save).to_have_count(0)
+        expect(page.get_by_role("status").filter(has_text=success)).to_be_visible()
         saved = read(draft_url)
         assert saved["status"] == "clean"
         assert saved["base_saved_revision_id"] != previous_head
@@ -74,12 +74,15 @@ def configure_atp_run(page, base_url, api_url):
     page.get_by_role("button", name="Select all valid", exact=True).click()
     world_head = confirm_and_save(
         "I reviewed the exact selection, changes and target Branch.",
+        "New Saved Revision saved.",
         initial_draft["base_saved_revision_id"],
     )
     next_package.click()
     check_target("/admin/packages/atp-tour-calendar-reference")
     tour_head = confirm_and_save(
-        "I reviewed the changes and confirm the displayed packages.", world_head,
+        "I reviewed the changes and confirm the displayed packages.",
+        "A new Saved Revision has been saved.",
+        world_head,
     )
 
     page.reload()

@@ -45,6 +45,16 @@ describe('Saved player three-tab profile',()=>{
     fireEvent.click(screen.getByRole('tab',{name:'Career & results'}))
     expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
   })
+  it('describes the canonical attribute catalogue without fabricated values or extra reads',async()=>{
+    mount('/admin/runs/run-a/people/p1?tab=attributes')
+    const section=await screen.findByRole('region',{name:'Sporting profile availability'})
+    expect(section).toHaveTextContent('57 attributes in six groups')
+    expect(section).toHaveTextContent('Unavailable values do not mean zero ability')
+    expect(section).toHaveTextContent('Potential OVR (hidden potential)')
+    expect(section).toHaveTextContent('Historical attribute development')
+    expect(section).not.toHaveTextContent(/\b0\/200\b/)
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(1)
+  })
   it('restores the career tab from a match-detail return URL', async () => {
     mount('/admin/runs/run-a/people/p1?tab=career&careerSeason=2&careerPage=1')
     expect(await screen.findByRole('heading', {name: 'Sample Player'})).toBeInTheDocument()

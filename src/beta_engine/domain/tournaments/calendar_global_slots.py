@@ -1216,16 +1216,22 @@ def _simulate_slot_matches(items):
         for context, seed, anchor, health in items
     ]
     known = [cache.get(key) for key in keys]
-    missing = [i for i, value in enumerate(known) if value is None]
-    computed = dict(zip(missing, simulate_batch([items[i] for i in missing]), strict=True))
+    missing = {}  # first index of every distinct key the lookup did not find
+    for i, key in enumerate(keys):
+        if known[i] is None:
+            missing.setdefault(key, i)
+    computed = dict(zip(missing.values(), simulate_batch([items[i] for i in missing.values()]), strict=True))
+    produced = {}
     results = []
     for i, key in enumerate(keys):
         if i in computed:
             result = computed[i]
             encoded = result.model_dump_json().encode()
-            entry = (128 + len(items[i][2]) + len(key[2]) + len(key[3]) + len(encoded), encoded)
+            entry = produced[key] = (128 + len(items[i][2]) + len(key[2]) + len(key[3]) + len(encoded), encoded)
         else:
-            entry = known[i]
+            # A hit of the lookup (kept even if an earlier miss of this batch
+            # evicted it) or a duplicate key computed above: fresh decoding.
+            entry = known[i] if known[i] is not None else produced[key]
             result = MatchResult.model_validate_json(entry[1])
         # Same LRU bookkeeping as one-by-one replay: refresh or insert in order.
         stale = cache.pop(key, None)

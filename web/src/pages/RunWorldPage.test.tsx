@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
@@ -22,7 +22,7 @@ vi.mock('../admin/AdminBranchContext',()=>({
 vi.mock('../admin/AdminTimeContext',()=>({useAdminTime:()=>context.time}))
 vi.mock('../i18n/LanguageContext',()=>({useLanguage:()=>({language:context.language})}))
 
-function mountWorld(path:string):{refresh:()=>void} {
+function mountWorld(path:string):{refresh:()=>void;client:QueryClient} {
   const client=new QueryClient({defaultOptions:{queries:{retry:false}}})
   const wrap=()=> <QueryClientProvider client={client}>
     <MemoryRouter initialEntries={[path]}>
@@ -33,7 +33,7 @@ function mountWorld(path:string):{refresh:()=>void} {
     </MemoryRouter>
   </QueryClientProvider>
   const mounted=render(wrap())
-  return {refresh:()=>mounted.rerender(wrap())}
+  return {refresh:()=>mounted.rerender(wrap()),client}
 }
 
 type CountryFilters={
@@ -191,6 +191,22 @@ describe('Run-owned World overview navigation',()=>{
       'href',expect.stringContaining('q=cze')
     )
     expect(api.getRunPackageState).toHaveBeenCalledWith('run-a','branch-a')
+  })
+  it('counts exact and fallback population evidence by region and filters the existing country list',async()=>{
+    mountWorld('/admin/runs/run-a/world?year=2000')
+    const table=await screen.findByRole('table',{name:'Population evidence coverage'})
+    const europe=within(table).getByRole('row',{name:/EUROPE/})
+    expect(within(europe).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['1','1','0','0'])
+    const america=within(table).getByRole('row',{name:/NORTH_AMERICA/})
+    expect(within(america).getAllByRole('cell').map(cell=>cell.textContent)).toEqual(['1','0','1','0'])
+    await userEvent.click(within(table).getByRole('button',{name:'EUROPE'}))
+    const countries=screen.getByRole('table',{name:'Run World countries'})
+    expect(countries).toHaveTextContent('Czechia')
+    expect(countries).not.toHaveTextContent('United States')
+    expect(screen.getByRole('link',{name:'Czechia (CZE)'})).toHaveAttribute('href',expect.stringContaining('region=region%3AEUROPE'))
+    await userEvent.click(screen.getByRole('button',{name:'All regions'}))
+    expect(countries).toHaveTextContent('United States')
+    expect(api.getRunPackageState).toHaveBeenCalledTimes(1)
   })
   it('shows country tabs, source fields and a reversible return link',async()=>{
     mountWorld('/admin/runs/run-a/world/countries/CZE?year=2000&q=cze')
@@ -416,7 +432,7 @@ describe('Run-owned World overview navigation',()=>{
       payload:{run:{run_id:'run-a'},branch:{branch_id:'branch-a'},content:{
         run_package_state:{fingerprint:fixture.fingerprint,state:fixture.state}}}
     })
-    mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020')
+    const view=mountWorld('/admin/runs/run-a/world/countries/CZE?tab=tournaments&year=2020')
     expect(await screen.findByRole('table',{name:'Country tournament editions 2000/2001'}))
       .toHaveTextContent('Brno World Open')
     const panel=screen.getByLabelText('Country Run-owned tournaments')
@@ -431,6 +447,13 @@ describe('Run-owned World overview navigation',()=>{
     expect(url.searchParams.get('season')).toBe('0')
     expect(url.searchParams.get('fromCountry')).toContain('tab=tournaments&year=2020')
     expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
+    api.getSavedRevision.mockRejectedValueOnce(new Error('Saved tournament refresh failed'))
+    await act(async()=>{await view.client.invalidateQueries({queryKey:['run-world-saved-calendar','run-a','branch-a','head-a']})})
+    await waitFor(()=>{
+      expect(screen.getByLabelText('Country Run-owned tournaments')).toHaveTextContent('Saved tournament refresh failed')
+      expect(screen.queryByRole('link',{name:'Brno World Open'})).not.toBeInTheDocument()
+    })
+    expect(api.getSavedRevision).toHaveBeenCalledTimes(2)
   })
 
   it('links second-season historical shared-ancestor Edition through selected Branch',async()=>{

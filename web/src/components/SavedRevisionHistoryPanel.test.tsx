@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -300,6 +300,7 @@ describe('SavedRevisionHistoryPanel', () => {
     api.listSavedRevisionHistory.mockResolvedValueOnce({
       ...history,
       saved_head_revision_id: 'revision-three',
+      total_count: 3,
       saved_revisions: [
         revisions[0],
         { ...revisions[1], is_branch_head: false },
@@ -373,6 +374,29 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(api.restoreSavedRevision).not.toHaveBeenCalled()
   })
 
+  it('filters only loaded revision evidence and offers an exact recorded-parent compare link',async()=>{
+    api.getSavedRevision.mockResolvedValue({...detail,...revisions[1]})
+    renderPanel()
+    const filters=await screen.findByRole('region',{name:'Loaded history filters'})
+    expect(filters).toHaveTextContent('Loaded revisions2')
+    expect(filters).toHaveTextContent('Counts and filters cover loaded pages only')
+    await userEvent.click(screen.getByRole('button',{name:/Revision 2:/}))
+    const parentLink=await screen.findByRole('link',{name:/Compare with recorded parent/})
+    expect(parentLink).toHaveAttribute('href','/admin/runs/'+encodeURIComponent(run.run_id)+'/branches/compare?'+
+      new URLSearchParams({branch:branch.branch_id,a:'revision-one',b:'revision-two'}).toString())
+    await userEvent.selectOptions(within(filters).getByLabelText('Revision kind'),'initial_run_creation')
+    expect(screen.queryByRole('button',{name:/Revision 2:/})).not.toBeInTheDocument()
+    expect(filters).toHaveTextContent('The open detail is outside the filter')
+    expect(parentLink).toBeInTheDocument()
+    await userEvent.selectOptions(within(filters).getByLabelText('Revision origin'),'shared')
+    expect(filters).toHaveTextContent('No loaded revision matches the filters.')
+    await userEvent.click(within(filters).getByRole('button',{name:'Clear history filters'}))
+    expect(screen.getByRole('button',{name:/Revision 2:/})).toBeInTheDocument()
+    expect(api.listSavedRevisionHistory).toHaveBeenCalledTimes(1)
+    expect(api.compareSavedRevisions).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
   it('opens an older Saved Revision as read-only without issuing a mutation', async () => {
     renderPanel()
 
@@ -534,6 +558,24 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
   })
 
+  it('rejects a preview with the right revision ID but a conflicting hash or owner',async()=>{
+    api.getSavedRevision.mockResolvedValueOnce({...detail,content_hash:'foreign-hash'})
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:/Revision 1:/}))
+    expect(await screen.findByText('The preview returned a mismatched Saved Revision identity.')).toBeInTheDocument()
+    expect(screen.queryByRole('button',{name:'Restore current Branch from this revision'})).not.toBeInTheDocument()
+    expect(api.getSavedRevisionRestorePreflight).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+  })
+  it('rejects older pages with foreign branch identity even if the newest page is valid',async()=>{
+    api.listSavedRevisionHistory.mockResolvedValueOnce({...history,saved_revisions:[revisions[1]],has_more_older:true,next_before_sequence:2})
+      .mockResolvedValueOnce({...history,branch_id:'foreign',saved_revisions:[revisions[0]]})
+    renderPanel()
+    await userEvent.click(await screen.findByRole('button',{name:'Load older revisions'}))
+    expect(await screen.findByText('Saved Revision history returned a mismatched Run or Branch identity.')).toBeInTheDocument()
+    expect(screen.queryByRole('table',{name:'Saved Revision history table'})).not.toBeInTheDocument()
+    expect(api.getSavedRevision).not.toHaveBeenCalled()
+  })
   it('does not permit Branch creation from a read-only Run', async () => {
     renderPanel({ run: { ...run, read_only: true } })
     await userEvent.click(await screen.findByRole('button', { name: /Revision 1:/ }))
@@ -684,7 +726,7 @@ describe('SavedRevisionHistoryPanel', () => {
         run_id: run.run_id,
         branch_id: branch.branch_id,
         saved_head_revision_id: 'revision-three',
-        saved_revisions: [revisions[1], revisionThree],
+        saved_revisions: [{...revisions[1],is_branch_head:false}, revisionThree],
         total_count: 3,
         has_more_older: true,
         next_before_sequence: 2

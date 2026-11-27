@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 31 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 32 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -65,10 +65,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Estoril](#estoril-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Houston](#houston-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Monte-Carlo](#monte-carlo-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Barcelona](#barcelona-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 31 zpracovaných ročníků; 28 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 32 zpracovaných ročníků; 29 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -105,7 +106,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 29 | Estoril 2024 | HOTOVO (nominální rozsah) |
 | 30 | Houston 2024 | HOTOVO (nominální rozsah) |
 | 31 | Monte-Carlo 2024 | HOTOVO (nominální rozsah) |
-| 32 | Barcelona 2024 | NEZAHÁJENO |
+| 32 | Barcelona 2024 | HOTOVO (nominální rozsah) |
 | 33 | Munich 2024 | NEZAHÁJENO |
 | 34 | Bucharest 2024 | NEZAHÁJENO |
 
@@ -156,6 +157,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#estoril-2024) | Millennium Estoril Open | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; dešťové odklady R32 odděleny |
 | [2024](#houston-2024) | Fayez Sarofim & Co. U.S. Men's Clay Court Championship | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu |
 | [2024](#monte-carlo-2024) | Rolex Monte-Carlo Masters | ATP Masters 1000 | 2024-04-06–2024-04-07 | 2024-04-07–2024-04-14 | HOTOVO v nominálním rozsahu; souběh Q2/R64 a R64/R32 |
+| [2024](#barcelona-2024) | Barcelona Open Banc Sabadell | ATP 500 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; souběh R64/R32 16.4. |
 
 ## Wimbledon 2024
 
@@ -3913,6 +3915,117 @@ I/T/H/D/R/B/P doloženy. E* chybí původní acceptance lists/DS, přesná hodin
 - MTC24-12: [ATP 10.4., dvě deštěm přerušené R32](https://www.atptour.com/en/news/monte-carlo-2024-wednesday-rain-delay), [ATP 11.4., dohrávky a R16](https://www.atptour.com/en/news/rune-dimitrov-monte-carlo-2024-thursday).
 - MTC24-13: [dobový přepis listin a seedů](https://www.livetennis.it/post/410245/masters-1000-monte-carlo-ecco-le-teste-di-serie-sorteggio-del-tabellone-principale-venerdi-pomeriggio-si-parte-sabato-con-le-qualificazioni-e-gia-domenica-con-il-main-draw/), SE 0/0, nedělní start.
 
+
+## Barcelona 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/Z s označenými mezerami). Rešerše 2026-11-27. První 48členný ATP 500 v registru. Výsledkové originály Main/Q přímo ATP a stejné kopie RFET vizuálně ověřeny, stejně jako poslední OOP. Hlavní los má chybný měnový symbol $, korigovaný explicitními EUR údaji ATP Media Notes a předturnajového přehledu. Originální předstartovní OOP všech dnů nezískány.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Barcelona Open Banc Sabadell / Trofeu Comte de Godó, 71. ročník celkově | BCN24-2/5/9 |
+| Kategorie / ATP ID | ATP 500 / 425 | BCN24-1/2 |
+| Dějiště | Real Club de Tenis Barcelona 1899, Barcelona, Španělsko | BCN24-4/5 |
+| Povrch | venkovní červená antuka | BCN24-1/2 |
+| Časové pásmo | Europe/Madrid, CEST UTC+02:00 během turnaje | lokalita a datum |
+| Ředitel | David Ferrer | BCN24-3 |
+| ATP supervisors | Cedric Mourier / Carlos Sanches | BCN24-1/2/3 |
+| Tour manager / referee | Arnau Brugues / Javier Moreno | BCN24-3 |
+| Měna | EUR (chybný $ v Main originálu) | BCN24-2/4/5 |
+
+ATP Media Notes počítají 56. ročník otevřené éry (1968–2019, od 2021), nikoli všechny ročníky od založení. 71. ročník označuje logo Q originálu a sekundární historie. Míče a detail sheet nezískány. Nepřenášet 32členný formát Barcelona 2025 zpět do roku 2024.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-18 | BCN24-6 |
+| Q rank date | 2024-03-25, pravidlový referenční den | odvozeno §7.03, originální Q listina chybí |
+| Nominální Main deadline | 2024-03-18 17:00 CET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-03-25 17:00 CET (12:00 US Eastern) | odvozeno §7.03 |
+| Podmíněná A+ WC deadline | 2024-04-12 16:00 CEST (10:00 US Eastern) | odvozeno §7.12 A.2 |
+| Main los | 2024-04-13, plán ATP, hodina nezískána | BCN24-5 |
+| Q los | nejpozději před Q1 2024-04-13, čas neověřen | BCN24-2/7 |
+| Q | 2024-04-13–14 od 10:00 CEST podle ATP | BCN24-5/7 |
+| Main | 2024-04-15–21 | BCN24-1/4/5 |
+| Singlové finále | 2024-04-21 ne před 16:00 CEST | BCN24-3/4 |
+
+Dobový přepis Main listiny 11.4. uvádí cutoff 72, výsledkový Main originál 92 v obou cutoff polích, Q originál Sanchez Izquierdo 285. Odlišné publikované stavy nesjednocovat. Přesné uzávěrky odvozené, nikoli nezávislé timestampy. Po změně amerického času 10.3. a před evropskou změnou 31.3. je rozdíl pěti hodin, v dubnu šesti. Původní acceptance lists a konkrétní hodiny obou losů nezískány.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-04-13 | 12 |
+| Q2 | 2024-04-14 | 6 |
+| R64 | 2024-04-15–16 | 16 (9+7 v dobových denních soupisech) |
+| R32 | 2024-04-16–17 | 16 (5+11 uzlů v dobových soupisech) |
+| R16 | 2024-04-18 | 8 |
+| QF | 2024-04-19 | 4 |
+| SF | 2024-04-20 | 2 |
+| F | 2024-04-21 | 1 |
+
+ATP Preview potvrzuje Q 13.–14.4. a Main 15.–21.4. Dvě kvalifikační kola 12+6 potvrzují Q originál a dobové denní archivy. Dobový mediální přepis programu BCN24-8 uvádí pondělí 9 R64, úterý 7 R64 a 5 R32, středu 11 R32 uzlů (včetně walkover Davidovich Fokina–Machac). Ve čtvrtek všech osm R16, poté 4/2/1. Výsledkový denní soupis BCN24-10 nezávisle kontroluje okna. Přesný počet skutečně rozehraných zápasů se může lišit od nominálního počtu uzlů; walkover nesnižuje plánovaný počet. Původní samostatné OOP prvních dnů nezískány, H* denní split a překryv R64/R32 rekonstruovány z dobového programu/výsledků; nepovažovat všechny údaje za primárně potvrzený původní plán. Originální OOP finále vydaný 20.4. v 20:17 přímo stanoví nedělní singlové finále ne před 16:00, po doubles. Q 2 + Main 7 dní bez překryvu, 9 kalendářních dní, 47+18=65 nominálních zápasů. Q probíhá během závěrečného víkendu Monte-Carlo.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 64 / 48 | 24 / 24 (6 sekcí po 4) |
+| Základní DA při všech rezervách | 36 | 20 |
+| SE rezerva | 1 | 0 |
+| WC | 4 běžné + 1 podmíněná A+ | 4 |
+| Řádné Q postupy | 6 | 6 |
+| Nasazení | 16 | 12 |
+| BYE | 16, všichni původní seedy | 0 |
+| Kola / zápasy | 6 / 47 | 2 / 18 |
+| Formát | BO3 setů | BO3 setů |
+
+Dobový §7.08 B.1.b pro ATP 500/48 hráčů výslovně 36–38 DA, 6 Q, 4–5 WC, 0–1 SE; při využití všech rezerv 36+1+4+1+6=48. Pátá WC pouze pro způsobilého A+ hráče z regionu dle §7.12 A.2. Přepis listiny BCN24-6 uvádí 36 DA, 4 WC, 6 Q, 0 SE: 46 obsazených míst v mezistavu, nikoli plánovaný 46členný pavouk. Uvolněná rezervovaná místa přecházejí na další způsobilé vstupy. ATP Day 1 uvádí čtyři WC, šest řádných Q, jeden LL a jednoho PR, nikoli využitou A+ WC. Konečný Main originál má WC 6/46/52/60, Q 28/29/37/38/53/59, LL 11/49, 16 BYE. Po odstoupení seed 1 Alcaraze přemístěn Marozsan [17] na pozici 1 a LL Grenier obsadil jeho původní místo; po odstoupení seed 7 Khachanova LL Vavassori zdědil pozici 49 včetně BYE. Původní seed list 1–16 se zachovává v patičce, dva vyškrtnuté; označení 17 ani LL s BYE nemění nominálních 16 seedů a 16 BYE. PR Nadal náleží mezi DA. Main 16+16+8+4+2+1=47, 48 účastníků.
+
+Q §7.08 E.1: 20 DA+4 WC=24; Q originál vizuálně potvrzuje všech 12 seedů, WC 3/6/11/14, Alt 18. Šest sekcí po čtyřech, dvě nasazené pozice v každé, šest vítězů. 12+6=18 zápasů. Dva následní LL nepřidávají řádná Q postupová místa. Obě kopie Q jsou výsledkové, nikoli nezávislé předstartovní losy.
+
+### 5. Dobová pravidla
+
+§7.03/7.08 B/E/7.09/7.10/7.12/7.15–18/7.20, verze VII z 16.2.2024 (BCN24-11). 48členný Main na 64 pozicích, 16 seedů a 16 BYE; 24členná kvalifikace má šest samostatných sekcí. Jedna SE rezerva, čtyři WC a podmíněná A+ WC; žádná ATP 250 LE. BO3 tiebreak sety. Bodová tabulka pro ATP 500 s 48 hráči se liší od ATP 500 s 32: Q postup 16, Q2 prohra 8, Q1 0 (BCN24-2/12), Main R32 25 a R64 0. ATP Media Notes potvrzují výjimku první prohry po BYE v R32: 0 bodů místo 25, peněžní odměna tím není změněna. Q body přičítat k Main dle předpisu. #NextGenATP jména v Media Notes nejsou dokladem speciálního vstupu: Landaluce WC, Shang řádný Q, Fils běžný DA; přesná individuální alokace případných týdenních NG rezerv Munich/Bucharest otevřena, neodvozovat další slot v Barceloně.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 500 | 488390 |
+| Finalista | 1 | 330 | 260475 |
+| SF | 2 | 200 | 135125 |
+| QF | 4 | 100 | 70550 |
+| R16 | 8 | 50 | 37175 |
+| R32 | 16 | 25 (0 při první prohře po BYE) | 20350 |
+| R64 | 16 | 0 | 10855 |
+| Q postupující | 6 | 16 | 0 samostatně |
+| Q2 prohra | 6 | 8 | 5700 |
+| Q1 prohra | 12 | 0 | 3255 |
+
+Main originál (ATP i RFET kopie) má v tabulce a financial commitment chybný symbol $, nikoli jiná čísla. ATP Media Notes 15.4. přímo označují jednotlivé částky EUR a předturnajový ATP přehled potvrzuje totéž, včetně celkové dotace 2782960 EUR a commitment 2938695 EUR. Q originál používá EUR. P bez hvězdičky, měnový rozpor vyřešen primárními dokumenty. Nominální Main 2097995 EUR, Q 73260 EUR, celkem 2171255 EUR; 48 Main příjemců a 18 nepostupujících Q příjemců. Celková turnajová dotace a commitment nejsou singlový součet. Historické LL payout nezahrnuty.
+
+### 7. Kontrola a mezery
+
+I/T/D/B/P doloženy. H* původní denní rozpisy mimo finále nedohledány; okna a denní rozdělení z dobového programu a výsledků, walkover oddělen. E* chybí originální acceptance lists/DS, časy losů a ročníkový doklad Q rank date; uzávěrky odvozené. R* týdenní NG alokace otevřena. Z* ATP Main/Q, obě RFET kopie a poslední OOP (vše po jedné straně) vizuálně ověřeny; ATP notes str. 2 a únorový rulebook textově, screenshoty 403. Nevymýšlet SHA-256. Kontroly 48/24, 16/12 seedů, 16/0 BYE, 6 řádných Q, 47/18 utkání, kvót a finančních součtů prošly. Další Munich, Bucharest 2024. Bez runtime změn.
+
+### 8. Zdroje (BCN24)
+
+- BCN24-1: [ATP výsledkový Main](https://www.protennislive.com/posting/2024/425/mds.pdf), [RFET kopie](https://www.rfet.es/descargar/file-competicion-cuadros/19750_Cuadro/2024-barcelona-open-banc-sabadell-individual.pdf), obě vizuálně, chybné $.
+- BCN24-2: [ATP výsledkový Q](https://www.protennislive.com/posting/2024/425/qs.pdf), [RFET kopie](https://www.rfet.es/descargar/file-competicion-cuadros/19744_Cuadro/2024-barcelona-open-banc-sabadell-previa.pdf), obě vizuálně; 12 seedů, 4 WC, EUR a 16/8/0.
+- BCN24-3: [ATP OOP finále](https://www.protennislive.com/posting/2024/425/op.pdf), vizuálně, vydání 20.4. 20:17, neděle 16:00 nejdříve.
+- BCN24-4: [ATP Preview & Day 1 15.4.](https://www.atptour.com/-/media/02b75ee196ac47bab051b508841d7ac6.pdf), str. 2 text, screenshot 403; EUR, body a BYE výjimka, vstupy.
+- BCN24-5: [ATP termíny a prize money](https://www.atptour.com/en/news/barcelona-2024-atp-500-history-draw-schedule), indexovaný text, přímé otevření 403.
+- BCN24-6: [dobový přepis Main listiny 11.4.](https://www.tennisteen.it/entry-list/atp/24150-atp-entry-list-15-21-aprile-2024.html), rank date, cutoff a kvóty.
+- BCN24-7: [Q1 13.4.](https://en.tennistemple.com/competitions/barcelona/2024/orderofplay/2024-04-13), [Q2 14.4.](https://en.tennistemple.com/competitions/barcelona/2024/orderofplay/2024-04-14), výsledkové dny.
+- BCN24-8: [dobový denní program a výsledky](https://tennisuptodate.com/atp/2024-barcelona-open-atp-tournament-centre-results-schedules-tv-guide-and-prize-money-breakdown-for-rafael-nadals-return), 9+7 R64, 5+11 R32, rozpis R16; obsahuje následné výsledkové aktualizace, nikoli kompletní původní OOP.
+- BCN24-9: [ročníkový přehled 2024](https://en.wikipedia.org/wiki/2024_Barcelona_Open_Banc_Sabadell), 71. ročník, místo a celková dotace.
+- BCN24-10: [dobový denní soupis](https://canaltenis.com/resultados-atp-barcelona-2024/), [Tennis Abstract](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024-0425%2FBarcelona), kontrola výsledků, nikoli originální OOP.
+- BCN24-11: [ATP Competition VII 16.2.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_16feb.pdf), §7.08 B/E, §7.09, tištěné str. 146/149–150, text, screenshot 403.
+- BCN24-12: [ATP ranking update 2024](https://www.atptour.com/en/news/2024-rankings-points-update), zvláštní řádek ATP 500 48 Draw, shoda s Q originálem.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3940,3 +4053,4 @@ I/T/H/D/R/B/P doloženy. E* chybí původní acceptance lists/DS, přesná hodin
 | Estoril 2024 | H*/E*/R*/Z* | původní R16 OOP před deštěm, acceptance listy/DS, časy losování a NG alokace; Main i Q finanční tabulky primárně vizuálně ověřeny |
 | Houston 2024 | H*/E*/R*/P*/Z* | originální Q PDF/DS a acceptance listy, přesné časy losů a finále, úplný Main OOP a vizuální kontrola Main, NG alokace týdne Marrakech/Estoril/Houston; Q 3550/1935 USD sekundární shoda |
 | Monte-Carlo 2024 | E*/Z* | originální acceptance lists/DS, přesný čas Q losu a model míčů; Main/Q finanční tabulky a všech 9 OOP primárně vizuálně ověřeny |
+| Barcelona 2024 | H*/E*/R*/Z* | originální denní OOP mimo finále, acceptance lists/DS, Q rank date a časy losů, týdenní NG alokace; Main/Q ceny primárně ověřeny, chybný $ v Main vyřešen explicitním ATP EUR rozpisem |

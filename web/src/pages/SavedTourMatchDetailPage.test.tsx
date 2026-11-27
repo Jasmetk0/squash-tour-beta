@@ -107,6 +107,54 @@ describe('exact historical Edition match replay',()=>{
     state.mode='checkpoint';view.refresh()
     expect(screen.queryByRole('region',{name:'Skóre archivované výměny'})).not.toBeInTheDocument()
   })
+  it('separates match sections without changing the exact replay bookmark or refetching',async()=>{
+    mount(url+'&rally=26&q=keep')
+    expect(await screen.findByText('Rally 26/30')).toBeInTheDocument()
+    const nav=screen.getByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    const stats=screen.getByRole('region',{name:'Statistics'})
+    expect(stats).toHaveTextContent('Total archived rallies: 30')
+    expect(stats).toHaveTextContent('Verified page range: 26–30 / 30')
+    expect(stats).toHaveTextContent('These are not whole-match statistics.')
+    expect(stats).toHaveTextContent('Rallies won by A (A)5')
+    expect(stats).toHaveTextContent('Rallies won by B (B)0')
+    expect(screen.queryByRole('region',{name:'Archived rally scoreboard'})).not.toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole('button',{name:'Overview'}))
+    expect(screen.getByRole('region',{name:'Overview'})).toHaveTextContent(
+      'Verified rally archive is available.')
+    expect(screen.getByText('3-2')).toBeInTheDocument()
+    await userEvent.click(within(nav).getByRole('button',{name:'Course & Replay'}))
+    expect(screen.getByText('Rally 26/30')).toBeInTheDocument()
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+    const href=screen.getByRole('link',{name:'Back to Edition results'}).getAttribute('href')!
+    expect(href).toContain('q=keep')
+    expect(href).toContain('revision=old-rev')
+    expect(href).not.toContain('rally=')
+  })
+  it('keeps localized statistics unavailable when no archive is recorded',async()=>{
+    state.language='cs'
+    api.getSavedTourMatchDetail.mockResolvedValue({
+      ...fixture(0),replay_status:'unavailable',total_rallies:0,
+      has_more:false,rallies:[],player_a_id:null,player_b_id:null
+    })
+    mount()
+    const nav=await screen.findByRole('navigation',{name:'Oddíly zápasu'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistiky'}))
+    const stats=screen.getByRole('region',{name:'Statistiky'})
+    expect(stats).toHaveTextContent('Pro tuto stránku nejsou ověřené výměny dostupné.')
+    expect(stats).not.toHaveTextContent('Archivovaných výměn celkem')
+    expect(stats).not.toHaveTextContent('Výměny s vítězem A')
+    expect(api.getSavedTourMatchDetail).toHaveBeenCalledTimes(1)
+  })
+  it('hides all match sections when source context becomes invalid',async()=>{
+    const view=mount()
+    const nav=await screen.findByRole('navigation',{name:'Match sections'})
+    await userEvent.click(within(nav).getByRole('button',{name:'Statistics'}))
+    expect(screen.getByRole('region',{name:'Statistics'})).toBeInTheDocument()
+    state.mode='checkpoint';view.refresh()
+    expect(screen.queryByRole('navigation',{name:'Match sections'})).not.toBeInTheDocument()
+    expect(screen.queryByRole('region',{name:'Statistics'})).not.toBeInTheDocument()
+  })
   it('rejects two independently valid but discontinuous cached archive pages',async()=>{
     api.getSavedTourMatchDetail.mockImplementation((
       _run:string,_branch:string,_rev:string,_season:number,

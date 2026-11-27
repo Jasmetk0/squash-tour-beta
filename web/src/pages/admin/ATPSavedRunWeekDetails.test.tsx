@@ -43,6 +43,7 @@ describe('ATP Saved reference mapping review',()=>{
     expect(api.getSavedATPRunWeekPreview).not.toHaveBeenCalled()
     await load()
     const review=await screen.findByRole('region',{name:'Reference mapping review'})
+    expect(review.closest('[data-run-navigation-readonly]')).not.toBeNull()
     expect(review).toHaveTextContent('Verified source dates in preview3')
     expect(review).toHaveTextContent('Mapped inside Run horizon2')
     expect(review).toHaveTextContent('Review flags inside horizon1')

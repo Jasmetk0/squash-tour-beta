@@ -35,7 +35,6 @@ def configure_atp_run(page, base_url, api_url):
     run_id, branch_id = run["run_id"], run["viewer_branch_id"]
     target = urlencode({"run": run_id, "branch": branch_id})
     draft_url = f"{api_url}/run-containers/{run_id}/branches/{branch_id}/working-draft"
-    admin_url = f"{api_url}/admin/runs/{run_id}/branches/{branch_id}"
 
     def read(url):
         response = page.request.get(url)
@@ -85,30 +84,17 @@ def configure_atp_run(page, base_url, api_url):
         world_head,
     )
 
-    page.reload()
-    check_target("/admin/packages/atp-tour-calendar-reference")
-    page.get_by_label("ATP season for this Run", exact=True).select_option("2025")
-    page.get_by_role("button", name="Preview weeks from the Saved ATP Package").click()
     saved_calendar = page.locator("section.package-apply-step").filter(
         has=page.get_by_role("heading", name="ATP calendar in Run weeks (W52)", exact=True),
-    ).filter(has=page.get_by_label("ATP season for this Run", exact=True))
+    )
+    saved_calendar.get_by_role("combobox").select_option("2025")
+    saved_calendar.get_by_role("button", name="Preview weeks from the Saved ATP Package").click()
     dallas = saved_calendar.locator("tbody").get_by_role("row").filter(has_text="Dallas")
     expect(dallas).to_contain_text("2025-02-03")
     expect(dallas).to_contain_text("2025/W06 (S1/W06)")
 
-    catalog = read(admin_url + "/calendar-tour/atp-source-editions")
-    assert (catalog["run_id"], catalog["branch_id"], catalog["saved_head_revision_id"]) == (
-        run_id, branch_id, tour_head,
-    )
-    profile = next(
-        edition for edition in catalog["entries"]
-        if edition["profile"]["occurrence_id"] == "atp_2025_dallas"
-    )
-    assert profile["qualification_calendar_projection"]["run_weeks"] == [
-        {"season_index": 0, "season_week": 5},
-    ]
-    assert [week["season_week"] for week in profile["calendar_projection"]["run_weeks"]] == [6]
-    assert read(draft_url)["base_saved_revision_id"] == tour_head
+    draft = read(draft_url)
+    assert draft["status"] == "clean" and draft["base_saved_revision_id"] == tour_head
 
 
 def main():

@@ -585,9 +585,10 @@ def deterministic_ids(seed: str):
 def serve(database: Path, args, *, stage: str):
     from tests.api.test_saved_revision_history_api import ApiServer
 
-    # Same sequence for both variants: they issue the same Saves in the same
-    # order, so equal history digests prove equal sporting results.
-    deterministic_ids(f"{args.sha256}:{args.scenario}:{stage}")
+    # One sequence for both variants (the historical "harness" seed string):
+    # they issue the same Saves in the same order, so equal history digests
+    # prove equal sporting results, and earlier harness runs stay reproducible.
+    deterministic_ids(f"{args.sha256}:{args.scenario}:harness:{stage}")
     log = []
     profiler = None
     if args.mode in {"profile", "alloc"}:

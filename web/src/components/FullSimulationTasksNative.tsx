@@ -131,11 +131,49 @@ export function NativeTaskActions({task}:{task:ServerTask}){
 
 export function NativeTaskSummary({task}:{task:ServerTask}){
  const cs=useLanguage().language==='cs'
- const query=useQuery({queryKey:['native-full-simulation-summary',task.run_id,task.branch_id,task.parent_command_id],queryFn:()=>nativeTaskSummary(task),retry:false})
- return <div>{query.isPending&&<p>{cs?'Načítám uložený souhrn…':'Loading stored summary…'}</p>}
+ const [search,setSearch]=useState('')
+ const [page,setPage]=useState(1)
+ const query=useQuery({queryKey:['native-full-simulation-summary',task.run_id,task.branch_id,task.parent_command_id,
+  task.state,task.current_week,task.execution_calendar,task.original_command.expected_revision_id],
+  queryFn:()=>nativeTaskSummary(task),retry:false})
+ const s=query.isSuccess&&!query.isFetching?query.data:null
+ const week=(w:{season_index:number;week:number})=>`S${w.season_index+1} W${String(w.week).padStart(2,'0')}`
+ const reason=s?.reason==='run_completed'?(cs?'Run dokončen':'Run completed'):
+  s?.reason==='week_target_reached'?(cs?'Dosažen cílový týden':'Target week reached'):
+  (cs?'Ukončeno operátorem':'Stopped by operator')
+ const filtered=s?.completed_tournaments.filter(id=>id.toLowerCase().includes(search.trim().toLowerCase()))??[]
+ const pageSize=20,pages=Math.max(1,Math.ceil(filtered.length/pageSize)),visiblePage=Math.min(page,pages)
+ return <section aria-label={cs?'Uložený nativní souhrn':'Stored native summary'}>
+  {(query.isPending||query.isFetching)&&<p role="status">{cs?'Načítám uložený souhrn…':'Loading stored summary…'}</p>}
   {query.error&&<p role="alert">{formatApiError(query.error)}</p>}
-  {query.data&&<><p>{cs?'Sportovní příkazy úlohy':'Task sporting commands'}: {query.data.persisted_child_command_count}</p>
-   <p>{cs?'Potvrzené turnaje odehrané touto úlohou':'Confirmed tournaments played by this task'}: {query.data.completed_tournaments.length}</p>
-   <p>Saved Revision: <code>{query.data.terminal_saved_revision_id}</code></p></>}
- </div>
+  <button type="button" disabled={query.isFetching} onClick={()=>{void query.refetch()}}>{cs?'Obnovit souhrn':'Refresh summary'}</button>
+  {s&&<>
+   <h5>{reason}</h5>
+   <p className="status">{cs?'Zachyceno při ukončení úlohy, nikoli podle dnešního stavu větve. Save zůstává samostatný.':
+    'Frozen at task termination, not the current Branch state. Save remains separate.'}</p>
+   <dl>
+    <dt>{cs?'Skutečný začátek':'Actual start'}</dt><dd>{week(s.start_week)}</dd>
+    <dt>{cs?'Skutečný konec':'Actual end'}</dt><dd>{week(s.end_week)}</dd>
+    <dt>{cs?'Původní konec Runu':'Original Run end'}</dt><dd>{week(s.original_final_week)}</dd>
+    <dt>{cs?'Cílový týden':'Target week'}</dt><dd>{week(s.effective_target_week)}</dd>
+    <dt>{cs?'Sportovní příkazy úlohy':'Task sporting commands'}</dt><dd>{s.persisted_child_command_count}</dd>
+    <dt>{cs?'Počáteční Saved Revision':'Initial Saved Revision'}</dt><dd><code>{s.initial_saved_revision_id}</code></dd>
+    <dt>{cs?'Koncová Saved Revision':'Terminal Saved Revision'}</dt><dd><code>{s.terminal_saved_revision_id}</code></dd>
+   </dl>
+   <h6>{cs?'Potvrzené turnaje odehrané touto úlohou':'Confirmed tournaments played by this task'}: {s.completed_tournaments.length}</h6>
+   {s.completed_tournaments.length>0?<><label>{cs?'Hledat ID Edition':'Find Edition ID'}
+    <input type="search" value={search} onChange={e=>{setSearch(e.target.value);setPage(1)}}/></label>
+    {filtered.length>0?<ul aria-label={cs?'Potvrzené Edition':'Confirmed Editions'}>{filtered.slice((visiblePage-1)*pageSize,visiblePage*pageSize).map(id=>
+     <li key={id}><code>{id}</code></li>)}</ul>:<p>{cs?'Žádné odpovídající Edition.':'No matching Editions.'}</p>}
+    <p>{cs?'Zobrazené výsledky':'Matching results'}: {filtered.length} / {s.completed_tournaments.length}</p>
+    {pages>1&&<div>
+     <button type="button" disabled={visiblePage===1} onClick={()=>setPage(visiblePage-1)}>{cs?'Předchozí':'Previous'}</button>
+     {' '}{visiblePage} / {pages}{' '}
+     <button type="button" disabled={visiblePage===pages} onClick={()=>setPage(visiblePage+1)}>{cs?'Další':'Next'}</button>
+    </div>}
+   </>:<p>{cs?'Nejsou zaznamenány potvrzené Edition této úlohy.':'No confirmed Editions are recorded for this task.'}</p>}
+   <p className="status">{cs?'Názvy turnajů, vítězové, změny rankingu a sledované události nejsou v nativním souhrnu dostupné.':
+    'Tournament names, winners, ranking changes and watched events are unavailable in the native summary.'}</p>
+  </>}
+ </section>
 }

@@ -97,6 +97,47 @@ validation and is kept, so the parent remains the bottleneck.
 Pause/Stop and Task Center semantics are unchanged: a slot step is still atomic
 and the parent installs nothing until every result is accepted.
 
+## Concurrency, recovery and bounds (27 November 2026, review follow-up)
+
+Work's review of `6e0810b` reproduced a real defect: `run()` used one concrete
+pool, but a later failure called `discard()` on whatever pool was installed
+*then*. After the first failure had replaced the pool, a late failure of an
+older batch shut down the healthy replacement. The pool now works in
+**generations**:
+
+- `run()` returns a `ProcessBatch` bound to the exact `_Generation` that
+  accepted its submissions. `discard(batch)` retires only that generation
+  (compare-and-set). A late failure of an old batch is counted as
+  `stale_discards` and changes nothing.
+- A new generation is created only after every process of a retiring one has
+  been terminated **and joined**. A batch that arrives meanwhile is computed in
+  its own request thread (`rejected_replacing`), so this process never has more
+  than `workers` live match workers, also during a replacement.
+- Lock order is always `generation.lock` → executor lock. The executor lock is
+  held only for bookkeeping, never while a match is simulated or a result is
+  awaited; `generation.lock` only for the few-millisecond submission.
+- **Admission** is bounded per process: at most `max_in_flight` submitted,
+  unfinished match requests (default `max(64, 16 × workers)`). A batch that does
+  not fit is computed sequentially in the parent (`rejected_full`), nothing is
+  queued unboundedly.
+- **Deadline**: `min(30 s, 5 s + 0.5 s × matches)` per admitted batch (21 s for
+  32 matches) instead of 600 s. After it, the unfinished work is cancelled, the
+  generation retired (terminate, join ≤ 5 s, kill), the batch recomputed
+  sequentially, and for 30 s the pool is not used (`rejected_cooldown`). A
+  stalled pool can therefore add at most deadline + cleanup before the original
+  sequential computation; it does not promise that the sequential computation
+  itself fits the client's 120 s.
+- `ExecutorUnavailable` (closed, full, replacing, cooling down) means nothing
+  was submitted: sequential, nothing retired. Every other failure retires the
+  batch's own generation and recomputes sequentially, as before.
+- Installation is atomic (`install_executor_if_absent`), `uninstall` removes
+  only its own executor, and `close()` retires the current generation: an
+  in-flight batch then falls back sequentially and no process is left.
+
+`executor.stats()` and `slot_batch.batch_counters()` expose admitted,
+declined (per reason), retired, stale, timeouts, the maximum in-flight count,
+the maximum live workers seen, total executor seconds and the longest batch.
+
 ## Measurement procedure
 
 Linux container, Intel Xeon @ 2.10 GHz, 4 cores (1 thread per core), 15 GiB
@@ -232,8 +273,106 @@ matches. This upper bound is Lab/isolated only.
 - Existing global-slot, group, walkover and appended-slot verification HTTP
   suites were also run with `BETA_ENGINE_MATCH_WORKERS=2` (see the PR).
 
+## Independent parity and fault evidence (27 November 2026)
+
+Linux, 4 vCPU, Python 3.12.3 (lock `fast-ci-linux`), `PYTHONHASHSEED` unset.
+`src` tree of the candidate `7d437ac5`; `buuk` `29784d5` in a separate worktree.
+
+**Full-output parity** (`scripts/verify_slot_worker_parity.py`, real uvicorn
+HTTP + SQLite, **Saved v2**, two Runs in one server process sharing one pool, a
+public fork as second Branch, a barrier-synchronized concurrent step: next-slot
+on A, on the fork and on Run B while two readers GET; every read must equal the
+complete view before or after; Save, restart, finals, Restore to the partial
+slot with an exact retry and a replay of the rest, restart). Input
+`parity.db` SHA-256 `455009b5eb1fce5e18b6d54cb6415e49899d0dc284a3e0d4adf20a5ed74c7356`
+(`prepare`: `ready(52)` as Saved v2). Product ids are deterministic in the
+scenario (`deps.uuid4` sequence; the concurrent step creates none).
+
+| variant | digest of receipts, views, full sporting checkpoints, Saved history + audit | executor batches / matches / fallbacks |
+| --- | --- | --- |
+| `buuk` 29784d5 | `25fcca23d5d4e653…` | – |
+| candidate, no pool (two runs) | `25fcca23d5d4e653…` ×2 | 0 / 0 / 0 |
+| candidate, 2 workers | `25fcca23d5d4e653…` | 28 / 77 / 0 |
+| candidate, 3 workers | `25fcca23d5d4e653…` | 28 / 77 / 0 |
+
+Part digests are equal too (receipts `4b323334`, views `db0dce2b`, Saved
+`ca3e5cf9`, sporting `e58e3d1e`). The sporting part contains every stored
+`MatchResult` with seed and log anchor, the state effects, side play, Health,
+revisions and their order.
+
+**Sequential replay in a new process** (`replay`, workers unset, another
+`PYTHONHASHSEED`): the cold inspection of the finished Run A database (both
+Branches) re-verifies every stored match by a sequential MatchEngine replay
+of the stored inputs. `buuk`, candidate without pool and candidate with
+3 workers: `e8480e26eb03bc16…` each. This is independent of the parent's
+validation of worker responses.
+
+**Faults over HTTP** (`tests/api/test_slot_worker_faults_http.py`): the same
+scenario with a shared 2-worker pool that crashes its workers, returns a
+duplicate, a missing and a foreign response, reorders valid responses and
+stalls past its deadline, batch after batch, then recovers: every part equal
+to the sequential run, ≥ 5 fallbacks, healthy batches after recovery, one
+timeout, never more than 2 live workers, no process left; a new sequential
+process verifies both final databases identically.
+
+**Replay memo** (`tests/domain/test_slot_match_replay_memo.py`): cache order,
+entries and byte accounting equal to the verbatim per-match implementation for
+mixed hit/miss, eviction of a later item by an earlier miss, refresh then
+eviction, duplicate keys (now computed once), an over-limit entry and a cap
+nothing fits; every hit is a fresh decode.
+
+**Wrapper cost and temporary memory** (`scripts/profile_slot_batch_memory.py`,
+32 wide-slot ko128 matches inside one replay memo scope, medians of 3; heap from
+`tracemalloc` in a separate pass):
+
+| variant | wall s | CPU s | heap retained MiB | temporary peak outside memo/results MiB | process max RSS MiB |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| `buuk` per-match memo (inlined) | 3.42 | 3.40 | 85.0 | 0.5 | 212 |
+| batch, no pool | 3.07 | 3.05 | 84.9 | 0.5 | 217 |
+| batch, 2 workers | 2.44 | 1.68 | 105.4 | 0.5 | 270 |
+| batch, 3 workers | 1.86 | 1.58 | 105.6 | 0.5 | 554* |
+| two concurrent requests, 2 workers | 6.05 | 4.57 | 106.0 (+106 other request) | – | 554* |
+
+\* high-water mark of the process, never decreases. Without a pool the batch
+wrapper costs nothing measurable (the first variant also pays warm-up). With a
+pool the returned results are decoded from JSON and do not share
+sub-objects the engine shares, about +20 MiB per 32 matches while the slot's
+results are alive. The memo itself is unchanged (15.8 MiB accounted).
+
+## Pending: Windows reference PC (4 cores, 8 GB)
+
+Not run here (no Windows host). Linux `spawn` proves only the start method.
+From a clean checkout of the candidate HEAD in PowerShell (Python 3.11/3.12,
+the pinned `windows-preview-win-amd64.lock.txt`):
+
+```powershell
+py -3.12 -m venv .venv; .\.venv\Scripts\Activate.ps1
+python -m pip install --only-binary=:all: --require-hashes -r .github\requirements\windows-preview-win-amd64.lock.txt
+python -m pip install -e . --no-deps
+$env:PYTHONHASHSEED = "0"
+# 1. Component and HTTP evidence of the pool on Windows
+python -m pytest -q tests\domain\test_match_worker_generations.py tests\domain\test_slot_match_batch.py tests\domain\test_slot_match_replay_memo.py tests\api\test_slot_match_workers.py
+python -m pytest -q tests\api\test_slot_worker_faults_http.py
+# 2. Output parity (Saved v2, two Runs, two Branches, concurrency, Restore, fork)
+python scripts\verify_slot_worker_parity.py prepare --database work\parity.db
+$sha = (Get-FileHash work\parity.db -Algorithm SHA256).Hash.ToLower()
+foreach ($w in 0,2,3) { python scripts\verify_slot_worker_parity.py scenario --input work\parity.db --sha256 $sha --workers $w --out "work\parity-$w.json" }
+# 3. Whole-operation A/B against buuk (A B B A in worktrees; mandatory equality)
+python scripts\profile_slot_match_workers.py prepare --editions 8 --database work\e8x8.db
+$sha8 = (Get-FileHash work\e8x8.db -Algorithm SHA256).Hash.ToLower()
+python scripts\profile_slot_match_workers.py ab --a 29784d51d01d9d747705be8abae30f0c82706c1e --b HEAD --input work\e8x8.db --sha256 $sha8 --steps 3 --b-workers 0,2,3 --out work\ab-e8x8-windows
+```
+
+Report: the three `digest` values of step 2 (must be equal to each other and
+to the Linux values in the PR), the step 3 table (`execute`, Save, restart,
+whole operation, parent/child CPU, group peak RSS) and Task Manager's peak
+commit of the process group. Only then can the owner decide about `auto`.
+
 ## Limitations
 
+- The deadline, admission and cooldown values are defaults chosen from the
+  measured 0.15–0.3 s per match (about 3× margin); they are not tuned on
+  Windows.
 - Windows was not run. The reference PC (4 cores, 8 GB) should repeat the
   `ab` command with `--b-workers 3`; the extra 170–300 MiB were measured on Linux.
 - One round per variant; A/B noise is about ±3 % on this host.

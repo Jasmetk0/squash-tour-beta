@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 36 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 37 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -70,10 +70,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Bucharest](#bucharest-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Madrid](#madrid-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Rome](#rome-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Geneva](#geneva-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 36 zpracovaných ročníků; 33 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 37 zpracovaných ročníků; 34 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -115,7 +116,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 34 | Bucharest 2024 | HOTOVO (nominální rozsah) |
 | 35 | Madrid 2024 | HOTOVO (nominální rozsah) |
 | 36 | Rome 2024 | HOTOVO (nominální rozsah) |
-| 37 | Geneva 2024 | NEZAHÁJENO |
+| 37 | Geneva 2024 | HOTOVO (nominální rozsah) |
 | 38 | Lyon 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -170,6 +171,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#bucharest-2024) | Țiriac Open | ATP 250 | 2024-04-14–2024-04-15 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 15.4. |
 | [2024](#madrid-2024) | Mutua Madrid Open | ATP Masters 1000 | 2024-04-22–2024-04-23 | 2024-04-24–2024-05-05 | HOTOVO v nominálním rozsahu; 4.5. bez mužské dvouhry |
 | [2024](#rome-2024) | Internazionali BNL d'Italia | ATP Masters 1000 | 2024-05-06–2024-05-07 | 2024-05-08–2024-05-19 | HOTOVO v nominálním rozsahu; 18.5. bez mužské dvouhry |
+| [2024](#geneva-2024) | Gonet Geneva Open | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | HOTOVO v nominálním rozsahu; souběh 19.5., sobotní F |
 
 ## Wimbledon 2024
 
@@ -4513,6 +4515,117 @@ I/T/D/R/B doloženy. H* Q1/Q2, první den Main a okna kol potvrzeny, původní R
 - ROM24-16: [Borsa&Finanza dobový kompletní rozpis cen a bodů](https://borsaefinanza.it/internazionali-roma-2024-quanto-guadagna-chi-vince/), Q 11820/6130, vložený nulový řádek Q3 není důkaz třetího kola.
 - ROM24-17: [ročníková finanční tabulka](https://en.wikipedia.org/wiki/2024_Italian_Open_(tennis)), [IA Tennis Academy 2024](https://iatennis.net/the-2024-italian-open-results/), shoda Q. Dobový ATP předpis viz IW24-11/14 a SCL24-18.
 
+## Geneva 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/Z s označenými mezerami). Rešerše 2026-11-27. Obě původní ATP finanční tabulky (Main i Q) dostupné jako indexovaný text z archivu pořadatele. Obrazové vykreslení selhalo; nezávislé dobové zdroje potvrzují strukturu a časový plán. Nedělní souběh Q2 a Main a sobotní finále jsou ročníkový plán, nikoli následky deště.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Gonet Geneva Open | GVA24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 322 | GVA24-4/5 |
+| Ročník | 2024, devátý od obnovení v roce 2015 | GVA24-4/12 |
+| Dějiště | Tennis Club de Genève, Parc des Eaux-Vives, Ženeva, Švýcarsko | GVA24-6/7 |
+| Povrch | venkovní červená antuka | GVA24-1/2/3/7 |
+| Časové pásmo | Europe/Zurich, CEST UTC+02:00 | lokalita a datum |
+| Ředitel | Thierry Grin | GVA24-9/10 |
+| ATP supervisors | Carlos Sanches / Ahmed Abdel-Azim | GVA24-9/10 |
+| Tour manager / referee | Nicolas Rakitin / Stephane Apostolou | GVA24-9/10 |
+| Měna | EUR | GVA24-1/2/3 |
+
+Míče a původní detail sheet nezískány. ATP kalendář z března 2023 již uvádí nedělní start Geneva i Lyon 19.5. (GVA24-5); sobotní konec potvrzuje konkrétní dobový program a losy. ITF datum od 20.5. je odlišný evidenční týden, nikoli důkaz změny nedělního Main startu.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-04-22 | GVA24-8 |
+| Nominální Main deadline | 2024-04-22 18:00 CEST (12:00 US Eastern) | odvozeno z §7.03 |
+| Q referenční rank date | 2024-04-29, odvozeno; původní listina chybí | §7.03 |
+| Nominální Q deadline | 2024-04-29 18:00 CEST (12:00 US Eastern), odvozeno | §7.03 |
+| Nominální LE deadline | 2024-05-16 16:00 CEST (10:00 US Eastern) | odvozeno §7.04 |
+| Main los | 2024-05-17, přesná hodina neověřena | GVA24-11 |
+| Q los | před zahájením Q1 2024-05-18, přesná hodina neověřena | GVA24-3/7 |
+| Q | 2024-05-18–19, program od 11:00 CEST | GVA24-7/13 |
+| Main | 2024-05-19–25 | GVA24-1/2/7 |
+| Singlové finále | 2024-05-25 15:00 CEST, nejdříve | GVA24-7/10 |
+
+Oznámení pořadatele 23.4. (GVA24-6) uvádí 18 DA, původní cutoff 51, tři rezervovaná místa souhrnně popsaná jako special exemptions, tři WC a čtyři Q. Dobový přepis entry listu (GVA24-8, 15.5.) uvádí 18 DA, SE 0 a LE 0; to není důkaz absence rezerv. Dobový obecný předpis je rozlišuje na dvě SE a jednu LE. Přesné znění originální listiny/DS nedostupné. Předstartovní Main los v obou cutoff polích uvádí Coria 83 (GVA24-1); odlišit od původního 51. Q originál uvádí Gakhov 272 jako poslední DA, původní Q cutoff a skutečná uzávěrka nejsou samostatně doloženy.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-05-18 | 8 |
+| Q2 | 2024-05-19 | 4 |
+| R32 | 2024-05-19–21 | 12 (2+6+4, rekonstruováno) |
+| R16 | 2024-05-21–22 | 8 (2+6 uzlů, rekonstruováno) |
+| QF | 2024-05-23 | 4 |
+| SF | 2024-05-24 | 2 |
+| F | 2024-05-25 | 1 |
+
+Dobový program GVA24-7 plánuje Q1 sobota, Q2 a první Main kolo neděle, první kolo pondělí, druhé kolo úterý/středa, QF čtvrtek, SF pátek a F sobota. Přesnější dobový přehled GVA24-14 uvádí v úterý R32 i R16. Nedělní úplný výsledkový program GVA24-13 zachycuje čtyři Q2 a dva Main R32, pondělní předem zveřejněný program GVA24-15 a ATP Day 2 potvrzují šest R32. Zbývající čtyři R32 patří do úterního plánu; úterní historický program vykazuje navíc dva R32 přenesené z pondělí. Dva R16 uzly jsou evidované v úterý, jeden jako walkover; zbývajících šest připadá na středu. Jde o rekonstrukci uzlů, nikoli nezávisle získaný původní úterní OOP. Originální revidovaný čtvrteční OOP GVA24-9 (vydán 22.5. ve 22:47) dokládá čtyři QF a pokračování jednoho nedokončeného R16. Revidovaný sobotní OOP GVA24-10 (24.5. 21:15) obsahuje odložené SF Cobolli–Ruud od 10:30 a F nejdříve v 15:00; nominální SF zůstává pátek. Q dva dny + Main sedm dní, jeden společný den 19.5., osm kalendářních dní celkem; 12+27=39 nominálních uzlů. Déšť a walkover nemění kapacitu, plán kol ani datum nominálního finále.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 (4 sekce po 4) |
+| DA | 18 základních, až 21 při nevyužití rezerv | 14 |
+| SE | 2 rezervy | 0 |
+| LE | 1 rezerva | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 (seedy 1–4) | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 18+2+1+3+4=28. Předstartovní Main GVA24-1 uvádí všech osm seedů, čtyři BYE, tři WC (Djokovic, Murray, Shapovalov), čtyři Q placeholdery a 21 zbývajících účastníků bez zvláštního označení; nevyvozovat individuální PR/LE pouze z absence značky. Q GVA24-3 uvádí všech osm seedů, dva WC (Jebens, Paul), tři náhradníky Alt a čtyři čtyřčlenné sekce. Alt obsazují existující kapacitu 14 míst mimo WC, nikoli další místa. Main 12+8+4+2+1=27 a Q 8+4=12. Výsledkový Main GVA24-2 obsahuje walkover v R16 a čtyři řádné kvalifikanty; plánované počty zůstávají stejné.
+
+### 5. Dobová pravidla
+
+ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03, verze viz MPL24-5/6 a IW24-11/14. Obvyklé dvě SE rezervy a jedna LE rezerva se při nevyužití vracejí DA; souhrnný pojem tři special exemptions v oznámení pořadatele neprokazuje tři samostatné SE podle předpisu. Q 14 DA/2 WC, osm seedů, čtyři kvalifikanti, žádná třetí Q fáze. Main osm seedů a čtyři BYE. První prohra po BYE přináší 0 ATP bodů; Q postup 13, Q2 prohra 7, Q1 prohra 0. Body za kvalifikaci přistupují k bodům z Main. Walkover není odehraný zápas. Bez přenosu pravidel Grand Slamu, ATP 500 A+ WC nebo týdenní alokace tří souběžných ATP akcí (zde dobový kalendář uvádí Geneva a Lyon).
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 88125 |
+| Finalista | 1 | 165 | 51400 |
+| SF | 2 | 100 | 30220 |
+| QF | 4 | 50 | 17510 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 10165 |
+| R32 | 12 | 0 | 6215 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3105 |
+| Q1 prohra | 8 | 0 | 1695 |
+
+Main částky přímo v GVA24-1/2, Q v GVA24-3, nikoli převzaté z jiného turnaje. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Výpočet zahrnuje 28 Main příjemců a 12 nepostupujících Q příjemců. Financial commitment 651865 EUR v originálech není mužský singlový součet. Sekundární souhrnné dotace 562815/579320 EUR nejsou touto singlovou tabulkou; rozdíl souhrnů zde neřešen a nemění doložené jednotlivé částky.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B/P doloženy. H* okna a nominální dny Q/QF/SF/F ověřeny, R32 2+6+4 a R16 2+6 uzlů transparentně rekonstruovány, plný předdešťový OOP chybí. E* rank date Main a původní cutoff z dobové listiny a oznámení, původní acceptance lists/DS, Q cutoff v původní listině a přesné časy losů nezískány. Z* primární pořadatelské Main/Q PDF, oznámení a oba revidované OOP dostupné textově; pokusy o obrazovou kontrolu skončily 502/timeout, ATP Day 2 403 a přímé ATP draw PDF nedostupné. Nevymýšlet PDF SHA-256. Kontrola kvót, 28/16, 8/8 seedů, čtyř Main BYE, čtyř postupujících, 27/12 uzlů a finančních součtů prošla. Další Lyon 2024, stejný nedělní start v dobovém kalendáři. Bez runtime změn.
+
+### 8. Zdroje (GVA24)
+
+- GVA24-1: [originální ATP předstartovní Main u pořadatele](https://gonetgenevaopen.com/wp-content/uploads/2024/05/MDS.pdf), str. 1 indexovaný text.
+- GVA24-2: [originální ATP výsledkový Main u pořadatele](https://gonetgenevaopen.com/wp-content/uploads/2024/05/MDS-6.pdf), str. 1 text.
+- GVA24-3: [originální ATP předstartovní Q u pořadatele](https://gonetgenevaopen.com/wp-content/uploads/2024/05/QS.pdf), str. 1 text, Q ceny a body.
+- GVA24-4: [Tennis Europe ročníkový záznam](https://www.tenniseurope.org/calendarevent/73816/Gonet-Geneva-Open), ATP 322 a Main data; [ATP identita](https://www.atptour.com/en/tournaments/Geneva/322/overview), nikoli aktuální finanční údaje.
+- GVA24-5: [ATP kalendář verze březen 2023](https://www.atptour.com/-/media/files/updated-2024-atp-tour-calendar-march-2023.pdf), indexovaný záznam Geneva/Lyon 19.5.; konkrétní sobotní finále potvrzeno GVA24-7/10.
+- GVA24-6: [oznámení pořadatele 23.4.2024](https://www.gonet.ch/uploads/2024-4-23-9-42-9-980-4U1nDfN09pNtfcI7spUh.pdf), str. 1 text, DA/rezervy/cutoff.
+- GVA24-7: [Flash Léman dobový program](https://flashleman.ch/le-tournoi-de-tennis-gonet-geneva-open-dans-le-magnifique-cadre-du-parc-des-eaux-vives/), Q a Main souběh, pátek SF, sobota F 15:00.
+- GVA24-8: [TennisTeen 15.5.2024, přepis acceptance listu](https://www.tennisteen.it/entry-list/atp/24168-atp-entry-list-20-26-maggio-2024.html).
+- GVA24-9: [originální revidovaný OOP 23.5.](https://gonetgenevaopen.com/wp-content/uploads/2024/05/OP-8.pdf), str. 1 text.
+- GVA24-10: [originální revidovaný OOP 25.5.](https://gonetgenevaopen.com/wp-content/uploads/2024/05/OP-11.pdf), str. 1 text.
+- GVA24-11: [ATP zpráva o losu 17.5.](https://www.atptour.com/en/news/djokovic-geneva-2024-draw).
+- GVA24-12: [ročníková identita](https://en.wikipedia.org/wiki/2024_Geneva_Open), historie a devátý novodobý ročník; [ITF ročníkový záznam](https://www.world.tennis/en/tournament/geneva/sui/2024/m-250-sui-2024-001/draws-and-results/).
+- GVA24-13: TennisTemple ročníkové denní programy [Q1 18.5.](https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-18), [19.5.](https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-19), [20.5.](https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-20), [21.5.](https://en.tennistemple.com/competitions/geneva-2024/31553/orderofplay/2024-05-21); skutečné výsledky odděleně od nominálního plánu.
+- GVA24-14: [dobový přehled rozpisu](https://gotennisracquets.com/geneva-open-2024/), indexovaný text, úterý R32/R16; nepoužívat pro nominální kapacitu či odměny.
+- GVA24-15: [nedělní předem zveřejněný pondělní program](https://tennisuptodate.com/atp/2024-geneva-open-monday-schedule-including-return-of-andy-murray-with-novak-djokovic-tie-in-his-sights), šest R32; [ATP Day 2 Media Notes](https://www.atptour.com/-/media/f11ca67985b94a4dbd96c4a3b7546ebf.pdf), text str. 1–3.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -4545,3 +4658,4 @@ I/T/D/R/B doloženy. H* Q1/Q2, první den Main a okna kol potvrzeny, původní R
 | Bucharest 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance lists, Q rank date/cutoff a čas losu, původní R16 split/OOP, týdenní Q NG alokace; Main EUR ověřeno primárně, Q 3105/1695 EUR ze tří ročníkových přehledů, TennisTemple zastaralá tabulka |
 | Madrid 2024 | H*/E*/Z* | původní denní splity R128/R64/R32, acceptance lists/DS, časy losů a model míčů; Main/Q ceny primární, konflikt souhrnného commitment 9249713/9017445 EUR bez vlivu na singlové ceny |
 | Rome 2024 | H*/E*/P*/Z* | originální Q los/finanční tabulka (11820/6130 EUR sekundární shoda), Q acceptance list/DS, Q rank date/cutoff, časy losů, původní denní R64/R32/QF OOP; originální Main acceptance list a oba Main losy vizuálně ověřeny |
+| Geneva 2024 | H*/E*/Z* | původní pre-rain OOP, originální acceptance lists/DS, Q rank date/cutoff a hodiny losů, vizuální ověření originálů; Main/Q finanční tabulky primárně textově doloženy |

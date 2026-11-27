@@ -68,6 +68,59 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     expect(screen.queryAllByText(/First recorded title/).filter(n => n.tagName !== 'OPTION')).toHaveLength(0)
   })
 
+  it('charts only recorded personal ranking highs from the selected historical response', async () => {
+    const record=(week:number,rank:number,fingerprint:string)=>({
+      kind:'career_high_ranking',effective_week:{season_index:0,week},
+      detail:{rank,points:100},source:{kind:'published_ranking',fingerprint}
+    })
+    const early=record(3,120,f),later=record(10,45,e)
+    const historical={...data(5,[early],[]),
+      overview:{...data(5,[early],[]).overview,career_high_rank:120,current_rank:140}}
+    const present={...data(12,[early,later],[]),
+      overview:{...data(12,[early,later],[]).overview,career_high_rank:45,current_rank:80}}
+    api.getSavedPlayerCareer.mockImplementation(async (_r,_b,_p,asOf)=>
+      asOf===5?historical:present)
+    mount()
+    const chart=await screen.findByRole('region',{name:'Recorded ranking highs'})
+    expect(within(chart).getByRole('img',{name:'Personal ranking records chart'})).toBeInTheDocument()
+    expect(chart).toHaveTextContent('Displayed records: 2/2')
+    expect(chart).toHaveTextContent('not weekly ranking history')
+    fireEvent.click(within(chart).getByText('Chart values and sources'))
+    expect(within(chart).getByRole('table',{name:'Ranking record values'})).toHaveTextContent('#45')
+    fireEvent.change(screen.getByLabelText(/View as of week/),{target:{value:'5'}})
+    fireEvent.click(screen.getByRole('button',{name:'Apply'}))
+    await screen.findByText(/Shown as of week no\. 5/)
+    const earlier=screen.getByRole('region',{name:'Recorded ranking highs'})
+    expect(earlier).toHaveTextContent('Displayed records: 1/1')
+    expect(earlier).not.toHaveTextContent('#45')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(2)
+    fireEvent.click(screen.getByRole('button',{name:'Return to present'}))
+    await screen.findByText(/Shown as of week no\. 12/)
+    expect(screen.getByRole('region',{name:'Recorded ranking highs'})).toHaveTextContent('Displayed records: 2/2')
+  })
+
+  it('does not chart a non-improving or mismatched personal record series', async () => {
+    const records=[120,150].map((rank,i)=>({
+      kind:'career_high_ranking',effective_week:{season_index:0,week:i+3},
+      detail:{rank,points:0},source:{kind:'published_ranking',fingerprint:i?e:f}
+    }))
+    const source=data(12,records,[])
+    api.getSavedPlayerCareer.mockResolvedValue({...source,overview:{...source.overview,career_high_rank:120}})
+    mount()
+    const chart=await screen.findByRole('region',{name:'Recorded ranking highs'})
+    expect(chart).toHaveTextContent('Verified ranking records for the chart are unavailable.')
+    expect(within(chart).queryByRole('img')).not.toBeInTheDocument()
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
+  it('shows a localized empty chart rather than a fabricated ranking', async () => {
+    api.getSavedPlayerCareer.mockResolvedValue(data(12,[turnPro],[]))
+    mount(true)
+    const chart=await screen.findByRole('region',{name:'Zaznamenaná rankingová maxima'})
+    expect(chart).toHaveTextContent('Ověřená rankingová maxima pro graf nejsou dostupná.')
+    expect(within(chart).queryByRole('img')).not.toBeInTheDocument()
+  })
+
   it('filters the timeline by type and renders Czech', async () => {
     api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
     mount(true)

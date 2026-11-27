@@ -59,15 +59,80 @@ export function AdminRankingCandidatesPage(): JSX.Element {
       {seasonIndex !== undefined && !selected ? <p role="alert">{t('No candidate is stored for this week.')}</p>
         : selected ? <SectionCard title={weekLabel(selected.snapshot.week, language)}>
           <p>{t('Unpublished candidate')} ({t('Not Official Ranking')}) · {t('Best')} {selected.snapshot.policy.best_n}</p>
-          {selected.snapshot.rows.length === 0
+          <CandidateReview key={JSON.stringify([runId,branchId,selected.fingerprint])} candidate={selected}/>
+          <RankingCandidateInputsPanel
+            key={'inputs/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
+            runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
+          <RankingSources
+            key={'sources/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
+            runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
+          <details><summary>{t('Technical provenance')}</summary>
+            <p>{t('Policy')}: {selected.snapshot.policy.policy_id}</p>
+            <p style={{ overflowWrap: 'anywhere' }}>{t('Fingerprint')}: {selected.fingerprint}</p>
+            <p>{t('Commands')}: {selected.command_ids.join(', ') || t('No command receipt')}</p>
+          </details>
+        </SectionCard>
+        : data.candidates.length > 0 && <p>{t('Select a week to inspect its ranking.')}</p>}
+    </div>}
+  </main>
+}
+
+function CandidateReview({candidate}:{candidate:import('../api/rankingCandidates').RankingCandidateDetail}):JSX.Element {
+  const {language}=useLanguage(),cs=language==='cs',t=(value:string)=>tr(value,language)
+  const [search,setSearch]=useState('')
+  const [page,setPage]=useState(0)
+  const [zeroOnly,setZeroOnly]=useState(false)
+  const rows=candidate.snapshot.rows
+  const totals=rows.reduce((acc,row)=>{
+    acc.points+=row.points
+    acc.zeroes+=row.disciplinary_zeros?.length??0
+    for(const result of row.counted_results){
+      acc.qualification+=result.qualification_points
+      acc.main+=result.main_points
+    }
+    return acc
+  },{points:0,qualification:0,main:0,zeroes:0})
+  const validTotals=Object.values(totals).every(Number.isSafeInteger)&&totals.points===totals.qualification+totals.main
+  const matched=rows.filter(row=>row.player_id.toLowerCase().includes(search.trim().toLowerCase())&&
+    (!zeroOnly||Boolean(row.disciplinary_zeros?.length)))
+  const size=50,pages=Math.max(1,Math.ceil(matched.length/size))
+  const current=Math.min(page,pages-1),visible=matched.slice(current*size,(current+1)*size)
+  return <section aria-label={cs?'Kontrola nepublikovaného kandidáta':'Unpublished candidate review'} data-run-navigation-readonly>
+    <h4>{cs?'Kontrola bodů kandidáta':'Candidate points review'}</h4>
+    <p className="status">{cs?'Pouze tento nepublikovaný výpočet, nikoli Official Ranking nebo změny proti předchozí publikaci.':
+      'This unpublished calculation only, not Official Ranking or movement against a previous publication.'}</p>
+    <p>{cs?'Klasifikované řádky kandidáta':'Candidate ranked rows'}: {rows.length}</p>
+    {validTotals&&<dl>
+      <dt>{cs?'Součet bodů všech řádků':'Total points across all rows'}</dt><dd>{totals.points}</dd>
+      <dt>{cs?'Započtené body kvalifikace':'Counted qualification points'}</dt><dd>{totals.qualification}</dd>
+      <dt>{cs?'Započtené body hlavní soutěže':'Counted main points'}</dt><dd>{totals.main}</dd>
+      <dt>{cs?'Aktivní disciplinární nuly v řádcích':'Active disciplinary zeros in rows'}</dt><dd>{totals.zeroes}</dd>
+    </dl>}
+    {validTotals&&totals.points>0&&<div>
+      <meter min={0} max={totals.points} value={totals.qualification}
+        aria-label={cs?'Podíl započtených kvalifikačních bodů':'Share of counted qualification points'}/>
+      <p className="status">{cs?'Podíl kvalifikačních bodů ze součtu kandidáta':'Qualification share of candidate points'}:
+        {' '}{(100*totals.qualification/totals.points).toFixed(1)} %</p>
+    </div>}
+    <p className="status">{cs?'Nezapočtené výsledky a jejich důvody vyžadují samostatné doložené zdroje níže.':
+      'Uncounted results and their reasons require the separate stored sources below.'}</p>
+    {rows.length>0&&<div>
+      <label>{cs?'Hledat ID hráče':'Find player ID'}<input type="search" value={search}
+        onChange={e=>{setSearch(e.target.value);setPage(0)}}/></label>
+      <label><input type="checkbox" checked={zeroOnly} onChange={e=>{setZeroOnly(e.target.checked);setPage(0)}}/>
+        {cs?'Jen řádky s disciplinární nulou':'Only rows with disciplinary zeros'}</label>
+      <p>{cs?'Odpovídající řádky':'Matching rows'}: {matched.length} / {rows.length}</p>
+      {matched.length===0&&<p>{cs?'Filtru neodpovídá žádný řádek.':'No rows match the filter.'}</p>}
+    </div>}
+          {rows.length === 0
             ? <EmptyState message={t('This candidate contains no ranked players.')} />
-            : <div className="table-scroll" role="region" aria-label={t('Candidate ranking table')} tabIndex={0}>
+            : visible.length>0&&<div className="table-scroll" role="region" aria-label={t('Candidate ranking table')} tabIndex={0}>
               <table><thead><tr><th>{t('Rank')}</th><th>{t('Player ID')}</th><th>{t('Points')}</th><th>{t('Counted results')}</th></tr></thead>
-                <tbody>{selected.snapshot.rows.map(row => <tr key={row.player_id}>
+                <tbody>{visible.map(row => <tr key={row.player_id}>
                   <td>{row.rank}</td><td>{row.player_id}</td><td>{row.points}
                     {Boolean(row.disciplinary_zeros?.length) && <details>
                       <summary>{row.disciplinary_zeros?.length} {t('active disciplinary zeros')}</summary>
-                      <p>{Math.max(0, selected.snapshot.policy.best_n - (row.disciplinary_zeros?.length ?? 0))} {t('tournament result slots available.')}</p>
+                      <p>{Math.max(0, candidate.snapshot.policy.best_n - (row.disciplinary_zeros?.length ?? 0))} {t('tournament result slots available.')}</p>
                       <ul>{row.disciplinary_zeros?.map(z =>
                         <li key={z.zero_id}>{z.zero_id}: {t('effective')} {weekLabel(z.effective_week, language)} {t('for')} {z.duration_weeks} {t('weeks')}.</li>)}</ul>
                     </details>}
@@ -84,21 +149,13 @@ export function AdminRankingCandidatesPage(): JSX.Element {
                 </tr>)}</tbody>
               </table>
             </div>}
-          <RankingCandidateInputsPanel
-            key={'inputs/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
-            runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
-          <RankingSources
-            key={'sources/' + runId + '/' + branchId + '/' + selected.snapshot.week.season_index + '/' + selected.snapshot.week.week + '/' + selected.fingerprint}
-            runId={runId} branchId={branchId} week={selected.snapshot.week} fingerprint={selected.fingerprint} />
-          <details><summary>{t('Technical provenance')}</summary>
-            <p>{t('Policy')}: {selected.snapshot.policy.policy_id}</p>
-            <p style={{ overflowWrap: 'anywhere' }}>{t('Fingerprint')}: {selected.fingerprint}</p>
-            <p>{t('Commands')}: {selected.command_ids.join(', ') || t('No command receipt')}</p>
-          </details>
-        </SectionCard>
-        : data.candidates.length > 0 && <p>{t('Select a week to inspect its ranking.')}</p>}
+
+    {pages>1&&<div className="actions">
+      <button type="button" disabled={current===0} onClick={()=>setPage(current-1)}>{cs?'Předchozí':'Previous'}</button>
+      <span>{current+1} / {pages}</span>
+      <button type="button" disabled={current===pages-1} onClick={()=>setPage(current+1)}>{cs?'Další':'Next'}</button>
     </div>}
-  </main>
+  </section>
 }
 
 function RankingSources({ runId, branchId, week, fingerprint }: {

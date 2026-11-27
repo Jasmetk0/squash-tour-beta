@@ -1,4 +1,4 @@
-import { screen, waitFor } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
@@ -373,6 +373,29 @@ describe('SavedRevisionHistoryPanel', () => {
     expect(api.restoreSavedRevision).not.toHaveBeenCalled()
   })
 
+  it('filters only loaded revision evidence and offers an exact recorded-parent compare link',async()=>{
+    api.getSavedRevision.mockResolvedValue({...detail,...revisions[1]})
+    renderPanel()
+    const filters=await screen.findByRole('region',{name:'Loaded history filters'})
+    expect(filters).toHaveTextContent('Loaded revisions2')
+    expect(filters).toHaveTextContent('Counts and filters cover loaded pages only')
+    await userEvent.click(screen.getByRole('button',{name:/Revision 2:/}))
+    const parentLink=await screen.findByRole('link',{name:/Compare with recorded parent/})
+    expect(parentLink).toHaveAttribute('href','/admin/runs/'+encodeURIComponent(run.run_id)+'/branches/compare?'+
+      new URLSearchParams({branch:branch.branch_id,a:'revision-one',b:'revision-two'}).toString())
+    await userEvent.selectOptions(within(filters).getByLabelText('Revision kind'),'initial_run_creation')
+    expect(screen.queryByRole('button',{name:/Revision 2:/})).not.toBeInTheDocument()
+    expect(filters).toHaveTextContent('The open detail is outside the filter')
+    expect(parentLink).toBeInTheDocument()
+    await userEvent.selectOptions(within(filters).getByLabelText('Revision origin'),'shared')
+    expect(filters).toHaveTextContent('No loaded revision matches the filters.')
+    await userEvent.click(within(filters).getByRole('button',{name:'Clear history filters'}))
+    expect(screen.getByRole('button',{name:/Revision 2:/})).toBeInTheDocument()
+    expect(api.listSavedRevisionHistory).toHaveBeenCalledTimes(1)
+    expect(api.compareSavedRevisions).not.toHaveBeenCalled()
+    expect(api.restoreSavedRevision).not.toHaveBeenCalled()
+    expect(api.createRunBranchFromSavedRevision).not.toHaveBeenCalled()
+  })
   it('opens an older Saved Revision as read-only without issuing a mutation', async () => {
     renderPanel()
 

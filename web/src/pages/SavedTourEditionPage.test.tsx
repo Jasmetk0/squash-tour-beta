@@ -282,6 +282,58 @@ describe('Saved Edition detail',()=>{
     expect(within(document.getElementById('saved-results-qualification')!).getByText('3-1')).toBeInTheDocument()
     expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
   })
+  it('shows actual first-round pairs, placeholders and published rounds without invented links',async()=>{
+    const source=fixture(true)
+    source.draw={
+      schema_version:'viewer_tournament_draw.v1',product_run_id:'run-a',
+      viewer_branch_id:'ancestor',event_id:'event-x',revision_count:0,
+      main:{draw_type:'main',section_id:null,bracket_size:4,slots:[
+        {slot_index:1,entrant_kind:'player',player_id:'P1',placeholder_id:null,seed_number:1,entry_status:null},
+        {slot_index:2,entrant_kind:'qualifier_placeholder',player_id:null,placeholder_id:'Q-slot-1',seed_number:null,entry_status:null},
+        {slot_index:3,entrant_kind:'player',player_id:'P2',placeholder_id:null,seed_number:null,entry_status:'wild_card'},
+        {slot_index:4,entrant_kind:'bye',player_id:null,placeholder_id:null,seed_number:null,entry_status:null}
+      ]},qualification_sections:[]
+    }
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    await userEvent.click(screen.getByRole('button',{name:'Visual overview'}))
+    const pair1=screen.getByRole('region',{name:'Pair 1'})
+    expect(pair1).toHaveTextContent('P1')
+    expect(pair1).toHaveTextContent('Q-slot-1')
+    expect(pair1).toHaveTextContent('Seed 1')
+    const pair2=screen.getByRole('region',{name:'Pair 2'})
+    expect(pair2).toHaveTextContent('P2')
+    expect(pair2).toHaveTextContent('wild card')
+    expect(pair2).toHaveTextContent('BYE')
+    const results=screen.getByRole('region',{name:'Published results by round'})
+    expect(within(results).getByRole('region',{name:'Round 2'})).toHaveTextContent('3-0')
+    expect(within(results).queryByRole('region',{name:'Round 1'})).not.toBeInTheDocument()
+    expect(results).toHaveTextContent('Feeder links and missing matches are not reconstructed.')
+    expect(within(results).getByRole('link',{name:'Match detail'})).toHaveAttribute('href',expect.stringContaining('drawView=visual'))
+    expect(screen.queryByRole('table',{name:'Saved draw main'})).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Table view'}))
+    expect(screen.getByRole('table',{name:'Saved draw main'})).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('restores qualification and visual view from the exact Edition URL',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount('/admin/runs/run-a/tour/calendar/event-x?branch=branch-a&revision=rev-old&season=2&tab=draw&drawPhase=qualification&drawView=visual&country=CZE')
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Qualification'})).toHaveAttribute('aria-pressed','true')
+    expect(screen.getByRole('button',{name:'Visual overview'})).toHaveAttribute('aria-pressed','true')
+    const results=screen.getByRole('region',{name:'Published results by round'})
+    expect(results).toHaveTextContent('3-1')
+    expect(results).not.toHaveTextContent('3-0')
+    const href=within(results).getByRole('link',{name:'Match detail'}).getAttribute('href')!
+    for(const v of ['/matches/q-final?','drawPhase=qualification','drawView=visual','tab=draw','revision=rev-old','country=CZE'])
+      expect(href).toContain(v)
+    const back=screen.getByRole('link',{name:/Back to calendar/}).getAttribute('href')!
+    expect(back).not.toContain('drawPhase')
+    expect(back).not.toContain('drawView')
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('fails closed for cross-revision and mismatched event',async()=>{
     api.getSavedTourEdition.mockResolvedValue({...fixture(),saved_revision_id:'new-rev'})
     mount()

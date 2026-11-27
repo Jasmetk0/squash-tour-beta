@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 34 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 35 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -68,10 +68,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Barcelona](#barcelona-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Munich](#munich-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Bucharest](#bucharest-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Madrid](#madrid-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 34 zpracovaných ročníků; 31 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 35 zpracovaných ročníků; 32 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -111,7 +112,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 32 | Barcelona 2024 | HOTOVO (nominální rozsah) |
 | 33 | Munich 2024 | HOTOVO (nominální rozsah) |
 | 34 | Bucharest 2024 | HOTOVO (nominální rozsah) |
-| 35 | Madrid 2024 | NEZAHÁJENO |
+| 35 | Madrid 2024 | HOTOVO (nominální rozsah) |
+| 36 | Rome 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -163,6 +165,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#barcelona-2024) | Barcelona Open Banc Sabadell | ATP 500 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; souběh R64/R32 16.4. |
 | [2024](#munich-2024) | BMW Open | ATP 250 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; poslední ročník ATP 250 |
 | [2024](#bucharest-2024) | Țiriac Open | ATP 250 | 2024-04-14–2024-04-15 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 15.4. |
+| [2024](#madrid-2024) | Mutua Madrid Open | ATP Masters 1000 | 2024-04-22–2024-04-23 | 2024-04-24–2024-05-05 | HOTOVO v nominálním rozsahu; 4.5. bez mužské dvouhry |
 
 ## Wimbledon 2024
 
@@ -4269,6 +4272,120 @@ I/T/D/B doloženy. H* plánovaný pondělní souběh a R32 4+8 potvrzeny, původ
 - BUC24-16: [Open Era Rankings 2024](https://openerarankings.com/Draws?DrawType=QS&tID=25310), nepřímý LL payout, nikoli primární nominální rozpis.
 - BUC24-17: [ATP předturnajový přehled Madrid 2024](https://www.atptour.com/en/news/madrid-2024-atp-masters-1000-history-draw-schedule), následující ročník. Dobová pravidla viz SCL24-18, LCB24-19, ROT24-16.
 
+
+## Madrid 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/Z s doplňkovými omezeními). Rešerše 2026-11-27. Originální ATP Main (obě strany), Q a poslední OOP vizuálně ověřeny. Únorový i dubnový plán pořadatele vizuálně ověřeny na první straně. Primární ročníkové ceny, odlišné od amerických Masters, a konkrétní chyby sekundárních zdrojů zdokumentovány.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Mutua Madrid Open, mužská dvouhra, 22. ročník | MAD24-1/8 |
+| Kategorie / ATP ID | ATP Masters 1000 / 1536 | MAD24-1/2/8 |
+| Dějiště | Caja Mágica, Madrid, Španělsko | MAD24-4/6 |
+| Povrch | červená antuka, venkovní s možností zastřešení | MAD24-1/2/8 |
+| Časové pásmo | Europe/Madrid, CEST UTC+02:00 během soutěže | lokalita a datum |
+| Ředitel | Feliciano López | MAD24-3 |
+| ATP supervisors | HJ Ochs, J. Mandl, C. Mourier, A. Egli | MAD24-1/2/3 |
+| ATP tour managers / referees | T. Schrader, D. Pedraza / I. Martinez, R. De Haro | MAD24-3 |
+| Měna | EUR | MAD24-1/2 |
+
+Míče a detail sheet nezískány. Nezaměňovat s WTA 1000 (ID 1038) nebo Madrid Challenger. Rok 2024 již druhý rozšířený 96členný ročník po změně v roce 2023, potvrzeno pořadatelem 26.3. (MAD24-6).
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-25 | MAD24-5/6 |
+| Q rank date | 2024-04-01 | MAD24-5 |
+| Nominální Main deadline | 2024-03-25 17:00 CET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-04-01 18:00 CEST (12:00 US Eastern) | odvozeno §7.03 |
+| Main los | 2024-04-22, hodina neověřena | MAD24-4/9 |
+| Q los | nejpozději před Q1 2024-04-22, přesný čas a den neověřeny | MAD24-2/10 |
+| Q | 2024-04-22–23; start session 10:00/11:00 CEST podle pozdějšího plánu | MAD24-4/7/10 |
+| Main | 2024-04-24–2024-05-05 | MAD24-1/4/7 |
+| Singlové finále | 2024-05-05 ne před 18:30 CEST | MAD24-3/7 |
+
+Pořadatel zveřejnil 26.3. 79 přijatých hráčů, původní Main cutoff Darderi 75. Dobový přepis MAD24-5 potvrzuje cutoff 75, Q 127 a obě rank dates. Výsledkový Main má Galan 84 v obou cutoff polích, Q originál Droguet 149. Jde o odlišné publikované údaje, nesjednocovat bez originálních acceptance lists. Přesné uzávěrky jsou pravidlová odvození. Evropská změna času 31.3. mění místní převod mezi oběma uzávěrkami. Únorový plán uvádí pro 23.4. společnou session od 10:00, dubnový 11:00; zachovat později publikovaný plán. Přesný čas Main/Q losu a nezávislé administrativní doklady chybějí.
+
+### 3. Nominální harmonogram
+
+| Kolo / den | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-04-22 | 24 |
+| Q2 | 2024-04-23 | 12 |
+| R128 | 2024-04-24–25 | 32 |
+| R64 | 2024-04-26–27 | 32 |
+| R32 | 2024-04-28–29 | 16 |
+| R16 | 2024-04-30 | 8 |
+| QF | 2024-05-01–02 | 4 (2+2) |
+| SF | 2024-05-03 | 2 |
+| bez mužské dvouhry | 2024-05-04 | 0 |
+| F | 2024-05-05 | 1 |
+
+Pořadatelský plán MAD24-7 v únorové a dubnové verzi potvrzuje všechna okna, QF dvě denně, SF 3.5., sobotu 4.5. bez ATP singlu a nedělní F ne před 18:30. První strany obou verzí ověřeny vizuálně; anglický extrahovaný text omylem uvádí Q2 už v pondělí, obraz a španělský plán potvrzují Q1. Extrakce dubnové anglické verze na 25.4. uvádí ATP 2nd Round na centru, ale obraz má ATP 1st Round; nejde o skutečný plánovaný překryv R128/R64. Součty 48/34/38/37 atd. jsou souhrn ATP a WTA, později i dalších disciplín, nikoli počty mužské dvouhry. Denní splity R128/R64/R32 nelze z tohoto smíšeného programu samostatně vyvodit. Q1/Q2 počty potvrzeny geometrií a dobovými výsledky. Všech osm R16 na jediný den potvrzuje dobový OOP v přepisu MAD24-11. Poslední originální OOP vydán 4.5. 17:33, WTA doubles od 15:30, ATP finále ne před 18:30. Rozlišit začátek session od mužského finále. Walkover Sinner–Auger-Aliassime v QF a skreče SF/QF neodstraňují plánované hrací uzly, ani nemění denní kvóty. Q 2 + Main 12 dní bez překryvu, Main 11 singlových hracích dní, celkem 14 kalendářních dní a 131 nominálních zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 128 / 96 | 48 / 48 (12 sekcí po 4) |
+| DA | 79 ročníkově; 78–79 podle SE | 43 |
+| SE | 0 ročníkově; obecně 0–1 | 0 |
+| WC | 5 | 5 |
+| Řádné Q postupy | 12 | 12 |
+| Nasazení | 32 | 24 |
+| BYE | 32, všichni seedy | 0 |
+| Kola / zápasy | 7 / 95 | 2 / 36 |
+| Formát | BO3 setů | BO3 setů |
+
+§7.08 B.1.a/E.1 a §7.10 B, viz IW24-11: obecně 78–79 DA, 0–1 SE, 5 WC a 12 Q. Ročníkový přepis MAD24-5 uvádí 79 DA, 5 WC, 12 Q, 0 SE; pořadatel nezávisle potvrzuje 79 přijatých. Obě strany výsledkového Main potvrzují 32 seedů a 32 BYE, WC na pozicích 28/51/70/76/102, 12 Q na 3/5/59/60/62/67/83/84/94/99/100/101; navíc LL Bautista Agut na 14 po odstoupení Evanse. Pět WC Fonseca, Blanch, Landaluce, Bergs, Shang; žádné další místo pro mediální Next Gen označení. PR Nadal a Shapovalov součástí DA. LL není třináctý řádný postup. Main 32+32+16+8+4+2+1=95.
+
+Q 43 DA+5 WC potvrzeno dobovým přepisem i vizuálně z originálu. Q WC na 3/10/14/19/27 (Pouille, Omarakhanov, Bennani, Martin Tiffon, Shelbayh). 24 nominálních seedů; v patičce vyškrtnuti Lestienne (6), Fognini (9) a Garin (15), Ajdukovic je označen jako náhradní seed 25. Neodvozovat nominálních 25 seedů ani snižovat kapacitu po odstoupeních. Tři Alt Hassan, Llamas Ruiz, Napolitano. Dvanáct sekcí po čtyřech, 24+12=36 zápasů, 12 postupujících. Q originál datuje záhlaví společně s Main, skutečná data Q doložena samostatně MAD24-4/7/10.
+
+### 5. Dobová pravidla
+
+§7.03/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle IW24-11/14 a SCL24-18. Pro 96členný Masters 32 seedů a 32 BYE, 24 Q seedů a 12 sekcí; jedna obecná SE rezerva, v Madridu listina 0 SE, bez ATP250 LE nebo ATP500 A+ WC. BO3 tiebreak sety. R64 první prohra po BYE 10 bodů místo 30; držitel WC při prohře R128 nula místo 10 (dobové pravidlo §9.03 G, viz IW24). Q 20/10/0 přímo originál, odlišně od 56členného Monte-Carlo 30/16/0. Q body navíc k Main výsledku. Peněžní nominály dle originálního losu, nikoli podle bodových výjimek. Povinnosti Masters ranking/commitment samostatně, nepřenášet nepovinnou výjimku Monte-Carlo.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 1000 | 963225 |
+| Finalista | 1 | 650 | 512260 |
+| SF | 2 | 400 | 284590 |
+| QF | 4 | 200 | 161995 |
+| R16 | 8 | 100 | 88440 |
+| R32 | 16 | 50 | 51665 |
+| R64 | 32 | 30 (10 při první prohře po BYE) | 30225 |
+| R128 | 32 | 10 (WC 0) | 20360 |
+| Q postupující | 12 | 20 | 0 samostatně |
+| Q2 prohra | 12 | 10 | 11820 |
+| Q1 prohra | 24 | 0 | 6130 |
+
+Obě tabulky z vizuálně ověřených ATP originálů MAD24-1/2. Sporting News MAD24-12 uvádí R64 30255 EUR, originál obou stran jednoznačně 30225 EUR, shoda s MAD24-13. Použít 30225; rozdíl 30 na hráče, 960 při 32 příjemcích. P bez hvězdičky. Nominální Main 5845525 EUR, Q 288960 EUR, celkem 6134485 EUR; 96 Main příjemců, 36 nepostupujících Q příjemců. Q vítězové 0 EUR samostatně. Originální losy uvádějí financial commitment 9249713 EUR, ATP předturnajový přehled 9017445 EUR a prize money 7877020 EUR. Rozdíl celkové commitment evidovat jako konflikt publikovaných souhrnů, neovlivňuje primární singlovou tabulku; přesná příčina nezjištěna. Nesčítat ATP a WTA ani nevydávat celkovou dotaci za mužský singlový součet. Historické LL a odstoupení nezahrnuty.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B/P doloženy. H* přesné původní denní splity R128/R64/R32 chybějí, okna a QF 2+2 primárně doloženy. E* původní acceptance lists/DS a hodiny losování nezískány, rank dates z ročníkového přepisu, termíny odvozené. Z* obě Main strany, Q, finálový OOP a první strany únorového/dubnového plánu vizuálně; předturnajový ATP přehled indexovaný, přímé otevření 403. Žádné neověřené hashe. Kontrola kvót, 96/48, 32/24 seedů, 32/0 BYE, 12 Q, 95/36 uzlů, příjemců a obou finančních součtů prošla. Další Rome 2024 po ověření kalendáře. Bez runtime změn.
+
+### 8. Zdroje (MAD24)
+
+- MAD24-1: [ATP výsledkový Main](https://www.protennislive.com/posting/2024/1536/mds.pdf), obě strany vizuálně; [pořadatelský archiv 2024](https://mutuamadridopen.com/palmares/palmares-2024/) odkazuje na Main kopii a ATP Q.
+- MAD24-2: [ATP výsledkový Q](https://www.protennislive.com/posting/2024/1536/qs.pdf), str. 1 vizuálně, 20/10/0 a 11820/6130 EUR.
+- MAD24-3: [ATP OOP finále](https://www.protennislive.com/posting/2024/1536/op.pdf), str. 1 vizuálně, vydání 4.5. 17:33, finále 18:30 nejdříve.
+- MAD24-4: [ATP předturnajový přehled 16.4.](https://www.atptour.com/en/news/madrid-2024-atp-masters-1000-history-draw-schedule), indexovaný text, přímé otevření 403; [španělská verze 19.4.](https://www.atptour.com/es/news/madrid-2024-atp-masters-1000-history-draw-schedule).
+- MAD24-5: [dobový přepis acceptance lists 17.4.](https://www.tennisteen.it/entry-list/atp/24154-atp-entry-list-22-aprile-5-maggio-2024.html), rank dates, cutoffs, DA/WC/Q/SE.
+- MAD24-6: [pořadatel 26.3., 79 přijatých, cutoff 75 a velikost 96](https://mutuamadridopen.com/en/nadal-sabalenka-alcaraz-swiatek-djokovic-and-gauff-among-the-stars-at-the-mutua-madrid-open/).
+- MAD24-7: [únorový plán pořadatele](https://desarrollo.mutuamadridopen.com/wp-content/uploads/2024/02/Programacion-Partidos-ATP-WTA-_MMO2024_2.pdf), [dubnový plán](https://mutuamadridopen.com/wp-content/uploads/2024/04/ING_Programacion_Partidos_ATP_WTA__MMO2024.pdf), první strany vizuálně, odlišné session a společné denní součty, nikoli jen ATP.
+- MAD24-8: [ročníkový přehled](https://en.wikipedia.org/wiki/2024_Mutua_Madrid_Open), 22. mužský ročník a místo; [ITF 2024](https://www.itftennis.com/en/tournament/madrid/esp/2024/m-1000-esp-2024-001/draws-and-results/).
+- MAD24-9: [Reuters 22.4., zveřejnění Main losu](https://www.reuters.com/sports/tennis/djokovic-skip-madrid-open-2024-04-22/).
+- MAD24-10: [dobový Q výsledkový soupis](https://www.rte.ie/sport/results/tennis/madrid-open-qualification-men/888932/results/), [Sky 22.4.](https://www.skysports.com/tennis/scores-schedule/22-04-2024).
+- MAD24-11: [dobový OOP 30.4.](https://elportal24.com/2024/04/orden-de-juego-partidos-y-horarios-de-hoy-martes-30-de-abril-en-el-mutua-madrid-open-2024/), [TennisTemple denní přehled](https://en.tennistemple.com/competitions/madrid/2024/orderofplay).
+- MAD24-12: [Sporting News dobový program a ceny](https://www.sportingnews.com/uk/tennis/news/watch-madrid-open-2024-schedule-channel-stream-prize-money/6fc48773e50b2528826a3afd), chybných 30255 EUR R64, přednost originálu.
+- MAD24-13: [TenisPortal ročníkový přehled](https://www.tenisportal.cz/madrid/2024/atp-muzi/), shoda 30225 EUR. Dobový předpis viz IW24-11/14 a SCL24-18.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -4299,3 +4416,4 @@ I/T/D/B doloženy. H* plánovaný pondělní souběh a R32 4+8 potvrzeny, původ
 | Barcelona 2024 | H*/E*/R*/Z* | originální denní OOP mimo finále, acceptance lists/DS, Q rank date a časy losů, týdenní NG alokace; Main/Q ceny primárně ověřeny, chybný $ v Main vyřešen explicitním ATP EUR rozpisem |
 | Munich 2024 | H*/E*/R*/P*/Z* | původní Main/Q PDF, Q finanční originál (3105/1695 EUR sekundární shoda), acceptance lists/DS, Q rank date a cutoff, hodiny losů, předdešťové OOP a týdenní Q NG alokace; plánovaný Main NG Prižmić a využití LE Fritzem doloženy |
 | Bucharest 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance lists, Q rank date/cutoff a čas losu, původní R16 split/OOP, týdenní Q NG alokace; Main EUR ověřeno primárně, Q 3105/1695 EUR ze tří ročníkových přehledů, TennisTemple zastaralá tabulka |
+| Madrid 2024 | H*/E*/Z* | původní denní splity R128/R64/R32, acceptance lists/DS, časy losů a model míčů; Main/Q ceny primární, konflikt souhrnného commitment 9249713/9017445 EUR bez vlivu na singlové ceny |

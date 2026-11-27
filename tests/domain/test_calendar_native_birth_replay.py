@@ -136,6 +136,36 @@ def test_entry_is_only_sealed_on_week_after_real_post_birth_submission():
         )
 
 
+def test_entry_replay_checks_exact_rosters_on_both_sides_of_birth_and_memo():
+    from beta_engine.domain.replay_scope import replay_value_scope
+
+    clock = RunCalendar(52, 35, 2030, 3)
+    snapshot = source(birth_row(at(clock, 1), "born"))
+    later = submission(at(clock, 2), token="born-token")
+    earlier = submission(at(clock, 0), player_id="existing", token="existing-token")
+    states = history(clock, snapshot, last=2, entries=(later, earlier))
+    args = {"states": states, "source": snapshot, "world_package_id": "world"}
+    with replay_value_scope():
+        proof = verify_calendar_native_birth_history(**args, submissions=(later, earlier))
+        assert proof == verify_calendar_native_birth_history(
+            **args, submissions=(earlier, later),
+        )
+        assert proof == verify_calendar_native_birth_history(
+            **args, submissions=(earlier, later),
+        )
+        before_birth = submission(at(clock, 0), token="born-token")
+        with pytest.raises(ValueError, match="before birth"):
+            verify_calendar_native_birth_history(**args, submissions=(before_birth, earlier))
+
+    # Same length and final ordinal, but the middle roster claims the wrong week.
+    wrong_week = states[1].model_copy(update={"week": at(clock, 2)})
+    with pytest.raises(ValueError, match="consecutive"):
+        verify_calendar_native_birth_history(
+            states=(states[0], wrong_week, states[2]), source=snapshot,
+            world_package_id="world", submissions=(earlier, later),
+        )
+
+
 def test_missing_birth_and_rehashed_forged_state_fail_closed():
     clock = RunCalendar(61, 37, 2030, 3)
     snapshot = source(birth_row(at(clock, 1), "born"))

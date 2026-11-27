@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 25 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 26 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -59,10 +59,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Acapulco](#acapulco-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Dubai](#dubai-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Santiago](#santiago-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: rozpor odměn Main) |
+| 2024 | [Indian Wells](#indian-wells-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 25 zpracovaných ročníků; 22 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 26 zpracovaných ročníků; 23 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -93,7 +94,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 23 | Acapulco 2024 | HOTOVO (nominální rozsah) |
 | 24 | Dubai 2024 | HOTOVO (nominální rozsah) |
 | 25 | Santiago 2024 | ROZPRACOVÁNO (P: rozpor odměn Main) |
-| 26 | Indian Wells 2024 | NEZAHÁJENO |
+| 26 | Indian Wells 2024 | HOTOVO (nominální rozsah) |
+| 27 | Miami 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -136,6 +138,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#acapulco-2024) | Abierto Mexicano Telcel presentado por HSBC | ATP 500 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-02 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 | [2024](#dubai-2024) | Dubai Duty Free Tennis Championships | ATP 500 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-02 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 | [2024](#santiago-2024) | Movistar Chile Open | ATP 250 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-03 | ROZPRACOVÁNO; finanční rozpor Main, termíny doloženy |
+| [2024](#indian-wells-2024) | BNP Paribas Open | ATP Masters 1000 | 2024-03-04–2024-03-05 | 2024-03-06–2024-03-17 | HOTOVO v nominálním rozsahu; 15.3. bez mužské dvouhry |
 
 ## Wimbledon 2024
 
@@ -3183,6 +3186,135 @@ I/T/H/E*/D/R*/B/Z* doloženy; P zůstává blokující rozpor. H: všechny term�
 - SCL24-22: [Tennis Infinity dobový finanční přehled](https://tennis-infinity.com/atp/2024-chile-open-santiago-atp-prize-money-points-overview), [TennisUpToDate dobový finanční přehled](https://tennisuptodate.com/atp/atp-prize-money-and-points-breakdown-2024-chile-open-santiago-with-661585-on-offer), alternativa Main; [český sekundární rozpis](https://web.kurzy.cz/wiki/Chile_Open_2024), indexovaný text 3550/1935 Q, otevření timeout.
 - [Původní Main PDF](https://www.protennislive.com/posting/2024/8996/mds.pdf) a [Q PDF](https://www.protennislive.com/posting/2024/8996/qs.pdf) nedostupné; DS nezískán.
 
+
+## Indian Wells 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/P/Z s omezeními). Rešerše 2026-11-27. První Masters 1000 v registru, 96 účastníků v pavouku o 128 pozicích. Předstartovní a výsledkový originální ATP Main vizuálně ověřeny, každý na dvou stránkách; původní Q los nedostupný, Q finanční odměny ze shodných sekundárních zdrojů.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | BNP Paribas Open, mužská dvouhra | IW24-1/2/3 |
+| Kategorie / ATP ID | ATP Masters 1000 / 404 | IW24-1/3/18 |
+| Ročník | 47. dle ATP preview, 50. dle sekundárního historického přehledu | IW24-3/17 |
+| Dějiště | Indian Wells Tennis Garden, Indian Wells, Kalifornie, USA | IW24-3/4 |
+| Povrch | venkovní tvrdý, Plexipave | IW24-1/2/3 |
+| Časové pásmo | America/Los_Angeles; PST UTC−08:00 do 10.3. 02:00, poté PDT UTC−07:00 | lokalita a americké DST 2024 |
+| Ředitel | Tommy Haas | IW24-5/6 |
+| ATP supervisor | Carlos Sanches; Main OOP navíc Zsolt Beda, Cedric Mourier, Ali Nili | IW24-1/5/6 |
+| Referee / tour manager | Gerry Armstrong / Thomas Schrader, Denis Zivkovic (Q OOP) | IW24-5/6 |
+| Měna | USD | IW24-1/2 |
+
+Odlišné počítání ročníků zachovat zdrojově, bez vynucení jedné historické genealogie. Turnaj zahrnuje WTA a další disciplíny, ty nejsou mužskou dvouhrou. Míče a detail sheet nezískány.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-02-05 | IW24-7 |
+| Q rank date | 2024-02-12 | IW24-7 |
+| Nominální Main deadline | 2024-02-05 09:00 PST (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální Q deadline | 2024-02-12 09:00 PST (12:00 US Eastern) | §7.03, odvozeno |
+| Main los | 2024-03-04 15:00 PST, plán ATP | IW24-3 |
+| Q los | nejpozději 2024-03-03 18:41 PST, vydání OOP; skutečný čas losu neověřen | IW24-5 |
+| Q1 Alt sign-in deadline | 2024-03-04 09:30 PST | IW24-5 |
+| Q | 2024-03-04–05, od 10:00 PST | IW24-3/5/8 |
+| Main | 2024-03-06–17 | IW24-1/2/3/4 |
+| Main LL sign-in 6.3. | 10:30 PST | IW24-6 |
+| Singlové finále | 2024-03-17 ne před 14:00 PDT | IW24-3/4 |
+
+Dobový přepis listiny IW24-7 uvádí původní cutoffs 76 Main / 140 Q. Obě originální Main verze uvádějí Zapata Miralles 79 při deadline i v losu. Alternativní přepis IW24-9 uvádí Main cutoff 75. Rozdíl údajů o výchozím cutu nepřepisovat bez původní acceptance listiny, nejde o rozpor nominální kapacity. Q konečný cutoff nezískán. Uzávěrky odvozené z §7.03, nikoli nezávislé timestampy. Kalifornský čas se v průběhu turnaje mění, neukládat jediný fixní offset pro všechny dny.
+
+### 3. Nominální harmonogram
+
+| Kolo / den | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-03-04 | 24 |
+| Q2 | 2024-03-05 | 12 |
+| R128 | 2024-03-06–07 | 32 (16+16) |
+| R64 | 2024-03-08–09 | 32 |
+| R32 | 2024-03-10–11 | 16 |
+| R16 | 2024-03-12–13 | 8 |
+| QF | 2024-03-14 | 4 |
+| bez mužské dvouhry | 2024-03-15 | 0 |
+| SF | 2024-03-16 | 2 |
+| F | 2024-03-17 | 1 |
+
+ATP plán Q 4.–5.3., nikoli 3.–5.3. (rozšíření společné akce na neděli se týká WTA Q; IW24-3/4). Originální OOP Q1 vydaný 3.3. 18:41 (IW24-5) má 24 ATP zápasů, odděleně osm WTA zápasů; počítat jen mužské. Pořadatel 5.3. výslovně potvrzuje 12 Q2 zápasů a 12 postupujících (IW24-8). Originální Main OOP 6.3., vydaný 5.3. 14:02 (IW24-6), obsahuje 16 ATP R128 včetně placeholderů dosud nepřiřazených Q, druhá polovina tedy nominálně 16 následující den. ATP dobová zpráva o dešti potvrzuje pouze devět dokončených ATP zápasů první den; zbytek se přesunul nebo dohrával, nepřepisovat původní 16+16. Plánovaná okna R64, R32, R16 doložena dobovým přehledem IW24-10; přesné denní rozdělení těchto vícedenních kol necertifikováno bez původních OOP obou dnů. Záměr 2024 nově shromáždit všech osm ATP/WTA QF do čtvrtka 14.3. výslovně potvrzuje pořadatel, pátek 15.3. je vyhrazen mužské čtyřhře a ženským SF; žádné mužské singlové kolo, nikoli přestávka celého turnaje. Mužské SF v sobotu, F v neděli. Nominál Q 2 dny + Main 12 kalendářních dní (11 hracích pro mužskou dvouhru) = 14 dní, bez plánovaného překryvu; 95+36=131 zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 128 / 96 | 48 / 48 (12 sekcí po 4) |
+| Základní DA při rezervovaném SE | 78 | 43 |
+| SE rezerva | 1 (0 použitých dle listiny) | 0 |
+| WC | 5 | 5 |
+| Řádné Q postupy | 12 | 12 |
+| Nasazení | 32 | 24 |
+| BYE | 32, všichni nasazení | 0 |
+| Kola / zápasy | 7 / 95 | 2 / 36 |
+| Formát | BO3 setů | BO3 setů |
+
+ATP §7.08 B.1.a a §7.10 B (IW24-11): 78 DA + 1 SE + 5 WC + 12 Q = 96; při nevyužitém SE 79 DA. Dobový přepis entry listu IW24-7 přesně 79 DA, 5 WC, 12 Q, 0 SE; nejde o obecně zrušenou SE rezervu. Bez ATP 250 LE a bez ATP 500 A+ WC. Předstartovní Main IW24-2 obě strany vizuálně: 32 seedů a 32 BYE, 12 Q placeholderů (3/13/19/20/45/68/77/84/107/115/123/124), WC 5/14/53/70/83. ATP předem oznámila právě pět Main WC a pět Q WC (IW24-12). Menšík má tentokrát v Main WC, nikoli NG nebo SE jako v Doha/Dubai. PR v DA není samostatná dodatečná kvóta. Výsledkový originál IW24-1 uvádí tři LL (Nardi, Nagal, Rodionov), včetně změny původní seed pozice po odstoupení Etcheverryho; nominální 32 seedů/12 Q/32 BYE tím neměníme. Main 32+32+16+8+4+2+1=95. R128 neznamená 128 přijatých hráčů.
+
+Q 43 DA + 5 WC, 48 hráčů, 24 seedů dle §7.08 E.1 a §7.15, dvanáct sekcí po čtyřech, dva seedy v každé podle §7.08 a pravidel nasazování Q. Q1 OOP všech 24 dvojic a 5 WC; pořadatelské oznámení Q2 potvrzuje 12 postupů. Sekundární úplný Q pavouk IW24-13 kontroluje 48 pozic a 36 výsledkových uzlů. Původní Q los nedostupný; žádný důkaz výjimky z nominálního nasazení. Q 24+12=36. Q není jeden 64pozicový pavouk s 16 BYE, ale 12 samostatných čtyřhráčových sekcí.
+
+### 5. Dobová pravidla a rankingové výjimky
+
+ATP §7.03, §7.08 B.1.a/E.1, §7.10, §7.15–18, §7.20–21, verze VII 16.2.2024 IW24-11. Pro SE do Masters 1000 musí předchozí kvalifikovaná soutěž být ATP 500, ATP Masters 1000 nebo Grand Slam; samotná účast v předcházejícím ATP 250 není standardním kvalifikačním důvodem pro SE do Masters. Jedna nevyužitá rezerva se vrací do DA. Všichni 32 seedy mají BYE, Q 24 seedů, 12 Q vítězů; výměny hráčů po začátku Q dle pravidel LL. BO3 tiebreak sety, nepřebírat GS BO5. Předpis §7.08 C.3 z LCB24-19 se týká Challengeru, nikoli této ATP Tour akce.
+
+Rankingová kapitola IX ve verzi 16.2.2024 (IW24-14, §9.03 G.2–5, tištěné str. 253–254) přímo potvrzuje:
+- 96členný Masters má vlastní řádek bodů; 48/56členný Masters má jiné Q body a nesmí používat automaticky stejnou tabulku.
+- Při prohře v prvním hraném kole po BYE přidělit body prvního kola (10, nikoli standardních 30 za R64); finanční odměna se neztotožňuje s bodovým ziskem.
+- WC hráč v Masters 1000 získává body od druhého kola; při prohře v R128 tedy 0, běžný DA získá 10.
+- Q postup 20 bodů navíc k Main výsledku, prohra v Q2 10, v Q1 nula. Nezaměňovat s WTA ani s 16/8 ze sekundární tabulky TennisTemple (IW24-15). Závazný je dobový ATP rankingový předpis.
+- Masters 1000 povinné turnaje a způsob započtení do 52týdenního rankingu jsou samostatná pravidla §9.03 A/B, nikoli změna počtu bodů za jednotlivé kolo. Žádná implementace v tomto registru.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 1000 | 1100000 |
+| Finalista | 1 | 650 | 585000 |
+| SF | 2 | 400 | 325000 |
+| QF | 4 | 200 | 185000 |
+| R16 | 8 | 100 | 101000 |
+| R32 | 16 | 50 | 59100 |
+| R64 | 32 | 30 (10 při prohře po BYE) | 42000 |
+| R128 | 32 | 10 (WC 0) | 30050 |
+| Q postupující | 12 | 20 | 0 samostatně |
+| Q2 prohra | 12 | 10 | 14400 |
+| Q1 prohra | 24 | 0 | 7800 |
+
+Main oba původní ATP losy IW24-1/2 vizuálně, Q body primární IW24-14 a předsezonní ATP update; Q ceny 14400/7800 USD shodně IW24-15/16/17, nezávislost vzniku tabulek neprokázána. P* do získání originální Q finanční tabulky. Pozor na chybný údaj TennisTemple 16/8 bodů a A$ u Stevegtennis: částky ano, body/měna mají přednost z ATP a USD turnajového kontextu. Nominální Main 7134200 USD, Q 360000 USD, celkem 7494200 USD; 96 Main příjemců, 36 nepostupujících Q příjemců. Q postupující odměna dle Main výsledku, nikoli další nominální Q odměna. Skutečné LL payout či odstoupení vyžadují samostatný předpis a nejsou zahrnuty. Financial commitment 12418990 USD v originále ATP; pořadatelské oznámení 19M USD zahrnuje společnou akci a jiné složky; nezaměňovat se singlovým součtem.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B doloženy. H* všechna okna, Q1/Q2 a R128 16+16 doloženy; původní denní dělení R64/R32/R16 neověřeno. E* referenční data listiny doložena, uzávěrky odvozeny, přesný čas Q losu, konečný cutoff, původní acceptance lists/DS chybí. P* Main originál, Q sekundární shoda. Z* obě strany původního ATP Main z federálního archivu RFET a předstartovní kopie Raquetc vizuálně, OOP Q1 a Main 6.3. vizuálně; alternativní Main archiv datocms textově, screenshot 404, kapitoly VII/IX textově, screenshot VII 403 a IX nepodporován. Původní ATP Q nedostupný; nevymýšlet SHA-256. Kontrola 96/48, 32/24 seedů, 32/0 BYE, 12 Q, 95/36 zápasů, kvót a finanční aritmetiky prošla. Další Miami 2024; bez runtime změn.
+
+### 8. Zdroje (IW24)
+
+- IW24-1: [výsledkový originální ATP Main v RFET archivu](https://www.rfet.es/descargar/file-noticias-adjuntos/4906_Documento/cuadro-individual-atp-1000-indian-wells-usa.pdf), obě stránky vizuálně.
+- IW24-2: [předstartovní originální ATP Main](https://www.raquetc.com/wp-content/uploads/2024/03/ATP-Masters-1000-Indian-Wells-2024-quadro-principal.pdf), obě stránky vizuálně; [alternativní datocms kopie](https://www.datocms-assets.com/110926/1709600551-msd.pdf), text, screenshot 404.
+- IW24-3: [ATP předturnajový přehled 26.2.2024](https://www.atptour.com/en/news/indian-wells-2024-atp-masters-1000-history-draw-schedule), indexovaný text, otevření 403, termíny a plán losu.
+- IW24-4: [pořadatel, předsezonní oznámení změn programu a prize money](https://bnpparibasopen.com/news/2024-bnp-paribas-open-prize-money-competition-schedule-changes), QF 14.3., pátek bez mužských singlů, SF 16.3., F 17.3. ne před 14:00.
+- IW24-5: [originální OOP Q1 4.3.](https://www.datocms-assets.com/110926/1709527753-op-20240304.pdf), str. 1 vizuálně; vydán 3.3. 18:41, 24 ATP Q1.
+- IW24-6: [originální OOP Main 6.3.](https://www.datocms-assets.com/110926/1709691958-op-20240306.pdf), str. 1 vizuálně; vydán 5.3. 14:02, 16 R128.
+- IW24-7: [dobový přepis entry listů 28.2.](https://www.tennisteen.it/entry-list/atp/24130-atp-entry-list-4-17-marzo-2024.html), Main/Q řádky 80–234.
+- IW24-8: [pořadatel 5.3., všech 12 Q postupů](https://bnpparibasopen.com/news/2024-indian-wells-qualifiers-ethan-quinn-leads-the-way).
+- IW24-9: [dobová aktualizace Main/Q listů 3.3.](https://www.livetennis.it/post/406065/masters-1000-indian-wells-la-situazione-aggiornata-md-e-qualificazioni-gaio-entra-nelle-quali-di-indian-wells/), rank dates a odlišný Main cutoff.
+- IW24-10: [dobový kompletní plán kol](https://www.etonline.com/how-to-watch-indian-wells-2024-online-schedule-channel-and-bnp-paribas-open-livestream-221127), [ATP 7.3. dešťové odklady](https://www.atptour.com/en/news/rain-indian-wells-2024-day-1-wednesday), [dobový denní výsledkový soupis](https://canaltenis.com/resultados-atp-indian-wells-2024/).
+- IW24-11: [ATP Competition VII 16.2.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_16feb.pdf), §7.08, §7.10, §7.15–18, text, screenshot 403.
+- IW24-12: [ATP oznámení pěti Main i pěti Q WC](https://www.atptour.com/en/news/mensik-indian-wells-2024-wild-cards), indexovaný text, přímé otevření 403.
+- IW24-13: [dobový Q pavouk](https://canaltenis.com/cuadro-atp-indian-wells-2024/), [Tennis Explorer Q](https://www.tenisportal.cz/indian-wells/2024/atp-muzi/?phase=qualification).
+- IW24-14: [ATP Ranking IX 16.2.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pepperstone-atp-rankings_16feb.pdf), §9.03 G.2–5 str. 253–254, text; screenshot nepodporován. [ATP předsezonní ranking update](https://www.atptour.com/en/news/2024-rankings-points-update).
+- IW24-15: [TennisTemple Q 2024](https://da.tennistemple.com/competitions/indian-wells/2024/draw-qualifications), správné Q částky 14400/7800, chybné 16/8 body; [Stevegtennis](https://www.stevegtennis.com/draw-results/atp/BNP%20Paribas%20Open%20-%20Indian%20Wells/2024), chybné A$.
+- IW24-16: [dobový Sporting News](https://www.sportingnews.com/uk/tennis/news/watch-indian-wells-tennis-2024-schedule-channel-prize-money/497790a441808e99d83234c1), [dobový Tennis365](https://www.tennis365.com/tennis-features/2024-indian-wells-open-novak-djokovic-carlos-alcaraz-rafael-nadal-play-dates-draw-prize-money), shoda Q.
+- IW24-17: [ročníkový přehled 2024](https://en.wikipedia.org/wiki/2024_BNP_Paribas_Open), Q ceny a body, sekundární chronologie; souhrnné částky v záhlaví a těle nejsou totožné, nepoužívat jako singlový součet.
+- IW24-18: [ročníková identita 2024-404](https://goatstats.tennis/tournament/2024-404), [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024); přímý [ATP Main](https://www.protennislive.com/posting/2024/404/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/404/qs.pdf) nedostupné, Main originály dostupné v IW24-1/2.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3203,4 +3335,5 @@ I/T/H/E*/D/R*/B/Z* doloženy; P zůstává blokující rozpor. H: všechny term�
 | Los Cabos 2024 | P* / E* / Z* | originální Q finanční tabulka (sekundární shoda 4910/2675 USD), acceptance list/DS, časy losování a pondělní OOP; Q NG alokace stále otevřená |
 | Acapulco 2024 | E*/P*/Z* | originální acceptance list/DS, čas losu, Q cutoff a primární Q finanční tabulka (sekundární shoda 8820/4945 USD); screenshot pořadatelských PDF nedostupný |
 | Dubai 2024 | E*/P*/Z* | originální Q PDF a jeho finanční tabulka (sekundární shoda 11760/6595 USD), acceptance list/DS, Q cutoff a čas losu; původní OOP Q1/R16 nezískán |
-| Santiago 2024 | P – Main prize money, blokuje HOTOVO | ATP Preview 100635/58700 vs více ročníkových zdrojů 100640/58705 USD; originální Main/Q los nebo DS; Q shoda 3550/1935 USD, NG alokace a hodiny losu také otevřeny |
+| Santiago 2024 | P – Main prize money, blokuje HOTOVO | ATP Preview 100635/58700 vs více ročníkových zdrojů 100640/58705 USD; opakovaná kontrola 27.11. (https://www.encancha.cl/polideportivo/tenis/2024/02/26/los-millones-del-atp-de-santiago-cuanto-dinero-reparte-en-premios-el-chile-open/ a https://www.tennisexplorer.com/santiago/2024/atp-men/ potvrzují 100640, https://dewiki.de/Lexikon/Movistar_Chile_Open_2024 uvádí 100635) další primární los nepřinesla; zůstává otevřeno, Q shoda 3550/1935 USD, NG a časy losu neověřeny |
+| Indian Wells 2024 | H*/E*/P*/Z* | původní denní R64/R32/R16 OOP, originální Q/DS a acceptance listy, Q čas losu a cutoff, Q odměny 14400/7800 USD sekundární shoda; body Q 20/10/0 primárně ověřeny |

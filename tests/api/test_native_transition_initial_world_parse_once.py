@@ -20,7 +20,13 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.infrastructure.db import initial_world_state
 from tests.api.test_calendar_native_birth_week_execution import sign_prospects
 from tests.api.test_calendar_native_turn_pro_v87_birth import _eager
-from tests.api.test_calendar_tour_flow import command, inspect, save_tour, setup, tour_url
+from tests.api.test_calendar_tour_flow import (
+    command,
+    inspect,
+    save_tour,
+    setup,
+    tour_url,
+)
 from tests.api.test_calendar_tour_turn_pro_v87_flow import _v87_population
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 

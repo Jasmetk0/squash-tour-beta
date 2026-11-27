@@ -105,9 +105,11 @@ RAM, Python 3.12.3 in a venv from `.github/requirements/fast-ci-linux.lock.txt`,
 Linux `spawn` run shows the start method, not Windows behaviour.
 
 A = `29784d51d01d9d747705be8abae30f0c82706c1e` (`buuk`). B =
-`4f5d1bdc72dadcb762cd904d256f37aaefd2d8ee`; its `src` tree
-`843f8349de1bf5a4d06739d7ad26ab42b6133fe6` and `tests` tree are identical to the
-PR head (the PR commit only removes an unrelated stray file from that commit).
+`4f5d1bdc72dadcb762cd904d256f37aaefd2d8ee` (local; not pushed). Its `src` tree
+`843f8349de1bf5a4d06739d7ad26ab42b6133fe6` and `tests` tree equal pushed commit
+`17404cb`, which only drops a stray downloaded file from it. The later head
+changes in `src` only the FastAPI lifespan order in `main.py` (an invalid
+setting now fails inside `try`), outside the measured slot path.
 Each A/B case uses detached worktrees, the driver from this checkout, a fresh
 process per sample, A B B A per worker variant, a byte-identical copy of one
 pinned fixture, and requires identical outputs across every sample.

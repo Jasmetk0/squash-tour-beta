@@ -12,6 +12,8 @@ check. Byte equality with ``buuk`` is pinned by the golden fingerprints in
 from __future__ import annotations
 
 import ast
+import hashlib
+import json
 from pathlib import Path
 
 import pytest
@@ -157,9 +159,12 @@ def test_match_package_never_mutates_model_attributes():
                 targets = node.targets
             for target in targets:
                 for item in ast.walk(target):
-                    if isinstance(item, ast.Attribute) and isinstance(item.ctx, (ast.Store, ast.Del)):
-                        if not (isinstance(item.value, ast.Name) and item.value.id == "self"):
-                            offenders.append(f"{path.name}:{node.lineno}")
+                    if (
+                        isinstance(item, ast.Attribute)
+                        and isinstance(item.ctx, (ast.Store, ast.Del))
+                        and not (isinstance(item.value, ast.Name) and item.value.id == "self")
+                    ):
+                        offenders.append(f"{path.name}:{node.lineno}")
                     if (
                         isinstance(item, ast.Subscript)
                         and isinstance(item.ctx, (ast.Store, ast.Del))
@@ -175,3 +180,41 @@ def test_match_package_never_mutates_model_attributes():
                 if name in {"setattr", "__setattr__", "delattr", "__delattr__"}:
                     offenders.append(f"{path.name}:{node.lineno}")
     assert offenders == []
+
+
+# --- canonical event-hash JSON ----------------------------------------------------
+
+
+def _reference_sha256(payload):
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+
+
+def test_canonical_json_is_byte_identical_to_the_historical_json_dumps():
+    awkward = {
+        "z": [1, 1.0, -0.0, 0.0, 1e-05, 5e-324, 1e16, 2**130, -(2**70), True, False, None],
+        "a": {"ü-ß": "\n\t \u0000\"\\", "emoji": "🎾", "": [], "x": {}},
+        "nan": [float("nan"), float("inf"), float("-inf")],
+        "Ä": [{"b": 1, "a": [{"d": 0.1 + 0.2, "c": 1 / 3}]}],
+        "1": "numeric-looking key", "10": 10, "2": 2,
+    }
+    for payload in (awkward, [], {}, "text", 0.1, [awkward, awkward]):
+        reference = json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+        assert content_hash._CANONICAL_JSON.encode(payload) == reference
+        assert content_hash.canonical_sha256(payload) == _reference_sha256(payload)
+
+
+def test_every_stored_event_hash_equals_the_historical_json_dumps_hash():
+    result = MatchEngine(rng=DeterministicRng(73)).simulate(_context(best_of=5))
+    for event in result.rally_log.events:
+        payload = RallyEvent._hash_payload(
+            event.model_dump(mode="json", exclude={"event_hash", "event_hash_algorithm"})
+        )
+        assert event.event_hash == _reference_sha256(payload)
+    for event in result.timeline_log.events:
+        payload = event.model_dump(mode="json", exclude={"event_hash", "event_hash_algorithm"})
+        assert event.event_hash == _reference_sha256(payload)
+    for transition in result.stamina_log.transitions:
+        assert transition.transition_hash == _reference_sha256(
+            StaminaTransition._hash_payload(transition)
+        )

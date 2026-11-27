@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from enum import Enum
 from itertools import pairwise
 from typing import TYPE_CHECKING, Literal
@@ -11,6 +9,7 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    canonical_sha256,
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
@@ -757,10 +756,7 @@ class RallyEvent(BaseModel):
 
     @staticmethod
     def _content_hash(payload: dict[str, object]) -> str:
-        encoded = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return canonical_sha256(payload)
 
 
 class MatchRallyLog(BaseModel):

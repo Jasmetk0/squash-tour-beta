@@ -18,6 +18,8 @@ factories, events created outside an engine call) keeps the full check.
 
 from __future__ import annotations
 
+import hashlib
+import json
 from collections.abc import Iterator
 from contextlib import contextmanager
 from contextvars import ContextVar
@@ -28,6 +30,20 @@ _hashed_in_scope: ContextVar[dict[int, tuple[object, tuple]] | None] = ContextVa
     "engine_hashed_events", default=None
 )
 _PLACEHOLDER_HASH = "0" * 64
+
+# Exactly the options of ``json.dumps(payload, sort_keys=True, separators=(",",
+# ":"), ensure_ascii=False)`` (the C encoder, ``allow_nan=True``) except the
+# circular-reference bookkeeping. A JSON-mode model dump is a fresh tree, never
+# cyclic (pydantic itself rejects recursion), and the bookkeeping does not
+# change the bytes of an acyclic value; it cost ~30 % of each event hash.
+_CANONICAL_JSON = json.JSONEncoder(
+    ensure_ascii=False, separators=(",", ":"), sort_keys=True, check_circular=False
+)
+
+
+def canonical_sha256(payload: object) -> str:
+    """SHA-256 of the historical event-hash JSON bytes of ``payload``."""
+    return hashlib.sha256(_CANONICAL_JSON.encode(payload).encode("utf-8")).hexdigest()
 
 
 def create_with_input_hash(cls, values: dict, hash_field: str, compute_hash):

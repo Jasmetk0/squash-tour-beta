@@ -295,6 +295,80 @@ def _appendable_state(fingerprint, event_count, suffix):
         return known[0].copy()
 
 
+# Canonical-JSON hash states of v13 checkpoint prefixes addressed by the
+# CONTENT identities of the parts they were decoded from (see
+# infrastructure.db.checkpoint_part_decode: SHA-256 of the exact strict-parse
+# input text plus the parser). A strict decode of identical text is the same
+# value, so its canonical dump bytes and every prefix state are pure functions
+# of those identities. Never a proof; it only spares re-encoding unchanged
+# history when the caller already decoded exactly these parts.
+_CONTENT_CHAINS = {}
+_CONTENT_CHAINS_LOCK = threading.Lock()
+MAX_CONTENT_CHAINS = 2048
+
+
+def _content_chain_get(key):
+    with _CONTENT_CHAINS_LOCK:
+        known = _CONTENT_CHAINS.get(key)
+        return None if known is None else (known[0].copy(), known[1])
+
+
+def _content_chain_put(key, state, suffix):
+    with _CONTENT_CHAINS_LOCK:
+        _CONTENT_CHAINS.pop(key, None)
+        _CONTENT_CHAINS[key] = (state.copy(), suffix)
+        while len(_CONTENT_CHAINS) > MAX_CONTENT_CHAINS:
+            _CONTENT_CHAINS.pop(next(iter(_CONTENT_CHAINS)))
+
+
+def prime_decoded_checkpoint_fingerprint(value, root_key, event_keys):
+    """Prime ``value.fingerprint`` inside a private replay scope; returns it or None.
+
+    ``root_key``/``event_keys`` must be the content identities of exactly the
+    parts ``value`` was strictly decoded from, in order. The digest is the SAME
+    canonical hash as the full computation: unchanged prefixes reuse their hash
+    state, every other event is encoded from the actual model.
+    """
+    scope = _replay_projections.get()
+    if (
+        scope is None
+        or scope.get('collect_checkpoint_value_hashes', False)
+        or root_key is None or any(key is None for key in event_keys)
+        or not _appendable_checkpoint_shape(value)
+        or len(event_keys) != len(value.events)
+    ):
+        return None
+    head = hashlib.sha256(repr((
+        'v13-checkpoint-content-chain', root_key, value.run_id, value.branch_id, value.schema_version,
+    )).encode()).digest()
+    known = _content_chain_get(head)
+    if known is None:
+        body = value.model_dump(mode='json', exclude={'events'})
+        if set(body) != {'schema_version', 'run_id', 'branch_id', 'competition_root'}:
+            return None
+        before = [_canonical_bytes(k) + b':' + _canonical_bytes(body[k]) for k in sorted(body) if k < 'events']
+        state = hashlib.sha256(b'{' + b','.join(before) + (b',' if before else b'') + b'"events":[')
+        suffix = _checkpoint_suffix(value)
+        _content_chain_put(head, state, suffix)
+    else:
+        state, suffix = known
+    chain = head
+    for index, (event, key) in enumerate(zip(value.events, event_keys)):
+        chain = hashlib.sha256(chain + repr(key).encode()).digest()
+        known = _content_chain_get(chain)
+        if known is not None:
+            state = known[0]
+            continue
+        state.update((b',' if index else b'') + _canonical_bytes(event.model_dump(mode='json')))
+        _content_chain_put(chain, state, suffix)
+    result = state.copy()
+    result.update(suffix)
+    fingerprint = result.hexdigest()
+    _remember_appendable_checkpoint(fingerprint, state, suffix, len(value.events))
+    _prime_private_fingerprint(value, fingerprint)
+    return fingerprint
+
+
 def appended_checkpoint_fingerprint(previous, successor):
     """``successor.fingerprint`` for ``previous`` plus exactly one new event.
 

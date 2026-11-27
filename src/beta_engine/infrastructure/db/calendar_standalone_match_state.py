@@ -459,7 +459,9 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
             replayed = checkpoint
             checkpoint = decoded_global_checkpoint_component(
                 _repository, cp_raw, run_id=run_id, branch_id=branch_id,
-                decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(json.dumps(component['state'])),
+                # The decoded payload's own value; parse_checkpoint_json only reads it.
+                decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(
+                    None, _body=component['state']),
                 _component_text=(span(payload_proof, ("content", "calendar_player_sporting_checkpoint"))
                     if payload_proof is not None else None),
             )

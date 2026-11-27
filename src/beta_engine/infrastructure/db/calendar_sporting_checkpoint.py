@@ -64,21 +64,38 @@ def _parsed_global_part(body, cache, parse, proven=None):
     return value
 
 
-def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
+def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None, _body=None):
     """Strict checkpoint model of ``raw``.
 
     ``_proven`` may be a canonical_text.ProvenSpan whose ``value`` is the
     unmodified decode of exactly ``raw`` (the proven span of a just decoded
     Saved payload). It only replaces decoding ``raw`` again and re-encoding each
     part; every part still runs its strict model validator.
+
+    ``_body`` (with ``raw=None``) may be the JSON value of an already decoded
+    payload, instead of encoding it only to decode it again here. It is read,
+    never modified; ``raw`` is rebuilt from it only where the original
+    whole-document validators need text.
+
+    Without ``_parsed_global_parts``, every v13 part is decoded through
+    ``checkpoint_part_decode``: exactly the original strict parse of exactly the
+    original part text, whose result is reused (as a fresh unpickled copy) only
+    for byte-identical text of the same parser.
     """
     from beta_engine.domain.players.calendar_native_sporting_checkpoint import (
         CalendarNativeSportingCheckpoint,
     )
 
-    body = _proven.value if _proven is not None else json.loads(raw)
+    if _proven is not None:
+        body = _proven.value
+    elif _body is not None and raw is None:
+        body = _body
+    else:
+        body = json.loads(raw)
     if not isinstance(body, dict):
         raise ValueError('Calendar sporting checkpoint must be a versioned object')
+    if raw is None:
+        raw = json.dumps(body) if body.get('schema_version') != 'calendar_sporting_checkpoint.v13' else None
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v13':
         from beta_engine.domain.tournaments.calendar_global_slots import (
             GlobalCompetitionCheckpoint,
@@ -98,19 +115,26 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
             # The original strict models allow their version field's default.
             # Preserve that noncanonical input contract through the original
             # Union validator; stored canonical histories take the fast path.
-            return GlobalCompetitionCheckpoint.model_validate_json(raw)
+            return GlobalCompetitionCheckpoint.model_validate_json(raw if raw is not None else json.dumps(body))
 
         from beta_engine.infrastructure.db.canonical_text import ProvenSpan
 
         def proven_part(path, part):
             return ProvenSpan(_proven.proof, _proven.path + path, part) if _proven is not None else None
 
+        from beta_engine.infrastructure.db import checkpoint_part_decode
+
+        part_keys = []
+
         def strict_part(part, parse, proven=None):
             if not isinstance(part, dict):
                 raise TypeError('Global checkpoint part must be a versioned object')
             if _parsed_global_parts is not None:
+                part_keys.append(None)
                 return _parsed_global_part(part, _parsed_global_parts, parse, proven)
-            return parse(json.dumps(part))
+            value, key = checkpoint_part_decode.decode(json.dumps(part), parse)
+            part_keys.append(key)
+            return value
 
         values = dict(body)
         values['competition_root'] = strict_part(body.get('competition_root'), parse_checkpoint_json)
@@ -128,7 +152,14 @@ def parse_checkpoint_json(raw, *, _parsed_global_parts=None, _proven=None):
         # Every nested value runs its ordinary strict JSON validator. Dispatch
         # by explicit schema avoids trial-decoding large histories through each
         # wrong Union alternative. The outer owner/root validator still runs.
-        return GlobalCompetitionCheckpoint.model_validate(values)
+        checkpoint = GlobalCompetitionCheckpoint.model_validate(values)
+        if part_keys and _parsed_global_parts is None:
+            from beta_engine.domain.tournaments.calendar_global_slots import (
+                prime_decoded_checkpoint_fingerprint,
+            )
+            # Same canonical hash, re-encoding only parts this chain has not seen.
+            prime_decoded_checkpoint_fingerprint(checkpoint, part_keys[0], part_keys[1:])
+        return checkpoint
     if body.get('schema_version') == 'calendar_sporting_checkpoint.v12':
         from beta_engine.domain.players.calendar_native_competition import (
             CalendarNativeCompetitionCheckpoint,

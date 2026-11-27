@@ -335,9 +335,17 @@ def decoded_global_checkpoint_component(repository, component, *, run_id, branch
         payload={'calendar_player_sporting_checkpoint': component})
     serialized = (('{"calendar_player_sporting_checkpoint":' + _component_text + '}')
         if type(_component_text) is str else None)
-    value = _decoded_value(repository, source, checked,
-        cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
-        entry_limit=4, _serialized=serialized)
+    declared = component.get('fingerprint') if isinstance(component, dict) else None
+    if serialized is None and _known_oversize(repository, run_id, branch_id, declared):
+        # This declared value was already measured too large for the value
+        # cache: skip only the cache key (a full canonical encoding). The
+        # strict decode and every check below run exactly as on a cache miss.
+        value = checked(source)
+    else:
+        value = _decoded_value(repository, source, checked,
+            cache_name='_global_tour_projection_cache', byte_limit=MAX_GLOBAL_TOUR_BYTES,
+            entry_limit=4, _serialized=serialized,
+            _on_oversize=lambda: _remember_oversize(repository, run_id, branch_id, declared))
     # checked() bound the strict decode to this entire component. Every hit
     # rehashes that full envelope and returns a defensive private copy.
     from beta_engine.domain.tournaments.calendar_global_slots import _prime_private_fingerprint
@@ -415,7 +423,29 @@ def remember_live_calendar_component(repository, *, run_id, branch_id, kind, raw
             cache.pop(next(iter(cache)))
 
 
-def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None):
+def _known_oversize(repository, run_id, branch_id, declared):
+    """Only a hint to skip a cache lookup that cannot hit; never an authority."""
+    if repository is None or type(declared) is not str:
+        return False
+    with repository._revision_validation_lock:
+        return (run_id, branch_id, declared) in getattr(repository, '_oversize_checkpoint_values', {})
+
+
+def _remember_oversize(repository, run_id, branch_id, declared):
+    if repository is None or type(declared) is not str:
+        return
+    with repository._revision_validation_lock:
+        known = getattr(repository, '_oversize_checkpoint_values', None)
+        if known is None:
+            known = repository._oversize_checkpoint_values = {}
+        known.pop((run_id, branch_id, declared), None)
+        known[(run_id, branch_id, declared)] = True
+        while len(known) > 64:
+            known.pop(next(iter(known)))
+
+
+def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None,
+                   _on_oversize=None):
     if repository is None:
         return decode(source)
     if _serialized is not None and _serialized.isascii() and len(_serialized) > byte_limit:
@@ -425,6 +455,8 @@ def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_
     serialized = (_serialized if _serialized is not None else canonical_json(source.payload)).encode("utf-8")
     size = len(serialized)
     if size > byte_limit:
+        if _on_oversize is not None:
+            _on_oversize()
         return decode(source)
     key = (source.run_id, source.branch_id, hashlib.sha256(serialized).digest())
     with repository._revision_validation_lock:

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 22 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 23 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -56,10 +56,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Rio de Janeiro](#rio-de-janeiro-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Doha](#doha-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Los Cabos](#los-cabos-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Acapulco](#acapulco-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 22 zpracovaných ročníků; 20 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 23 zpracovaných ročníků; 21 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -87,7 +88,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 20 | Rio de Janeiro 2024 | HOTOVO (nominální rozsah) |
 | 21 | Doha 2024 | HOTOVO (nominální rozsah) |
 | 22 | Los Cabos 2024 | HOTOVO (nominální rozsah) |
-| 23 | Acapulco 2024 | NEZAHÁJENO |
+| 23 | Acapulco 2024 | HOTOVO (nominální rozsah) |
 | 24 | Dubai 2024 | NEZAHÁJENO |
 | 25 | Santiago 2024 | NEZAHÁJENO |
 
@@ -129,6 +130,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#rio-de-janeiro-2024) | Rio Open presented by Claro | ATP 500 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-25 | HOTOVO v nominálním rozsahu; odklady deštěm odděleně |
 | [2024](#doha-2024) | Qatar ExxonMobil Open | ATP 250 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-24 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 | [2024](#los-cabos-2024) | Mifel Tennis Open by Telcel Oppo | ATP 250 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-24 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
+| [2024](#acapulco-2024) | Abierto Mexicano Telcel presentado por HSBC | ATP 500 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-02 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 
 ## Wimbledon 2024
 
@@ -2812,6 +2814,126 @@ I/T/H/D/B doloženy; E* původní acceptance list a časy losů nedohledány, uz
 - LCB24-22: [dobový The SportsRush finanční rozpis 2024](https://thesportsrush.com/tennis-news-los-cabos-open-2024-prize-money-breakdown-who-is-playing-in-it-points-on-offer-where-to-watch-in-usa-and-uk/), Q shoda.
 - LCB24-23: [Stevegtennis ročník 2024](https://www.stevegtennis.com/draw-results/atp/Mifel%20Tennis%20Open%20-%20Los%20Cabos/2024), indexovaná shoda částek, chybné A$; přímý přístup timeout.
 
+
+## Acapulco 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; E/P/Z s omezeními). Rešerše 2026-11-27. Třetí ATP 500 v registru; šestidenní Main bez BYE. Předstartovní originální ATP Main kopie vizuálně ověřena, pořadatelská aktualizace Main a OOP textově. Původní Q PDF nedostupné; Q finanční částky potvrzeny shodou více sekundárních zdrojů, nikoli originálem.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Abierto Mexicano Telcel presentado por HSBC, 31. ročník, mužská dvouhra | ACA24-1/2/3 |
+| Kategorie / ATP ID | ATP 500 / 807 | ACA24-1/4 |
+| Dějiště obou fází | Arena GNP Seguros, Acapulco, Guerrero, Mexiko | ACA24-3/4/5 |
+| Povrch | venkovní tvrdý, Solflex | ACA24-1/2 |
+| Časové pásmo | America/Mexico_City, UTC−06:00 v únoru a březnu 2024 | lokalita a datum |
+| Ředitel | Álvaro Falla | ACA24-6 |
+| Supervisor | Ali Nili / Cristina Romero; OOP 28.2. navíc Jaime Chavez | ACA24-1/6 |
+| Referee / tour manager | Ricardo Reis / Arnau Brugues | ACA24-6 |
+| Měna | USD | ACA24-1/2 |
+
+Nezaměňovat s Los Cabos, které bylo v roce 2024 přesunuto z července na předcházející týden. Pořadatel v prosinci 2023 potvrdil zachování dějiště a plán 24.2.–2.3.2024 po hurikánu Otis (ACA24-7); nejde o mimořádně přesunutý turnaj. Model míčů a originální detail sheet nezískány.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | neověřeno originální listinou; pravidlový referenční den 2024-01-29 | §7.03 |
+| Q rank date | neověřeno originální listinou; pravidlový referenční den 2024-02-05 | §7.03 |
+| Nominální Main deadline | 2024-01-29 11:00 (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-02-05 11:00 (12:00 US Eastern) | odvozeno §7.03 |
+| Podmíněná A+ WC deadline | 2024-02-23 09:00 (10:00 US Eastern) | odvozeno §7.12 A.2 |
+| Main los | 2024-02-24; hodina 15:00 uvedena v rozporném ATP preview, skutečná hodina neověřena | ACA24-8/9 |
+| Q los | nejpozději 2024-02-24 před Q1, přesná hodina neověřena | ACA24-10/11 |
+| Q | 2024-02-24–25 | ACA24-5/10/12 |
+| Main | 2024-02-26–2024-03-02 | ACA24-1/2/5/13 |
+| Finále | 2024-03-02 21:00 místně, plán | ACA24-5 |
+
+ATP preview ACA24-8 uvádí neslučitelnou kombinaci soboty a 25.2.; v roce 2024 je 25.2. neděle. Pořadatel ve zprávě s datací 24.2. a dobová publikace téhož dne potvrzují los 24.2.; hodinu z chybně datovaného preview nepovažujeme za jistou. Předstartovní originální Main los uvádí Taro Daniel 62 jako last DA při deadline i při losu, zatímco dobový přepis původní listiny 31.1. končí u McDonalda 48 (ACA24-14). Jsou to různé stavy, bez originální acceptance listiny nelze jejich rozdíl přesně administrativně vysvětlit. Q cutoff ani původní rank dates nezískány. Uzávěrky odvozené, ne prokázané skutečným timestampem.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-24 | 8 |
+| Q2 | 2024-02-25 | 4 |
+| R32 | 2024-02-26–27 | 16 (8+8) |
+| R16 | 2024-02-28 | 8 |
+| QF | 2024-02-29 | 4 |
+| SF | 2024-03-01 | 2 |
+| F | 2024-03-02 | 1 |
+
+Oficiální návštěvnický program ACA24-5 výslovně uvádí oba Q dny (17:00 a 18:00), R32 ve dvou dnech od 18:00, R16 28.2. od 18:00, QF 29.2. od 18:00, SF 1.3. od 19:00 a singlové finále 2.3. od 21:00 po doubles finále. Pořadatel před Q1 publikoval 8 singlových zápasů; Q2 25.2. čtyři postupující. Pořadatelská zpráva 25.2. (ACA24-12) plánuje na pondělí osm singlů a dva doubles. Zpráva o druhé Main hrací době (ACA24-15) uvádí osm singlů a šest doubles; v úvodní větě chybně označuje den jako pondělí, titulek, jmenované dvojice a výsledky potvrzují úterý 27.2. Originální OOP 28.2. vydán 28.2. 00:12, osm R16 na třech kurtech, žádné plánované R32. Výsledkový archiv ACA24-16 nezávisle kontroluje počty, zahraniční datum přes půlnoc nepřepisuje místní plán. Celé nominální okno osm dní, 2 Q + 6 Main bez překryvu fází, 43 zápasů. ATP kalendář označuje sobotní finále; ITF datum do 3.3. je širší metadata, nikoli nominální den finále.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 32 | 16 / 16 |
+| Základní DA při všech rezervách | 23 | 13 |
+| SE rezerva | 1 | 0 |
+| WC | 3 běžné + 1 podmíněná A+ | 3 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 0 | 0 |
+| Kola / zápasy | 5 / 31 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 23 DA + 1 SE + 3 WC + 1 A+ WC + 4 Q = 32, přímo doloženo ročníkovým přepisem listiny z 31.1. (ACA24-14) a standardem §7.08 B/E, §7.10 B, §7.12 A.2; 0–1 SE, 3–4 WC, 23–25 DA dle využití rezerv. Nevyužité rezervy se vracejí do DA. Originální předstartovní Main ACA24-1 vizuálně potvrzuje všechny 32 pozice, 8 seedů, Q placeholdery 6/14/29/31 a WC 4/11/19; žádné BYE. Pořadatelská aktualizace 26.2. ACA24-2 dokládá čtyři Q a jednoho LL Nishioku po odstoupení Norrieho. Historické přerozdělení slotů (např. LL v pozici 6, Q v pozici 27) nemění čtyři nominální Q postupy; neoznačovat pět vstupů z kvalifikačního pole za pět řádných postupů.
+
+Q 13 DA + 3 WC = 16 dle standardu ATP 500; dobový přepis Q losu a OOP 24.2. ACA24-11 označuje tři WC (Svajda, Mejia, Rubio Fierros), jedno Alt, všech osm seedů a čtyři sekce. Pořadatel potvrzuje osm dvojic a čtyři postupy ACA24-10/12, výsledkový pavouk ACA24-17 potvrzuje geometrii a štítky. Původní Q PDF a acceptance list nedostupné, neodvozovat neoznačené jednotlivce jako jistě DA. Main 16+8+4+2+1=31, Q 8+4=12. Historická skreč nebo LL nemění nominální počet.
+
+### 5. Dobová pravidla
+
+ATP 500 §7.08 B/E, §7.10 B, §7.12 A.2, §7.13/7.15–16: jedna SE rezerva (pro SE z ATP 250 platí stejný ATP region), podmíněná A+ WC do páteční uzávěrky, osm seedů Main/Q, čtyři Q vítězové, náhradníci a LL podle §7.09/7.16, BO3 s tiebreakem podle ATP singles předpisu. Oproti ATP 250 žádná LE rezerva; žádná bodová výjimka při prohře po BYE, neboť pavouk nemá BYE. Pro tento ročník již platí únorové změny sign-in a pravidel náhradníků z 16.2. (LCB24-19); nepřenášet starší verzi beze změny. Q body 25/13/0 dle dobového předpisu ROT24-16 a příslušného řádku 32 hráčů ATP 500.
+
+Týden Acapulco/Dubai/Santiago: samotná přítomnost mladých hráčů nebo WC není důkaz Next Gen programového vstupu. Přesné přidělení případných kvalifikačních příležitostí neověřeno; další audit při zpracování Santiago, ATP 250 téhož týdne. Nevytvářet dodatečné místo v žádném pavouku.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 500 | 412555 |
+| Finalista | 1 | 330 | 221975 |
+| SF | 2 | 200 | 118300 |
+| QF | 4 | 100 | 60440 |
+| R16 | 8 | 50 | 32265 |
+| R32 | 16 | 0 | 17210 |
+| Q postupující | 4 | 25 | 0 samostatně |
+| Q2 prohra | 4 | 13 | 8820 |
+| Q1 prohra | 8 | 0 | 4945 |
+
+Main primární ATP los ACA24-1 vizuálně, ACA24-2 textově. Q sekundární shoda ACA24-17/18/19 (vzájemná nezávislost neprokázána); TennisTemple nesprávně nazývá postup třetím Q kolem, geometrie a pořadatel potvrzují dvě kola. Canal Tenis uvádí chybně 112625 USD za SF (částka Rio), proto pro Main výlučně primární ATP částka 118300 USD; jeho Q řádky souhlasí s dalšími tabulkami. P* zůstává do získání Q originálu. Nominální Main 1646370 USD, Q 74840 USD, celkem 1721210 USD; total financial commitment 2377565 USD (originální ATP los) a ITF celková dotace 2206080 USD (ACA24-20) jsou jiné veličiny. Q postupující dostávají Main odměnu podle výsledku, Q body se přičítají dle dobového předpisu.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/R/B doloženy. E* pravidlové uzávěrky odvozené; originální acceptance listy/DS, přesné časy losů a Q cutoff neověřeny. P* Q odměny sekundární shoda. Z* archiv předstartovního originálu Main (1 strana) vizuálně; pořadatelský originální Main 26.2. a OOP 28.2. textově, screenshoty 404; originální Q PDF nedostupné. Nevymýšlet SHA-256. Kontrola kvót, seedů, zápasů, peněz a nominálních oken prošla. Další Dubai 2024, následně Santiago. Bez runtime změn.
+
+### 8. Zdroje (ACA24)
+
+- ACA24-1: [archiv předstartovního originálního ATP Main](https://www.raquetc.com/wp-content/uploads/2024/02/ATP-500-Acapulco-2024-quadro-principal-singulares.pdf), str. 1 vizuálně, kvóty, povrch, body/ceny.
+- ACA24-2: [pořadatelský originál ATP Main 26.2.](https://abiertomexicanodetenis.com/wp-content/uploads/2024/02/mds_26feb.pdf), text, screenshot 404, LL a čtyři Q, ceny.
+- ACA24-3: [pořadatelské zprávy 26.2.](https://abiertomexicanodetenis.com/tag/prensa_26feb_2024/), 31. ročník, dějiště.
+- ACA24-4: [ATP série 807](https://www.atptour.com/es/tournaments/acapulco/807/overview), identita a tvrdý povrch od 2014; ne zdroj specifických ročníkových cen.
+- ACA24-5: [oficiální návštěvnický plán s daty 2024](https://abiertomexicanodetenis.com/planea-tu-visita/), tabulka HORARIOS; při budoucí aktualizaci URL kontrolovat ročník.
+- ACA24-6: [originální OOP 28.2.](https://abiertomexicanodetenis.com/wp-content/uploads/2024/02/OP_28feb_acapulco.pdf), text, screenshot 404; 8 R16 a funkcionáři.
+- ACA24-7: [pořadatel 14.12.2023](https://abiertomexicanodetenis.com/2023/12/14/mextenis-refrenda-su-compromiso-con-acapulco-y-mantiene-en-el-puerto-el-abierto-mexicano-telcel-presentado-por-hsbc-del-2024/), potvrzení celého okna.
+- ACA24-8: [ATP preview 23.2.2024](https://www.atptour.com/en/news/acapulco-2024-history-draw-schedule), indexovaný text, přímý přístup 403; chyba datum/den Main losu.
+- ACA24-9: [pořadatelský archiv zprávy o losu](https://abiertomexicanodetenis.com/tag/imagen_ok/page/6/), datace 24.2.; [dobová sekundární zpráva 24.2.](https://tennisuptodate.com/atp/atp-draw-2024-mexican-open-acapulco-abierto-mexicano-telcel-including-alexander-zverev-holger-rune-taylor-fritz), nezávislé potvrzení data.
+- ACA24-10: [pořadatel Q1 24.2.](https://abiertomexicanodetenis.com/en/2024/02/24/the-abierto-mexicano-telcel-presented-by-hsbc-2024-kicks-off-with-the-qualy-round/), 8 dvojic, čtyři postupy.
+- ACA24-11: [dobový Q los a program 24.2.](https://www.livetennis.it/post/407412/atp-500-acapulco-e-atp-250-santiago-il-tabellone-di-qualificazione-con-il-programma-completo-cinque-azzurri-al-via/), osm seedů, tři WC, lokální start.
+- ACA24-12: [pořadatelský archiv zpráv 25.2.](https://abiertomexicanodetenis.com/en/amt-news/page/11/), indexované zprávy o čtyřech postupech a osmi pondělních singlech, přímé otevření 404; [španělský archiv](https://abiertomexicanodetenis.com/category/noticias/page/13/).
+- ACA24-13: [ATP kalendář 8.2.2024](https://www.atptour.com/-/media/files/calendar-pdfs/2024/2024-atp-challenger-calendar-as-of-8-february-2024.pdf), indexovaný řádek 32/16 a Saturday final; [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024).
+- ACA24-14: [dobový přepis Main entry listu 31.1.](https://canaltenis.com/entry-list-atp-acapulco-2024/), 23 DA a explicitní 3 WC + A+ WC + SE + 4 Q; v úvodu generické koncové datum 3.3., přednost ATP a pořadateli.
+- ACA24-15: [pořadatel druhý den Main](https://abiertomexicanodetenis.com/2024/02/27/zverev-rune-tsitsipas-ruud-y-tiafoe-entran-en-accion-en-la-segunda-jornada-del-amt-2024/), osm singlů, chyba weekday v úvodu.
+- ACA24-16: [dobový denní přehled výsledků](https://canaltenis.com/resultados-atp-acapulco-2024/), pouze kontrola kol/počtů; [Tennis Abstract](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024Acapulco).
+- ACA24-17: [TennisTemple Q pavouk a odměny](https://en.tennistemple.com/competitions/acapulco/2024/draw-qualifications), 8820/4945, 25/13/0.
+- ACA24-18: [TennisCompanion historický sloupec 2024 USD](https://tenniscompanion.org/prize-money/acapulco/), Q shoda.
+- ACA24-19: [Canal Tenis, ročníkový oddíl 2024](https://canaltenis.com/el-prize-money-del-atp-acapulco/), Q shoda, nesprávná SF částka; nepoužívat pro Main.
+- ACA24-20: [ITF ročník](https://www.itftennis.com/en/tournament/acapulco/mex/2024/m-500-mex-2024-001/draws-and-results/), celková dotace, širší datum do 3.3. není nominální finále.
+- Pravidla ROT24-15/16, LCB24-19; [originální Q PDF](https://www.protennislive.com/posting/2024/807/qs.pdf) nedostupné, DS nezískán.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -2830,3 +2952,4 @@ I/T/H/D/B doloženy; E* původní acceptance list a časy losů nedohledány, uz
 | Rio de Janeiro 2024 | H*/E*/Z* – doplňkové podklady | původní rozdělení R16 před deštěm, originální acceptance list/DS, čas Q losu, obrazová kontrola velké Revista; primární Main/Q finanční tabulky ověřeny |
 | Doha 2024 | R*/E*/H*/Z* – doplňkové podklady | originální schválení ES a případná kompenzace, Q NextGen alokace v týdnu Rio/Doha/Los Cabos, originální acceptance list/DS, časy losů a kompletní původní OOP; Main/Q ceny vizuálně z ATP kopií |
 | Los Cabos 2024 | P* / E* / Z* | originální Q finanční tabulka (sekundární shoda 4910/2675 USD), acceptance list/DS, časy losování a pondělní OOP; Q NG alokace stále otevřená |
+| Acapulco 2024 | E*/P*/Z* | originální acceptance list/DS, čas losu, Q cutoff a primární Q finanční tabulka (sekundární shoda 8820/4945 USD); screenshot pořadatelských PDF nedostupný |

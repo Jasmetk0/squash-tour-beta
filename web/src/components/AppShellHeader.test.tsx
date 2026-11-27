@@ -24,6 +24,7 @@ function renderHeader(path: string): void {
 describe('approved Admin header', () => {
   beforeEach(() => {
     localStorage.clear()
+    sessionStorage.clear()
     api.listRunContainers.mockResolvedValue({ run_containers: [] })
     api.getRunContainer.mockResolvedValue({ run_id: 'run-a', official_branch_id: null })
     api.listRunBranches.mockResolvedValue({ run_branches: [] })
@@ -35,6 +36,15 @@ describe('approved Admin header', () => {
     expect(screen.getByRole('link', { name: 'Squash Engine global Home' })).toHaveAttribute('href', '/admin')
     expect(screen.queryByRole('combobox', { name: 'Admin active Run' })).not.toBeInTheDocument()
     expect(screen.queryByRole('navigation', { name: 'Mode switcher' })).not.toBeInTheDocument()
+  })
+  it('offers opt-in monitoring in Admin, but does not duplicate the Task Center', () => {
+    renderHeader('/admin/packages')
+    expect(screen.getByRole('button',{name:'Sledovat simulace'})).toHaveAttribute('aria-pressed','false')
+  })
+  it('leaves the dedicated Task Center as the only task reader on its own route', () => {
+    renderHeader('/admin/operations')
+    expect(screen.queryByRole('region',{name:'Sledování simulací'})).not.toBeInTheDocument()
+    expect(screen.getByRole('link',{name:'Centrum simulací'})).toHaveAttribute('href','/admin/operations')
   })
   it('allows Czech and English selection and retains Run / Branch / Time controls only within Run scope', () => {
     renderHeader('/admin/runs/run-a')

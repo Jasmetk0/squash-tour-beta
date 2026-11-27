@@ -45,6 +45,16 @@ describe('Saved player three-tab profile',()=>{
     fireEvent.click(screen.getByRole('tab',{name:'Career & results'}))
     expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
   })
+  it('describes the canonical attribute catalogue without fabricated values or extra reads',async()=>{
+    mount('/admin/runs/run-a/people/p1?tab=attributes')
+    const section=await screen.findByRole('region',{name:'Sporting profile availability'})
+    expect(section).toHaveTextContent('57 attributes in six groups')
+    expect(section).toHaveTextContent('Unavailable values do not mean zero ability')
+    expect(section).toHaveTextContent('Potential OVR (hidden potential)')
+    expect(section).toHaveTextContent('Historical attribute development')
+    expect(section).not.toHaveTextContent(/\b0\/200\b/)
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(1)
+  })
   it('restores the career tab from a match-detail return URL', async () => {
     mount('/admin/runs/run-a/people/p1?tab=career&careerSeason=2&careerPage=1')
     expect(await screen.findByRole('heading', {name: 'Sample Player'})).toBeInTheDocument()
@@ -52,6 +62,41 @@ describe('Saved player three-tab profile',()=>{
     expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
     fireEvent.click(screen.getByRole('tab', {name: 'Overview'}))
     expect(screen.getByRole('tab', {name: 'Overview'})).toHaveAttribute('aria-selected', 'true')
+  })
+  it('shows recorded career totals on the verified overview without loading matches',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValue({...profile,titles:3,final_appearances:5})
+    mount()
+    const summary=await screen.findByRole('region',{name:'Saved profile summary'})
+    expect(summary).toHaveTextContent('Recorded titles3')
+    expect(summary).toHaveTextContent('Recorded final appearances5')
+    expect(summary).toHaveTextContent('earlier unknown history is not zero')
+    expect(screen.queryByTestId('saved-matches')).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button',{name:'Open career'}))
+    expect(screen.getByRole('tab',{name:'Career & results'})).toHaveAttribute('aria-selected','true')
+    expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
+    expect(api.getSavedPlayerProfile).toHaveBeenCalledTimes(1)
+  })
+  it('hides current HEAD finals and match reads during a scoped historical career selection',async()=>{
+    api.getSavedPlayerProfile.mockResolvedValue({...profile,titles:1,final_appearances:1,
+      total_tournament_results:1,tournament_results:[{
+        event_id:'later-event',event_name:'Later Open',season:'2005/06',week:12,finish:'champion'
+      }]})
+    const qs=new URLSearchParams({tab:'career',
+      career_scope:JSON.stringify(['run-a','branch-a','head-a','p1']),career_asof:'0'})
+    mount('/admin/runs/run-a/people/p1?'+qs.toString())
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    expect(screen.getByText(/Current Saved HEAD finals and matches are hidden/)).toBeInTheDocument()
+    expect(screen.queryByText('Later Open')).not.toBeInTheDocument()
+    expect(screen.queryByTestId('saved-matches')).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading',{name:'Tournament history'})).not.toBeInTheDocument()
+  })
+  it('ignores a historical career parameter owned by another player',async()=>{
+    const qs=new URLSearchParams({tab:'career',
+      career_scope:JSON.stringify(['run-a','branch-a','head-a','p2']),career_asof:'0'})
+    mount('/admin/runs/run-a/people/p1?'+qs.toString())
+    expect(await screen.findByRole('heading',{name:'Sample Player'})).toBeInTheDocument()
+    expect(screen.getByTestId('saved-matches')).toBeInTheDocument()
+    expect(screen.queryByText(/Current Saved HEAD finals and matches are hidden/)).not.toBeInTheDocument()
   })
   it('refuses historical mode instead of querying the current profile',()=>{
     context.time.mode='checkpoint'

@@ -70,14 +70,48 @@ export async function nativeTaskControl(run:string,branch:string,parent:string,a
  if(value?.schema_version!=='native_full_simulation_control_result.v1'||value.run_id!==run||value.branch_id!==branch||value.command_id!==parent||value.control_command_id!==id)throw Error('Invalid native control acknowledgement')
  return value
 }
-export async function nativeTaskSummary(task:ServerTask){
+export type NativeTerminalSummary={
+ schema_version:'full_simulation_terminal_summary.v3';status:'stopped'|'target_reached'|'complete';
+ run_id:string;branch_id:string;command_id:string;start_week:NativeTaskWeek;end_week:NativeTaskWeek;
+ original_final_week:NativeTaskWeek;effective_target_week:NativeTaskWeek;execution_calendar:TaskCalendar;
+ initial_saved_revision_id:string;terminal_saved_revision_id:string;persisted_child_command_count:number;
+ reason:'operator_stop'|'week_target_reached'|'run_completed';target_reached:boolean;
+ completed_tournaments:string[];summary_fingerprint:string
+}
+export async function nativeTaskSummary(task:ServerTask):Promise<NativeTerminalSummary>{
  const value=await send(scope(task.run_id,task.branch_id)+`/parents/${encodeURIComponent(task.parent_command_id)}/summary`)
  const s=value?.summary
- if(value?.schema_version!=='full_simulation_terminal_summary_response.v2'||value.run_id!==task.run_id||value.branch_id!==task.branch_id||value.command_id!==task.parent_command_id||
-  value.available!==true||!s||s.schema_version!=='full_simulation_terminal_summary.v3'||s.run_id!==task.run_id||s.branch_id!==task.branch_id||s.command_id!==task.parent_command_id||s.status!==task.state||
-  !same(s.end_week,task.current_week)||!same(s.execution_calendar,task.execution_calendar)||!hash(s.summary_fingerprint)||!Number.isSafeInteger(s.persisted_child_command_count)||s.persisted_child_command_count<0||
-  !Array.isArray(s.completed_tournaments)||s.completed_tournaments.some((id:unknown)=>typeof id!=='string'||!id))throw Error('Invalid native terminal summary')
- return s as {persisted_child_command_count:number;completed_tournaments:string[];terminal_saved_revision_id:string;reason:string}
+ const command=task.original_command
+ const invalid=()=>{throw Error('Invalid native terminal summary')}
+ if(!('schema_version' in command)||command.schema_version!=='authoritative_full_simulation_command.v2'||
+  task.schema_version!=='full_simulation_task_view.v2'||task.progress_evidence.kind!=='terminal_frozen'||
+  command.run_id!==task.run_id||command.branch_id!==task.branch_id||command.command_id!==task.parent_command_id||
+  value?.schema_version!=='full_simulation_terminal_summary_response.v2'||value.run_id!==task.run_id||
+  value.branch_id!==task.branch_id||value.command_id!==task.parent_command_id||value.status!==task.state||
+  value.available!==true||!s||s.schema_version!=='full_simulation_terminal_summary.v3'||s.run_id!==task.run_id||
+  s.branch_id!==task.branch_id||s.command_id!==task.parent_command_id||s.status!==task.state||
+  !['stopped','target_reached','complete'].includes(s.status)||!same(s.end_week,task.current_week)||
+  !same(s.end_week,task.progress_evidence.week)||!same(s.execution_calendar,task.execution_calendar)||
+  !same(s.execution_calendar,command.execution_calendar)||!hash(s.summary_fingerprint)||
+  !Number.isSafeInteger(s.persisted_child_command_count)||s.persisted_child_command_count<0||
+  !Array.isArray(s.completed_tournaments)||s.completed_tournaments.some((id:unknown)=>typeof id!=='string'||!id.trim())||
+  new Set(s.completed_tournaments).size!==s.completed_tournaments.length||
+  s.initial_saved_revision_id!==command.expected_revision_id||
+  typeof s.terminal_saved_revision_id!=='string'||!s.terminal_saved_revision_id.trim())return invalid()
+ const calendar=serverTaskCalendar(task)
+ const final={season_index:calendar.season_count-1,week:calendar.weeks_per_year}
+ const target=command.target_week??final
+ if(![s.start_week,s.end_week,s.original_final_week,s.effective_target_week].every(w=>validTaskWeek(w,calendar))||
+  !same(s.start_week,command.expected_start_week)||!same(s.original_final_week,final)||
+  !same(s.effective_target_week,target)||s.target_reached!==(s.status==='target_reached')||
+  s.reason!==(s.status==='complete'?'run_completed':s.status==='target_reached'?'week_target_reached':'operator_stop'))return invalid()
+ const start=taskWeekOrdinal(s.start_week,calendar),end=taskWeekOrdinal(s.end_week,calendar)
+ const targetOrdinal=taskWeekOrdinal(target,calendar)
+ if(end<start||targetOrdinal<start||end>targetOrdinal||
+  task.progress_evidence.weeks_advanced_since_start!==end-start||
+  (s.status==='target_reached'&&(command.target_week===null||end!==targetOrdinal))||
+  (s.status==='complete'&&(command.target_week!==null||!same(s.end_week,final))))return invalid()
+ return s as NativeTerminalSummary
 }
 export async function nativeSeasonReview(task:ServerTask):Promise<NativeSeasonReview>{
  const value=await send(scope(task.run_id,task.branch_id)+`/native/${encodeURIComponent(task.parent_command_id)}/season-transition`)

@@ -1,0 +1,95 @@
+name: Diagnostic W12 Saved Source A-B
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/benchmark_native_saved_w12_ab.py'
+      - '.github/workflows/diagnostic-native-saved-w12-ab.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: native-w12-saved-source-ab-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  paired-original-vs-claude:
+    name: Same archived 256-player/8-Edition SQLite / original vs Claude cold GET
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check out exact original buuk for immutable A/B
+        uses: actions/checkout@v4
+        with:
+          ref: 320e4766ec8ba78e3de20153b8aaada90585b0cf
+          path: original
+          persist-credentials: false
+      - name: Check out exact Claude PR 1803 candidate
+        uses: actions/checkout@v4
+        with:
+          ref: 136b277a6b246da8bd01bca7b2e1668f35983fad
+          path: optimized
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      - name: Install backend API environment
+        run: python -m pip install -e . pytest
+      - name: Reuse exact final SQLite archived from successful test 1815
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/baseline-native-w12
+      - name: Fresh-process A-B-B-A same actual Saved state
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t databases < <(find "$RUNNER_TEMP/baseline-native-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#databases[@]}" -ne 1 ]; then
+            echo "::error::Expected one numbered original W12 SQLite state"
+            exit 1
+          fi
+          input_sha="$(sha256sum "${databases[0]}" | cut -d' ' -f1)"
+          if [ "$input_sha" != "17d8bae0e69e08457cb3ba2d76da813b6a2a684da76eb96ab39fb0ae51ab78e7" ]; then
+            echo "::error::Source database differs from independently profiled exact input"
+            exit 1
+          fi
+          cp scripts/benchmark_native_saved_w12_ab.py original/scripts/
+          cp scripts/benchmark_native_saved_w12_ab.py optimized/scripts/
+          mkdir -p "$RUNNER_TEMP/native-source-ab"
+          for label in A1 B1 B2 A2; do
+            case "$label" in
+              A*) checkout=original ;;
+              B*) checkout=optimized ;;
+            esac
+            cp "${databases[0]}" "$RUNNER_TEMP/native-case.sqlite"
+            (
+              cd "$checkout"
+              PYTHONPATH="$PWD/src:$PWD" python scripts/benchmark_native_saved_w12_ab.py \
+                --case "$label" \
+                --database "$RUNNER_TEMP/native-case.sqlite" \
+                --out "$RUNNER_TEMP/native-source-ab/$label.json"
+            )
+            rm -f "$RUNNER_TEMP/native-case.sqlite" "$RUNNER_TEMP/native-case.sqlite-wal" "$RUNNER_TEMP/native-case.sqlite-shm"
+          done
+          python scripts/benchmark_native_saved_w12_ab.py \
+            --summary "$RUNNER_TEMP/native-source-ab"
+      - name: Publish only A/B numeric reports, never the giant database
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-w12-saved-source-ab-${{ github.run_id }}
+          path: ${{ runner.temp }}/native-source-ab/
+          if-no-files-found: warn
+          retention-days: 7

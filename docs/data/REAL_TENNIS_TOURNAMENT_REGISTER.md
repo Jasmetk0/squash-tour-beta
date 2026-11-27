@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 18 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 19 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -52,10 +52,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Marseille](#marseille-2024) | ✓ | ✓ | ✓ | ? | ✓ | ✓* | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: nominální Q WC) |
 | 2024 | [Buenos Aires](#buenos-aires-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Rotterdam](#rotterdam-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Delray Beach](#delray-beach-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 18 zpracovaných ročníků; 16 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 19 zpracovaných ročníků; 17 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -79,7 +80,10 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 16 | Marseille 2024 | ROZPRACOVÁNO (E: nominální Q WC) |
 | 17 | Buenos Aires 2024 | HOTOVO (nominální rozsah) |
 | 18 | Rotterdam 2024 | HOTOVO (nominální rozsah) |
-| 19 | Delray Beach 2024 | NEZAHÁJENO |
+| 19 | Delray Beach 2024 | HOTOVO (nominální rozsah) |
+| 20 | Rio de Janeiro 2024 | NEZAHÁJENO |
+| 21 | Doha 2024 | NEZAHÁJENO |
+| 22 | Los Cabos 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -115,6 +119,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#marseille-2024) | Open 13 Provence | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | ROZPRACOVÁNO: nominální Q WC |
 | [2024](#buenos-aires-2024) | IEB+ Argentina Open | ATP 250 | 2024-02-10–2024-02-11 | 2024-02-12–2024-02-18 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 | [2024](#rotterdam-2024) | ABN AMRO Open | ATP 500 | 2024-02-10–2024-02-11 | 2024-02-12–2024-02-18 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
+| [2024](#delray-beach-2024) | Delray Beach Open | ATP 250 | 2024-02-10–2024-02-11 (plán) | 2024-02-12–2024-02-18 (plán) | HOTOVO v nominálním rozsahu; finále přeloženo na 19.2. |
 
 ## Wimbledon 2024
 
@@ -2333,6 +2338,120 @@ I/T/D/R/B/P doloženy. H*: doložena okna a dobové denní rozpisy, nikoli celý
 - ROT24-17: [ATP Preview & Day 1](https://www.atptour.com/-/media/2841d9bdded5444cb752004800f36cbd.pdf), str. 2 Main body/ceny, text, screenshot 403.
 - ROT24-18: [sekundární ročníkový kontext a prize pool](https://en.wikipedia.org/wiki/2024_ABN_AMRO_Open); originální [DS](https://www.protennislive.com/posting/2024/407/ds.pdf) nedostupný.
 
+
+## Delray Beach 2024
+
+**Stav:** HOTOVO (nominální rozsah, 9/9; H/E/R/Z s omezeními). První doložené využití Next Gen vstupu v týdnu 12.2. v tomto registru. Rešerše 2026-11-27. Předturnajový Main los vizuálně, originální Q los v archivní kopii textově (screenshot 403). Plánované termíny nemění mimořádné přesuny zápasů.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Delray Beach Open, 32. ročník, mužská dvouhra | DLB24-1/3/4 |
+| Kategorie / ATP ID | ATP 250 / 499 | DLB24-1/2/3/5 |
+| Dějiště | Delray Beach Stadium & Tennis Center, 201 West Atlantic Avenue, Florida, USA | DLB24-4/6 |
+| Povrch | venkovní tvrdý, Plexipave | DLB24-1/2/4 |
+| Časové pásmo | America/New_York, EST UTC−05:00 | lokalita a datum |
+| ATP supervisor | Nacho Forcadell | DLB24-1/2 |
+| Měna | USD | DLB24-1/2/3 |
+
+Celá pořadatelská akce 9.–18.2. zahrnovala také Legends a ženskou exhibici; pátek 9.2. není první den mužské kvalifikace ATP. Série probíhala v Coral Springs 1993–98, v Delray Beach od 1999 dle ATP notes; historické názvy/místa nepřepisovat současnou identitou. Přesný typ míčů, DS a další funkcionáři nezjištěni.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-01-15 | DLB24-7 |
+| Q rank date | 2024-01-22 | DLB24-7 |
+| Nominální Main deadline | 2024-01-15 12:00 EST | §7.03, odvozeno |
+| Nominální Q deadline | 2024-01-22 12:00 EST | §7.03, odvozeno |
+| Nominální LE deadline | 2024-02-08 10:00 EST | §7.04, odvozeno |
+| Main/Q losy | před příslušnou fází; přesné časy neověřeny | DLB24-1/2 |
+| Q | 2024-02-10–11, plán | DLB24-8/9 |
+| Main | 2024-02-12–18, plán | DLB24-1/3/4 |
+| Finále | 2024-02-18 15:00 EST, plán | DLB24-3 |
+| Přeložené finále | 2024-02-19 ne před 12:30 EST | DLB24-10, historická změna |
+
+Dobový přepis listiny DLB24-7: původní cutoff Main 71, Q 143; Main předstartovní originál uvádí Broady 98 při deadline a Lestienne 104 v losu; Q originální kopie uvádí Moreno de Alboran 147 jako last DA. Hodnoty zachovat s jejich zdrojovým označením, nejsou totožnými okamžiky. Přímý čas uzávěrek ani losovací ceremonie nepotvrzeny původní listinou.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-10 | 8 |
+| Q2 | 2024-02-11 | 4 |
+| R32 | 2024-02-12–13 | 12 |
+| R16 | 2024-02-14–15 | 8 |
+| QF | 2024-02-16 | 4 |
+| SF | 2024-02-17 | 2 |
+| F | 2024-02-18 | 1 |
+
+Pořadatel 10.1. publikoval sobotní začátek Q od 10:00 EST, Q v sobotu a neděli; 23.1. znovu explicitně dvě kola 10.–11.2. a čtyři postupující. Prosincový předběžný program umístil první hrané kolo Fritz a Paul na 14./15.2.; lednová aktualizace mění Paulův čas z večera na denní session, při zachování data, a potvrzuje Tiafoeho na 15.2. (DLB24-4/8/9). ATP Preview 12.2. a dobové denní přehledy DLB24-3/11 potvrzují R32 4+8, R16 4+4, QF/SF 4/2. Jde o rekonstrukci denních počtů podle dobových rozpisů a výsledků, nikoli celý první předturnajový OOP. Jeden Q2 zápas Kokkinakis–Mochizuki je v dobových sekundárních archivech veden 12.2., ostatní tři 11.2.; důvod ani přesný lokální čas změny neověřen primárně. Nominál Q2 zůstává 11.2., nepřidávat třetí standardní Q den. Nedělní finále výslovně odloženo deštěm na pondělí 19.2. (DLB24-10), nominál neděle 18.2. se nemění. Plán 2+7 dní bez překryvu fází; 27+12=39 zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA včetně NG | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main dle dobového §7.08: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28. DLB24-7 výslovně počítá 18 DA, z toho 17 běžných podle pořadí a jeden Shang (NG); NG je zahrnutý v DA kvótě, nikoli 29. hráč. Zobrazený mezistav listiny 18+1 LE+3 WC+4 Q+0 SE=26 není konečný los; nevyužité SE rezervy se vracejí do DA. Originální předstartovní Main DLB24-1, str. 1 vizuálně: BYE 2/10/23/31, Q placeholdery 20/22/26/29, WC 12/15/19, 8 seedů. Shang na místě 30 bez zvláštního štítku; pořadatel v lednovém oznámení DLB24-12 a DLB24-9 explicitně potvrzuje NG vstup, ATP notes potvrzují účast, dobové výsledky DLB24-11 potvrzují, že nastoupil. U Tiafoeho sekundární ročníkový přehled DLB24-13 výslovně uvádí LE a pořadatel oznámil jeho dodatečný vstup již 23.1., nikoli až po Dallasu, jak naznačuje sekundární článek; přesná administrativní realizace LE doložena slaběji než NG. Neoznačovat ho jako WC (v losu bez WC štítku). V pozdějším skutečném losu se objevují LL Diallo a Cobolli, nepřičítat jako další plánované Q postupy.
+
+Q 14 DA + 2 WC = 16 dle listiny a dobového pravidla. Originální Q kopie DLB24-2 (text) obsahuje osm seedů, dvě WC, šest Alt a čtyři sekce po čtyřech. Nominální počty nezměněny historickými náhradami. Q 8+4=12 a Main 12+8+4+2+1=27; BYE není zápas.
+
+### 5. Dobová pravidla a Next Gen
+
+ATP §§7.03/7.04/7.08/7.09/7.10/7.15–18/7.20 (MPL24-7, MRS24-16 a DLB24-14): termíny, SE a LE, pravidla pro náhradníky/LL, čtyři Q sekce, osm seedů v obou fázích, top čtyři Main BYE, BO3 tiebreak sety. ATP Media Notes DLB24-3 výslovně potvrzují nula bodů při prohře prvního hraného kola po BYE. Body Q dle 2024 pravidel, přičítají se k Main výsledku.
+
+Next Gen (2024, ne novější model): ve třítur­najovém týdnu Rotterdam/Buenos Aires/Delray Beach je Main rezervace v Delray doložena pořadatelem, acceptance přepisem a skutečnou účastí Shanga; Q nominálně 14+2 a žádný další slot. Michelsen byl v počáteční Q listině na základě rankingu 91, poté v Main losu; označení mladého hráče v ATP notes není samo důkaz využití programové rezervy. Konkrétní dvě Q příležitosti, jejich výběr a případné přidělení/propad v týdnu zůstávají otevřené; nemáme důkaz, že Buenos Aires použil vlastní Main NG místo. Obecné pravidlo jednoho vyhrazeného místa pro ATP 250 ve třítur­najových týdnech neinterpretovat jako automatické přidávání míst nebo univerzální alokaci každému turnaji; DLB24-14/15. Tím je předchozí otevřená stopa ROT24-7 pro Main Delray vyřešena, nikoli celý týdenní mechanismus.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 100635 |
+| Finalista | 1 | 165 | 58700 |
+| SF | 2 | 100 | 34510 |
+| QF | 4 | 50 | 19995 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 11610 |
+| R32 | 12 | 0 | 7095 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3550 |
+| Q1 prohra | 8 | 0 | 1935 |
+
+Main primární předstartovní ATP los vizuálně a ATP notes textově (DLB24-1/3), Q primární kopie ATP losu DLB24-2 textově, nikoli pouze sekundární tabulka; screenshot Q 403. Body potvrzeny ATP ročníkovým oznámením DAL24-21. Nominální singlové součty: Main 486355 USD, Q 29680 USD, celkem 516035 USD. Financial commitment 742350 USD v originálních losech není singlová dotace. Q postupující nemají zvláštní Q peněžní odměnu. Shoda Q částek s Adelaide a dalšími ročníky není sama důkaz odměn Aucklandu; ten zůstává otevřený.
+
+### 7. Kontrola a mezery
+
+I/T/D/B/P doloženy; H* denní rozdělení rekonstruováno, kompletní předturnajový OOP a přesný důvod jednotlivého Q posunu neověřeny; E* uzávěrky odvozené, originální acceptance list a časy losování nezískány; R* Next Gen Main doložen, Q alokace stále otevřena; Z* Main původní předstartovní kopie vizuálně ověřena, Q a ATP notes textově (403 při screenshotu), přímé originály/DS nedostupné. Nevymýšlet PDF hash. Kontrola kvót, slotů, zápasů a odměn prošla. Další pořadí Rio de Janeiro, Doha, Los Cabos 2024 podle ATP archivu DLB24-16; žádný zásah do engine.
+
+### 8. Zdroje (DLB24)
+
+- DLB24-1: [archiv původního ATP předstartovního Main losu](https://www.raquetc.com/wp-content/uploads/2024/02/ATP-250-Delray-Beach-2024-quadro-singulares.pdf), str. 1 vizuálně zkontrolována.
+- DLB24-2: [archiv původního ATP Q losu](https://britwatchsports.com/wp-content/uploads/2021/11/ATP-Delray-Beach-QS-20240211.pdf), text (16 pozic, 8 seedů, odměny 3550/1935); screenshot 403. Datum v názvu souboru není důkaz doby dokončení všech zápasů.
+- DLB24-3: [ATP Preview & Day 1, 12.2.2024](https://www.atptour.com/-/media/ce938d7699d5422cad4894f597885392.pdf), tištěná str. 2, text; screenshot 403.
+- DLB24-4: [pořadatel 21.12.2023](https://www.delraybeachopen.com/en/tournament/news/schedule-released-for-top-players), předběžný Main a původní session plán, venkovní tvrdý povrch.
+- DLB24-5: [oficiální archiv losů pořadatele](https://www.delraybeachopen.com/en/tournament/past-draws), řádek 2024; originální [Main](https://www.protennislive.com/posting/2024/499/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/499/qs.pdf) přímým otevřením nedostupné.
+- DLB24-6: [město Delray Beach, místo a termíny 2024](https://www.delraybeachfl.gov/Home/Components/News/News/743/395).
+- DLB24-7: [dobový přepis ATP acceptance listů](https://www.tennisteen.it/entry-list/atp/24114-atp-entry-list-12-18-febbraio-2024.html), řádky 164–214, Main/Q, 17 běžných DA + Shang NG pod hlavičkou 18.
+- DLB24-8: [pořadatel 10.1.2024, opening weekend](https://www.delraybeachopen.com/en/tournament/news/fritz-and-paul-rankings-race), sobota 10:00 a neděle Q.
+- DLB24-9: [pořadatel 23.1.2024, Q field a Tiafoe](https://www.delraybeachopen.com/en/tournament/news/tiafoe-player-announcement), explicitní Q 10.–11.2., čtyři postupy, NG Shang, posun Paulovy session.
+- DLB24-10: [pořadatel 18.2., odklad finále deštěm](https://www.delraybeachopen.com/en/tournament/news/delray-beach-2024-final-postponed), pondělí 19.2. ne před 12:30.
+- DLB24-11: [Canal Tenis dobový denní přehled](https://canaltenis.com/resultados-atp-delray-beach-2024/), počty a kalendář; [TennisTemple 12.2.](https://it.tennistemple.com/competitions/delray-beach/2024/orderofplay/2024-02-12), [15.2.](https://en.tennistemple.com/competitions/delray-beach/2024/orderofplay/2024-02-15) nezávislá kontrola; [Tennis Abstract Main](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024Delray_Beach). U přesahů do dalšího dne nekopírovat neoznačené timezone; sekundární [Q přehled](https://www.livefootball365.com/Tennis/USA/Delray-Beach-Open-Qualification/65250) podporuje datum Q2 posunu, ne důvod.
+- DLB24-12: [pořadatel původní Main list](https://www.delraybeachopen.com/en/tournament/news/player-field-announcement), výslovně Shang Next Gen vstup, [USTA nezávislé zrcadlo](https://www.usta.com/en/home/stay-current/florida/2024-delray-beach-open-early-entry-list-revealed.html).
+- DLB24-13: [dobový sekundární Main přehled](https://canaltenis.com/cuadro-atp-delray-beach-2024/), Tiafoe LE, nepřebírat jeho časové vysvětlení v rozporu s pořadatelem; [ročníkový soupis](https://en.wikipedia.org/wiki/2024_Delray_Beach_Open).
+- DLB24-14: [ATP Rulebook VII 2.7.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_02jul.pdf), §7.08 B, str. 147, text, screenshot 403; lednová verze MPL24-7 / MRS24-16 pro dobový základ, nikoli automatická retroaktivita pozdější revize.
+- DLB24-15: [ATP oznámení Next Gen programu 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024), příležitosti od roku 2024.
+- DLB24-16: [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), další Rio, Doha, Los Cabos.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -2345,5 +2464,6 @@ I/T/D/R/B/P doloženy. H*: doložena okna a dobové denní rozpisy, nikoli celý
 | Córdoba/Dallas/Marseille 2024 | R* – Next Gen rezervy v týdnu tří ATP akcí | ověřit přesnou alokaci mezi akcemi a případné individuální využití, nepřidávat mimo pevnou kapacitu; COR24-17 |
 | Dallas 2024 | P* – sekundární Q prize money | původní ATP Q PDF nebo Detail Sheet; 4055/2210 USD shoda sekundárních zdrojů, DAL24-17/19/20 |
 | Buenos Aires 2024 | P* – sekundární Q prize money | originální Q draw/DS; sekundární shoda 3445/1880 USD (BUE24-16/17/18) |
-| Buenos Aires/Delray Beach 2024 | R* – NextGen rezervy | alokace mezi dvěma ATP 250 v týdnu s Rotterdamem, bez navýšení kapacity; BUE24-7/14 |
+| Buenos Aires/Delray Beach 2024 | R* – NextGen rezervy | Main Delray Shang doložen pořadatelem a listinou DLB24-7/9/12; Q příležitosti a případné využití/propad v týdnu stále otevřeny; žádné navýšení kapacity |
 | Rotterdam 2024 | E*/Z* – doplňkové podklady | originální acceptance list/DS, Q losovací čas; Main/Q ceny přímo v originálech, bez blokující mezery |
+| Delray Beach 2024 | E*/H*/Z* – doplňkové podklady | původní acceptance list, detail sheet, úplné OOP, vizuální kontrola Q originálu a přesný důvod Q2 posunu; nominální Q odměny již z primárního textu |

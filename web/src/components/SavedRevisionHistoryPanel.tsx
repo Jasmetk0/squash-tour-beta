@@ -24,6 +24,7 @@ import { EmptyState, JsonPayloadBlock, MetadataList, SectionCard } from './RunSc
 import { SavedBranchMap } from './SavedBranchMap'
 import {useLanguage} from '../i18n/LanguageContext'
 import {historyText} from '../i18n/historyText'
+import {validateReachableCompareHistory} from '../pages/savedCompareStates'
 
 type ForkReview = {
   commandId: string
@@ -106,6 +107,14 @@ export function SavedRevisionHistoryPanel({
       lastPage.has_more_older ? lastPage.next_before_sequence ?? undefined : undefined,
     enabled: Boolean(runId && branchId)
   })
+  const pages=historyQuery.data?.pages??[]
+  const verifiedHistory=pages.length>0&&pages[0].saved_revisions?.length>0?
+    validateReachableCompareHistory(runId,branchId,pages):null
+  // An empty legacy history has no action authority. A nonempty history must
+  // prove every page, not merely the identity of the first response.
+  const emptyHistory=pages.length===1&&pages[0].run_id===runId&&pages[0].branch_id===branchId&&
+    Array.isArray(pages[0].saved_revisions)&&pages[0].saved_revisions.length===0&&
+    !pages[0].has_more_older&&(pages[0].total_count===undefined||pages[0].total_count===0)
   const history: SavedRevisionHistoryResponse | undefined = historyQuery.data
     ? {
         run_id: historyQuery.data.pages[0].run_id,
@@ -117,7 +126,8 @@ export function SavedRevisionHistoryPanel({
       }
     : undefined
   const historyIdentityIsValid = Boolean(
-    history && history.run_id === runId && history.branch_id === branchId
+    history && historyQuery.isSuccess && (!historyQuery.isFetching||historyQuery.isFetchingNextPage) &&
+      (verifiedHistory||emptyHistory) && history.run_id === runId && history.branch_id === branchId
   )
   const loaded=historyIdentityIsValid&&history&&!historyQuery.isError?history.saved_revisions:[]
   const visibleHistory=loaded.filter(revision=>
@@ -172,7 +182,10 @@ export function SavedRevisionHistoryPanel({
   })
   const detail = detailQuery.data
   const detailIdentityIsValid = Boolean(
-    detail &&
+    detail && detailQuery.isSuccess && !detailQuery.isFetching && historyIdentityIsValid && selectedEntry &&
+      detail.content_hash===selectedEntry.content_hash && detail.content_hash_algorithm===selectedEntry.content_hash_algorithm &&
+      detail.revision_branch_id===selectedEntry.revision_branch_id && detail.sequence===selectedEntry.sequence &&
+      detail.parent_revision_id===selectedEntry.parent_revision_id &&
       detail.run_id === runId &&
       detail.branch_id === branchId &&
       detail.revision_id === selectedRevisionId
@@ -205,7 +218,12 @@ export function SavedRevisionHistoryPanel({
   })
   const comparison = comparisonQuery.data
   const comparisonIdentityIsValid = Boolean(
-    comparison &&
+    comparison && comparisonQuery.isSuccess && !comparisonQuery.isFetching && detailIdentityIsValid &&
+      comparisonEntry && comparison.saved_head_revision_id===history?.saved_head_revision_id &&
+      comparison.from_revision.content_hash===comparisonEntry.content_hash &&
+      comparison.to_revision.content_hash===selectedEntry?.content_hash &&
+      comparison.from_revision.revision_branch_id===comparisonEntry.revision_branch_id &&
+      comparison.to_revision.revision_branch_id===selectedEntry?.revision_branch_id &&
       comparison.run_id === runId &&
       comparison.branch_id === branchId &&
       comparison.from_revision.revision_id === comparisonRevisionId &&
@@ -219,7 +237,10 @@ export function SavedRevisionHistoryPanel({
   })
   const restorePreflight = restorePreflightQuery.data
   const restorePreflightIdentityIsValid = Boolean(
-    restorePreflight &&
+    restorePreflight && restorePreflightQuery.isSuccess && !restorePreflightQuery.isFetching &&
+      detailIdentityIsValid && historyIdentityIsValid && branch &&
+      restorePreflight.saved_head_revision_id===history?.saved_head_revision_id &&
+      restorePreflight.saved_head_revision_id===branch.saved_head_revision_id &&
       restorePreflight.run_id === runId &&
       restorePreflight.branch_id === branchId &&
       restorePreflight.target_saved_revision_id === selectedRevisionId
@@ -355,7 +376,7 @@ export function SavedRevisionHistoryPanel({
   }
 
   const reviewStillCurrent = Boolean(
-    restoreReview &&
+    restoreReview && detailIdentityIsValid && historyIdentityIsValid &&
       restorePreflightIdentityIsValid &&
       restorePreflight?.can_restore &&
       restorePreflight.saved_head_revision_id === restoreReview.expectedHeadSavedRevisionId &&
@@ -479,7 +500,7 @@ export function SavedRevisionHistoryPanel({
       {historyQuery.error && (
         <p className="error">{T("Failed to load Saved Revision history:")} {formatApiError(historyQuery.error)}</p>
       )}
-      {history && !historyIdentityIsValid && (
+      {history && !historyIdentityIsValid && !historyQuery.isFetching && !historyQuery.isError && (
         <p className="error">{T("Saved Revision history returned a mismatched Run or Branch identity.")}</p>
       )}
       {historyIdentityIsValid && history?.saved_revisions.length === 0 && (
@@ -564,7 +585,7 @@ export function SavedRevisionHistoryPanel({
             {detailQuery.error && (
               <p className="error">{T("Failed to load Saved Revision preview:")} {formatApiError(detailQuery.error)}</p>
             )}
-            {detail && !detailIdentityIsValid && (
+            {detail && !detailIdentityIsValid && !detailQuery.isFetching && !detailQuery.isError && (
               <p className="error">{T("The preview returned a mismatched Saved Revision identity.")}</p>
             )}
             {detailIdentityIsValid && detail && (
@@ -616,7 +637,7 @@ export function SavedRevisionHistoryPanel({
                   <label>
                     {T("Compare from")}
                     <select
-                      aria-label={T("Compare selected revision with")}
+                      data-run-navigation-readonly aria-label={T("Compare selected revision with")}
                       value={comparisonRevisionId}
                       onChange={(event) => setComparisonRevisionId(event.target.value)}
                     >

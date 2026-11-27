@@ -211,7 +211,7 @@ SLOT_SAVE_OBSERVED = (
     # (module, attribute, label) for --slot-plan --mode calls. Wrapping keeps
     # inputs/results/errors; per-call wall/CPU include the wrapper itself.
     ('beta_engine.infrastructure.db.calendar_sporting_checkpoint', 'read_checkpoint_for_save', None),
-    ('beta_engine.infrastructure.db.calendar_sporting_checkpoint', 'prepare_checkpoint_for_save', None),
+    ('beta_engine.infrastructure.db.native_fork_source_projection', 'take_live_calendar_component', None),
     ('beta_engine.infrastructure.db.calendar_sporting_checkpoint', '_checkpoint_for_capture', None),
     ('beta_engine.infrastructure.db.native_fork_source_projection', 'decoded_live_calendar_component', None),
     ('beta_engine.infrastructure.db.native_fork_source_projection', 'remember_committed_global_sources', None),

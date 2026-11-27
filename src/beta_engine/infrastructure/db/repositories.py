@@ -6437,19 +6437,7 @@ class SimulationPersistenceRepository:
         global_append_ancestors = ()
         committed_global_append = None
         origin_value_projections = {}
-        prepared_checkpoint = None
         reinstall_live = None
-        if expected_calendar_tour_fingerprint is not None:
-            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import (
-                prepare_checkpoint_for_save,
-            )
-
-            # Private decode of the live row's current bytes, outside the
-            # writer lock. The writer transaction below uses it only for
-            # byte-identical bytes of the same row; it authorizes nothing.
-            prepared_checkpoint = prepare_checkpoint_for_save(
-                self._session_factory, run_id=run_id, branch_id=branch_id, repository=self,
-            )
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -6711,15 +6699,13 @@ class SimulationPersistenceRepository:
                 )
                 checkpoint_read = read_checkpoint_for_save(
                     session, run_id=run_id, branch_id=branch_id, repository=self,
-                    prepared=prepared_checkpoint,
+                    # Manual Tour Save only: transfer an exclusively owned
+                    # decode of exactly these bytes instead of copying it.
+                    take_live=expected_calendar_tour_fingerprint is not None,
                 )
                 # A value taken from the live decode cache returns there only
-                # after a successful commit, and only if this Save used it.
-                reinstall_live = (prepared_checkpoint.retained
-                    if prepared_checkpoint is not None and checkpoint_read is not None
-                    and prepared_checkpoint.retained is not None
-                    and checkpoint_read.state is prepared_checkpoint.retained[1][1] else None)
-                prepared_checkpoint = None
+                # after a successful commit (below); a rollback drops it.
+                reinstall_live = checkpoint_read.taken if checkpoint_read is not None else None
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
                     or (

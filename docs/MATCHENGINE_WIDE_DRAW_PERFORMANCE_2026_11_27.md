@@ -153,7 +153,51 @@ anything in `core/rng.py` (handed to Work below).
 
 ## 4. Results
 
-TBD
+Pins: A = `buuk 29784d51d01d9d747705be8abae30f0c82706c1e` (src tree `494a35ec`,
+matches tree `2d8baa57`), B = `5a3308b4111eb4f6d3aca2e0a27c6df7d34b10be` (src tree
+`91236374`, matches tree `606e7034`; `core/rng.py` blob `259b6359` on both sides),
+harness SHA-256 `00a71bdd…`. Same VM, same venv, separate processes. Raw manifests,
+equality reports and summaries: `docs/evidence/match_kernel_ab_2026_11_27/`.
+
+**Noise.** The first A/A (3 rounds, fixed A B B A order) showed a position effect:
+identical trees differed by +8.6…+10.6 % in every ko64 round. The driver now
+alternates A B B A / B A A B; the decisive A/A and A/B below use 6 rounds (12 samples
+per side and scenario). "Paired" is the median over rounds of
+(B₁+B₂)/(A₁+A₂) − 1, with the per-round minimum/maximum in brackets.
+
+| Scenario (matches / rallies) | Metric | A/A paired | A/B medians A → B | A/B paired |
+| --- | --- | ---: | ---: | ---: |
+| `ko64` Lab knockout (63 / 3,382) | wall | −0.1 % [−12.3, +6.3] | 12.13 → 10.52 s | **−13.8 %** [−15.7, −8.1] |
+| | engine | +1.1 % [−12.9, +7.9] | 9.13 → 7.59 s | **−15.4 %** [−17.9, −8.0] |
+| | process CPU | +1.2 % | 12.67 → 11.16 s | −12.9 % |
+| `ko128` Lab knockout (127 / 6,779) | wall | 0.0 % [−3.8, +5.5] | 22.00 → 19.41 s | **−13.0 %** [−17.5, −8.7] |
+| | engine | 0.0 % [−4.9, +6.0] | 17.49 → 14.92 s | **−14.5 %** [−21.3, −11.3] |
+| | process CPU | −0.3 % | 22.52 → 20.00 s | −12.3 % |
+| `corpus` production inputs (12 / 697) | wall | +0.2 % [−1.9, +16.5] | 1.81 → 1.56 s | **−11.0 %** [−19.8, −3.9] |
+| | engine | +0.2 % [−2.8, +17.6] | 1.62 → 1.37 s | **−13.3 %** [−21.0, −5.2] |
+
+Every one of the 6 A/B rounds is faster on B for ko64, ko128 and corpus (wall and
+engine); for ko128 the A/A and A/B round ranges do not overlap. Per match / per rally
+(engine medians): ko128 137.7 → 117.5 ms per match, 2.58 → 2.20 ms per rally; ko64
+144.9 → 120.4 ms, 2.70 → 2.24 ms. Peak RSS is unchanged: 126.5–127.0 MB (ko64/ko128),
+73.4 MB (corpus) on both sides; RSS of these processes is dominated by imports and the
+Lab service, and each match's results are released after fingerprinting. The sampled
+heap-rise proxy of the engine itself falls 112 → 96 MiB for 24 matches (−14 %), the
+rally-hash part 31 → 18 MiB.
+
+Earlier 3-round run (fixed order, therefore indicative only; includes `ko32`,
+`http64`, `restart`): A/B paired wall ko32 −12.2 %, ko64 −16.3 %, ko128 −14.3 %,
+corpus −19.2 %, http64 −11.0 % (engine −11.2 %), restart engine −10.2 % (its wall is
+dominated by four child-process starts). Its A/A paired medians were −0.4 % (ko32),
++8.6 % (ko64, the position effect), +1.5 % (ko128), −8.0 % (corpus), −0.9 % (http64).
+The http64 and restart rows are therefore not claimed beyond "faster engine, equal
+bytes"; the real HTTP pass gains less in total because app start, HTTP and the Lab
+response (≈7 s) are unchanged.
+
+What the share means: MatchEngine was 74–80 % of a Lab knockout's wall time on
+`buuk`; it gains ~15 %, so the whole draw gains ~13 %. A season is not claimed: the
+earlier W6 native season measurements are dominated by Saved validation and
+persistence, which this branch does not touch.
 
 ## 5. Determinism and stored history
 
@@ -189,6 +233,43 @@ TBD
   byte-identical engine output, so it is unaffected; the black-box native week below
   exercises it through real HTTP/SQLite.
 
-## 6. Not resolved / next
+## 6. Reproduce
 
-TBD
+```bash
+python3.12 -m venv .venv && .venv/bin/pip install --only-binary=:all: --require-hashes \
+  -r .github/requirements/fast-ci-linux.lock.txt
+a=29784d51d01d9d747705be8abae30f0c82706c1e
+b=5a3308b4111eb4f6d3aca2e0a27c6df7d34b10be
+.venv/bin/python scripts/ab_match_kernel.py --a $a --b $a --out work/aa --rounds 6 \
+  --python .venv/bin/python --skip-equality ko64 ko128 corpus
+.venv/bin/python scripts/ab_match_kernel.py --a $a --b $b --out work/ab --rounds 6 \
+  --python .venv/bin/python ko64 ko128 corpus          # equality pass first, exit 1 on any difference
+.venv/bin/python scripts/ab_match_kernel.py --a $a --b $b --out work/ab-wide --rounds 3 \
+  --python .venv/bin/python ko32 http64 restart cases single
+MATCH_BENCH_SOURCE_ROOT=<tree> .venv/bin/python scripts/profile_match_engine_phases.py set --json
+```
+
+Corpus size: ko32/ko64/ko128 31/63/127 matches and 1,610/3,382/6,779 rallies; http64
+63/3,318; corpus 12/697; restart 4/283 (+ the step path of each); cases 10.
+
+## 7. Not resolved / next
+
+- **Largest remaining cost: RNG (~25–29 % of engine CPU).** About 45 child RNGs per
+  rally; each costs a BLAKE2b derivation (1.6 µs) and an MT19937 seeding of a 128-bit
+  seed (6.4 µs in C). It is inherent in the seed hierarchy; any change belongs to
+  `core/rng.py` and would change or re-architect the draw sequence, so it is handed to
+  Work with these numbers, not touched here.
+- Remaining engine cost after this branch: one hash per event (rally ≈ 150 µs:
+  JSON-mode dump + sorted encoding; fixed by the hash definition), pydantic's nested
+  `after` re-runs at event creation (≈2–3 %), stamina state model construction.
+- Step mode (`Simulate Next Rally`) still re-validates and re-hashes every earlier
+  event of the match in each new `MatchRallyWorkingState` (quadratic in rallies); only
+  the new event's rehash is skipped. A fix touches the persisted working-state
+  contract and is left for a separate decision.
+- Outside the engine: the Lab service's per-match result dump + fingerprint (≈12 % of
+  a knockout), app start, HTTP and response encoding. Not this task's area.
+- Not measured: a native Run calendar slot with 64/128 matches (see §1); Windows;
+  hosted CI runners. A short real native week (HTTP/SQLite/Saved v2) was run as a
+  black-box integration check (§5), not as a performance claim.
+- Decision for Work/owner: whether the scoped single validation (§3, path 2) is an
+  acceptable replacement for the second hash as a mutation guard.

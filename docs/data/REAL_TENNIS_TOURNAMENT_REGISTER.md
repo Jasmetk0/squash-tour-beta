@@ -1,6 +1,59 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 1 ročník, Wimbledon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován a jeho mezery výslovně zaznamenány. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 1 ročník, Wimbledon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+
+## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
+
+Vlastník výslovně určil, že pro budoucí squashové balíčky se mají přebírat **nominální parametry a plánovaný program konkrétního ročníku**, nikoli náhodný průběh skutečného turnaje. Tento registr nadále obsahuje výhradně tenisová fakta, bez jakéhokoli převodu nebo implementace enginu.
+
+- Zapisovat plánovaný počet nasazených, účastníků, WC a řádných Q postupů. Například Wimbledon 2024: 32 Q seedů, ne 31; 9 Q WC, ne 6. Historické výjimky zůstávají v odděleném kontextu a nesmí přepsat nominální hodnoty.
+- Zapisovat plánovaná data kol a fází. Ojedinělý zápas přeložený kvůli dešti, tmě, zranění apod. nemění standardní termín kola. Rozlišit původní plán a doloženou trvalou změnu formátu/kalendáře ročníku.
+- U více dnů uvádět celé plánované okno kola; přesné denní rozdělení pouze pokud je doložené nebo výslovně označené jako odvozené. Nevymýšlet rozdělení 50/50. Den bez mužského kola může být hracím dnem jiné disciplíny.
+- Pravidla náhradníků, odstoupení a LL jsou součástí nominálního sportovního předpisu; jejich konkrétní historické realizace jsou volitelný kontext. Není požadován přepis jmen, skóre či hodin všech zápasů ani rekonstrukce každého individuálního odstoupení.
+- Zdroje, data a identifikátory zachovávat v reálné podobě. Všechny hodiny jsou místní a časové pásmo se eviduje odděleně. Žádná projekce W52, převod na squash ani změna runtime v tomto PR.
+
+## Evidence pokrytí a postup rešerše
+
+Jednotkou práce je **jeden ročník jedné série**. Kompletní znamená kompletní vůči níže definovanému nominálnímu rozsahu, nikoli kompletní archiv všech skutečných zápasů. Každý ročník dostane stejný checklist a zdroje; stav se aktualizuje po kontrole, ne podle počtu napsaných řádků.
+
+| Kód | Povinná oblast |
+|---|---|
+| I | Identita, kategorie, rok, lokalita, povrch, místní timezone |
+| T | Plánované začátky/konce Main a Q (nebo doložená absence Q) |
+| H | Plánovaný den či okno každého kola/fáze, včetně přestávek; ne jednotlivé mimořádně odložené zápasy |
+| E | Nominální vstupní kvóty, přihlášky a losování (termíny, jsou-li publikované) |
+| D | Kapacita, účastníci, počet nasazených, BYE, kvalifikační struktura, kola a postupy |
+| R | Dobová pravidla losování, vstupu, náhradníků, formát zápasů a relevantní bodové výjimky |
+| B | Body za každou fázi včetně Q |
+| P | Odměny za každou fázi v původní měně; případně doložená absence odměny |
+| Z | Konkrétní dohledatelné dobové zdroje; rozpory a nejistoty označeny |
+
+Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na úrovni ročníku; **ROZPRACOVÁNO** = alespoň jedna povinná oblast chybí; **NEZAHÁJENO** = žádná rešerše v tomto registru. Skutečné hodiny jednotlivých zápasů, jména a výsledky, individuální cutoffs a SHA-256 jsou doplňková metadata, ne podmínka dokončení nominálního profilu. Nepublikované přesné denní počty zůstávají explicitní mezerou, ne smyšleným faktem. U ročníků s nejasností, která mění plánovanou strukturu, zůstává stav ROZPRACOVÁNO.
+
+### Přehled ročníků v tomto PR
+
+| Ročník | Turnaj | I | T | H | E | D | R | B | P | Z | Stav |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 2024 | [Wimbledon](#wimbledon-2024) | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+
+`*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno.
+
+**Součet registru:** 1 zpracovaný ročník; 1 hotový v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+
+### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
+
+| Pořadí | Ročník a turnaj | Stav |
+|---|---|---|
+| 1 | Wimbledon 2024 | HOTOVO (nominální rozsah) |
+| 2 | Wimbledon 2025 | NEZAHÁJENO |
+| 3 | Australian Open 2024 | NEZAHÁJENO |
+| 4 | Roland Garros 2024 | NEZAHÁJENO |
+| 5 | US Open 2024 | NEZAHÁJENO |
+| 6 | Australian Open 2025 | NEZAHÁJENO |
+| 7 | Roland Garros 2025 | NEZAHÁJENO |
+| 8 | US Open 2025 | NEZAHÁJENO |
+
+Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
 
 ## Metodika evidence
 
@@ -12,7 +65,7 @@
 
 | Ročník | Soutěž | Kategorie | Kvalifikace (místně) | Main (místně) | Stav |
 |---|---|---|---|---|---|
-| [2024](#wimbledon-2024) | Wimbledon | Grand Slam | 2024-06-24–2024-06-27 | 2024-07-01–2024-07-14 | Základní struktura doložena; otevřené detaily níže |
+| [2024](#wimbledon-2024) | Wimbledon | Grand Slam | 2024-06-24–2024-06-27 | 2024-07-01–2024-07-14 | HOTOVO v nominálním rozsahu; doplňková metadata otevřená |
 
 ## Wimbledon 2024
 
@@ -55,7 +108,24 @@ Všechny hodiny níže jsou londýnské místní časy, nikoli UTC. Uzávěrky b
 | Čas finále — starší verze | ne před 15:00 | oznámení v detail sheet 2024-06-14 | S1 |
 | Čas finále — denní program | 14:00, první zápas | pozdější oficiální pořadí hry; první odpálený míč NEOVĚŘENO | S9 |
 
-**Denní rozpis mužské dvouhry, základní plán / doložená fáze.** Počty v tabulce jsou počty uzlů celého kola, nikoli tvrzení o počtu dohraných zápasů konkrétního dne. Kde je kolo rozděleno do dvou dnů, není počet mechanicky dělen napůl.
+**Nominální rozpis kol — referenční fakta pro tento ročník.** Počty jsou uzly celého kola, nikoli počet zápasů odehraných v konkrétním dni. Ověřeno proti dobovému programu S13/S21 a kvalifikačním denním rozpisům S6/S7/S12. Původní kvalifikační program jednotlivých dnů před zahájením nebyl samostatně archivně získán; Q1/Q2/Q3 jsou doložené programy a výsledky příslušných dnů, nikoli odhad z jiného ročníku.
+
+| Kolo | Plánované okno, místní datum | Nominální počet zápasových uzlů | Zdroj |
+|---|---|---:|---|
+| Q1 | 2024-06-24 | 64 | S1, S6; datum doloženo výsledky |
+| Q2 | 2024-06-26 | 32 | S7a |
+| Q3 | 2024-06-27 | 16 | S7b |
+| R128 | 2024-07-01–2024-07-02 | 64 | S13, S21 |
+| R64 | 2024-07-03–2024-07-04 | 32 | S13, S21 |
+| R32 | 2024-07-05–2024-07-06 | 16 | S13, S21 |
+| R16 | 2024-07-07–2024-07-08 | 8 | S13, S21 |
+| QF | 2024-07-09–2024-07-10 | 4 | S13, S21 |
+| SF | 2024-07-12 | 2 | S13, S21 |
+| F | 2024-07-14 | 1 | S1, S13, S21 |
+
+Kontrola: Q = 64+32+16 = 112; Main = 64+32+16+8+4+2+1 = 127; celkem 239 nominálních uzlů. Plánovaná struktura zůstává 239, ne 237 (skutečně zahájených). Přihlášky: 104+16+8=128, Q:119+9=128. Main odměny součtem počtů poražených v kole a vítěze = 17 942 000 GBP; Q odměny 64×15 000 + 32×25 000 + 16×40 000 = 2 400 000 GBP. Výjimky nemění tyto plánované parametry.
+
+**Denní pohled a historický kontext:**
 
 | Místní den | Fáze | Druh evidence |
 |---|---|---|
@@ -81,7 +151,7 @@ Všechny hodiny níže jsou londýnské místní časy, nikoli UTC. Uzávěrky b
 | So 13. 7. | bez plánované mužské dvouhry | plán S13 |
 | Ne 14. 7. | F | výsledek S9 |
 
-Odvozeno: kvalifikační okno 4 kalendářní dny včetně dne 25. 6.; Main 14 kalendářních dnů; celé okno od 24. 6. do 14. 7. včetně 21 dnů. Nejde o počet skutečných hracích dnů mužů. Déšť a přerušené zápasy jsou skutečné odchylky: například zápas Bellucci–Shelton je v denním protokolu 1. 7. označen jako nedokončený (S8), konečný los už uvádí výsledek (S2). Přesná denní alokace všech zápasů zatím není přepsána.
+Odvozeno: kvalifikační okno 4 kalendářní dny včetně dne 25. 6.; Main 14 kalendářních dnů; celé okno od 24. 6. do 14. 7. včetně 21 dnů. Nejde o počet skutečných hracích dnů mužů. Déšť a přerušené zápasy jsou skutečné odchylky: například zápas Bellucci–Shelton je v denním protokolu 1. 7. označen jako nedokončený (S8), konečný los už uvádí výsledek (S2). Přesná denní alokace všech zápasů není povinná; okna kol jsou v nominální tabulce.
 
 ### 3. Struktura obou soutěží — plán versus konečný los
 
@@ -154,9 +224,9 @@ Hodnoty bodů vycházejí z dobového ATP detail sheet a ATP Rulebook 2024 §IX.
 | Rozhodující set Main při 6:6 | tiebreak na 10, rozdíl alespoň 2 body | S20 |
 | Přijetí Main dle žebříčku | standardně ranking asi 42 dnů před turnajem; WC a Q samostatné | S16 §2.a–e |
 | Nasazení Main | standardně ranking asi 7 dnů před turnajem, 32 skutečných seedů | S16 §2.f, S2 |
-| Q nasazení | dva seedy na sekci; při pozdním odstoupení může místo obsadit alternate | S16 §3.g, S17 |
+| Q nasazení | dva seedy na sekci; prvních 16 seedů na horních pozicích jednotlivých sekcí, dalších 16 losováno na dolní pozice. Před zveřejněním Order of Play se odstoupený seed nahradí dalším způsobilým seedem, po zveřejnění přímo alternatem. | S16 §3.g–h, tištěné str. 30–31; S17 |
 | Zařazení vítězů Q | losování do volných kvalifikačních pozic po Q; žádné předem pevné spojení sekce s pozicí Main | S16 §3.j |
-| Lucky loser | priorita poražených posledního kola; výběr podle dobového předpisu a případného losování, nikoli automatické rozšíření Q kvóty | S16 §2.h |
+| Lucky loser | přednost poražených Q3; při nedostatku i dřívější kola. Los mezi čtyřmi nejvýše postavenými podle rankingu pro Q nasazení, ostatní podle rankingu; pokud při skončení Q více než dvě odhlášení z Main, velikost losované skupiny = počet odhlášení + 2. Náhrada před prvním bodem prvního zápasu odstoupivšího; sign-in 30 min před prvním zápasem dne. | S16 §2.h, tištěné str. 28–29 |
 | Vítěz / finalista | Carlos Alcaraz / Novak Djokovic | S2, S9 |
 | Výsledek finále | 6:2, 6:2, 7:6(4) | S2, S9 |
 | Walkovery Main | de Minaur proti Pouille (R32); Djokovic proti de Minaur (QF) | S2 str. 2 |
@@ -171,14 +241,14 @@ Hodnoty bodů vycházejí z dobového ATP detail sheet a ATP Rulebook 2024 §IX.
 | Identita, dějiště, data fází, velikost, kvóty, body, odměny | Doloženo | kontrola revizí původních zdrojů při případné opravě |
 | Konečné značení Q/W/L/A, nasazení, nulové BYE, uzly | Doloženo / odvozeno | individuální rekonstrukce přijetí a odhlášení |
 | Přihlášky a losování | Doložený oznámený plán | skutečné okamžiky losování nejsou ověřeny |
-| Denní harmonogram | Plán a vybrané skutečné dny | přepsat denní zápasové protokoly, dokončení a zpoždění každého zápasu |
+| Denní harmonogram | Nominální okna všech kol doložena | přesné denní počty vícedenních kol a samostatný původní program Q před zahájením nejsou získány; nepovinný detail, neodhadovat |
 | Časové pásmo | Lokální pásmo a letní offset | konkrétní skutečné starty zápasů dosud nepřepsány |
 | Body a prize money všech jednotlivých hráčů | Tabulky a pravidlo Q doloženy | konkrétní výjimky a rankingové výpisy (včetně LL a WC) |
 | Ochranné pořadí, přihlášky, cutoffs 2024, všechna odstoupení | Neověřeno | původní a konečné entry lists, pozor: detail sheet obsahuje cutoffs 2023, nepoužívat pro 2024 |
 | Originální bajty a SHA-256 PDF | Neověřeno | vizuální/textové zobrazení není stažení souboru; žádný hash nevymyšlen |
-| Přepis celých losů / všech 239 uzlů výsledků | Nepřepsáno | originály dostupné S2/S3; rozsah podrobného přepisu případně schválit |
+| Přepis celých losů / všech 239 uzlů výsledků | Mimo požadovaný rozsah | originály dostupné S2/S3; jednotlivé výsledky nepřepisovat |
 
-Závěr: první detailní historický záznam je založen a základní údaje jsou doloženy. Není to tvrzení o kompletním přepisu všech zápasů ani o 100% historické certifikaci; mezery výše zůstávají otevřené. Žádné převody do simulačního kalendáře.
+Závěr: Wimbledon 2024 je uzavřen v definovaném nominálním rozsahu (I/T/H/E/D/R/B/P/Z), s výše uvedenými omezeními zdrojů a detailnosti. Není to tvrzení o kompletním přepisu všech zápasů ani o 100% historické certifikaci. Historické výjimky nepřepisují plánované údaje. Žádné převody do simulačního kalendáře.
 
 ### 7. Zdroje
 
@@ -202,3 +272,5 @@ Závěr: první detailní historický záznam je založen a základní údaje js
 - S18: [ATP Rulebook 2024, Chapter IX — Rankings](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pif-atp-rankings_27feb.pdf), §G, tištěné str. 253–254; vizuálně ověřeny.
 - S19: [ATP — kvalifikace, 27. 6.](https://www.atptour.com/en/news/wimbledon-qualifying-2024-thursday).
 - S20: [ITF — Wimbledon 2024 men's tournament preview](https://www.itftennis.com/media/12685/2024-wimbledon-mens-tournament-preview.pdf) a [Grand Slam Board — společná změna rozhodujícího tiebreaku 2022](https://ausopen.com/articles/news/grand-slams-jointly-adopt-10-point-final-set-tiebreak).
+
+- S21: [The Standard — předturnajový rozpis mužské dvouhry Wimbledon 2024](https://www.standard.co.uk/sport/tennis/wimbledon-2024-tennis-dates-schedule-ticket-information-b1160804.html); potvrzuje okna všech sedmi kol; [Sky Sports — 26. 6. 2024](https://www.skysports.com/tennis/scores-schedule/26-06-2024), [27. 6. 2024](https://www.skysports.com/tennis/scores-schedule/27-06-2024) nezávislá kontrola označení kol Q2/Q3. Opětovná kontrola 2026-11-27: S1 str. 1–2 vizuálně; S7a/b první strany vizuálně; S16 text dohledán, screenshot vrací 404.

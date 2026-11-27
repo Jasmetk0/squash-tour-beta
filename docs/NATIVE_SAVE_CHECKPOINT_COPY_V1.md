@@ -6,6 +6,78 @@ Not touched: dependency graphs and Saved v2 storage (#1875), appended-increment
 verification and the Full Simulation worker (#1901/#1905), sporting rules,
 RNG, schemas, history, configuration and the 120 s HTTP limit.
 
+
+## Revision 27 November 2026: exclusive transfer inside the writer transaction
+
+Work's review of `72764c4` reproduced that `decoded_live_calendar_component`
+held the retained model past the cache lock and copied it afterwards, while
+`take_live_calendar_component` could hand that same object to a Save as
+"private"; after a committed Save the reinstalled value was also referenced by
+the global decode cache. That proves shared references, not a corrupted
+database. The candidate is now:
+
+- **Pins.** A reader pins the retained entry (under the repository lock) while it
+  copies it outside the lock, and unpins it afterwards.
+- **Transfer only when exclusive, inside the Save transaction.**
+  `read_checkpoint_for_save(take_live=True)` (manual Tour Save only) hashes the
+  complete actual row and calls `take_live_calendar_component` with that digest.
+  An entry is transferred only if it is unpinned and not `shared`; it leaves the
+  cache under the lock, so no later reader can reach it. Its retained Run/Branch
+  and value fingerprint must equal the row's, otherwise it is dropped and the
+  original decode reports any mismatch.
+- **Shared after commit.** A committed value returns to the live cache marked
+  `shared`, because the global decode cache owns it too. It is never transferred
+  again; such bytes take the copying path.
+- **A1 removed.** The decode before `BEGIN IMMEDIATE` cost an extra row read,
+  full hash and copy on a cold miss or changed bytes (+5–8 % per Save). A miss is
+  now exactly the original path: one row read, one digest, one strict decode.
+
+The sections below describe the superseded 26 November candidate (A1 + A2) and
+its measurements; the new A/B is in "A/B of the 27 November candidate".
+
+## A/B of the 27 November candidate
+
+Container, 4 vCPU Xeon 2.30 GHz, 15 GiB, Python 3.12.3 (lock `fast-ci-linux`),
+`PYTHONHASHSEED=0`, `BETA_ENGINE_NEW_RUN_SAVED_STORAGE=saved_v2`, nothing else
+running. Order A B B A per depth, every run a fresh backup of the pinned fixture
+in its own process, restart as a fresh spawned process, script
+`scripts/profile_native_save.py` (SHA-256 `0fb10cb6…`) in both trees.
+
+- A = `buuk 29784d5` (`src` `494a35ec`) + this script.
+- B = this branch `7b38b5e` (`src` `e23f7a3e`; `buuk 29784d5` merged in).
+
+Fixtures were made again on `buuk 29784d5` with
+`profile_native_week_ab.py prepare --slot-depth N` from #1895 (`45893e5`):
+d2 `d97f1931e85217f0813196fd2cd6d8f7a117e3b3a1276e44848ced13044b47ca`
+(25 → 28 revisions, live checkpoint 16.9 MB) and d8
+`da01e094107b55cbb49b7cc4eec8704d9b59c67271515d699783d5138491358a`
+(live checkpoint 49.8 MB). History digest, live checkpoint fingerprint and bytes
+were identical in all eight runs (d2 `d9113dfe…`, d8 `e7e7700a…`).
+
+Medians (n = 2 + 2), Save wall / writer lock:
+
+| | d2 A → B | d8 A → B |
+| --- | --- | --- |
+| warm Save | 4.62 → 4.07 s (−12 %), lock 3.48 → 3.01 (−13 %) | 14.40 → 13.70 s (−5 %), lock 10.70 → 10.14 (−5 %) |
+| Save after restart | 5.37 → 4.40 s (−18 %), lock 4.08 → 3.15 (−23 %) | 14.97 → 13.23 s (−12 %), lock 11.18 → 9.84 (−12 %) |
+| cold miss | 5.71 → 6.16 s (+8 %), lock 4.41 → 4.79 | 18.37 → 20.39 s (+11 %), lock 14.33 → 16.02 |
+| GET after warm Save | 1.73 → 1.92 s | 5.42 → 6.04 s |
+| first GET after restart | 17.72 → 17.08 s | 57.40 → 58.52 s |
+| peak RSS | 1 052 → 1 071 MiB | 2 612 → 2 609 MiB |
+
+The cold-miss path executes exactly the original work. Separate `calls` runs on
+d8 (A and B concurrently, so absolute times are inflated) count, per cold Save:
+`read_checkpoint_for_save` 1, `decoded_live_calendar_component` 2,
+`parse_checkpoint_json` 2, `_value_identity` 3, `remember_committed_global_sources`
+1 in both trees; B adds one `take_live_calendar_component` (0.00 s). There the
+cold Save took 18.20 s (A) and 18.35 s (B) and the warm Save 14.19 → 12.70 s.
+The sequential +2 s is therefore not additional work in the cold path. My
+tentative explanation is a different position of cyclic garbage collection after
+the warm Save, which allocated less. That is not proven, and the cold-miss
+result stays a limitation. Compared with the 26 November candidate (G), the
+warm saving is smaller (G also decoded before the lock), and the cold miss no
+longer reads, hashes and decodes twice.
+
 ## What the Save did before
 
 `save_viewer_branch_selection_atomically` (native Tour Save) runs inside

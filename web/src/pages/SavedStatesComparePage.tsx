@@ -31,7 +31,7 @@ export function SavedStatesComparePage():JSX.Element{
     enabled:Boolean(runId),retry:false,
   })
   const branches=branchesQuery.isSuccess&&!branchesQuery.isFetching?branchesQuery.data?.run_branches??[]:[]
-  const validBranches=branches.every(b=>b.run_id===runId&&b.branch_id)&&
+  const validBranches=branchesQuery.isSuccess&&!branchesQuery.isFetching&&branches.every(b=>b.run_id===runId&&b.branch_id)&&
     new Set(branches.map(b=>b.branch_id)).size===branches.length
   const branchId=requestedBranch===null?branches[0]?.branch_id??'':
     branches.some(b=>b.branch_id===requestedBranch)?requestedBranch:''
@@ -45,7 +45,7 @@ export function SavedStatesComparePage():JSX.Element{
     getNextPageParam:last=>last.has_more_older?last.next_before_sequence??undefined:undefined,
     enabled:Boolean(branchId&&validBranches),retry:false
   })
-  const history=historyQuery.isSuccess&&!historyQuery.isFetching&&historyQuery.data&&validBranches?
+  const history=historyQuery.isSuccess&&(!historyQuery.isFetching||historyQuery.isFetchingNextPage)&&historyQuery.data&&validBranches?
     validateReachableCompareHistory(runId,branchId,historyQuery.data.pages):null
   const a=history?.entries.find(x=>x.revision_id===requestedA)
   const b=history?.entries.find(x=>x.revision_id===requestedB)
@@ -100,11 +100,11 @@ export function SavedStatesComparePage():JSX.Element{
     <section className="panel" aria-label={T("Compare Saved Revision selection")}>
       <h3>{T("States A → B")}</h3>
       <p className="status">{T('Run:')} <code>{runId}</code> {T('· Both states must be reachable through the same selected Branch. Cross-Branch Compare is not supported by this Saved API. Saved timestamps are not simulation positions.')}</p>
-      {branchesQuery.isPending&&<p role="status">{T("Loading Run Branches…")}</p>}
+      {(branchesQuery.isPending||branchesQuery.isFetching)&&<p role="status">{T("Loading Run Branches…")}</p>}
       {branchesQuery.error&&<p role="alert">{formatApiError(branchesQuery.error)}</p>}
-      {branchesQuery.isSuccess&&!validBranches&&<p role="alert">
+      {branchesQuery.isSuccess&&!branchesQuery.isFetching&&!validBranches&&<p role="alert">
         {T("Branch list has inconsistent Run identities.")}</p>}
-      {branchesQuery.isSuccess&&requestedBranch!==null&&!selectedBranch&&
+      {branchesQuery.isSuccess&&!branchesQuery.isFetching&&requestedBranch!==null&&!selectedBranch&&
         <p role="alert">{T("Selected Compare Branch does not belong to this Run.")}</p>}
       {validBranches&&branches.length===0&&<p role="status">{T("No saved Run Branch available.")}</p>}
       {validBranches&&selectedBranch&&<div className="saved-compare-selectors">
@@ -129,9 +129,9 @@ export function SavedStatesComparePage():JSX.Element{
           </select>
         </label>)}
       </div>}
-      {historyQuery.isPending&&selectedBranch&&<p role="status">{T("Loading reachable Saved Revisions…")}</p>}
+      {(historyQuery.isPending||historyQuery.isFetching&&!historyQuery.isFetchingNextPage)&&selectedBranch&&<p role="status">{T("Loading reachable Saved Revisions…")}</p>}
       {historyQuery.error&&<p role="alert">{formatApiError(historyQuery.error)}</p>}
-      {historyQuery.isSuccess&&selectedBranch&&!history&&<p role="alert">
+      {historyQuery.isSuccess&&!historyQuery.isFetching&&selectedBranch&&!history&&<p role="alert">
         {T("Invalid reachable Saved Revision history; Compare disabled.")}</p>}
       {history&&<p className="status">{T('Loaded')} {history.entries.length} {T('reachable revisions.')}
         {' '}{historyQuery.hasNextPage?T("Older pages remain unloaded; Compare only loaded revisions."):

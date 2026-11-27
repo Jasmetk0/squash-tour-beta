@@ -1,0 +1,414 @@
+name: "Overnight combined optimization giant matrix Nov 27"
+
+on:
+  push:
+    branches:
+      - 'test/giant-combined-hardware-20261127'
+    paths:
+      - '.github/workflows/giant-combined-hardware-20261127.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: giant-combined-hardware-20261127
+  cancel-in-progress: false
+
+jobs:
+  giant-saved-v2:
+    if: ${{ github.ref == 'refs/heads/test/giant-combined-hardware-20261127' }}
+    name: giant / ${{ matrix.label }} / 1000 players
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - label: x64-1-control
+            runner: ubuntu-latest
+            arch: x64
+            variant: control
+            workers: '0'
+          - label: x64-2-seq
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '0'
+          - label: x64-3-seq
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '0'
+          - label: x64-4-seq
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '0'
+          - label: x64-5-w2
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '2'
+          - label: x64-6-w2
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '2'
+          - label: x64-7-w3
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '3'
+          - label: x64-8-w3
+            runner: ubuntu-latest
+            arch: x64
+            variant: optimized
+            workers: '3'
+          - label: arm64-1-control
+            runner: ubuntu-24.04-arm
+            arch: arm64
+            variant: control
+            workers: '0'
+          - label: arm64-2-w2
+            runner: ubuntu-24.04-arm
+            arch: arm64
+            variant: optimized
+            workers: '2'
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    steps:
+      - name: Checkout exact engine
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 29784d51d01d9d747705be8abae30f0c82706c1e
+          fetch-depth: 0
+          path: engine
+          persist-credentials: false
+      - name: Combine exact optimization heads (local only)
+        working-directory: engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Diagnostic build"
+          git config user.email "diagnostic@example.invalid"
+          export GIT_AUTHOR_DATE="2026-11-27T22:20:00Z"
+          export GIT_COMMITTER_DATE="$GIT_AUTHOR_DATE"
+          # #1901 is already merged. Apply only the two #1905 follow-up commits.
+          # Do not silently resolve conflicting code or mix in unrelated changes.
+          for pin in 7203f0f5cfefc99d1e2d911d7c160d86830a667d ea9978fb3e41558fef5e9f00778f2cc18cf513ba dfb2e3a0d98bfca700ce1f9d801929ccec2544bf; do
+            git cat-file -e "$pin^{commit}" || git fetch --no-tags origin "$pin"
+          done
+          git merge-base --is-ancestor 7203f0f5cfefc99d1e2d911d7c160d86830a667d HEAD
+          git cherry-pick -x ea9978fb3e41558fef5e9f00778f2cc18cf513ba dfb2e3a0d98bfca700ce1f9d801929ccec2544bf
+          if [ "${{ matrix.variant }}" = control ]; then
+            pins="72764c49f2b3b0ea7203352358ee41ff2d3688a0 47beee7a2a999cce7d9fd71aea0412e95b1d56ac 091ac6c79852ddd1fc976c0fff808795703359f5"
+          else
+            # Latest corrected Save, previous proven candidates, match kernel, RNG,
+            # authenticated Tour read, and worker pool (includes #1910).
+            pins="1372c31849e242cc2ca0f0a2d67cd73af04c816f 47beee7a2a999cce7d9fd71aea0412e95b1d56ac 091ac6c79852ddd1fc976c0fff808795703359f5 1935e53555c1f6d3d11481d3e83cb9687bceb3cd 18bf7156cb056e25a5fb22a306609597a2517fd0 b0f135fb83422b220f08ae1863f632e48f01bac6 b5e1ab34fd0574565224f28ac398b1a613cf4d18"
+          fi
+          for pin in $pins; do
+            git cat-file -e "$pin^{commit}" || git fetch --no-tags origin "$pin"
+            git merge --no-ff --no-edit "$pin"
+            git merge-base --is-ancestor "$pin" HEAD
+          done
+          git merge-base --is-ancestor 29784d51d01d9d747705be8abae30f0c82706c1e HEAD
+          git diff --exit-code
+          git diff --cached --exit-code
+          git rev-parse HEAD
+          git rev-parse HEAD^{tree}
+          mkdir -p "$RUNNER_TEMP/giant-saved-v2-evidence"
+          printf 'variant=%s\nworkers=%s\n' "${{ matrix.variant }}" "${{ matrix.workers }}" > "$RUNNER_TEMP/giant-saved-v2-evidence/configuration.txt"
+          git log -12 --format='%H %s' > "$RUNNER_TEMP/giant-saved-v2-evidence/candidate.txt"
+          git rev-parse HEAD HEAD^{tree} >> "$RUNNER_TEMP/giant-saved-v2-evidence/candidate.txt"
+      - name: Checkout previously used load harness
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 51dbde8990e0118af9827485ac12d3f27286c3e4
+          path: harness
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.11.18'
+      - name: Install pinned backend test dependencies (x64)
+        if: matrix.arch == 'x64'
+        working-directory: engine
+        run: |
+          python -m pip install --only-binary=:all: --require-hashes -r .github/requirements/fast-ci-linux.lock.txt
+      - name: Resolve exact pinned versions to official PyPI wheel hashes (ARM)
+        if: matrix.arch == 'arm64'
+        working-directory: engine
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/giant-saved-v2-evidence"
+          python - <<'PY'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          from urllib.parse import quote
+          from urllib.request import urlopen
+
+          source = Path(".github/requirements/fast-ci-linux.lock.txt")
+          output = Path(os.environ["RUNNER_TEMP"]) / "giant-saved-v2-evidence" / "arm-wheel.lock"
+          lines = []
+          for line in source.read_text().splitlines():
+              if not line.strip() or line.lstrip().startswith(("#", "--hash=")):
+                  continue
+              match = re.fullmatch(r"([A-Za-z0-9_.-]+)(\[[A-Za-z0-9_,.-]+\])?==([^\s]+)(?:\s+\\)?", line.strip())
+              if not match:
+                  raise ValueError(f"Unexpected requirement: {line}")
+              name, extras, version = match.groups()
+              with urlopen(f"https://pypi.org/pypi/{quote(name)}/{quote(version)}/json", timeout=30) as response:
+                  data = json.load(response)
+              wheels = [item for item in data["urls"] if item["packagetype"] == "bdist_wheel" and not item.get("yanked")]
+              hashes = sorted({item["digests"]["sha256"] for item in wheels})
+              if not hashes or any(not re.fullmatch(r"[a-f0-9]{64}", value) for value in hashes):
+                  raise ValueError(f"No valid non-yanked wheel hashes for {name}=={version}")
+              lines.append(f"{name}{extras or ''}=={version} " + " ".join("--hash=sha256:" + value for value in hashes))
+          if not lines:
+              raise ValueError("Empty lock")
+          output.write_text("\n".join(lines) + "\n")
+          PY
+          python -m pip install --only-binary=:all: --require-hashes -r "$RUNNER_TEMP/giant-saved-v2-evidence/arm-wheel.lock"
+      - name: Record installed dependency versions
+        working-directory: engine
+        shell: bash
+        run: |
+          mkdir -p "$RUNNER_TEMP/giant-saved-v2-evidence"
+          python -m pip freeze --all > "$RUNNER_TEMP/giant-saved-v2-evidence/dependencies.txt"
+          uname -m
+      - name: Focused correctness gate on this exact candidate
+        working-directory: engine
+        shell: bash
+        env:
+          PYTHONPATH: src:.:tests/api
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/giant-saved-v2-evidence"
+          python -m pytest -q tests/domain/test_native_official_ranking_seams.py tests/domain/test_calendar_sporting_week_kernel_equivalence.py tests/api/test_native_official_ranking_reuse.py tests/api/test_native_week_transition_performance.py tests/infrastructure/test_saved_v2_store.py tests/application/test_native_week_ab_diagnostic.py tests/api/test_calendar_tour_appended_slot_verification.py tests/api/test_native_full_simulation_appended_slot.py tests/api/test_save_prepared_checkpoint.py tests/domain/test_calendar_native_health_preparation.py 2>&1 | tee "$root/preflight-tests.log"
+      - name: New optimization correctness gate
+        if: matrix.variant == 'optimized'
+        working-directory: engine
+        shell: bash
+        env:
+          PYTHONPATH: src:.:tests/api
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/giant-saved-v2-evidence"
+          python -m pytest -q tests/core/test_rng_byte_equivalence.py tests/domain/test_match_engine_single_log_validation.py tests/domain/test_match_engine_performance_equivalence.py tests/api/test_calendar_tour_inspection_decode.py tests/infrastructure/test_calendar_checkpoint_decoded_body.py tests/domain/test_calendar_match_state_hash_once.py tests/domain/test_match_worker_generations.py tests/domain/test_slot_match_batch.py tests/domain/test_slot_match_replay_memo.py tests/api/test_slot_match_workers.py tests/api/test_slot_worker_faults_http.py 2>&1 | tee "$root/new-tests.log"
+      - name: Same-host strict real W6 A/B correctness gate
+        working-directory: engine
+        shell: bash
+        env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+          BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          root="$RUNNER_TEMP/giant-saved-v2-evidence"
+          candidate=$(git rev-parse HEAD)
+          driver="$PWD/scripts/profile_native_week_ab.py"
+          git worktree add --detach "$RUNNER_TEMP/ab-baseline" 574d5a76596b134f562f918758449e8202c917fc
+          (cd "$RUNNER_TEMP/ab-baseline" && python "$driver" prepare --database "$root/week-input.db") | tee "$root/prepare.log"
+          git worktree remove "$RUNNER_TEMP/ab-baseline"
+          sha=$(sha256sum "$root/week-input.db" | cut -d' ' -f1)
+          python "$driver" ab --a 574d5a76596b134f562f918758449e8202c917fc --b "$candidate" --input "$root/week-input.db" --sha256 "$sha" --out "$root/timing" --repetitions 1 --worker-timeout 600 2>&1 | tee "$root/ab.log"
+          git diff --exit-code HEAD --
+      - name: Execute disposable five-season load with request observations
+        working-directory: engine
+        env:
+          PYTHONPATH: src:.:tests/api
+          GITHUB_EVENT_NAME: giant_native_load
+          BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
+          SNAPSHOT_ENABLED: ${{ matrix.label == 'x64-2-seq' || matrix.label == 'arm64-2-w2' }}
+          PYTHONUNBUFFERED: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD
+          python --version
+          lscpu
+          free -b
+          sha256sum ../harness/scripts/giant_native_five_season_load.py
+          mkdir -p "$RUNNER_TEMP/giant-saved-v2-evidence"
+          cat > "$RUNNER_TEMP/observe_giant.py" <<'PY'
+          import hashlib
+          import json
+          import os
+          import resource
+          import sqlite3
+          from contextlib import closing
+          import runpy
+          import sys
+          import time
+          from pathlib import Path
+          from urllib import request
+          from urllib.parse import urlsplit
+
+          # Observe the same urllib call used by the pinned harness. No request,
+          # response body, timeout, retry, assertion or sporting operation changes.
+          output = Path(os.environ["RUNNER_TEMP"]) / "giant-saved-v2-evidence"
+          original = request.urlopen
+          started = time.perf_counter()
+          sequence = 0
+
+          def counters():
+              status = {}
+              for line in Path("/proc/self/status").read_text().splitlines():
+                  key, _, value = line.partition(":")
+                  if key in ("VmRSS", "VmHWM"):
+                      status[key] = int(value.split()[0])
+              io = {}
+              for line in Path("/proc/self/io").read_text().splitlines():
+                  key, _, value = line.partition(":")
+                  if key in ("rchar", "wchar", "read_bytes", "write_bytes"):
+                      io[key] = int(value)
+              return {
+                  "cpu_s": time.process_time(),
+                  "rss_kib": status.get("VmRSS"),
+                  "hwm_kib": status.get("VmHWM"),
+                  "max_rss_kib": resource.getrusage(resource.RUSAGE_SELF).ru_maxrss,
+                  **io,
+              }
+
+          if __name__ == "__main__":
+              with (output / "http-requests.jsonl").open("x", buffering=1) as stream:
+                  def observed(req, *args, **kwargs):
+                      global sequence
+                      sequence += 1
+                      index = sequence
+                      target = req.full_url if hasattr(req, "full_url") else str(req)
+                      endpoint = urlsplit(target).path
+                      method = req.get_method() if hasattr(req, "get_method") else "GET"
+                      before = counters()
+                      t0 = time.perf_counter()
+                      status = None
+                      error = None
+                      try:
+                          response = original(req, *args, **kwargs)
+                          status = getattr(response, "status", None)
+                          return response
+                      except BaseException as exc:
+                          status = getattr(exc, "code", None)
+                          error = type(exc).__name__
+                          raise
+                      finally:
+                          wall = time.perf_counter() - t0
+                          try:
+                              after = counters()
+                              row = {
+                                  "request_index": index, "method": method,
+                                  "endpoint": endpoint, "http_status": status,
+                                  "error_type": error, "wall_to_headers_s": wall,
+                                  "elapsed_since_wrapper_s": time.perf_counter() - started,
+                                  "process_cpu_s": after["cpu_s"] - before["cpu_s"],
+                                  "rss_before_kib": before["rss_kib"],
+                                  "rss_after_kib": after["rss_kib"],
+                                  "hwm_after_kib": after["hwm_kib"],
+                                  "max_rss_kib": after["max_rss_kib"],
+                                  **{key + "_delta": after[key] - before[key]
+                                     for key in ("rchar", "wchar", "read_bytes", "write_bytes")},
+                              }
+                              stream.write(json.dumps(row, separators=(",", ":")) + "\n")
+                          except Exception as exc:
+                              print("REQUEST_TELEMETRY_ERROR", type(exc).__name__, file=sys.stderr)
+                  request.urlopen = observed
+                  try:
+                      harness = Path("../harness/scripts/giant_native_five_season_load.py").resolve()
+                      sys.argv = [str(harness), *sys.argv[1:]]
+                      if os.environ.get("SNAPSHOT_ENABLED", "").lower() != "true":
+                          runpy.run_path(str(harness), run_name="__main__")
+                      else:
+                          # Keep the pinned harness unchanged. Only observe completed,
+                          # explicitly saved week boundaries; no extra HTTP operations.
+                          ns = runpy.run_path(str(harness), run_name="giant_load_observed")
+                          evidence_type = ns["Evidence"]
+                          original_metric = evidence_type.metric
+                          snapshots = output / "snapshots"
+                          snapshots.mkdir()
+                          def snapshot_metric(self, kind, **fields):
+                              original_metric(self, kind, **fields)
+                              if kind != "week_completed" or fields.get("season") != 0 or fields.get("week") not in (9, 12, 15, 19, 22, 26):
+                                  return
+                              week = fields["week"]
+                              dest = snapshots / f"after-W{week:02d}.sqlite"
+                              temp = dest.with_suffix(".partial")
+                              start = time.perf_counter()
+                              record = {"completed_week": week, "position": self.total["last_position"],
+                                        "players": fields["players"], "database": dest.name}
+                              try:
+                                  with closing(sqlite3.connect(self.db.resolve().as_uri() + "?mode=ro", uri=True)) as src, closing(sqlite3.connect(temp)) as dst:
+                                      src.backup(dst)
+                                      check = dst.execute("PRAGMA quick_check").fetchall()
+                                      if check != [("ok",)]:
+                                          raise RuntimeError(f"SQLite quick_check: {check[:3]}")
+                                      head = dst.execute("SELECT saved_head_revision_id FROM run_branches WHERE run_id='run' AND branch_id='branch'").fetchone()
+                                      if head is None:
+                                          raise RuntimeError("Missing Saved HEAD")
+                                      record["saved_head_revision_id"] = head[0]
+                                  record["saved_revision_count"] = ns["verify_saved_v2_sqlite_history"](temp, head[0])
+                                  with temp.open("rb") as source:
+                                      record["sha256"] = hashlib.file_digest(source, "sha256").hexdigest()
+                                  record["size_bytes"] = temp.stat().st_size
+                                  temp.replace(dest)
+                                  record["status"] = "ok"
+                              except Exception as exc:
+                                  record.update(status="failed", error=repr(exc))
+                                  temp.unlink(missing_ok=True)
+                              finally:
+                                  record["backup_wall_s"] = time.perf_counter() - start
+                                  with (snapshots / "manifest.jsonl").open("a", encoding="utf-8") as target:
+                                      target.write(json.dumps(record, separators=(",", ":")) + "\n")
+                                  print("SNAPSHOT " + json.dumps(record), flush=True)
+                          evidence_type.metric = snapshot_metric
+                          raise SystemExit(ns["main"]())
+                  finally:
+                      request.urlopen = original
+          PY
+          python -m py_compile "$RUNNER_TEMP/observe_giant.py"
+          python "$RUNNER_TEMP/observe_giant.py" \
+            --profile compatible \
+            --players 1000 \
+            --seasons 5 \
+            --editions-per-season 60 \
+            --born-per-season 80 \
+            --saved-v2 \
+            --allow-five-season-run \
+            --budget-minutes 315 \
+            --output-dir "$RUNNER_TEMP/giant-saved-v2-evidence" \
+            2>&1 | tee "$RUNNER_TEMP/giant-saved-v2-console.log"
+      - name: Preserve metrics and logs
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: giant-nov27-${{ matrix.label }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/giant-saved-v2-evidence/summary.json
+            ${{ runner.temp }}/giant-saved-v2-evidence/timeline.jsonl
+            ${{ runner.temp }}/giant-saved-v2-evidence/http-requests.jsonl
+            ${{ runner.temp }}/giant-saved-v2-evidence/preflight-tests.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/new-tests.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/configuration.txt
+            ${{ runner.temp }}/giant-saved-v2-evidence/prepare.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/ab.log
+            ${{ runner.temp }}/giant-saved-v2-evidence/timing
+            ${{ runner.temp }}/giant-saved-v2-evidence/candidate.txt
+            ${{ runner.temp }}/giant-saved-v2-evidence/dependencies.txt
+            ${{ runner.temp }}/giant-saved-v2-evidence/arm-wheel.lock
+            ${{ runner.temp }}/giant-saved-v2-console.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve consistent SQLite snapshots from selected runs
+        if: always() && (matrix.label == 'x64-2-seq' || matrix.label == 'arm64-2-w2')
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: giant-nov27-snapshots-${{ matrix.label }}-${{ github.run_id }}
+          path: ${{ runner.temp }}/giant-saved-v2-evidence/snapshots
+          if-no-files-found: warn
+          compression-level: 1
+          retention-days: 7
+      - name: Verify tracked engine files remain intact
+        if: always()
+        working-directory: engine
+        run: git diff --exit-code HEAD --

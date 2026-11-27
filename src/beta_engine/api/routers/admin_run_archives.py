@@ -8,17 +8,21 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
-from beta_engine.application.run_branch_archive_service import RunBranchArchiveService
+from beta_engine.application.run_branch_archive_service import (
+    RunBranchArchiveService,
+    validate_compact_snapshot,
+)
 from beta_engine.domain.run_branch_archive import ID, MAX_ARCHIVE_BYTES, MAX_CUSTOM_BRANCHES, ArchiveError
 
 router = APIRouter(prefix="/admin/run-archives", tags=["admin-run-archives"])
+COMPACT_MEDIA_TYPE = "application/vnd.squash.compact-snapshot+json"
 
 
 class ExportSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     run_id: str = Field(min_length=1, max_length=128)
     branch_id: str = Field(min_length=1, max_length=128)
-    mode: Literal["branch", "full_run", "custom"] = "branch"
+    mode: Literal["branch", "full_run", "custom", "compact"] = "branch"
     selected_branch_ids: list[ID] = Field(default_factory=list, max_length=MAX_CUSTOM_BRANCHES)
 
     @model_validator(mode="after")
@@ -30,6 +34,9 @@ class ExportSelection(BaseModel):
         elif self.selected_branch_ids:
             raise ValueError("selected_branch_ids is only valid for custom export")
         return self
+
+    def compact_arguments(self):
+        return self.model_dump(exclude={"mode", "selected_branch_ids"})
 
     def export_arguments(self):
         return {
@@ -69,9 +76,10 @@ def export_preview(
     payload: ExportSelection, runtime: Annotated[ApiRuntime, Depends(get_runtime)]
 ):
     try:
-        return RunBranchArchiveService(runtime.repository).export_preview(
-            **payload.export_arguments()
-        )
+        service = RunBranchArchiveService(runtime.repository)
+        if payload.mode == "compact":
+            return service.compact_preview(**payload.compact_arguments())
+        return service.export_preview(**payload.export_arguments())
     except (ValueError, TypeError, KeyError) as exc:
         _error(exc)
 
@@ -81,7 +89,16 @@ def export(
     payload: ExportRequest, runtime: Annotated[ApiRuntime, Depends(get_runtime)]
 ):
     try:
-        raw = RunBranchArchiveService(runtime.repository).export(**payload.export_arguments())
+        service = RunBranchArchiveService(runtime.repository)
+        if payload.mode == "compact":
+            return Response(
+                service.compact_export(**payload.compact_arguments()),
+                media_type=COMPACT_MEDIA_TYPE,
+                headers={
+                    "Content-Disposition": 'attachment; filename="compact-snapshot-v1.sqsnap"'
+                },
+            )
+        raw = service.export(**payload.export_arguments())
         filename = {
             "full_run": "full-run-v1.sqbranch",
             "custom": "custom-run-v1.sqbranch",
@@ -94,6 +111,18 @@ def export(
                 "Content-Disposition": f'attachment; filename="{filename}"'
             },
         )
+    except (ValueError, TypeError, KeyError) as exc:
+        _error(exc)
+
+
+@router.post("/compact/validate")
+async def compact_validate(request: Request):
+    """Validate uploaded Compact snapshot bytes alone; no database is opened."""
+    raw = await _read(request)
+    from starlette.concurrency import run_in_threadpool
+
+    try:
+        return await run_in_threadpool(validate_compact_snapshot, raw)
     except (ValueError, TypeError, KeyError) as exc:
         _error(exc)
 

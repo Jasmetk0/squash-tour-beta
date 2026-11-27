@@ -36,6 +36,41 @@ FULL_RUN_OMITTED_AREAS = (
 )
 # Per-request parser budget, not a Run/history quota. No compression/extraction.
 MAX_ARCHIVE_BYTES = 128 * 1024 * 1024
+# Master §24.1 scope 3: the current Saved state of ONE Branch. A separate,
+# independently versioned format: it is never a trimmed restore envelope, so
+# no archive v1 contract (closed lineage from sequence 1) is weakened.
+COMPACT_FORMAT = "run_compact_snapshot.v1"
+COMPACT_SCOPE = "compact_saved_branch_snapshot"
+COMPACT_MINIMUM_ENGINE = "engine+compact-snapshot.v1"
+COMPACT_PART_NAMES = ("run", "branch", "head")
+COMPACT_OMITTED_AREAS = (
+    "older_saved_revisions",
+    "other_branches",
+    "run_viewer_selection",
+    "revision_audits",
+    "restore_checkpoints",
+    "package_identity_allocator",
+    *FULL_RUN_OMITTED_AREAS,
+)
+# Components whose meaning lives in ANOTHER Branch's Saved revision (native
+# fork: InitialWorld, Package provenance and replay source). Carrying that
+# revision would package foreign state, so the compact scope rejects them.
+COMPACT_FOREIGN_SOURCE_COMPONENTS = frozenset(
+    {"native_fork_baseline", "native_fork_runtime"}
+)
+COMPACT_RUN_FIELDS = (
+    "display_name",
+    "status",
+    "timeline_start_season",
+    "timeline_end_season",
+)
+COMPACT_BRANCH_FIELDS = (
+    "branch_id",
+    "display_name",
+    "status",
+    "forked_from_branch_id",
+    "forked_from_saved_revision_id",
+)
 ID = Annotated[str, Field(min_length=1, max_length=128, pattern=r"^\S(?:.*\S)?$")]
 Digest = Annotated[str, Field(pattern=r"^[0-9a-f]{64}$")]
 PART_NAMES = ("run", "branches", "revisions", "audits", "checkpoints", "allocator")
@@ -320,6 +355,13 @@ class Archive:
         value = decode(raw)
         formats = {FORMAT: Envelope, FULL_RUN_FORMAT: FullRunEnvelope, CUSTOM_FORMAT: CustomEnvelope}
         archive_format = value.get("format") if isinstance(value, dict) else None
+        if archive_format == COMPACT_FORMAT:
+            fail(
+                "compact_snapshot_not_restorable",
+                "This is a Compact snapshot: it can be read and validated on its own, "
+                "but it carries no Saved history and cannot restore a playable Run. "
+                "Use a full or custom Run archive for import/restore.",
+            )
         if not isinstance(archive_format, str) or archive_format not in formats:
             fail(
                 "unsupported_archive_version",
@@ -646,3 +688,167 @@ def pack(
             selected_branch_ids=list(custom_branch_ids),
         )
     return encode(envelope)
+
+
+class CompactRunSpec(Closed):
+    run_id: ID
+    display_name: Annotated[str, Field(min_length=1, max_length=256)]
+    status: Literal["working", "active", "completed", "archived"]
+    timeline_start_season: int
+    timeline_end_season: int
+    metadata_json: str
+
+
+class CompactBranchSpec(Closed):
+    branch_id: ID
+    display_name: Annotated[str, Field(min_length=1, max_length=256)]
+    status: Literal["active"] = "active"
+    branch_seed: Annotated[int, Field(ge=-(2**63), le=2**63 - 1)] | None
+    # References only: the fork source Branch/revision content is NOT included.
+    forked_from_branch_id: ID | None
+    forked_from_saved_revision_id: ID | None
+    metadata_json: str
+
+
+class CompactEnvelope(Closed):
+    format: Literal["run_compact_snapshot.v1"]
+    engine_capability: Literal["run_compact_snapshot.v1"]
+    minimum_engine: Literal["engine+compact-snapshot.v1"]
+    scope: Literal["compact_saved_branch_snapshot"]
+    run_id: ID
+    selected_branch_id: ID
+    selected_head_revision_id: ID
+    content_hash: Digest
+    omitted_areas: list[str]
+    parts: list[Part]
+
+
+class CompactSnapshot:
+    """One Branch's exact Saved HEAD, verifiable from the file bytes alone.
+
+    The original Saved hash covers the HEAD's identity, sequence, parent
+    reference, payload and summary, so the HEAD is authenticated without the
+    omitted parents. The parent id stays a reference only: the snapshot proves
+    WHAT the Saved state is, never that it can continue or restore a Run.
+    Component validators are applied by the application layer.
+    """
+
+    def __init__(self, raw: bytes):
+        if len(raw) > MAX_ARCHIVE_BYTES:
+            fail(
+                "archive_request_too_large",
+                f"Snapshot exceeds this operation's {MAX_ARCHIVE_BYTES}-byte parser budget",
+            )
+        value = decode(raw)
+        snapshot_format = value.get("format") if isinstance(value, dict) else None
+        if snapshot_format != COMPACT_FORMAT:
+            fail(
+                "unsupported_snapshot_version",
+                "Not a supported Compact snapshot; unknown versions cannot be downgraded",
+            )
+        self.envelope = CompactEnvelope.model_validate(value)
+        self.raw_digest, self.size = digest(raw), len(raw)
+        if [p.name for p in self.envelope.parts] != list(COMPACT_PART_NAMES):
+            fail("invalid_manifest", "Snapshot must contain exactly the ordered v1 parts")
+        if self.envelope.omitted_areas != list(COMPACT_OMITTED_AREAS):
+            fail("invalid_manifest", "Unsupported omitted-area declaration")
+        parts = {}
+        for part in self.envelope.parts:
+            data = part.data_json.encode("utf-8")
+            if len(data) != part.size or digest(data) != part.sha256:
+                fail("invalid_part_integrity", f"Part size or digest failed: {part.name}")
+            parts[part.name] = decode(data)
+        self.run = CompactRunSpec.model_validate(parts["run"])
+        self.branch = CompactBranchSpec.model_validate(parts["branch"])
+        # Schema, closed component set, original owner and original Saved hash.
+        self.head = RevisionSpec.model_validate(parts["head"]).original_authority()
+        envelope, head = self.envelope, self.head
+        if (
+            head.revision_id != envelope.selected_head_revision_id
+            or head.content_hash != envelope.content_hash
+            or (head.run_id, self.run.run_id) != (envelope.run_id, envelope.run_id)
+            or (head.branch_id, self.branch.branch_id)
+            != (envelope.selected_branch_id, envelope.selected_branch_id)
+        ):
+            fail(
+                "invalid_selection",
+                "Snapshot Run, Branch, Saved HEAD and content digest are not bound together",
+            )
+        self.payload = decode(head.payload_json)
+        foreign = COMPACT_FOREIGN_SOURCE_COMPONENTS & self.payload["content"].keys()
+        if foreign:
+            fail(
+                "compact_foreign_source_dependency",
+                "Saved HEAD depends on another Branch's Saved source state: "
+                + ", ".join(sorted(foreign)),
+            )
+        signed_run, signed_branch = self.payload["run"], self.payload["branch"]
+        self.metadata = decode(self.run.metadata_json)
+        if not isinstance(self.metadata, dict) or set(self.metadata) - {"run_calendar"}:
+            fail(
+                "unsupported_run_metadata",
+                "Compact snapshot v1 carries only the Saved Run calendar metadata",
+            )
+        if any(
+            signed_run.get(name) != getattr(self.run, name) for name in COMPACT_RUN_FIELDS
+        ) or signed_run.get("run_calendar") != self.metadata.get("run_calendar"):
+            fail(
+                "compact_foreign_run_witness",
+                "Snapshot Run name/status/timeline/calendar differ from the Saved HEAD",
+            )
+        if any(
+            signed_branch.get(name) != getattr(self.branch, name)
+            for name in COMPACT_BRANCH_FIELDS
+        ) or not isinstance(decode(self.branch.metadata_json), dict):
+            fail(
+                "invalid_branch_context",
+                "Snapshot Branch differs from its original owned Saved HEAD",
+            )
+        from beta_engine.domain.calendar.run_calendar import RunCalendar
+
+        clock = (
+            RunCalendar.from_metadata(self.metadata["run_calendar"])
+            if "run_calendar" in self.metadata
+            else RunCalendar.legacy_fax()
+        )
+        if (self.run.timeline_start_season, self.run.timeline_end_season) != (
+            clock.start_year,
+            clock.start_year + clock.season_count - 1,
+        ):
+            fail("invalid_run_calendar", "Run timeline and Saved calendar disagree")
+        # Descriptive only (legacy calendars have no writable v1 metadata).
+        self.calendar = {
+            "schema_version": clock.schema_version,
+            "weeks_per_year": clock.weeks_per_year,
+            "season_start_year_week": clock.season_start_year_week,
+            "start_year": clock.start_year,
+            "season_count": clock.season_count,
+        }
+
+
+def pack_compact(*, run, branch, head):
+    parts = []
+    for name, value in zip(COMPACT_PART_NAMES, (run, branch, head), strict=True):
+        raw = encode(value)
+        parts.append(
+            {
+                "name": name,
+                "size": len(raw),
+                "sha256": digest(raw),
+                "data_json": raw.decode("utf-8"),
+            }
+        )
+    return encode(
+        {
+            "format": COMPACT_FORMAT,
+            "engine_capability": COMPACT_FORMAT,
+            "minimum_engine": COMPACT_MINIMUM_ENGINE,
+            "scope": COMPACT_SCOPE,
+            "run_id": run["run_id"],
+            "selected_branch_id": branch["branch_id"],
+            "selected_head_revision_id": head["revision_id"],
+            "content_hash": head["content_hash"],
+            "omitted_areas": list(COMPACT_OMITTED_AREAS),
+            "parts": parts,
+        }
+    )

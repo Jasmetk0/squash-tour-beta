@@ -3,7 +3,7 @@ import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { RunBranch, RunContainer } from '../api/types'
-import type { SavedBranchArchivePreview } from '../api/runBranchArchiveExport'
+import type { CompactSnapshotPreview, SavedBranchArchivePreview } from '../api/runBranchArchiveExport'
 import { LanguageProvider, useLanguage } from '../i18n/LanguageContext'
 import { SavedBranchArchiveExportPanel } from './SavedBranchArchiveExportPanel'
 
@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
   listRunBranches: vi.fn(),
   getBranchWorkingDraft: vi.fn(),
   previewSavedBranchArchive: vi.fn(),
+  previewCompactSnapshot: vi.fn(),
   downloadSavedBranchArchive: vi.fn()
 }))
 vi.mock('../api/client', () => ({
@@ -23,6 +24,8 @@ vi.mock('../api/client', () => ({
 vi.mock('../api/runBranchArchiveExport', () => ({
   MAX_CUSTOM_BRANCHES: 128,
   previewSavedBranchArchive: mocks.previewSavedBranchArchive,
+  previewCompactSnapshot: mocks.previewCompactSnapshot,
+  isCompactSnapshotPreview: (value: {scope: string}) => value.scope === 'compact_saved_branch_snapshot',
   downloadSavedBranchArchive: mocks.downloadSavedBranchArchive
 }))
 const run = {
@@ -60,6 +63,28 @@ const archive = {
   continuation: 'Use existing operation-scoped preview'
 } as SavedBranchArchivePreview
 
+const compact = {
+  schema_version: 'run_compact_snapshot_preview.v1', archive_digest: 'c'.repeat(64),
+  archive_size_bytes: 2048, format: 'run_compact_snapshot.v1', minimum_engine: 'engine',
+  scope: 'compact_saved_branch_snapshot', run_id: 'r', display_name: 'Run',
+  selected_branch_id: 'b', selected_branch_display_name: 'Branch A',
+  selected_head_revision_id: 'head', selected_head_sequence: 3,
+  selected_head_kind: 'viewer_branch_selection', saved_at: '2026-11-27 10:00:00',
+  payload_schema_version: 'run_saved_revision_v1', content_hash_algorithm: 'sha256',
+  content_hash: 'd'.repeat(64),
+  run_calendar: {weeks_per_year: 52, start_year: 2000, season_count: 2},
+  included_components: ['initial_world', 'simulation_slot_match_state'],
+  package_provenance: {source_package_ids: ['atp-tour'], run_local_entity_count: 4},
+  unresolved_package_references: [],
+  kept_references: {parent_revision_id: 'previous', forked_from_branch_id: null,
+    forked_from_saved_revision_id: null, viewer_branch_id_signed_at_save: 'dep'},
+  omitted_older_revision_count: 2, omitted_areas: ['older_saved_revisions', 'other_branches'],
+  verified_uses: ['read_and_validate_from_file_bytes'], unsupported_uses: ['cold_restore'],
+  verification: 'Validated from bytes',
+  source_context: {viewer_branch_id: 'viewer', selected_is_viewer_branch: false,
+    omitted_branch_count: 2, omitted_older_revision_count: 2}
+} as CompactSnapshotPreview
+
 function Toggle(): JSX.Element {
   const { setLanguage, language } = useLanguage()
   return <button onClick={() => setLanguage(language === 'cs' ? 'en' : 'cs')}>Switch language</button>
@@ -83,6 +108,47 @@ describe('Saved Branch archive Admin export panel', () => {
     mocks.downloadSavedBranchArchive.mockResolvedValue(new Blob(['file']))
   })
   afterEach(() => vi.restoreAllMocks())
+
+  it('previews a compact snapshot with its exact HEAD, omissions and verified use, then downloads it', async () => {
+    mocks.previewCompactSnapshot.mockResolvedValue(compact)
+    const objectUrl = vi.fn(() => 'blob:test')
+    Object.defineProperty(URL, 'createObjectURL', {configurable: true, value: objectUrl})
+    Object.defineProperty(URL, 'revokeObjectURL', {configurable: true, value: vi.fn()})
+    const names: string[] = []
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      names.push(this.download)
+    })
+    mount()
+    fireEvent.change(screen.getByRole('combobox', {name: 'Rozsah exportu'}), {target: {value: 'compact'}})
+    expect(screen.getByText(/Jen aktuální uložený stav vybrané větve/)).toBeInTheDocument()
+    expect(mocks.previewCompactSnapshot).not.toHaveBeenCalled()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    await screen.findByRole('button', {name: 'Stáhnout ověřený kompaktní snapshot'})
+    expect(mocks.previewCompactSnapshot).toHaveBeenCalledWith('r', 'b', expect.any(AbortSignal))
+    expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
+    expect(screen.getByText('d'.repeat(64))).toBeInTheDocument()
+    expect(screen.getByText(/Vybraná větev není Viewer Branch/)).toBeInTheDocument()
+    expect(screen.getByText(/neobnoví hratelný Run/)).toBeInTheDocument()
+    expect(screen.getByText(/4 Run-local entit z Package: atp-tour/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Switch language'}))
+    expect(screen.getByText(/is not the Viewer Branch/)).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', {name: 'Download verified compact snapshot'}))
+    await waitFor(() => expect(names).toEqual(['compact-snapshot-v1.sqsnap']))
+    expect(mocks.downloadSavedBranchArchive).toHaveBeenCalledWith(compact, expect.objectContaining({aborted: false}))
+    expect(mocks.getBranchWorkingDraft).toHaveBeenCalledTimes(2)
+  })
+
+  it('blocks a compact snapshot when the Branch draft has unsaved changes', async () => {
+    mocks.getBranchWorkingDraft.mockResolvedValue({
+      run_id: 'r', branch_id: 'b', base_saved_revision_id: 'head', status: 'dirty', change_count: 1
+    })
+    mount()
+    fireEvent.change(screen.getByRole('combobox', {name: 'Rozsah exportu'}), {target: {value: 'compact'}})
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    await screen.findByRole('alert')
+    expect(mocks.previewCompactSnapshot).not.toHaveBeenCalled()
+    expect(screen.queryByRole('button', {name: /kompaktní snapshot/})).not.toBeInTheDocument()
+  })
 
   it('loads saved branches for a custom preview and invalidates the review on selection change', async () => {
     const extra = {...branch, branch_id:'dep', display_name:'Timeline 2'}

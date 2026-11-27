@@ -10,8 +10,11 @@ const MAX_ERROR_BYTES = 64 * 1024
 const BRANCH_SCOPE = 'custom_selected_saved_branch_with_dependency_history'
 const FULL_RUN_SCOPE = 'full_saved_run'
 const CUSTOM_SCOPE = 'custom_saved_branches'
+const COMPACT_SCOPE = 'compact_saved_branch_snapshot'
+const ARCHIVE_MIME = 'application/vnd.squash.saved-branch+json'
+const COMPACT_MIME = 'application/vnd.squash.compact-snapshot+json'
 export const MAX_CUSTOM_BRANCHES = 128
-export type ArchiveExportMode = 'branch' | 'full_run' | 'custom'
+export type ArchiveExportMode = 'branch' | 'full_run' | 'custom' | 'compact'
 
 export type IncludedArchiveBranch = {
   branch_id: string
@@ -55,6 +58,50 @@ export type SavedBranchArchivePreview = {
   omitted_branch_ids: string[]
   omitted_areas: string[]
 }
+/** Master §24.1 scope 3: one Branch's exact Saved HEAD, no technical history. */
+export type CompactSnapshotPreview = {
+  schema_version: 'run_compact_snapshot_preview.v1'
+  archive_digest: string
+  archive_size_bytes: number
+  format: 'run_compact_snapshot.v1'
+  minimum_engine: string
+  scope: typeof COMPACT_SCOPE
+  run_id: string
+  display_name: string
+  selected_branch_id: string
+  selected_branch_display_name: string
+  selected_head_revision_id: string
+  selected_head_sequence: number
+  selected_head_kind: string
+  saved_at: string
+  payload_schema_version: string
+  content_hash_algorithm: 'sha256'
+  content_hash: string
+  run_calendar: Record<string, unknown>
+  included_components: string[]
+  package_provenance: { source_package_ids: string[]; run_local_entity_count: number }
+  unresolved_package_references: unknown[]
+  kept_references: {
+    parent_revision_id: string | null
+    forked_from_branch_id: string | null
+    forked_from_saved_revision_id: string | null
+    viewer_branch_id_signed_at_save: string | null
+  }
+  omitted_older_revision_count: number
+  omitted_areas: string[]
+  verified_uses: string[]
+  unsupported_uses: string[]
+  verification: string
+  source_context: {
+    viewer_branch_id: string
+    selected_is_viewer_branch: boolean
+    omitted_branch_count: number
+    omitted_older_revision_count: number
+  }
+}
+export type ArchiveExportPreview = SavedBranchArchivePreview | CompactSnapshotPreview
+export const isCompactSnapshotPreview = (value: ArchiveExportPreview): value is CompactSnapshotPreview =>
+  value.scope === COMPACT_SCOPE
 const record = (data: unknown): data is Record<string, unknown> =>
   typeof data === 'object' && data !== null && !Array.isArray(data)
 const strings = (data: unknown): data is string[] =>
@@ -244,6 +291,52 @@ export function assertSavedBranchArchivePreview(
   return value as SavedBranchArchivePreview
 }
 
+const nullableString = (data: unknown): data is string | null =>
+  data === null || (typeof data === 'string' && data.length > 0)
+
+/** Fail closed: a Compact preview must bind this exact Run, Branch, HEAD and digest. */
+export function assertCompactSnapshotPreview(
+  value: unknown, runId: string, branchId: string
+): CompactSnapshotPreview {
+  const references = record(value) ? value.kept_references : null
+  const packages = record(value) ? value.package_provenance : null
+  const source = record(value) ? value.source_context : null
+  if (!record(value) || value.schema_version !== 'run_compact_snapshot_preview.v1' ||
+    value.scope !== COMPACT_SCOPE || value.format !== 'run_compact_snapshot.v1' ||
+    value.run_id !== runId || value.selected_branch_id !== branchId ||
+    typeof value.selected_head_revision_id !== 'string' || !value.selected_head_revision_id ||
+    typeof value.archive_digest !== 'string' || !SHA256.test(value.archive_digest) ||
+    value.content_hash_algorithm !== 'sha256' ||
+    typeof value.content_hash !== 'string' || !SHA256.test(value.content_hash) ||
+    !Number.isSafeInteger(value.archive_size_bytes) || (value.archive_size_bytes as number) <= 0 ||
+    (value.archive_size_bytes as number) > MAX_BYTES ||
+    !Number.isSafeInteger(value.selected_head_sequence) || (value.selected_head_sequence as number) < 1 ||
+    value.omitted_older_revision_count !== (value.selected_head_sequence as number) - 1 ||
+    typeof value.display_name !== 'string' || typeof value.selected_branch_display_name !== 'string' ||
+    typeof value.minimum_engine !== 'string' || !value.minimum_engine ||
+    typeof value.selected_head_kind !== 'string' || typeof value.saved_at !== 'string' ||
+    typeof value.payload_schema_version !== 'string' || typeof value.verification !== 'string' ||
+    !record(value.run_calendar) || !strings(value.included_components) ||
+    !strings(value.omitted_areas) || !value.omitted_areas.length ||
+    !strings(value.verified_uses) || !value.verified_uses.length ||
+    !strings(value.unsupported_uses) || !value.unsupported_uses.includes('cold_restore') ||
+    !Array.isArray(value.unresolved_package_references) ||
+    !record(packages) || !strings(packages.source_package_ids) ||
+    !Number.isSafeInteger(packages.run_local_entity_count) ||
+    !record(references) || !nullableString(references.parent_revision_id) ||
+    (references.parent_revision_id === null) !== (value.selected_head_sequence === 1) ||
+    !nullableString(references.forked_from_branch_id) ||
+    !nullableString(references.forked_from_saved_revision_id) ||
+    !nullableString(references.viewer_branch_id_signed_at_save) ||
+    !record(source) || typeof source.viewer_branch_id !== 'string' || !source.viewer_branch_id ||
+    source.selected_is_viewer_branch !== (source.viewer_branch_id === branchId) ||
+    !Number.isSafeInteger(source.omitted_branch_count) || (source.omitted_branch_count as number) < 0 ||
+    source.omitted_older_revision_count !== value.omitted_older_revision_count) {
+    throw new Error('Compact snapshot preview has an invalid or foreign scope.')
+  }
+  return value as CompactSnapshotPreview
+}
+
 /** Bound both preview and error JSON without trusting Content-Length alone. */
 async function boundedResponseText(
   response: Response, limit: number
@@ -308,13 +401,30 @@ export async function previewSavedBranchArchive(
   return assertSavedBranchArchivePreview(JSON.parse(previewBody.text) as unknown, runId, branchId, mode, selectedIds)
 }
 
+export async function previewCompactSnapshot(
+  runId: string, branchId: string, signal?: AbortSignal
+): Promise<CompactSnapshotPreview> {
+  const response = await archiveResponse('/export/preview', {
+    run_id: runId, branch_id: branchId, mode: 'compact'
+  }, signal)
+  if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
+    throw new Error('Server returned a non-JSON snapshot preview.')
+  }
+  const previewBody = await boundedResponseText(response, MAX_BYTES)
+  if (previewBody.exceeded) throw new Error('Compact snapshot preview exceeds the safe size limit.')
+  return assertCompactSnapshotPreview(JSON.parse(previewBody.text) as unknown, runId, branchId)
+}
+
 /** Prove the attachment is the *exact* reviewed bytes, not merely a successful HTTP reply. */
 export async function downloadSavedBranchArchive(
-  preview: SavedBranchArchivePreview, signal?: AbortSignal
+  preview: ArchiveExportPreview, signal?: AbortSignal
 ): Promise<Blob> {
+  const compact = isCompactSnapshotPreview(preview)
+  const mime = compact ? COMPACT_MIME : ARCHIVE_MIME
   const response = await archiveResponse('/export', {
     run_id: preview.run_id,
     branch_id: preview.selected_branch_id,
+    ...(compact ? {mode: 'compact'} : {}),
     ...(preview.scope === FULL_RUN_SCOPE ? {mode: 'full_run'} : {}),
     ...(preview.scope === CUSTOM_SCOPE ? {
       mode: 'custom', selected_branch_ids: preview.selected_branch_ids
@@ -322,7 +432,7 @@ export async function downloadSavedBranchArchive(
     expected_head_revision_id: preview.selected_head_revision_id,
     expected_archive_digest: preview.archive_digest
   }, signal)
-  if (!response.headers.get('Content-Type')?.startsWith('application/vnd.squash.saved-branch+json')) {
+  if (!response.headers.get('Content-Type')?.startsWith(mime)) {
     throw new Error('Server returned a non-archive attachment.')
   }
   // Do not buffer an arbitrary HTTP payload before checking its size: even
@@ -352,5 +462,5 @@ export async function downloadSavedBranchArchive(
   const digest = await globalThis.crypto.subtle.digest('SHA-256', raw)
   const actual = Array.from(new Uint8Array(digest), n => n.toString(16).padStart(2, '0')).join('')
   if (actual !== preview.archive_digest) throw new Error('Export digest differs from reviewed preview.')
-  return new Blob([raw.buffer], { type: 'application/vnd.squash.saved-branch+json' })
+  return new Blob([raw.buffer], { type: mime })
 }

@@ -43,7 +43,7 @@ def _generator_for(value: object) -> random.Random:
 class DeterministicRng:
     """Seeded RNG wrapper with deterministic child-seed derivation."""
 
-    __slots__ = ("_value", "_seed", "_generator", "_seed_text", "_scope", "_prefix")
+    __slots__ = ("_value", "_seed", "_generator", "_seed_text", "_prefix")
 
     def __init__(self, seed: Seed | int):
         if not isinstance(seed, Seed):
@@ -53,11 +53,11 @@ class DeterministicRng:
         # Created on first draw from the same seed: identical state and
         # sequence. Many child RNGs only derive further seeds and never draw.
         self._generator: random.Random | None = None
-        # Decimal text of the seed and the ``v1|<scope>|<text>`` prefix of the
-        # last scope, reused by every child derivation.
+        # Decimal text of the seed and ``(scope, "v1|<scope>|<text>")`` of the
+        # last scope, reused by every child derivation. The pair is replaced
+        # in one assignment, so a concurrent reader never mixes two scopes.
         self._seed_text: str | None = None
-        self._scope: SeedScope | None = None
-        self._prefix: str | None = None
+        self._prefix: tuple[SeedScope, str] | None = None
 
     @classmethod
     def _child(cls, value: int) -> "DeterministicRng":
@@ -68,7 +68,6 @@ class DeterministicRng:
         rng._value = value
         rng._generator = None
         rng._seed_text = None
-        rng._scope = None
         rng._prefix = None
         return rng
 
@@ -122,16 +121,16 @@ class DeterministicRng:
         # Same material and digest as ``derive_child_seed`` (the reference):
         # ``"|".join(("v1", scope.value, str(seed), *map(str, parts)))``. The
         # first three fields are joined once per scope member and reused.
-        if scope is self._scope:
-            prefix = self._prefix
+        cached = self._prefix
+        if cached is not None and cached[0] is scope:
+            prefix = cached[1]
         else:
             text = self._seed_text
             if text is None:
                 text = self._seed_text = str(self._value)
             prefix = "|".join(("v1", scope.value, text))
             if type(scope) is SeedScope:
-                self._scope = scope
-                self._prefix = prefix
+                self._prefix = (scope, prefix)
         material = "|".join((prefix, *map(str, parts)))
         digest = _blake2b(material.encode("utf-8"), digest_size=16).digest()
         return _int_from_bytes(digest, "big")

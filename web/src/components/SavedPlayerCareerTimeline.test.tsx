@@ -121,6 +121,71 @@ describe('SavedPlayerCareerTimeline (component, mocked API)', () => {
     expect(within(chart).queryByRole('img')).not.toBeInTheDocument()
   })
 
+  it('groups distinct recorded Editions by Run season and separates titles from runner-up finishes', async () => {
+    const edition=(season_index:number,week:number,id:string,reached_stage:string)=>({
+      kind:'edition_result',effective_week:{season_index,week},
+      detail:{edition_id:id,name:id,reached_stage,awarded_points:100},
+      source:{kind:'played_edition',fingerprint:id,edition_id:id}
+    })
+    const record=(season_index:number,week:number,rank:number)=>({
+      kind:'career_high_ranking',effective_week:{season_index,week},
+      detail:{rank,points:100},source:{kind:'published_ranking',fingerprint:'rank-'+rank}
+    })
+    const earlier=[edition(0,3,'A','champion'),edition(0,4,'B','finalist'),record(0,5,120)]
+    const later=[...earlier,edition(2,3,'C','quarterfinal'),record(2,4,45)]
+    const source=(asOf:number,events:unknown[],count:number,best:number)=>{
+      const base=data(asOf,events,[])
+      return {...base,overview:{...base.overview,titles:1,finals:1,editions_played:count,
+        career_high_rank:best,current_rank:best}}
+    }
+    api.getSavedPlayerCareer.mockImplementation(async (_r,_b,_p,asOf)=>
+      asOf===5?source(5,earlier,2,120):source(126,later,3,45))
+    mount()
+    const table=await screen.findByRole('table',{name:'Recorded career by season'})
+    const rows=within(table).getAllByRole('row')
+    expect(rows).toHaveLength(3)
+    expect(within(rows[1]).getAllByRole('cell').map(c=>c.textContent)).toEqual(['1','0','0','#45'])
+    expect(within(rows[1]).getByRole('rowheader')).toHaveTextContent('3')
+    expect(within(rows[2]).getAllByRole('cell').map(c=>c.textContent)).toEqual(['2','1','1','#120'])
+    expect(within(rows[2]).getByRole('rowheader')).toHaveTextContent('1')
+    expect(within(table).queryByRole('rowheader',{name:'2'})).not.toBeInTheDocument()
+    fireEvent.change(screen.getByLabelText(/View as of week/),{target:{value:'5'}})
+    fireEvent.click(screen.getByRole('button',{name:'Apply'}))
+    await screen.findByText(/Shown as of week no\. 5/)
+    const past=screen.getByRole('table',{name:'Recorded career by season'})
+    expect(within(past).getAllByRole('row')).toHaveLength(2)
+    expect(past).not.toHaveTextContent('#45')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(2)
+  })
+
+  it('does not aggregate duplicate or incomplete Edition evidence into season totals', async () => {
+    const edition={...title,detail:{...title.detail,edition_id:'A'},
+      source:{...title.source,edition_id:'A'}}
+    const base=data(12,[edition,edition],[])
+    api.getSavedPlayerCareer.mockResolvedValue({...base,overview:{...base.overview,
+      titles:2,editions_played:2}})
+    mount()
+    const summary=await screen.findByRole('region',{name:'Recorded career by season'})
+    expect(summary).toHaveTextContent('Verified season summary is unavailable.')
+    expect(within(summary).queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it('shows a ranking-only season without inventing a tournament or season-end rank', async () => {
+    const event={kind:'career_high_ranking',effective_week:{season_index:0,week:3},
+      detail:{rank:50,points:100},source:{kind:'published_ranking',fingerprint:f}}
+    const base=data(12,[event],[])
+    api.getSavedPlayerCareer.mockResolvedValue({...base,overview:{...base.overview,
+      career_high_rank:50,current_rank:65}})
+    mount()
+    const summary=await screen.findByRole('region',{name:'Recorded career by season'})
+    const table=within(summary).getByRole('table')
+    expect(within(table).getAllByRole('row')).toHaveLength(2)
+    expect(within(table).getAllByRole('cell').map(c=>c.textContent)).toEqual(['0','0','0','#50'])
+    expect(table).not.toHaveTextContent('#65')
+    expect(summary).toHaveTextContent('not proof of non-participation')
+    expect(api.getSavedPlayerCareer).toHaveBeenCalledTimes(1)
+  })
+
   it('filters the timeline by type and renders Czech', async () => {
     api.getSavedPlayerCareer.mockResolvedValue(data(12, [turnPro, title], [turnPro, first]))
     mount(true)

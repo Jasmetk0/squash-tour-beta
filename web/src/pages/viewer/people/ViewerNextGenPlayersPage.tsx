@@ -28,6 +28,11 @@ const copy = {
     'Prospects have an invalid public source, future data or a Run/Viewer Branch mismatch. No entries are displayed.',
   ],
   retry: ['Načíst znovu (GET)', 'Retry read (GET)'],
+  refresh: ['Obnovit uložená data', 'Refresh Saved data'],
+  lifecycle: ['Stav kariéry na této stránce', 'Career status on this page'],
+  all: ['Všechny stavy', 'All statuses'],
+  active: ['Aktivní', 'Active'],
+  retiredFilter: ['Po kariéře', 'Retired'],
   summary: ['Historicky viditelné talenty', 'Historically visible prospects'],
   run: ['Product Run', 'Product Run'],
   branch: ['Viewer Branch', 'Viewer Branch'],
@@ -118,13 +123,18 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
   const [params, setParams] = useSearchParams()
   const currentPage = ignoreUrlPage ? 1 : readProspectPage(params)
   const offset = (currentPage - 1) * PAGE_SIZE
-  const [pageFilter, setPageFilter] = useState({ page: currentPage, text: '' })
+  type LifecycleFilter = 'all' | 'active' | 'retired'
+  const [pageFilter, setPageFilter] = useState<{ page: number; text: string; lifecycle: LifecycleFilter }>(
+    { page: currentPage, text: '', lifecycle: 'all' },
+  )
   const filter = pageFilter.page === currentPage ? pageFilter.text : ''
+  const lifecycle = pageFilter.page === currentPage ? pageFilter.lifecycle : 'all'
   useEffect(() => {
-    setPageFilter(previous => previous.page === currentPage ? previous : { page: currentPage, text: '' })
+    setPageFilter(previous => previous.page === currentPage ? previous :
+      { page: currentPage, text: '', lifecycle: 'all' })
   }, [currentPage])
   function setFilter(text: string): void {
-    setPageFilter({ page: currentPage, text })
+    setPageFilter({ page: currentPage, text, lifecycle })
   }
   function setOffset(nextOffset: number): void {
     setParams(previous => {
@@ -133,7 +143,7 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
       else next.set('prospectPage', String(nextOffset / PAGE_SIZE + 1))
       return next
     })
-    setFilter('')
+    setPageFilter({ page: nextOffset / PAGE_SIZE + 1, text: '', lifecycle: 'all' })
   }
   const query = useQuery({
     queryKey: ['viewer-visible-pre-tour-prospects', runId, branchId, offset],
@@ -157,9 +167,10 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
   const needle = foldSearch(filter.trim())
-  const visible = data.prospects.filter(prospect => !needle ||
-    [prospect.player_id, prospect.display_name, prospect.short_name, prospect.country_code, prospect.country_name]
-      .some(value => value !== null && foldSearch(value).includes(needle)))
+  const visible = data.prospects.filter(prospect =>
+    (lifecycle === 'all' || prospect.lifecycle_status === lifecycle) &&
+    (!needle || [prospect.player_id, prospect.display_name, prospect.short_name, prospect.country_code, prospect.country_name]
+      .some(value => value !== null && foldSearch(value).includes(needle))))
   const start = data.prospects.length ? data.offset + 1 : 0
   const end = data.prospects.length ? data.offset + data.prospects.length : 0
   return <>
@@ -172,6 +183,7 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
         { label: t.count, value: data.total },
         { label: t.range, value: data.total === 0 ? '0' : start + '–' + end + ' ' + t.of + ' ' + data.total },
       ]} />
+      <button type="button" onClick={() => void query.refetch()}>{t.refresh}</button>
     </article>
 
     {data.total === 0 && data.offset === 0 ? <ViewerEmptyState>{t.empty}</ViewerEmptyState> : (
@@ -181,7 +193,19 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
           <label htmlFor="viewer-prospect-filter">{t.filter}</label>
           <input id="viewer-prospect-filter" type="search" value={filter}
             onChange={event => setFilter(event.target.value)} />
-          <button type="button" disabled={!filter} onClick={() => setFilter('')}>{t.clearFilter}</button>
+          <label htmlFor="viewer-prospect-lifecycle">{t.lifecycle}</label>
+          <select id="viewer-prospect-lifecycle" value={lifecycle}
+            onChange={event => {
+              const value = event.target.value
+              if (value === 'all' || value === 'active' || value === 'retired')
+                setPageFilter({ page: currentPage, text: filter, lifecycle: value })
+            }}>
+            <option value="all">{t.all}</option>
+            <option value="active">{t.active}</option>
+            <option value="retired">{t.retiredFilter}</option>
+          </select>
+          <button type="button" disabled={!filter && lifecycle === 'all'}
+            onClick={() => setPageFilter({ page: currentPage, text: '', lifecycle: 'all' })}>{t.clearFilter}</button>
           <p className="status">{t.filterScope}</p>
           <p role="status">{t.filteredCount}: {visible.length} / {data.prospects.length}</p>
           {visible.length ? <ul className="viewer-home-list viewer-sample-list" aria-label={t.list}>

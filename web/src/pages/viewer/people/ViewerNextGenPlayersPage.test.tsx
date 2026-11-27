@@ -298,4 +298,39 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
   })
 
+  it('filters retired identities within the verified page without implying a global status count', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    const source = page(0, ['Active prospect', 'Retired prospect'], 2)
+    api.getViewerVisibleProspects.mockResolvedValueOnce({
+      ...source, prospects: [source.prospects[0], { ...source.prospects[1], lifecycle_status: 'retired' }],
+    })
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Active prospect')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Stav kariéry na této stránce'), 'retired')
+    expect(screen.queryByText('Active prospect')).not.toBeInTheDocument()
+    expect(screen.getByText('Retired prospect')).toBeInTheDocument()
+    expect(screen.getByText('Odpovídající hráči na stránce: 1 / 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Vymazat hledání' }))
+    expect(screen.getByText('Active prospect')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes the current Saved page and suppresses stale rows while a new projection is loading', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    let resolve!: (value: ReturnType<typeof page>) => void
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(0, ['Before Tour entry'], 1))
+      .mockImplementationOnce(() => new Promise(r => { resolve = r }))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Before Tour entry')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Obnovit uložená data' }))
+    await waitFor(() => expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('Before Tour entry')).not.toBeInTheDocument()
+    await act(async () => resolve({ ...page(0, [], 0), week: { season_index: 4, week: 11 } }))
+    expect(await screen.findByText('V tomto uloženém týdnu nejsou viditelní žádní hráči před vstupem na Tour.')).toBeInTheDocument()
+    expect(screen.getByText(/2004\/05 · W11/)).toBeInTheDocument()
+  })
+
 })

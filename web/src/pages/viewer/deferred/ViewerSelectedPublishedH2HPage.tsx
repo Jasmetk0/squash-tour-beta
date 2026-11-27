@@ -85,7 +85,14 @@ const copy = {
   zero: ['Ve vybraných publikacích nebyl nalezen žádný vzájemný výsledek. To není důkaz nulové bilance za kariéru.', 'No H2H outcomes were found in the selected publications. This does not prove a zero career record.'],
   table: ['Konkrétní vzájemné zápasy', 'Exact H2H outcome records'],
   event: ['Turnaj', 'Tournament'],
-  week: ['Týden', 'Week'],
+  week: ['Týden rozpisu', 'Scheduled week'],
+  drawTable: ['Bilance podle části turnaje ve vybraných zdrojích', 'Outcomes by draw section in selected sources'],
+  qualification: ['Kvalifikace', 'Qualification'],
+  group: ['Skupiny', 'Group'],
+  main: ['Hlavní pavouk', 'Main draw'],
+  knockout: ['Vyřazovací část', 'Knockout'],
+  sectionWins: ['Výhry v části', 'Section wins'],
+  sectionLosses: ['Prohry v části', 'Section losses'],
   matchId: ['ID zápasu', 'Match ID'],
   draw: ['Část', 'Draw'],
   round: ['Kolo', 'Round'],
@@ -153,6 +160,22 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
           {stats.listedInEvents === 0 ? <p className="empty-state">{t('sourceAbsent')}</p> : null}
         </div>)}
       <div className="table-wrap">
+        <table aria-label={t('drawTable')}>
+          <thead><tr>
+            <th scope="col">{t('draw')}</th>
+            <th scope="col">{report.playerA} · {t('sectionWins')}</th>
+            <th scope="col">{report.playerA} · {t('sectionLosses')}</th>
+            <th scope="col">{report.playerB} · {t('sectionWins')}</th>
+            <th scope="col">{report.playerB} · {t('sectionLosses')}</th>
+          </tr></thead>
+          <tbody>{report.playerAStats.byDraw.map((row, index) => <tr key={row.draw}>
+            <th scope="row">{t(row.draw)}</th>
+            <td>{row.wins}</td><td>{row.losses}</td>
+            <td>{report.playerBStats.byDraw[index].wins}</td><td>{report.playerBStats.byDraw[index].losses}</td>
+          </tr>)}</tbody>
+        </table>
+      </div>
+      <div className="table-wrap">
         <table aria-label={t('playerEventTable')}>
           <thead><tr>
             <th scope="col">{t('playerA')} / {t('playerB')}</th>
@@ -188,7 +211,7 @@ function H2HReport({ events, runId, branchId, a, b, t }: {
           <tbody>{report.encounters.map(match => <tr key={match.eventId + ':' + match.matchId}>
             <td><Link to={viewerTournamentDetailPath(runId, match.eventId)}>
               {match.eventName || match.eventId}</Link> ({match.season})</td>
-            <td>W{match.week}</td><td>{match.draw}</td><td>{match.round}</td>
+            <td>W{match.week}</td><td>{t(match.draw)}</td><td>{match.round}</td>
             <td><Link title={t('matchLink')} to={viewerTopTourMatchesPath() + '?' + new URLSearchParams({
               event: match.eventId, match: match.matchId, matchRun: runId, matchBranch: branchId,
             }).toString()}>{match.matchId}</Link></td>

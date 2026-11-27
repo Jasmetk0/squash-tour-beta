@@ -440,4 +440,27 @@ describe('real-source-shape, explicitly bounded published tournament H2H (mocked
     expect(api.getViewerTournamentResult).toHaveBeenCalledWith('run alpha', 'EVENT/2')
   })
 
+  it('shows the already verified per-draw outcomes without another GET or counting BYEs as wins', async () => {
+    const user = userEvent.setup()
+    const original = result('EVENT/1')
+    api.getViewerTournamentResult.mockResolvedValueOnce({
+      ...original, matches: [
+        ...original.matches,
+        { match_id: 'q-win', draw_type: 'qualification', round_number: 1, bracket_position: 1,
+          winner_player_id: 'B', loser_player_id: 'C', scoreline: '3-1' },
+        { match_id: 'q-bye', draw_type: 'qualification', round_number: 1, bracket_position: 2,
+          winner_player_id: 'A', loser_player_id: null, scoreline: 'BYE' },
+      ],
+    })
+    mount()
+    await selectPlayers(user)
+    const table = await screen.findByRole('table', { name: 'Bilance podle části turnaje ve vybraných zdrojích' })
+    const cells = (name: string) => within(within(table).getByRole('rowheader', { name }).closest('tr')!)
+      .getAllByRole('cell').map(cell => cell.textContent)
+    expect(cells('Kvalifikace')).toEqual(['0', '0', '1', '0'])
+    expect(cells('Hlavní pavouk')).toEqual(['2', '0', '0', '1'])
+    expect(screen.getByText(/Vzájemné výsledkové záznamy: 1/)).toBeInTheDocument()
+    expect(api.getViewerTournamentResult).toHaveBeenCalledTimes(1)
+  })
+
 })

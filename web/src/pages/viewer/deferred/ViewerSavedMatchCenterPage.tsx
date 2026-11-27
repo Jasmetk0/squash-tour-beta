@@ -59,7 +59,9 @@ const messages = {
   eventMismatch: ['Detail zápasů neodpovídá publikovanému turnaji nebo obsahuje nepovolené údaje.', 'Match detail disagrees with the published tournament or contains forbidden data.'],
   champion: ['Publikovaný vítěz', 'Published champion'],
   finalist: ['Publikovaný finalista', 'Published finalist'],
-  matchCount: ['Zápasů ve veřejném výsledku', 'Matches in public result'],
+  matchCount: ['Záznamů ve veřejném výsledku', 'Records in public result'],
+  completed: ['Dokončení turnaje (uložený týden)', 'Tournament completion (Saved week)'],
+  completedScope: ['Týden dokončení turnaje není čas jednotlivého zápasu ani čas publikace.', 'Tournament completion week is not the time of an individual match or its publication.'],
   matches: ['Publikované zápasy vybraného turnaje', 'Published matches for selected tournament'],
   noMatches: ['Veřejný výsledek neobsahuje žádné záznamy zápasů.', 'Public result contains no match records.'],
   noMatchRows: ['Vyhledávání neodpovídá žádný zápas.', 'No matches match these filters.'],
@@ -212,7 +214,9 @@ function SavedMatchRows({ source, runId, t, exactMatch, matchLink, search, onSea
       <div><dt>{t('finalist')}</dt><dd><Link to={viewerPlayerProfilePath(runId, source.finalist_player_id)}>
         {source.finalist_player_id}</Link></dd></div>
       <div><dt>{t('matchCount')}</dt><dd>{source.matches.length}</dd></div>
+      <div><dt>{t('completed')}</dt><dd>S{source.completed_season_index} · W{source.completed_week}</dd></div>
     </dl>
+    <p className="status">{t('completedScope')}</p>
     {source.matches.length === 0 ? <p className="empty-state">{t('noMatches')}</p> : <>
       {exactMatch ? <button type="button" onClick={onClear}>{t('clearMatch')}</button> :
       <div className="viewer-filters">

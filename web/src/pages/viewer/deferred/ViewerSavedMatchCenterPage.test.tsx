@@ -161,6 +161,8 @@ describe('Saved Match Center over actual published tournament GET contract (mock
     expect(within(matches).getAllByRole('row')).toHaveLength(3)
     expect(within(matches).getByText('final')).toBeInTheDocument()
     expect(within(matches).getByText('3-2')).toBeInTheDocument()
+    expect(screen.getByText('Dokončení turnaje (uložený týden)').parentElement).toHaveTextContent('S28 · W5')
+    expect(screen.getByText(/není čas jednotlivého zápasu ani čas publikace/)).toBeInTheDocument()
     expect(within(matches).getAllByRole('link', { name: 'B' })[0])
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/players/B/career')
     expect(screen.getByRole('link', { name: 'Detail turnaje' }))

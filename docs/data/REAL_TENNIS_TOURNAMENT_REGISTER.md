@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 27 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 28 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -61,10 +61,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Santiago](#santiago-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: rozpor odměn Main) |
 | 2024 | [Indian Wells](#indian-wells-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Miami](#miami-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Marrakech](#marrakech-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 27 zpracovaných ročníků; 24 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 28 zpracovaných ročníků; 25 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -97,7 +98,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 25 | Santiago 2024 | ROZPRACOVÁNO (P: rozpor odměn Main) |
 | 26 | Indian Wells 2024 | HOTOVO (nominální rozsah) |
 | 27 | Miami 2024 | HOTOVO (nominální rozsah) |
-| 28 | Marrakech 2024 | NEZAHÁJENO |
+| 28 | Marrakech 2024 | HOTOVO (nominální rozsah) |
 | 29 | Estoril 2024 | NEZAHÁJENO |
 | 30 | Houston 2024 | NEZAHÁJENO |
 
@@ -144,6 +145,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#santiago-2024) | Movistar Chile Open | ATP 250 | 2024-02-24–2024-02-25 | 2024-02-26–2024-03-03 | ROZPRACOVÁNO; finanční rozpor Main, termíny doloženy |
 | [2024](#indian-wells-2024) | BNP Paribas Open | ATP Masters 1000 | 2024-03-04–2024-03-05 | 2024-03-06–2024-03-17 | HOTOVO v nominálním rozsahu; 15.3. bez mužské dvouhry |
 | [2024](#miami-2024) | Miami Open presented by Itaú | ATP Masters 1000 | 2024-03-18–2024-03-19 | 2024-03-20–2024-03-31 | HOTOVO v nominálním rozsahu; 30.3. bez mužské dvouhry |
+| [2024](#marrakech-2024) | Grand Prix Hassan II | ATP 250 | 2024-03-31–2024-04-01 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 1.4. |
 
 ## Wimbledon 2024
 
@@ -3437,6 +3439,122 @@ I/T/D/R/B/P doloženy; H*: všechna okna doložena, denní dělení R128 a QF ov
 - MIA24-14: [dobový OOP SF 29.3. v mediálním přepisu](https://www.miamilivingmagazine.com/post/dimitrov-stuns-alcaraz-2024-miami-open-presented-by-ita%C3%BA-tournament-update), [ATP potvrzení nedělního finále](https://www.atptour.com/en/news/sinner-dimitrov-miami-2024-final).
 - Dobový předpis ATP VII/IX viz IW24-11/14, nikoli novější ročníková pravidla.
 
+
+## Marrakech 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/P/Z s doplňkovými omezeními). Rešerše 2026-11-27. Předstartovní i výsledkový originální ATP Main vizuálně ověřeny. Originální pořadatelský magazín potvrzuje Q kvóty, Main velikost a odměny. Q finanční tabulka sekundární shoda po rozlišení ročníků; původní Q PDF nedostupné. Q2 a Main R32 plánovaně ve stejný den, nikoli mimořádný odklad.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Grand Prix Hassan II, mužská dvouhra | RAK24-1/2/3/4 |
+| Kategorie / ATP ID | ATP 250 / 360 | RAK24-1/15 |
+| Ročník | 38. podle pořadatele; 32. podle ATP Media Notes | RAK24-3/4 |
+| Dějiště | Royal Tennis Club de Marrakech, Marrakech, Maroko | RAK24-1/3/4 |
+| Povrch | venkovní červená antuka | RAK24-1/2/3 |
+| Časové pásmo | Africa/Casablanca, UTC+00:00 během turnaje (ramadán) | RAK24-5 |
+| Ředitel | Hicham Arazi | RAK24-3 |
+| ATP supervisor / referee | Roland Herfel / Ashraf Hamouda | RAK24-1/3 |
+| Měna | EUR | RAK24-1/2/3 |
+
+Rozdílné počty ročníků zachovat jako zdrojové údaje. ATP notes uvádějí historii ATP akce od roku 1990, pořadatel používá širší počítání; textová extrakce losů mylně uvádí 30ème, obraz obou originálů jednoznačně 38ème. Logo sponzora Dunlop na titulní straně magazínu samo neurčuje přesný model zápasových míčů. Detail sheet a tour manager neověřeny.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-04 | RAK24-6 |
+| Q rank date | 2024-03-11 | RAK24-6 |
+| Nominální Main deadline | 2024-03-04 18:00 (12:00 US Eastern, UTC−05; Maroko UTC+01) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-03-11 16:00 (12:00 US Eastern, UTC−04; Maroko UTC+00) | odvozeno §7.03 |
+| Nominální LE deadline | 2024-03-28 14:00 (10:00 US Eastern) | odvozeno §7.04 |
+| Q los | nejpozději před Q1 dne 2024-03-31, přesný okamžik neověřen | RAK24-7/8 |
+| Main los | před dokončením Q2, nejpozději před Main startem 2024-04-01, přesný okamžik neověřen | RAK24-2/4 |
+| Q | 2024-03-31–2024-04-01 | RAK24-3/4/6/7 |
+| Main | 2024-04-01–07 | RAK24-1/2/4 |
+| Singlové finále | 2024-04-07 14:00 místně, plán ATP | RAK24-4 |
+
+Dobový přepis entry listu 27.3. uvádí původní cutoff 75 Main a 128 Q; oba originální Main losy uvádějí Moutet 105 při deadline i v losu. Neztotožňovat různé publikované stavy bez originální acceptance listiny; Q konečný cutoff neověřen. Přesné termíny uzávěrek jsou odvozené z dobového předpisu, nikoli prokázané časové značky. Časový režim se mezi Main a Q uzávěrkou změnil na obou stranách Atlantiku; nezaměňovat dubnový marocký čas UTC+00 s obvyklým UTC+01.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-03-31 | 8 |
+| Q2 | 2024-04-01 | 4 |
+| R32 | 2024-04-01–02 | 12 (3+9) |
+| R16 | 2024-04-03–04 | 8 (4+4 pozorováno) |
+| QF | 2024-04-05 | 4 |
+| SF | 2024-04-06 | 2 |
+| F | 2024-04-07 | 1 |
+
+Pořadatelský magazín uvádí celé okno 31.3.–7.4., dobový přepis listiny výslovně začátek Q v neděli 31.3. a ATP Preview & Day 1 1.4. předem uvádí čtyři kvalifikanty, kteří budou určeni až v pondělí. Pondělní souběh není dešťový posun: dobová zpráva RAK24-9 výslovně avizuje tři první Main zápasy v pondělí; denní přehled RAK24-7 potvrzuje současně čtyři Q2 a tři R32, dalších devět R32 v úterý. Osm R16 rozděleno 4+4 podle výsledků, původní samostatné OOP obou dnů nezískány. QF/SF/F potvrzeny denním přehledem, finále plánováno v ATP notes na neděli 14:00. Plánovaná okna kol podporuje dobový průběh; bez kompletního předturnajového OOP neprohlašovat všechny denní počty za nezávisle potvrzený původní plán. Q dva dny, Main sedm dní, překryv jeden den, celé okno osm kalendářních dní a 39 zápasů. Předchozí Miami má finále ve stejný civilní den jako Q1 Marrakech; nejde o chybu kalendáře. 
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA (včetně případné NG rezervy) | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+ATP 250 podle dobového §7.08 B/E: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28. RAK24-6 uvádí 18 DA, 0 SE/LE, 3 WC a 4 Q (mezistav 25, ne konečný počet). Pořadatelský magazín RAK24-3 uvádí 21 přímých vstupů, 4 Q, 3 WC a samostatně Q 14 DA + 2 WC; souhrnných 21 odpovídá uvolnění rezerv, nikoli absenci nominálních rezerv. Oba originální Main losy potvrzují BYE 2/10/23/31, WC 6/7/26, Q pozice 3/11/13/15, PR na pozici 18 a osm seedů. Žádný LL nebo SE ve výsledkovém Main. PR náleží mezi přímé vstupy. Sekundární zpráva RAK24-8 uvádí 32 hráčů v Main, ale směšuje kapacitu s účastí; přednost oficiálnímu magazínu a originálnímu pavouku s 28 hráči. 12+8+4+2+1=27.
+
+Q 16 hráčů, 14 DA a 2 WC výslovně potvrzují pořadatel i přepis listiny. Výsledkový pavouk RAK24-10 uvádí Karmoussiho a Bennaniho jako WC, jednoho Alt Miedlera a sedm označených seedů (1–6 a 8). Osm nominálních seedů podle §7.15, případný původní seed 7 a jeho konkrétní nahrazení neověřeny; neodvozovat jeho jméno pouze z pozice Alt. Q 4 sekce po čtyřech, 8+4=12 utkání, čtyři postupující potvrzeni výsledky a Main originálem. Nominální počet zachovat navzdory skutečným změnám.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 v únorové verzi (SCL24-18), včetně účinných změn LCB24-19 a upřesnění rozsahu challengerového §7.08 C.3 v SCL24. Dvě SE a jedna LE rezerva v Main ATP 250, nevyužitá místa přecházejí na DA, čtyři BYE top čtyř seedů, čtyři Q sekce, osm Q seedů, BO3 s tiebreakem. ATP notes RAK24-4 potvrzují 0 bodů za první prohru po BYE, finanční R16 nominál zůstává. Q body 13/7/0 podle dobového ATP předpisu, nikoli zastaralé 12/6/0 v RAK24-10.
+
+Týden 1.–7.4. tři ATP 250 (Marrakech, Estoril, Houston), viz RAK24-6 a RAK24-16. ATP notes označují Van Assche #NextGenATP, ale přepis původní Main listiny jej uvádí mezi běžnými náhradníky s rankingem 86, originální Main bez zvláštní značky. Nelze prohlásit programovou alokaci NG jen z jeho věku nebo mediálního označení. Konkrétní využití či propad NG rezerv v tomto týdnu zůstává otevřené; žádná místa nad nominální kapacitu.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 88125 |
+| Finalista | 1 | 165 | 51400 |
+| SF | 2 | 100 | 30220 |
+| QF | 4 | 50 | 17510 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 10165 |
+| R32 | 12 | 0 | 6215 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3105 |
+| Q1 prohra | 8 | 0 | 1695 |
+
+Main ceny a body shodně oba vizuálně ověřené ATP losy, ATP notes a oficiální magazín. Q 3105/1695 EUR shodně ročníkový sloupec 2024 TennisCompanion a explicitní oddíl 2024 Canal Tenis (RAK24-11/12). TennisTemple uvádí 3020/1645 a 12/6 bodů; obě částky přesně odpovídají oddílům 2023 v obou srovnávacích zdrojích a body staršímu předpisu, proto jde o silně doložené podezření na převzetí starší tabulky, ne rovnocenný ročníkový protidoklad. Na rozdíl od Santiago zde lze konkrétní zdroj nesrovnalosti vysvětlit přesným shodným předchozím ročníkem. P* sekundární shoda, ne primární Q potvrzení; nezávislost vzniku obou tabulek neprokázána. Alternativa ze staršího rozpisu by dala Q 25240 EUR, nepoužívá se. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Financial commitment 651865 EUR z originálu a turnajová dotace 579320 EUR z magazínu jsou jiné veličiny; neodvozovat Q ceny z rozdílu celkových částek. Q postupující získávají Main peníze podle výsledku.
+
+### 7. Kontrola a mezery
+
+I/T/D/B doloženy. H* okna a souběh potvrzeny, úplný původní denní OOP nezískán. E* uzávěrky odvozené, acceptance listy/DS, Q konečný cutoff a hodiny losů chybějí. R* NG alokace otevřena; P* Q ceny sekundární shoda po kontrole odlišného ročníku. Z* oba originální Main (po jedné straně) vizuálně; oficiální magazín titulní strana vizuálně, pasáže o kvótách a odměnách textově; ATP notes str. 2 screenshot 403, text dostupný; Q PDF nedostupný. Nevymýšlet hash. Kontroly 28/16 účastníků, 8/8 seedů, 4/0 BYE, 27/12 zápasů, 3+9 a 4+4 dělení, finanční součty a všech devět oblastí prošly v nominálním rozsahu s hvězdičkami. Následující Estoril, poté Houston. Žádný převod ani runtime změna.
+
+### 8. Zdroje (RAK24)
+
+- RAK24-1: [výsledkový originální ATP Main v RFET](https://www.rfet.es/descargar/file-noticias-adjuntos/4915_Documento/cuadro-atp-marrakech.pdf), str. 1 vizuálně.
+- RAK24-2: [předstartovní originální ATP Main](https://www.fantatennis.net/_downloads/2af70157f3988736b3cb652f47eaaefe), str. 1 vizuálně.
+- RAK24-3: [oficiální Magazine GPH2 38e](https://grandprixhassan2.com/wp-content/uploads/2024/04/Magazine-GPH2-38e-web_compressed.pdf), titul vizuálně, COMITÉ D'ORGANISATION, PRÉSENTATION DES TABLEAUX, BREAKDOWN textově.
+- RAK24-4: [ATP Preview & Day 1, 1.4.2024](https://www.atptour.com/-/media/13627bca79a044779d36c8fa90f6105e.pdf), str. 1–2 text, screenshot 403.
+- RAK24-5: [časové změny Marrakech 2024](https://www.timeanddate.com/time/change/morocco/marrakech?year=2024), [dobová zpráva o ramadánu](https://www.moroccoworldnews.com/2024/03/22340/ramadan-2024-morocco-back-to-gmt-on-march-10/).
+- RAK24-6: [dobový přepis listiny 27.3.](https://www.tennisteen.it/entry-list/atp/24142-atp-entry-list-1-7-aprile-2024.html), řádky 182–244, obě fáze a kvóty.
+- RAK24-7: [dobový denní přehled obou fází](https://canaltenis.com/resultados-atp-marrakech-2024/), místní data a počty; [Sky 1.4.](https://www.skysports.com/tennis/scores-schedule/01-04-2024) nezávislá kontrola souběhu.
+- RAK24-8: [SNRT News 31.3. o Q startu](https://snrtnews.com/fr/article/38e-grand-prix-hassan-ii-de-tennis-coup-denvoi-des-qualifications-au-tableau-final-94375), Main kapacitu nelze zaměnit za počet hráčů.
+- RAK24-9: [TennisActu 1.4. o třech pondělních Main zápasech](https://www.tennisactu.net/news-atp-marrakech-luca-van-assche-cale-d-entree-face-a-jaume-munar-au-maroc-108684.html), [ATP 1.4.](https://www.atptour.com/en/news/munar-van-assche-marrakech-2024-monday).
+- RAK24-10: [TennisTemple Q 2024](https://en.tennistemple.com/competitions/marrakech/2024/draw-qualifications), geometrie a vstupy, zastaralá bodová/finanční tabulka.
+- RAK24-11: [TennisCompanion ročníkové sloupce EUR](https://tenniscompanion.org/prize-money/marrakech/), 2024 a 2023 porovnány.
+- RAK24-12: [Canal Tenis ročníkové oddíly 2024 a 2023](https://canaltenis.com/prize-money-atp-marrakech/), Q 3105/1695 vs 3020/1645.
+- RAK24-13: [Sportface dobové Main ceny 8.4.](https://news.sportface.it/tennis/atp-marrakech-2024-montepremi-e-prize-money/2500487), souhlas s originály; celková částka v článku je commitment.
+- RAK24-14: [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), Main termíny.
+- RAK24-15: [ročníkový identifikátor ATP 360](https://www.ultimatetennisstatistics.com/tournamentEvent?extId=360&name=Marrakech&season=2024&tab=results), 32/28; [ATP Q PDF](https://www.protennislive.com/posting/2024/360/qs.pdf) nedostupné.
+- RAK24-16: [ATP kalendář 11.3.2024](https://www.atptour.com/-/media/files/calendar-pdfs/2024/2024-atp-challenger-calendar-as-of-11-march-2024.pdf), indexovaný text, týden tří ATP 250; viz také RAK24-6. Dobový předpis viz SCL24-18, LCB24-19, ROT24-16.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3460,3 +3578,4 @@ I/T/D/R/B/P doloženy; H*: všechna okna doložena, denní dělení R128 a QF ov
 | Santiago 2024 | P – Main prize money, blokuje HOTOVO | ATP Preview 100635/58700 vs více ročníkových zdrojů 100640/58705 USD; opakovaná kontrola 27.11. (https://www.encancha.cl/polideportivo/tenis/2024/02/26/los-millones-del-atp-de-santiago-cuanto-dinero-reparte-en-premios-el-chile-open/ a https://www.tennisexplorer.com/santiago/2024/atp-men/ potvrzují 100640, https://dewiki.de/Lexikon/Movistar_Chile_Open_2024 uvádí 100635) další primární los nepřinesla; zůstává otevřeno, Q shoda 3550/1935 USD, NG a časy losu neověřeny |
 | Indian Wells 2024 | H*/E*/P*/Z* | původní denní R64/R32/R16 OOP, originální Q/DS a acceptance listy, Q čas losu a cutoff, Q odměny 14400/7800 USD sekundární shoda; body Q 20/10/0 primárně ověřeny |
 | Miami 2024 | H*/E*/Z* | původní acceptance listy/DS a čas Q losu, kompletní první OOP a denní R64/R32 splity před deštěm; obě finanční tabulky primárně vizuálně ověřeny |
+| Marrakech 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance listy, časy losů, původní OOP, skutečná alokace NG v týdnu Marrakech/Estoril/Houston; Q 3105/1695 EUR sekundární shoda 2024, 3020/1645 přesně odpovídá roku 2023, nikoli rovnocenný ročníkový doklad |

@@ -191,6 +191,11 @@ def parse_node(body: str):
 
 
 MAX_FLAT_PIECES = 1 << 24
+# Above this many aggregated subtree-piece references, avoid holding an
+# overlapping flattened tuple for EVERY reachable node at the same time.
+# This is an allocation strategy only; the same complete DAG/authentication
+# and expansion limits are evaluated before either reconstruction path.
+MAX_INTERMEDIATE_FLAT_PIECES = 1 << 18
 
 
 def materialize(fetch, *, run_id, root, expected_chars, on_value_node=None, verified=None):
@@ -302,8 +307,38 @@ def _materialize_nodes(nodes, *, root, expected_chars, on_value_node, derived):
     if sizes[root] != expected_chars:
         raise SavedV2IntegrityError("v2 Saved size differs from its envelope")
     if on_value_node is None:
-        # Flatten bottom-up (children before parents in ``order``), reusing the
-        # flattened tuples of this snapshot; join once at C speed.
+        # For a very wide/overlapping DAG, materializing and retaining the
+        # flattened tuple of EVERY subtree multiplies the transient reference
+        # count even though only the root text is requested. Its authenticated
+        # sizes/piece-count/depth/cycle checks have ALL already run above.
+        if sum(counts[d] for d in order) > MAX_INTERMEDIATE_FLAT_PIECES:
+            out = []
+            work = [("n", root)]
+            while work:
+                tag, value = work.pop()
+                if tag == "p":
+                    if value:
+                        out.append(value)
+                    continue
+                # A closed subtree is reusable only when it was authenticated
+                # and size-checked earlier in THIS unchanged guarded snapshot.
+                known = derived.get(value) if derived is not None else None
+                if known is not None:
+                    out.extend(known[1])
+                    continue
+                _, children, pieces = nodes[value]
+                sequence = [("p", pieces[0])]
+                for child, piece in zip(children, pieces[1:]):
+                    sequence.append(("n", child))
+                    sequence.append(("p", piece))
+                work.extend(reversed(sequence))
+            text = "".join(out)
+            if len(text) != expected_chars:
+                raise SavedV2IntegrityError("v2 Saved text differs from its envelope size")
+            return text
+
+        # Normal-sized reads keep the existing same-snapshot derived subtree
+        # reuse: children before parents, then one C-level join of root pieces.
         flat = {}
         for digest in order:
             _, children, pieces = nodes[digest]

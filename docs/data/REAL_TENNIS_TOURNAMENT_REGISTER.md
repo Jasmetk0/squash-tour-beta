@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 8 ročníků, všechny Grand Slamy 2024 a 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 9 ročníků, všechny Grand Slamy 2024 a 2025 a Brisbane 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -42,10 +42,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Australian Open](#australian-open-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Roland Garros](#roland-garros-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [US Open](#us-open-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Brisbane](#brisbane-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 8 zpracovaných ročníků; 8 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 9 zpracovaných ročníků; 9 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -59,8 +60,12 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 6 | Australian Open 2025 | HOTOVO (nominální rozsah) |
 | 7 | Roland Garros 2025 | HOTOVO (nominální rozsah) |
 | 8 | US Open 2025 | HOTOVO (nominální rozsah) |
+| 9 | Brisbane 2024 | HOTOVO (nominální rozsah) |
+| 10 | Hong Kong 2024 | NEZAHÁJENO |
+| 11 | Adelaide 2024 | NEZAHÁJENO |
+| 12 | Auckland 2024 | NEZAHÁJENO |
 
-Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
+Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
 
 ## Metodika evidence
 
@@ -80,6 +85,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2025](#australian-open-2025) | Australian Open | Grand Slam | 2025-01-06–2025-01-09 | 2025-01-12–2025-01-26 | HOTOVO v nominálním rozsahu |
 | [2025](#roland-garros-2025) | Roland Garros | Grand Slam | 2025-05-19–2025-05-23 | 2025-05-25–2025-06-08 | HOTOVO v nominálním rozsahu |
 | [2025](#us-open-2025) | US Open | Grand Slam | 2025-08-18–2025-08-21 (plán) | 2025-08-24–2025-09-07 | HOTOVO v nominálním rozsahu; skutečné Q do 22. 8. |
+| [2024](#brisbane-2024) | Brisbane International | ATP 250 | 2023-12-30–2023-12-31 | 2023-12-31–2024-01-07 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 
 ## Wimbledon 2024
 
@@ -1136,3 +1142,118 @@ I/T/H/D/R/B/P pokryto; E*: Main rank date potvrzen přímo pořadatelem, Q deadl
 - US25-10: [ATP zrušení programu 20. 8.](https://www.atptour.com/en/news/us-open-2025-wednesday-qualifying-cancelled), [Tennis.com přesun Q2](https://www.tennis.com/news/articles/2025-us-open-qualifying-postponed-due-to-wednesday-rain), [USTA Q2 21. 8.](https://www.usopen.org/en_US/news/articles/2025-08-21/day_4_of_mens_and_womens_qualifying_at_the_2025_us_open.html), [USTA konec Q 22. 8.](https://www.usopen.org/en_US/news/articles/2025-08-22/day_5_of_mens_and_womens_qualifying_at_the_2025_us_open.html).
 - US25-11: [ATP Rulebook IX 2025](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf), indexovaný text / dříve vizuálně W25-15; [ITF hostovaný ATP 2025 ranking info](https://www.itftennis.com/media/13761/atp-2025-rankings-info.pdf), indexovaná bodová tabulka.
 - US25-12: [ATP mužský turnajový preview PDF](https://www.atptour.com/-/media/bbcfbd0dcbf94821998f4339a53cf8ab.pdf), indexovaný text odlišný od chybného webového článku.
+
+## Brisbane 2024
+
+**Stav:** HOTOVO v nominálním rozsahu, H/E/R/Z s označenými omezeními. Rešerše 2026-11-27. První běžný ATP turnaj v registru. Zásadní výjimka proti obecnému pravidlu ATP 250: Q24, šest postupů, nikoli Q16/4.
+
+### 1. Identita
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Brisbane International presented by Evie | BRI24-1 |
+| Ročník / disciplína | sezona 2024 / mužská dvouhra | BRI24-1/2 |
+| Kategorie / ATP ID | ATP 250 / 339 | BRI24-1 |
+| Dějiště Q a Main | Queensland Tennis Centre, Tennyson, Brisbane, Queensland, Austrálie | BRI24-2/3 |
+| Povrch | venkovní tvrdý, Greenset Cushion | BRI24-1/2 |
+| Časové pásmo | Australia/Brisbane, AEST UTC+10 (Queensland nemá letní čas) | místní civilní data, identita lokality |
+| Ředitel / ATP supervisor | Cameron Pearson / Hans-Jürgen Ochs | BRI24-1/4 |
+| Měna | USD, nikoli AUD | BRI24-1/8 |
+| Míče, individuální diety | NEOVĚŘENO | doplňková metadata |
+
+Ročník patří do sezony 2024, přestože dvě první lokální data leží v roce 2023. Dvojí datum 31. 12. nelze deduplikovat: Q2 a R32 jsou odlišné fáze.
+
+### 2. Přihlášky, plán a losování
+
+| Pole | Údaj | Důkaz / význam |
+|---|---|---|
+| Main entry rank date | 2023-12-04 | dobový přepis mužského acceptance listu BRI24-5 |
+| Q entry rank date | 2023-12-11 | BRI24-5 |
+| Nominální Main uzávěrka | 2023-12-04 12:00 US Eastern (2023-12-05 03:00 AEST) | §7.03 A.1, 28 dnů před pondělím 2024-01-01; odvozeno, nikoli samostatný původní detail sheet |
+| Nominální Q uzávěrka | 2023-12-11 12:00 US Eastern (2023-12-12 03:00 AEST) | §7.03 A.2, 21 dnů před pondělím; odvozeno |
+| Q los | nejpozději před Q1 30. 12.; přesný okamžik NEOVĚŘEN | BRI24-4 |
+| Q | 2023-12-30–31 | pořadatelské OOP BRI24-4/6, dobové ATP zprávy BRI24-7 |
+| Main los | 2023-12-30 dopoledne, Queensland Tennis Centre | pořadatel BRI24-3; hodina nepublikována |
+| Main | 2023-12-31–2024-01-07 | originální Main los BRI24-1 a předturnajové oznámení BRI24-2 |
+| Běžný program | 11:00 AEST (některé kurty později) | BRI24-4/6 |
+| Finále | 2024-01-07 | BRI24-1/9; přesný plánovaný čas mužského finále neověřen |
+
+Rulebook §7.12 obsahuje starší formulaci 42 dní pro Main ranking list; pro tento ročník rozhoduje konkrétní dobový acceptance list (4. 12.) a výslovná entry deadline §7.03 (28 dní). Nepoužívat 42/28denní Grand Slam lhůtu. Původní ATP detail sheet nedostupný. Datum US Eastern není lokálním australským datem; obě data zachována s pásmem, nikoli W52 převod.
+
+### 3. Nominální harmonogram
+
+| Kolo | Místní okno | Nominální uzly | Důkaz |
+|---|---|---:|---|
+| Q1 | 2023-12-30 | 12 | BRI24-4/7 |
+| Q2 | 2023-12-31 | 6 | BRI24-6, šest kvalifikačních dvojic v programu |
+| R32 | 2023-12-31–2024-01-02 | 16 | BRI24-6/9/10, rekonstruovaný plán |
+| R16 | 2024-01-03–04 | 8 | BRI24-9/11 |
+| QF | 2024-01-05 | 4 | BRI24-12, všechny čtyři mužské singlové dvojice v OOP |
+| SF | 2024-01-06 | 2 | BRI24-9/13 |
+| F | 2024-01-07 | 1 | BRI24-1/9 |
+
+Q 2 dny, Main 8 dní, celkem 9 kalendářních dnů, protože Q2 se hraje stejný den jako začátek Main. R32 31. 12.–2. 1. je rekonstrukce z denních plánů a doloženého odkladu posledního R32 (Humbert/Michelsen původně 2. 1., odehráno 3. 1. kvůli dešti, BRI24-10). Proto nominální konec není 3. 1. R16 3.–4. 1. potvrzen dobovými zprávami a programy. Kompletní předturnajový detailní mužský rozpis se nepodařilo získat; H* značí rekonstruované plánované okno, ne tvrzení o jeho přímém přepisu. Přesné počty R32 na jednotlivé dny neodhadovat.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Cílový počet účastníků | 32 | 24 |
+| Přímé akceptace | 23 | 20 |
+| WC | 3 | 4 |
+| Řádné Q postupy | 6 | 6 vítězů sekcí |
+| SE rezervace v publikovaném acceptance listu | 0 | nevztahuje se |
+| Nasazení | 8 | 12 |
+| BYE | 0 | 0 |
+| Struktura | vyřazovací pavouk 32 | 6 nezávislých vyřazovacích sekcí po 4 |
+| Kola / nominální uzly | 5 / 31 | 2 / 18 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 23+3+6=32, Q 20+4=24; Q 12+6=18, Main 16+8+4+2+1=31; celkem 49 uzlů. Main originál vizuálně: 6 Q (6,15,19,23,26,29), 3 WC (18,20,28), všech 8 seedů, žádný BYE ani LL; jeden pozdější walkover a skreč nepřepisují plán. Q kompletní textový pavouk BRI24-14 obsahuje 24 účastníků, všech 12 seedů, čtyři WC, šest sekcí po 4, bez BYE. Main i Q strukturu nezávisle potvrzuje dobová acceptance list BRI24-5; pozor na obecnou §7.08 šablonu 16 Q/4 postupů pro ATP 250. Pro Brisbane má přednost skutečná nominální ročníková dokumentace. Nominální SE 0 zde dle listiny, nikoli plošný zákaz SE.
+
+### 5. Dobová pravidla ATP (nikoli Grand Slam)
+
+- 2024 ATP §7.03/7.08/7.10/7.12/7.15–16 (BRI24-15): vstup podle rankingu a příslušných pravidel entry protection; Main 8 seedů, #1 na řádku 1 a #2 na řádku 32, skupiny 3–4 na 9/24, skupina 5–8 na 8/16/17/25 losem. Pro Q24 je 12 seedů; 6 sekcí po 4, dva seedy na sekci. Kvalifikanti jsou po ukončení Q přiřazeni do volných Main pozic losem, nikoli předem pevnou vazbou.
+- ATP §7.20 A: LL prioritně z poražených posledního Q kola, teprve poté z dřívějších kol; pokud při skončení Q nejsou volná místa, pořadí dle rankingu pro Q seeding (bez protected ranking). Při jednom volném místě los mezi dvěma nejvýše postavenými; při nejméně dvou odhlášeních počet +1; následně ranking. Denní sign-in 30 min před prvním zápasem. To je jiný postup než Grand Slam 4 / počet+2.
+- Předpis §7.20 rozlišuje obsazení volných míst před Q a po začátku Q, náhradu seedu před prvním OOP a další případy. Nenahrazovat obecnými pravidly Grand Slam. BO3 v obou fázích potvrzeno losy BRI24-1/14.
+
+### 6. Body a prize money (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 95340 |
+| Finalista | 1 | 165 | 55665 |
+| SF | 2 | 100 | 32800 |
+| QF | 4 | 50 | 18700 |
+| R16 | 8 | 25 | 11000 |
+| R32 | 16 | 0 | 6640 |
+| Q postupující | 6 | 13 | samostatná odměna neuvedena |
+| Q2 prohra | 6 | 7 | 3600 |
+| Q1 prohra | 12 | 0 | 2000 |
+
+Main peníze i body vizuálně z originálního ATP losu (BRI24-1); Q peníze z dobové tabulky BRI24-8 a historického přehledu BRI24-16, Q body dle dobového ATP 2024 §9.03 G singles table a aktualizace 16. 2. (BRI24-17), odpovídají i Q archivu BRI24-14. Původní znění bodového §9.03 G.4 v ITF hostovaném PDF uvádí starých 6 bodů v textu, ale jeho nová tabulka 7 a opravený únorový předpis výslovně 7; používat 7. Q body přičítají k Main výsledku. Prohra R32 Main 0 bodů. Nominální součet Main 485645 USD, Q 45600 USD = 531245 USD. Celková mužská prize money 661 585 USD dle ITF, zahrnuje i čtyřhru; total financial commitment 739 945 USD z ATP losu není synonymum prize money. Částka 1 736 763 v kombinovaných OOP je ženská dotace, nikoli mužská. Nominální součet neslouží k rekonstrukci skutečných individuálních plateb.
+
+### 7. Kontrola a mezery
+
+I/T/D/B/P doloženy. H*: rekonstruované okno R32/R16 z původních denních programů a výslovně doloženého odkladu, nikoli nově získaný kompletní předturnajový program. E*: konkrétní rank dates a kvóty z dobového přepisu acceptance listu, lhůty odvozené podle §7.03, Q draw time neznámý. R*: ATP pravidla indexovaný text, vizuální vykreslení PDF selhalo. Z*: originální Main PDF vizuálně ověřeno, původní Q PDF a detail sheet nedostupné, Q struktura nezávisle potvrzena textovým úplným losem a dobovým acceptance listem. OOP získány textově, screenshoty selhaly. Žádný hash se nepředstírá. Srovnání s `buuk`: kalendář Brisbane 2024 již má správné Main datum 31.12.2023–7.1.2024; sportovní profil pro tento ročník v katalogu `squash_sporting_profiles_v1.json` není. Žádná změna runtime. Další Hong Kong 2024.
+
+### 8. Zdroje (BRI24)
+
+- BRI24-1: [originální ATP Main los](https://www.protennislive.com/posting/2024/339/mds.pdf), str. 1 vizuálně ověřena (datum, povrch, 32 míst, 6Q/3WC, body, prize, supervisor).
+- BRI24-2: [Tennis Australia oznámení návratu 2024](https://www.tennis.com.au/brisbane-international/news/2023/09/brisbane-international-returns-in-2024); [dobový mužský entry preview](https://tennis-infinity.com/atp/2024-brisbane-international-atp-entry-list-nadal-rune-shelton-more) potvrzuje venkovní tvrdý povrch a 32 Main.
+- BRI24-3: [pořadatel — los 30.12.](https://www.tennis.com.au/brisbane-international/news/2023/12/draws-set-for-brisbane-international-2024); [Tennis Australia mužský los](https://www.tennis.com.au/fan-zone/news/2023/12/30/aussies-contenders-handed-brutal-draws-at-brisbane-international-2024).
+- BRI24-4: [pořadatel OOP 30.12.](https://www.brisbaneinternational.com.au/documents/bi-2024-order-of-play/), text dostupný, screenshot timeout.
+- BRI24-5: [dobový přepis acceptance listů 13.12.2023](https://www.tennisteen.it/entry-list/atp/24092-atp-entry-list-1-7-gennaio-2024.html), Brisbane Main/Q odděleně.
+- BRI24-6: [pořadatel OOP 31.12.](https://www.brisbaneinternational.com.au/documents/bi-2024-order-of-play-day-one-revised/), text, screenshot timeout; 6 Q2 a současně Main.
+- BRI24-7: [ATP Q1 30.12.](https://www.atptour.com/en/news/thiem-mccabe-brisbane-2024-saturday-qualifying).
+- BRI24-8: [dobová tabulka odměn USD](https://firstsportz.com/tennis-prize-money-for-the-2024-brisbane-international); [ITF ročník](https://www.itftennis.com/en/tournament/brisbane/aus/2024/m-250-aus-2024-002/draws-and-results/) potvrzuje mužskou dotaci, ale jeho týdenní datum 1.–7.1. není přesné Main okno.
+- BRI24-9: [dobový rozpis a výsledky](https://www.sportingnews.com/au/tennis/news/brisbane-international-schedule-scores-results-2024-tennis/d718f35dac0afe7d42f20934), [Khel Now 5.1.](https://khelnow.com/tennis/2024-01-brisbane-international-2024-fixtures-schedule-timings-results-telecast-live-streaming), používat jen ověřené rozlišení kola, ne jeho chybné označení R32 jako R16 u jednoho zápasu.
+- BRI24-10: [pořadatel OOP 3.1.](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/01/ORDER-OF-PLAY-WEDNESDAY-3-JANUARY-2024-l.pdf), indexovaný text; [TennisActu 3.1. výslovně potvrzuje úterní odklad Humbert/Michelsen](https://www.tennisactu.net/news-atp-brisbane-malade-humbert-s-en-est-sorti-rune-a-dejoue-un-piege-106988.html).
+- BRI24-11: [Tennis Australia 3.1.](https://www.tennis.com.au/brisbane-international/news/2024/01/quarterfinal-spots-secured-in-dramatic-mens-singles-encounters), [4.1.](https://www.tennis.com.au/fan-zone/news/2024/01/04/hijikata-joins-thompson-and-duckworth-in-brisbane-international-quarterfinals).
+- BRI24-12: [pořadatel QF OOP 5.1.](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/01/ORDER-OF-PLAY-FRIDAY-5-JANUARY-2024.pdf), text, screenshot přesměroval.
+- BRI24-13: [pořadatel SF OOP 6.1.](https://www.brisbaneinternational.com.au/documents/2024-brisbane-international-order-of-play-day-seven-6-january-2024/), indexovaný text.
+- BRI24-14: [úplný nezávislý Q pavouk](https://en.tennistemple.com/competitions/brisbane/2024/draw-qualifications), text; [originál ATP Q](https://www.protennislive.com/posting/2024/339/qs.pdf) přístup selhal; [detail sheet](https://www.protennislive.com/posting/2024/339/ds.pdf) nedostupný.
+- BRI24-15: [ATP Rulebook 2024, Competition, verze 21.12.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-7_the-competition_21dec.pdf), §7.03,7.08,7.10,7.12,7.15,7.16,7.20, indexovaný text, screenshot 403.
+- BRI24-16: [historická tabulka odměn](https://tenniscompanion.org/prize-money/brisbane/), řádek 2024, nezávislá kontrola.
+- BRI24-17: [ATP dobové oznámení bodů](https://www.atptour.com/en/news/2024-rankings-points-update), [ITF hostovaná bodová tabulka 2024](https://www.world.tennis/media/11555/2024-atp-rankings-section.pdf), [oprava 16.2.](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pepperstone-atp-rankings_16feb.pdf), text ověřen, screenshot nedostupný.
+

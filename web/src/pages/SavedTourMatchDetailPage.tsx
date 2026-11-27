@@ -1,5 +1,5 @@
 /** Exact historical Run Tour Edition match detail and archived rally replay. */
-import {useState} from 'react'
+import {useCallback,useEffect,useState} from 'react'
 import {useQuery,useQueryClient} from '@tanstack/react-query'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourMatchDetail} from '../api/client'
@@ -45,12 +45,18 @@ function HistoricalMatchReplay():JSX.Element{
   const [rallyInput,setRallyInput]=useState('')
   // Presentation only. Existing rally bookmarks continue opening Replay.
   const [section,setSection]=useState<'overview'|'statistics'|'replay'>('replay')
-  const moveToRally=(oneBased:number)=>{
+  const [playing,setPlaying]=useState(false)
+  const [speed,setSpeed]=useState<1|2|4>(1)
+  const advanceToRally=useCallback((oneBased:number)=>{
     const next=new URLSearchParams(params)
     if(oneBased===1)next.delete('rally')
     else next.set('rally',String(oneBased))
     setRallyInput('')
     setParams(next,{replace:true})
+  },[params,setParams])
+  const moveToRally=(oneBased:number)=>{
+    setPlaying(false)
+    advanceToRally(oneBased)
   }
   const offset=Math.floor(index/PAGE)*PAGE
   const ready=Boolean(branch&&explicitBranch===branch&&revision&&revision.trim()===revision
@@ -89,6 +95,43 @@ function HistoricalMatchReplay():JSX.Element{
   const invalid=Boolean(ready&&q.isSuccess&&!q.isFetching&&q.data&&!data)
   const frame=data?.rallies.find(r=>r.rally_index===index+1)
   const target=parseSavedReplayRally(rallyInput,data?.total_rallies??0)
+  const canAdvance=Boolean(frame&&data&&index+1<data.total_rallies
+    &&index+1<MAX_LINKED_RALLY&&!frame.match_complete)
+  // Only advance the existing URL cursor. A page crossing waits for the same
+  // verified reader; failures and scope changes cancel playback, never retry it.
+  useEffect(()=>{
+    if(!playing)return
+    if(!ready||invalid||q.isError||section!=='replay'){
+      setPlaying(false)
+      return
+    }
+    if(q.isFetching||q.isPending)return
+    if(!frame||!canAdvance||frame.set_complete){
+      setPlaying(false)
+      return
+    }
+    const timer=window.setTimeout(()=>advanceToRally(index+2),1000/speed)
+    return ()=>window.clearTimeout(timer)
+  },[playing,ready,invalid,q.isError,q.isFetching,q.isPending,section,frame,
+    canAdvance,index,speed,advanceToRally])
+  const startPlayback=()=>{
+    if(!canAdvance||!frame)return
+    // Explicit restart at a completed game may enter the next one.
+    if(frame.set_complete)advanceToRally(index+2)
+    setPlaying(true)
+  }
+  // Expose exact starts and ends only when the verified page proves them.
+  // A first frame on page 2+ is not necessarily the start of its game.
+  const landmarks=data?.rallies.flatMap((r,i)=>{
+    const prior=i>0?data.rallies[i-1]:
+      previous?.rallies[previous.rallies.length-1]
+    const start=r.rally_index===1||Boolean(prior?.set_complete
+      &&prior.set_number+1===r.set_number&&prior.rally_index+1===r.rally_index)
+    return [
+      ...(start?[{rally:r.rally_index,game:r.set_number,kind:'start'}]:[]),
+      ...(r.set_complete?[{rally:r.rally_index,game:r.set_number,kind:'end'}]:[]),
+    ]
+  })??[]
   const sections=['overview','statistics','replay'] as const
   const sectionLabels=cs?['Přehled','Statistiky','Průběh a Replay']:
     ['Overview','Statistics','Course & Replay']
@@ -138,7 +181,9 @@ function HistoricalMatchReplay():JSX.Element{
     {ready&&(q.isPending||q.isFetching)&&<p role="status">{cs?'Načítám ověřený zápas…':'Loading canonical match…'}</p>}
     {ready&&q.error&&<p role="alert">{formatApiError(q.error)}</p>}
     <button type="button" disabled={!ready||q.isFetching}
-      onClick={()=>{void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
+      onClick={()=>{setPlaying(false);void q.refetch()}}>{cs?'Obnovit zápas / archiv':'Retry match / archive read'}</button>
+    {playing&&!data&&<button type="button" onClick={()=>setPlaying(false)}>
+      {cs?'Pozastavit přehrávání':'Pause replay'}</button>}
     {invalid&&<p role="alert">{cs?
       'Archivovaný zápas neodpovídá vybrané Run/Branch/revizi nebo stránce výměn.':
       'Archived match does not match the selected Run/Branch/revision or rally page.'}</p>}
@@ -166,7 +211,7 @@ function HistoricalMatchReplay():JSX.Element{
     <nav className="saved-tour-edition-tabs" aria-label={cs?'Oddíly zápasu':'Match sections'}>
       {sections.map((name,i)=><button key={name} type="button"
         aria-current={section===name?'page':undefined} className={section===name?'active':''}
-        onClick={()=>setSection(name)}>{sectionLabels[i]}</button>)}
+        onClick={()=>{setPlaying(false);setSection(name)}}>{sectionLabels[i]}</button>)}
     </nav>
     {section==='overview'&&<section aria-label={sectionLabels[0]}>
       <h3>{sectionLabels[0]}</h3>
@@ -246,6 +291,37 @@ function HistoricalMatchReplay():JSX.Element{
         <button type="button" disabled={q.isFetching||!frame||index+1>=data.total_rallies}
           onClick={()=>moveToRally(data.total_rallies)}>{cs?'Poslední výměna':'Last rally'}</button>
       </div>
+      {frame&&<section aria-label={cs?'Ovládání přehrávání':'Replay playback'}>
+        <div className="grid">
+          <button type="button" disabled={!playing&&!canAdvance}
+            onClick={()=>playing?setPlaying(false):startPlayback()}>
+            {playing?(cs?'Pozastavit přehrávání':'Pause replay'):
+              (cs?'Přehrát archiv':'Play replay')}</button>
+          <label>{cs?'Rychlost zobrazení':'Playback speed'}
+            <select value={speed} onChange={event=>{
+              const next=Number(event.target.value)
+              if(next===1||next===2||next===4)setSpeed(next)
+            }}>
+              <option value={1}>1×</option><option value={2}>2×</option>
+              <option value={4}>4×</option>
+            </select></label>
+        </div>
+        <p className="status">{cs?
+          'Automatický postup zastaví na konci gamu či zápasu nebo při chybě čtení. Rychlost je pouze rychlost zobrazení; zdravotní a jiné mimořádné události tento archiv neposkytuje.':
+          'Playback stops at game or match end or on a read error. Speed controls display only; health and other exceptional events are not exposed by this archive.'}</p>
+        <h4>{cs?'Ověřené hranice gamů na stránce':'Verified game landmarks on this page'}</h4>
+        {landmarks.length>0?<div className="grid">
+          {landmarks.map(mark=><button key={mark.rally+':'+mark.kind} type="button"
+            disabled={mark.rally===index+1||mark.rally>MAX_LINKED_RALLY}
+            onClick={()=>moveToRally(mark.rally)}>
+            {cs?'Game':'Game'} {mark.game} · {mark.kind==='start'?
+              (cs?'začátek':'start'):(cs?'konec':'end')} · #{mark.rally}
+          </button>)}
+        </div>:<p className="status">{cs?'Na této stránce není doložený začátek ani konec gamu.':
+          'No verified game start or end on this page.'}</p>}
+        <p className="status">{cs?'Další hranice se zobrazí po načtení příslušné stránky archivu.':
+          'Other landmarks appear when their archive page is loaded.'}</p>
+      </section>}
       <form className="grid" onSubmit={event=>{
         event.preventDefault()
         if(frame&&target!==null){

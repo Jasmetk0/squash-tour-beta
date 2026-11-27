@@ -81,6 +81,69 @@ versions. First performance measurements target a modest Windows PC. These
 are product criteria. ATP continuity and FAX Season 25 closure still require
 real acceptance evidence.
 
+# Bounded cold reopen of long Saved v2 Runs — 22 November 2026
+
+Candidate `17708df` on `claude/inspiring-dirac-d2aqk6` (base `buuk 71f03fb`,
+after #1836; it includes #1838's deferred lineage walk as `f8cad4e` and
+nothing from #1837). Diagnostic run 44946599925 used one `ubuntu-latest`
+runner (4 vCPU AMD EPYC 9V74, 16 GB, Python 3.11.18) for all three trees.
+Inputs were the W9 fixture from artifact 14581530042 (53 revisions) and the
+W10 (60) and W12 (76) databases built on that runner from it. Every cold
+first read was production HTTP, SQLite and Saved v2 in a fresh process, with
+no client deadline, and returned the exact expected inspection.
+
+| cold first read (s / peak RSS) | buuk | #1838 alone | candidate |
+|---|---:|---:|---:|
+| W9, 53 revisions | 64.7 / 5.26 GiB | 64.8 / 5.26 GiB | 72.3 / 3.10 GiB |
+| W10, 60 revisions | 75.1 / 6.38 GiB | 74.6 / 6.38 GiB | 83.2 / 3.43 GiB |
+| W12, 76 revisions | 113.9 / 9.53 GiB | 114.5 / 9.54 GiB | 125.1 / 4.27 GiB |
+
+Explicit-Save continuation on the same runner had a 120-second deadline after
+the first read. W9→W10 used seven Saves and W12→W13 six. Each tree produced
+byte-identical revision rows, nodes, audit, Working Drafts and final
+inspections to buuk at W10 and W13. The fixture rows were unchanged.
+
+| continuation | buuk | #1838 alone | candidate |
+|---|---:|---:|---:|
+| W10 slowest Save / execute (s) | 60.7 / 67.8 | 56.5 / 58.1 | 57.1 / 58.2 |
+| W10 process peak RSS | 6.38 GiB | 5.26 GiB | 4.66 GiB |
+| W13 slowest Save / execute (s) | 99.3 / 109.4 | 90.5 / 90.0 | 90.4 / 89.3 |
+| W13 process peak RSS | 10.77 GiB | 9.53 GiB | 6.58 GiB |
+
+The cold read no longer keeps every historical text. It proves, validates
+and releases one revision at a time inside the same snapshot, so its peak
+falls by about 55% at W12. Peak memory still grows by about 50 MiB per
+revision, against about 190 MiB on buuk. The two bounded passes cost time:
+each text is loaded, chain-proven and hashed once more. W12 takes 125.1 s
+instead of 113.9 s, so the 120-second goal is not met on this runner. #1838
+alone changes neither time nor peak. Its Save and execute gains hold in the
+candidate. In the separate `windows-latest` job (Windows Server 2025,
+16 GB, Python 3.12), buuk took 63.0/72.4/108.0 s at W9/W10/W12 and the
+candidate 69.0/79.5/121.3 s. That job's memory reader was broken and
+reported 0.
+
+Run 44970217972 repeated only the cold reads of the same three databases,
+two alternating rounds per tree. It also read the follow-up
+`claude/inspiring-dirac-d2aqk6-engine` `8c92a96` (span-hash reuse) and
+measured Windows memory with the fixed peak working set reader.
+
+| W12 cold first read, run 44970217972 | buuk | candidate | + span-hash reuse |
+|---|---:|---:|---:|
+| ubuntu-latest, Xeon 6975P (s) | 100.0 / 100.9 | 113.0 / 112.6 | 110.0 / 109.7 |
+| ubuntu-latest peak RSS | 9.53 GiB | 4.27 GiB | 4.33 GiB |
+| windows-latest (s) | 89.3 / 82.4 | 93.5 / 90.9 | 88.9 / 87.3 |
+| windows-latest peak working set | 9.48 GiB | 4.15 GiB | 4.15 GiB |
+
+Runner hardware alone moved buuk's W12 read from 113.9 s to 100.0–100.9 s.
+The candidate stays about 1.1 times buuk on Linux. Whether it is under 120 s
+therefore depends on the runner, and its margin is small. None of these
+runners is the reference 8 GB PC.
+
+Profiling shows that about 38 s of the W12 read is one complete HEAD
+replay: 49 MatchEngine matches, checkpoint and Tour fingerprints and 11 week
+preparations. That replay is common to all trees. The five- and 25-season
+runs were not executed.
+
 # W10 on a GitHub runner, base vs #1836 vs #1838 — 21 November 2026
 
 Diagnostic run 44895352733 (branch `test/w10-actions-ab-20261121`, never

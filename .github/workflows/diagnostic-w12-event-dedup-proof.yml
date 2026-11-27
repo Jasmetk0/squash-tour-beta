@@ -1,0 +1,56 @@
+name: Diagnostic W12 Exact Event Dedup Reconstruction
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/proof_w12_sporting_event_dedup.py'
+      - '.github/workflows/diagnostic-w12-event-dedup-proof.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: w12-event-exact-reconstruction-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  original-w12-exact-event-reconstruction:
+    name: Exactly replay all 39 original event arrays, fail on tamper/reorder
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/authentic-w12
+      - name: Exact historic reconstruction and negative integrity checks
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t databases < <(find "$RUNNER_TEMP/authentic-w12" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#databases[@]}" -ne 1 ]; then
+            echo "::error::No single authentic W12 SQLite input"
+            exit 1
+          fi
+          python scripts/proof_w12_sporting_event_dedup.py \
+            --database "${databases[0]}" \
+            --out "$RUNNER_TEMP/event-proof"
+      - name: Retain tiny proof only; not private source DB
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w12-real-event-exact-reconstruction-${{ github.run_id }}
+          path: ${{ runner.temp }}/event-proof/
+          if-no-files-found: warn
+          retention-days: 7

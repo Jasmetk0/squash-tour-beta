@@ -1,0 +1,64 @@
+name: Diagnostic W12 Generic Merkle Thresholds
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'scripts/benchmark_w12_generic_merkle_thresholds.py'
+      - '.github/workflows/diagnostic-w12-generic-merkle-thresholds.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: w12-generic-merkle-threshold-diag-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  real-sporting-merkle-node-granularity:
+    name: 15 actual W12 events, generic Merkle 4K/2K/1K/512B exact restore
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Use Claude's exact original generic Merkle prototype, no duplicate implementation
+        uses: actions/checkout@v4
+        with:
+          ref: 4c7271144e02580d8d33a9b2bfb56f12d9ad2156
+          path: claude-original-merkle
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Download original 256-player 8-Edition W12 physical Saved SQLite
+        uses: actions/download-artifact@v4
+        with:
+          name: native-populated-w12-43919075227
+          run-id: 43919075227
+          repository: Jasmetk0/squash-tour-beta
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/w12-real
+      - name: Compare generic Merkle 4KB, 2KB, 1KB, 512B nodes, exact 15-event outputs
+        env:
+          PYTHONUNBUFFERED: '1'
+        run: |
+          set -euo pipefail
+          mapfile -t databases < <(find "$RUNNER_TEMP/w12-real" -maxdepth 4 -type f -name 'populated-w12-256.db' ! -path '*/test_native_*current/*')
+          if [ "${#databases[@]}" -ne 1 ]; then
+            echo "::error::Expected one original physical genuine Saved source"
+            exit 1
+          fi
+          python scripts/benchmark_w12_generic_merkle_thresholds.py \
+            --database "${databases[0]}" \
+            --claude-module claude-original-merkle/src/beta_engine/infrastructure/db/merkle_json_prototype.py \
+            --out "$RUNNER_TEMP/merkle-granularity"
+      - name: Retain only measurement statistics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w12-generic-merkle-granularity-${{ github.run_id }}
+          path: ${{ runner.temp }}/merkle-granularity/
+          if-no-files-found: warn
+          retention-days: 7

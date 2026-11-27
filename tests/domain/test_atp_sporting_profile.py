@@ -3,7 +3,9 @@ import json
 
 import pytest
 
-from beta_engine.application.atp_sporting_package_adapter import build_atp_sporting_package
+from beta_engine.application.atp_sporting_package_adapter import (
+    KNOCKOUT_KIND_V2, SPORTING_KIND, build_atp_sporting_package,
+)
 from beta_engine.domain.tournaments.atp_sporting_profile import ATPSportingProfile
 
 pytestmark = pytest.mark.pr_critical
@@ -40,5 +42,30 @@ def test_invalid_source_profile_is_rejected(patch):
 
 
 def test_source_order_and_fingerprints_are_reproducible():
-    assert build_atp_sporting_package() == build_atp_sporting_package()
-    assert len(build_atp_sporting_package().entities) == 3
+    source = build_atp_sporting_package()
+    assert source == build_atp_sporting_package()
+    entity_kinds = {entity.source_entity_id: entity.entity_kind for entity in source.entities}
+    assert len(entity_kinds) == len(source.entities)
+    assert {
+        "atp_2025_atp_finals": SPORTING_KIND,
+        "atp_2025_next_gen_atp_finals": SPORTING_KIND,
+        "atp_2025_rotterdam": KNOCKOUT_KIND_V2,
+        "atp_2025_dallas": KNOCKOUT_KIND_V2,
+        "atp_2025_munich": KNOCKOUT_KIND_V2,
+        "atp_2025_vienna": KNOCKOUT_KIND_V2,
+    }.items() <= entity_kinds.items()
+
+
+@pytest.mark.parametrize(("occurrence", "start", "end", "ranked", "points"), [
+    ("atp_2024_atp_finals", "2024-11-10", "2024-11-17", True, 1500),
+    ("atp_2024_next_gen_atp_finals", "2024-12-18", "2024-12-22", False, 0),
+])
+def test_2024_finals_profile_is_independently_sourced(occurrence, start, end, ranked, points):
+    entity = next(e for e in build_atp_sporting_package().entities if e.source_entity_id == occurrence)
+    p = ATPSportingProfile.model_validate_json(json.dumps(entity.payload))
+    assert (p.source_start_date, p.source_end_date, p.ranked) == (start, end, ranked)
+    assert (p.group_count, p.group_size, p.advancing_per_group) == (2, 4, 2)
+    assert 3 * p.played_group_win_points + p.knockout_stage_points.get("champion", 0) == points
+    assert p.match_best_of == p.knockout_best_of == 5
+    assert p.entrant_selection == "admin_selected_no_automatic_race_or_age"
+    assert len(p.source_urls) >= 2

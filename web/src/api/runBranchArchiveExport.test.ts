@@ -53,6 +53,30 @@ describe('Saved Branch export-only HTTP boundary', () => {
     }, 'run', 'branch')).toThrow(/scope/)
   })
 
+  it('binds whole-Run preview to the requested mode and disallows omitted Branches', async () => {
+    const full = {
+      ...original, format: 'run_full_archive.v1', scope: 'full_saved_run',
+      omitted_branch_ids: [],
+      branches: [...original.branches, {
+        ...original.branches[0], branch_id: 'other', role: 'included',
+        forked_from_branch_id: 'branch', forked_from_saved_revision_id: 'head'
+      }]
+    }
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(full), {
+      headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(previewSavedBranchArchive('run', 'branch', undefined, 'full_run'))
+      .resolves.toEqual(full)
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+      run_id: 'run', branch_id: 'branch', mode: 'full_run'
+    })
+    expect(() => assertSavedBranchArchivePreview(full, 'run', 'branch', 'branch')).toThrow(/scope/)
+    expect(() => assertSavedBranchArchivePreview(original, 'run', 'branch', 'full_run')).toThrow(/scope/)
+    expect(() => assertSavedBranchArchivePreview({
+      ...full, omitted_branch_ids: ['missing']
+    }, 'run', 'branch', 'full_run')).toThrow(/scope/)
+  })
+
   it('refuses a foreign owner, missing parent, missing dependency HEAD or unknown archive format', () => {
     expect(() => assertSavedBranchArchivePreview({
       ...original, format: 'unknown-v999'

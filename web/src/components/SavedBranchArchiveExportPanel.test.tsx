@@ -21,6 +21,7 @@ vi.mock('../api/client', () => ({
   getBranchWorkingDraft: mocks.getBranchWorkingDraft
 }))
 vi.mock('../api/runBranchArchiveExport', () => ({
+  MAX_CUSTOM_BRANCHES: 128,
   previewSavedBranchArchive: mocks.previewSavedBranchArchive,
   downloadSavedBranchArchive: mocks.downloadSavedBranchArchive
 }))
@@ -83,6 +84,28 @@ describe('Saved Branch archive Admin export panel', () => {
   })
   afterEach(() => vi.restoreAllMocks())
 
+  it('loads saved branches for a custom preview and invalidates the review on selection change', async () => {
+    const extra = {...branch, branch_id:'dep', display_name:'Timeline 2'}
+    const other = {...branch, branch_id:'other', display_name:'Timeline 3'}
+    mocks.listRunBranches.mockResolvedValue({run_branches:[branch, extra, other]})
+    mocks.previewSavedBranchArchive.mockResolvedValue({
+      ...archive, scope:'custom_saved_branches', format:'run_custom_archive.v1',
+      selected_branch_ids:['b','dep'], branches: archive.branches.map(b => ({...b,role:'selected'}))
+    })
+    mount()
+    fireEvent.change(screen.getByRole('combobox', {name:'Rozsah exportu'}), {target:{value:'custom'}})
+    const review = screen.getByRole('button', {name:'Načíst exportní náhled'})
+    expect(review).toBeDisabled()
+    fireEvent.click(await screen.findByRole('checkbox', {name:'Timeline 2'}))
+    fireEvent.click(review)
+    await screen.findByRole('button', {name:/Stáhnout ověřený/})
+    expect(mocks.previewSavedBranchArchive).toHaveBeenCalledWith(
+      'r', 'b', expect.any(AbortSignal), 'custom', ['b','dep']
+    )
+    fireEvent.click(screen.getByRole('checkbox', {name:'Timeline 3'}))
+    expect(screen.queryByRole('button', {name:/Stáhnout ověřený/})).not.toBeInTheDocument()
+  })
+
   it('does not preview or Save on mount, and retains the reviewed export after CS/EN toggle', async () => {
     mount()
     expect(mocks.previewSavedBranchArchive).not.toHaveBeenCalled()
@@ -128,6 +151,26 @@ describe('Saved Branch archive Admin export panel', () => {
     fireEvent.click(screen.getByRole('button', {name: 'Reload preview'}))
     await waitFor(() => expect(screen.getByText('Showing revisions: 1–2 / 2')).toBeInTheDocument())
     expect(mocks.previewSavedBranchArchive).toHaveBeenCalledTimes(2)
+  })
+
+  it('requires new confirmation when the user switches to the whole Run', async () => {
+    mount()
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByRole('button', {name: /Stáhnout ověřený/})).toBeEnabled()
+    fireEvent.change(screen.getByRole('combobox', {name: 'Rozsah exportu'}), {
+      target: {value: 'full_run'}
+    })
+    expect(screen.queryByRole('button', {name: /Stáhnout ověřený/})).not.toBeInTheDocument()
+    mocks.previewSavedBranchArchive.mockResolvedValueOnce({
+      ...archive, scope: 'full_saved_run', format: 'run_full_archive.v1',
+      omitted_branch_ids: [],
+      branches: archive.branches.map(b => b.role === 'dependency' ? {...b, role: 'included'} : b)
+    })
+    fireEvent.click(screen.getByRole('button', {name: 'Načíst exportní náhled'}))
+    expect(await screen.findByText(/součást Runu/)).toBeInTheDocument()
+    expect(mocks.previewSavedBranchArchive).toHaveBeenLastCalledWith(
+      'r', 'b', expect.any(AbortSignal), 'full_run'
+    )
   })
 
   it.each([

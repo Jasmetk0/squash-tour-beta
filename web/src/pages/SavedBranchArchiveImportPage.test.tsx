@@ -3,7 +3,12 @@ import {MemoryRouter} from 'react-router-dom'
 import {beforeEach,describe,expect,it,vi} from 'vitest'
 import {SavedBranchArchiveImportPage} from './SavedBranchArchiveImportPage'
 
-const mocks=vi.hoisted(()=>({previewSavedBranchImport:vi.fn()}))
+const mocks=vi.hoisted(()=>({
+  previewSavedBranchImport:vi.fn(),confirmSavedBranchImport:vi.fn(),
+  ArchiveRestoreRejected:class extends Error {
+    constructor(message:string,readonly status:number,readonly code:string) { super(message) }
+  }
+}))
 vi.mock('../api/runBranchArchiveImportPreview',()=>({
   ...mocks,MAX_IMPORT_ARCHIVE_BYTES:128*1024*1024
 }))
@@ -25,11 +30,14 @@ const select=(name='world.sqbranch')=>{
   })
   return file
 }
-describe('Admin Saved Branch import read-only review',()=>{
-  beforeEach(()=>{vi.clearAllMocks();mocks.previewSavedBranchImport.mockResolvedValue(answer)})
-  it('never contacts the backend before an explicit preview or offers a restore action',async()=>{
+describe('Admin archive preview and restore',()=>{
+  beforeEach(()=>{
+    vi.resetAllMocks()
+    mocks.previewSavedBranchImport.mockResolvedValue(answer)
+    mocks.confirmSavedBranchImport.mockResolvedValue(undefined)
+  })
+  it('never contacts the backend before explicit preview or restores before consent',async()=>{
     mount()
-    expect(screen.getByText(/preview-only/)).toBeInTheDocument()
     expect(screen.getByRole('button',{name:'Validate archive and conflicts'})).toBeDisabled()
     expect(mocks.previewSavedBranchImport).not.toHaveBeenCalled()
     select()
@@ -38,7 +46,8 @@ describe('Admin Saved Branch import read-only review',()=>{
     expect(await screen.findByText(/currently has no target identity conflicts/)).toBeInTheDocument()
     expect(screen.getByText(/Original Run/)).toBeInTheDocument()
     expect(screen.getByText(/Portable Run/)).toBeInTheDocument()
-    expect(screen.queryByRole('button',{name:/restore|confirm|import now/i})).not.toBeInTheDocument()
+    expect(screen.getByRole('button',{name:'Restore Run'})).toBeDisabled()
+    expect(mocks.confirmSavedBranchImport).not.toHaveBeenCalled()
     expect(mocks.previewSavedBranchImport).toHaveBeenCalledTimes(1)
   })
   it('shows the actual blocking target conflicts without enabling restore',async()=>{
@@ -89,5 +98,45 @@ describe('Admin Saved Branch import read-only review',()=>{
     fireEvent.click(screen.getByRole('button',{name:'Validate archive and conflicts'}))
     expect(await screen.findByRole('alert')).toHaveTextContent('Saved owner invalid')
     expect(screen.queryByText(/currently has no target identity conflicts/)).not.toBeInTheDocument()
+  })
+  const giveConsent = () => {
+    fireEvent.change(screen.getByLabelText('Operator name'),{target:{value:'Admin'}})
+    fireEvent.change(screen.getByLabelText('Restore reason'),{target:{value:'Recovery test'}})
+    fireEvent.click(screen.getByRole('checkbox',{name:/I confirm restoration/}))
+  }
+  it('uses one immutable command for uncertain outcomes and links only after the verified receipt',async()=>{
+    mocks.confirmSavedBranchImport.mockRejectedValueOnce(new Error('Connection lost'))
+    mount()
+    const file = select()
+    fireEvent.click(screen.getByRole('button',{name:'Validate archive and conflicts'}))
+    await screen.findByRole('button',{name:'Restore Run'})
+    giveConsent()
+    fireEvent.click(screen.getByRole('button',{name:'Restore Run'}))
+    const retry = await screen.findByRole('button',{name:'Retry the same restore'})
+    expect(screen.getByLabelText('Restore reason')).toBeDisabled()
+    expect(screen.getByLabelText('Select an archive up to 128 MiB')).toBeDisabled()
+    expect(screen.queryByRole('link',{name:'Open restored Run'})).not.toBeInTheDocument()
+    fireEvent.click(retry)
+    expect(await screen.findByRole('link',{name:'Open restored Run'})).toHaveAttribute('href','/admin/runs/run')
+    expect(mocks.confirmSavedBranchImport).toHaveBeenCalledTimes(2)
+    expect(mocks.confirmSavedBranchImport.mock.calls[1].slice(0,3))
+      .toEqual([file,answer,mocks.confirmSavedBranchImport.mock.calls[0][2]])
+  })
+  it('requires fresh review and new consent after a stale target preview',async()=>{
+    mocks.confirmSavedBranchImport.mockRejectedValueOnce(new mocks.ArchiveRestoreRejected(
+      'Target changed',409,'stale_import_preview'
+    ))
+    mount()
+    select()
+    const review = screen.getByRole('button',{name:'Validate archive and conflicts'})
+    fireEvent.click(review)
+    await screen.findByRole('button',{name:'Restore Run'})
+    giveConsent()
+    fireEvent.click(screen.getByRole('button',{name:'Restore Run'}))
+    expect(await screen.findByRole('alert')).toHaveTextContent('Review the archive again')
+    expect(screen.queryByRole('button',{name:'Restore Run'})).not.toBeInTheDocument()
+    fireEvent.click(review)
+    expect(await screen.findByRole('button',{name:'Restore Run'})).toBeDisabled()
+    expect(mocks.confirmSavedBranchImport).toHaveBeenCalledTimes(1)
   })
 })

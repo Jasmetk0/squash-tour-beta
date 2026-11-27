@@ -393,6 +393,33 @@ def main():
             assert _dump(database) == original_state, "Inherited fork export performed a write"
             fork_panel.screenshot(path=str(root / "fork-inherited-en.png"))
 
+            fork_panel.get_by_role("combobox", name="Export scope").select_option("custom")
+            branch_name = next(
+                b["display_name"] for b in reviewed["branches"] if b["branch_id"] == branch_id
+            )
+            fork_panel.get_by_role("checkbox", name=branch_name, exact=True).check()
+            with page.expect_response(
+                lambda resp: resp.request.method == "POST"
+                and resp.url.endswith("/admin/run-archives/export/preview"),
+                timeout=180000,
+            ) as custom_preview:
+                fork_panel.get_by_role("button", name="Load export preview").click()
+            assert custom_preview.value.status == 200
+            custom_review = custom_preview.value.json()
+            assert custom_review["selected_branch_ids"] == sorted([branch_id, fork_id])
+            assert custom_review["scope"] == "custom_saved_branches"
+            with page.expect_download() as custom_event:
+                fork_panel.get_by_role("button", name="Download verified .sqbranch file").click()
+            assert custom_event.value.suggested_filename == "custom-run-v1.sqbranch"
+            custom_file = root / "custom-selection.sqbranch"
+            custom_event.value.save_as(custom_file)
+            custom_archive = Archive(custom_file.read_bytes())
+            assert custom_archive.raw_digest == custom_review["archive_digest"]
+            assert custom_archive.size == custom_review["archive_size_bytes"]
+            assert len(custom_archive.revisions) == len(reviewed["history"])
+            assert _dump(database) == original_state
+            fork_panel.screenshot(path=str(root / "custom-selection-en.png"))
+
             code, draft = _request(
                 "GET",
                 f"{api}/run-containers/{run_id}/branches/{branch_id}/working-draft",
@@ -423,6 +450,7 @@ def main():
                         "reviewed_history_count": len(reviewed["history"]),
                         "real_match_result": bool(played["result"]),
                         "inherited_fork_id": fork_id,
+                        "custom_selected_branch_count": 2,
                         "inherited_fork_sha256": inherited_hash,
                         "inherited_fork_selected_head": historical_head,
                         "inherited_fork_original_owner": branch_id,

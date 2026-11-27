@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request, Response
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from beta_engine.api.deps import ApiRuntime, get_runtime
 from beta_engine.application.run_branch_archive_service import RunBranchArchiveService
-from beta_engine.domain.run_branch_archive import MAX_ARCHIVE_BYTES, ArchiveError
+from beta_engine.domain.run_branch_archive import ID, MAX_ARCHIVE_BYTES, MAX_CUSTOM_BRANCHES, ArchiveError
 
 router = APIRouter(prefix="/admin/run-archives", tags=["admin-run-archives"])
 
@@ -18,6 +18,25 @@ class ExportSelection(BaseModel):
     model_config = ConfigDict(extra="forbid")
     run_id: str = Field(min_length=1, max_length=128)
     branch_id: str = Field(min_length=1, max_length=128)
+    mode: Literal["branch", "full_run", "custom"] = "branch"
+    selected_branch_ids: list[ID] = Field(default_factory=list, max_length=MAX_CUSTOM_BRANCHES)
+
+    @model_validator(mode="after")
+    def validate_selection(self):
+        if self.mode == "custom":
+            ids = set(self.selected_branch_ids)
+            if len(ids) < 2 or len(ids) != len(self.selected_branch_ids) or self.branch_id not in ids:
+                raise ValueError("Custom export requires two or more unique Branches including branch_id")
+        elif self.selected_branch_ids:
+            raise ValueError("selected_branch_ids is only valid for custom export")
+        return self
+
+    def export_arguments(self):
+        return {
+            **self.model_dump(exclude={"mode", "selected_branch_ids"}),
+            "full_run": self.mode == "full_run",
+            "custom_branch_ids": tuple(sorted(self.selected_branch_ids)),
+        }
 
 
 class ExportRequest(ExportSelection):
@@ -51,7 +70,7 @@ def export_preview(
 ):
     try:
         return RunBranchArchiveService(runtime.repository).export_preview(
-            **payload.model_dump()
+            **payload.export_arguments()
         )
     except (ValueError, TypeError, KeyError) as exc:
         _error(exc)
@@ -62,12 +81,17 @@ def export(
     payload: ExportRequest, runtime: Annotated[ApiRuntime, Depends(get_runtime)]
 ):
     try:
-        raw = RunBranchArchiveService(runtime.repository).export(**payload.model_dump())
+        raw = RunBranchArchiveService(runtime.repository).export(**payload.export_arguments())
+        filename = {
+            "full_run": "full-run-v1.sqbranch",
+            "custom": "custom-run-v1.sqbranch",
+            "branch": "saved-branch-v1.sqbranch",
+        }[payload.mode]
         return Response(
             raw,
             media_type="application/vnd.squash.saved-branch+json",
             headers={
-                "Content-Disposition": 'attachment; filename="saved-branch-v1.sqbranch"'
+                "Content-Disposition": f'attachment; filename="{filename}"'
             },
         )
     except (ValueError, TypeError, KeyError) as exc:

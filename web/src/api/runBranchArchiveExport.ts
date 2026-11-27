@@ -1,4 +1,4 @@
-/** Export-only boundary for the merged Saved Branch archive v1 API (#1677).
+/** Export-only boundary for Saved archives.
  * No import, Save, mutation or implicit retry is allowed in this module.
  */
 import { ApiError } from './client'
@@ -7,11 +7,16 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:8000'
 const SHA256 = /^[0-9a-f]{64}$/
 const MAX_BYTES = 128 * 1024 * 1024
 const MAX_ERROR_BYTES = 64 * 1024
+const BRANCH_SCOPE = 'custom_selected_saved_branch_with_dependency_history'
+const FULL_RUN_SCOPE = 'full_saved_run'
+const CUSTOM_SCOPE = 'custom_saved_branches'
+export const MAX_CUSTOM_BRANCHES = 128
+export type ArchiveExportMode = 'branch' | 'full_run' | 'custom'
 
 export type IncludedArchiveBranch = {
   branch_id: string
   display_name: string
-  role: 'selected' | 'dependency'
+  role: 'selected' | 'dependency' | 'included'
   forked_from_branch_id: string | null
   forked_from_saved_revision_id: string | null
   saved_head_revision_id: string
@@ -31,7 +36,8 @@ export type SavedBranchArchivePreview = {
   archive_size_bytes: number
   format: string
   minimum_engine: string
-  scope: 'custom_selected_saved_branch_with_dependency_history'
+  scope: typeof BRANCH_SCOPE | typeof FULL_RUN_SCOPE | typeof CUSTOM_SCOPE
+  selected_branch_ids?: string[]
   run_id: string
   display_name: string
   selected_branch_id: string
@@ -56,11 +62,18 @@ const strings = (data: unknown): data is string[] =>
 
 /** Fail closed on foreign/partial previews: never authorize a download from an unchecked response. */
 export function assertSavedBranchArchivePreview(
-  value: unknown, runId: string, branchId: string
+  value: unknown, runId: string, branchId: string, mode?: ArchiveExportMode,
+  requestedIds?: readonly string[]
 ): SavedBranchArchivePreview {
+  const fullRun = record(value) && value.scope === FULL_RUN_SCOPE
+  const custom = record(value) && value.scope === CUSTOM_SCOPE
+  const scope = custom ? CUSTOM_SCOPE : fullRun ? FULL_RUN_SCOPE : BRANCH_SCOPE
+  const format = custom ? 'run_custom_archive.v1' : fullRun ? 'run_full_archive.v1' : 'run_branch_archive.v1'
+  const actualMode = custom ? 'custom' : fullRun ? 'full_run' : 'branch'
+  const otherRole = fullRun ? 'included' : 'dependency'
   if (!record(value) ||
     value.schema_version !== 'run_branch_archive_preview.v1' ||
-    value.scope !== 'custom_selected_saved_branch_with_dependency_history' ||
+    value.scope !== scope || (mode !== undefined && actualMode !== mode) ||
     value.run_id !== runId || value.selected_branch_id !== branchId ||
     typeof value.selected_head_revision_id !== 'string' || !value.selected_head_revision_id ||
     typeof value.archive_digest !== 'string' || !SHA256.test(value.archive_digest) ||
@@ -68,13 +81,14 @@ export function assertSavedBranchArchivePreview(
     (value.archive_size_bytes as number) <= 0 ||
     (value.archive_size_bytes as number) > MAX_BYTES ||
     typeof value.display_name !== 'string' ||
-    value.format !== 'run_branch_archive.v1' ||
+    value.format !== format ||
     typeof value.minimum_engine !== 'string' || !value.minimum_engine ||
     typeof value.continuation !== 'string' || !value.continuation ||
     !Array.isArray(value.branches) || !value.branches.length ||
     !Array.isArray(value.history) || !value.history.length ||
     !strings(value.included_components) || !strings(value.selected_head_components) ||
     !strings(value.omitted_branch_ids) || !strings(value.omitted_areas) ||
+    (fullRun && value.omitted_branch_ids.length !== 0) ||
     !Array.isArray(value.unresolved_package_references) ||
     !Number.isSafeInteger(value.audit_event_count) || (value.audit_event_count as number) < 0 ||
     !Number.isSafeInteger(value.checkpoint_count) || (value.checkpoint_count as number) < 0 ||
@@ -82,16 +96,24 @@ export function assertSavedBranchArchivePreview(
     typeof value.run_activation_revision_id !== 'string' || !value.run_activation_revision_id) {
     throw new Error('Saved Branch archive preview has an invalid or foreign scope.')
   }
+  const selectedIds = custom ? value.selected_branch_ids : [branchId]
+  if (!strings(selectedIds) || !selectedIds.includes(branchId) ||
+      (custom && (selectedIds.length < 2 || selectedIds.length > MAX_CUSTOM_BRANCHES)) ||
+      new Set(selectedIds).size !== selectedIds.length ||
+      (requestedIds && (requestedIds.length !== selectedIds.length ||
+        requestedIds.some(id => !selectedIds.includes(id))))) {
+    throw new Error('Saved Branch archive preview has a foreign selection.')
+  }
   const branches = value.branches as unknown[]
   const history = value.history as unknown[]
   if (branches.some(b => !record(b) || typeof b.branch_id !== 'string' || !b.branch_id ||
       typeof b.display_name !== 'string' ||
-      (b.role !== 'selected' && b.role !== 'dependency') ||
+      (b.role !== 'selected' && b.role !== otherRole) ||
       typeof b.saved_head_revision_id !== 'string' || !b.saved_head_revision_id ||
       !(b.forked_from_branch_id === null || typeof b.forked_from_branch_id === 'string') ||
       !(b.forked_from_saved_revision_id === null || typeof b.forked_from_saved_revision_id === 'string')) ||
-    branches.filter(b => record(b) && b.role === 'selected' && b.branch_id === branchId).length !== 1 ||
-    branches.some(b => record(b) && b.role === 'selected' && b.branch_id !== branchId) ||
+    branches.filter(b => record(b) && b.role === 'selected').length !== selectedIds.length ||
+    branches.some(b => record(b) && (b.role === 'selected') !== selectedIds.includes(String(b.branch_id))) ||
     new Set(branches.map(b => (b as IncludedArchiveBranch).branch_id)).size !== branches.length ||
     !branches.some(b => record(b) && b.branch_id === branchId &&
       b.saved_head_revision_id === value.selected_head_revision_id) ||
@@ -269,15 +291,21 @@ async function archiveResponse(path: string, body: object, signal?: AbortSignal)
 }
 
 export async function previewSavedBranchArchive(
-  runId: string, branchId: string, signal?: AbortSignal
+  runId: string, branchId: string, signal?: AbortSignal, mode: ArchiveExportMode = 'branch',
+  selectedIds?: readonly string[]
 ): Promise<SavedBranchArchivePreview> {
-  const response = await archiveResponse('/export/preview', { run_id: runId, branch_id: branchId }, signal)
+  const selection = { run_id: runId, branch_id: branchId }
+  const response = await archiveResponse('/export/preview', {
+    ...selection,
+    ...(mode === 'branch' ? {} : {mode}),
+    ...(mode === 'custom' ? {selected_branch_ids: selectedIds} : {})
+  }, signal)
   if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
     throw new Error('Server returned a non-JSON archive preview.')
   }
   const previewBody = await boundedResponseText(response, MAX_BYTES)
   if (previewBody.exceeded) throw new Error('Saved Branch archive preview exceeds the safe size limit.')
-  return assertSavedBranchArchivePreview(JSON.parse(previewBody.text) as unknown, runId, branchId)
+  return assertSavedBranchArchivePreview(JSON.parse(previewBody.text) as unknown, runId, branchId, mode, selectedIds)
 }
 
 /** Prove the attachment is the *exact* reviewed bytes, not merely a successful HTTP reply. */
@@ -287,6 +315,10 @@ export async function downloadSavedBranchArchive(
   const response = await archiveResponse('/export', {
     run_id: preview.run_id,
     branch_id: preview.selected_branch_id,
+    ...(preview.scope === FULL_RUN_SCOPE ? {mode: 'full_run'} : {}),
+    ...(preview.scope === CUSTOM_SCOPE ? {
+      mode: 'custom', selected_branch_ids: preview.selected_branch_ids
+    } : {}),
     expected_head_revision_id: preview.selected_head_revision_id,
     expected_archive_digest: preview.archive_digest
   }, signal)

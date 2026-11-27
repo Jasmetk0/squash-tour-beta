@@ -17,6 +17,7 @@ from beta_engine.domain.calendar.run_calendar import RunCalendar
 from beta_engine.domain.rankings.official import (
     FrozenInput, OfficialRankingPolicy,
 )
+from beta_engine.domain.replay_scope import identity_value
 
 
 def _hash(data: object) -> str:
@@ -147,7 +148,7 @@ class CalendarOfficialRankingSnapshot(FrozenInput):
 
     @property
     def fingerprint(self) -> str:
-        return _hash(self.model_dump(mode="json"))
+        return identity_value(self, "fingerprint", lambda: _hash(self.model_dump(mode="json")))
 
 
 def _ordinal(calendar: RunCalendar, week: CalendarRankingWeek) -> int:

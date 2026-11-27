@@ -380,15 +380,39 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
         return value
     value = parse(raw)
     fingerprint = value.fingerprint if _with_fingerprint else None
+    remember_live_calendar_component(repository, run_id=run_id, branch_id=branch_id,
+        kind=kind, raw=raw, value=value, fingerprint=fingerprint, _identity=(size, key))
+    return (value, fingerprint) if _with_fingerprint else value
+
+
+def remember_live_calendar_component(repository, *, run_id, branch_id, kind, raw, value, fingerprint,
+                                     _identity=None):
+    """Retain a private copy of the strict decode value of exactly ``raw``.
+
+    ``value`` must equal what ``parse(raw)`` returns: the ordinary miss path
+    above, or a caller that verified these complete bytes against such a value.
+    ``_identity`` is only the miss path's own (size, key) of these bytes.
+    """
+    if repository is None:
+        return
+    if _identity is None:
+        actual = raw.encode('utf-8')
+        _identity = len(actual), (run_id, branch_id, kind, hashlib.sha256(actual).digest())
+    size, key = _identity
+    if size > MAX_LIVE_COMPONENT_BYTES:
+        return
     if fingerprint is not None:
         remember_live_value_fingerprint(repository, run_id=run_id, branch_id=branch_id,
             kind=kind, raw=raw, fingerprint=fingerprint)
     retained, attribute_hints = _copy_decoded_value(value)
     with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_calendar_value_cache', None)
+        if cache is None:
+            cache = repository._live_calendar_value_cache = {}
+        cache.pop(key, None)
         cache[key] = (size, retained, fingerprint, attribute_hints)
         while len(cache) > 4 or sum(item[0] for item in cache.values()) > MAX_LIVE_COMPONENT_BYTES:
             cache.pop(next(iter(cache)))
-    return (value, fingerprint) if _with_fingerprint else value
 
 
 def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_limit, _serialized=None):

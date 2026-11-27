@@ -14,6 +14,7 @@ from beta_engine.domain.run_branch_archive import (
     AuditSpec,
     BranchSpec,
     CheckpointSpec,
+    MAX_ARCHIVE_BYTES,
     RevisionSpec,
     RunSpec,
     decode,
@@ -41,6 +42,7 @@ from beta_engine.infrastructure.db.run_branch_archive_components import (
     prospect_records,
     validate_components,
 )
+from beta_engine.infrastructure.db.saved_v2_store import ENVELOPE_KEY, ENVELOPE_PREFIX
 
 
 class RunBranchArchiveReceiptModel(Base):
@@ -189,7 +191,42 @@ def _check_clean(repository, session, branch, payload):
         )
 
 
-def collect_archive(repository, session, *, run_id, branch_id, expected_head=None):
+def _check_full_archive_size(session, run_id):
+    # A UTF-8 JSON archive is at least as large as its unescaped payload
+    # character count. Reject an oversized Run before expanding its history.
+    # A small declared Saved v2 length never replaces the physical validation.
+    lengths = session.execute(
+        text(
+            """
+            SELECT CASE
+                WHEN substr(payload_json, 1, :prefix_size) = :prefix THEN
+                    CASE WHEN json_valid(payload_json)
+                         THEN json_extract(payload_json, :chars_path) END
+                ELSE length(payload_json)
+            END
+            FROM branch_saved_revisions WHERE run_id = :run_id
+            """
+        ),
+        {
+            "run_id": run_id, "prefix": ENVELOPE_PREFIX,
+            "prefix_size": len(ENVELOPE_PREFIX), "chars_path": f"$.{ENVELOPE_KEY}.chars",
+        },
+    )
+    size = 0
+    for (length,) in lengths:
+        if type(length) is int and length >= 0:
+            size += length
+        if size > MAX_ARCHIVE_BYTES:
+            fail(
+                "archive_request_too_large",
+                "Saved payloads alone exceed the full archive size budget",
+            )
+
+
+def collect_archive(
+    repository, session, *, run_id, branch_id, expected_head=None, full_run=False,
+    custom_branch_ids=()
+):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
     run = session.get(RunContainerModel, run_id)
     if run is None:
@@ -218,11 +255,17 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             "stale_export_preview",
             "Saved HEAD changed since export preview; review the new Saved state",
         )
+    if full_run:
+        _check_full_archive_size(session, run_id)
     branches, anchors, rows, payloads, checked = {}, {}, {}, {}, set()
     pending = []
+    scoped_owners = {branch_id: selected}
 
     def anchor(bid, revision_id=None):
-        owner = _scope_branch(session, run_id, bid)
+        owner = scoped_owners.get(bid)
+        if owner is None:
+            owner = _scope_branch(session, run_id, bid)
+            scoped_owners[bid] = owner
         rid = revision_id or owner.saved_head_revision_id
         row = session.get(BranchSavedRevisionModel, rid)
         if row is None or row.run_id != run_id:
@@ -238,7 +281,9 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             branches[bid], anchors[bid] = owner, rid
             pending.append((bid, rid))
 
-    anchor(branch_id)
+    requested = set(custom_branch_ids) if custom_branch_ids else {branch_id}
+    for bid in sorted(requested):
+        anchor(bid)
     anchor(run.official_branch_id)
     # The Viewer choice may have been Saved by a third editing Branch. Preserve
     # that actual immutable witness as a dependency instead of inventing a new
@@ -255,10 +300,14 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
     candidates = session.scalars(
         select(RunBranchModel).where(RunBranchModel.run_id == run_id)
     ).all()
+    if full_run:
+        for candidate in candidates:
+            anchor(candidate.branch_id)
     candidates.sort(
         key=lambda b: (
             b.branch_id != branch_id,
             b.branch_id != run.official_branch_id,
+            bool(custom_branch_ids) and b.branch_id not in requested,
             b.branch_id,
         )
     )
@@ -274,7 +323,8 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             projection.get(k) == v for k, v in expected_run.items()
         ) and projection.get("run_calendar") == metadata.get("run_calendar"):
             activation_revision_id = witness.revision_id
-            anchor(candidate.branch_id, witness.revision_id)
+            witness_owner = witness.branch_id if custom_branch_ids else candidate.branch_id
+            anchor(witness_owner, witness.revision_id)
             break
     if activation_revision_id is None:
         fail(
@@ -282,7 +332,10 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             "No current Saved Branch witnesses the actual Run calendar/name/Viewer choice",
         )
 
+    payload_chars = 0
+
     def drain_pending():
+        nonlocal payload_chars
         while pending:
             bid, rid = pending.pop()
             key = bid, rid
@@ -293,7 +346,8 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             # Verify reachability against ACTUAL source metadata and full original
             # lineage. Only the selected historical prefix goes into the archive.
             lineage = repository._validated_branch_revision_lineage_in_session(
-                session=session, branch=owner
+                session=session, branch=owner,
+                payload_revision_ids=frozenset() if full_run or custom_branch_ids else None,
             )
             members = {r.revision_id: r for r in lineage}
             if rid not in members:
@@ -311,6 +365,10 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
                     )
                 row = session.get(BranchSavedRevisionModel, current)
                 if current not in rows:
+                    if custom_branch_ids:
+                        payload_chars += len(row.payload_json)
+                        if payload_chars > MAX_ARCHIVE_BYTES:
+                            fail("archive_request_too_large", "Selected history exceeds the archive size budget")
                     rows[current] = RevisionSpec.model_validate(
                         _row_values(row, RevisionSpec)
                     )
@@ -353,6 +411,7 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         if not pending:
             break
     specs = []
+    other_role = "included" if full_run else "dependency"
     for bid in sorted(branches):
         branch, rid = branches[bid], anchors[bid]
         if rid == branch.saved_head_revision_id:
@@ -367,10 +426,16 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
                 forked_from_saved_revision_id=branch.forked_from_saved_revision_id,
                 saved_head_revision_id=rid,
                 metadata_json=branch.metadata_json,
-                role="selected" if bid == branch_id else "dependency",
+                role="selected" if bid in requested else other_role,
             ).model_dump()
         )
     revision_ids = set(rows)
+    if full_run and revision_ids != set(session.scalars(
+        select(BranchSavedRevisionModel.revision_id).where(
+            BranchSavedRevisionModel.run_id == run_id
+        )
+    )):
+        fail("incomplete_run_history", "Full archive cannot omit Saved revisions outside Branch history")
     audits = [
         AuditSpec.model_validate(_row_values(a, AuditSpec)).model_dump()
         for a in session.scalars(
@@ -395,6 +460,15 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
             .order_by(BranchSavedRevisionCheckpointModel.checkpoint_id)
         )
     ]
+    if full_run:
+        for model, primary_key, included in (
+            (BranchRevisionAuditEventModel, BranchRevisionAuditEventModel.audit_event_id, audits),
+            (BranchSavedRevisionCheckpointModel, BranchSavedRevisionCheckpointModel.checkpoint_id, checkpoints),
+        ):
+            if set(session.scalars(select(primary_key).where(model.run_id == run_id))) != {
+                row[primary_key.key] for row in included
+            }:
+                fail("incomplete_run_history", "Full archive cannot omit original audits or checkpoints")
     allocator = session.get(RunPackageIdentityAllocatorModel, run_id)
     omitted = sorted(
         set(
@@ -427,6 +501,8 @@ def collect_archive(repository, session, *, run_id, branch_id, expected_head=Non
         selected_branch_id=branch_id,
         selected_head_revision_id=selected.saved_head_revision_id,
         omitted_branch_ids=omitted,
+        full_run=full_run,
+        custom_branch_ids=custom_branch_ids,
     )
     return raw
 

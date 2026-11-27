@@ -1,0 +1,129 @@
+name: Native week A/A portability
+
+on:
+  pull_request:
+    branches: [buuk]
+    paths:
+      - 'scripts/profile_native_week_ab.py'
+      - 'scripts/process_measurement.py'
+      - 'scripts/profile_native_full_simulation_metrics.py'
+      - 'tests/application/test_native_week_ab_diagnostic.py'
+      - '.github/workflows/native-week-aa-portability.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: native-week-aa-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  native-week-aa:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            lock: .github/requirements/fast-ci-linux.lock.txt
+          - os: windows-latest
+            lock: .github/requirements/windows-preview-win-amd64.lock.txt
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    env:
+      BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+      PYTHONHASHSEED: '0'
+      PYTHONUTF8: '1'
+    defaults:
+      run:
+        shell: pwsh
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5
+        with:
+          python-version: '3.12'
+          cache: pip
+          cache-dependency-path: ${{ matrix.lock }}
+      - name: Install locked dependencies
+        run: |
+          if ($IsWindows) { git config --local core.longpaths true }
+          python -m pip install --only-binary=:all: --require-hashes -r "${{ matrix.lock }}"
+          if ($LASTEXITCODE -ne 0) { throw "Dependency install failed" }
+          python -m pip check
+          if ($LASTEXITCODE -ne 0) { throw "Dependency check failed" }
+      - name: Focused regression tests
+        run: |
+          $env:GITHUB_EVENT_NAME = "native_week_aa_acceptance"
+          python -m pytest -q tests/application/test_native_week_ab_diagnostic.py
+          if ($LASTEXITCODE -ne 0) { throw "Focused tests failed" }
+      - name: Prepare real W6 fixture and run same-commit A/A
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "native week aa evidence"
+          New-Item -ItemType Directory -Path $root | Out-Null
+          $db = Join-Path $root "week-input.db"
+          $driver = "scripts/profile_native_week_ab.py"
+          $commit = (git rev-parse HEAD).Trim()
+          python $driver prepare --database $db | Tee-Object -FilePath (Join-Path $root "prepare.json")
+          if ($LASTEXITCODE -ne 0) { throw "Prepare failed" }
+          $sha = (Get-FileHash -LiteralPath $db -Algorithm SHA256).Hash.ToLowerInvariant()
+          $out = Join-Path $root "timing"
+          python $driver ab --scenario w6 --a $commit --b $commit --input $db --sha256 $sha --out $out
+          if ($LASTEXITCODE -ne 0) { throw "A/A failed" }
+          python $driver compare (Join-Path $out "A-normal.json") (Join-Path $out "B-normal.json")
+          if ($LASTEXITCODE -ne 0) { throw "Standalone compare failed" }
+          if ((Get-FileHash -LiteralPath $db -Algorithm SHA256).Hash.ToLowerInvariant() -ne $sha) {
+            throw "Fixture changed"
+          }
+          $summary = Get-Content (Join-Path $out "comparison.json") -Raw | ConvertFrom-Json
+          $manifest = Get-Content (Join-Path $out "manifest.json") -Raw | ConvertFrom-Json
+          if ($summary.verdict -ne "equal" -or $manifest.status -ne "equal") { throw "A/A not equal" }
+          foreach ($case in @("A-normal", "B-normal", "A-retry", "B-retry")) {
+            $report = Get-Content (Join-Path $out "$case.json") -Raw | ConvertFrom-Json
+            $expected = if ($case.EndsWith("retry")) { 18 } else { 16 }
+            if ($report.calls.Count -ne $expected -or $report.evidence.match_count -ne 3 -or
+                $report.evidence.players -ne 8 -or $report.after.revisions -ne ($report.before.revisions + 3) -or
+                $report.history.Count -ne $report.after.revisions -or $report.metadata.commit -ne $commit) {
+              throw "Unexpected W6 evidence in $case"
+            }
+            if ($IsWindows) {
+              if ($null -ne $report.metadata.cpu_affinity_count -or $report.peak_rss_kib -le 0) {
+                throw "Unexpected Windows counters"
+              }
+              foreach ($row in $report.calls) {
+                if ($null -ne $row.read_syscall_bytes -or $null -ne $row.storage_read_bytes -or
+                    $row.current_rss_kib -le 0 -or $row.peak_rss_kib -le 0) { throw "Invalid Windows request counters" }
+              }
+            }
+            Write-Host "$case commit=$commit sha=$sha calls=$expected matches=$($report.evidence.match_count) history=$($report.history.Count) wall=$($report.wall_s) cpu=$($report.cpu_s) peak_kib=$($report.peak_rss_kib) result=$($report.evidence.inspection_sha256)"
+          }
+      - name: Linux endpoint CPU sampling control
+        if: runner.os == 'Linux'
+        run: |
+          $root = Join-Path $env:RUNNER_TEMP "native week aa evidence"
+          $db = Join-Path $root "week-input.db"
+          $sha = (Get-FileHash -LiteralPath $db -Algorithm SHA256).Hash.ToLowerInvariant()
+          $commit = (git rev-parse HEAD).Trim()
+          $out = Join-Path $root "cpu"
+          python scripts/profile_native_week_ab.py ab --scenario w6 --a $commit --b $commit --input $db --sha256 $sha --out $out --profile-cpu
+          if ($LASTEXITCODE -ne 0) { throw "Profiled A/A failed" }
+          $normal = Get-Content (Join-Path $root "timing/A-normal.json") -Raw | ConvertFrom-Json
+          $profile = Get-Content (Join-Path $out "A-normal.json") -Raw | ConvertFrom-Json
+          if ($normal.evidence.inspection_sha256 -ne $profile.evidence.inspection_sha256 -or
+              ($normal.history | ConvertTo-Json -Depth 20 -Compress) -ne ($profile.history | ConvertTo-Json -Depth 20 -Compress)) {
+            throw "CPU sampling changed results or history"
+          }
+          Write-Host "Profiled A/A equal; identical inspection and history to unprofiled timing"
+      - name: Retain evidence, not fixture databases
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: native-week-aa-${{ matrix.os }}
+          path: |
+            ${{ runner.temp }}/native week aa evidence/**/*.json
+            ${{ runner.temp }}/native week aa evidence/**/*.jsonl
+            ${{ runner.temp }}/native week aa evidence/**/*.log
+          if-no-files-found: warn
+          retention-days: 7

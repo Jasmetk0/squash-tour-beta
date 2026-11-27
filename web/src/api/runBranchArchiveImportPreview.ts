@@ -1,4 +1,4 @@
-/** Read-only cold-restore preview. No import/confirm endpoint exists in this module. */
+/** Preview and explicitly confirmed cold restore of one reviewed file. */
 import { ApiError } from './client'
 import { assertSavedBranchArchivePreview, type SavedBranchArchivePreview } from './runBranchArchiveExport'
 
@@ -16,6 +16,18 @@ export type SavedBranchImportPreview = SavedBranchArchivePreview & {
   can_restore: boolean
   preview_fingerprint: string
   conflicts: SavedBranchImportConflict[]
+}
+
+export type ArchiveRestoreCommand = {
+  commandId: string
+  operatorLabel: string
+  auditReason: string
+}
+
+export class ArchiveRestoreRejected extends ApiError {
+  constructor(message: string, status: number, readonly code?: string) {
+    super(message, status)
+  }
 }
 
 const record = (value: unknown): value is Record<string, unknown> =>
@@ -84,24 +96,73 @@ export async function previewSavedBranchImport(
   const hash = await globalThis.crypto.subtle.digest('SHA-256', bytes)
   const digest = Array.from(new Uint8Array(hash), n => n.toString(16).padStart(2, '0')).join('')
   if (signal?.aborted) throw new DOMException('Cancelled', 'AbortError')
-  const response = await fetch(API_BASE + '/admin/run-archives/import/preview', {
+  const response = await uploadArchive('/preview', file, signal)
+  const raw = await boundedText(response, MAX_IMPORT_ARCHIVE_BYTES)
+  return assertSavedBranchImportPreview(JSON.parse(raw) as unknown, file.size, digest)
+}
+
+async function uploadArchive(path: string, file: File, signal?: AbortSignal): Promise<Response> {
+  const response = await fetch(API_BASE + '/admin/run-archives/import' + path, {
     method: 'POST', headers: {'Content-Type': 'application/octet-stream'},
     body: file, signal
   })
   if (!response.ok) {
     const raw = await boundedText(response, ERROR_BYTES)
     let message = raw
+    let code: string | undefined
     try {
       const parsed: unknown = JSON.parse(raw)
       if (record(parsed) && record(parsed.detail) && typeof parsed.detail.message === 'string') {
         message = parsed.detail.message
+        if (typeof parsed.detail.code === 'string') code = parsed.detail.code
       }
     } catch { /* Preserve bounded server text when not JSON. */ }
-    throw new ApiError(message || 'Saved Branch import preview failed.', response.status)
+    throw new ArchiveRestoreRejected(message || 'Archive request failed.', response.status, code)
   }
   if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
     throw new Error('Saved Branch import returned non-JSON review data.')
   }
-  const raw = await boundedText(response, MAX_IMPORT_ARCHIVE_BYTES)
-  return assertSavedBranchImportPreview(JSON.parse(raw) as unknown, file.size, digest)
+  return response
+}
+
+const sameIds = (actual: unknown, expected: string[]): boolean => {
+  const expectedIds = new Set(expected)
+  return Array.isArray(actual) && actual.length === expectedIds.size &&
+    new Set(actual).size === expectedIds.size &&
+    actual.every(id => typeof id === 'string' && expectedIds.has(id))
+}
+
+/** The existing API binds the immutable file bytes and the review in one atomic command. */
+export async function confirmSavedBranchImport(
+  file: File, reviewed: SavedBranchImportPreview, command: ArchiveRestoreCommand,
+  signal?: AbortSignal
+): Promise<void> {
+  if (!reviewed.can_restore || reviewed.conflicts.length ||
+      file.size !== reviewed.archive_size_bytes || !SHA256.test(reviewed.preview_fingerprint) ||
+      !command.commandId.trim() || command.commandId.length > 128 ||
+      !command.operatorLabel.trim() || command.operatorLabel.length > 160 ||
+      !command.auditReason.trim() || command.auditReason.length > 1000) {
+    throw new Error('Restore requires an eligible archive review and audit details.')
+  }
+  const query = new URLSearchParams({
+    command_id: command.commandId,
+    expected_preview_fingerprint: reviewed.preview_fingerprint,
+    explicit_confirmation: 'true',
+    operator_label: command.operatorLabel,
+    audit_reason: command.auditReason,
+  })
+  const response = await uploadArchive('/confirm?' + query, file, signal)
+  const value: unknown = JSON.parse(await boundedText(response, MAX_IMPORT_ARCHIVE_BYTES))
+  if (response.status !== 201 || !record(value) ||
+      value.schema_version !== 'run_branch_archive_restore_receipt.v1' ||
+      value.command_id !== command.commandId || value.archive_digest !== reviewed.archive_digest ||
+      value.preview_fingerprint !== reviewed.preview_fingerprint ||
+      value.run_id !== reviewed.run_id || value.display_name !== reviewed.display_name ||
+      value.selected_branch_id !== reviewed.selected_branch_id ||
+      value.viewer_branch_id !== reviewed.viewer_branch_id ||
+      value.saved_head_revision_id !== reviewed.selected_head_revision_id ||
+      !sameIds(value.restored_branch_ids, reviewed.branches.map(branch => branch.branch_id)) ||
+      !sameIds(value.restored_revision_ids, reviewed.history.map(revision => revision.revision_id))) {
+    throw new Error('The restore receipt does not match the reviewed Run. Retry the same restore to verify it.')
+  }
 }

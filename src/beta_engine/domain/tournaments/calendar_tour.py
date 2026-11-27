@@ -28,6 +28,7 @@ from beta_engine.domain.rankings.calendar_terminal_result import (
 from beta_engine.domain.players.turn_pro import PlayerTurnProDecision
 from beta_engine.domain.players.turn_pro_model import TurnProModelPolicy
 from beta_engine.domain.rankings.official import FrozenInput, OfficialRankingPolicy
+from beta_engine.domain.replay_scope import identity_value, identity_values
 from beta_engine.domain.run_packages import canonical_hash
 from beta_engine.domain.tournaments.application_submission_authority import (
     TournamentApplicationSubmissionAuthority,
@@ -179,6 +180,11 @@ class CalendarEditionAuthority(FrozenInput):
 
     @property
     def execution_fingerprint(self):
+        # A pure hash of this frozen authority, which embeds a complete ranking
+        # snapshot. Inside a private replay scope it is computed once per object.
+        return identity_value(self, "execution_fingerprint", self._execution_fingerprint)
+
+    def _execution_fingerprint(self):
         return canonical_hash(
             {
                 "edition": self.edition.fingerprint,
@@ -730,6 +736,22 @@ def edition_results(authority, event):
 
 
 def published_edition_results(authority, event, calendar):
+    """All published results of one confirmed Edition (pure, fail closed).
+
+    Inside a private replay scope the very same frozen authority and played
+    event objects, on the same Run clock, are rebuilt and re-hashed only once:
+    a replay re-publishes every earlier Edition at every later Week Transition.
+    A failure is never remembered. Outside a scope every call rebuilds fully.
+    """
+    return identity_values(
+        "published_edition_results",
+        (authority, event),
+        lambda: _published_edition_results(authority, event, calendar),
+        key=(calendar,),
+    )
+
+
+def _published_edition_results(authority, event, calendar):
     return tuple(
         r.for_publication(calendar) if isinstance(r, CalendarTerminalRankingResult) else r
         for r in edition_results(authority, event)

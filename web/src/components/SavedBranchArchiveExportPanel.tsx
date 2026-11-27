@@ -4,8 +4,8 @@ import { Link } from 'react-router-dom'
 import { getBranchWorkingDraft, getRunContainer, listRunBranches } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
-  downloadSavedBranchArchive, previewSavedBranchArchive,
-  type SavedBranchArchivePreview
+  downloadSavedBranchArchive, MAX_CUSTOM_BRANCHES, previewSavedBranchArchive,
+  type ArchiveExportMode, type SavedBranchArchivePreview
 } from '../api/runBranchArchiveExport'
 import { useLanguage } from '../i18n/LanguageContext'
 import { savedBranchArchiveText } from '../i18n/savedBranchArchiveText'
@@ -17,6 +17,11 @@ const REVISION_PAGE_SIZE = 100
 // does not make a writable Saved Branch ineligible for this read-only export.
 const supportedRunStatus = (status: string): boolean =>
   ['working', 'active', 'completed', 'archived'].includes(status)
+function validBranchInventory(branches: RunBranch[] | undefined, runId: string): branches is RunBranch[] {
+  return Array.isArray(branches) && branches.every(item => item && item.run_id === runId &&
+    typeof item.branch_id === 'string' && item.branch_id.length > 0) &&
+    new Set(branches.map(item => item.branch_id)).size === branches.length
+}
 const bytes = (value: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
   .format(value / (1024 * 1024)) + ' MiB'
 
@@ -29,6 +34,39 @@ export function SavedBranchArchiveExportPanel({
 }: { run: RunContainer; branch: RunBranch | null }): JSX.Element {
   const { language } = useLanguage()
   const l = savedBranchArchiveText[language]
+  const [mode, setMode] = useState<ArchiveExportMode>('branch')
+  const selectionOwner = JSON.stringify([run.run_id, branch?.branch_id])
+  const [custom, setCustom] = useState<{owner: string; extras: string[]}>({
+    owner: selectionOwner, extras: []
+  })
+  const extras = custom.owner === selectionOwner ? custom.extras : []
+  const [inventory, setInventory] = useState<{
+    owner: string; branches?: RunBranch[]; failed?: boolean
+  } | null>(null)
+  useEffect(() => {
+    if (mode !== 'custom') return
+    let current = true
+    setInventory(null)
+    listRunBranches(run.run_id).then(result => {
+      if (!current) return
+      if (validBranchInventory(result?.run_branches, run.run_id)) {
+        setInventory({owner: selectionOwner, branches: result.run_branches})
+      } else {
+        setInventory({owner: selectionOwner, failed: true})
+      }
+    }).catch(() => {
+      if (current) setInventory({owner: selectionOwner, failed: true})
+    })
+    return () => { current = false }
+  }, [mode, run.run_id, selectionOwner])
+  const customInventory = inventory?.owner === selectionOwner ? inventory : null
+  const choices = customInventory?.branches?.filter(item =>
+    item.branch_id !== branch?.branch_id && item.status === 'active' &&
+    !item.read_only && Boolean(item.saved_head_revision_id)
+  ) ?? []
+  const customAllowed = mode !== 'custom' ||
+    (extras.length > 0 && extras.every(id => choices.some(item => item.branch_id === id)))
+
   // Consent also depends on live eligibility; a parent refresh that changes
   // editability/status must invalidate and abort the old reviewed download.
   const scope = JSON.stringify([
@@ -36,7 +74,7 @@ export function SavedBranchArchiveExportPanel({
     branch?.run_id ?? null, branch?.branch_id ?? null,
     branch?.display_name ?? null, branch?.saved_head_revision_id ?? null,
     branch?.status ?? null,
-    branch?.read_only ?? null
+    branch?.read_only ?? null, mode, ...(mode === 'custom' ? extras : [])
   ])
   const currentScope = useRef(scope)
   currentScope.current = scope
@@ -69,7 +107,7 @@ export function SavedBranchArchiveExportPanel({
   const selected = branch?.run_id === run.run_id ? branch : null
   const allowed = run.storage_kind === 'custom_local' && !run.read_only &&
     supportedRunStatus(run.status) && selected?.status === 'active' && !selected.read_only &&
-    Boolean(selected.saved_head_revision_id)
+    Boolean(selected.saved_head_revision_id) && customAllowed
   const active = reviewed?.scope === scope &&
     reviewed.preview.selected_head_revision_id === selected?.saved_head_revision_id
     ? reviewed.preview : null
@@ -88,10 +126,13 @@ export function SavedBranchArchiveExportPanel({
     // Never pick the first matching Branch from an ambiguous or foreign
     // inventory. The caller has only reviewed one exact Run/Branch/HEAD.
     const liveBranches = branchList?.run_branches
-    if (!Array.isArray(liveBranches) ||
-      liveBranches.some(item => !item || item.run_id !== run.run_id ||
-        typeof item.branch_id !== 'string' || !item.branch_id) ||
-      new Set(liveBranches.map(item => item.branch_id)).size !== liveBranches.length) {
+    if (!validBranchInventory(liveBranches, run.run_id)) {
+      throw new Error(l.invalidSelection)
+    }
+    if (mode === 'custom' && extras.some(id => !liveBranches.some(item =>
+      item.branch_id === id && item.status === 'active' && !item.read_only &&
+      Boolean(item.saved_head_revision_id)
+    ))) {
       throw new Error(l.invalidSelection)
     }
     const matches = liveBranches.filter(item => item.branch_id === branchId)
@@ -132,7 +173,11 @@ export function SavedBranchArchiveExportPanel({
     try {
       await recheck(selected.saved_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
-      const data = await previewSavedBranchArchive(run.run_id, selected.branch_id, requestController.signal)
+      const args = [run.run_id, selected.branch_id, requestController.signal] as const
+      const data = mode === 'custom'
+        ? await previewSavedBranchArchive(...args, mode, [selected.branch_id, ...extras].sort())
+        : mode === 'full_run' ? await previewSavedBranchArchive(...args, mode)
+          : await previewSavedBranchArchive(...args)
       if (generation.current !== token || currentScope.current !== key) return
       if (data.selected_head_revision_id !== selected.saved_head_revision_id) {
         throw new Error(l.invalidSelection)
@@ -165,7 +210,8 @@ export function SavedBranchArchiveExportPanel({
       try {
         const anchor = document.createElement('a')
         anchor.href = url
-        anchor.download = 'saved-branch-v1.sqbranch'
+        anchor.download = mode === 'custom' ? 'custom-run-v1.sqbranch' :
+          mode === 'full_run' ? 'full-run-v1.sqbranch' : 'saved-branch-v1.sqbranch'
         document.body.appendChild(anchor)
         try { anchor.click() } finally { anchor.remove() }
       } finally {
@@ -197,13 +243,36 @@ export function SavedBranchArchiveExportPanel({
   const base = '/admin/runs/' + encodeURIComponent(run.run_id)
   return <section aria-label={l.title} className="panel">
     <h4>{l.title}</h4>
-    <p>{l.description}</p>
+    <label>{l.scope}{' '}
+      <select value={mode} onChange={event => {
+        const value = event.target.value
+        setMode(value === 'full_run' || value === 'custom' ? value : 'branch')
+      }}>
+        <option value="branch">{l.branchMode}</option>
+        <option value="custom">{l.customMode}</option>
+        <option value="full_run">{l.fullRunMode}</option>
+      </select>
+    </label>
+    <p>{mode === 'custom' ? l.customDescription : mode === 'full_run' ? l.fullRunDescription : l.description}</p>
+    {mode === 'custom' && <fieldset disabled={busy !== null}>
+      <legend>{l.customBranches}</legend>
+      {customInventory?.failed ? <p role="alert">{l.invalidSelection}</p> :
+        !customInventory?.branches ? <p role="status">{l.customLoading}</p> :
+          choices.length === 0 ? <p>{l.customEmpty}</p> :
+            choices.map(item => <label key={item.branch_id} style={{display: 'block'}}>
+              <input type="checkbox" checked={extras.includes(item.branch_id)}
+                disabled={!extras.includes(item.branch_id) && extras.length >= MAX_CUSTOM_BRANCHES - 1}
+                onChange={event => setCustom({owner: selectionOwner, extras: event.target.checked
+                  ? [...extras, item.branch_id].sort() : extras.filter(id => id !== item.branch_id)})}
+              /> {item.display_name}
+            </label>)}
+    </fieldset>}
     <p className="status">{l.context}: <strong>{selected?.display_name || selected?.branch_id || '—'}</strong>
       {' · '}{l.head}: <code>{selected?.saved_head_revision_id || l.noHead}</code></p>
     <p>{l.warning}</p>
     <p className="status">{l.draft}: {workingStatus === null ? l.unknownDraft :
       workingStatus === 'dirty' ? l.dirty : l.clean}. {l.notAllDrafts}</p>
-    {!allowed && <p role="status">{l.readOnly}</p>}
+    {!allowed && customAllowed && <p role="status">{l.readOnly}</p>}
     {error && <p role="alert" className="error">{error}</p>}
     {workingStatus === 'dirty' && <p role="status"><Link to={base}>{l.saveLink}</Link>
       {' · '}<Link to={base + '/branches'}>{l.historyLink}</Link></p>}
@@ -223,7 +292,8 @@ export function SavedBranchArchiveExportPanel({
         <dt>{l.revisionCount}</dt><dd>{active.history.length}</dd>
         <dt>{l.activationRevision}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{active.run_activation_revision_id}</code></dd>
         <dt>{l.branches}</dt><dd>{active.branches.length}</dd>
-        <dt>{l.dependencies}</dt><dd>{active.branches.filter(b => b.role === 'dependency').length}</dd>
+        {mode !== 'full_run' && <><dt>{l.dependencies}</dt>
+          <dd>{active.branches.filter(b => b.role === 'dependency').length}</dd></>}
         <dt>{l.size}</dt><dd>{active.archive_size_bytes.toLocaleString()} B ({bytes(active.archive_size_bytes)})</dd>
         <dt>{l.audit}</dt><dd>{active.audit_event_count}</dd>
         <dt>{l.checkpoints}</dt><dd>{active.checkpoint_count}</dd>
@@ -231,7 +301,8 @@ export function SavedBranchArchiveExportPanel({
       </dl>
       <h5>{l.included}</h5>
       <ul>{active.branches.map(item => <li key={item.branch_id}>
-        <strong>{item.display_name}</strong> ({item.role === 'selected' ? l.selected : l.dependency})
+        <strong>{item.display_name}</strong> ({item.role === 'selected' ? l.selected :
+          item.role === 'included' ? l.branchIncluded : l.dependency})
         {' · '}<code>{item.branch_id}</code>
         {' · '}{l.parent}: <code>{item.forked_from_branch_id || l.noParent}</code>
       </li>)}</ul>

@@ -1,10 +1,10 @@
-/** Global, read-only Saved Branch cold-restore preview; never invokes restore/Save. */
+/** Admin archive review and confirmed cold restore. */
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLanguage } from '../i18n/LanguageContext'
 import {
-  MAX_IMPORT_ARCHIVE_BYTES, previewSavedBranchImport,
-  type SavedBranchImportPreview
+  ArchiveRestoreRejected, MAX_IMPORT_ARCHIVE_BYTES, confirmSavedBranchImport,
+  previewSavedBranchImport, type ArchiveRestoreCommand, type SavedBranchImportPreview
 } from '../api/runBranchArchiveImportPreview'
 import { formatApiError } from '../utils/apiErrors'
 
@@ -17,14 +17,21 @@ const texts = {
     clear: 'Zrušit náhled', loading: 'Ověřuji skutečný obsah přes SHA-256 a backend…',
     ready: 'Archiv je ověřený a v této chvíli nemá konflikt identit.',
     blocked: 'Import není možný: cílová databáze již obsahuje kolidující identity.',
-    noCommit: 'Tato obrazovka je pouze náhled. Neobsahuje potvrzení obnovy ani žádný zápis do Runu.',
     name: 'Původní Run', selected: 'Vybraná Branch', viewer: 'Původní Viewer Branch',
     head: 'Saved HEAD', digest: 'SHA-256 archivu', size: 'Velikost',
     branches: 'Obsažené Branche', revisions: 'Uložené revize', audit: 'Události auditu',
     checkpoints: 'Checkpointy', omissions: 'Záměrně vynechané oblasti',
     unresolved: 'Nevyřešené reference balíčků', conflicts: 'Konflikty v cílové databázi',
     more: 'Další konflikty nejsou v náhledu vypsané; celkový počet:',
-    limitation: 'Import v1 zachovává původní identity a neumí přepsat ani přejmenovat existující Run. Pro skutečnou obnovu je nutný samostatný výslovně potvrzený krok.'
+    limitation: 'Obnova zachová původní identifikátory a vyžaduje volné identity v cílové databázi.',
+    confirmHeading: 'Obnova ověřeného archivu', operator: 'Jméno operátora',
+    reason: 'Důvod obnovy', consent: 'Potvrzuji obnovu z ověřeného souboru.',
+    restore: 'Obnovit Run', restoring: 'Obnovuji Run…',
+    retry: 'Ověřit výsledek opakováním obnovy',
+    retryHint: 'Výsledek obnovy se nepodařilo potvrdit. Opakování použije stejný příkaz a nevytvoří duplicitní Run.',
+    refresh: 'Ověř archiv znovu, protože cílový stav se změnil.',
+    restored: 'Run byl úspěšně obnoven.', openRun: 'Otevřít obnovený Run',
+    fullArchive: 'Celý uložený Run', customArchive: 'Vlastní výběr větví', branchArchive: 'Vybraná větev s historií', scope: 'Rozsah archivu'
   },
   en: {
     title: 'Saved Branch import review', intro: 'Independently validate the file and target-database collisions first. This preview never restores, saves or overwrites anything.',
@@ -34,14 +41,21 @@ const texts = {
     clear: 'Clear review', loading: 'Verifying exact SHA-256 file bytes and backend history…',
     ready: 'The archive is verified and currently has no target identity conflicts.',
     blocked: 'Restore is blocked: the target already contains conflicting identities.',
-    noCommit: 'This screen is preview-only. No restore confirmation or Run write is available here.',
     name: 'Original Run', selected: 'Selected Branch', viewer: 'Original Viewer Branch',
     head: 'Saved HEAD', digest: 'Archive SHA-256', size: 'Size',
     branches: 'Included Branches', revisions: 'Saved revisions', audit: 'Audit events',
     checkpoints: 'Checkpoints', omissions: 'Intentionally omitted areas',
     unresolved: 'Unresolved package references', conflicts: 'Target database conflicts',
     more: 'Additional conflicts are not shown here; total count:',
-    limitation: 'Import v1 preserves original identities; it cannot overwrite or rename an existing Run. Actual restoration requires a separate explicitly confirmed action.'
+    limitation: 'Restore preserves original identities and requires those identities to be available in the target database.',
+    confirmHeading: 'Restore the reviewed archive', operator: 'Operator name',
+    reason: 'Restore reason', consent: 'I confirm restoration from the reviewed file.',
+    restore: 'Restore Run', restoring: 'Restoring Run…',
+    retry: 'Retry the same restore',
+    retryHint: 'The restore outcome could not be confirmed. Retrying uses the same command and cannot create a duplicate Run.',
+    refresh: 'Review the archive again because the target state has changed.',
+    restored: 'The Run was restored successfully.', openRun: 'Open restored Run',
+    fullArchive: 'Entire Saved Run', customArchive: 'Custom Branch selection', branchArchive: 'Selected Branch with history', scope: 'Archive scope'
   }
 }
 
@@ -54,8 +68,13 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
   const l = texts[language]
   const [file,setFile] = useState<File | null>(null)
   const [reviewed,setReviewed] = useState<{file: File; preview: SavedBranchImportPreview} | null>(null)
-  const [busy,setBusy] = useState(false)
+  const [busy,setBusy] = useState<'preview' | 'restore' | null>(null)
   const [error,setError] = useState<string | null>(null)
+  const [operator,setOperator] = useState('')
+  const [reason,setReason] = useState('')
+  const [consent,setConsent] = useState(false)
+  const [pendingCommand,setPendingCommand] = useState<ArchiveRestoreCommand | null>(null)
+  const [restoredRun,setRestoredRun] = useState<string | null>(null)
   const generation = useRef(0)
   const inFlight = useRef<AbortController | null>(null)
 
@@ -70,7 +89,11 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
     inFlight.current = null
     setReviewed(null)
     setError(null)
-    setBusy(false)
+    setBusy(null)
+    setConsent(false)
+    setReason('')
+    setPendingCommand(null)
+    setRestoredRun(null)
   }
   const choose = (selected: File | null) => {
     invalidate()
@@ -78,14 +101,17 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
     if (selected && !fileAllowed(selected)) setError(l.invalid)
   }
   const preview = async () => {
-    if (!fileAllowed(file) || busy) return
+    if (!fileAllowed(file) || inFlight.current || pendingCommand) return
     const exactFile = file!
     const current = ++generation.current
     const controller = new AbortController()
     inFlight.current = controller
-    setBusy(true)
+    setBusy('preview')
     setError(null)
     setReviewed(null)
+    setConsent(false)
+    setReason('')
+    setRestoredRun(null)
     try {
       const answer = await previewSavedBranchImport(exactFile, controller.signal)
       if (current !== generation.current || controller.signal.aborted) return
@@ -96,21 +122,55 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
       }
     } finally {
       if (inFlight.current === controller) inFlight.current = null
-      if (current === generation.current) setBusy(false)
+      if (current === generation.current) setBusy(null)
     }
   }
   const data = reviewed?.file === file ? reviewed.preview : null
+  const restore = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault()
+    if (!file || !data?.can_restore || !consent || !operator.trim() || !reason.trim() ||
+        inFlight.current || restoredRun) return
+    const command = pendingCommand ?? {
+      commandId: crypto.randomUUID(), operatorLabel: operator.trim(), auditReason: reason.trim()
+    }
+    const current = ++generation.current
+    const controller = new AbortController()
+    inFlight.current = controller
+    setPendingCommand(command)
+    setBusy('restore')
+    setError(null)
+    try {
+      await confirmSavedBranchImport(file, data, command, controller.signal)
+      if (current !== generation.current || controller.signal.aborted) return
+      setRestoredRun(data.run_id)
+      setPendingCommand(null)
+      setConsent(false)
+    } catch (cause) {
+      if (current !== generation.current || controller.signal.aborted) return
+      if (cause instanceof ArchiveRestoreRejected &&
+          ['stale_import_preview', 'identity_conflict'].includes(cause.code ?? '')) {
+        setReviewed(null)
+        setConsent(false)
+        setPendingCommand(null)
+        setError(l.refresh + ' ' + formatApiError(cause))
+      } else {
+        setError(formatApiError(cause))
+      }
+    } finally {
+      if (inFlight.current === controller) inFlight.current = null
+      if (current === generation.current) setBusy(null)
+    }
+  }
   return <section className="panel" aria-label={l.title}>
     <div className="page-intro">
       <h2>{l.title}</h2>
       <p>{l.intro}</p>
     </div>
     <p><Link to="/admin/runs">{l.runs}</Link></p>
-    <p className="status">{l.noCommit}</p>
     <div className="run-home-status-block">
       <label htmlFor="saved-branch-import-file">{l.file}</label>
       <input id="saved-branch-import-file" type="file" accept=".sqbranch"
-        aria-label={l.choose} disabled={busy}
+        aria-label={l.choose} disabled={busy !== null || pendingCommand !== null}
         onChange={event => {
           const picked = event.currentTarget.files?.[0] ?? null
           choose(picked)
@@ -118,20 +178,23 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
         }} />
       {file && <p className="status">{file.name} · {file.size.toLocaleString()} B</p>}
       <div className="actions">
-        <button type="button" disabled={!fileAllowed(file) || busy}
-          onClick={() => void preview()}>{busy ? l.reviewing : l.review}</button>
-        {(file || data || error || busy) && <button type="button" onClick={() => {
+        <button type="button" disabled={!fileAllowed(file) || busy !== null || pendingCommand !== null}
+          onClick={() => void preview()}>{busy === 'preview' ? l.reviewing : l.review}</button>
+        {(file || data || error || busy) && !pendingCommand && <button type="button" onClick={() => {
           invalidate()
           setFile(null)
         }}>{l.clear}</button>}
       </div>
     </div>
-    {busy && <p role="status">{l.loading}</p>}
+    {busy === 'preview' && <p role="status">{l.loading}</p>}
     {error && <p role="alert" className="error">{error}</p>}
     {data && <section aria-label={l.title + ' result'}>
-      <p role={data.can_restore ? 'status' : 'alert'}>{data.can_restore ? l.ready : l.blocked}</p>
+      {!restoredRun && <p role={data.can_restore ? 'status' : 'alert'}>
+        {data.can_restore ? l.ready : l.blocked}</p>}
       <dl>
         <dt>{l.name}</dt><dd>{data.display_name} · <code>{data.run_id}</code></dd>
+        <dt>{l.scope}</dt><dd>{data.scope === 'custom_saved_branches' ? l.customArchive :
+          data.scope === 'full_saved_run' ? l.fullArchive : l.branchArchive}</dd>
         <dt>{l.selected}</dt><dd><code>{data.selected_branch_id}</code></dd>
         <dt>{l.viewer}</dt><dd><code>{data.viewer_branch_id}</code></dd>
         <dt>{l.head}</dt><dd><code>{data.selected_head_revision_id}</code></dd>
@@ -153,6 +216,24 @@ export function SavedBranchArchiveImportPage(): JSX.Element {
       <h3>{l.omissions}</h3>
       <ul>{data.omitted_areas.map((area,i)=><li key={i}>{area}</li>)}</ul>
       <p className="status">{l.limitation}</p>
+      {restoredRun && <p role="status">
+        {l.restored}{' '}<Link to={'/admin/runs/' + encodeURIComponent(restoredRun)}>{l.openRun}</Link>
+      </p>}
+      {data.can_restore && !restoredRun && <form onSubmit={restore}>
+        <fieldset disabled={busy !== null || pendingCommand !== null}>
+          <legend>{l.confirmHeading}</legend>
+          <label>{l.operator}{' '}<input value={operator} required maxLength={160}
+            onChange={event => setOperator(event.target.value)} /></label>
+          <label>{l.reason}{' '}<textarea value={reason} required maxLength={1000}
+            onChange={event => setReason(event.target.value)} /></label>
+          <label><input type="checkbox" checked={consent}
+            onChange={event => setConsent(event.target.checked)} /> {l.consent}</label>
+        </fieldset>
+        {pendingCommand && busy === null && <p className="status">{l.retryHint}</p>}
+        <button type="submit" disabled={busy !== null || !consent || !operator.trim() || !reason.trim()}>
+          {busy === 'restore' ? l.restoring : pendingCommand ? l.retry : l.restore}
+        </button>
+      </form>}
     </section>}
   </section>
 }

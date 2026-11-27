@@ -67,6 +67,44 @@ class CalendarNativeRankingAdoptionProof(FrozenInput):
         return canonical_hash(self.model_dump(mode="json"))
 
 
+def validate_previous_ranking_owner(previous, previous_life, replay) -> None:
+    """The previous Ranking is owned by the immediate prior lifecycle week.
+
+    One exact index of that lifecycle snapshot replaces a per-row linear search
+    and the per-row rebuilt identity set. The first occurrence of an identity is
+    the one consulted, as ``next(...)`` did, and the checks and their messages
+    keep their order: every row is first checked to be born, then each row's
+    prior Tour Entry is checked.
+    """
+    if previous is None or (
+        (previous.run_id, previous.branch_id) != (replay.run_id, replay.branch_id)
+        or previous.week != ranking_week(previous_life.week)
+        or previous.run_calendar != previous_life.week.calendar.to_metadata()
+    ):
+        raise ValueError("Native Ranking bridge requires the exact previous Saved ranking")
+    by_id = {}
+    for person in previous_life.players:
+        by_id.setdefault(person.player_id, person)
+    if any(row.player_id not in by_id for row in previous.rows):
+        raise ValueError("Previous ranking contains an athlete not born at its publication")
+    # Any athlete listed in the prior ranking must have an actual first Entry
+    # strictly BEFORE that ranking publication. The first v2 population snapshot
+    # never invents such an Entry.
+    for row in previous.rows:
+        prior = by_id[row.player_id]
+        if (
+            prior.tour_entry_week is None
+            or prior.tour_entry_week.ordinal >= previous_life.week.ordinal
+            or prior.status == "retired"
+        ):
+            raise ValueError("Previous ranking contains an athlete without prior Tour Entry")
+
+
+def result_source_fingerprints(results) -> tuple[str, ...]:
+    """Every source result, counted or expired, is retained in the proof."""
+    return tuple(sorted(canonical_hash(r.model_dump(mode="json")) for r in results))
+
+
 def calculate_native_ranking_from_signed_lifecycle(
     *, states, source, world_package_id: str, submissions,
     previous: CalendarOfficialRankingSnapshot,
@@ -92,28 +130,7 @@ def calculate_native_ranking_from_signed_lifecycle(
     current = states[-1]
     previous_life = states[-2]
     clock = current.week.calendar
-    if previous is None or (
-        (previous.run_id, previous.branch_id) != (replay.run_id, replay.branch_id)
-        or previous.week != ranking_week(previous_life.week)
-        or previous.run_calendar != previous_life.week.calendar.to_metadata()
-    ):
-        raise ValueError("Native Ranking bridge requires the exact previous Saved ranking")
-    if any(
-        row.player_id not in {person.player_id for person in previous_life.players}
-        for row in previous.rows
-    ):
-        raise ValueError("Previous ranking contains an athlete not born at its publication")
-    # Any athlete listed in the prior ranking must have an actual first Entry
-    # strictly BEFORE that ranking publication. The first v2 population snapshot
-    # never invents such an Entry.
-    for row in previous.rows:
-        prior = next(p for p in previous_life.players if p.player_id == row.player_id)
-        if (
-            prior.tour_entry_week is None
-            or prior.tour_entry_week.ordinal >= previous_life.week.ordinal
-            or prior.status == "retired"
-        ):
-            raise ValueError("Previous ranking contains an athlete without prior Tour Entry")
+    validate_previous_ranking_owner(previous, previous_life, replay)
 
     players = tuple(
         CalendarRankingPlayer(
@@ -145,7 +162,7 @@ def calculate_native_ranking_from_signed_lifecycle(
         target_lifecycle_fingerprint=current.fingerprint,
         previous_ranking_fingerprint=previous.fingerprint,
         calculated_ranking_fingerprint=candidate.fingerprint,
-        source_result_fingerprints=tuple(sorted(canonical_hash(r.model_dump(mode="json")) for r in results)),
+        source_result_fingerprints=result_source_fingerprints(results),
         source_zero_fingerprints=tuple(sorted(canonical_hash(z.model_dump(mode="json")) for z in disciplinary_zeros)),
         eligible_player_ids=eligible_ids,
         classified_player_ids=tuple(sorted(r.player_id for r in candidate.rows)),

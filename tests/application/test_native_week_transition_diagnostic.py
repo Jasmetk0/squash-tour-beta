@@ -73,3 +73,26 @@ def test_report_refuses_unmatched_inputs_and_bad_restart(tmp_path, settings):
 
     with pytest.raises(ValueError):
         diagnostic.report(SimpleNamespace(roots=[a, b]))
+
+
+def test_every_phase_names_an_existing_production_callable():
+    import importlib
+
+    for module_name, attribute, label in diagnostic.PHASES:
+        owner = importlib.import_module(module_name)
+        for part in attribute.split("."):
+            owner = getattr(owner, part)
+        assert callable(owner), (module_name, attribute, label)
+
+
+def test_v87_fixture_adds_only_the_explicit_lifecycle_policy(monkeypatch):
+    from tests.api import test_calendar_initial_world_adoption as adoption
+    from tests.api import test_calendar_population_sporting_checkpoint as population
+    from tests.api.test_calendar_tour_turn_pro_v87_flow import V87
+
+    seen = []
+    monkeypatch.setattr(population, "population_request", population.population_request)
+    monkeypatch.setattr(adoption, "request", lambda server, **changes: seen.append(changes) or changes)
+    diagnostic._use_v87_population()
+    population.population_request("server", generation={"seed": 1})
+    assert seen == [{"generation": {"seed": 1}, "lifecycle_policy": V87}]

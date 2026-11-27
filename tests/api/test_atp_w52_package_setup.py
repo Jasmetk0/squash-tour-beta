@@ -1,4 +1,4 @@
-"""Import both built-in ATP packages through the real W52 Admin setup contract."""
+"""Import both built-in ATP packages and plan a tournament on the same W52 Run."""
 
 from pathlib import Path
 from urllib.parse import quote
@@ -84,5 +84,38 @@ def test_earth_world_and_atp_tour_packages_share_a_saved_w52_timeline(tmp_path: 
         assert mapping["calendar"] == {"schema_version": "run_calendar.v1", **clock}
         assert {row["atp_season_year"] for row in mapping["events"]} == {2024, 2025}
         assert all(1 <= week["season_week"] <= 52 for row in mapping["events"] for week in row["run_weeks"])
-        code, draft = _request("GET", reopened.base_url + draft_path)
+        draft_url = reopened.base_url + draft_path
+        code, draft = _request("GET", draft_url)
         assert code == 200 and draft["status"] == "clean" and draft["base_saved_revision_id"] == head
+
+        # Consume the package from the same Run after restart, without staging a tournament.
+        editions_url = reopened.base_url + "/admin/runs" + target + "/calendar-tour/atp-source-editions"
+        code, catalog = _request("GET", editions_url)
+        assert code == 200, catalog
+        assert catalog["saved_head_revision_id"] == head
+        dallas = next(row for row in catalog["entries"]
+                      if row["profile"]["occurrence_id"] == "atp_2025_dallas")
+        assert dallas["qualification_calendar_projection"]["run_weeks"] == [
+            {"season_index": 1, "season_week": 5},
+        ]
+        assert [(week["season_index"], week["season_week"])
+                for week in dallas["calendar_projection"]["run_weeks"]] == [(1, 6)]
+
+        def position(week, slot):
+            return {"week": {"calendar": mapping["calendar"], "season_index": 1, "week": week},
+                    "slot": slot}
+
+        code, plan = _request("POST", editions_url + "/atp_2025_dallas/schedule-preview", {
+            "expected_saved_head": head,
+            "expected_profile_fingerprint": dallas["profile_fingerprint"],
+            "schedule": {
+                "calendar": mapping["calendar"],
+                "qualification": [position(5, slot) for slot in range(1, 3)],
+                "main": [position(6, slot) for slot in range(1, 6)],
+            },
+        })
+        assert code == 200, plan
+        assert plan["actual_match_count"] == 43
+        assert plan["qualification_dates_verified"] is True
+        assert plan["run_mutated"] is False
+        assert _request("GET", draft_url) == (200, draft)

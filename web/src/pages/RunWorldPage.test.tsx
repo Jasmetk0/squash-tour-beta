@@ -449,8 +449,11 @@ describe('Run-owned World overview navigation',()=>{
     expect(api.getSavedRevision).toHaveBeenCalledWith('run-a','branch-a','head-a')
     api.getSavedRevision.mockRejectedValueOnce(new Error('Saved tournament refresh failed'))
     await act(async()=>{await view.client.invalidateQueries({queryKey:['run-world-saved-calendar','run-a','branch-a','head-a']})})
-    expect(panel).toHaveTextContent('Saved tournament refresh failed')
-    expect(within(panel).queryByRole('link',{name:'Brno World Open'})).not.toBeInTheDocument()
+    await waitFor(()=>{
+      expect(screen.getByLabelText('Country Run-owned tournaments')).toHaveTextContent('Saved tournament refresh failed')
+      expect(screen.queryByRole('link',{name:'Brno World Open'})).not.toBeInTheDocument()
+    })
+    expect(api.getSavedRevision).toHaveBeenCalledTimes(2)
   })
 
   it('links second-season historical shared-ancestor Edition through selected Branch',async()=>{

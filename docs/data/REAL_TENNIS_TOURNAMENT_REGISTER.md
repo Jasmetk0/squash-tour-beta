@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 28 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 29 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -62,10 +62,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Indian Wells](#indian-wells-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Miami](#miami-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Marrakech](#marrakech-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Estoril](#estoril-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 28 zpracovaných ročníků; 25 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 29 zpracovaných ročníků; 26 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -99,7 +100,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 26 | Indian Wells 2024 | HOTOVO (nominální rozsah) |
 | 27 | Miami 2024 | HOTOVO (nominální rozsah) |
 | 28 | Marrakech 2024 | HOTOVO (nominální rozsah) |
-| 29 | Estoril 2024 | NEZAHÁJENO |
+| 29 | Estoril 2024 | HOTOVO (nominální rozsah) |
 | 30 | Houston 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -146,6 +147,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#indian-wells-2024) | BNP Paribas Open | ATP Masters 1000 | 2024-03-04–2024-03-05 | 2024-03-06–2024-03-17 | HOTOVO v nominálním rozsahu; 15.3. bez mužské dvouhry |
 | [2024](#miami-2024) | Miami Open presented by Itaú | ATP Masters 1000 | 2024-03-18–2024-03-19 | 2024-03-20–2024-03-31 | HOTOVO v nominálním rozsahu; 30.3. bez mužské dvouhry |
 | [2024](#marrakech-2024) | Grand Prix Hassan II | ATP 250 | 2024-03-31–2024-04-01 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 1.4. |
+| [2024](#estoril-2024) | Millennium Estoril Open | ATP 250 | 2024-03-30–2024-03-31 | 2024-04-01–2024-04-07 | HOTOVO v nominálním rozsahu; dešťové odklady R32 odděleny |
 
 ## Wimbledon 2024
 
@@ -3555,6 +3557,126 @@ I/T/D/B doloženy. H* okna a souběh potvrzeny, úplný původní denní OOP nez
 - RAK24-15: [ročníkový identifikátor ATP 360](https://www.ultimatetennisstatistics.com/tournamentEvent?extId=360&name=Marrakech&season=2024&tab=results), 32/28; [ATP Q PDF](https://www.protennislive.com/posting/2024/360/qs.pdf) nedostupné.
 - RAK24-16: [ATP kalendář 11.3.2024](https://www.atptour.com/-/media/files/calendar-pdfs/2024/2024-atp-challenger-calendar-as-of-11-march-2024.pdf), indexovaný text, týden tří ATP 250; viz také RAK24-6. Dobový předpis viz SCL24-18, LCB24-19, ROT24-16.
 
+
+## Estoril 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/Z s omezeními). Rešerše 2026-11-27. Originální ATP Q předstartovní los, Main po doplnění kvalifikantů před prvními zápasy a výsledkový Main vizuálně ověřeny. Původní OOP 1. a 2.4. jednoznačně potvrzují původní R32 4+8, navzdory zrušení celé úterní hrací doby.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Millennium Estoril Open, mužská dvouhra, 9. ročník | EST24-1/2/4/5 |
+| Kategorie / ATP ID | ATP 250 / 7290 | EST24-1/3/14 |
+| Dějiště | Clube de Ténis do Estoril, Estoril, Portugalsko | EST24-4/5/15 |
+| Povrch | venkovní červená antuka | EST24-1/2/3 |
+| Časové pásmo | Europe/Lisbon; WET UTC+00 do 31.3. 01:00, poté WEST UTC+01 | místní kalendář DST |
+| Ředitel | João Zilhão | EST24-7/8 |
+| ATP supervisor | Anne Lasserre, později Carlos Sanches | EST24-1/2/7/9 |
+| Tour manager / referee | Arnau Brugues / Rogério Santos | EST24-7/8/9 |
+| Měna | EUR | EST24-1/2/3 |
+
+Model míčů podle indexované dobové Raquetc zprávy EST24-16: Dunlop ATP Millennium Estoril Open Special Select; přímé otevření zprávy 503, nepovažovat za ověřený detail sheet. Nezaměňovat s jinou historickou portugalskou sérií ani s Challenger ročníkem 2025.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-04 | EST24-6 |
+| Q rank date | 2024-03-11 | EST24-6 |
+| Nominální Main deadline | 2024-03-04 17:00 WET (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální Q deadline | 2024-03-11 16:00 WET (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální LE deadline | 2024-03-28 14:00 WET (10:00 US Eastern) | §7.04, odvozeno |
+| Q los | zveřejněn 2024-03-29; přesný čas neověřen | EST24-10 |
+| Main los | zveřejněn 2024-03-30; přesný čas neověřen | EST24-11 |
+| Q | 2024-03-30–31 | EST24-5/6/12 |
+| Main | 2024-04-01–07 | EST24-1/2/4 |
+| LL sign-in 1.4. / 2.4. | 11:30 / 11:00 WEST | EST24-7/8 |
+| Singlové finále | 2024-04-07 15:30 WEST, plán ATP | EST24-4/13 |
+
+Dobový přepis EST24-6 uvádí původní cutoffs 91 Main / 140 Q. Main dokument před začátkem Main EST24-2 uvádí Lestienne 100 při deadline i v losu; výsledkový los ponechává pole prázdná. Q originál uvádí Vanshelboim 358 jako last DA. Odlišná data neztotožňovat bez originální acceptance listiny. Změna US DST 10.3. a portugalského DST 31.3. znamená různé offsety v průběhu procesu, včetně samotné Q. Uzávěrky odvozené, nikoli nezávislé timestampy.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-03-30 | 8 |
+| Q2 | 2024-03-31 | 4 |
+| R32 | 2024-04-01–02 | 12 (4+8) |
+| R16 | 2024-04-03–04 (rekonstrukce původního okna) | 8 |
+| QF | 2024-04-05 | 4 |
+| SF | 2024-04-06 | 2 |
+| F | 2024-04-07 | 1 |
+
+Pořadatel 28.2. oznámil celé okno 30.3.–7.4. a závěrečný víkend SF/F 6.–7.4. (EST24-5). Dobové Q výsledky EST24-12 potvrzují 8+4, Q byla ukončena v neděli 31.3. před Main startem. OOP 1.4., vydaný 31.3. v 16:08, obsahuje čtyři R32 na centrálním kurtu a dva doubles na vedlejším. OOP 2.4., vydaný 1.4. v 16:28, obsahuje osm zbývajících R32 (4+2+2 na třech kurtech), bez pondělních dohrávek. Revidovaný originál 19:45 mění Lestienne na LL Jorda Sanchis, nikoli počet plánovaných utkání. ATP výslovně potvrzuje zrušení celé úterní hrací doby deštěm (EST24-17). Revidovaný středeční OOP má devět singlových R32 (osm zbývajících úterních a pondělní dohrávku); ve čtvrtečním OOP všech osm R16. Tyto dva krizové programy nejsou původní nominální plán. Okno R16 3.–4.4. je rekonstrukce mezi původním koncem R32 a QF 5.4., podpořená předem publikovanými denními/nočními session 3.–5.4. (EST24-15) a skutečným čtvrtečním R16; původní přesné denní rozdělení R16 neznámé, nepřebírat 4+4 z jiných akcí. QF čtyři v pátek, SF dvě v sobotu a nedělní F potvrzeny dobovými výsledky EST24-18 a plánem pořadatele. Finále od 15:30 podle ATP Day 1 i posledního OOP v mediálním přepisu. Q 2 dny + Main 7 dní = 9 kalendářních dní bez překryvu; 39 zápasů. Na rozdíl od Marrakech začíná Q v sobotu, ne v neděli a nekryje se s Main.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+ATP §7.08 B/E: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28; nevyužité SE/LE rezervy přecházejí do DA. Dobový přepis EST24-6 potvrzuje 18 základních DA, 0 SE a 0 LE v mezistavu, 3 WC, 4 Q; nejde o konečný 25členný pavouk. Main originál před zápasy EST24-2 potvrzuje 21 ostatních vstupů, tři WC 7/18/30, čtyři Q 21/26/27/29, osm seedů, BYE 2/10/23/31. Výsledkový Main EST24-1 uvádí LL Gasqueta na pozici 9 po odstoupení seed 4 a LL Jorda Sanchise na pozici 28 po odstoupení Lestienneho. Gasquet tak historicky získal BYE po náhradě původního seedu; neznamená to jiné plánované pravidlo nasazování či šest řádných kvalifikantů. Main 12+8+4+2+1=27.
+
+Originální Q EST24-3 potvrzuje osm seedů, 16 pozic, dva WC na pozicích 2/3 (Vale a Francisco Rocha), Alt na 10 po odstoupení Nardiho. Nominál 14 DA+2 WC, čtyři sekce po čtyřech, 8+4=12 zápasů, čtyři řádní vítězové potvrzeni pořadatelem a Main originálem. Výsledkový Q originál nebyl získán, ale předstartovní originál a dobové výsledky potvrzují geometrii nezávisle.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 v únorové verzi (SCL24-18), se změnami LCB24-19 a upřesněním challengerového §7.08 C.3 v SCL24. Dvě SE a jedna LE rezerva, čtyři Q sekce, osm seedů, BO3 tiebreak, první čtyři Main seedy BYE. ATP Preview přímo potvrzuje nulu bodů za první prohru po BYE; Q originál 13/7/0. Historický LL na původní seed pozici s BYE evidovat jako výjimku při změně obsazení, ne jako páté BYE ani vlastní nasazení LL. Jeho konkrétní individuální bodový či peněžní payout necertifikován.
+
+Next Gen týden Marrakech/Estoril/Houston: ATP notes uvádějí Fils, Fonseca a Henrique Rocha jako #NextGenATP; Fonseca a Rocha jsou doložené běžné WC a Fils řádný DA v listině. Mediální označení není doklad programové rezervy. Q originál oba WC a jednoho Alt označuje; individuální NG alokace či propad není potvrzen. Nevytvářet dodatečné místo.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 88125 |
+| Finalista | 1 | 165 | 51400 |
+| SF | 2 | 100 | 30220 |
+| QF | 4 | 50 | 17510 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 10165 |
+| R32 | 12 | 0 | 6215 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3105 |
+| Q1 prohra | 8 | 0 | 1695 |
+
+Main obě originální verze vizuálně shodné, Q originál EST24-3 vizuálně včetně 13/7/0 a 0/3105/1695 EUR. P bez hvězdičky. Main 425905 EUR, Q 25980 EUR, nominální součet 451885 EUR. Financial commitment 651865 EUR a turnajová dotace 579320 EUR (EST24-19) jsou jiné veličiny. Shoda všech jednotlivých částek s Marrakech 2024 podporuje jeho sekundární Q kandidát, ale není ročníkovým originálem Marrakech; P* u Marrakech zachovat.
+
+### 7. Kontrola a mezery
+
+I/T/D/B/P doloženy. H* původní R32 4+8 vizuálně ověřeno, R16 okno rekonstruováno a denní split před deštěm neznámý; E* originální acceptance lists/DS a přesné časy losů chybějí, uzávěrky odvozené. R* NG přidělení neověřeno. Z* tři ATP pavouky a pět originálních OOP (1.4., dvě verze 2.4., 3.4., 4.4.) po jedné straně vizuálně; ATP Preview str. 2 textově, screenshot 403; žádný tvrzený SHA-256. Kontrola kvót, 8/8 seedů, 4/0 BYE, 27/12 utkání, denního součtu a obou primárních finančních tabulek prošla. Další Houston 2024. Žádný převod ani změna runtime.
+
+### 8. Zdroje (EST24)
+
+- EST24-1: [výsledkový originální ATP Main, RFET](https://www.rfet.es/descargar/file-noticias-adjuntos/4914_Documento/cuadro-atp-250-estoril-por.pdf), str. 1 vizuálně.
+- EST24-2: [originální ATP Main před zápasy, po doplnění Q](https://www.raquetc.com/wp-content/uploads/2024/03/MDS.pdf), str. 1 vizuálně.
+- EST24-3: [originální ATP Q před zápasy](https://www.raquetc.com/wp-content/uploads/2024/03/QS.pdf), str. 1 vizuálně, osm seedů, 2 WC, finanční tabulka.
+- EST24-4: [ATP Preview & Day 1, 1.4.2024](https://www.atptour.com/-/media/73f6e75ef1d744888e375556c0e2e0ba.pdf), str. 1–2 text, str. 2 screenshot 403; 9. ročník, plán finále, WC/Q/LL, BYE.
+- EST24-5: [pořadatel 28.2., devátý ročník a program](https://www.millenniumestorilopen.com/news/65df1d0987adfe001c9b22fa), celé okno, SF/F víkend.
+- EST24-6: [dobový přepis obou acceptance listů 27.3.](https://www.tennisteen.it/entry-list/atp/24142-atp-entry-list-1-7-aprile-2024.html), řádky 66–125, kvóty a rank dates.
+- EST24-7: [originální OOP 1.4.](https://www.raquetc.com/wp-content/uploads/2024/03/OP-2.pdf), vydání 31.3. 16:08, 4 R32, vizuálně.
+- EST24-8: [originální OOP 2.4.](https://www.raquetc.com/wp-content/uploads/2024/04/OP.pdf), vydání 1.4. 16:28, 8 R32, vizuálně; [revidovaný pořadatelský originál](https://estoril-open-media.s3.amazonaws.com/images/660b01eb4e9144001cc1eb9c-OP.pdf), 19:45, vizuálně.
+- EST24-9: [OOP 3.4.](https://www.raquetc.com/wp-content/uploads/2024/04/OP-3.pdf), [OOP 4.4.](https://www.raquetc.com/wp-content/uploads/2024/04/OP-4.pdf), oba vizuálně, program po dešti, nikoli původní.
+- EST24-10: [A Bola 29.3., oznámení Q losu](https://www.abola.pt/noticias/estoril-open-sorteado-qualifying-com-seis-portugueses-2024032919574947993).
+- EST24-11: [A Bola 30.3., Main los](https://www.abola.pt/noticias/estoril-open-sorteio-conhecido-portugueses-com-adversarios-duros-2024033015240029312).
+- EST24-12: [RTÉ Q denní soupis](https://www.rte.ie/sport/results/tennis/estoril-open-qualification-men/888919/results/), [pořadatel 31.3., dokončení Q](https://www.millenniumestorilopen.com/news/6609a0cf8e7a92001c0a7acb).
+- EST24-13: [Raquetc, program finále publikovaný 6.4.](https://www.raquetc.com/2024/04/06/millennium-estoril-open-ordem-de-jogos-de-7-de-abril-domingo/), potvrzení 15:30.
+- EST24-14: [Tennis Europe, identita 7290 a odkaz na původní ATP los](https://www.tenniseurope.org/calendarevent/73808/Millenium-Estoril-Open).
+- EST24-15: [dobové návštěvnické informace a session](https://cartazculturallisboa.pt/evento/millennium-estoril-open-2024/), dny 3.–5.4., nikoli přesné počty kol.
+- EST24-16: [Raquetc, přehled 30.3.](https://www.raquetc.com/2024/03/30/millennium-estoril-open-2024-tudo-o-que-precisa-de-saber-sobre-o-maior-torneio-em-portugal/), indexovaný model míčů, otevření 503.
+- EST24-17: [ATP 2.4., zrušení úterního programu deštěm](https://www.atptour.com/en/news/estoril-2024-tuesday-rain), [Raquetc 2.4., revidovaný středeční program](https://www.raquetc.com/2024/04/02/millennium-estoril-open-ordem-de-jogos-de-3-de-abril-quarta-feira/).
+- EST24-18: [Tennis Explorer 2024](https://www.tennisexplorer.com/estoril/2024/atp-men/), [RTÉ Main denní výsledky](https://www.rte.ie/sport/results/tennis/estoril-open-men/888923/results/), kontrola QF/SF/F.
+- EST24-19: [ročníkový přehled dotace](https://web.kurzy.cz/wiki/Estoril_Open_2024); pravidla viz SCL24-18, LCB24-19, ROT24-16.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -3579,3 +3701,4 @@ I/T/D/B doloženy. H* okna a souběh potvrzeny, úplný původní denní OOP nez
 | Indian Wells 2024 | H*/E*/P*/Z* | původní denní R64/R32/R16 OOP, originální Q/DS a acceptance listy, Q čas losu a cutoff, Q odměny 14400/7800 USD sekundární shoda; body Q 20/10/0 primárně ověřeny |
 | Miami 2024 | H*/E*/Z* | původní acceptance listy/DS a čas Q losu, kompletní první OOP a denní R64/R32 splity před deštěm; obě finanční tabulky primárně vizuálně ověřeny |
 | Marrakech 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance listy, časy losů, původní OOP, skutečná alokace NG v týdnu Marrakech/Estoril/Houston; Q 3105/1695 EUR sekundární shoda 2024, 3020/1645 přesně odpovídá roku 2023, nikoli rovnocenný ročníkový doklad |
+| Estoril 2024 | H*/E*/R*/Z* | původní R16 OOP před deštěm, acceptance listy/DS, časy losování a NG alokace; Main i Q finanční tabulky primárně vizuálně ověřeny |

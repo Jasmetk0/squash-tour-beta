@@ -74,10 +74,17 @@ function folded(value: string | number | null | undefined): string {
   return String(value ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
 }
 function matches(query: string, values: Array<string | number | null | undefined>): boolean {
-  const terms = folded(query).trim().split(/\s+/).filter(Boolean)
-  if (!terms.length) return false
-  const fields = values.map(folded)
-  return terms.every(term => fields.some(field => field.includes(term)))
+  const phrase = folded(query).trim().replace(/\s+/g, ' ')
+  if (!phrase) return false
+  const fields = values.map(value => folded(value).replace(/\s+/g, ' '))
+  if (fields.some(field => field.includes(phrase))) return true
+  const terms = phrase.split(' ')
+  // Preserve existing phrase-prefix behavior (e.g. "Player 0" must not
+  // match "Player 10"). Cross-field matching is only for terms that do
+  // not all occur together in any individual field.
+  return terms.length > 1 &&
+    !fields.some(field => terms.every(term => field.includes(term))) &&
+    terms.every(term => fields.some(field => field.includes(term)))
 }
 
 function SearchTournamentRow({ entry, runId, t }: {

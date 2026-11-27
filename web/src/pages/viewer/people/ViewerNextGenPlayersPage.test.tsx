@@ -333,4 +333,22 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(screen.getByText(/2004\/05 · W11/)).toBeInTheDocument()
   })
 
+  it.each(['failed GET', 'invalid source'])('recovers a deep page after %s without browser navigation', async kind => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+    if (kind === 'failed GET') api.getViewerVisibleProspects.mockRejectedValueOnce(new Error('unavailable'))
+    else api.getViewerVisibleProspects.mockResolvedValueOnce(page(0, ['Wrong page'], 1))
+    api.getViewerVisibleProspects.mockResolvedValueOnce(page(0, ['Recovered player'], 1))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=9&keep=1' })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Wrong page')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Přejít na první stránku' }))
+    expect(await screen.findByText('Recovered player')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects.mock.calls).toEqual([
+      ['product run', { limit: 50, offset: 400 }],
+      ['product run', { limit: 50, offset: 0 }],
+    ])
+  })
+
 })

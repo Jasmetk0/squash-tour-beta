@@ -137,6 +137,7 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
     setPageFilter({ page: currentPage, text, lifecycle })
   }
   function setOffset(nextOffset: number): void {
+    if (nextOffset === offset) return
     setParams(previous => {
       const next = new URLSearchParams(previous)
       if (nextOffset === 0) next.delete('prospectPage')
@@ -157,12 +158,14 @@ function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
   if (query.isError) return <div role="alert">
     <p>{t.readError}</p>
     <button type="button" onClick={() => void query.refetch()}>{t.retry}</button>
+    {offset > 0 ? <button type="button" onClick={() => setOffset(0)}>{t.firstPage}</button> : null}
   </div>
 
   const data = verifiedVisibleProspects(query.data, runId, branchId, PAGE_SIZE, offset)
   if (!data) return <div role="alert">
     <p>{t.sourceError}</p>
     <button type="button" onClick={() => void query.refetch()}>{t.retry}</button>
+    {offset > 0 ? <button type="button" onClick={() => setOffset(0)}>{t.firstPage}</button> : null}
   </div>
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE))

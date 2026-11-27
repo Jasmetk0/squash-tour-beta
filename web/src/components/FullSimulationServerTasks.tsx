@@ -9,6 +9,7 @@ import {NativeTaskActions,NativeTaskSummary} from './FullSimulationTasksNative'
 import { useLanguage } from '../i18n/LanguageContext'
 import { formatApiError } from '../utils/apiErrors'
 import { FullSimulationSummary } from './FullSimulationSummary'
+import { FullSimulationTaskProgressEvidence } from './FullSimulationTaskProgressEvidence'
 import { FullSimulationWeekScheduleReview } from './FullSimulationWeekScheduleReview'
 import { supportedCalendarSeason } from './RunPackageSetupPanel'
 
@@ -178,6 +179,7 @@ function TaskCard({task,focused=false}:{task:ServerTask;focused?:boolean}){
   {task.progress_evidence.kind==='live_branch' && (task.progress_evidence.native_match_receipts_this_week!==undefined
    ?<p>{language==='cs'?'Uložené nativní zápasy v aktuálním týdnu':'Persisted native matches in current week'}: {task.progress_evidence.native_match_receipts_this_week}</p>
    :<p>{t.slots}: {task.progress_evidence.completed_slot_receipts_this_week} · {t.groups}: {task.progress_evidence.committed_group_receipts_this_week}</p>)}
+  <FullSimulationTaskProgressEvidence task={task} cs={language==='cs'}/>
   {currentCheckpoint && <p>{t.checkpoint}: <code>{currentCheckpoint}</code></p>}
   {safePauseCheckpoint && <p>{t.pauseCheckpoint}: <code>{safePauseCheckpoint}</code></p>}
   {task.checkpoint&&!currentCheckpoint&&!safePauseCheckpoint && <details><summary>{t.lastCheckpoint}</summary><code>{task.checkpoint}</code></details>}

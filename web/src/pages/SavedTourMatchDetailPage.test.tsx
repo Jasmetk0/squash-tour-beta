@@ -83,6 +83,7 @@ describe('exact historical Edition match replay',()=>{
   it('shows the verified post-rally scores in source A/B order and advances without an extra read',async()=>{
     mount()
     const board=await screen.findByRole('region',{name:'Archived rally scoreboard'})
+    expect(board.closest('[data-run-navigation-readonly]')).not.toBeNull()
     expect(board).toHaveTextContent('Player A: A')
     expect(board).toHaveTextContent('Player B: B')
     expect(within(board).getAllByText('Game points:',{exact:false}).map(node=>node.textContent))

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 21 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 22 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -55,10 +55,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Delray Beach](#delray-beach-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Rio de Janeiro](#rio-de-janeiro-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Doha](#doha-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Los Cabos](#los-cabos-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 21 zpracovaných ročníků; 19 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 22 zpracovaných ročníků; 20 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -85,7 +86,10 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 19 | Delray Beach 2024 | HOTOVO (nominální rozsah) |
 | 20 | Rio de Janeiro 2024 | HOTOVO (nominální rozsah) |
 | 21 | Doha 2024 | HOTOVO (nominální rozsah) |
-| 22 | Los Cabos 2024 | NEZAHÁJENO |
+| 22 | Los Cabos 2024 | HOTOVO (nominální rozsah) |
+| 23 | Acapulco 2024 | NEZAHÁJENO |
+| 24 | Dubai 2024 | NEZAHÁJENO |
+| 25 | Santiago 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -124,6 +128,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#delray-beach-2024) | Delray Beach Open | ATP 250 | 2024-02-10–2024-02-11 (plán) | 2024-02-12–2024-02-18 (plán) | HOTOVO v nominálním rozsahu; finále přeloženo na 19.2. |
 | [2024](#rio-de-janeiro-2024) | Rio Open presented by Claro | ATP 500 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-25 | HOTOVO v nominálním rozsahu; odklady deštěm odděleně |
 | [2024](#doha-2024) | Qatar ExxonMobil Open | ATP 250 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-24 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
+| [2024](#los-cabos-2024) | Mifel Tennis Open by Telcel Oppo | ATP 250 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-24 | HOTOVO v nominálním rozsahu; plánované sobotní finále |
 
 ## Wimbledon 2024
 
@@ -2686,6 +2691,127 @@ I/T/D/B/P doloženy, H* přesné R32 denní rozdělení pouze výsledkově, niko
 - DOH24-15: [dobový Main finanční rozpis](https://tennis-infinity.com/atp/2024-qatar-open-doha-atp-prize-money-points-overview), shoda Main, celková dotace; [SteveGtennis](https://www.stevegtennis.com/draw-results/atp/Qatar%20ExxonMobil%20Open%20-%20Doha/2024) shoda Q částek, chybné A$ označení, původní USD los má přednost.
 - Přímé originální ATP [Main](https://www.protennislive.com/posting/2024/451/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/451/qs.pdf) nedostupné; dochované kopie DOH24-1/2 zkontrolovány.
 
+
+## Los Cabos 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; E/R/P/Z s označenými omezeními). Rešerše 2026-11-27. Tři verze původního ATP Main losu a dva originální OOP vizuálně ověřeny. Kvalifikační finanční tabulka má pouze sekundární shodu, nikoli získaný originál.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Mifel Tennis Open by Telcel Oppo, 8. ročník, mužská dvouhra | LCB24-1/4/5 |
+| Kategorie / ATP ID | ATP 250 / 7480 | LCB24-1/4/15 |
+| Dějiště | Cabo Sports Complex, turistický koridor San José del Cabo–Cabo San Lucas, Baja California Sur, Mexiko | LCB24-4/6/13 |
+| Povrch | venkovní tvrdý, Solflex | LCB24-1/2/3/13 |
+| Časové pásmo | America/Mazatlan, UTC−07:00 v únoru | LCB24-16 |
+| Ředitel | José Antonio Fernández (Geoffrey) | LCB24-7/8 |
+| Supervisor / referee / tour manager | Jaime Chavez / Ricardo Reis / Arnau Brugues | LCB24-7/8 |
+| Měna | USD | LCB24-1/4 |
+
+ATP oznámila změnu z červencového termínu na únor už v kalendáři 2024 (LCB24-14). Ročník je plánovanou změnou, nikoli odloženým letním turnajem. Následuje týden před Acapulcem, nikoli souběžně s ním. Přesný model míčů a detail sheet neověřeny.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Zdroj |
+|---|---|---|
+| Main rank date | 2024-01-22 | LCB24-9 |
+| Q rank date | 2024-01-29 | LCB24-9 |
+| Nominální Main deadline | 2024-01-22 10:00 (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální Q deadline | 2024-01-29 10:00 (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální LE deadline | 2024-02-15 08:00 (10:00 US Eastern) | §7.04, odvozeno |
+| Main los | 2024-02-17, hodina neověřena | LCB24-5 |
+| Q los | nejpozději 2024-02-17 před Q1, hodina neověřena | LCB24-10 |
+| Q | 2024-02-17–18, od 16:00 | LCB24-5/6/10/11 |
+| Main | 2024-02-19–24 | LCB24-1/4/5/6 |
+| Main LL sign-in 20.2. | 15:30 místně | LCB24-7 |
+| Finále | 2024-02-24 20:00 místně | LCB24-6/8 |
+
+Rank date a pravidlově odvozený deadline nejsou nezávislým potvrzením hodiny uzávěrky. Přepis listiny LCB24-9 uvádí původní cutoffs 62 Main a 132 Q. Pořadatelský předstartovní Main PDF má obě cutoff pole prázdná, archivní kopie stejného pavouka uvádí Koepfer 62 při deadline a Kokkinakis 80 v losu. Verze před finále 24.2. má Koepfer 62 a Lestienne 99. Jde o různé verze; Q cutoff v konečném losu neověřen.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-17 | 8 |
+| Q2 | 2024-02-18 | 4 |
+| R32 | 2024-02-19–20 | 12 |
+| R16 | 2024-02-21 | 8 |
+| QF | 2024-02-22 | 4 |
+| SF | 2024-02-23 | 2 |
+| F | 2024-02-24 | 1 |
+
+Pořadatelský program LCB24-6 uvádí R32 ve dvou dnech od 16:00, R16 ve středu od 16:00, QF čtvrtek od 15:00, SF pátek od 19:00 a singlové finále od 20:00. Dvě chyby v kalendářním textu (druhá kvalifikační neděle označená 25.2., finálový 24.2. označený nedělí) jsou opraveny podle dobových datovaných oznámení pořadatele LCB24-5/10/11 a originálního sobotního OOP LCB24-8; 24.2.2024 je sobota. Q1/Q2 potvrzeny pořadatelem 8/4. Originální OOP 20.2. vydaný 19.2. 18:12 vizuálně potvrzuje sedm R32; výsledkový přehled LCB24-13 potvrzuje pět R32 19.2. a sedm 20.2., osm R16 21.2., 4/2/1 v dalších kolech. Pondělní původní OOP nedostupný, jeho pět R32 je doloženo výsledkově, nikoli samostatným předstartovním OOP. Časy sekundárních zahraničních archivů mohou přesahovat do následujícího civilního dne; např. LCB24-13 uvádí finále pod 25.2., ale místní sobotní plán 24.2. 20:00 je přímo potvrzen. Původní singlové okno 8 dní, Q 2 + Main 6, žádný plánovaný překryv; 39 zápasů. Čtyřhrové změny programu nemění singlový nominál.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Standard ATP 250 dle dříve doložené lednové verze §7.08: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28; entry list LCB24-9 explicitně uvádí 18 DA, 3 WC, 4 Q, 0 SE a 0 LE, tedy mezistav 25. Nepoužité rezervy se vracejí do DA, nejde o menší plánovaný pavouk. Předstartovní ATP Main (LCB24-1/2) vizuálně ověřen: BYE 2/10/23/31, čtyři Q placeholdery 3/14/27/28, WC 13/15/30, Alt 11/12 a osm seedů. Originál 24.2. (LCB24-3) má čtyři přiřazené Q, stejné WC/BYE, odstraněné Alt značky; nejde o změnu kapacity. Main 12+8+4+2+1=27. Q 14 DA + 2 WC dle dobové listiny, 16 účastníků a osm Q1 utkání dle pořadatele, čtyři sekce a všech osm seedů potvrzeny nezávislým výsledkovým archivem LCB24-12. Sekundární Q pavouk LCB24-17 označuje WC Rubio Fierros a Mejía, Alt Holt a Mayo; pořadatel potvrzuje všech 16 jmen, nikoli všechny vstupní štítky. 8+4=12, čtyři řádní postupující. Nominální počet Q WC doložen dobovým přepisem a pravidlem; původní Q PDF chybí.
+
+### 5. Dobová pravidla
+
+§7.03/7.04/7.08/7.09/7.10/7.15–18/7.20, dříve doložená lednová verze, včetně SE/LE, čtyř sekcí, osmi seedů, čtyř Main BYE a pravidel náhradníků. ATP Preview LCB24-4 potvrzuje nulové body za první prohru po BYE; Q body dle LCB24-18. Next Gen v týdnu Rio/Doha/Los Cabos: Main Menšík v Doha doložen, žádný NG vstup není označen v Los Cabos listině LCB24-9; Michelsen je v Main předstartovním losu Alt. Věk ani samotná účast nedokazují NG rezervu. Přesná alokace Q příležitostí zůstává otevřená.
+
+**Důležitá časová revize pravidel:** oficiální ATP change log LCB24-19 výslovně datuje na 16.2.2024 změny §7.04 D (sign-in přes SMS nebo e-mail s potvrzením před deadline) a §7.08 C.3 (uchování způsobilosti na acceptance listu, kontakt před 18:00 místně den před Q; po zahájení Q přednost LL před dalšími Alt). Tentýž den oprava §9.03 G.4 potvrzuje pro ATP 250 s Main do 32 hráčů Q2 7 bodů, Q1 0. Tato revize již platí pro Q 17.2. v Los Cabos, Doha a Rio; nepřenášet automaticky na starší ročníky. Dále change log datuje změnu §7.03 A.7 (ES) na 20.2.2024, vypouští předchozí formulaci začátku časového okna v pondělí před event week; páteční uzávěrka a podmínky zůstávají. Pro vstupy před zahájením Doha 19.2. zachovat dřívější časový předpis, nikoli zpětně novelizovaný. Evidence změny je textová; screenshot zdroje 403.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 139190 |
+| Finalista | 1 | 165 | 81195 |
+| SF | 2 | 100 | 47740 |
+| QF | 4 | 50 | 26665 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 16065 |
+| R32 | 12 | 0 | 9815 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 4910 |
+| Q1 prohra | 8 | 0 | 2675 |
+
+Main přímo ze tří vizuálně ověřených originálních ATP kopií a ATP notes. Q ceny 4910/2675 shodně ve čtyřech sekundárních přehledech (LCB24-20/21/22/23), bez prokázané vzájemné nezávislosti; Stevegtennis chybně označuje měnu A$, jeho Main čísla však souhlasí s primárním USD losem. Q body primární předpis LCB24-18/19. Q částky nejsou primárně ověřené; P* zůstává do získání originálního Q losu/DS. Nominální Main 668825 USD, Q 41040 USD, celkem 709865 USD. ITF celková dotace 915245 USD a financial commitment v Main 1005620 USD nejsou singlovým součtem.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/B doloženy; E* původní acceptance list a časy losů nedohledány, uzávěrky odvozené; R* dobové změny doloženy textem, Q NG alokace otevřena; P* Q ceny sekundární shoda; Z* vizuálně ověřeny pořadatelský Main 17.2., archivní Main kopie, Main 24.2. před finále a OOP 20./24.2. (vše po jedné straně). ATP notes str. 2 a ATP change log textově, pokusy o screenshot 403; přímý Q originál a DS nedostupné. Žádné PDF hashe. Kontrola kvót, počtů zápasů a finančních součtů prošla. Další Acapulco, Dubai a Santiago 2024. Bez runtime změn.
+
+### 8. Zdroje (LCB24)
+
+- LCB24-1: [pořadatelský ATP Main los 17.2.](https://www.loscabostennisopen.com/wp-content/uploads/2024/02/MDS_17feb.pdf), str. 1 vizuálně.
+- LCB24-2: [archiv původního předstartovního Main losu](https://www.raquetc.com/wp-content/uploads/2024/02/ATP-250-Los-Cabos-2024-quadro-principal-de-singulares.pdf), str. 1 vizuálně, vyplněné cutoffs.
+- LCB24-3: [pořadatelský ATP Main los 24.2. před finále](https://www.loscabostennisopen.com/wp-content/uploads/prensa-2024/febrero_24/documentos/mds_24feb.pdf), str. 1 vizuálně.
+- LCB24-4: [ATP Preview & Day 1](https://www.atptour.com/-/media/b8477901154743c9a3d363d6c88a8814.pdf), 19.2., str. 2 Main body/odměny/BYE, text, screenshot 403.
+- LCB24-5: [pořadatel 17.2. Main los](https://loscabostennisopen.com/en/2024/02/17/mifel-tennis-open-2024-main-draw-is-ready/), termín Main a Q, změna harmonogramu.
+- LCB24-6: [pořadatelský program označený 2024](https://loscabostennisopen.com/en/tournament-schedules/), tabulka SCHEDULES, dvě chyby v datu/dni opraveny podle dobových dokumentů.
+- LCB24-7: [originální OOP 20.2.](https://www.loscabostennisopen.com/wp-content/uploads/prensa-2024/febrero_20/documentos/OP_20feb.pdf), vydán 19.2. 18:12, str. 1 vizuálně, 7 R32.
+- LCB24-8: [originální OOP 24.2.](https://www.loscabostennisopen.com/wp-content/uploads/prensa-2024/febrero_24/documentos/OP_24feb.pdf), vydán 24.2. 01:46, str. 1 vizuálně, finále 20:00.
+- LCB24-9: [dobový přepis entry listů](https://www.tennisteen.it/entry-list/atp/24123-atp-entry-list-19-25-febbraio-2024.html), Los Cabos řádky 121–180.
+- LCB24-10: [pořadatel Q1 17.2.](https://loscabostennisopen.com/en/2024/02/17/mifel-tennis-open-by-telcel-oppo-2024-opens-with-qualifiers/), osm dvojic, 16 hráčů.
+- LCB24-11: [pořadatel Q2 18.2.](https://loscabostennisopen.com/en/2024/02/18/cobolli-nava-holt-y-kovacevic-advance-to-the-main-draw/), čtyři postupující.
+- LCB24-12: [Tennis Explorer Q](https://www.tennisexplorer.com/los-cabos/2024/atp-men/?phase=qualification), úplná výsledková struktura a seedy, ne místní data.
+- LCB24-13: [Canal Tenis dobové výsledky](https://canaltenis.com/resultados-atp-los-cabos-2024/), Main denní rozdělení, finále datum nekopírovat jako místní; [pořadatel R16](https://loscabostennisopen.com/en/2024/02/21/zverev-tsitsipas-and-ruud-advance-to-quarterfinals/).
+- LCB24-14: [ATP oznámení kalendáře 2024](https://www.atptour.com/en/news/2024-atp-tour-calendar), přesun z července do února.
+- LCB24-15: [Ultimate Tennis Statistics ročník s extId 7480](https://www.ultimatetennisstatistics.com/tournamentEvent?extId=7480&name=Los+Cabos&season=2024&tab=results); [ITF ročník a celková dotace](https://www.itftennis.com/en/tournament/los-cabos/mex/2024/m-250-mex-2024-001/draws-and-results/).
+- LCB24-16: [historie času San José del Cabo](https://www.timeanddate.com/time/zone/mexico/san-jose-del-cabo), UTC−7 od 2023; [IANA timezone](https://time.is/Los_Cabos).
+- LCB24-17: [sekundární Q pavouk](https://en.wikipedia.org/wiki/2024_Los_Cabos_Open_%E2%80%93_Singles), WC/Alt a osm seedů; původní [ATP Q PDF](https://www.protennislive.com/posting/2024/7480/qs.pdf) nedostupný.
+- LCB24-18: [ATP předsezonní aktualizace rankingových bodů 2024](https://www.atptour.com/en/news/2024-rankings-points-update), ATP 250 32 draw.
+- LCB24-19: [ATP změny rulebooku, revize 30.4.2024](https://www.atptour.com/-/media/files/rulebook/2024/24-rulebook-changes_apr2024.pdf), explicitně účinnost 16.2. (§7.04 D, §7.08 C.3, §9.03 G.4) a 20.2. (§7.03 A.7); text, screenshot 403.
+- LCB24-20: [TennisCompanion historický sloupec 2024](https://tenniscompanion.org/prize-money/los-cabos/), Q 4910/2675.
+- LCB24-21: [Canal Tenis ročníkový oddíl 2024](https://canaltenis.com/prize-money-atp-los-cabos/), Q shoda.
+- LCB24-22: [dobový The SportsRush finanční rozpis 2024](https://thesportsrush.com/tennis-news-los-cabos-open-2024-prize-money-breakdown-who-is-playing-in-it-points-on-offer-where-to-watch-in-usa-and-uk/), Q shoda.
+- LCB24-23: [Stevegtennis ročník 2024](https://www.stevegtennis.com/draw-results/atp/Mifel%20Tennis%20Open%20-%20Los%20Cabos/2024), indexovaná shoda částek, chybné A$; přímý přístup timeout.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -2703,3 +2829,4 @@ I/T/D/B/P doloženy, H* přesné R32 denní rozdělení pouze výsledkově, niko
 | Delray Beach 2024 | E*/H*/Z* – doplňkové podklady | původní acceptance list, detail sheet, úplné OOP, vizuální kontrola Q originálu a přesný důvod Q2 posunu; nominální Q odměny již z primárního textu |
 | Rio de Janeiro 2024 | H*/E*/Z* – doplňkové podklady | původní rozdělení R16 před deštěm, originální acceptance list/DS, čas Q losu, obrazová kontrola velké Revista; primární Main/Q finanční tabulky ověřeny |
 | Doha 2024 | R*/E*/H*/Z* – doplňkové podklady | originální schválení ES a případná kompenzace, Q NextGen alokace v týdnu Rio/Doha/Los Cabos, originální acceptance list/DS, časy losů a kompletní původní OOP; Main/Q ceny vizuálně z ATP kopií |
+| Los Cabos 2024 | P* / E* / Z* | originální Q finanční tabulka (sekundární shoda 4910/2675 USD), acceptance list/DS, časy losování a pondělní OOP; Q NG alokace stále otevřená |

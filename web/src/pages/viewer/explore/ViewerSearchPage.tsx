@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   getViewerCountries,
@@ -8,18 +8,17 @@ import {
   getViewerRunCalendar,
   getViewerTournamentHistory,
 } from '../../../api/client'
-import { ViewerActiveRunLinks, ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
+import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
 import type { ViewerCountries, ViewerPlayers } from '../../../api/types'
 import { playerViewerBranch, verifiedViewerPlayers } from '../people/viewerPlayerDirectory'
-import { verifiedTournamentCatalog } from '../tour/viewerTournamentCatalog'
-import { viewerRunsPath } from '../../../viewer/viewerRoutes'
+import { verifiedTournamentCatalog, type SavedTournamentEntry } from '../tour/viewerTournamentCatalog'
+import { viewerRunsPath, viewerPlannedEventPath, viewerTournamentDetailPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
-import { normalizeViewerSearchQuery, searchTextMatches, type ViewerSearchTournamentResult } from './viewerComparisonDisplay'
-import { renderSearchTournamentMetadata } from './viewerComparisonRender'
+import { normalizeViewerSearchQuery } from './viewerComparisonDisplay'
 
 // Labels belong to Search; the existing public data and match/event metadata are unchanged.
 const searchCopy = {
@@ -45,10 +44,51 @@ const searchCopy = {
   previous: ['Předchozí', 'Previous'],
   next: ['Další', 'Next'],
   page: ['Strana', 'Page'],
+  eventId: ['ID turnaje', 'Event ID'],
+  season: ['Sezona', 'Season'],
+  week: ['Týden rozpisu', 'Scheduled week'],
+  location: ['Místo', 'Location'],
+  category: ['Kategorie', 'Category'],
+  tour: ['Tour', 'Tour'],
+  template: ['Šablona', 'Template'],
+  publication: ['Publikovaný výsledek', 'Published result'],
+  yes: ['Ano', 'Yes'],
+  no: ['Ne', 'No'],
+  openResult: ['Otevřít výsledek turnaje', 'Open tournament result'],
   routeNotice: ['Odkazy na výsledky používají kanonické cesty Product Runu.', 'Result links use canonical Product Run routes.'],
 } as const
 
 const SEARCH_PAGE_SIZE = 25
+
+// Fold only search text; preserve the original IDs, names and season labels.
+function folded(value: string | number | null | undefined): string {
+  return String(value ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+function matches(query: string, values: Array<string | number | null | undefined>): boolean {
+  const needle = folded(query).trim()
+  return !!needle && values.some(value => folded(value).includes(needle))
+}
+
+function SearchTournamentRow({ entry, runId, t }: {
+  entry: SavedTournamentEntry; runId: string; t: (key: keyof typeof searchCopy) => string;
+}): JSX.Element {
+  const { event, publication } = entry
+  return <>
+    <strong><Link to={viewerPlannedEventPath(runId, event.event_id)}>{event.event_name || event.event_id}</Link></strong>
+    <ViewerMetadataList items={[
+      { label: t('eventId'), value: event.event_id },
+      { label: t('season'), value: String(event.season) },
+      // The week-only route cannot identify a historical season.
+      { label: t('week'), value: 'W' + event.season_week },
+      { label: t('location'), value: [event.host_country, event.host_city].filter(Boolean).join(' · ') },
+      { label: t('tour'), value: event.tour_level ?? '—' },
+      { label: t('category'), value: event.category },
+      { label: t('template'), value: event.template_id },
+      { label: t('publication'), value: publication.result_published
+        ? <Link to={viewerTournamentDetailPath(runId, event.event_id)}>{t('openResult')}</Link> : t('no') },
+    ]} />
+  </>
+}
 
 function SearchResultsSection<T>({ title, empty, items, itemKey, renderItem, t }: {
   title: string; empty: string; items: readonly T[]; itemKey: (item: T) => string;
@@ -202,24 +242,13 @@ export function ViewerSearchPage(): JSX.Element {
     ? verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, productRunId ?? '', branchId ?? '') : null
   const verified = Boolean(roster && countrySource && catalog)
   const hasError = !isLoading && !verified
-  const tournaments = useMemo<Array<ViewerSearchTournamentResult & { eventName: string }>>(() => {
+  const tournaments = useMemo(() => {
     if (!verified || !catalog) return []
-    return catalog.entries
-      .filter(({ event }) => searchTextMatches(urlQuery, [
-        event.event_id, event.event_name, event.tour_level,
-        event.category, event.template_id, event.season_week,
-      ]))
-      .map(({ event, publication }) => ({
-        eventId: event.event_id,
-        eventName: event.event_name,
-        season: Number.parseInt(String(event.season).split('/')[0] ?? '', 10) || null,
-        week: event.season_week,
-        tour: event.tour_level,
-        category: event.category,
-        templateId: event.template_id,
-        hasPlannedEvent: true,
-        hasPersistedEvent: publication.result_published,
-      }))
+    return catalog.entries.filter(({ event }) => matches(urlQuery, [
+      event.event_id, event.event_name, event.tour_level,
+      event.category, event.template_id, event.season_week, 'W' + event.season_week,
+      event.season, event.host_country, event.host_city, event.region,
+    ]))
   }, [catalog, verified, urlQuery])
 
   if (!productRunId || !hasSearchQuery) {
@@ -238,7 +267,7 @@ export function ViewerSearchPage(): JSX.Element {
   }
 
   const players = (verified ? roster?.players ?? [] : []).filter((player) =>
-    searchTextMatches(urlQuery, [
+    matches(urlQuery, [
       player.player_id,
       player.name,
       player.country_code,
@@ -247,7 +276,7 @@ export function ViewerSearchPage(): JSX.Element {
     ])
   )
   const countries = (verified ? countrySource?.countries ?? [] : []).filter((country) =>
-    searchTextMatches(urlQuery, [
+    matches(urlQuery, [
       country.country_code,
       country.top_player_name,
       country.top_player_id,
@@ -285,11 +314,8 @@ export function ViewerSearchPage(): JSX.Element {
           renderItem={country => renderCountrySampleMetadata(country, productRunId)} />
         <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'tournaments'])}
           title={t('tournaments')} empty={t('noTournaments')} items={tournaments} t={t}
-          itemKey={event => event.eventId}
-          renderItem={event => <>
-            <strong>{event.eventName || event.eventId}</strong>
-            {renderSearchTournamentMetadata(productRunId, event)}
-          </>} />
+          itemKey={entry => entry.event.event_id}
+          renderItem={entry => <SearchTournamentRow entry={entry} runId={productRunId} t={t} />} />
         </> : null}
         <section aria-label={t('links')}>
           <h4>{t('links')}</h4>

@@ -5,6 +5,7 @@ import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ViewerSearchPage } from './ViewerSearchPage'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory } from '../../../test/viewerCalendarFixtures'
 
 const mocks = vi.hoisted(() => ({
   runId: 'run-a' as string | null,
@@ -282,6 +283,32 @@ describe('Viewer Search submission (mocked GET API)', () => {
     expect(within(nextSection).getAllByRole('listitem')).toHaveLength(9)
     expect(within(nextSection).getByText('Player 01')).toBeInTheDocument()
     expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
+  it('finds accented names without accents and preserves original display text', async () => {
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', ['Jiří Novák', 'Bob']))
+    mount('/viewer/search?q=jiri+novak')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getByText('Jiří Novák')).toBeInTheDocument()
+    expect(within(section).queryByText('Bob')).not.toBeInTheDocument()
+  })
+
+  it('finds tournaments by host city, retains exact season labels and avoids an ambiguous week-only link', async () => {
+    const event = calendarEvent({ event_id: 'historic/event', event_name: 'Historical Open',
+      host_country: 'CZE', host_city: 'Plzeň', season: '2004/2005', season_week: 9 })
+    mocks.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([event], 'run-a'), viewer_branch_id: mocks.branch })
+    mocks.getViewerTournamentHistory.mockResolvedValue({
+      ...savedHistory([historyEvent(event)], 'run-a'), viewer_branch_id: mocks.branch,
+    })
+    mount('/viewer/search?q=plzen')
+    const section = await screen.findByRole('region', { name: 'Tournaments' })
+    expect(within(section).getByRole('link', { name: 'Historical Open' })).toHaveAttribute(
+      'href', '/viewer/runs/run-a/calendar/historic%2Fevent',
+    )
+    expect(within(section).getByText('2004/2005')).toBeInTheDocument()
+    expect(within(section).getByText('W9')).toBeInTheDocument()
+    expect(within(section).getByText('CZE · Plzeň')).toBeInTheDocument()
+    expect(within(section).getAllByRole('link')).toHaveLength(1)
   })
 
 })

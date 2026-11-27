@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 6 ročníků, všechny Grand Slamy 2024 a Wimbledon a Australian Open 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 7 ročníků, všechny Grand Slamy 2024 a Wimbledon, Australian Open a Roland Garros 2025.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -40,10 +40,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Roland Garros](#roland-garros-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [US Open](#us-open-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Australian Open](#australian-open-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [Roland Garros](#roland-garros-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 6 zpracovaných ročníků; 6 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 7 zpracovaných ročníků; 7 hotových v nominálním rozsahu; 0 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -55,7 +56,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 4 | Roland Garros 2024 | HOTOVO (nominální rozsah) |
 | 5 | US Open 2024 | HOTOVO (nominální rozsah) |
 | 6 | Australian Open 2025 | HOTOVO (nominální rozsah) |
-| 7 | Roland Garros 2025 | NEZAHÁJENO |
+| 7 | Roland Garros 2025 | HOTOVO (nominální rozsah) |
 | 8 | US Open 2025 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení.
@@ -76,6 +77,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#roland-garros-2024) | Roland Garros | Grand Slam | 2024-05-20–2024-05-24 | 2024-05-26–2024-06-09 | HOTOVO v nominálním rozsahu; denní Q2 ověřeno |
 | [2024](#us-open-2024) | US Open | Grand Slam | 2024-08-19–2024-08-22 | 2024-08-26–2024-09-08 | HOTOVO v nominálním rozsahu |
 | [2025](#australian-open-2025) | Australian Open | Grand Slam | 2025-01-06–2025-01-09 | 2025-01-12–2025-01-26 | HOTOVO v nominálním rozsahu |
+| [2025](#roland-garros-2025) | Roland Garros | Grand Slam | 2025-05-19–2025-05-23 | 2025-05-25–2025-06-08 | HOTOVO v nominálním rozsahu |
 
 ## Wimbledon 2024
 
@@ -912,3 +914,115 @@ I/T/D/R/B/P pokryto. H: Q denní okna potvrzena dobovými zprávami, ale samosta
 - AO25-14: [Grand Slam Rule Book 2025](https://www.wimbledon.com/pdf/Grand_Slam_Rulebook_2025.pdf), opět vizuálně tištěné str. 7,24,26,30,31, zbytek relevantního §2/3 viz W25-4; ATP body W25-15.
 - AO25-15: [Tennis Australia — AO25 Key Player Information](https://www.tennis.com.au/wp-content/uploads/2024/11/AO25-Key-Player-Information.pdf), str. 1 vizuálně.
 
+
+## Roland Garros 2025
+
+**Stav:** HOTOVO v nominálním rozsahu (9/9), s níže uvedenými omezeními H/E/Z. Rešerše 2026-11-27. Pouze tenisová fakta.
+
+### 1. Identita
+
+| Pole | Hodnota | Zdroj |
+|---|---|---|
+| Název / disciplína | Roland-Garros 2025, mužská dvouhra | RG25-1/2 |
+| Kategorie / ATP ID | Grand Slam / 520 (identita série) | RG25-1, RG24-16 |
+| Dějiště obou fází | Stade Roland-Garros, Paříž, Francie | RG25-1/2 |
+| Povrch | venkovní antuka | RG25-2 |
+| Časové pásmo | Europe/Paris, CEST UTC+02:00 | místní civilní datum, RG25-1 |
+| Pořadatel / měna | FFT / EUR | RG25-3/4 |
+| Ředitelka | Amélie Mauresmo | RG25-3 |
+| Míče, rozhodčí, individuální diety | neověřeno pro tento ročník | doplňková metadata |
+
+### 2. Přihlášky a plán
+
+| Pole | Místní údaj | Zdroj / význam |
+|---|---|---|
+| Main datum rankingu pro vstup | 2025-04-14 | mužský ATP Acceptance List RG25-5, rank date výslovně; 42 dní před prvním pondělím 26. 5. |
+| Q datum rankingu pro vstup | 2025-04-21 | mužský ATP Q Acceptance List RG25-6, rank date výslovně |
+| Obecná Q uzávěrka podle předpisu | 2025-04-28 | výpočet 28 dní před pondělím Main; nejde o doloženou mužskou uzávěrku tohoto ročníku. Q rank date 21. 4. nelze zaměnit s touto hodnotou. Konkrétní uzávěrka/hodina nezískána. |
+| Oznámení WC | 2025-05-13, aktualizace 18. 5. | RG25-3 |
+| Q los | zveřejněn 2025-05-18 | RG25-7, okamžik losování neověřen |
+| Q | 2025-05-19–23 | RG25-1 |
+| Main los | 2025-05-22 14:00 | RG25-1 |
+| Main | 2025-05-25–06-08 | RG25-1 |
+| Mužské SF | 2025-06-06, ne před 14:30 a 19:00 | RG25-1 |
+| Mužské finále | 2025-06-08, ne před 15:00 | RG25-1 |
+
+Pozor: mužský Q Acceptance List nese Date 19 May a Rank Date 21 Apr; Main Acceptance List Date 26 May a Rank Date 14 Apr. Date 26 May v administrativní listině nepřepisuje nedělní zahájení soutěže 25. 5. Ženský acceptance PDF RG25-8 uvádí jiné Q datum 28. 4.; pro muže se nesmí použít. Předpis RG25-9 str. 24 určuje obecné lhůty a možnost výjimek. Stejnou opatrnost uplatňovat u starších ročníků: RG24 dříve evidované Q datum 29. 4. je pouze obecný výpočet s podpůrným ženským dokladem, nikoli ověřený mužský rank date.
+
+### 3. Plánované fáze a kola
+
+| Kolo | Lokální okno | Nominální uzly | Evidence |
+|---|---|---:|---|
+| Q1 | 2025-05-19–20 | 64 | RG25-10/11 |
+| Q2 | 2025-05-21 | 32 | RG25-11/12; odklad části programu 22. 5. kvůli dešti |
+| Q3 | 2025-05-22–23 | 16 | RG25-1/12/13, denní pořadatelské zprávy |
+| Mezi fázemi | 2025-05-24 | 0 | RG25-1, charitativní Yannick Noah Day |
+| R128 | 2025-05-25–27 | 64 | RG25-1 |
+| R64 | 2025-05-28–29 | 32 | RG25-1 |
+| R32 | 2025-05-30–31 | 16 | RG25-1 |
+| R16 | 2025-06-01–02 | 8 | RG25-1 |
+| QF | 2025-06-03–04 | 4 | RG25-1 |
+| Bez mužského singlového kola | 2025-06-05 | 0 | RG25-1 |
+| SF | 2025-06-06 | 2 | RG25-1 |
+| Bez mužského singlového kola | 2025-06-07 | 0 | RG25-1 |
+| F | 2025-06-08 | 1 | RG25-1 |
+
+Q 5 dní, Main 15 dní, 21 dní celé okno. Pořadatel v úterý 20. 5. avizoval Q2 na středu. Dne 21. 5. déšť způsobil odklad venkovních zápasů, 22. 5. se hrálo Q2 i Q3. Nominální Q2 ponecháváme 21. 5. jako odvozený plán kola podpořený dobovou zprávou o odkladu; kompletní předdešťový OOP s 32 mužskými identifikátory, jako u RG24, zatím nezískán. Q3 okno potvrzeno pořadatelskými články, nikoli přesným původním rozdělením denních počtů. Main okna všech kol přímo v oficiálním plánu. Start Q 19.–21. 5. od 10:00, 22.–23. 5. od 11:00; Main obvykle od 11:00. Nejde o individuální starty.
+
+### 4. Struktura a pravidla
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / nominální hráči | 128 | 128 |
+| Přímé akceptace | 104 | 119 |
+| WC | 8 | 9 |
+| Nasazení | 32 | 32 |
+| Q postupová místa | 16 | 16 vítězů sekcí |
+| BYE | 0 | 0 |
+| Kola / nominální uzly | 7 / 127 | 3 / 112 |
+| Formát | BO5 setů | BO3 setů ve všech kolech |
+
+RG25-5/6 přímo mužské ATP listiny uvádějí kvóty; RG25-3 aktualizované WC; RG25-14 obě strany Main vizuálně, RG25-15 horní Q strana vizuálně a druhá textově, RG25-7/13 Q výsledky. 104+16+8=128; 119+9=128; 239 uzlů celkem. Main kontrolní konečný los 8 WC, 16 Q, 6 LL, 32 seedů, žádný BYE; šest skutečných LL není nominální kvóta. Q 16 sekcí po osmi, 2 seedy v každé sekci. Nepřebírat výjimku Wimbledonu BO5 Q3. Dobová pravidla RG25-9: Main seeding podle rankingu přibližně týden před turnajem, skupiny 128/32, krajní seedy 1/2; Q seedy 1–16 horní pozice, 17–32 losované na spodní pozice. Před zveřejněním prvního OOP odstoupeného seedu nahradí další způsobilý seed, po zveřejnění alternate. Q vítězové přiřazeni do Main losem po skončení Q. LL z posledního kola Q přednostně, další kola jen v případě potřeby; losování čtyř nejvýše postavených způsobilých, při více než dvou odstoupeních při konci Q počet odstoupení + 2; poté ranking. Náhrada před prvním bodem prvního zápasu odstoupivšího; sign-in 30 min před prvním zápasem dne. Rozhodující tiebreak na 10 s rozdílem 2 při 6:6. Main a Q BO doloženo 2025 předpisem a výsledky Q3 RG25-13. Historické první cutoff ranky 100 Main, 218 Q z RG25-5/6 jsou jen kontext.
+
+### 5. Body a odměny
+
+| Výsledek | Příjemci | ATP body | EUR 2025 |
+|---|---:|---:|---:|
+| Vítěz | 1 | 2000 | 2550000 |
+| Finalista | 1 | 1300 | 1275000 |
+| SF | 2 | 800 | 690000 |
+| QF | 4 | 400 | 440000 |
+| R16 | 8 | 200 | 265000 |
+| R32 | 16 | 100 | 168000 |
+| R64 | 32 | 50 | 117000 |
+| R128 | 64 | 10 | 78000 |
+| Q postupující | 16 | 30 | samostatná odměna neuvedena |
+| Q3 prohra | 16 | 16 | 43000 |
+| Q2 prohra | 32 | 8 | 29500 |
+| Q1 prohra | 64 | 0 | 21000 |
+
+Main přímo ATP mužský preview RG25-16 (text, screenshot 403) + WTA preview vizuálně pouze pro stejné odměny, nikoli ženské body. Q tabulka z více zdrojů RG25-17; originální press kit je odkázán, ale přímý přístup překročil velikostní limit, takže nelze tvrdit jeho vizuální kontrolu. Eurosport tabulka v době rešerše obsahuje chybné/nesouhlasné částky 2 555 000, 88 737, 48 919; pro Main přednost ATP a WTA, pro Q shoda zdrojů s původním release. ATP body Q dle W25-15, 30 Q body přičítány k Main, WC prohra R128 bez bodů. Nominální součty Main 20509000 EUR, Q 2976000 EUR = 23485000 EUR. Celoturnajová dotace 56 352 000 EUR zahrnuje ostatní soutěže. Nepřepisovat skutečné platby jednotlivcům.
+
+### 6. Pokrytí
+
+I/T/D/R/B/P doloženo, H* Q2 plán odvozen z dobového programu/odkladu, kompletní předdešťové OOP nezískáno; E* mužské rank dates přímo doloženy, skutečná Q entry uzávěrka a hodiny losu neověřeny (neztotožňovat rank date a deadline); Z* druhá Q strana a ATP preview vizuálně nedostupné, Q prize press kit překročil limit. Nominální struktura doložena mužskými listinami a dobovým předpisem. SHA-256 nebyly získány. Další US Open 2025.
+
+### 7. Zdroje (RG25)
+
+- RG25-1: [FFT oficiální program všech kol](https://www.rolandgarros.com/en-us/article/2025-full-schedule-calendar-qualifications-main-draw-singles-doubles-wheelchair-tennis).
+- RG25-2: [WTA dobový přehled](https://www.wtatennis.com/news/4271092/____french-open-2025-draws-dates-prize-money-and-what-you-need-to-know) (identita/povrch, ne ženské body).
+- RG25-3: [FFT WC 13. 5., update 18. 5.](https://www.rolandgarros.com/en-us/article/2025-wildcards-men-women-singles-qualifying-rounds).
+- RG25-4: [ATP prize money](https://www.atptour.com/en/news/roland-garros-2025-prize-money) indexovaný text.
+- RG25-5: [mužský Main ATP Acceptance List](https://rg-organisation.fft.fr/sites/default/files/2025-04/RG%20MD%20Men%202025.pdf), str. 1 vizuálně.
+- RG25-6: [mužský Q ATP Acceptance List](https://rg-organisation.fft.fr/sites/default/files/2025-04/RG%20Q%20Men%202025.pdf), str. 1 vizuálně.
+- RG25-7: [ATP Q draw 18. 5.](https://www.atptour.com/en/news/roland-garros-2025-qualifying-draw), [FFT Q preview](https://www.rolandgarros.com/en-us/article/rg2025-qualifying-the-only-way-is-up).
+- RG25-8: [ženský WTA acceptance PDF](https://rg-organisation.fft.fr/sites/default/files/2025-05/RolandGarrosMD2025Update.pdf), indexovaný text, pouze kontrast, ne mužské datum.
+- RG25-9: [ITF Grand Slam Rulebook 2025](https://www.itftennis.com/media/5986/grand-slam-rulebook-2025-f.pdf), tištěná str. 24 vizuálně; §2/3 viz W25-4, AO25-14.
+- RG25-10: [FFT Opening Week](https://www.rolandgarros.com/en-us/article/2025-roland-garros-gears-up-for-opening-week).
+- RG25-11: [FFT 20. 5., představení středečního Q2](https://www.rolandgarros.com/en-us/article/rg2025-roland-garros-wrap-tuesday-may-20).
+- RG25-12: [FFT 21. 5., odklady](https://www.fft.fr/actualites/qualifications-roland-garros-mercredi-droguet-ferro-monnet-gea-mpetshi-programmation-courts-tableaux), [L'Équipe 21. 5.](https://www.lequipe.fr/Tennis/Actualites/Les-matches-de-qualifications-sur-les-courts-annexes-reportes-a-jeudi-en-raison-de-la-pluie/1563683), [FFT 22. 5.](https://www.rolandgarros.com/en-us/article/rg2025-roland-garros-wrap-thurs-may-22).
+- RG25-13: [ATP Q3 výsledky 23. 5.](https://www.atptour.com/en/news/roland-garros-2025-qualifying-results), [FFT poslední den](https://www.fft.fr/actualites/vendredi-23-mai-direct-commente-roland-garros).
+- RG25-14: [originální Main draw kopie RFET, aktualizace 8. 6. 20:58](https://www.rfet.es/descargar/file-noticias-adjuntos/5247_Documento/cuadro-individual-roland-garros-2025.pdf), obě strany vizuálně.
+- RG25-15: [FFT Q draw 19. 5. 21:05](https://rg-organisation.fft.fr/sites/default/files/2025-05/Mens_Qualifying_20250519210617.pdf), str. 1 vizuálně; str. 2 screenshot 500, indexovaný text.
+- RG25-16: [ATP Men's Tournament Preview 2025](https://www.atptour.com/-/media/8b317e663bf34fbba0bbb6fa013a76fa.pdf), tabulka bodů a Main prize textově, screenshot 403; [WTA preview](https://wtafiles.wtatennis.com/pdf/matchnotes/2025/903_preview.pdf), str. 1 vizuálně, pouze stejné peněžní částky.
+- RG25-17: [press kit FFT](https://fft-rg-commun-news.cdn.prismic.io/fft-rg-commun-news/aAEIrOvxEdbNPMke_DPROLANDGARROS2025UKVF1.pdf), přístup selhal kvůli velikosti 13 MB; [tabulka s odkazem na press kit](https://tennisprizemoney.com/french-open-prize-money/2025/), [dobový TennisTemple Q tabulka](https://en.tennistemple.com/actu/roland-garros-announces-prize-money-increase-for/F2du), [Reuters 6. 5. 2025](https://www.reuters.com/sports/tennis/french-open-2025-prize-money-how-much-do-winners-earn-2025-05-06/).

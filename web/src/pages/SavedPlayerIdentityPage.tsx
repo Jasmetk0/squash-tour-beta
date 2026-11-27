@@ -143,6 +143,22 @@ export function SavedPlayerIdentityPage(): JSX.Element {
             <p className="status">{cs
               ? 'Autoritativní 0–200 OVR, Potential OVR a sada atributů zatím nejsou v tomto saved-player read kontraktu dostupné. Z legacy stupnice ani jiných branchí je nepřebíráme.'
               : 'Authoritative 0–200 OVR, Potential OVR and the attribute catalogue are not available in this saved-player read contract yet. Legacy scales and other Branches are not substituted.'}</p>
+            <section aria-label={cs?'Dostupnost sportovního profilu':'Sporting profile availability'}>
+              <h4>{cs?'Dostupnost údajů v uloženém profilu':'Saved profile data availability'}</h4>
+              <p>{cs?'Kanonický model enginu obsahuje 57 atributů v šesti skupinách. Tento čtecí kontrakt ale jejich hodnoty zatím nepředává.':
+                'The canonical engine model has 57 attributes in six groups. This read contract does not expose their values yet.'}</p>
+              <div className="table-responsive"><table>
+                <thead><tr><th>{cs?'Údaj':'Field'}</th><th>{cs?'Dostupnost v profilu':'Profile availability'}</th></tr></thead>
+                <tbody>{(cs?['Aktuální OVR','Potential OVR (skrytý potenciál)','Technika','Pohyb','Taktika','Mentální','Fyzické','Kreativita',
+                  'Forma, rozehranost a dlouhodobá únava','Historický vývoj atributů']:
+                  ['Current OVR','Potential OVR (hidden potential)','Technical','Move','Tactics','Mental','Physical','Creativity',
+                  'Form, sharpness and long-term fatigue','Historical attribute development']).map(name=><tr key={name}>
+                    <th scope="row">{name}</th><td>{cs?'Nedostupné z tohoto zdroje':'Unavailable from this source'}</td>
+                  </tr>)}</tbody>
+              </table></div>
+              <p className="status">{cs?'Nedostupnost hodnot neznamená nulovou schopnost. OVR se zde nepřepočítává; konečné váhy nejsou kalibrovány.':
+                'Unavailable values do not mean zero ability. OVR is not recomputed here; final weights are not calibrated.'}</p>
+            </section>
             <p className="status">{cs ? 'Režim: jen čtení. Úpravy se zpřístupní samostatným výslovným krokem.' :
               'Read-only mode. Editing will require a separate explicit action.'}</p>
           </section>}

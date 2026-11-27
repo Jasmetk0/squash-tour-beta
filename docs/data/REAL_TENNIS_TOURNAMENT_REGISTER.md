@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 19 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 20 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -53,10 +53,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Buenos Aires](#buenos-aires-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Rotterdam](#rotterdam-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Delray Beach](#delray-beach-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Rio de Janeiro](#rio-de-janeiro-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 19 zpracovaných ročníků; 17 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 20 zpracovaných ročníků; 18 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -81,7 +82,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 17 | Buenos Aires 2024 | HOTOVO (nominální rozsah) |
 | 18 | Rotterdam 2024 | HOTOVO (nominální rozsah) |
 | 19 | Delray Beach 2024 | HOTOVO (nominální rozsah) |
-| 20 | Rio de Janeiro 2024 | NEZAHÁJENO |
+| 20 | Rio de Janeiro 2024 | HOTOVO (nominální rozsah) |
 | 21 | Doha 2024 | NEZAHÁJENO |
 | 22 | Los Cabos 2024 | NEZAHÁJENO |
 
@@ -120,6 +121,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#buenos-aires-2024) | IEB+ Argentina Open | ATP 250 | 2024-02-10–2024-02-11 | 2024-02-12–2024-02-18 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 | [2024](#rotterdam-2024) | ABN AMRO Open | ATP 500 | 2024-02-10–2024-02-11 | 2024-02-12–2024-02-18 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 | [2024](#delray-beach-2024) | Delray Beach Open | ATP 250 | 2024-02-10–2024-02-11 (plán) | 2024-02-12–2024-02-18 (plán) | HOTOVO v nominálním rozsahu; finále přeloženo na 19.2. |
+| [2024](#rio-de-janeiro-2024) | Rio Open presented by Claro | ATP 500 | 2024-02-17–2024-02-18 | 2024-02-19–2024-02-25 | HOTOVO v nominálním rozsahu; odklady deštěm odděleně |
 
 ## Wimbledon 2024
 
@@ -2452,6 +2454,119 @@ I/T/D/B/P doloženy; H* denní rozdělení rekonstruováno, kompletní předturn
 - DLB24-15: [ATP oznámení Next Gen programu 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024), příležitosti od roku 2024.
 - DLB24-16: [ATP archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), další Rio, Doha, Los Cabos.
 
+
+## Rio de Janeiro 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/Z s omezeními). Druhý ATP 500 v registru; první ATP 500 na antuce. Rešerše 2026-11-27. Oba originální ATP losy i předstartovní Main kopie vizuálně zkontrolovány. Oficiální program pořadatele má přednost před deštěm změněnými skutečnými výsledky.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Rio Open presented by Claro, 10. ročník, mužská dvouhra | RIO24-1/2/4/5 |
+| Kategorie / ATP ID | ATP 500 / 6932 | RIO24-1/2/4 |
+| Dějiště Main i Q | Jockey Club Brasileiro, Rio de Janeiro, Brazílie | RIO24-4/5/6 |
+| Povrch | venkovní červená antuka | RIO24-1/2/4 |
+| Časové pásmo | America/Sao_Paulo, BRT UTC−03:00 v únoru 2024 | lokalita a datum |
+| Ředitel | Luiz Procopio Carvalho | RIO24-4 |
+| ATP supervisors | Carlos Sanches / Jorge Mandl | RIO24-1/2/3 |
+| Měna | USD | RIO24-1/2/4 |
+
+Míče, původní ATP detail sheet a referee neověřeny. Čtyřhra jen kontext, nikoli součást singlového součtu.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-01-22 | RIO24-7 |
+| Q rank date | 2024-01-29 | RIO24-7 |
+| Nominální Main deadline | 2024-01-22 14:00 BRT (12:00 US Eastern) | §7.03, odvozeno |
+| Nominální Q deadline | 2024-01-29 14:00 BRT (12:00 US Eastern) | §7.03, odvozeno |
+| Podmíněná A+ WC deadline | 2024-02-16 12:00 BRT (10:00 US Eastern) | §7.12 A.2, odvozeno |
+| Main los | 2024-02-17 14:30 BRT (publikovaný plán) | RIO24-4 |
+| Q los | nejpozději 2024-02-16, kdy pořadatel zveřejnil páry; přesný čas neověřen | RIO24-8 |
+| Q | 2024-02-17–18 od 16:00 | RIO24-4/6/8/9 |
+| Main | 2024-02-19–25 | RIO24-1/4/9 |
+| Finále | 2024-02-25 17:30 BRT (plán) | RIO24-4/9 |
+
+Dobový přepis listin RIO24-7 uvádí původní cutoffs 85 Main / 145 Q. Předstartovní Main los RIO24-3 uvádí Diaz Acosta 90 při deadline a Dellien 105 v losu; výsledkový Main RIO24-1 nechává obě pole prázdná. Originální Q los uvádí Pellegrino 163 jako last DA. Zachovat rozdílné zdrojové údaje bez ztotožnění a bez dopočítávání chybějících polí. Uzávěrky jsou pravidlovým odvozením; originální acceptance list PDF ani hodina Q losu nedohledány.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-17 | 8 |
+| Q2 | 2024-02-18 | 4 |
+| R32 | 2024-02-19–20 | 16 |
+| R16 | 2024-02-21–22 | 8 |
+| QF | 2024-02-23 | 4 |
+| SF | 2024-02-24 | 2 |
+| F | 2024-02-25 | 1 |
+
+Oficiální pořadatelská Revista Rio Open 2024 (RIO24-9, PROGRAMAÇÃO) výslovně stanoví uvedená okna. Q na všech kurtech od 16:00, po–čt první session 16:30 a večer od 19:00; QF jeden na kurtu 1 od 16:00 a tři na centru od 16:30; SF od 17:00, F 17:30. Po–čt nelze odvodit celkové počty pouze z centrálního kurtu. Q1 předstartovní seznam obsahuje všech osm dvojic a všech osm seedů (RIO24-8). Oficiální OOP 19.2. vydaný 18.2. má sedm R32 (3+2+2 na třech kurtech); OOP 20.2. vydaný 19.2. má devět R32 (3+2+2+2 na čtyřech kurtech); součet 16. Denní plán R32 tedy doložen 7+9, nikoli odhad 8+8. Pořadatelský OOP 21.2. již po úterním dešti zahrnoval jeden přesunutý R32 a čtyři R16. Původní denní rozdělení osmi R16 bez vlivu deště není nezávisle doloženo, zachovat okno 21.–22.2., neprohlašovat 4+4 za původní přesný plán. Dne 21.2. další déšť způsobil přesun tří singlových R16 (jedno rozehrané) a jednoho doubles utkání na 22.2.; počty a okna nominálu se nemění. Q 2 dny, Main 7 dní, celkem 9 dní bez plánovaného překryvu fází ani Main kol. 31+12=43 zápasů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 32 | 16 / 16 |
+| Základní DA při všech rezervách | 23 | 13 |
+| SE rezervy | 1 | 0 |
+| WC | 3 běžné + 1 podmíněná A+ | 3 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 0 | 0 |
+| Kola / zápasy | 5 / 31 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Na rozdíl od pouhého obecného odvození z pravidel ATP je zde i přímý ročníkový důkaz všech Main kvót: pořadatel 5.2. výslovně popisuje 23 DA + 3 WC + 1 A+ WC + 4 Q + 1 SE a převod nepoužitých A+/SE na DA (RIO24-5). Dobový přepis RIO24-7 uvádí 23 DA, 3 WC, 4 Q, 0 SE, což je neúplný stav listiny, nikoli konečná kapacita. Předstartovní originál RIO24-3: Q placeholdery 3/7/10/22; WC 2/18/29; osm seedů, žádné BYE. Finální originál potvrzuje stejné čtyři Q pozice a tři WC, bez LL nebo SE značek. 25 ostatních míst odpovídá uvolnění rezerv, individuální administrativní cestu nezjišťujeme pouze ze štítku. Cilic měl v počáteční listině PR, ne extra kapacitu, v předstartovním losu již nebyl.
+
+Q 13 DA + 3 WC dle RIO24-7, standardu ATP 500 a předem vydaného Q programu RIO24-8. Výsledkový originál RIO24-2 vizuálně potvrzuje tři WC na pozicích 6/14/15, dvě Alt a sedm aktivních seedů; seed 6 Barrios Vera a Dellien přešli do Main, jejich místa obsadili náhradníci. Osm nominálních seedů zachovat podle původního Q programu. Dřívější mediální oznámení WC RIO24-14 zahrnovalo i Meligeniho, který ve finálním Q originálu WC štítek nemá; původní oznámení není konečný vstupní status. Čtyři Q sekce po čtyřech, každý vítěz postoupí dvěma zápasy; Q 8+4=12, Main 16+8+4+2+1=31. Skreče nemění nominální počet.
+
+### 5. Dobová pravidla
+
+ATP 500 §7.08 B/E, §7.10 B a §7.12 A.2: jedna SE rezerva, tři běžné WC, podmíněná A+ WC s páteční uzávěrkou; nevyužité rezervy se vracejí do DA. SE z ATP 250 pro ATP 500 omezen stejným ATP regionem. §7.13/7.15–16: osm seedů v Main i Q, čtyři kvalifikanti; pravidla Alt a LL podle §7.09/7.16. BO3 s tiebreakem dle dobového ATP singles předpisu (MPL24-7, ROT24-15). Bodové pravidlo pro prohru po BYE není relevantní, protože pavouk nemá BYE. Q body dle ATP 2024 rankingové aktualizace ROT24-16.
+
+Týden 19.2. zahrnuje také ATP 250 Doha a Los Cabos. Pořadatelský Main seznam označuje Fonsecu jako WC a Filse jako řádnou přímou akceptaci, byť je oba mediálně možné označit jako mladé hráče; nejde o doklad programového NG vstupu. Dobový týdenní přepis RIO24-7 již uvádí Menšíka jako NG v rámci 18 DA Doha (17 ostatních); spolu s MRS24-15 je to silná stopa pro příští ročník, nikoli nové místo v Rio nebo potvrzení konkrétních Q rezerv.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 500 | 392775 |
+| Finalista | 1 | 330 | 211330 |
+| SF | 2 | 200 | 112625 |
+| QF | 4 | 100 | 57540 |
+| R16 | 8 | 50 | 30715 |
+| R32 | 16 | 0 | 16380 |
+| Q postupující | 4 | 25 | 0 samostatně |
+| Q2 prohra | 4 | 13 | 8395 |
+| Q1 prohra | 8 | 0 | 4710 |
+
+Main i Q primární vizuálně ověřené tabulky RIO24-1/2, Main shoda s předstartovním losem RIO24-3 a ATP preview u pořadatele RIO24-4. Nominální Main 1567315 USD, Q 71260 USD, součet 1638575 USD. Celková turnajová dotace 2100230 USD a total financial commitment 2271715 USD jsou jiné veličiny (RIO24-4); neztotožňovat se singlovým součtem. Q postupující obdrží 25 bodů a samostatně 0 USD, peníze podle Main výsledku.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B/P doloženy včetně explicitních ročníkových Main rezerv a tří Q WC. H*: předturnajový plán kol oficiálně, R32 7+9 ověřeno v předem vydaných OOP; původní R16 denní dělení neověřeno, dešťové přesuny nepromítnuty do nominálu. E*: Main čas losu doložen plánem, Q čas neznámý, uzávěrky odvozené; originální acceptance list/DS nezískány. Z*: originální Main/Q i předstartovní Main kopie vizuálně zkontrolovány, Revista program textově, screenshot odmítnut kvůli velikosti 18,6 MB. PDF hashe neověřeny. Aritmetická kontrola kvót, zápasů, peněz a součtu R32 prošla. Následující Doha 2024; Los Cabos poté. Žádný zásah do runtime.
+
+### 8. Zdroje (RIO24)
+
+- RIO24-1: [originální ATP Main los](https://www.protennislive.com/posting/2024/6932/mds.pdf), str. 1 vizuálně ověřena.
+- RIO24-2: [originální ATP Q los](https://www.protennislive.com/posting/2024/6932/qs.pdf), str. 1 vizuálně ověřena včetně bodů a peněz.
+- RIO24-3: [archiv předstartovního ATP Main losu](https://www.fantatennis.net/_downloads/05df4c56adf4a0efda3077262cebdb08), str. 1 vizuálně ověřena, cutoffs a Q placeholdery.
+- RIO24-4: [ATP předturnajový přehled 15.2.](https://www.atptour.com/en/news/rio-de-janeiro-2024-history-draw-schedule), [stejný článek u pořadatele](https://www.rioopen.com/en/noticias/news/rio-de-janeiro-2024-history-draw-schedule), termíny, Main los, session, body/peníze, ředitel; nejde o dva nezávislé zdroje.
+- RIO24-5: [pořadatelský Main entry list 5.2.](https://www.rioopen.com/en/noticias/news/rio-open-2024-entry-list-features-alcaraz-norrie-fils-wawrinka-and-cilic), explicitní 23 DA + 3 WC + A+ WC + 4 Q + SE.
+- RIO24-6: [pořadatel Q entry list 30.1.](https://www.rioopen.com/pt-br/noticias/news/quali-2024), Q dny a dva zápasy na postup.
+- RIO24-7: [dobový přepis entry listů týdne 19.–25.2.](https://www.tennisteen.it/entry-list/atp/24123-atp-entry-list-19-25-febbraio-2024.html), Rio Main/Q, Doha NG stopa, Los Cabos.
+- RIO24-8: [pořadatel Q los a Q1 program 16.2.](https://www.rioopen.com/en/noticias/news/qualifying-gets-underway-in-rio), všech osm předstartovních seedů a tři WC.
+- RIO24-9: [oficiální Revista Rio Open 2024](https://www.rioopen.com/-/media/sites/tournaments/rio/revista-programa/revista_rio_open_fev2024_site.pdf), oddíl PROGRAMAÇÃO, celý nominální rozpis kol, text, screenshot neúspěšný (příliš velký soubor).
+- RIO24-10: [pořadatel OOP 19.2. vydaný 18.2.](https://www.rioopen.com/en/noticias/news/norrie-begins-his-tittle-defense-this-monday), 7 R32.
+- RIO24-11: [pořadatel OOP 20.2. vydaný 19.2.](https://www.rioopen.com/en/noticias/news/alcaraz-wawrinka-and-fils-in-action-this-tuesday), 9 R32.
+- RIO24-12: [pořadatel úterní déšť](https://www.rioopen.com/en/noticias/news/diaz-acosta-wawrinka-rio-de-janeiro-2024-tuesday), [středeční aktualizovaný OOP](https://www.rioopen.com/en/noticias/news/norrie-back-in-action-at-jockey-this-wednesday), [odklad středečních zápasů](https://www.rioopen.com/en/noticias/news/rain-cancels-four-matches-on-wednesday-night).
+- RIO24-13: [Ge dobový program](https://ge.globo.com/tenis/rio-open/noticia/2024/02/19/rio-open-2024-onde-assistir-ao-vivo-e-programacao.ghtml), nezávislé potvrzení plánovaných oken; [dobový denní archiv](https://canaltenis.com/resultados-atp-rio-open-2024/) pouze jako výsledková kontrola, chybná závěrečná data v úvodu nepřebírat.
+- RIO24-14: [Ge 14.2., oznámení WC](https://ge.globo.com/tenis/rio-open/noticia/2024/02/14/rio-open-distribui-convites-para-mais-quatro-tenistas-brasileiros.ghtml), historické oznámení před definitivním losem.
+- Pravidla viz ROT24-15/16 a MPL24-7; originální DS a acceptance list PDF nedohledány.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -2467,3 +2582,4 @@ I/T/D/B/P doloženy; H* denní rozdělení rekonstruováno, kompletní předturn
 | Buenos Aires/Delray Beach 2024 | R* – NextGen rezervy | Main Delray Shang doložen pořadatelem a listinou DLB24-7/9/12; Q příležitosti a případné využití/propad v týdnu stále otevřeny; žádné navýšení kapacity |
 | Rotterdam 2024 | E*/Z* – doplňkové podklady | originální acceptance list/DS, Q losovací čas; Main/Q ceny přímo v originálech, bez blokující mezery |
 | Delray Beach 2024 | E*/H*/Z* – doplňkové podklady | původní acceptance list, detail sheet, úplné OOP, vizuální kontrola Q originálu a přesný důvod Q2 posunu; nominální Q odměny již z primárního textu |
+| Rio de Janeiro 2024 | H*/E*/Z* – doplňkové podklady | původní rozdělení R16 před deštěm, originální acceptance list/DS, čas Q losu, obrazová kontrola velké Revista; primární Main/Q finanční tabulky ověřeny |

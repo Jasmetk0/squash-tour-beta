@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 15 ročníků, všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas a rozpracovaný Auckland 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 16 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas a rozpracované Auckland a Marseille 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -49,10 +49,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Montpellier](#montpellier-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Córdoba](#córdoba-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Dallas](#dallas-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Marseille](#marseille-2024) | ✓ | ✓ | ✓ | ? | ✓ | ✓* | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: nominální Q WC) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 15 zpracovaných ročníků; 14 hotových v nominálním rozsahu; 1 rozpracovaný; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 16 zpracovaných ročníků; 14 hotových v nominálním rozsahu; 2 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -73,7 +74,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 13 | Montpellier 2024 | HOTOVO (nominální rozsah) |
 | 14 | Córdoba 2024 | HOTOVO (nominální rozsah) |
 | 15 | Dallas 2024 | HOTOVO (nominální rozsah) |
-| 16 | Marseille 2024 | NEZAHÁJENO (ověřit mapování katalogu) |
+| 16 | Marseille 2024 | ROZPRACOVÁNO (E: nominální Q WC) |
+| 17 | Buenos Aires 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -106,6 +108,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#montpellier-2024) | Open Sud de France | ATP 250 | 2024-01-28–2024-01-29 | 2024-01-29–2024-02-04 | HOTOVO v nominálním rozsahu; Q/Main překryv |
 | [2024](#córdoba-2024) | Córdoba Open | ATP 250 | 2024-02-03–2024-02-04 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; bez překryvu Q/Main |
 | [2024](#dallas-2024) | Dallas Open | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | HOTOVO v nominálním rozsahu; Q/Main překryv |
+| [2024](#marseille-2024) | Open 13 Provence | ATP 250 | 2024-02-04–2024-02-05 | 2024-02-05–2024-02-11 | ROZPRACOVÁNO: nominální Q WC |
 
 ## Wimbledon 2024
 
@@ -1963,6 +1966,123 @@ I/T/D/B doloženy dobovými ATP/SMU materiály a úplnými sekundárními pavouk
 - DAL24-21: [ATP předsezonní aktualizace 2024](https://www.atptour.com/en/news/2024-rankings-points-update), tabulka ATP250, 13/7; další ročníkový rankingový předpis viz BRI24-17.
 - DAL24-22: [ITF Dallas 2024](https://www.world.tennis/en/tournament/dallas/usa/2024/m-250-usa-2024-001/draws-and-results/), celková dotace. Originální ATP [Main](https://www.protennislive.com/posting/2024/424/mds.pdf), [Q](https://www.protennislive.com/posting/2024/424/qs.pdf), [DS](https://www.protennislive.com/posting/2024/424/ds.pdf) v tomto průchodu nedostupné.
 
+
+## Marseille 2024
+
+**Stav:** ROZPRACOVÁNO (8/9). E: rozpor konkrétní nominální kvalifikační WC kvóty mezi pořadatelským press kitem a dobovým přepisem ATP acceptance listu. Ostatní oblasti pokryty, včetně primárních Q odměn a historické identity série. Rešerše 2026-11-27.
+
+### 1. Identita a mapování série
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Open 13 Provence, mužská dvouhra 2024 | MRS24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 496 | MRS24-3/4 |
+| Dějiště obou fází | Palais des Sports, Marseille, Francie | MRS24-3 |
+| Povrch | krytý tvrdý, acrylic on wood | MRS24-1/2/3 |
+| Časové pásmo | Europe/Paris, CET UTC+01:00 v únoru | lokalita a datum |
+| Ředitel | Jean-François Caujolle | MRS24-3/5 |
+| Míče | Babolat | MRS24-3, značka, přesný model neověřen |
+| Video review | Foxtenn | MRS24-3 |
+| ATP supervisor / referee | Stéphane Cretois / Pascal Maria v OOP 5.2.; Main verze 6.2. uvádí Cédric Mourier jako supervisora | MRS24-5/1; zachovat rozdíl verzí |
+| Měna | EUR | MRS24-1/2/3/6 |
+
+**Identita série vs místo ročníku:** `calendar_dates_v1.json` na `buuk` uvádí `lyon` 5.–11.2.2024 a `lyon_old` 19.–25.5.2024. ATP oficiální archiv MRS24-7 rozlišuje Marseille v únoru a Lyon v květnu; originální mužská acceptance list MRS24-4 má ID 2024-496. ATP oznámení MRS24-8 potvrzuje relokaci série 496 z Marseille do Lyon-Décines od 2026; samostatný květnový Lyon měl ID 7694 (MRS24-9). Označení `lyon` v katalogu může být stabilní identita přejmenované série, nikoli chybné datum. Historický název/místo pro 2024 zůstává Marseille; žádná změna identifikátorů ani runtime. Přesné ověření interní definice série nebylo dokončeno (pokus o cestu k series souboru 404); nepotvrzujeme správnost celého katalogu.
+
+### 2. Vstup a losování
+
+| Událost | Datum / čas | Zdroj |
+|---|---|---|
+| Main rank date | 2024-01-08 | originální ATP acceptance list MRS24-4 |
+| Q rank date v přepisu | 2024-01-08 | MRS24-10; není dokladem uzávěrky |
+| Nominální Main deadline | 2024-01-08 12:00 US Eastern = 18:00 CET | odvozeno dle §7.03 |
+| Nominální Q deadline | 2024-01-15 12:00 US Eastern = 18:00 CET | odvozeno dle §7.03; skutečný Q deadline neověřen |
+| Nominální LE deadline | 2024-02-01 10:00 US Eastern = 16:00 CET | odvozeno dle §7.04 |
+| Q/Main losy | před příslušným prvním kolem; přesné časy neověřeny | MRS24-5/11 |
+| Q | 2024-02-04–05 | MRS24-3/5/12 |
+| Main | 2024-02-05–11 | MRS24-1/3/6/7 |
+| Finále | 2024-02-11 15:30 CET dle pořadatelského press kitu | MRS24-3; sekundární předběžný program MRS24-13 uvádí 14:00, přednost pořadatelskému plánu |
+
+Originální Main acceptance list 9.1. má cutoff 73 a rank date 8.1.; pozdější Main los uvádí cutoff 87 při deadline a 97 v losu. Jde o různé okamžiky, nikoli pevné parametry. Originální Q acceptance list a detail sheet nezískány. Údaj rank date se nezaměňuje s časem uzávěrky.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-02-04 | 8 |
+| Q2 | 2024-02-05 | 4 |
+| R32 | 2024-02-05–07 | 12 |
+| R16 | 2024-02-07–08 | 8 |
+| QF | 2024-02-09 | 4 |
+| SF | 2024-02-10 | 2 |
+| F | 2024-02-11 | 1 |
+
+Předem vydaný pořadatelský press kit MRS24-3, oddíl Programme prévisionnel, výslovně uvádí překryv Q/Main 5.2. a R32/R16 7.2.; Q 4.2. od 11:00, 5.2. od 12:00, 6.–8.2. od 11:30, 9.2. od 12:30, 10.2. od 14:00, finále 11.2. v 15:30. Jeho denní počty Main zahrnují čtyřhru; nepoužívat je jako singlové počty. OOP 5.2. vydán 4.2. 12:58 (MRS24-5) přímo potvrzuje 4 Q2 a 3 R32, od 16:00 Main; přesné počty jiných vícedenních kol neodhadovat. Q 2 dny, Main 7 dní, celé okno 8 dní, 27+12=39 nominálních zápasů. Sekundární předběžný časový plán MRS24-13 se liší v některých hodinách; data kol souhlasí a pořadatelský press kit má přednost.
+
+### 4. Nominální struktura a rozpor vstupních kvót
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita pavouka | 32 | 16 |
+| Účastníci | 28 | 16 |
+| Základní DA | 18 dle originální ATP listiny | 14 dle přepisu ATP listiny / 12 dle press kitu |
+| Rezervy | 3 souhrnně v originální listině; standard ATP 2 SE + 1 LE | nevztahuje se |
+| WC | 3 | 2 dle přepisu / 4 dle press kitu – otevřeno |
+| Řádné Q postupy | 4 | 4 vítězové sekcí |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / hrané zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Originální ATP Main acceptance list (MRS24-4, vydání 9.1. 03:19) výslovně uvádí 18 DA, 3 WC, 4 Q a 3 možné SE (součet 28). Standard §7.08 lednové verze rozlišuje 2 SE a 1 LE; dobový přepis z 20.1. uvádí 18 DA, 1 LE, 1 SE, 3 WC a 4 Q, tj. mezistav bez úplného součtu. Neprohlašovat 3 souhrnné rezervy ve starší listině za tři definitivní SE podle pozdějšího členění. Press kit uvádí 19 DA + 2 SE + 4 Q + 3 WC, což je jiné členění a pravděpodobně obecný starší popis; nemáme doklad, že tento popis byl skutečně závazný pro ročník. Main základní standard 18+2+1+3+4=28 s otevřenou specifickou NextGen alokací uvnitř pevné kapacity.
+
+**Blokující E:** Q press kit uvádí 12 DA + 4 WC (MRS24-3); ročníkový přepis acceptance listu uvádí 14 DA + 2 WC (MRS24-10), což odpovídá standardu ATP 250. Originální výsledkový Q los (MRS24-2) viditelně označuje pouze jednu WC, pět Alt a osm seedů; nevyužití WC neřeší otázku původní nominální kvóty. Obě nominální varianty mají 16 míst. Nelze bez původního Q acceptance listu, DS nebo výslovného vyjádření ATP určit, zda byla ročníková výjimka 4 WC, či je press kit zastaralý. Preferovaný kandidát 14+2, nikoli certifikovaná hodnota. E zůstává otevřeno.
+
+Vizuálně ověřená předstartovní Main kopie MRS24-11: BYE 2/10/23/31, Q placeholdery 11/26/27/30, WC 3/12/18, Alt 7/28 a osm seedů. Originální verze 6.2. potvrzuje čtyři Q, jeden LL (Zeppieri na místě 20), dva Alt a tři WC. Q text originálu má všech 16 hráčů a osm seedů, čtyři sekce po čtyřech, 8+4 zápasů. Main 12+8+4+2+1=27; BYE není zápas. Skutečné výměny nepromítat do nominálního plánu.
+
+### 5. Dobová pravidla
+
+BO3 včetně tiebreaku ve všech setech výslovně pořadatel MRS24-3. Standard ATP §§7.03/7.04/7.08/7.10/7.15–16/7.20 (MPL24-7/ADL24-8): 8 Main seedů, top 4 BYE, Q 8 seedů ve 4 sekcích; Q vítězové losováni do volných Main pozic, SE/LE uvolnění nevyužitých míst, LL dle ATP. Prohra prvního hraného kola po BYE = nula bodů, potvrzeno ATP Media Notes MRS24-6. Finanční odměny odděleně dle ATP finančního předpisu.
+
+Next Gen: ATP §7.04 v ročníkové verzi z 10.7.2024 (MRS24-14) výslovně popisuje způsobilost narozených 2004 a později, top 250, jednu Main a dvě Q příležitosti v týdnu se třemi ATP akcemi a uvolnění nevyužitých pozic. Jde o příležitosti programu, ne automatické navýšení kapacity. ATP 26.2.2024 výslovně potvrdila využití rezervy Jakubem Menšíkem v Doha (MRS24-15); to nedokládá konkrétní únorovou alokaci v Marseille, Dallasu či Córdobě. Pozdější ročník pravidel nepřenášet zpět bez kontroly. Přesné turnajové vyhrazení v týdnu 5.2. zůstává v otevřené evidenci.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 110115 |
+| Finalista | 1 | 165 | 64240 |
+| SF | 2 | 100 | 37765 |
+| QF | 4 | 50 | 21885 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 12705 |
+| R32 | 12 | 0 | 7765 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3885 |
+| Q1 prohra | 8 | 0 | 2120 |
+
+Main přímo originální Main los MRS24-1 (text), vizuálně zkontrolovaná předstartovní kopie MRS24-11 a dobové ATP Media Notes MRS24-6. Q hodnoty v originálním ATP Q losu zveřejněném pořadatelem MRS24-2 (text v zápatí, screenshot 502). Q body dle stejné tabulky 13/7/0, přičtení dle ročníkových pravidel. Nominální součet Main 532245 EUR, Q 32500 EUR, celkem 564745 EUR. Prize pool dle pořadatelského press kitu 724015 EUR; total financial commitment 801335 EUR z losů je odlišný. Nezaměňovat s nominálním singlovým součtem.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/B/P doloženy. E otevřeno kvůli rozporu 12+4 versus 14+2 Q; nominální Main administrativní rezervy odděleny od historické realizace. R* dobové ATP pravidlo doloženo textem, NextGen přesná alokace otevřena. Z* Main předstartovní originální kopie vizuálně; pořadatelský originál Q/Main, press kit, OOP a Main acceptance list textově, screenshoty 502; ATP notes screenshot 403, žádné vymyšlené hashe. Další krok dohledat originální Q acceptance list/DS či písemný ročníkový Q WC předpis. Poté Buenos Aires 2024 (při přetrvávajícím bloku po dokumentované opakované rešerši pokračovat bez povýšení stavu). Runtime beze změny.
+
+### 8. Zdroje (MRS24)
+
+- MRS24-1: [pořadatel ATP Main los 6.2.](https://www.open13.fr/wp-content/uploads/2024/02/MDS_060224.pdf), text, screenshot 502.
+- MRS24-2: [pořadatel ATP Q los 5.2.](https://www.open13.fr/wp-content/uploads/2024/02/QS_050224.pdf), text, screenshot 502.
+- MRS24-3: [pořadatelský press kit ročníku](https://www.open13.fr/wp-content/uploads/2024/02/DOSSIER-DE-PRESSE-V2.pdf), oddíly Tableau de bord, Déroulement de la compétition, Programme prévisionnel; text, screenshot 502.
+- MRS24-4: [originální mužský ATP acceptance list 9.1.](https://www.open13.fr/wp-content/uploads/2024/01/Singles-Acceptance-List-open1324.pdf), text, screenshot 502, footer ID 2024-496.
+- MRS24-5: [originální OOP 5.2., vydán 4.2. 12:58](https://www.open13.fr/wp-content/uploads/2024/02/OP_4224.pdf), text, screenshot 502.
+- MRS24-6: [ATP Preview & Day 1](https://www.atptour.com/-/media/24ce339c3bba4717b70cc06ecb77539c.pdf), str. 2, text, screenshot 403.
+- MRS24-7: [ATP výsledkový archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), Marseille 5.–11.2., Lyon 19.–25.5.; [Tennis Europe 2024](https://www.tenniseurope.org/calendar/82/European-Tennis-Calendar?egid=42&year=2024) nezávisle potvrzuje.
+- MRS24-8: [ATP relokace série do Lyonu od 2026](https://www.atptour.com/en/news/marseille-lyon-relocation), [ATP ID 496](https://www.atptour.com/en/tournaments/marseille/496/overview).
+- MRS24-9: [ATP původní Lyon ID 7694](https://www.atptour.com/en/tournaments/lyon/7694/overview).
+- MRS24-10: [dobový přepis Main/Q acceptance listu 20.1.](https://www.tennisteen.it/entry-list/atp/24110-atp-entry-list-5-11-febbraio-2024.html), Marseille, explicitně 14 DA/2 WC pro Q.
+- MRS24-11: [archiv původního předstartovního ATP Main losu](https://www.fantatennis.net/_downloads/e73fef15c93cc78e7dc67fbca63180c9), str. 1 vizuálně ověřena.
+- MRS24-12: [Sky Q1 4.2.](https://www.skysports.com/tennis/scores-schedule/04-02-2024).
+- MRS24-13: [sekundární předběžný program](https://the-place-to-be.fr/evenement/open-13-provence-marseille/), odlišné některé hodiny, shoda okna kol.
+- MRS24-14: [ATP Rulebook 2024, 10.7., §7.04](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook_10jul.pdf), text programu účinného od 1.1.2024; viz dřívější pokusy o screenshot AKL24-22; [ATP oznámení 20.12.2023](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024).
+- MRS24-15: [ATP potvrzení Menšíkovy rezervy Doha 26.2.2024](https://www.atptour.com/en/news/mensik-michelsen-fonseca-next-gen-review-26-february-2024), nevztahovat na Marseille.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -1970,6 +2090,7 @@ I/T/D/B doloženy dobovými ATP/SMU materiály a úplnými sekundárními pavouk
 | Auckland 2024 | P – Q prize money, blokuje HOTOVO | originální ATP Q draw/Detail Sheet nebo ročníková spolehlivá tabulka potvrzující konkrétní hodnoty; kandidát 3550/1935 USD není certifikovaný |
 | Hong Kong 2024 | P* – sekundární Q prize money | originální Q tabulka; kandidát 3550/1935 USD doložen sekundární shodou |
 | Montpellier 2024 | P* – sekundární Q prize money | originální Q tabulka, kandidát 3105/1695 EUR doložen sekundární shodou |
-| Marseille 2024 | inventura – mapování identity v katalogu | před zpracováním potvrdit skutečnou akci proti původnímu kalendáři, neměnit runtime |
+| Marseille 2024 | inventura – historická identita doložena, interní series metadata neověřena | ATP 496 se přesunul do Lyonu 2026; samostatný Lyon 7694; historické místo Marseille, neměnit runtime; MRS24-4/7/8/9 |
+| Marseille 2024 | E – nominální Q WC, blokuje HOTOVO | pořadatelský press kit 12 DA+4 WC vs dobový přepis listiny 14 DA+2 WC; potřebný originální Q acceptance list/DS či výslovný předpis ročníku |
 | Córdoba/Dallas/Marseille 2024 | R* – Next Gen rezervy v týdnu tří ATP akcí | ověřit přesnou alokaci mezi akcemi a případné individuální využití, nepřidávat mimo pevnou kapacitu; COR24-17 |
 | Dallas 2024 | P* – sekundární Q prize money | původní ATP Q PDF nebo Detail Sheet; 4055/2210 USD shoda sekundárních zdrojů, DAL24-17/19/20 |

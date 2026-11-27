@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
@@ -50,6 +50,8 @@ const copy = {
   filter: ['Hledat na této stránce', 'Search this page'],
   filterScope: ['Filtr prohledává jen právě načtených nejvýše 50 hráčů, nikoli celý Run.', 'The filter searches only the currently loaded page of up to 50 players, not the entire Run.'],
   noFiltered: ['Na této stránce nejsou odpovídající talenti.', 'No matching prospects on this page.'],
+  filteredCount: ['Odpovídající hráči na stránce', 'Matching players on this page'],
+  clearFilter: ['Vymazat hledání', 'Clear search'],
   preTour: ['Před vstupem na Tour', 'Pre-Tour'],
   scope: [
     'Viditelnost od narození není vstup na Tour. Tento seznam nevypovídá o skrytém potenciálu ani budoucí kariéře hráče.',
@@ -103,13 +105,24 @@ function PageJump({ page, totalPages, onPage, t }: {
   </form>
 }
 
-function ProspectsForBranch({ runId, branchId, t }: {
-  runId: string; branchId: string; t: Copy
+function foldSearch(value: string): string {
+  return value.normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+
+function ProspectsForBranch({ runId, branchId, t, ignoreUrlPage }: {
+  runId: string; branchId: string; t: Copy; ignoreUrlPage: boolean
 }): JSX.Element {
   const [params, setParams] = useSearchParams()
-  const currentPage = readProspectPage(params)
+  const currentPage = ignoreUrlPage ? 1 : readProspectPage(params)
   const offset = (currentPage - 1) * PAGE_SIZE
-  const [filter, setFilter] = useState('')
+  const [pageFilter, setPageFilter] = useState({ page: currentPage, text: '' })
+  const filter = pageFilter.page === currentPage ? pageFilter.text : ''
+  useEffect(() => {
+    setPageFilter(previous => previous.page === currentPage ? previous : { page: currentPage, text: '' })
+  }, [currentPage])
+  function setFilter(text: string): void {
+    setPageFilter({ page: currentPage, text })
+  }
   function setOffset(nextOffset: number): void {
     setParams(previous => {
       const next = new URLSearchParams(previous)
@@ -140,10 +153,10 @@ function ProspectsForBranch({ runId, branchId, t }: {
   </div>
 
   const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
-  const needle = filter.trim().toLocaleLowerCase()
+  const needle = foldSearch(filter.trim())
   const visible = data.prospects.filter(prospect => !needle ||
     [prospect.player_id, prospect.display_name, prospect.short_name, prospect.country_code, prospect.country_name]
-      .some(value => value?.toLocaleLowerCase().includes(needle)))
+      .some(value => value !== null && foldSearch(value).includes(needle)))
   const start = data.prospects.length ? data.offset + 1 : 0
   const end = data.prospects.length ? data.offset + data.prospects.length : 0
   return <>
@@ -165,7 +178,9 @@ function ProspectsForBranch({ runId, branchId, t }: {
           <label htmlFor="viewer-prospect-filter">{t.filter}</label>
           <input id="viewer-prospect-filter" type="search" value={filter}
             onChange={event => setFilter(event.target.value)} />
+          <button type="button" disabled={!filter} onClick={() => setFilter('')}>{t.clearFilter}</button>
           <p className="status">{t.filterScope}</p>
+          <p role="status">{t.filteredCount}: {visible.length} / {data.prospects.length}</p>
           {visible.length ? <ul className="viewer-home-list viewer-sample-list" aria-label={t.list}>
           {visible.map(prospect => <li key={prospect.player_id}>
             <strong>{prospect.display_name}</strong>
@@ -199,8 +214,21 @@ export function ViewerNextGenPlayersPage(): JSX.Element {
   const t = copyFor(language)
   const context = useViewerOfficialRunContext(runId)
   const branchId = playerViewerBranch(context.data, runId)
-  const verifiedContext = Boolean(branchId && !context.isPending &&
+  const verifiedContext = Boolean(runId && branchId && !context.isPending &&
     !context.isFetching && !context.isError)
+  const [params, setParams] = useSearchParams()
+  const sourceKey = verifiedContext ? JSON.stringify([runId, branchId]) : null
+  const priorSource = useRef<string | null>(null)
+  const sourceChanged = Boolean(sourceKey && priorSource.current && sourceKey !== priorSource.current)
+  useEffect(() => {
+    if (!sourceKey) return
+    if (sourceChanged && params.has('prospectPage')) {
+      const next = new URLSearchParams(params)
+      next.delete('prospectPage')
+      setParams(next, { replace: true })
+    }
+    priorSource.current = sourceKey
+  }, [sourceKey, sourceChanged, params, setParams])
 
   return <section className="panel viewer-shell-page">
     <div className="page-intro">
@@ -213,7 +241,7 @@ export function ViewerNextGenPlayersPage(): JSX.Element {
         <p>{t.contextError}</p>
         <button type="button" onClick={() => void context.refetch()}>{t.retry}</button>
       </div> : <ProspectsForBranch key={JSON.stringify([runId, branchId])}
-        runId={runId} branchId={branchId ?? ''} t={t} />
+        runId={runId} branchId={branchId ?? ''} t={t} ignoreUrlPage={sourceChanged} />
     }
   </section>
 }

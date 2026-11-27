@@ -249,4 +249,36 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     },
   )
 
+  it('resets old page before reading a new Branch and does not fetch that Branch at the old offset', async () => {
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(50, ['Old page player'], 51))
+      .mockResolvedValueOnce(page(0, ['New first page'], 1, 'branch-b'))
+    const view = renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=2&keep=1' })
+    expect(await screen.findByText('Old page player')).toBeInTheDocument()
+    chosen.branch = 'branch-b'
+    view.rerender(<ViewerContextProvider><ViewerNextGenPlayersPage /></ViewerContextProvider>)
+    expect(await screen.findByText('New first page')).toBeInTheDocument()
+    expect(screen.queryByText('Old page player')).not.toBeInTheDocument()
+    expect(api.getViewerVisibleProspects.mock.calls).toEqual([
+      ['product run', { limit: 50, offset: 50 }],
+      ['product run', { limit: 50, offset: 0 }],
+    ])
+  })
+
+  it('matches accented names on the current page, shows filtered coverage and clears without another GET', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockResolvedValue(page(0, ['Jiří Novák', 'Omar Hassan'], 2))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Jiří Novák')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Hledat na této stránce'), 'jiri novak')
+    expect(screen.getByText('Jiří Novák')).toBeInTheDocument()
+    expect(screen.queryByText('Omar Hassan')).not.toBeInTheDocument()
+    expect(screen.getByText('Odpovídající hráči na stránce: 1 / 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Vymazat hledání' }))
+    expect(screen.getByText('Omar Hassan')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
 })

@@ -235,6 +235,65 @@ export function SavedTourEditionPage():JSX.Element {
       </table>
     </div>
   </section>
+  // Group cards join only the frozen schedule and completed standings.
+  // Group points are not Official Ranking points; the DTO contains no
+  // configured crossing/advancement mapping.
+  const groupVisual=groupSchedule&&<section aria-label={cs?'Grafický přehled skupin':'Visual group overview'}>
+    <h4>{cs?'Uložené skupiny':'Saved groups'}</h4>
+    <p className="status">{cs?'Skupinové body nejsou body Official Rankingu. Postupové vazby tento historický zdroj neposkytuje.':
+      'Group points are not Official Ranking points. This historical source does not expose advancement mappings.'}</p>
+    <div className="grid">
+      {Array.from({length:groupSchedule.group_count},(_,i)=>i+1).map(groupIndex=>{
+        const fixtures=groupSchedule.matches.filter(m=>m.group_index===groupIndex)
+          .sort((a,b)=>a.match_day_ordinal-b.match_day_ordinal||a.match_order-b.match_order)
+        const members=[...new Set(fixtures.flatMap(m=>[m.top_player_id,m.bottom_player_id]))].sort()
+        const rows=groupStandings?.groups.find(g=>g.group_index===groupIndex)?.rows
+        const finalRows=rows&&rows.length===members.length&&rows.every(r=>members.includes(r.player_id))?rows:null
+        const publishedCount=fixtures.filter(m=>matches.some(r=>r.match_id===m.match_id&&r.draw_type==='group')).length
+        return <section key={groupIndex} className="section-subtle"
+          aria-label={(cs?'Skupina ':'Group ')+groupIndex}>
+          <h5>{cs?'Skupina':'Group'} {groupIndex}</h5>
+          <p className="status">{cs?'Publikované zápasy':'Published matches'}: {publishedCount}/{fixtures.length}</p>
+          {finalRows?<><p>{cs?'Uložené konečné pořadí':'Saved final standings'}</p>
+            <div className="table-responsive"><table aria-label={(cs?'Konečné pořadí skupiny ':'Final standings for group ')+groupIndex}>
+              <thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>W–L</th>
+                <th>{cs?'Skupinové body':'Group points'}</th><th>W/O +/−</th></tr></thead>
+              <tbody>{finalRows.map(r=><tr key={r.player_id}>
+                <td>{r.position}</td><td>{playerRef(r.player_id)}</td>
+                <td>{r.wins}–{r.losses}</td><td><strong>{r.group_points}</strong></td>
+                <td>{r.walkovers_received}/{r.walkovers_conceded}</td>
+              </tr>)}</tbody>
+            </table></div>
+          </>:<><p role="status">{cs?'Ověřené konečné pořadí není dostupné.':
+            'Verified final standings are unavailable.'}</p>
+            <p>{cs?'Účastníci podle uloženého rozpisu (bez pořadí)':
+              'Participants from saved schedule (unranked)'}</p>
+            <ul>{members.map(id=><li key={id}>{playerRef(id)}</li>)}</ul>
+          </>}
+          <details>
+            <summary>{cs?'Uložený program skupiny':'Saved group fixtures'} ({fixtures.length})</summary>
+            {fixtures.map(g=>{
+              const published=matches.find(m=>m.match_id===g.match_id&&m.draw_type==='group')
+              return <div key={g.match_id} style={{borderTop:'1px solid currentColor',padding:'0.5rem 0'}}>
+                <small>{cs?'Zápasový den':'Match Day'} {g.match_day_ordinal} · #{g.match_order} · BO{g.best_of}</small>
+                <p>{playerRef(g.top_player_id)} – {playerRef(g.bottom_player_id)}</p>
+                {published?<p>{cs?'Vítěz':'Winner'}: {playerRef(published.winner_player_id)} · {published.scoreline}
+                  {published.loser_player_id&&<>
+                    {' · '}<Link to={matchHref(g.match_id,'draw')}>{cs?'Detail zápasu':'Match detail'}</Link>
+                  </>}</p>:<p className="status">{cs?'Bez kanonického výsledku':'Not canonically published'}</p>}
+              </div>
+            })}
+          </details>
+        </section>
+      })}
+    </div>
+    <p className="status">{cs?'Zápasové dny jsou pořadová čísla, ne datum nebo hodina.':
+      'Match Days are ordinals, not dates or clock times.'}</p>
+    {pendingTiePanel}
+    {groupStandings&&groupStandings.tie_decisions.length>0&&<p className="status">
+      {cs?'Úplný audit rozhodnutí při shodách je v záložce Výsledky.':
+        'The full audited tie decisions are in Results.'}</p>}
+  </section>
   const statusMissing=cs?'Tento zdroj neobsahuje úplnou historickou autoritu pro tento oddíl.':
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
@@ -406,11 +465,17 @@ export function SavedTourEditionPage():JSX.Element {
           <button type="button" aria-pressed={visualDraw} onClick={()=>setVisualDraw(true)}>
             {cs?'Grafický přehled':'Visual overview'}</button>
         </div>
+        {phase==='main'&&groupSchedule&&(visualDraw?groupVisual:<>
+          {groupStandingsTables}{pendingTiePanel}{groupScheduleTable}
+        </>)}
         {draw?(phase==='main'?bracketView(draw.main):draw.qualification_sections.length?
           draw.qualification_sections.map(bracketView):<p>{cs?'Uložený kvalifikační pavouk není dostupný.':
             'No saved qualification bracket is available.'}</p>):
-          <p role="status">{cs?'V této revizi není uložená Draw authority.':
-            'No saved Draw authority exists in this revision.'}</p>}
+          <p role="status">{phase==='main'&&groupSchedule?
+            (cs?'Samostatný vyřazovací pavouk není v této revizi doložen.':
+              'No separate knockout draw is evidenced in this revision.'):
+            (cs?'V této revizi není uložená Draw authority.':
+              'No saved Draw authority exists in this revision.')}</p>}
         {result&&<><h4>{cs?'Publikované výsledky zápasů':'Published match results'}</h4>
           {visualDraw?visualResults(phase==='main'?main:qualification):
             matchTable(phase==='main'?main:qualification)}</>}

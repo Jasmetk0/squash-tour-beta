@@ -191,11 +191,11 @@ export function RunPage(): JSX.Element {
   // An old successful response may survive while React Query refreshes or
   // after the refresh fails. Do not let those cached data feed the current
   // sporting timeline or a follow-on player-name lookup.
-  const activityVerified = homeActivityQuery.isSuccess && !homeActivityQuery.isFetching
+  const activityVerified = ready && homeActivityQuery.isSuccess && !homeActivityQuery.isFetching
     && homeActivityQuery.data?.run_id === runId
     && homeActivityQuery.data.branch_id === branchId
     && homeActivityQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
-  const rankingVerified = rankingChangesQuery.isSuccess && !rankingChangesQuery.isFetching
+  const rankingVerified = ready && rankingChangesQuery.isSuccess && !rankingChangesQuery.isFetching
     && rankingChangesQuery.data?.run_id === runId
     && rankingChangesQuery.data.branch_id === branchId
     && rankingChangesQuery.data.saved_revision_id === selectedBranch?.saved_head_revision_id
@@ -317,6 +317,21 @@ export function RunPage(): JSX.Element {
   const emptyRun = ready && packageVerified && ownedPackages === null
     && positionQuery.isError && isApiNotFound(positionQuery.error)
   const base = '/admin/runs/' + encodeURIComponent(runId)
+  // The Home feed is a bounded projection of the same Saved Calendar history.
+  // Do not manufacture a new Edition identity or derive native calendar dates.
+  const editionLink=(event:{event_id:string;season_index:number},tab:'overview'|'results')=>{
+    if(!homeActivity)return base+'/tour/calendar'
+    const params=new URLSearchParams({branch:homeActivity.branch_id,revision:homeActivity.saved_revision_id,
+      season:String(event.season_index),tab})
+    return base+'/tour/calendar/'+encodeURIComponent(event.event_id)+'?'+params.toString()
+  }
+  const upcomingWeeks=homeActivity?.upcoming.reduce<Array<{key:string;season:string;week:number;events:typeof homeActivity.upcoming}>>((groups,event)=>{
+    const key=JSON.stringify([event.season_index,event.week])
+    const group=groups.find(g=>g.key===key)
+    if(group)group.events.push(event)
+    else groups.push({key,season:event.season,week:event.week,events:[event]})
+    return groups
+  },[])??[]
   const statusErrors = [
     branchError,
     time.error,
@@ -432,12 +447,18 @@ export function RunPage(): JSX.Element {
           {(positionQuery.isPending || positionQuery.isFetching) && <p role="status">{l.loading}</p>}
           {homeActivity && homeActivity.calendar_status === 'ready' && homeActivity.upcoming.length > 0 && <div>
             <h4>{l.upcomingEvents}</h4>
-            <ul className="run-home-feed" aria-label={language === 'cs' ? 'Nadcházející uložené turnaje' : 'Upcoming saved tournaments'}>
-              {homeActivity.upcoming.map(event => <li key={event.event_id}>
-                <span><strong>{event.event_name}</strong><small>{event.season} · W{event.week} · {event.category}</small></span>
-                <Link to={base + '/manage'}>{language === 'cs' ? 'Balíčky Runu' : 'Run packages'} →</Link>
-              </li>)}
-            </ul>
+            <p className="status">{language==='cs'?'Omezený výběr nadcházejících uložených termínů; nejde o potvrzený rozpis zápasů.':
+              'Bounded selection of upcoming Saved dates; not a confirmed match schedule.'}</p>
+            <div aria-label={language==='cs'?'Nadcházející uložené turnaje':'Upcoming saved tournaments'}>
+              {upcomingWeeks.map(group=><section key={group.key} aria-label={group.season+' W'+group.week}>
+                <h5>{group.season} · W{group.week}</h5>
+                <ul className="run-home-feed">{group.events.map(event=><li key={event.event_id}>
+                  <span><strong>{event.event_name}</strong><small>{event.category}</small></span>
+                  <Link to={editionLink(event,'overview')}>{language==='cs'?'Detail uložené edice':'Saved Edition detail'} →</Link>
+                </li>)}</ul>
+              </section>)}
+            </div>
+            <Link to={base+'/manage'}>{language==='cs'?'Balíčky Runu':'Run packages'} →</Link>
           </div>}
           {homeActivity && homeActivity.calendar_status === 'unpositioned' && <p className="status">{l.noPosition}</p>}
           {homeActivity && homeActivity.calendar_status === 'empty' && ownedPackages !== null && <p className="status">{l.noCalendar}</p>}
@@ -484,6 +505,8 @@ export function RunPage(): JSX.Element {
         : 'Reads the selected Branch Saved Revision. Individual match scores are outside this projection.'}</p>
       {homeActivity && <section className="run-home-results">
         <h4>{l.publishedResults}</h4>
+        <p className="status">{language==='cs'?'Publikované výsledky v projekci':'Published results in projection'}: {homeActivity.published_result_count}
+          {' · '}{language==='cs'?'Zobrazené poslední výsledky':'Recent results shown'}: {homeActivity.recent_results.length}</p>
         {homeActivity.result_status === 'empty' && <p className="status">{l.noResults}</p>}
         {homeActivity.result_status === 'ready' && <ul className="run-home-feed" aria-label={language === 'cs' ? 'Publikované výsledky turnajů branche' : 'Published Branch tournament results'}>
           {homeActivity.recent_results.map(result => <li key={result.event_id}>
@@ -492,7 +515,7 @@ export function RunPage(): JSX.Element {
                 playerId={result.champion_player_id} identity={playerIdentities[result.champion_player_id]}/>
               {' · '}{language === 'cs' ? 'Finalista' : 'Finalist'}: <HomePlayerIdentityLink runId={runId}
                 playerId={result.finalist_player_id} identity={playerIdentities[result.finalist_player_id]}/></small></span>
-            <Link to={base + '/simulate'}>{l.continue} →</Link>
+            <Link to={editionLink(result,'results')}>{language==='cs'?'Výsledky uložené edice':'Saved Edition results'} →</Link>
           </li>)}
         </ul>}
 

@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, type FormEvent } from 'react'
+import { useSearchParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 
 import { getViewerVisibleProspects } from '../../../api/client'
@@ -43,6 +44,13 @@ const copy = {
   previous: ['Předchozí', 'Previous'],
   next: ['Další', 'Next'],
   pagination: ['Stránkování talentů', 'Prospect pagination'],
+  page: ['Stránka', 'Page'],
+  go: ['Přejít', 'Go'],
+  invalidPage: ['Vyber číslo dostupné stránky.', 'Choose an available page number.'],
+  filter: ['Hledat na této stránce', 'Search this page'],
+  filterScope: ['Filtr prohledává jen právě načtených nejvýše 50 hráčů, nikoli celý Run.', 'The filter searches only the currently loaded page of up to 50 players, not the entire Run.'],
+  noFiltered: ['Na této stránce nejsou odpovídající talenti.', 'No matching prospects on this page.'],
+  preTour: ['Před vstupem na Tour', 'Pre-Tour'],
   scope: [
     'Viditelnost od narození není vstup na Tour. Tento seznam nevypovídá o skrytém potenciálu ani budoucí kariéře hráče.',
     'Birth-week visibility is not Tour entry. This list does not disclose hidden potential or predict future careers.',
@@ -64,10 +72,53 @@ function weekLabel(seasonIndex: number, week: number): string {
   return start + '/' + String((start + 1) % 100).padStart(2, '0') + ' · W' + week
 }
 
+function readProspectPage(params: URLSearchParams): number {
+  const values = params.getAll('prospectPage')
+  if (values.length !== 1 || !/^[1-9]\d*$/.test(values[0])) return 1
+  const page = Number(values[0])
+  return Number.isSafeInteger(page) && page <= Math.floor(Number.MAX_SAFE_INTEGER / PAGE_SIZE) ? page : 1
+}
+
+function PageJump({ page, totalPages, onPage, t }: {
+  page: number; totalPages: number; onPage: (page: number) => void; t: Copy
+}): JSX.Element {
+  const [value, setValue] = useState(String(page))
+  const [invalid, setInvalid] = useState(false)
+  function submit(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const next = Number(value)
+    if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(next) || next > totalPages) {
+      setInvalid(true)
+      return
+    }
+    setInvalid(false)
+    onPage(next)
+  }
+  return <form onSubmit={submit} aria-label={t.pagination + ' – ' + t.go}>
+    <label htmlFor="viewer-prospect-page">{t.page} (1–{totalPages})</label>
+    <input id="viewer-prospect-page" type="text" inputMode="numeric" value={value}
+      aria-invalid={invalid} onChange={event => { setValue(event.target.value); setInvalid(false) }} />
+    <button type="submit">{t.go}</button>
+    {invalid ? <p role="alert">{t.invalidPage}</p> : null}
+  </form>
+}
+
 function ProspectsForBranch({ runId, branchId, t }: {
   runId: string; branchId: string; t: Copy
 }): JSX.Element {
-  const [offset, setOffset] = useState(0)
+  const [params, setParams] = useSearchParams()
+  const currentPage = readProspectPage(params)
+  const offset = (currentPage - 1) * PAGE_SIZE
+  const [filter, setFilter] = useState('')
+  function setOffset(nextOffset: number): void {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (nextOffset === 0) next.delete('prospectPage')
+      else next.set('prospectPage', String(nextOffset / PAGE_SIZE + 1))
+      return next
+    })
+    setFilter('')
+  }
   const query = useQuery({
     queryKey: ['viewer-visible-pre-tour-prospects', runId, branchId, offset],
     queryFn: () => getViewerVisibleProspects(runId, { limit: PAGE_SIZE, offset }),
@@ -88,6 +139,11 @@ function ProspectsForBranch({ runId, branchId, t }: {
     <button type="button" onClick={() => void query.refetch()}>{t.retry}</button>
   </div>
 
+  const totalPages = Math.max(1, Math.ceil(data.total / PAGE_SIZE))
+  const needle = filter.trim().toLocaleLowerCase()
+  const visible = data.prospects.filter(prospect => !needle ||
+    [prospect.player_id, prospect.display_name, prospect.short_name, prospect.country_code, prospect.country_name]
+      .some(value => value?.toLocaleLowerCase().includes(needle)))
   const start = data.prospects.length ? data.offset + 1 : 0
   const end = data.prospects.length ? data.offset + data.prospects.length : 0
   return <>
@@ -105,15 +161,21 @@ function ProspectsForBranch({ runId, branchId, t }: {
     {data.total === 0 && data.offset === 0 ? <ViewerEmptyState>{t.empty}</ViewerEmptyState> : (
       <div className="viewer-sample-list-block">
         <h3>{t.list}</h3>
-        {data.prospects.length ? <ul className="viewer-home-list viewer-sample-list" aria-label={t.list}>
-          {data.prospects.map(prospect => <li key={prospect.player_id}>
+        {data.prospects.length ? <>
+          <label htmlFor="viewer-prospect-filter">{t.filter}</label>
+          <input id="viewer-prospect-filter" type="search" value={filter}
+            onChange={event => setFilter(event.target.value)} />
+          <p className="status">{t.filterScope}</p>
+          {visible.length ? <ul className="viewer-home-list viewer-sample-list" aria-label={t.list}>
+          {visible.map(prospect => <li key={prospect.player_id}>
             <strong>{prospect.display_name}</strong>
-            {' · '}{prospect.country_code}
+            {' · '}{prospect.country_code}{prospect.country_name ? ' · ' + prospect.country_name : ''}
             {' · '}{t.age} {prospect.age}
-            {' · pre-Tour · '}{t.since} {' '}
+            {' · '}{t.preTour}{' · '}{t.since} {' '}
             {weekLabel(prospect.visible_since_week.season_index, prospect.visible_since_week.week)}
           </li>)}
-        </ul> : <ViewerEmptyState>{t.emptyPage}</ViewerEmptyState>}
+        </ul> : <ViewerEmptyState>{t.noFiltered}</ViewerEmptyState>}
+        </> : <ViewerEmptyState>{t.emptyPage}</ViewerEmptyState>}
         <nav className="viewer-active-run-actions" aria-label={t.pagination}>
           {data.offset > 0 && data.prospects.length === 0 ? <>
             <button type="button" onClick={() => setOffset(0)}>{t.firstPage}</button>{' '}
@@ -123,6 +185,8 @@ function ProspectsForBranch({ runId, branchId, t }: {
           <button type="button" disabled={data.offset + data.prospects.length >= data.total}
             onClick={() => setOffset(data.offset + PAGE_SIZE)}>{t.next}</button>
         </nav>
+        {totalPages > 1 ? <PageJump key={String(currentPage) + ':' + totalPages}
+          page={currentPage} totalPages={totalPages} onPage={page => setOffset((page - 1) * PAGE_SIZE)} t={t} /> : null}
         <ViewerStatusMessage>{t.scope}</ViewerStatusMessage>
       </div>
     )}

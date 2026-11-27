@@ -205,4 +205,48 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(screen.getByText('Jan Novak')).toBeInTheDocument()
     expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
   })
+  it('restores the public page from a direct URL and filters only its verified rows', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockResolvedValue(page(50, ['Jan Novak', 'Omar Hassan'], 52))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=2&keep=1' })
+    expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledWith('product run', { limit: 50, offset: 50 })
+    await user.type(screen.getByLabelText('Hledat na této stránce'), 'egypt')
+    expect(screen.queryByText('Jan Novak')).not.toBeInTheDocument()
+    expect(screen.getByText('Omar Hassan')).toBeInTheDocument()
+    expect(screen.getByText(/Filtr prohledává jen/)).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('jumps directly to an available page and rejects out-of-range pages without a GET', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(0, Array.from({ length: 50 }, (_, i) => 'Prospect ' + i), 101))
+      .mockResolvedValueOnce(page(100, ['Last prospect'], 101))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Prospect 0')).toBeInTheDocument()
+    const input = screen.getByLabelText('Stránka (1–3)')
+    await user.clear(input)
+    await user.type(input, '4')
+    await user.click(screen.getByRole('button', { name: 'Přejít' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Vyber číslo dostupné stránky.')
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+    await user.clear(input)
+    await user.type(input, '3')
+    await user.click(screen.getByRole('button', { name: 'Přejít' }))
+    expect(await screen.findByText('Last prospect')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenLastCalledWith('product run', { limit: 50, offset: 100 })
+  })
+
+  it.each(['prospectPage=0', 'prospectPage=2&prospectPage=3', 'prospectPage=90071992547409999'])(
+    'uses the first page for malformed pagination: %s', async search => {
+      setViewerActiveProductRunId('product run')
+      renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?' + search })
+      expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
+      expect(api.getViewerVisibleProspects).toHaveBeenCalledWith('product run', { limit: 50, offset: 0 })
+    },
+  )
+
 })

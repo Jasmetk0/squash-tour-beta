@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-27: 33 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-27: 34 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest a rozpracované Auckland, Marseille a Santiago 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -67,10 +67,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Monte-Carlo](#monte-carlo-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Barcelona](#barcelona-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Munich](#munich-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Bucharest](#bucharest-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 33 zpracovaných ročníků; 30 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 34 zpracovaných ročníků; 31 hotových v nominálním rozsahu; 3 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -109,7 +110,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 31 | Monte-Carlo 2024 | HOTOVO (nominální rozsah) |
 | 32 | Barcelona 2024 | HOTOVO (nominální rozsah) |
 | 33 | Munich 2024 | HOTOVO (nominální rozsah) |
-| 34 | Bucharest 2024 | NEZAHÁJENO |
+| 34 | Bucharest 2024 | HOTOVO (nominální rozsah) |
+| 35 | Madrid 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -160,6 +162,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#monte-carlo-2024) | Rolex Monte-Carlo Masters | ATP Masters 1000 | 2024-04-06–2024-04-07 | 2024-04-07–2024-04-14 | HOTOVO v nominálním rozsahu; souběh Q2/R64 a R64/R32 |
 | [2024](#barcelona-2024) | Barcelona Open Banc Sabadell | ATP 500 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; souběh R64/R32 16.4. |
 | [2024](#munich-2024) | BMW Open | ATP 250 | 2024-04-13–2024-04-14 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; poslední ročník ATP 250 |
+| [2024](#bucharest-2024) | Țiriac Open | ATP 250 | 2024-04-14–2024-04-15 | 2024-04-15–2024-04-21 | HOTOVO v nominálním rozsahu; plánovaný souběh Q2/R32 15.4. |
 
 ## Wimbledon 2024
 
@@ -4149,6 +4152,123 @@ I/T/D/B doloženy. H* úplný původní OOP mimo finále a předdešťový denn�
 - MUC24-19: [ATP München, ročníková finanční tabulka](https://de.wikipedia.org/wiki/ATP_M%C3%BCnchen), 2024 shoda Q.
 - [Původní ATP Main](https://www.protennislive.com/posting/2024/308/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/308/qs.pdf) při kontrole nedostupné. Dobová pravidla viz SCL24-18, LCB24-19, ROT24-16.
 
+
+## Bucharest 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/R/P/Z s označenými mezerami). Rešerše 2026-11-27. Návrat ATP do Bukurešti po osmi letech. Předstartovní Main originál vizuálně ověřen ve dvou archivních kopiích, výsledkový Main v primárním textu. Nedělní Q1 a pondělní Q2/Main souběh potvrzeny programem před zahájením Main. Q finanční tabulka sekundární shoda tří ročníkových přehledů; konfliktní zastaralá tabulka zdokumentována.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Țiriac Open | BUC24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 4462 | BUC24-1/14 |
+| Ročník | 25. dle ATP (1993–2016, 2024), 22. podle místního počítání 1996–2016 a 2024 | BUC24-3/4/5 |
+| Dějiště | Baza Sportivă Năstase–Marica, Bukurešť, Rumunsko; ATP notes Tiriac Stadium | BUC24-3/4/5 |
+| Povrch | venkovní červená antuka | BUC24-1/2/4 |
+| Časové pásmo | Europe/Bucharest, EEST UTC+03:00 během soutěže | lokalita a datum |
+| Ředitel | Cosmin Hodor (sekundární ročníkový přehled) | BUC24-14 |
+| ATP supervisor | Zsolt Beda | BUC24-1/2 |
+| Měna | EUR | BUC24-1/2 |
+
+Nepřenášet dějiště 2025 National Tennis Center ani předchozí Arenele BNR do roku 2024; pořadatel potvrzuje nové dějiště 2025 (BUC24-15). Míče, detail sheet, referee a tour manager neověřeny. Rozdílné historické počítání ročníků zachovat.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-03-18 | BUC24-6 |
+| Q rank date | 2024-03-25, odvozený referenční den | §7.03 |
+| Nominální Main deadline | 2024-03-18 18:00 EET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální Q deadline | 2024-03-25 18:00 EET (12:00 US Eastern) | odvozeno §7.03 |
+| Nominální LE deadline | 2024-04-11 17:00 EEST (10:00 US Eastern) | odvozeno §7.04 |
+| Main los | 2024-04-13 13:00 EEST, oznámený plán | BUC24-7 |
+| Q los | nejpozději před Q1 dne 2024-04-14, čas neověřen | BUC24-5/8 |
+| Q | 2024-04-14–15 | BUC24-4/5/8 |
+| Main | 2024-04-15–21 | BUC24-1/2/3 |
+| Singlové finále | 2024-04-21 ne před 15:00 EEST | BUC24-3/4 |
+
+Místní rozhlas 11.4. oznámil los na sobotu 13.4. ve 13:00, zprávy 13.4. potvrzují den konání, nikoli nezávisle přesný okamžik. Přepis Main entry listu 11.4. má původní cutoff 88; obě originální Main verze uvádějí Moutet 107 v deadline i draw polích. Odlišné publikované stavy nesjednocovat. Uzávěrky odvozené z dobového předpisu; Q rank date/cutoff, originální acceptance lists a DS nezískány. V březnu se americký letní čas změnil dříve než rumunský.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-04-14 | 8 |
+| Q2 | 2024-04-15 | 4 |
+| R32 | 2024-04-15–16 | 12 (4+8) |
+| R16 | 2024-04-17–18 | 8 |
+| QF | 2024-04-19 | 4 |
+| SF | 2024-04-20 | 2 |
+| F | 2024-04-21 | 1 |
+
+Předturnajový program vstupenek publikovaný 12.4. (BUC24-4) potvrzuje nedělní kvalifikační start, pondělní kombinaci kvalifikace a R32, úterní R32 a R16 ve středu/čtvrtek. Páteční a sobotní popis v této zprávě opakuje čtvrtfinále a doubles SF pro oba dny, proto z něj neodvozovat nominální QF dělení. Nedělní zpráva GSP 14.4. (BUC24-5) uvádí všech osm Q1 výsledků, a především úplný předem publikovaný pondělní program: čtyři Main R32 na centru, čtyři Q2 na kurtech 1/2 a dvě doubles utkání. Nominální pondělní souběh 4 Q2 + 4 R32 tedy není důsledkem deště; zbývá osm R32 pro úterý. Jeden R32 Barrere–Kokkinakis se skutečně dokončil ve středu 17.4. a pouze Tabilo–Rinderknech z R16 se stihl celý před deštěm. ATP zpráva a místní GSP dokládají zrušení zbytku středečního programu (BUC24-9). Čtyři R16 dokončeny až v pátek; přesné původní denní rozdělení R16 neověřeno. Páteční QF Cerundolo–Navone přerušen tmou bez umělého osvětlení, dohrán v sobotu před SF (BUC24-10). Nominální páteční QF a sobotní SF rekonstruovány z průběhu a dokladu pátečního přerušení, nikoli z úplného předturnajového OOP. Nedělní singlové finále plánované na 15:00 bylo skutečně dokončeno v neděli 21.4. (BUC24-11), žádný pondělní přesun singlového finále. Q 2 + Main 7 dní − 1 plánovaný překryv = 8 kalendářních dní, 39 nominálních zápasů. Q1 se překrývá s finále předchozího Monte-Carlo.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 |
+| Základní DA | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4, top 4 | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Dobový §7.08 B/E: 18 DA + 2 SE + 1 LE + 3 WC + 4 Q = 28. Přepis BUC24-6 obsahuje 18 DA, 3 WC, 4 Q, SE 0, LE 0 (mezistav 25). Předstartovní originál BUC24-1 potvrzuje 21 běžných vstupů, WC Gasquet, Fonseca, Shapovalov na 3/18/28, Q placeholdery 11/15/19/29, osm seedů a BYE 2/10/23/31. Nevyužité rezervy doplněny do DA. Výsledkový Main BUC24-2 a ATP Media Notes potvrzují LL Bonzi na pozici 3 po odstoupení WC Gasqueta pro nemoc. Tato náhrada není pátý řádný Q postup ani nominální snížení WC kvóty. Čtyři řádní Q Albot, Barrere, Taberner, Vacherot. Main 12+8+4+2+1=27.
+
+Q 14 DA+2 WC podle §7.08 E.1; úplný výsledkový pavouk BUC24-8 potvrzuje osm seedů Dzumhur, Barrere, Albot, Vacherot, Zeppieri, Droguet, Misolic, Bonzi, dvě WC Pouille a Copil, čtyři označené Alt Taberner, Cretu, Jianu, Pavel. Čtyři sekce po čtyřech, 8+4=12 zápasů; skreč v Q1 nemění nominální uzly. Původní Q PDF a acceptance list nedostupné, struktura doložena dobovým přepisem a výsledky.
+
+### 5. Dobová pravidla
+
+§7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 v únorové verzi (SCL24-18), s příslušnými účinnými změnami LCB24-19. Dvě SE, jedna LE rezerva, čtyři Main BYE, osm seedů v každé fázi, čtyři Q sekce, BO3 tiebreak. ATP notes BUC24-3 přímo potvrzují výjimku nula bodů při první prohře po BYE. Q 13/7/0 podle dobového ATP předpisu, body se přičítají k Main výsledku. WC po odstoupení před zápasem nahrazena LL; další individuální peněžní nároky necertifikovat pouze podle sekundárních payoutů.
+
+Týden Barcelona/Munich/Bucharest: ATP Media Notes výslovně uvádějí Fonsecu jako #NextGenATP a WC. Jeho skutečný Main vstup je běžná WC, nikoli doklad využití zvláštní NG rezervy. Dobový Main přepis neobsahuje v Bukurešti NG označení; plánovaná NG Main akceptace Prižmiće v Mnichově je již zdokumentována (MUC24). Přesná týdenní alokace Q NG příležitostí nadále neověřena. Nezvyšovat nominální kapacity.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 88125 |
+| Finalista | 1 | 165 | 51400 |
+| SF | 2 | 100 | 30220 |
+| QF | 4 | 50 | 17510 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 10165 |
+| R32 | 12 | 0 | 6215 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3105 |
+| Q1 prohra | 8 | 0 | 1695 |
+
+Main originál vizuálně v BUC24-1 a výsledkový text BUC24-2 potvrzují EUR a všech šest částek i body. ATP notes BUC24-3 chybně uvádějí symbol $ v názvu sloupce; originální losy a ročníková dotace jsou EUR. Dobové rumunské mediální zprávy BUC24-7 uvádějí 150 bodů finalistovi, ale přednost mají originální ATP 165. Q 3105/1695 EUR ve třech shodných ročníkových tabulkách BUC24-12/13/14; sekundární nezávislost jejich vzniku neprokázána. TennisTemple BUC24-8 uvádí 3020/1645 a zastaralé body 12/6. Tyto hodnoty odpovídají staršímu obecnému rozpisu 2023 zdokumentovanému v RAK24, nikoli předchozímu ročníku Bukurešti, který v roce 2023 neexistoval. Proto nepovažovat za rovnocenný 2024 protidoklad. Další nepřímá kontrola: BUC24-16 uvádí Bonziho kombinovaný payout 9320 EUR = 6215+3105; současně u Kordy po BYE uvádí odlišnou částku, kterou bez primárního vyúčtování nelze vydávat za nominální tabulku. P* Q sekundární shoda, originální Q finanční tabulka stále chybí. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Nominální částky podle kola z losu, nikoli skutečně vyplacený součet včetně LL a individuálních výjimek. Turnajová dotace 579320 EUR a financial commitment 651865 EUR samostatné veličiny.
+
+### 7. Kontrola a mezery
+
+I/T/D/B doloženy. H* plánovaný pondělní souběh a R32 4+8 potvrzeny, původní R16 denní split a úplný OOP nezískány; QF/SF rekonstrukce s dobovou dokumentací dohrávky. E* originální acceptance lists/DS, Q rank date/cutoff a čas losu chybějí. R* týdenní Q NG alokace otevřena. P* Main originál, Q sekundární shoda s popsaným konfliktem. Z* dvě archivní kopie stejného předstartovního Main originálu vizuálně, výsledkový ATP Main text (screenshot DisabledError), ATP Media Notes str. 1/2 text (screenshoty 403), přímý Q PDF nedostupný. Bez neověřených hashů. Kontroly kvót, 8/8 seedů, 4/0 BYE, 27/12 utkání, denních součtů a peněz prošly. Další Madrid 2024, ATP předturnajový přehled BUC24-17 potvrzuje Q 22.–23.4. a Main 24.4.–5.5. Bez runtime změn.
+
+### 8. Zdroje (BUC24)
+
+- BUC24-1: [předstartovní originální Main Raquetc](https://www.raquetc.com/wp-content/uploads/2024/04/ATP-250-Bucareste-2024-quadro-principal.pdf), [archivní kopie Fantatennis](https://www.fantatennis.net/_downloads/03a408fea3c351219c08354041e87fbb), obě str. 1 vizuálně.
+- BUC24-2: [ATP výsledkový Main](https://www.protennislive.com/posting/2024/4462/mds.pdf), text, screenshot DisabledError; [Q PDF](https://www.protennislive.com/posting/2024/4462/qs.pdf) nedostupné.
+- BUC24-3: [ATP Preview & Day 1 15.4.2024](https://www.atptour.com/-/media/1584a0f6b38242dab78db712e1b02b35.pdf), str. 1–2 text, oba screenshoty 403, 25. ročník, Main odměny, body, LL a finále.
+- BUC24-4: [TVR 12.4., předturnajový program](https://tvrinfo.ro/incepe-turneul-international-de-tenis-atp-250-tiriac-open-premii-de-600-000-de-euro/), Q/Main okna, předprodej, finále ne před 15:00; závěrečný víkend v textu nepřesně popsán.
+- BUC24-5: [GSP 14.4., všech osm Q1 a předem zveřejněný pondělní program](https://www.gsp.ro/sporturi/tenis/tiriac-open-bucuresti-dupa-8-ani-primul-antrenament-stan-wawrinka-738386.html).
+- BUC24-6: [dobový Main entry list 11.4.](https://www.tennisteen.it/entry-list/atp/24150-atp-entry-list-15-21-aprile-2024.html), ř. 160–190.
+- BUC24-7: [Radio București 11.4., plán losu](https://www.bucurestifm.ro/2024/04/11/tragerea-la-sorti-a-turneului-atp-250-tiriac-open-are-loc-pe-13-aprilie/), [Mediafax 13.4., los](https://www.mediafax.ro/sport/s-au-tras-la-sorti-meciurile-de-pe-tabloul-principal-al-tiriac-open-de-la-bucuresti-22337275), 150 bodů finalisty v médiích je v rozporu s ATP.
+- BUC24-8: [TennisTemple Q pavouk](https://de.tennistemple.com/competitions/bucharest/2024/draw-qualifications), geometrie a vstupy, zastaralé body/ceny; [Sky Q1 14.4.](https://www.skysports.com/tennis/scores-schedule/14-04-2024), [Sky Q2 15.4.](https://www.skysports.com/tennis/scores-schedule/15-04-2024).
+- BUC24-9: [pořadatel/ATP 17.4., déšť](https://tiriacopen.ro/en/media/news/fonseca-bucharest-2024-rain), [GSP 17.4. výsledky a revidovaný čtvrteční program](https://www.gsp.ro/sporturi/tenis/tiriac-open-ploaie-persistenta-si-doar-trei-meciuri-incheiate-programul-zilei-a-cincea-738786.html).
+- BUC24-10: [Tennis Explorer Main](https://www.tennisexplorer.com/bucharest/2024/atp-men/), [Radio România 20.4. přesuny](https://www.romania-actualitati.ro/stiri/sport/tiriac-open-primii-semifinalisti-id191992.html), [TyC Sports 19.4., QF přerušení tmou](https://www.tycsports.com/tenis/indignacion-por-insolito-motivo-que-freno-duelo-argentino-atp-250-bucarest-id579071.html).
+- BUC24-11: [ATP finále 21.4.](https://www.atptour.com/en/news/fucsovics-navone-bucharest-2024-final), [Radio România 21.4.](https://www.romania-actualitati.ro/stiri/sport/marton-fucsovics-campion-la-tiriac-open-2024-id192036.html), skutečný nedělní konec.
+- BUC24-12: [TennisCompanion EUR ročníkový sloupec 2024](https://tenniscompanion.org/prize-money/bucharest/), Q 3105/1695.
+- BUC24-13: [Canal Tenis ročníkový oddíl 2024](https://canaltenis.com/prize-money-atp-bucarest/), Q shoda.
+- BUC24-14: [ročníkový přehled 2024](https://de.wikipedia.org/wiki/%C8%9Airiac_Open_2024), identita 4462, ředitel, Q ceny/body a dotace.
+- BUC24-15: [pořadatel 17.2.2025, nové dějiště National Tennis Center](https://www.tiriacopen.ro/en/media/news/comunicat-tiriac-open).
+- BUC24-16: [Open Era Rankings 2024](https://openerarankings.com/Draws?DrawType=QS&tID=25310), nepřímý LL payout, nikoli primární nominální rozpis.
+- BUC24-17: [ATP předturnajový přehled Madrid 2024](https://www.atptour.com/en/news/madrid-2024-atp-masters-1000-history-draw-schedule), následující ročník. Dobová pravidla viz SCL24-18, LCB24-19, ROT24-16.
+
 ## Otevřené položky k opakované kontrole
 
 | Ročník | Oblast | Priorita / další požadovaný doklad |
@@ -4178,3 +4298,4 @@ I/T/D/B doloženy. H* úplný původní OOP mimo finále a předdešťový denn�
 | Monte-Carlo 2024 | E*/Z* | originální acceptance lists/DS, přesný čas Q losu a model míčů; Main/Q finanční tabulky a všech 9 OOP primárně vizuálně ověřeny |
 | Barcelona 2024 | H*/E*/R*/Z* | originální denní OOP mimo finále, acceptance lists/DS, Q rank date a časy losů, týdenní NG alokace; Main/Q ceny primárně ověřeny, chybný $ v Main vyřešen explicitním ATP EUR rozpisem |
 | Munich 2024 | H*/E*/R*/P*/Z* | původní Main/Q PDF, Q finanční originál (3105/1695 EUR sekundární shoda), acceptance lists/DS, Q rank date a cutoff, hodiny losů, předdešťové OOP a týdenní Q NG alokace; plánovaný Main NG Prižmić a využití LE Fritzem doloženy |
+| Bucharest 2024 | H*/E*/R*/P*/Z* | originální Q/DS a acceptance lists, Q rank date/cutoff a čas losu, původní R16 split/OOP, týdenní Q NG alokace; Main EUR ověřeno primárně, Q 3105/1695 EUR ze tří ročníkových přehledů, TennisTemple zastaralá tabulka |

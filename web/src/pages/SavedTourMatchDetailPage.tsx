@@ -161,8 +161,29 @@ function HistoricalMatchReplay():JSX.Element{
       {frame?<div className="run-home-status-block">
         <p><strong>{cs?'Výměna':'Rally'} {frame.rally_index}/{data.total_rallies}</strong>
           {' · '}{cs?'Set':'Game'} {frame.set_number}</p>
-        <p>{frame.score_a_before} : {frame.score_b_before} → <strong>
-          {frame.score_a_after} : {frame.score_b_after}</strong></p>
+        {/* Scoreboard is a projection of this verified post-rally frame only.
+            Keep A/B source order even when B is the published match winner. */}
+        <section aria-label={cs?'Skóre archivované výměny':'Archived rally scoreboard'}>
+          <div className="grid">
+            <div className="section-subtle">
+              <p>{cs?'Hráč A':'Player A'}: <strong>{data.player_a_id}</strong></p>
+              <p>{cs?'Body v gamu':'Game points'}: <strong>{frame.score_a_after}</strong></p>
+              <p>{cs?'Vyhrané gamy':'Games won'}: {frame.sets_a_after}</p>
+            </div>
+            <div className="section-subtle">
+              <p>{cs?'Hráč B':'Player B'}: <strong>{data.player_b_id}</strong></p>
+              <p>{cs?'Body v gamu':'Game points'}: <strong>{frame.score_b_after}</strong></p>
+              <p>{cs?'Vyhrané gamy':'Games won'}: {frame.sets_b_after}</p>
+            </div>
+          </div>
+          <p className="status">{cs?'Skóre před a po výměně':'Score before and after rally'}:
+            {' '}{frame.score_a_before} : {frame.score_b_before} → <strong>
+            {frame.score_a_after} : {frame.score_b_after}</strong></p>
+          <progress aria-label={cs?'Pozice v archivu výměn':'Position in rally archive'}
+            value={frame.rally_index} max={data.total_rallies}/>
+          <p className="status">{cs?'Pozice v uloženém záznamu; nejde o uplynulý čas zápasu.':
+            'Position in the stored archive, not elapsed match time.'}</p>
+        </section>
         <p>{cs?'Stav setů':'Games'}: {frame.sets_a_after} : {frame.sets_b_after}</p>
         <p>{cs?'Podává':'Server'}: {frame.server_player_id}
           {' · '}{cs?'Vítěz výměny':'Rally winner'}: {frame.winner_player_id??'—'}</p>

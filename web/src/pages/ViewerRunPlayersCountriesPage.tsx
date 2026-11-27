@@ -490,7 +490,7 @@ export function ViewerRunPlayersPage(): JSX.Element {
     {isLoading ? <p role="status">{l('Loading canonical players…', 'Načítám uložené hráče…')}</p> :
       !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
       query.isPending || query.isFetching ? <p role="status">{l('Loading canonical players…', 'Načítám uložené hráče…')}</p> :
-      query.isError ? <div role="alert"><p>{l('Failed to load canonical players:', 'Hráče nelze načíst:')} {String(query.error)}</p><button type="button" onClick={() => void query.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+      query.isError ? <div role="alert"><p>{l('Failed to load canonical players.', 'Hráče nelze načíst:')}</p><button type="button" onClick={() => void query.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
       !source ? <div role="alert"><p>{l('Saved player list is invalid or belongs to another source.', 'Seznam hráčů je neplatný nebo patří jinému zdroji.')}</p><button type="button" onClick={() => void query.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> : <>
       <SectionCard title={l('Player filters', 'Filtry hráčů')}><div className="form-grid">
         <label>{l('Search', 'Hledat')}<input type="search" value={search} onChange={e => change('vpQ', e.target.value, '', true)} /></label>
@@ -572,7 +572,7 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
         !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !playerId ? <p role="alert">{l('No player ID was provided.', 'Chybí ID hráče.')}</p> :
         playersQuery.isPending || playersQuery.isFetching ? <p role="status">{l('Loading canonical player profile…', 'Načítám uložený profil…')}</p> :
-        playersQuery.isError ? <div role="alert"><p>{l('Failed to load canonical player profile:', 'Profil hráče nelze načíst:')} {String(playersQuery.error)}</p><button type="button" onClick={() => void playersQuery.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        playersQuery.isError ? <div role="alert"><p>{l('Failed to load canonical player profile.', 'Profil hráče nelze načíst:')}</p><button type="button" onClick={() => void playersQuery.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !source ? <div role="alert"><p>{l('Saved player list is invalid or belongs to another source.', 'Seznam hráčů je neplatný nebo patří jinému zdroji.')}</p><button type="button" onClick={() => void playersQuery.refetch()}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !playerProfile ? <p className="status">{l('No canonical player with this ID exists in the selected Saved Revision.', 'V uložené revizi není hráč s tímto ID.')}</p> : null}
 
@@ -638,20 +638,25 @@ export function ViewerRunPlayerCareerPage(): JSX.Element {
 }
 
 export function ViewerRunCountriesPage(): JSX.Element {
-  const { productRunId: runId } = useViewerProductRunRouteContext()
+  const { runId, branchId, validContext, isLoading: contextLoading, refetch, query: playersQuery, source } = useRunPlayerRoster(true)
   const [search, setSearch] = useState('')
   const [sort, setSort] = useState('player_count_desc')
 
   const countriesQuery = useQuery({
-    queryKey: ['viewer-run-countries-canonical', runId],
+    queryKey: ['viewer-run-countries-canonical', runId, branchId],
     queryFn: () => getViewerCountries(runId),
-    enabled: Boolean(runId),
+    enabled: validContext,
     retry: false
   })
-
+  const loading = contextLoading || (validContext && (
+    countriesQuery.isPending || countriesQuery.isFetching || playersQuery.isPending || playersQuery.isFetching))
+  const hasError = countriesQuery.isError || playersQuery.isError
+  const joined = useMemo(() => source && !countriesQuery.isFetching && !countriesQuery.isError
+    ? joinedCountryRoster(countriesQuery.data, source) : null,
+    [source, countriesQuery.data, countriesQuery.isFetching, countriesQuery.isError])
   const countries = useMemo(() => {
     const normalizedSearch = search.trim().toUpperCase()
-    const values = (countriesQuery.data?.countries ?? []).filter(
+    const values = Array.from(joined?.values() ?? []).map(entry => entry.country).filter(
       (country) => !normalizedSearch || country.country_code.includes(normalizedSearch)
     )
     return [...values].sort((a, b) => {
@@ -659,7 +664,7 @@ export function ViewerRunCountriesPage(): JSX.Element {
       if (sort === 'country_code_asc') return a.country_code.localeCompare(b.country_code)
       return b.player_count - a.player_count || a.country_code.localeCompare(b.country_code)
     })
-  }, [countriesQuery.data?.countries, search, sort])
+  }, [joined, search, sort])
 
   return (
     <section className="panel">
@@ -667,10 +672,10 @@ export function ViewerRunCountriesPage(): JSX.Element {
       <CurrentContextStrip
         items={[
           { label: 'Product Run', value: runId || 'unknown' },
-          { label: 'Viewer Branch', value: countriesQuery.data?.viewer_branch_id ?? '—' },
-          { label: 'Public week', value: countriesQuery.data ? `S${countriesQuery.data.season_index} W${countriesQuery.data.week}` : '—' },
-          { label: 'Total country count', value: countriesQuery.data?.country_count ?? '—' },
-          { label: 'Visible countries', value: countries.length }
+          { label: 'Viewer Branch', value: joined ? branchId : '—' },
+          { label: 'Public week', value: joined && source ? `S${source.season_index} W${source.week}` : '—' },
+          { label: 'Total country count', value: joined?.size ?? '—' },
+          { label: 'Visible countries', value: joined ? countries.length : '—' }
         ]}
       />
 
@@ -692,9 +697,14 @@ export function ViewerRunCountriesPage(): JSX.Element {
       </SectionCard>
 
       <SectionCard title="Country overview">
-        {countriesQuery.isLoading ? <p className="status">Loading canonical countries…</p> : null}
-        {countriesQuery.error ? <p className="error">Failed to load canonical countries: {String(countriesQuery.error)}</p> : null}
-        {!countriesQuery.isLoading && !countriesQuery.error && countriesQuery.data ? (
+        {loading ? <p role="status">Loading canonical countries…</p> :
+          !validContext ? <div role="alert"><p>Viewer Branch could not be verified.</p>
+            <button type="button" onClick={() => void refetch()}>Retry read (GET)</button></div> :
+          hasError ? <div role="alert"><p>Failed to load canonical countries.</p>
+            <button type="button" onClick={() => { void countriesQuery.refetch(); void playersQuery.refetch() }}>Retry read (GET)</button></div> :
+          !joined ? <div role="alert"><p>Saved country and player sources do not match.</p>
+            <button type="button" onClick={() => { void countriesQuery.refetch(); void playersQuery.refetch() }}>Retry read (GET)</button></div> : null}
+        {!loading && !hasError && joined ? (
           countries.length > 0 ? (
             <table>
               <thead>
@@ -796,7 +806,7 @@ export function ViewerRunCountryDetailPage(): JSX.Element {
       {isLoading ? <p role="status">{l('Loading canonical country profile…', 'Načítám uložený profil země…')}</p> :
         !validContext ? <div role="alert"><p>{l('Viewer Branch context is not verified.', 'Kontext Viewer Branch není ověřený.')}</p><button type="button" onClick={refetch}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !validCode ? <p role="alert">{l('Invalid country code.', 'Neplatný kód země.')}</p> :
-        hasError ? <div role="alert"><p>{l('Failed to load canonical country profile:', 'Profil země nelze načíst:')} {String(countriesQuery.error ?? playersQuery.error)}</p><button type="button" onClick={retry}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
+        hasError ? <div role="alert"><p>{l('Failed to load canonical country profile.', 'Profil země nelze načíst:')}</p><button type="button" onClick={retry}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !joined ? <div role="alert"><p>{l('Saved country and player sources do not match.', 'Uložené zdroje zemí a hráčů se neshodují.')}</p><button type="button" onClick={retry}>{l('Retry read (GET)', 'Načíst znovu (GET)')}</button></div> :
         !countryProfile ? <p className="status">{l('No canonical country with this code exists in the selected Saved Revision.', 'V uložené revizi není země s tímto kódem.')}</p> : null}
 

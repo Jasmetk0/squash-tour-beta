@@ -7,6 +7,7 @@ import type {SavedTourEvent} from '../api/savedTour'
 import {useAdminBranch} from '../admin/AdminBranchContext'
 import {useAdminTime} from '../admin/AdminTimeContext'
 import {useLanguage} from '../i18n/LanguageContext'
+import {SavedTourSeasonOverview} from '../components/SavedTourSeasonOverview'
 import {SavedTourCalendarExportPanel} from '../components/SavedTourCalendarExportPanel'
 import {formatApiError} from '../utils/apiErrors'
 import {calendarSeasonIndex} from './runWorldCountryTournaments'
@@ -110,7 +111,7 @@ export function SavedTourCalendarPage():JSX.Element{
     (!seasonValid?(cs?'Neplatná sezona.':'Invalid season.'):
     requestedBranch!==null&&branch&&requestedBranch!==branch?(cs?'Nesouhlasí vybraná Branch.':'Selected Branch does not match the link.'):
     requestedRevision!==null&&!revision?(cs?'Chybí ID revize.':'Revision ID is missing.'):null))
-  return <section className="panel">
+  return <section className="panel" data-run-navigation-readonly>
     <Link to={`/admin/runs/${encodeURIComponent(runId)}/tour/editions`}>{cs?'Spravovat nativní Edition a oficiální týden':'Manage native Editions and Official week'}</Link>
     <div className="page-intro"><p className="eyebrow">RUN → TOUR → CALENDAR</p>
       <h2>{cs?'Uložený sezonní kalendář':'Saved season calendar'}</h2>
@@ -207,6 +208,9 @@ export function SavedTourCalendarPage():JSX.Element{
         {' · '}{shown.length} {cs?'po filtrování':'after filtering'}
         {typeof selectedWeek==='number'&&<> · {weekEditions.length} {cs?'ve vybraném týdnu':'in focused week'}</>}
         {' · '}{cs?'Zdrojová Branch':'Source Branch'}: <code>{model.revision_branch_id}</code></p>
+      <SavedTourSeasonOverview model={model} displayed={weekEditions} cs={cs} selectedWeek={selectedWeek}
+        categoryFilter={filters.category} onWeek={week=>set('week',String(week))}
+        onCategory={category=>set('category',category)}/>
       <SavedTourCalendarExportPanel model={model} runId={runId} branchId={branch!}
         revisionId={revision!} seasonIndex={seasonIndex} filters={filters}
         focusedWeek={selectedWeek}/>

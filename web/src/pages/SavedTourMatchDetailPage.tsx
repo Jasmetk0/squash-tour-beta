@@ -183,7 +183,7 @@ function HistoricalMatchReplay():JSX.Element{
   parentParams.delete('rally')
   const back='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar/'
     +encodeURIComponent(eventId)+'?'+parentParams.toString()
-  return <section className="panel">
+  return <section className="panel" data-run-navigation-readonly>
     <Link to={back} aria-label={tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):
       cs?'Zpět na výsledky edice':'Back to Edition results'}>
       ← {tab==='draw'?(cs?'Zpět na pavouk edice':'Back to Edition draw'):

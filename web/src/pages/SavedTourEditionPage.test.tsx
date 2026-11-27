@@ -223,6 +223,65 @@ describe('Saved Edition detail',()=>{
     expect(screen.queryByText('q-final')).not.toBeInTheDocument()
     expect(screen.getByText('3-1')).toBeInTheDocument()
   })
+  it('uses phase jump links rather than filters outside Draw and keeps Main first',async()=>{
+    api.getSavedTourEdition.mockResolvedValue(fixture(true))
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    for(const [label,section] of [
+      ['Entries & participants','entries'],['Schedule & matches','schedule'],
+      ['Results','results'],['Settings','settings']
+    ]){
+      await userEvent.click(screen.getByRole('button',{name:label}))
+      const jumps=screen.getByRole('navigation',{name:'Jump to competition phase'})
+      expect(within(jumps).getByRole('link',{name:'Main'})).toHaveAttribute('href','#saved-'+section+'-main')
+      expect(within(jumps).getByRole('link',{name:'Qualification'})).toHaveAttribute('href','#saved-'+section+'-qualification')
+      const main=document.getElementById('saved-'+section+'-main')!
+      const qualification=document.getElementById('saved-'+section+'-qualification')!
+      expect(main).toBeInTheDocument()
+      expect(qualification).toBeInTheDocument()
+      expect(main.compareDocumentPosition(qualification)&Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+      expect(screen.queryByRole('button',{name:'Qualification'})).not.toBeInTheDocument()
+    }
+    await userEvent.click(screen.getByRole('button',{name:'Draw / groups'}))
+    expect(screen.getByRole('button',{name:'Qualification'})).toBeInTheDocument()
+    expect(screen.queryByRole('navigation',{name:'Jump to competition phase'})).not.toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('omits qualification navigation and sections when no qualification is configured or recorded',async()=>{
+    const source=fixture(true)
+    source.edition.qualification_draw_size=0
+    source.edition.qualifier_spots=0
+    source.published_result!.qualification_winner_ids=[]
+    source.published_result!.matches=source.published_result!.matches.filter(m=>m.draw_type!=='qualification')
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    for(const [label,section] of [
+      ['Entries & participants','entries'],['Schedule & matches','schedule'],
+      ['Results','results'],['Settings','settings'],['Draw / groups','draw']
+    ]){
+      await userEvent.click(screen.getByRole('button',{name:label}))
+      expect(screen.queryByRole('navigation',{name:'Jump to competition phase'})).not.toBeInTheDocument()
+      expect(screen.queryByRole('button',{name:'Qualification'})).not.toBeInTheDocument()
+      expect(document.getElementById('saved-'+section+'-qualification')).not.toBeInTheDocument()
+    }
+    expect(screen.getByText('3-0')).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
+  it('retains published qualification evidence when configured sizes are zero',async()=>{
+    const source=fixture(true)
+    source.edition.qualification_draw_size=0
+    source.edition.qualifier_spots=0
+    api.getSavedTourEdition.mockResolvedValue(source)
+    mount()
+    expect(await screen.findByRole('heading',{name:'Brno Open'})).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Entries & participants'}))
+    expect(screen.getByRole('heading',{name:'Published qualification winners (1)'})).toBeInTheDocument()
+    expect(screen.getByText('Published result evidence does not substitute for the Entry Field.')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button',{name:'Results'}))
+    expect(within(document.getElementById('saved-results-qualification')!).getByText('3-1')).toBeInTheDocument()
+    expect(api.getSavedTourEdition).toHaveBeenCalledTimes(1)
+  })
   it('fails closed for cross-revision and mismatched event',async()=>{
     api.getSavedTourEdition.mockResolvedValue({...fixture(),saved_revision_id:'new-rev'})
     mount()

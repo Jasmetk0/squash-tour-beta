@@ -103,9 +103,9 @@ function CandidateReview({candidate}:{candidate:import('../api/rankingCandidates
       'This unpublished calculation only, not Official Ranking or movement against a previous publication.'}</p>
     <p>{cs?'Klasifikované řádky kandidáta':'Candidate ranked rows'}: {rows.length}</p>
     {validTotals&&<dl>
-      <dt>{cs?'Součet bodů všech řádků':'Total points across all rows'}</dt><dd>{totals.points}</dd>
-      <dt>{cs?'Započtené body kvalifikace':'Counted qualification points'}</dt><dd>{totals.qualification}</dd>
-      <dt>{cs?'Započtené body hlavní soutěže':'Counted main points'}</dt><dd>{totals.main}</dd>
+      <dt>{cs?'Součet bodů všech řádků':'Total points across all rows'}</dt><dd>{totals.points} {cs?'b.':'pts'}</dd>
+      <dt>{cs?'Započtené body kvalifikace':'Counted qualification points'}</dt><dd>{totals.qualification} {cs?'b.':'pts'}</dd>
+      <dt>{cs?'Započtené body hlavní soutěže':'Counted main points'}</dt><dd>{totals.main} {cs?'b.':'pts'}</dd>
       <dt>{cs?'Aktivní disciplinární nuly v řádcích':'Active disciplinary zeros in rows'}</dt><dd>{totals.zeroes}</dd>
     </dl>}
     {validTotals&&totals.points>0&&<div>

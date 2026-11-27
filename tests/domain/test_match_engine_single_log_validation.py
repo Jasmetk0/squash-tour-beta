@@ -12,6 +12,7 @@ check. Byte equality with ``buuk`` is pinned by the golden fingerprints in
 from __future__ import annotations
 
 import ast
+import contextlib
 import hashlib
 import json
 from pathlib import Path
@@ -292,3 +293,47 @@ def test_tampered_stamina_after_state_and_control_segments_are_rejected(engine_r
     with pytest.raises(ValueError, match="exactly one level"):
         RallyEffortChange(player_id="SV-A", from_level="CONSERVE", to_level="INCREASED",
                           reason=next(iter(RallyEffortChangeReason)))
+
+
+# --- historical and stored records keep the complete load validation ------------------
+
+LEGACY_V8 = Path(__file__).resolve().parents[1] / "fixtures" / "matches" / "legacy_engine_v8.json"
+
+
+def _stored_results():
+    from beta_engine.domain.matches.models import MatchResult
+
+    legacy = json.loads(LEGACY_V8.read_text())["result"]
+    current = MatchEngine(rng=DeterministicRng(89)).simulate(_context(best_of=5))
+    return MatchResult, {"legacy_v8": legacy, "current": current.model_dump(mode="json")}
+
+
+@pytest.mark.parametrize("inside_engine_scope", [False, True])
+def test_historical_and_current_records_reload_and_reject_changes(inside_engine_scope):
+    MatchResult, stored = _stored_results()
+    scope = content_hash.engine_event_scope() if inside_engine_scope else contextlib.nullcontext()
+    with scope:
+        for label, payload in stored.items():
+            reloaded = MatchResult.model_validate(payload)
+            for chain in ("rally_log", "timeline_log", "stamina_log"):
+                assert getattr(reloaded, chain).match_log_hash == payload[chain]["match_log_hash"]
+            if label == "current":  # the legacy dump gains later defaulted fields
+                assert reloaded.model_dump(mode="json") == payload
+            assert MatchResult.model_validate_json(reloaded.model_dump_json()) == reloaded
+
+            def rejected(mutate, payload=payload):
+                changed = json.loads(json.dumps(payload))
+                mutate(changed)
+                with pytest.raises(ValueError):
+                    MatchResult.model_validate(changed)
+
+            rejected(lambda r: r["rally_log"]["events"][0].update(rally_seed="1"))
+            rejected(lambda r: r["rally_log"]["events"][-1].update(previous_event_hash="b" * 64))
+            rejected(lambda r: r["timeline_log"]["events"][0].update(elapsed_seconds=0.5))
+            rejected(lambda r: r["stamina_log"]["transitions"][0]["states_after"][0]["bars"][0]
+                     .update(current=1.0))
+            rejected(lambda r: r["stamina_log"]["transitions"].pop())  # incomplete chain
+            rejected(lambda r: r["rally_log"]["events"].pop())  # incomplete rally log
+            if payload["rally_log"]["events"][0].get("gameplan_context"):
+                rejected(lambda r: r["rally_log"]["events"][0]["gameplan_context"]
+                             ["player_decisions"][0].update(observed_rallies=7))

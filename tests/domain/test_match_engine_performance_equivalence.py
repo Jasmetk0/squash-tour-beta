@@ -1,7 +1,8 @@
 """MatchEngine performance changes must not change a single result byte.
 
 Golden fingerprints were computed on unmodified ``buuk`` (``320e476`` for the
-first two, re-confirmed on ``8af660d``; the edge-case corpus on ``8af660d``)
+first two, re-confirmed on ``8af660d``; the edge-case corpus on ``8af660d``; the
+production-input corpus on ``29784d5``, in a separate process)
 with ``scripts/benchmark_match_engine.py``: complete ``MatchResult`` dumps of
 real matches through the production input path, the Tournament Lab path and
 the step-wise ``Simulate Next Rally`` path including every persisted working
@@ -35,6 +36,7 @@ pytestmark = pytest.mark.pr_critical
 GOLDEN_SINGLE = "7ef71261c0027218d76b9bc507bb637634871d73138382bbf29e2f424fca29cc"
 GOLDEN_FIRST_SIX = "ad84a849b87cb0647d3f3e305e4f1d7100f243bfc9e349058bd1b9ee506faeda"
 GOLDEN_EDGE_CASES = "70b082cb3046a6b4d9e46fdb012e266fd1c7001d993a7eb73eaf56fa96e00a69"
+GOLDEN_CORPUS = "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914"
 
 
 def _single():
@@ -62,6 +64,17 @@ def edge_outputs():
 def test_edge_case_corpus_is_byte_identical_to_the_pre_change_engine(edge_outputs):
     # Includes every persisted working state of the step-wise path.
     assert bench.digest(list(edge_outputs.values())) == GOLDEN_EDGE_CASES
+
+
+def test_production_corpus_with_human_inputs_is_byte_identical_to_buuk():
+    # Human Admin modifiers, Injury/Illness Health snapshots, gameplans,
+    # tie-breaks, long retriever rallies, BO1/BO3/BO5 and retirements.
+    outputs = bench.corpus_outputs()
+    assert bench.digest(outputs) == GOLDEN_CORPUS
+    assert len({o["health"] for o in outputs}) >= 3  # healthy, Injury, Illness inputs
+    assert max(
+        e["abstract_segments"] for o in outputs for e in o["result"]["rally_log"]["events"]
+    ) >= 14
 
 
 def test_edge_case_corpus_really_contains_the_abnormal_states(edge_outputs):

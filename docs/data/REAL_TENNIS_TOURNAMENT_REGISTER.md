@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 72 ročníků: nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 73 ročníků: nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -106,10 +106,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Next Gen ATP Finals](#next-gen-atp-finals-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 1990 | [Adelaide](#adelaide-1990) | ✓ | ? | ? | ? | ? | ? | ? | ? | ✓* | ROZPRACOVÁNO (2/9; T/H/E/D/R/B/P) |
 | 1990 | [Wellington](#wellington-1990) | ✓ | ? | ? | ? | ? | ? | ? | ? | ✓* | ROZPRACOVÁNO (2/9; T/H/E/D/R/B/P) |
+| 2025 | [Brisbane](#brisbane-2025) | ✓ | ✓ | ✓* | ? | ✓ | ✓* | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: původní rozdělení rezerv) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 72 zpracovaných ročníků; 66 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 73 zpracovaných ročníků; 66 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -187,7 +188,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 70 | Next Gen ATP Finals 2024 | HOTOVO (nominální rozsah) |
 | 71 | Adelaide 1990 | ROZPRACOVÁNO (T/H/E/D/R/B/P) |
 | 72 | Wellington 1990 | ROZPRACOVÁNO (T/H/E/D/R/B/P) |
-| 73 | Sydney 1990 | NEZAHÁJENO (další chronologická rešerše) |
+| — | Sydney 1990 | ODLOŽENO (historická rešerše pro jiný model) |
+| 73 | Brisbane 2025 | ROZPRACOVÁNO (E: původní rozdělení rezerv) |
+| 74 | Hong Kong 2025 | NEZAHÁJENO |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -8352,7 +8355,102 @@ Daily Iowan uvádí 22 550 USD vítěz a 12 175 finalista, ovšem jako souhrnný
 - K doplnění: originální Main/Q, nominální entry, Q/Main OOP, dobový předpis, singlový finanční rozpis. Další chronologická edice Sydney 1990.
 
 
+
+## Pokračování novějšími sezonami — rozhodnutí vlastníka 2026-11-28
+
+Historický rok 1990 odložen pro pozdější hloubkovou rešerši jiným modelem; Adelaide a Wellington včetně všech dosavadních zdrojů a nejistot zachovány. Nyní chronologicky individuální ATP 2025, čtyři GS již zpracovány; po této sezoně další novější ročníky. Čtyři původní otevřené edice 2024 zůstávají v kontrolní frontě, nezvyšovat stav bez důkazů. Stále výhradně reálný tenis, bez týmových akcí a bez engine adaptace.
+
+## Brisbane 2025
+
+**Stav: ROZPRACOVÁNO (8/9; E otevřeno — nominální Main rezervy).** Rešerše 2026-11-28. Výjimka Q24/6 postupů doložená oběma původními losy; nelze přebrat standardní Q16.
+
+### 1. Identita
+
+ATP 250 ID339, Brisbane International presented by Evie, 13. edice dle ATP, Queensland Tennis Centre, Tennyson, Brisbane, Austrálie; venkovní tvrdý povrch, AEST UTC+10 (Australia/Brisbane), měna USD. Ředitel Cameron Pearson, ATP supervisor Hans-Juergen Ochs. Main 29.12.2024–5.1.2025. Chybný rok 2024 na hlavičkách původních ATP losů/OOP (5.1.2024) opraven podle explicitních denních dat, release časů, ATP Day1 a pořadatelského oznámení. Přesný model povrchu a míčů v mužském originálu neověřen.
+
+### 2. Přihlášky a plán
+
+| Pole | Hodnota / hranice důkazu |
+|---|---|
+| Main ranking date / original cutoff | 2.12.2024 / 55 (dobový přepis) |
+| Q ranking date / original cutoff | 9.12.2024 / 129 (dobový přepis) |
+| Main/Q deadline | odvozeno dle §7.03: 2./9.12. 12:00 EST USA, následující den 03:00 AEST; skutečný DS chybí |
+| Q los | publikovaná verze 27.12.2024 19:22:05, přesný čas ceremonie neznámý |
+| Main los | pořadatel plán 28.12.; publikovaná verze 28.12.2024 09:56:54, přesný čas ceremonie neznámý |
+| Q muži | 28.–29.12.2024 (původní denní OOP, ATP Day1 a DE ročník) |
+| Main muži | 29.12.2024–5.1.2025 |
+| Q1 začátek | 11:00 AEST, alternate sign-in 10:30 |
+| F | 5.1.2025 NB 18:30 AEST (ATP Day1) |
+
+Obecné kombinované oznámení pořadatele uvádí Q27.–28.12.; to nepřepisuje specifické mužské OOP 28.12. (Q1) a 29.12. (všech šest Q2), 27.12. je doložená ženská Q1. OOP 29.12. obsahuje dvě Q2 s dosud neuzavřenými soupeři z Q1, příčina není doložena. Neodvozovat z toho nový standardní Q den. Main a Q2 se překrývají.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální uzly |
+|---|---|---:|
+| Q1 | 28.12.2024 | 12 |
+| Q2 | 29.12.2024 | 6 |
+| R32 | 29.–31.12.2024 | 16 |
+| R16 | 1.–2.1.2025 | 8 |
+| QF | 3.1.2025 | 4 |
+| SF | 4.1.2025 | 2 |
+| F | 5.1.2025 | 1 |
+
+H* = mužské okno rekonstruované z kombinovaného předturnajového programu, mužských OOP a výsledků. Obecný plán uvádí R1/R2 31.12. a R2/R3 2.1., ale zahrnuje WTA s jinou geometrií; nepřenášet ženské R32/R16 do mužského plánu. OOP 29.12. jedno Main R32 (NB20:00), potvrzeno Reuters. QF všechny čtyři mužské páry v OOP z 2.1.; SF a F dobový výsledkový přehled. Přesný počáteční split R32/R16 po dnech mimo doložený první zápas necertifikován.
+
+### 4. Struktura a vstup
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Účastníci / pozice | 32 | 24 |
+| Nasazení | 8 | 12 |
+| WC | 3 | 4 |
+| Řádní kvalifikanti | 6 | 6 postupujících |
+| BYE | 0 | 0 |
+| Formát | BO3 | BO3 |
+| Nominální uzly | 31 | 18 |
+
+Q6 sekcí po 4 se dvěma seedy, 12+6 uzlů, 20 DA + 4 WC (dobová listina a původní Q). Main 16+8+4+2+1, šest Q pozic 3/5/14/18/22/31, WC pozice 2/10/30, 2 PR pozice 6/12; všech 8 seedů a bez BYE. Celkem 49 nominálních uzlů. Pozdější změny ani skreče včetně F nezmenšují plánovanou kapacitu.
+
+**E otevřeno:** dobový přepis Main uvádí 22 DA + 3 WC + 6 Q + 0 SE + 0 LE, což dává pouze 31. Pořadatel oznámil 22 jmen (včetně PR) a původní Main potvrzuje 23 obsazených ostatních pozic, 3 WC a 6 Q. §7.08 běžné ATP250/32 má 4 Q, 22–24 DA, 0–2 SE, 1 LE, není přímý doklad rezerv u výjimky Q24. Hypotéza 22 DA + 1 rezervovaná pozice (LE, případně jiná schválená rezerva) + 3 WC + 6 Q, po uvolnění 23 ostatních vstupů. Bez originální acceptance/DS či výslovného předpisu výjimky nelze certifikovat typ rezervy. V listině je Mensik běžný rankingový DA; ATP Day1 označení #NextGenATP není samo o sobě důkaz NG vstupního mechanismu. Nepřidávat extra místo.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.08/7.09 a pravidla náhradníků z verze 23.12.2024 pro 2025: přihlášky Main 28 dní, Q 21 dní před pondělím; PR pro vstup, ne pro seeding; Q přidělení do Main losem po ukončení kvalifikace; po zahájení Q se volná Main místa plní oprávněnými LL, rozlišit změny nasazených před prvním OOP a následné substituce, denní sign-in 30 minut před prvním zápasem. Výjimka velikosti Q přímo z losů, nikoli z obecného pravidla. ATP §9.03 G potvrzuje přírůstek Q bodů k Main a nulový zisk za Main první kolo. Bodová pravidla 10.2.2025 vizuálně zkontrolována, pro lednovou edici přímo potvrzena původními tabulkami. Přesný individuální rezervační mechanismus otevřen v E.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | Body | USD |
+|---|---:|---:|---:|
+| W | 1 | 250 | 96985 |
+| F | 1 | 165 | 56580 |
+| SF | 2 | 100 | 33055 |
+| QF | 4 | 50 | 18685 |
+| R16 | 8 | 25 | 10955 |
+| R32 | 16 | 0 | 6580 |
+| Q postup | 6 | 13 | 0 |
+| Q2 prohra | 6 | 7 | 3480 |
+| Q1 prohra | 12 | 0 | 1865 |
+
+Main 487335 USD, Q 43260 USD, celkem 530595 USD. Main původní ATP los a vizuálně ověřené ATP Day1 shodné, Q původní předstartovní los a konečný archivní ATP los (text), sekundární TennisTemple a historické tabulky souhlasí. Q3 štítek TennisTemple je úspěšná kvalifikace po dvou kolech, nikoli třetí zápas. R32 6580, ne překlep 5580 z dobového TennisUpToDate. Celkové prize money 680140 USD (včetně doubles), commitment 766290 USD z hlavičky; nezaměňovat. 
+
+### 7. Kontrola a zdroje
+
+- [BRI25-1 ATP Day1](https://www.atptour.com/-/media/50ac06595e6f45d6b999d86b669de326.pdf) str.1 vizuálně, identita, termíny, 6 Q, 3 WC, body a Main finance.
+- [BRI25-2 pořadatel Main originál](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/12/BI25-MDS-Draw.pdf) a [BRI25-3 Q originál](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/12/BI25-QS-Draw.pdf): celé indexované texty včetně všech pozic a odměn; screenshoty přesměrovány na aktuální web. [Q konečný ATP archivní originál](https://britwatchsports.com/wp-content/uploads/2021/11/ATP-Brisbane-QS-Final.pdf) text, screenshot403. Protennislive Main/Q přímý přístup nedostupný.
+- [BRI25-4 předturnajový program](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/07/2025-BRISBANE-INTERNATIONAL-PROVISIONAL-SCHEDULE.pdf), [pořadatel klíčové termíny](https://www.tennis.com.au/brisbane-international/news/2024/12/everything-you-need-to-know-tournament-details-and-key-dates-explained); PDF text, screenshot přesměrován.
+- [BRI25-5 Q1 OOP](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/12/OP-Saturday-28-December-2024.pdf), [Q2/Main OOP](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/12/BI25-OP-Sunday-29-December.pdf), [30.12.](https://www.brisbaneinternational.com.au/wp-content/uploads/2024/12/BI25-OP-Monday-30-December.pdf), [QF OOP](https://www.brisbaneinternational.com.au/wp-content/uploads/2025/01/BI25-Friday-3-Jan-Order-of-Play.pdf); text, screenshoty přesměrovány.
+- [BRI25-6 acceptance přepis](https://www.tennisteen.it/entry-list/atp/24278-atp-entry-list-30-dicembre-2024-5-gennaio-2025.html), [oficiální oznámení pole](https://www.tennis.com.au/brisbane-international/news/2024/12/full-field-announced-novak-djokovic-headlines-stellar-brisbane-international-line-up), [CanalTenis](https://canaltenis.com/entry-list-atp-brisbane-2025/); pozor na neúplný Main součet.
+- [BRI25-7 ATP Competition 23.12.](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-7_the-competition_23dec.pdf), text, screenshot403; [ATP Ranking 10.2.](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-9_pif-atp-rankings_10feb.pdf) tištěná str.264 vizuálně.
+- [BRI25-8 EN ročník](https://en.wikipedia.org/wiki/2025_Brisbane_International), [DE ročník](https://de.wikipedia.org/wiki/Brisbane_International_2025/Herren), [EN Main/Q](https://en.wikipedia.org/wiki/2025_Brisbane_International_%E2%80%93_Men%27s_singles), [TennisTemple Q](https://en.tennistemple.com/competitions/brisbane/2025/draw-qualifications), [TennisCompanion](https://tenniscompanion.org/prize-money/brisbane/) — sekundární kontroly.
+- [BRI25-9 Reuters 29.12.](https://www.reuters.com/sports/tennis/vukic-advances-brisbane-with-win-over-goffin-2024-12-29/), [Sporting News výsledky](https://www.sportingnews.com/au/tennis/news/brisbane-international-schedule-draw-results-scores-2025/9964f6b0de49242fb1d16cbb) — pozorované termíny; Sporting News hodiny AEDT, nepřebírat jako AEST.
+
+Otevřeno E: nominální Main rezervy, původní acceptance/DS; doplňkově přesné skutečné deadline, hodiny losů, originální vizuální Main/Q/OOP, přesný model míčů a předturnajové denní splity. Bez smyšlených hashů. Další Hong Kong 2025 až po zapsání mezery; historický rok 1990 pozastaven.
+
+
 ## Otevřené položky k opakované kontrole
+
+**Brisbane 2025 — E otevřeno:** získat původní Main acceptance/DS nebo schválení výjimky Q24/6 a rozdělení 23 zbývajících míst; dobový přepis dává jen 31 celkem. Adelaide/Wellington 1990 odloženy, nikoli dokončeny.
 
 **Cílená kontrola Shanghai (2026-11-28):** [ATP předturnajová stránka](https://www.atptour.com/en/news/shanghai-2024-atp-masters-1000-history-draws-schedule) indexovaný text explicitně potvrzuje R32 59000, tedy podporuje Media Notes; [TennisTonic 30.9.](https://tennistonic.com/tennis-news/781617/atp-shanghai-draw-prize-money-sinner-zverev-alcaraz-djokovic-are-the-top-seeds-2/) a [TennisExplorer](https://www.tennisexplorer.com/shanghai/2024/atp-men/) uvádějí 59100/34500 a podporují los. Ani další zdroje nepřinesly rozhodný individuální výplatní doklad. P zůstává otevřeno, pracovní kandidát dle konečného losu zachován.
 

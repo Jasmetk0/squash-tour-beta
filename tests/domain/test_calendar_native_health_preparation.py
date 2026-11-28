@@ -52,6 +52,9 @@ def test_prepares_every_missing_week_with_each_birthday_only_at_its_actual_week(
                for i,h in enumerate(result) if i)
     assert result[-1].birth_event == life[-1].birth_event
     assert baseline.model_dump_json() == original
+    carried = [next(p for p in h.players if p.player_id == "existing") for h in result]
+    assert len({id(p) for p in carried}) == len(result)
+    assert all(p.model_dump_json() == carried[0].model_dump_json() for p in carried)
     assert result == prepare_native_health_history(
         saved_health=(baseline,), signed_lifecycle=life[:-1], next_lifecycle=life[-1],
     )
@@ -84,7 +87,9 @@ def test_preparation_never_heals_or_erases_existing_health_and_admin_evidence():
     result=prepare_native_health_history(saved_health=(edited,),
         signed_lifecycle=life[:-1],next_lifecycle=life[-1])
     for h in result[1:]:
-        assert next(p for p in h.players if p.player_id=="existing").records == (record,)
+        player = next(p for p in h.players if p.player_id == "existing")
+        assert player.records == (record,)
+        assert player.records[0] is not record
         assert h.admin_edits == (edit,)
         assert h.origin == edited.origin
 

@@ -8293,6 +8293,26 @@ Dobová AP přímo potvrzuje singlovou výhru USD 18 000. Daily Iowan 9.1. ve st
 - **Nová konkrétní archivní stopa:** [Victorian Collections – katalog Tennis Australia](https://victoriancollections.net.au/collections?q=+souvenir+programmes) indexuje papírový turnajový program „Foundation South Australian Mens Hardcourt Tennis Championships (Adelaide) 1990“. Přímé zúžené hledání a položka za tlačítkem Show more nebyly dostupné; neviděli jsme obálku ani obsah. Priorita: získat katalogové číslo a stránky s plánem, Q a prize money; žádná žádost ani platba neprovedena. Samostatné hledání pozdější lednové akce odhalilo [AP 11.1.1990](https://www.latimes.com/archives/la-xpm-1990-01-11-sp-577-story.html) o Rio Challenge, exhibici na stejném místě; její data neslučovat s ATP turnajem.
 - **Závěr:** I/Z doloženy, T/H/E/D/R/B/P zůstávají otevřeny; žádný nový turnaj, žádné zvýšení počtu dokončených. Před dalším ročníkem zaznamenat mezery a usilovat o původní program/losy. Zásady jednoho turnaje po druhém a maximální hloubky podle požadavku vlastníka.
 
+### 7. Třetí hloubkový průchod Adelaide — 2026-11-28
+
+Nový sekundární zdroj [GoTennis, historická edice 2114](https://gotennis.ru/players/tourney/atp_1990/2114) obsahuje všech 31 Main výsledkových uzlů a u 30 z nich explicitní datum. Na rozdíl od dříve odmítnutého Foretennis, který přiděluje všem zápasům datum začátku akce, uvádí rozlišená data. Původ dat a časové pásmo však nedeklaruje; nejde o předturnajový OOP.
+
+| Kolo | Kandidátní skutečné okno (leden 1990) | Rozpis dle GoTennis |
+|---|---|---|
+| R32 | 1.–2.1. | 8 dne 1.1., 7 dne 2.1., 1 bez explicitního data (Arias–Woodforde; odvodit jen z kontextu nelze) |
+| R16 | 3.–4.1. | 4+4 |
+| QF | 5.1. | 4 |
+| SF | 6.1. | 2 |
+| F | 7.1. | 1 |
+
+Součet 8+7+1+4+4+4+2+1 = 31. Nedělní F je navíc přímo potvrzeno dobovou AP zprávou. **H zůstává otevřeno**: tato rekonstrukce je kandidátní historie, nikoli doložený nominální plán. Nevyplňovat chybějící datum ani Q data.
+
+Kontrola proti [TennisDB, zápasy Koevermanse](https://tennis-db.com/players/3931063/mark-koevermans/matches): stejná trojice soupeřů, ale data s hvězdičkou 4./5./6.1. proti GoTennis 2./3./5.1. (R32/R16/QF). Hvězdičková data nejsou rovnocenné potvrzení; bez vysvětlení jejich původu je nepoužívat jako přesné datum. [Tennis.esp.br](https://tennis.esp.br/jogadores/mark-woodforde?fim=1990-12-31&inicio=1990-01-01) výslovně upozorňuje, že data jsou začátky turnajů, navíc směšuje více položek Adelaide v témže roce. [Flashscore 1990](https://www.flashscore.com.au/tennis/atp-singles/adelaide-1990/) má konkrétní archivní ročník, ale dostupný HTML výstup neobsahuje výsledkové řádky. [Tennislive](https://www.tennislive.net/atp-men/adelaide-1990/) uvádí 31 zápasů a 125K, výsledkový seznam se v dostupném výstupu nenačetl. [TennisTemple](https://en.tennistemple.com/competition/adelaide-1990/3119/) potvrzuje 8 seedů, termín a 125K, jeho moderní štítek ATP250 není dobová kategorie. Žádný z těchto zdrojů neposkytuje originální Q listinu ani ročníkovou finanční tabulku.
+
+Nová archivní cesta: [Tennis Australia – instituce a popis sbírky](https://victoriancollections.net.au/organisations/tennis-australia) potvrzuje fond více než 16 000 evidovaných předmětů včetně programů, časopisů a novinových výstřižků; [oficiální kontakt](https://www.tennis.com.au/about-us/contact-us) play@tennis.com.au. Původní Adelaide 1990 stále pouze v indexu katalogu; individuální záznam 542cc4959821f5030c91102f byl prověřen a patří Roland Garros 1990, ne Adelaide. Nezaměňovat. [Historie areálu The Drive](https://www.thedriveadelaide.com.au/history/) potvrzuje pořadatelskou roli Tennis SA a odlišný exhibiční Rio Challenge; historický název série podporuje, nikoli konkrétní týdenní program. Pro archivní dotaz žádat katalogové ID, předturnajové časové rozpisy, mužský Q/Main draw a rozpis cen, případně dobový ATP rulebook; nejprve ověřit dostupnost a podmínky užití. Žádný dotaz neodeslán, žádný nákup.
+
+**Výsledek:** nový kandidátní Main harmonogram, další rozpor dat explicitně zaznamenán, žádná změna nominálních hodnot ani povinných stavů. T/H/E/D/R/B/P otevřeny, I/Z zachovány. Q32 zůstává hlavičkový údaj. Nezískána další spolehlivá singlová sazba ani kvalifikační dny.
+
 ## Wellington 1990
 
 **ROZPRACOVÁNO (I/Z; T/H/E/D/R/B/P otevřeny).**

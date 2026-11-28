@@ -47,10 +47,15 @@ def create_app(
         app.state.runtime = build_runtime(database_url=database_url)
         from beta_engine.application.full_simulation_tasks import FullSimulationTaskWorker
         app.state.full_simulation_worker = FullSimulationTaskWorker(app.state.runtime.repository._session_factory)
+        from beta_engine.infrastructure import match_workers
+        app.state.match_workers = None
         try:
+            # Opt-in only (BETA_ENGINE_MATCH_WORKERS); results never depend on it.
+            app.state.match_workers = match_workers.install_from_environment()
             yield
         finally:
             app.state.full_simulation_worker.close()
+            match_workers.uninstall(app.state.match_workers)
 
     app = FastAPI(title="Squash Tour Beta Engine", version="0.1.0", lifespan=lifespan)
     app.add_middleware(

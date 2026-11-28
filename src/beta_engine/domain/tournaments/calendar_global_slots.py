@@ -15,14 +15,14 @@ from typing import Literal
 from pydantic import Field, model_validator
 from pydantic_core import to_json
 
-from beta_engine.core import DeterministicRng
 from beta_engine.domain.calendar.run_week_position import RunWeekPosition
 from beta_engine.domain.matches.health import (
     EffectiveMatchHealthSnapshot,
     project_player_health,
 )
-from beta_engine.domain.matches.match_engine import MatchEngine
+from beta_engine.domain.matches.match_engine import MatchEngine  # noqa: F401 - patched by tests
 from beta_engine.domain.matches.models import MatchContext, MatchResult
+from beta_engine.domain.matches.slot_batch import simulate_batch
 from beta_engine.domain.players.calendar_canonical_match import canonical_participant
 from beta_engine.domain.players.calendar_continuation_match import (
     CalendarContinuationMatch,
@@ -1120,6 +1120,33 @@ def freeze_slot(state, checkpoint, *, world, lifecycle, health, source, head):
 
 
 def calculate_match(slot, item):
+    return calculate_matches(slot, (item,))[0]
+
+
+def calculate_matches(slot, items):
+    """Calculate independent frozen matches of one slot, in the given order.
+
+    Participation, collisions, walkovers, Health and the snapshot are decided
+    by the caller beforehand. Only the pure MatchEngine calls may run in a
+    bounded worker batch; their results are strictly rebound and decoded here,
+    and state effects and evidence are always built here in request order.
+    """
+    prepared = [_match_inputs(slot, item) for item in items]
+    results = _simulate_slot_matches(
+        [(ctx, item.seed, anchor, item.health) for item, (ctx, _, anchor) in zip(items, prepared)]
+    )
+    made = []
+    for (ctx, inputs, anchor), result in zip(prepared, results, strict=True):
+        _, effects = continuation_effects(
+            SimpleNamespace(players=slot.players), ctx, result, inputs["state_policy"]
+        )
+        made.append(CalendarContinuationMatch(
+            **inputs, result=result, effects=effects, log_anchor_hash=anchor
+        ))
+    return made
+
+
+def _match_inputs(slot, item):
     snapshot = slot.snapshot_fingerprint
     ctx = MatchContext(
         match_id=item.match_id,
@@ -1165,41 +1192,59 @@ def calculate_match(slot, item):
         "effective_health": item.health,
     }
     anchor = continuation_anchor(SimpleNamespace(**inputs))
-    result = _simulate_slot_match(ctx, seed=item.seed, anchor=anchor, health=item.health)
-    _, effects = continuation_effects(
-        SimpleNamespace(players=slot.players), ctx, result, inputs["state_policy"]
-    )
-    return CalendarContinuationMatch(
-        **inputs, result=result, effects=effects, log_anchor_hash=anchor
-    )
+    return ctx, inputs, anchor
 
 
 def _simulate_slot_match(context, *, seed, anchor, health):
+    return _simulate_slot_matches([(context, seed, anchor, health)])[0]
+
+
+def _simulate_slot_matches(items):
+    """MatchEngine results of ``(context, seed, anchor, health)``, in order.
+
+    Missing results are computed as one independent batch (sequentially by
+    default). The private replay memo keeps its original per-match semantics.
+    """
     scope = _replay_projections.get()
     cache = scope.get("match_results") if scope is not None else None
     if cache is None:
-        return MatchEngine(DeterministicRng(seed)).simulate(
-            context, log_anchor_hash=anchor, effective_match_health=health,
-        )
+        return simulate_batch(items)
     # Memoize expected engine output, never the match supplied by Saved storage.
     # Exact inputs bind the replay; fresh decoding keeps nested logs isolated.
-    key = (seed, anchor, context.model_dump_json().encode(), health.model_dump_json().encode())
-    previous = cache.pop(key, None)
-    if previous is not None:
-        cache[key] = previous
-        return MatchResult.model_validate_json(previous[1])
-    result = MatchEngine(DeterministicRng(seed)).simulate(
-        context, log_anchor_hash=anchor, effective_match_health=health,
-    )
-    encoded = result.model_dump_json().encode()
-    size = 128 + len(anchor) + len(key[2]) + len(key[3]) + len(encoded)
-    if size <= _MATCH_REPLAY_BYTES:
-        while scope["match_result_bytes"] + size > _MATCH_REPLAY_BYTES:
-            removed_size, _ = cache.pop(next(iter(cache)))
-            scope["match_result_bytes"] -= removed_size
-        cache[key] = (size, encoded)
-        scope["match_result_bytes"] += size
-    return result
+    keys = [
+        (seed, anchor, context.model_dump_json().encode(), health.model_dump_json().encode())
+        for context, seed, anchor, health in items
+    ]
+    known = [cache.get(key) for key in keys]
+    missing = {}  # first index of every distinct key the lookup did not find
+    for i, key in enumerate(keys):
+        if known[i] is None:
+            missing.setdefault(key, i)
+    computed = dict(zip(missing.values(), simulate_batch([items[i] for i in missing.values()]), strict=True))
+    produced = {}
+    results = []
+    for i, key in enumerate(keys):
+        if i in computed:
+            result = computed[i]
+            encoded = result.model_dump_json().encode()
+            entry = produced[key] = (128 + len(items[i][2]) + len(key[2]) + len(key[3]) + len(encoded), encoded)
+        else:
+            # A hit of the lookup (kept even if an earlier miss of this batch
+            # evicted it) or a duplicate key computed above: fresh decoding.
+            entry = known[i] if known[i] is not None else produced[key]
+            result = MatchResult.model_validate_json(entry[1])
+        # Same LRU bookkeeping as one-by-one replay: refresh or insert in order.
+        stale = cache.pop(key, None)
+        if stale is not None:
+            scope["match_result_bytes"] -= stale[0]
+        if entry[0] <= _MATCH_REPLAY_BYTES:
+            while cache and scope["match_result_bytes"] + entry[0] > _MATCH_REPLAY_BYTES:
+                removed_size, _ = cache.pop(next(iter(cache)))
+                scope["match_result_bytes"] -= removed_size
+            cache[key] = entry
+            scope["match_result_bytes"] += entry[0]
+        results.append(result)
+    return results
 
 
 def accept_slot(checkpoint, slot, *, match_id=None):
@@ -1224,7 +1269,7 @@ def accept_slot(checkpoint, slot, *, match_id=None):
             )
     accepted = tuple(
         sorted(
-            (*slot.accepted, *(calculate_match(slot, s) for s in selected if s.match_id not in walkovers)),
+            (*slot.accepted, *calculate_matches(slot, tuple(s for s in selected if s.match_id not in walkovers))),
             key=lambda m: m.match_id,
         )
     )

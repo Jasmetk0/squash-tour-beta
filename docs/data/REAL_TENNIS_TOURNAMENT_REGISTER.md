@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 84 ročníků: nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 85 ročníků: nově Acapulco 2025; nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -118,10 +118,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Marseille](#marseille-2025) | ✓ | ✓ | ✓ | ? | ✓ | ✓* | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: Main rezervy/NG) |
 | 2025 | [Doha](#doha-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Rio de Janeiro](#rio-de-janeiro-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [Acapulco](#acapulco-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 84 zpracovaných ročníků; 71 hotových v nominálním rozsahu; 13 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 85 zpracovaných ročníků; 72 hotových v nominálním rozsahu; 13 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -212,6 +213,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 82 | Marseille 2025 | ROZPRACOVÁNO (E: Main rezervy/NG) |
 | 83 | Doha 2025 | HOTOVO (nominální rozsah) |
 | 84 | Rio de Janeiro 2025 | HOTOVO (nominální rozsah) |
+| 85 | Acapulco 2025 | HOTOVO (nominální rozsah) |
+| 86 | Dubai 2025 | NEZAHÁJENO |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -9445,7 +9448,95 @@ Main 1788110 USD přímo ze dvou vizuálních Main losů a ATP Day1; předstarto
 Otevřené doplňky: původní Q finanční tabulka, signed acceptance/DS, Q cutoff, skutečné uzávěrky a hodiny losů, individuální A+ administrativa, přesná příčina Q2 časové změny, úplné OOP, model míčů a vizuální magazín. Bez smyšlených hashů. Další Acapulco 2025.
 
 
+## Acapulco 2025
+
+**Stav: HOTOVO (nominální rozsah, 9/9 s omezeními H/E/R/Z).** Rešerše 2026-11-28. Oba konečné originální ATP singlové losy vizuálně ověřeny včetně odměn a bodů, předstartovní Main a denní OOP dostupné textově. Oficiální magazín má zastaralé body; pro sportovní hodnoty mají přednost ročníkové originální ATP tabulky.
+
+### 1. Identita
+
+Abierto Mexicano Telcel presentado por HSBC, ATP500 ID807, 32. edice, Arena GNP Seguros, Acapulco, Guerrero, Mexiko; venkovní tvrdý povrch Solflex, míče Dunlop (pořadatelský magazín, přesný model neověřen). America/Mexico_City, CST UTC−6; USD. Ředitel Álvaro Falla, ATP supervisoři Gerry Armstrong, Zsolt Beda, Jaime Chavez, referee Ricardo Reis a tour manager Denis Zivkovic (originální losy/OOP).
+
+### 2. Termíny a přihlášky
+
+| Pole | Hodnota |
+|---|---|
+| Main rank date / původní cutoff | 27.1.2025 / 57, dobový TennisTeen |
+| Q datum listiny / původní cutoff | 3.2.2025 / 93, LiveTennis, datum listiny není nezávisle potvrzený rank date |
+| Nominální Main/Q deadline | 27.1./3.2. 12:00 EST = 11:00 CST, odvozeno dle §7.03 |
+| Main los | 22.2. plán 15:00 CST (ATP preview), pořadatel potvrzuje konání tentýž den; skutečná hodina neověřena |
+| Q | 22.–23.2.2025, session 17:00 / 18:00 CST |
+| Main | 24.2.–1.3.2025 |
+| F | 1.3. NB21:00 CST, ATP preview a finálový přehled |
+| Main konečný cutoff | Vukic66, předstartovní i finální ATP Main (v originálech odlišný přepis křestního jména) |
+| Q konečný cutoff | Mannarino107, finální ATP Q |
+
+Q a Main se nepřekrývají. ITF databázová hlavička 24.2.–2.3. není doloženým posunem finále; ATP losy, pořadatel a výsledky potvrzují sobotu 1.3. Předstartovní Main release 22.2. 23:37:47, Q2 OOP 22.2. 23:37:49; časová zóna release polí nedoložena, neztotožňovat s hodinou ceremonie. LiveTennis používá datum listiny 3.2. i u Main, což nevyvrací původní Main rank date 27.1. Skutečné uzávěrky a hodina Q losu nedoloženy.
+
+### 3. Nominální harmonogram
+
+| Kolo | Místní den/okno | Uzly |
+|---|---|---:|
+| Q1 | 22.2. | 8 |
+| Q2 | 23.2. | 4 |
+| R32 | 24.–25.2. | 16 |
+| R16 | 26.2. | 8 |
+| QF | 27.2. | 4 |
+| SF | 28.2. | 2 |
+| F | 1.3. | 1 |
+
+Pořadatel 22.2. výslovně potvrzuje osm Q1 singles a dva doubles; Q2 OOP má čtyři singles a jeden doubles. Denní předherní OOP potvrzují R32 8+8 (Po tři plus tři plus dva, Út tři plus dva plus tři), R16 všech osm ve středu a QF všechny čtyři ve čtvrtek. Po–Čt singlové session od18:00 CST. SF datum z výsledkového přehledu, kompletní původní SF OOP nedohledán; F 21:00 z ATP. Denní rozdělení pochází z rozpisů po losu, nikoli z předlosového interního plánu. Dva R16 walkovery a jeden skreč v konečném Main neubírají nominální uzly. Celkem 43 uzlů.
+
+### 4. Struktura a vstup
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Účastníci/pozice | 32 | 16 |
+| Nasazení nominálně | 8 | 8 |
+| BYE | 0 | 0 |
+| Běžné WC | 3 | 3 |
+| Podmíněné A+ WC | 1 | 0 |
+| Řádné Q postupy | 4 | 4 |
+| Formát | BO3 | BO3 |
+| Uzly | 31 | 12 |
+
+Normativní Main podle dobového §7.08 B.1.b: 23–25 DA +4 Q +3–4 WC +0–1 SE, maximální rezervace 23 DA +3 WC +1 podmíněná regionální A+ WC +1 SE +4 Q =32; nevyužité rezervace se vracejí do DA. TennisTeen původní seznam 23 DA +3 WC +4 Q a hlavička SE0 dávají jen30, odpovídají nevyplněným rezervám, nikoli samostatné kapacitě 30; nelze z nich certifikovat konkrétní administrativní stav. Aktualizace CanalTenis má 25 běžných jmen +3 WC +4 Q =32. LiveTennis hlavička SE1/2 neodpovídá standardnímu max1 v předpisu; nevytvářet druhý SE, význam čítače nedoložen. Předstartovní Main 22.2. má 25 neoznačených míst, WC5/20/30, Q placeholdery18/22/23/28, osm seedů, žádný SE. Tento stav podporuje nominální standard a uvolnění rezerv, neprokazuje individuální ledger A+/SE.
+
+Finální Main: Musetti seed6 odstoupil, Shapovalov nově seed9 na17, kvalifikant Tien na jeho původní pozici3, LL Bellucci na28; Q3/18/22/23, WC5/20/30, osm skutečně aktivních seedů. Q §7.08 E.1 13 DA +3 WC; třináct běžných jmen a tři prázdná místa v LiveTennis listině, finální originál WC3/6/10, tři alternates, čtyři sekce po4, 8+4 uzlů; seed3 chybí, pořadatel při zahájení uváděl Hijikatu s chybně zopakovaným číslem2, v Main již neoznačený. Konečné Q má sedm označených seedů, nominálně osm. Týden Acapulco/Dubai/Santiago: §7.04 a §7.08 určují Next Gen příležitosti na ATP250, nikoli automatickou rezervaci ATP500. Žádné navýšení kapacity. Původní podepsané acceptance/DS a individuální uvolnění rezerv otevřené.
+
+### 5. Dobová pravidla
+
+ATP Competition 23.12.2024 §7.03/7.04/7.08–12/7.15–20, textově ověřeny konkrétně §7.08 Main/Q a Next Gen program. Standard ATP50032/16, osm seedů, žádné BYE, čtyři Q sekce, postup po dvou výhrách, přiřazení Q pozic losem, LL po zahájení Q a pravidla náhrady seedů (před/po OOP). BO3 obou fází přímo z originálů. Q body se přičítají k Main; přesná individuální administrativa LL/SE/A+ a pořadí odstoupení otevřené. Pořadatelský magazín uvádí staré singlové sazby 500/300/180/90/45 a Q20; pro 2025 odmítnuty ve prospěch obou originálních losů 500/330/200/100/50/0 a Q25/13/0.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | Body | USD |
+|---|---:|---:|---:|
+| W | 1 | 500 | 483515 |
+| F | 1 | 330 | 260150 |
+| SF | 2 | 200 | 138645 |
+| QF | 4 | 100 | 70830 |
+| R16 | 8 | 50 | 37810 |
+| R32 | 16 | 0 | 20165 |
+| Q postup | 4 | 25 | 0 |
+| Q2 prohra | 4 | 13 | 10335 |
+| Q1 prohra | 8 | 0 | 5800 |
+
+Main 1929395 USD + Q 87740 USD = 2017135 USD nominální singlové odměny, obě primární vizuální tabulky, Main navíc předstartovní pořadatelský originál (text); DE ročník shodný v singles. Souhrn ATP prize money2585410 a commitment2763440 nejsou singlovými součty. Magazín uvádí odlišnou agregovanou částku2206080, jejíž kontext není vysvětlen; nepoužít jako ročníkové singlové ceny. Nejde o audit skutečných individuálních plateb.
+
+### 7. Zdroje a omezení (ACA25)
+
+- [ATP finální Main](https://www.protennislive.com/posting/2025/807/mds.pdf) a [ATP finální Q](https://www.protennislive.com/posting/2025/807/qs.pdf) obě str.1 vizuálně ověřeny; [pořadatel předstartovní Main](https://abiertomexicanodetenis.com/wp-content/uploads/prensa-2025/febrero_23/documentos/mds_AMTfeb23_2025.pdf) text, screenshot404.
+- [Oficiální magazín AMT 2025](https://abiertomexicanodetenis.com/wp-content/uploads/2025/02/AMT-2025_Web.pdf) text (tištěná str.16), screenshot404, zastaralé body; [ATP preview](https://www.atptour.com/en/news/acapulco-2025-history-draw-schedule) indexovaný text, přímý403; [ATP finále](https://www.atptour.com/en/news/acapulco-2025-schedule), [ATP prize money](https://www.atptour.com/en/news/acapulco-2025-prize-money) indexovaný text.
+- [Pořadatel Main los](https://abiertomexicanodetenis.com/en/2025/02/22/the-draw-of-the-xxxii-edition-of-the-amt-2025-is-defined/), [Q1](https://abiertomexicanodetenis.com/en/2025/02/22/amt-2025-kicks-off-with-qualifiers/); [Q2 OOP](https://britwatchsports.com/wp-content/uploads/2021/11/ATP-Acapulco-OOP-20252302.pdf) text screenshot403; [Po OOP](https://abiertomexicanodetenis.com/wp-content/uploads/prensa-2025/febrero_24/documentos/op_feb24.pdf), [Út](https://abiertomexicanodetenis.com/wp-content/uploads/2025/02/op_feb25.pdf), [St](https://abiertomexicanodetenis.com/wp-content/uploads/prensa-2025/febrero_26/documentos/op_feb26.pdf), [Čt](https://abiertomexicanodetenis.com/wp-content/uploads/2025/02/op_feb27.pdf), všechny text, screenshot404.
+- [TennisTeen](https://www.tennisteen.it/entry-list/atp/24312-atp-entry-list-24-febbraio-2-marzo-2025.html), [LiveTennis Main/Q](https://www.livetennis.it/post/432250/atp-500-acapulco-dubai-e-atp-250-santiago-la-situazione-aggiornata-md-e-qualificazioni-fognini-e-passaro-danno-forfait-a-santiago/), [CanalTenis aktualizace](https://canaltenis.com/entry-list-atp-acapulco-2025/), [ATP Competition 23.12.2024](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-7_the-competition_23dec.pdf) text, screenshot403.
+- [DE ročník](https://de.wikipedia.org/wiki/Abierto_Mexicano_Telcel_2025), [DE Q](https://de.wikipedia.org/wiki/Abierto_Mexicano_Telcel_2025/Qualifikation), [EN ročník](https://en.wikipedia.org/wiki/2025_Abierto_Mexicano_Telcel), [ES ročník](https://es.wikipedia.org/wiki/Torneo_de_Acapulco_2025), [TennisAbstract](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2025-0807%2FAcapulco), [ITF](https://www.itftennis.com/en/tournament/acapulco-500/mex/2025/m-500-mex-2025-001/draws-and-results/) odlišná koncová hlavička, [TennisUpToDate](https://tennisuptodate.com/atp/prize-money-and-points-breakdown-2025-mexican-open-acapulco-with-record-2585410-on-offer). Sekundární přepisy mohou sdílet původ.
+
+Otevřené doplňky: originální acceptance/DS, přesná individuální historie A+/SE a Q seed3, skutečné uzávěrky, čas Q losu, původní předstartovní Q a úplné Q1/SF/F OOP, obrazová kontrola pořadatelských PDF a přesný model míče. Bez smyšlených hashů. Další Dubai 2025.
+
+
 ## Otevřené položky k opakované kontrole
+
+**Acapulco 2025 — H*/E*/R*/Z*:** originální acceptance/DS, přesná historie A+/SE a Q seed3, skutečné uzávěrky/losy, předstartovní Q, Q1/SF/F OOP a vizuální pořadatelské PDF; oba finanční rozpisy primárně vizuálně ověřeny. Magazínové staré bodování odmítnuto.
 
 **Rio de Janeiro 2025 — H*/E*/R*/P*/Z*:** Q finanční originál (9580/5375 USD sekundární shoda), acceptance/DS, Q cutoff, skutečné hodiny losů/uzávěrek, A+ administrativa, kompletní OOP a čas Q2 16:00 vs 17:00; oba konečné losy a předstartovní Main vizuálně ověřeny.
 

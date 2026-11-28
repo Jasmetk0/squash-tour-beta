@@ -1,8 +1,9 @@
 /** Mocked HTTP contract tests only; real HTTP/SQLite/Chromium is a separate gate. */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  assertSavedBranchArchivePreview, downloadSavedBranchArchive, previewSavedBranchArchive,
-  type SavedBranchArchivePreview
+  assertCompactSnapshotPreview, assertSavedBranchArchivePreview, downloadSavedBranchArchive,
+  previewCompactSnapshot, previewSavedBranchArchive,
+  type CompactSnapshotPreview, type SavedBranchArchivePreview
 } from './runBranchArchiveExport'
 
 const hash = 'ab'.repeat(32)
@@ -325,5 +326,95 @@ describe('Saved Branch export-only HTTP boundary', () => {
   it('rejects wrong MIME even if the response size matches', async () => {
     fetchMock.mockResolvedValueOnce(new Response('wrong length', {status: 200, headers: {'Content-Type': 'text/html'}}))
     await expect(downloadSavedBranchArchive(original)).rejects.toThrow(/non-archive/)
+  })
+})
+
+const compact: CompactSnapshotPreview = {
+  schema_version: 'run_compact_snapshot_preview.v1',
+  archive_digest: hash, archive_size_bytes: 3,
+  format: 'run_compact_snapshot.v1', minimum_engine: 'engine+compact-snapshot.v1',
+  scope: 'compact_saved_branch_snapshot', run_id: 'run', display_name: 'Run',
+  selected_branch_id: 'branch', selected_branch_display_name: 'Timeline 1',
+  selected_head_revision_id: 'head', selected_head_sequence: 3,
+  selected_head_kind: 'viewer_branch_selection', saved_at: '2026-11-27 10:00:00',
+  payload_schema_version: 'run_saved_revision_v1', content_hash_algorithm: 'sha256',
+  content_hash: 'cd'.repeat(32),
+  run_calendar: {weeks_per_year: 52, start_year: 2000, season_count: 1},
+  included_components: ['initial_world', 'run_package_state'],
+  package_provenance: {source_package_ids: ['pkg'], run_local_entity_count: 2},
+  unresolved_package_references: [],
+  kept_references: {
+    parent_revision_id: 'previous', forked_from_branch_id: null,
+    forked_from_saved_revision_id: null, viewer_branch_id_signed_at_save: 'other'
+  },
+  omitted_older_revision_count: 2, omitted_areas: ['older_saved_revisions'],
+  verified_uses: ['read_and_validate_from_file_bytes'], unsupported_uses: ['cold_restore'],
+  verification: 'Validated from the file bytes alone',
+  source_context: {
+    viewer_branch_id: 'viewer', selected_is_viewer_branch: false,
+    omitted_branch_count: 2, omitted_older_revision_count: 2
+  }
+}
+
+describe('Compact snapshot export-only HTTP boundary', () => {
+  beforeEach(() => {
+    fetchMock.mockReset()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+  afterEach(() => vi.unstubAllGlobals())
+
+  it('binds the exact Run, Branch, HEAD, content digest and omitted history', () => {
+    expect(assertCompactSnapshotPreview(compact, 'run', 'branch')).toBe(compact)
+    for (const invalid of [
+      {...compact, selected_branch_id: 'other'},
+      {...compact, run_id: 'foreign'},
+      {...compact, content_hash: 'not-a-digest'},
+      {...compact, omitted_older_revision_count: 0},
+      {...compact, unsupported_uses: []},
+      {...compact, kept_references: {...compact.kept_references, parent_revision_id: null}},
+      {...compact, source_context: {...compact.source_context, selected_is_viewer_branch: true}},
+      {...compact, scope: 'custom_saved_branches'},
+      {...compact, format: 'run_compact_snapshot.v2'}
+    ]) {
+      expect(() => assertCompactSnapshotPreview(invalid, 'run', 'branch')).toThrow(/invalid or foreign/)
+    }
+  })
+
+  it('previews with an explicit compact mode POST and no other request', async () => {
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(compact), {
+      status: 200, headers: {'Content-Type': 'application/json'}
+    }))
+    await expect(previewCompactSnapshot('run', 'branch')).resolves.toEqual(compact)
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit]
+    expect(url).toContain('/admin/run-archives/export/preview')
+    expect(init.method).toBe('POST')
+    expect(JSON.parse(init.body as string)).toEqual({run_id: 'run', branch_id: 'branch', mode: 'compact'})
+    expect(fetchMock).toHaveBeenCalledTimes(1)
+  })
+
+  it('downloads only the compact MIME with the reviewed HEAD/digest and exact SHA-256', async () => {
+    const digest = 'ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad'
+    vi.stubGlobal('crypto', {subtle: {digest: vi.fn(async () =>
+      Uint8Array.from(digest.match(/../g)!.map(byte => Number.parseInt(byte, 16))).buffer)}})
+    const verified = {...compact, archive_digest: digest}
+    fetchMock.mockResolvedValueOnce(new Response('abc', {
+      status: 200, headers: {'Content-Type': 'application/vnd.squash.saved-branch+json'}
+    }))
+    await expect(downloadSavedBranchArchive(verified)).rejects.toThrow(/non-archive/)
+    fetchMock.mockResolvedValueOnce(new Response('abc', {
+      status: 200, headers: {'Content-Type': 'application/vnd.squash.compact-snapshot+json'}
+    }))
+    const blob = await downloadSavedBranchArchive(verified)
+    expect(blob.type).toBe('application/vnd.squash.compact-snapshot+json')
+    const [, init] = fetchMock.mock.calls[1] as [string, RequestInit]
+    expect(JSON.parse(init.body as string)).toEqual({
+      run_id: 'run', branch_id: 'branch', mode: 'compact',
+      expected_head_revision_id: 'head', expected_archive_digest: digest
+    })
+    fetchMock.mockResolvedValueOnce(new Response('abd', {
+      status: 200, headers: {'Content-Type': 'application/vnd.squash.compact-snapshot+json'}
+    }))
+    vi.stubGlobal('crypto', {subtle: {digest: vi.fn(async () => new Uint8Array(32).buffer)}})
+    await expect(downloadSavedBranchArchive(verified)).rejects.toThrow(/digest differs/)
   })
 })

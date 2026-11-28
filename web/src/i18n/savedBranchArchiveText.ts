@@ -1,3 +1,70 @@
+/** Compact snapshot copy: one entry per key as [cs, en]. */
+const compactText = {
+  compactMode: ['Kompaktní snapshot',
+    'Compact snapshot'],
+  compactDescription: ['Jen aktuální uložený stav vybrané větve. Starší Saved revize, ostatní větve, audity, checkpointy, Working Draft ani cache se nepřenášejí.',
+    'Only the current Saved state of the selected Branch. Older Saved revisions, other Branches, audits, checkpoints, Working Draft and caches are not transferred.'],
+  compactDownload: ['Stáhnout ověřený kompaktní snapshot',
+    'Download verified compact snapshot'],
+  compactState: ['Zahrnutý uložený stav',
+    'Included Saved state'],
+  compactRun: ['Run',
+    'Run'],
+  compactBranch: ['Větev',
+    'Branch'],
+  compactSequence: ['Pořadí Saved HEAD',
+    'Saved HEAD sequence'],
+  compactSavedAt: ['Uloženo',
+    'Saved at'],
+  compactKind: ['Druh revize',
+    'Revision kind'],
+  compactContentHash: ['Obsahový digest (původní Saved SHA-256)',
+    'Content digest (original Saved SHA-256)'],
+  compactFileHash: ['SHA-256 souboru',
+    'File SHA-256'],
+  compactCalendar: ['Kalendář Runu',
+    'Run calendar'],
+  compactCalendarValue: ['týdnů v roce {weeks}, start {year}, sezon {seasons}',
+    '{weeks} weeks per year, start {year}, {seasons} seasons'],
+  compactDependencies: ['Povinné závislosti obsažené v HEAD',
+    'Required dependencies inside HEAD'],
+  compactPackages: ['Package provenance',
+    'Package provenance'],
+  compactPackageValue: ['{count} Run-local entit z Package: {packages}',
+    '{count} Run-local entities from Packages: {packages}'],
+  compactOmitted: ['Vynechaná technická historie',
+    'Omitted technical history'],
+  compactOlder: ['Starší Saved revize',
+    'Older Saved revisions'],
+  compactOtherBranches: ['Ostatní větve',
+    'Other Branches'],
+  compactViewer: ['Viewer Branch',
+    'Viewer Branch'],
+  compactNotViewer: ['Vybraná větev není Viewer Branch. Volba Viewer Branch je nastavení celého Runu a do snapshotu se nepřenáší.',
+    'The selected Branch is not the Viewer Branch. The Viewer Branch choice is a Run-wide setting and is not part of the snapshot.'],
+  compactIsViewer: ['Vybraná větev je Viewer Branch. Volba Viewer Branch se do snapshotu nepřenáší.',
+    'The selected Branch is the Viewer Branch. The Viewer Branch choice is not part of the snapshot.'],
+  compactReferences: ['Zachované reference bez obsahu',
+    'References kept without content'],
+  compactParent: ['Rodičovská revize',
+    'Parent revision'],
+  compactFork: ['Zdroj větve',
+    'Branch source'],
+  compactSignedViewer: ['Viewer Branch v okamžiku uložení',
+    'Viewer Branch when Saved'],
+  compactVerifiedUse: ['Ověřené použití',
+    'Verified use'],
+  compactVerifiedText: ['Soubor lze samostatně přečíst a ověřit z jeho bajtů (integrita částí, původní Saved SHA-256, vazba Run/větev/kalendář a validátory komponent) bez zdrojové databáze.',
+    'The file can be read and validated on its own from its bytes (part integrity, original Saved SHA-256, Run/Branch/calendar binding and component validators) without the source database.'],
+  compactUnsupported: ['Kompaktní snapshot neobnoví hratelný Run, nelze ho importovat ani v něm pokračovat v simulaci. K tomu slouží úplný nebo vlastní archiv.',
+    'A Compact snapshot cannot restore a playable Run, be imported or continue a simulation. Use the full or custom archive for that.'],
+  compactConfirmed: ['Před uložením souboru znovu kontrolujeme Saved HEAD, draft i přesné SHA-256 souboru.',
+    'Before delivering the file we recheck Saved HEAD, draft and the exact file SHA-256.'],
+} as const
+const compactCopy = (index: 0 | 1) => Object.fromEntries(
+  Object.entries(compactText).map(([key, value]) => [key, value[index]])
+) as { [Key in keyof typeof compactText]: string }
+
 /** Localized Saved Branch archive export copy; no global navigation text changes. */
 export const savedBranchArchiveText = {
   cs: {
@@ -29,7 +96,8 @@ export const savedBranchArchiveText = {
     confirmed: 'Před uložením souboru znovu kontrolujeme HEAD, draft i přesné SHA-256.',
     previewStale: 'Náhled je zastaralý. Stáhni až po novém náhledu.',
     readOnly: 'Tento Run nebo vybranou větev nelze exportovat.',
-    refresh: 'Znovu načíst náhled'
+    refresh: 'Znovu načíst náhled',
+    ...compactCopy(0)
   },
   en: {
     title: 'Export Saved Branch', description: 'Portable selected Saved Branch with dependencies and reachable history.',
@@ -60,6 +128,7 @@ export const savedBranchArchiveText = {
     confirmed: 'Before delivering the file we recheck HEAD, draft, and exact SHA-256.',
     previewStale: 'Preview is stale. Review the latest snapshot before downloading.',
     readOnly: 'This Run or selected Branch cannot be exported.',
-    refresh: 'Reload preview'
+    refresh: 'Reload preview',
+    ...compactCopy(1)
   }
 } as const

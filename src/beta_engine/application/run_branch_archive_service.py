@@ -9,19 +9,30 @@ from pathlib import Path
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from beta_engine.domain.run_branch_archive import Archive, CustomEnvelope, decode, digest, encode, fail
+from beta_engine.domain.run_branch_archive import (
+    Archive,
+    CompactSnapshot,
+    CustomEnvelope,
+    decode,
+    digest,
+    encode,
+    fail,
+)
 from beta_engine.infrastructure.db.run_branch_archive import (
     RunBranchArchiveReceiptModel,
     collect_archive,
+    collect_compact_snapshot,
     conflicts,
     install_archive,
     validate_in_isolated_database,
 )
+from beta_engine.infrastructure.db.run_branch_archive_components import validate_components
 
 
-def inventory(archive):
-    unresolved = []
-    for revision in archive.revisions:
+def _package_inventory(revisions):
+    """Package entities and unresolved references, never resolved or added."""
+    unresolved, packages, entity_count = [], set(), 0
+    for revision in revisions:
         state = (
             decode(revision.payload_json)["content"]
             .get("run_package_state", {})
@@ -38,6 +49,8 @@ def inventory(archive):
         if any(not isinstance(e, dict) for e in entities):
             fail("invalid_package_component", "Package entities must be objects")
         available = {(e["source_package_id"], e["source_entity_id"]) for e in entities}
+        packages.update(e["source_package_id"] for e in entities)
+        entity_count += len(entities)
         for entity in entities:
             references = entity.get("references", [])
             if not isinstance(references, list) or any(
@@ -60,6 +73,11 @@ def inventory(archive):
                             "reference": reference,
                         }
                     )
+    return unresolved, sorted(packages), entity_count
+
+
+def inventory(archive):
+    unresolved, _, _ = _package_inventory(archive.revisions)
     selected = next(
         r
         for r in archive.revisions
@@ -118,6 +136,71 @@ def inventory(archive):
             "overwrite_existing_run": False,
             "other_export_modes": False,
         },
+    }
+
+
+COMPACT_VERIFIED_USES = ("read_and_validate_from_file_bytes",)
+COMPACT_UNSUPPORTED_USES = (
+    "cold_restore",
+    "import_as_run_or_branch",
+    "continue_simulation",
+    "saved_history_and_replay_derivation",
+)
+
+
+def validate_compact_snapshot(raw):
+    """Standalone validation from the snapshot bytes only.
+
+    Uses no source/target database, Package registry or process cache: envelope
+    and part integrity, original Saved hash and owner, Run/Branch/calendar
+    binding, then the established pure Saved component validators.
+    """
+    snapshot = CompactSnapshot(raw)
+    head, payload = snapshot.head, snapshot.payload
+    validate_components(payload, run_id=head.run_id, branch_id=head.branch_id)
+    unresolved, packages, entity_count = _package_inventory([head])
+    content = payload["content"]
+    return {
+        "schema_version": "run_compact_snapshot_preview.v1",
+        "archive_digest": snapshot.raw_digest,
+        "archive_size_bytes": snapshot.size,
+        "format": snapshot.envelope.format,
+        "minimum_engine": snapshot.envelope.minimum_engine,
+        "scope": snapshot.envelope.scope,
+        "run_id": snapshot.run.run_id,
+        "display_name": snapshot.run.display_name,
+        "selected_branch_id": head.branch_id,
+        "selected_branch_display_name": snapshot.branch.display_name,
+        "selected_head_revision_id": head.revision_id,
+        "selected_head_sequence": head.sequence,
+        "selected_head_kind": head.kind,
+        "saved_at": head.created_at,
+        "payload_schema_version": head.payload_schema_version,
+        "content_hash_algorithm": head.content_hash_algorithm,
+        "content_hash": head.content_hash,
+        "run_calendar": snapshot.calendar,
+        "included_components": sorted(content),
+        "package_provenance": {
+            "source_package_ids": packages,
+            "run_local_entity_count": entity_count,
+        },
+        "unresolved_package_references": unresolved,
+        "kept_references": {
+            "parent_revision_id": head.parent_revision_id,
+            "forked_from_branch_id": snapshot.branch.forked_from_branch_id,
+            "forked_from_saved_revision_id": snapshot.branch.forked_from_saved_revision_id,
+            "viewer_branch_id_signed_at_save": payload["run"].get("viewer_branch_id"),
+        },
+        "omitted_older_revision_count": head.sequence - 1,
+        "omitted_areas": snapshot.envelope.omitted_areas,
+        "verified_uses": list(COMPACT_VERIFIED_USES),
+        "unsupported_uses": list(COMPACT_UNSUPPORTED_USES),
+        "verification": (
+            "Validated from the file bytes alone: part digests, original Saved SHA-256 of "
+            "the HEAD, Run/Branch/calendar binding and Saved component validators. "
+            "Older revisions, other Branches, audits and checkpoints are not included; "
+            "the file cannot restore or continue a Run."
+        ),
     }
 
 
@@ -185,6 +268,30 @@ def _guard_review(session, archive, expected):
 @dataclass
 class RunBranchArchiveService:
     repository: object
+
+    def compact_preview(self, *, run_id, branch_id):
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            raw, source = collect_compact_snapshot(
+                self.repository, session, run_id=run_id, branch_id=branch_id
+            )
+        # The preview is computed from the produced bytes, not the source rows.
+        return {**validate_compact_snapshot(raw), "source_context": source}
+
+    def compact_export(self, *, run_id, branch_id, expected_head_revision_id, expected_archive_digest):
+        with self.repository._session_factory() as session:
+            session.execute(text("BEGIN"))
+            raw, _ = collect_compact_snapshot(
+                self.repository, session, run_id=run_id, branch_id=branch_id,
+                expected_head=expected_head_revision_id,
+            )
+        if digest(raw) != expected_archive_digest:
+            fail(
+                "stale_export_preview",
+                "Compact snapshot bytes changed since preview; review again",
+            )
+        validate_compact_snapshot(raw)
+        return raw
 
     def export_preview(self, *, run_id, branch_id, full_run=False, custom_branch_ids=()):
         with self.repository._session_factory() as session:

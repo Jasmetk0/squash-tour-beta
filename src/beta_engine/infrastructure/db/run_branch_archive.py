@@ -11,9 +11,13 @@ from sqlalchemy.exc import StatementError
 from sqlalchemy.orm import Mapped, mapped_column
 
 from beta_engine.domain.run_branch_archive import (
+    COMPACT_FOREIGN_SOURCE_COMPONENTS,
+    COMPACT_RUN_FIELDS,
     AuditSpec,
     BranchSpec,
     CheckpointSpec,
+    CompactBranchSpec,
+    CompactRunSpec,
     MAX_ARCHIVE_BYTES,
     RevisionSpec,
     RunSpec,
@@ -22,6 +26,7 @@ from beta_engine.domain.run_branch_archive import (
     encode,
     fail,
     pack,
+    pack_compact,
 )
 from beta_engine.domain.run_revisions import RUN_WORKING_DRAFT_SCHEMA_VERSION
 from beta_engine.infrastructure.db.models import (
@@ -228,6 +233,25 @@ def collect_archive(
     custom_branch_ids=()
 ):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
+    run, selected = _export_scope(session, run_id, branch_id, expected_head)
+    return _collect_archive(
+        repository, session, run=run, selected=selected, run_id=run_id,
+        branch_id=branch_id, full_run=full_run, custom_branch_ids=custom_branch_ids,
+    )
+
+
+def _export_scope(session, run_id, branch_id, expected_head):
+    run = _supported_run(session, run_id)
+    selected = _scope_branch(session, run_id, branch_id)
+    if expected_head is not None and selected.saved_head_revision_id != expected_head:
+        fail(
+            "stale_export_preview",
+            "Saved HEAD changed since export preview; review the new Saved state",
+        )
+    return run, selected
+
+
+def _supported_run(session, run_id):
     run = session.get(RunContainerModel, run_id)
     if run is None:
         fail("run_not_found", "Export Run was not found")
@@ -249,12 +273,95 @@ def collect_archive(
             "unsupported_run",
             "Archive v1 supports custom Saved Runs; legacy/global-backed or protected Run metadata needs another adapter",
         )
-    selected = _scope_branch(session, run_id, branch_id)
-    if expected_head is not None and selected.saved_head_revision_id != expected_head:
+    return run
+
+
+def collect_compact_snapshot(repository, session, *, run_id, branch_id, expected_head=None):
+    """Current Saved HEAD of ONE Branch, read in the caller's single SQLite snapshot.
+
+    The source history is fully verified by the production lineage validator
+    (read-only) before it is omitted; only the HEAD row travels. Returns the
+    snapshot bytes and a source-side summary of what was omitted.
+    """
+    run, selected = _export_scope(session, run_id, branch_id, expected_head)
+    head = session.get(BranchSavedRevisionModel, selected.saved_head_revision_id)
+    if head is None or head.run_id != run_id:
+        fail("missing_revision", "Selected Saved HEAD is absent or foreign")
+    if head.branch_id != branch_id:
+        # The HEAD is signed for its source owner; this Branch has no Saved
+        # projection of its own name/fork context yet. Do not invent one.
         fail(
-            "stale_export_preview",
-            "Saved HEAD changed since export preview; review the new Saved state",
+            "compact_shared_head",
+            "This Branch still shares its source Branch's Saved HEAD; make one explicit "
+            "Save in this Branch before a Compact snapshot, or use the Branch/custom archive",
         )
+    # Authenticate the complete ACTUAL source history (hashes, owners, sources,
+    # replay proofs) while it is still available. Only HEAD's payload is kept.
+    repository._validated_branch_revision_lineage_in_session(
+        session=session, branch=selected,
+        payload_revision_ids=frozenset({head.revision_id}),
+    )
+    payload = decode(head.payload_json)
+    foreign = COMPACT_FOREIGN_SOURCE_COMPONENTS & payload["content"].keys()
+    if foreign:
+        fail(
+            "compact_foreign_source_dependency",
+            "Saved HEAD is a native fork whose InitialWorld, Package provenance and replay "
+            "source live in another Branch's Saved revision ("
+            + ", ".join(sorted(foreign))
+            + "); the Compact snapshot would have to package foreign state. Use the "
+            "Branch or custom archive",
+        )
+    validate_components(payload, run_id=run_id, branch_id=branch_id)
+    _check_clean(repository, session, selected, payload)
+    metadata = decode(run.metadata_json)
+    if not isinstance(metadata, dict):
+        fail("unsupported_run_metadata", "Run metadata must be a JSON object")
+    signed = payload["run"]
+    if any(
+        signed.get(name) != getattr(run, name) for name in COMPACT_RUN_FIELDS
+    ) or signed.get("run_calendar") != metadata.get("run_calendar"):
+        # The current Run-level value is witnessed only by another revision.
+        fail(
+            "compact_foreign_run_witness",
+            "The current Run name/status/calendar was Saved outside this Branch's HEAD; "
+            "Save this Branch again or use the Branch/custom archive",
+        )
+    raw = pack_compact(
+        run=CompactRunSpec(
+            run_id=run_id,
+            display_name=run.display_name,
+            status=run.status,
+            timeline_start_season=run.timeline_start_season,
+            timeline_end_season=run.timeline_end_season,
+            metadata_json=run.metadata_json,
+        ).model_dump(),
+        branch=CompactBranchSpec(
+            branch_id=branch_id,
+            display_name=selected.display_name,
+            status=selected.status,
+            branch_seed=selected.branch_seed,
+            forked_from_branch_id=selected.forked_from_branch_id,
+            forked_from_saved_revision_id=selected.forked_from_saved_revision_id,
+            metadata_json=selected.metadata_json,
+        ).model_dump(),
+        head=RevisionSpec.model_validate(_row_values(head, RevisionSpec)).model_dump(),
+    )
+    branch_ids = sorted(
+        session.scalars(select(RunBranchModel.branch_id).where(RunBranchModel.run_id == run_id))
+    )
+    source = {
+        "viewer_branch_id": run.official_branch_id,
+        "selected_is_viewer_branch": run.official_branch_id == branch_id,
+        "omitted_branch_count": len(branch_ids) - 1,
+        "omitted_older_revision_count": head.sequence - 1,
+    }
+    return raw, source
+
+
+def _collect_archive(
+    repository, session, *, run, selected, run_id, branch_id, full_run, custom_branch_ids
+):
     if full_run:
         _check_full_archive_size(session, run_id)
     branches, anchors, rows, payloads, checked = {}, {}, {}, {}, set()

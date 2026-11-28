@@ -4,8 +4,9 @@ import { Link } from 'react-router-dom'
 import { getBranchWorkingDraft, getRunContainer, listRunBranches } from '../api/client'
 import type { RunBranch, RunContainer } from '../api/types'
 import {
-  downloadSavedBranchArchive, MAX_CUSTOM_BRANCHES, previewSavedBranchArchive,
-  type ArchiveExportMode, type SavedBranchArchivePreview
+  downloadSavedBranchArchive, isCompactSnapshotPreview, MAX_CUSTOM_BRANCHES,
+  previewCompactSnapshot, previewSavedBranchArchive,
+  type ArchiveExportMode, type ArchiveExportPreview, type CompactSnapshotPreview
 } from '../api/runBranchArchiveExport'
 import { useLanguage } from '../i18n/LanguageContext'
 import { savedBranchArchiveText } from '../i18n/savedBranchArchiveText'
@@ -22,6 +23,8 @@ function validBranchInventory(branches: RunBranch[] | undefined, runId: string):
     typeof item.branch_id === 'string' && item.branch_id.length > 0) &&
     new Set(branches.map(item => item.branch_id)).size === branches.length
 }
+const fill = (template: string, values: Record<string, unknown>): string =>
+  template.replace(/\{(\w+)\}/g, (_, key: string) => String(values[key] ?? '—'))
 const bytes = (value: number): string => new Intl.NumberFormat(undefined, { maximumFractionDigits: 2 })
   .format(value / (1024 * 1024)) + ' MiB'
 
@@ -80,7 +83,7 @@ export function SavedBranchArchiveExportPanel({
   currentScope.current = scope
   const generation = useRef(0)
   const inFlight = useRef<AbortController | null>(null)
-  const [reviewed, setReviewed] = useState<{scope: string; preview: SavedBranchArchivePreview} | null>(null)
+  const [reviewed, setReviewed] = useState<{scope: string; preview: ArchiveExportPreview} | null>(null)
   const [workingStatus, setWorkingStatus] = useState<'clean' | 'dirty' | null>(null)
   const [revisionPage, setRevisionPage] = useState(0)
   const [busy, setBusy] = useState<'preview' | 'download' | null>(null)
@@ -111,9 +114,11 @@ export function SavedBranchArchiveExportPanel({
   const active = reviewed?.scope === scope &&
     reviewed.preview.selected_head_revision_id === selected?.saved_head_revision_id
     ? reviewed.preview : null
+  const compact: CompactSnapshotPreview | null = active && isCompactSnapshotPreview(active) ? active : null
+  const archive = active && !isCompactSnapshotPreview(active) ? active : null
   // Rendering a collapsed <details> still mounts all its children; keep the
   // long Saved revision inventory bounded without hiding any exported bytes.
-  const revisionTotal = active?.history.length ?? 0
+  const revisionTotal = archive?.history.length ?? 0
   const revisionStart = Math.min(revisionPage * REVISION_PAGE_SIZE,
     Math.max(0, Math.ceil(revisionTotal / REVISION_PAGE_SIZE) - 1) * REVISION_PAGE_SIZE)
   const revisionEnd = Math.min(revisionStart + REVISION_PAGE_SIZE, revisionTotal)
@@ -174,10 +179,12 @@ export function SavedBranchArchiveExportPanel({
       await recheck(selected.saved_head_revision_id, selected.branch_id, token, key)
       if (generation.current !== token || currentScope.current !== key) return
       const args = [run.run_id, selected.branch_id, requestController.signal] as const
-      const data = mode === 'custom'
-        ? await previewSavedBranchArchive(...args, mode, [selected.branch_id, ...extras].sort())
-        : mode === 'full_run' ? await previewSavedBranchArchive(...args, mode)
-          : await previewSavedBranchArchive(...args)
+      const data: ArchiveExportPreview = mode === 'compact'
+        ? await previewCompactSnapshot(...args)
+        : mode === 'custom'
+          ? await previewSavedBranchArchive(...args, mode, [selected.branch_id, ...extras].sort())
+          : mode === 'full_run' ? await previewSavedBranchArchive(...args, mode)
+            : await previewSavedBranchArchive(...args)
       if (generation.current !== token || currentScope.current !== key) return
       if (data.selected_head_revision_id !== selected.saved_head_revision_id) {
         throw new Error(l.invalidSelection)
@@ -210,7 +217,8 @@ export function SavedBranchArchiveExportPanel({
       try {
         const anchor = document.createElement('a')
         anchor.href = url
-        anchor.download = mode === 'custom' ? 'custom-run-v1.sqbranch' :
+        anchor.download = mode === 'compact' ? 'compact-snapshot-v1.sqsnap' :
+          mode === 'custom' ? 'custom-run-v1.sqbranch' :
           mode === 'full_run' ? 'full-run-v1.sqbranch' : 'saved-branch-v1.sqbranch'
         document.body.appendChild(anchor)
         try { anchor.click() } finally { anchor.remove() }
@@ -246,14 +254,16 @@ export function SavedBranchArchiveExportPanel({
     <label>{l.scope}{' '}
       <select value={mode} onChange={event => {
         const value = event.target.value
-        setMode(value === 'full_run' || value === 'custom' ? value : 'branch')
+        setMode(value === 'full_run' || value === 'custom' || value === 'compact' ? value : 'branch')
       }}>
         <option value="branch">{l.branchMode}</option>
         <option value="custom">{l.customMode}</option>
         <option value="full_run">{l.fullRunMode}</option>
+        <option value="compact">{l.compactMode}</option>
       </select>
     </label>
-    <p>{mode === 'custom' ? l.customDescription : mode === 'full_run' ? l.fullRunDescription : l.description}</p>
+    <p>{mode === 'compact' ? l.compactDescription : mode === 'custom' ? l.customDescription :
+      mode === 'full_run' ? l.fullRunDescription : l.description}</p>
     {mode === 'custom' && <fieldset disabled={busy !== null}>
       <legend>{l.customBranches}</legend>
       {customInventory?.failed ? <p role="alert">{l.invalidSelection}</p> :
@@ -281,36 +291,37 @@ export function SavedBranchArchiveExportPanel({
         {busy === 'preview' ? l.loading : active ? l.refresh : error ? l.retry : l.review}
       </button>
       {active && <button type="button" onClick={() => void download()} disabled={!allowed || busy !== null}>
-        {busy === 'download' ? l.downloading : l.download}
+        {busy === 'download' ? l.downloading : mode === 'compact' ? l.compactDownload : l.download}
       </button>}
       {(active || error || busy) && <button type="button" onClick={cancel}>{l.cancel}</button>}
     </div>
     {busy && <p role="status">{busy === 'preview' ? l.loading : l.downloading}</p>}
-    {active && <div aria-label={l.title + ' preview'}>
+    {compact && <CompactPreview preview={compact} l={l} />}
+    {archive && <div aria-label={l.title + ' preview'}>
       <p className="status">{l.confirmed}</p>
       <dl>
-        <dt>{l.revisionCount}</dt><dd>{active.history.length}</dd>
-        <dt>{l.activationRevision}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{active.run_activation_revision_id}</code></dd>
-        <dt>{l.branches}</dt><dd>{active.branches.length}</dd>
+        <dt>{l.revisionCount}</dt><dd>{archive.history.length}</dd>
+        <dt>{l.activationRevision}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{archive.run_activation_revision_id}</code></dd>
+        <dt>{l.branches}</dt><dd>{archive.branches.length}</dd>
         {mode !== 'full_run' && <><dt>{l.dependencies}</dt>
-          <dd>{active.branches.filter(b => b.role === 'dependency').length}</dd></>}
-        <dt>{l.size}</dt><dd>{active.archive_size_bytes.toLocaleString()} B ({bytes(active.archive_size_bytes)})</dd>
-        <dt>{l.audit}</dt><dd>{active.audit_event_count}</dd>
-        <dt>{l.checkpoints}</dt><dd>{active.checkpoint_count}</dd>
-        <dt>{l.hashes}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{active.archive_digest}</code></dd>
+          <dd>{archive.branches.filter(b => b.role === 'dependency').length}</dd></>}
+        <dt>{l.size}</dt><dd>{archive.archive_size_bytes.toLocaleString()} B ({bytes(archive.archive_size_bytes)})</dd>
+        <dt>{l.audit}</dt><dd>{archive.audit_event_count}</dd>
+        <dt>{l.checkpoints}</dt><dd>{archive.checkpoint_count}</dd>
+        <dt>{l.hashes}</dt><dd><code style={{overflowWrap: 'anywhere'}}>{archive.archive_digest}</code></dd>
       </dl>
       <h5>{l.included}</h5>
-      <ul>{active.branches.map(item => <li key={item.branch_id}>
+      <ul>{archive.branches.map(item => <li key={item.branch_id}>
         <strong>{item.display_name}</strong> ({item.role === 'selected' ? l.selected :
           item.role === 'included' ? l.branchIncluded : l.dependency})
         {' · '}<code>{item.branch_id}</code>
         {' · '}{l.parent}: <code>{item.forked_from_branch_id || l.noParent}</code>
       </li>)}</ul>
-      <p>{l.omitted}: {active.omitted_branch_ids.length ? active.omitted_branch_ids.join(', ') : l.omittedNone}</p>
-      <p>{l.areas}: {active.omitted_areas.length ? active.omitted_areas.join(', ') : l.omittedNone}</p>
-      <details><summary>{l.revisionParent} ({active.history.length})</summary>
+      <p>{l.omitted}: {archive.omitted_branch_ids.length ? archive.omitted_branch_ids.join(', ') : l.omittedNone}</p>
+      <p>{l.areas}: {archive.omitted_areas.length ? archive.omitted_areas.join(', ') : l.omittedNone}</p>
+      <details><summary>{l.revisionParent} ({archive.history.length})</summary>
         <p className="status">{l.revisionRange}: {revisionStart + 1}–{revisionEnd} / {revisionTotal}</p>
-        <ol start={revisionStart + 1}>{active.history.slice(revisionStart, revisionEnd).map(item =>
+        <ol start={revisionStart + 1}>{archive.history.slice(revisionStart, revisionEnd).map(item =>
           <li key={item.revision_id}>
             <code>{item.revision_id}</code> ({item.original_owner_branch_id}, #{item.sequence})
             {' → '}<code>{item.parent_revision_id || l.noParent}</code>
@@ -322,18 +333,75 @@ export function SavedBranchArchiveExportPanel({
             onClick={() => setRevisionPage(page => page + 1)}>{l.nextRevisions}</button>
         </div>}
       </details>
-      <details><summary>{l.components} ({active.included_components.length})</summary>
-        <ul>{active.included_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+      <details><summary>{l.components} ({archive.included_components.length})</summary>
+        <ul>{archive.included_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
       </details>
-      <details><summary>{l.headComponents} ({active.selected_head_components.length})</summary>
-        <ul>{active.selected_head_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+      <details><summary>{l.headComponents} ({archive.selected_head_components.length})</summary>
+        <ul>{archive.selected_head_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
       </details>
-      <h5>{l.refs} ({active.unresolved_package_references.length})</h5>
-      {active.unresolved_package_references.length === 0 ? <p>{l.noRefs}</p> :
-        <ul>{active.unresolved_package_references.map((reference, index) =>
+      <h5>{l.refs} ({archive.unresolved_package_references.length})</h5>
+      {archive.unresolved_package_references.length === 0 ? <p>{l.noRefs}</p> :
+        <ul>{archive.unresolved_package_references.map((reference, index) =>
           <li key={index}><span>{l.source}: </span><code style={{overflowWrap: 'anywhere'}}>
             {JSON.stringify(reference)}</code></li>)}</ul>}
-      <p>{l.explanation}: {active.continuation}</p>
+      <p>{l.explanation}: {archive.continuation}</p>
     </div>}
   </section>
+}
+
+type ArchiveText = (typeof savedBranchArchiveText)[keyof typeof savedBranchArchiveText]
+
+/** Exactly what the reviewed Compact snapshot contains, omits and is verified for. */
+function CompactPreview({ preview, l }: { preview: CompactSnapshotPreview; l: ArchiveText }): JSX.Element {
+  const calendar = preview.run_calendar
+  const refs = preview.kept_references
+  const packages = preview.package_provenance
+  const code = (value: string | null): JSX.Element =>
+    <code style={{overflowWrap: 'anywhere'}}>{value || l.noParent}</code>
+  return <div aria-label={l.compactMode + ' preview'}>
+    <p className="status">{l.compactConfirmed}</p>
+    <h5>{l.compactState}</h5>
+    <dl>
+      <dt>{l.compactRun}</dt><dd>{preview.display_name} · {code(preview.run_id)}</dd>
+      <dt>{l.compactBranch}</dt><dd>{preview.selected_branch_display_name} · {code(preview.selected_branch_id)}</dd>
+      <dt>{l.head}</dt><dd>{code(preview.selected_head_revision_id)}</dd>
+      <dt>{l.compactSequence}</dt><dd>#{preview.selected_head_sequence}</dd>
+      <dt>{l.compactKind}</dt><dd><code>{preview.selected_head_kind}</code></dd>
+      <dt>{l.compactSavedAt}</dt><dd>{preview.saved_at}</dd>
+      <dt>{l.compactContentHash}</dt><dd>{code(preview.content_hash)}</dd>
+      <dt>{l.compactFileHash}</dt><dd>{code(preview.archive_digest)}</dd>
+      <dt>{l.size}</dt><dd>{preview.archive_size_bytes.toLocaleString()} B ({bytes(preview.archive_size_bytes)})</dd>
+      <dt>{l.compactCalendar}</dt><dd>{fill(l.compactCalendarValue, {
+        weeks: calendar.weeks_per_year, year: calendar.start_year, seasons: calendar.season_count
+      })}</dd>
+      <dt>{l.compactPackages}</dt><dd>{fill(l.compactPackageValue, {
+        count: packages.run_local_entity_count,
+        packages: packages.source_package_ids.length ? packages.source_package_ids.join(', ') : l.omittedNone
+      })}</dd>
+    </dl>
+    <details><summary>{l.compactDependencies} ({preview.included_components.length})</summary>
+      <ul>{preview.included_components.map(name => <li key={name}><code>{name}</code></li>)}</ul>
+    </details>
+    <h5>{l.compactOmitted}</h5>
+    <dl>
+      <dt>{l.compactOlder}</dt><dd>{preview.omitted_older_revision_count}</dd>
+      <dt>{l.compactOtherBranches}</dt><dd>{preview.source_context.omitted_branch_count}</dd>
+      <dt>{l.compactViewer}</dt><dd>{preview.source_context.selected_is_viewer_branch
+        ? l.compactIsViewer : l.compactNotViewer}</dd>
+    </dl>
+    <p>{l.areas}: {preview.omitted_areas.join(', ')}</p>
+    <h5>{l.compactReferences}</h5>
+    <dl>
+      <dt>{l.compactParent}</dt><dd>{code(refs.parent_revision_id)}</dd>
+      <dt>{l.compactFork}</dt><dd>{code(refs.forked_from_branch_id)} · {code(refs.forked_from_saved_revision_id)}</dd>
+      <dt>{l.compactSignedViewer}</dt><dd>{code(refs.viewer_branch_id_signed_at_save)}</dd>
+    </dl>
+    <h5>{l.refs} ({preview.unresolved_package_references.length})</h5>
+    {preview.unresolved_package_references.length === 0 ? <p>{l.noRefs}</p> :
+      <ul>{preview.unresolved_package_references.map((reference, index) =>
+        <li key={index}><code style={{overflowWrap: 'anywhere'}}>{JSON.stringify(reference)}</code></li>)}</ul>}
+    <h5>{l.compactVerifiedUse}</h5>
+    <p>{l.compactVerifiedText}</p>
+    <p role="note">{l.compactUnsupported}</p>
+  </div>
 }

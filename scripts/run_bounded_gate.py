@@ -6,9 +6,11 @@ never exited, the step waited for the six-hour job cap and blocked every
 later diagnostic decision. This wrapper is meant only for such bounded
 diagnostic steps (it changes no production timeout):
 
-* the command runs in its own process group (POSIX session); its combined
-  stdout/stderr is streamed line by line to the console and to ``--log``,
-  flushed per line, so the log survives any outcome;
+* the command runs in its own process group (POSIX session) with
+  ``PYTHONUNBUFFERED=1`` unless set; its combined stdout/stderr is streamed
+  line by line to the console and to ``--log``, flushed per line, so the log
+  survives any outcome (with ``| tee`` pytest's block-buffered tail stayed in
+  the hung process);
 * after ``--limit-seconds`` the stacks are dumped with ``py-spy`` when it is
   installed, then the whole group gets SIGTERM, after ``--grace-seconds``
   SIGKILL, and the exit code is 124;
@@ -89,8 +91,11 @@ def run(command, *, limit, grace, log_path):
                 log.write(text)
                 log.flush()
 
+        # Unbuffered Python output: a command that later hangs (or is stopped
+        # at the limit) has already written everything it printed to the log.
+        environment = {**os.environ, "PYTHONUNBUFFERED": os.environ.get("PYTHONUNBUFFERED", "1")}
         process = subprocess.Popen(
-            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+            command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, env=environment,
             start_new_session=True, bufsize=1, text=True, errors="replace",
         )
         pgid = process.pid  # the new session's group id equals its leader's pid

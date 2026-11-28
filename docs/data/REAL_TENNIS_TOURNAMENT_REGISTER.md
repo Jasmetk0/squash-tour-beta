@@ -183,9 +183,29 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 68 | Belgrade 2024 | HOTOVO (nominální rozsah) |
 | 69 | ATP Finals 2024 | HOTOVO (nominální rozsah) |
 | 70 | Next Gen ATP Finals 2024 | HOTOVO (nominální rozsah) |
-| 71 | United Cup 2024 | NEZAHÁJENO (týmová soutěž, audit rozsahu) |
+| 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
-Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
+Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
+
+## Audit rozsahu 2024 — 2026-11-28
+
+Rozhodnutí vlastníka: United Cup a obdobné soutěže nejsou požadované. Pro tento registr zahrnout individuální mužskou dvouhru ATP250/500/Masters1000, Grand Slamy a již zpracované ATP Finals a Next Gen ATP Finals. Týmové akce (United Cup, Davis Cup, Laver Cup), olympiádu a exhibice nezpracovávat; tento výklad rozsahu platí i pro následující ročníky, pokud vlastník neurčí jinak. Challenger/ITF nižší úrovně mimo původní rozsah. Zmínky těchto akcí jako kalendářního kontextu mohou zůstat, ale nepřidávat jejich profily.
+
+Křížová kontrola proti [ATP Results Archive 2024](https://www.atptour.com/en/scores/results-archive?year=2024) (indexované pasáže, přímé otevření403), [EN historickému kalendáři](https://en.wikipedia.org/wiki/2024_ATP_Tour), [DE historickému kalendáři](https://de.wikipedia.org/wiki/ATP_Tour_2024) a [ATP oznámení náhrady Gijónu Bělehradem](https://www.atptour.com/en/news/belgrade-2024-announcement). Početní a jmenná kontrola tabulky a samostatných sekcí registru, včetně kategorie uvedené v identitě každé sekce:
+
+| Kategorie | Očekáváno | Evidováno | HOTOVO | ROZPRACOVÁNO |
+|---|---:|---:|---:|---:|
+| ATP 250 | 38 | 38 | 32 | 6 |
+| ATP 500 | 13 | 13 | 13 | 0 |
+| ATP Masters 1000 | 9 | 9 | 8 | 1 |
+| Grand Slam | 4 | 4 | 4 | 0 |
+| ATP Finals | 1 | 1 | 1 | 0 |
+| Next Gen ATP Finals | 1 | 1 | 1 | 0 |
+| Celkem 2024 | 66 | 66 | 59 | 7 |
+
+66 jedinečných názvů a 66 samostatných sekcí roku 2024, žádný chybějící nebo duplicitní profil ve vymezeném rozsahu. Gijón 2024 se nehrál, Belgrade je evidovaná náhrada. Přesuny Zhuhai/Hangzhou a Astana/Almaty nepovažovat za další edice. Čtyři již hotové Grand Slamy 2025 tvoří zbytek 70 registrovaných ročníků. Pokrytí kalendáře 100 %, nominálně kompletní 59/66; není to opakované ověření každého jednotlivého údaje všech profilů.
+
+Otevřené brány beze změny: Auckland P, Marseille E, Santiago P, Lyon E, Båstad E, Winston-Salem E, Shanghai P. Opakovaně vizuálně ověřen [konečný Shanghai Main, obě strany](https://www.tenislosalcazares.com/cuadros/masters/shanghai24.pdf): R32/R64 59100/34500; dřívější ATP Media Notes rozpor trvá. [Santiago ATP Day1](https://www.atptour.com/-/media/0d8c7cea020848e1b5007515dbef1ab5.pdf) opakovaně textově 100635/58700, screenshot403; [dobová chilská zpráva](https://www.encancha.cl/polideportivo/tenis/2024/02/26/los-millones-del-atp-de-santiago-cuanto-dinero-reparte-en-premios-el-chile-open/) uvádí 100640. Bez rozhodného dalšího dokladu neuzavírat. Žádné nové profily ani změny jejich parametrů v tomto auditu.
 
 ## Metodika evidence
 
@@ -8163,7 +8183,7 @@ Výpočet 150000+3×36660+113500+153000=526480. Osm hrajících: 8×150000+12×3
 
 ### 7. Kontrola a mezery
 
-I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně ověřena, skutečný Race snapshot, individuální WC a seznam všech přítomných alternates nezískány. P* jednotlivé sazby potvrzené, souhrnný účetní rozdíl 80 USD při hypotetických dvou alternates bez dokladu nerozdělovat. Z* ATP Day1 str.1 a srpnový soupis změn str.5 vizuálně; Day1 str.3 textově, screenshot403; červencový rulebook textově indexované pasáže, screenshot403; původní §4.04 str.89–91 z ITF textově, screenshot500. Původní podepsaný los/DS, úplné další denní OOP, model míčů a vizuální kontrola Media Guide otevřeny. Bez neověřených hashů. Kontrola 7+1=8, 2×4, 12+2+1=15, body0, výherní sazby a nominální singlové součty prošla. Další inventura sezóny 2024 včetně týmových/speciálních akcí; neoznačovat celý rok za hotový. Bez runtime změn.
+I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně ověřena, skutečný Race snapshot, individuální WC a seznam všech přítomných alternates nezískány. P* jednotlivé sazby potvrzené, souhrnný účetní rozdíl 80 USD při hypotetických dvou alternates bez dokladu nerozdělovat. Z* ATP Day1 str.1 a srpnový soupis změn str.5 vizuálně; Day1 str.3 textově, screenshot403; červencový rulebook textově indexované pasáže, screenshot403; původní §4.04 str.89–91 z ITF textově, screenshot500. Původní podepsaný los/DS, úplné další denní OOP, model míčů a vizuální kontrola Media Guide otevřeny. Bez neověřených hashů. Kontrola 7+1=8, 2×4, 12+2+1=15, body0, výherní sazby a nominální singlové součty prošla. Další audit existujících edic 2024; týmové a obdobné soutěže mimo rozsah dle rozhodnutí vlastníka 28.11.; neoznačovat celý rok za hotový při otevřených branách. Bez runtime změn.
 
 ### 8. Zdroje (NGF24)
 

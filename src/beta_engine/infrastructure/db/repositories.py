@@ -38,7 +38,11 @@ from beta_engine.domain.careers import NextSeasonPlayerState, PlayerSeasonTransi
 from beta_engine.domain.finals import FinalsQualificationResult, FinalsResult
 from beta_engine.domain.rankings import CompletedTournamentPointsInput
 from beta_engine.domain.run_revisions import (
+    BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND,
     BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+    branch_fork_materialized_audit_event_id,
+    branch_fork_materialized_audit_payload,
+    branch_fork_materialized_change_summary,
     BRANCH_RESTORE_AUDIT_EVENT_KIND,
     BRANCH_RESTORE_SAVED_REVISION_KIND,
     CLEAN_WORKING_DRAFT_STATUS,
@@ -4372,22 +4376,17 @@ class SimulationPersistenceRepository:
                                 "remapped Simulation Slot core could not be installed: "
                                 f"{exc}"
                             ) from exc
-                    summary = {
-                        "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
-                        "summary": (
-                            f"Forked Branch from {source_revision_id} with remapped "
-                            "Branch-owned world identity"
-                        ),
-                        "source_branch_id": source_branch_id,
-                        "source_saved_revision_id": source_revision_id,
-                        "ranking_fingerprint": (
+                    summary = branch_fork_materialized_change_summary(
+                        source_branch_id=source_branch_id,
+                        source_saved_revision_id=source_revision_id,
+                        ranking_fingerprint=(
                             remapped_ranking.fingerprint if remapped_ranking else None
                         ),
-                        "initial_world_fingerprint": (
+                        initial_world_fingerprint=(
                             remapped_initial_world.fingerprint
                             if remapped_initial_world else None
                         ),
-                    }
+                    )
                     sequence = source_revision.sequence + 1
                     revision_hash = saved_revision_content_hash(
                         revision_id=materialized_fork_revision_id,
@@ -4413,6 +4412,34 @@ class SimulationPersistenceRepository:
                             content_hash=revision_hash,
                             payload_json=_to_json(target_payload),
                             change_summary_json=_to_json(summary),
+                        )
+                    )
+                    session.flush()
+                    # The root's original audit is part of the SAME atomic
+                    # fork command; a failed audit insert rolls back the
+                    # Branch, draft, components and root together. It is
+                    # flushed after the root so that failure path is real.
+                    session.add(
+                        BranchRevisionAuditEventModel(
+                            audit_event_id=branch_fork_materialized_audit_event_id(
+                                materialized_fork_revision_id
+                            ),
+                            run_id=run_id,
+                            branch_id=branch_id,
+                            saved_revision_id=materialized_fork_revision_id,
+                            event_kind=BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND,
+                            payload_json=_to_json(
+                                branch_fork_materialized_audit_payload(
+                                    source_branch_id=source_branch_id,
+                                    source_saved_revision_id=source_revision_id,
+                                    saved_revision_content_hash=revision_hash,
+                                    working_draft_id=working_draft_id,
+                                    viewer_branch_id=run.official_branch_id,
+                                    command_id=(
+                                        review["command_id"] if review else None
+                                    ),
+                                )
+                            ),
                         )
                     )
                     session.flush()

@@ -205,4 +205,150 @@ describe('ViewerNextGenPlayersPage public Saved source guard (mocked GET)', () =
     expect(screen.getByText('Jan Novak')).toBeInTheDocument()
     expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
   })
+  it('restores the public page from a direct URL and filters only its verified rows', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockResolvedValue(page(50, ['Jan Novak', 'Omar Hassan'], 52))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=2&keep=1' })
+    expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledWith('product run', { limit: 50, offset: 50 })
+    await user.type(screen.getByLabelText('Hledat na této stránce'), 'egypt')
+    expect(screen.queryByText('Jan Novak')).not.toBeInTheDocument()
+    expect(screen.getByText('Omar Hassan')).toBeInTheDocument()
+    expect(screen.getByText(/Filtr prohledává jen/)).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('jumps directly to an available page and rejects out-of-range pages without a GET', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(0, Array.from({ length: 50 }, (_, i) => 'Prospect ' + i), 101))
+      .mockResolvedValueOnce(page(100, ['Last prospect'], 101))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Prospect 0')).toBeInTheDocument()
+    const input = screen.getByLabelText('Stránka (1–3)')
+    await user.clear(input)
+    await user.type(input, '4')
+    await user.click(screen.getByRole('button', { name: 'Přejít' }))
+    expect(screen.getByRole('alert')).toHaveTextContent('Vyber číslo dostupné stránky.')
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+    await user.clear(input)
+    await user.type(input, '3')
+    await user.click(screen.getByRole('button', { name: 'Přejít' }))
+    expect(await screen.findByText('Last prospect')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenLastCalledWith('product run', { limit: 50, offset: 100 })
+  })
+
+  it.each(['prospectPage=0', 'prospectPage=2&prospectPage=3', 'prospectPage=90071992547409999'])(
+    'uses the first page for malformed pagination: %s', async search => {
+      setViewerActiveProductRunId('product run')
+      renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?' + search })
+      expect(await screen.findByText('Jan Novak')).toBeInTheDocument()
+      expect(api.getViewerVisibleProspects).toHaveBeenCalledWith('product run', { limit: 50, offset: 0 })
+    },
+  )
+
+  it('resets old page before reading a new Branch and does not fetch that Branch at the old offset', async () => {
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(50, ['Old page player'], 51))
+      .mockResolvedValueOnce(page(0, ['New first page'], 1, 'branch-b'))
+    const view = renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=2&keep=1' })
+    expect(await screen.findByText('Old page player')).toBeInTheDocument()
+    chosen.branch = 'branch-b'
+    view.rerender(<ViewerContextProvider><ViewerNextGenPlayersPage /></ViewerContextProvider>)
+    expect(await screen.findByText('New first page')).toBeInTheDocument()
+    expect(screen.queryByText('Old page player')).not.toBeInTheDocument()
+    expect(api.getViewerVisibleProspects.mock.calls).toEqual([
+      ['product run', { limit: 50, offset: 50 }],
+      ['product run', { limit: 50, offset: 0 }],
+    ])
+  })
+
+  it('matches accented names on the current page, shows filtered coverage and clears without another GET', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockResolvedValue(page(0, ['Jiří Novák', 'Omar Hassan'], 2))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Jiří Novák')).toBeInTheDocument()
+    await user.type(screen.getByLabelText('Hledat na této stránce'), 'jiri novak')
+    expect(screen.getByText('Jiří Novák')).toBeInTheDocument()
+    expect(screen.queryByText('Omar Hassan')).not.toBeInTheDocument()
+    expect(screen.getByText('Odpovídající hráči na stránce: 1 / 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Vymazat hledání' }))
+    expect(screen.getByText('Omar Hassan')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('distinguishes intake at age 15 from birth and retired pre-Tour identities from active prospects', async () => {
+    setViewerActiveProductRunId('product run')
+    const source = page(0, ['Active prospect', 'Retired prospect'], 2)
+    api.getViewerVisibleProspects.mockResolvedValueOnce({
+      ...source, prospects: [source.prospects[0], { ...source.prospects[1], lifecycle_status: 'retired' }],
+    })
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    const active = (await screen.findByText('Active prospect')).closest('li')!
+    const retired = screen.getByText('Retired prospect').closest('li')!
+    expect(active).toHaveTextContent('Před vstupem na Tour')
+    expect(retired).toHaveTextContent('Ukončená kariéra bez vstupu na Tour')
+    expect(active).toHaveTextContent('ID hráče: prospect-1')
+    expect(active).toHaveTextContent('Rok narození: 1989')
+    expect(screen.getByText(/při dosažení 15 let, nikoli při narození/)).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters retired identities within the verified page without implying a global status count', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    const source = page(0, ['Active prospect', 'Retired prospect'], 2)
+    api.getViewerVisibleProspects.mockResolvedValueOnce({
+      ...source, prospects: [source.prospects[0], { ...source.prospects[1], lifecycle_status: 'retired' }],
+    })
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Active prospect')).toBeInTheDocument()
+    await user.selectOptions(screen.getByLabelText('Stav kariéry na této stránce'), 'retired')
+    expect(screen.queryByText('Active prospect')).not.toBeInTheDocument()
+    expect(screen.getByText('Retired prospect')).toBeInTheDocument()
+    expect(screen.getByText('Odpovídající hráči na stránce: 1 / 2')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Vymazat hledání' }))
+    expect(screen.getByText('Active prospect')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(1)
+  })
+
+  it('refreshes the current Saved page and suppresses stale rows while a new projection is loading', async () => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    let resolve!: (value: ReturnType<typeof page>) => void
+    api.getViewerVisibleProspects.mockReset()
+      .mockResolvedValueOnce(page(0, ['Before Tour entry'], 1))
+      .mockImplementationOnce(() => new Promise(r => { resolve = r }))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />)
+    expect(await screen.findByText('Before Tour entry')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Obnovit uložená data' }))
+    await waitFor(() => expect(api.getViewerVisibleProspects).toHaveBeenCalledTimes(2))
+    expect(screen.queryByText('Before Tour entry')).not.toBeInTheDocument()
+    await act(async () => resolve({ ...page(0, [], 0), week: { season_index: 4, week: 11 } }))
+    expect(await screen.findByText('V tomto uloženém týdnu nejsou viditelní žádní hráči před vstupem na Tour.')).toBeInTheDocument()
+    expect(screen.getByText(/2004\/05 · W11/)).toBeInTheDocument()
+  })
+
+  it.each(['failed GET', 'invalid source'])('recovers a deep page after %s without browser navigation', async kind => {
+    const user = userEvent.setup()
+    setViewerActiveProductRunId('product run')
+    api.getViewerVisibleProspects.mockReset()
+    if (kind === 'failed GET') api.getViewerVisibleProspects.mockRejectedValueOnce(new Error('unavailable'))
+    else api.getViewerVisibleProspects.mockResolvedValueOnce(page(0, ['Wrong page'], 1))
+    api.getViewerVisibleProspects.mockResolvedValueOnce(page(0, ['Recovered player'], 1))
+    renderWithViewerProviders(<ViewerNextGenPlayersPage />, { route: '/viewer/players/next-gen?prospectPage=9&keep=1' })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+    expect(screen.queryByText('Wrong page')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Přejít na první stránku' }))
+    expect(await screen.findByText('Recovered player')).toBeInTheDocument()
+    expect(api.getViewerVisibleProspects.mock.calls).toEqual([
+      ['product run', { limit: 50, offset: 400 }],
+      ['product run', { limit: 50, offset: 0 }],
+    ])
+  })
+
 })

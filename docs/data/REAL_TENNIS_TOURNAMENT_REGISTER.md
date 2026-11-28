@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 68 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 69 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -102,10 +102,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Paris](#paris-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Metz](#metz-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Belgrade](#belgrade-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [ATP Finals](#atp-finals-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 68 zpracovaných ročníků; 61 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 69 zpracovaných ročníků; 62 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -179,7 +180,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 66 | Paris 2024 | HOTOVO (nominální rozsah) |
 | 67 | Metz 2024 | HOTOVO (nominální rozsah) |
 | 68 | Belgrade 2024 | HOTOVO (nominální rozsah) |
-| 69 | ATP Finals 2024 | NEZAHÁJENO |
+| 69 | ATP Finals 2024 | HOTOVO (nominální rozsah) |
+| 70 | Next Gen ATP Finals 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -7971,6 +7973,108 @@ I/T/D/R/B/P doloženy, H* rekonstruovaná okna s předdenními pořadatelskými 
 - BEL24-6: [TennisTeen 31.10.](https://www.tennisteen.it/entry-list/atp/24258-atp-entry-list-4-10-novembre-2024.html), [LiveTennis 1.11.](https://www.livetennis.it/post/424517/atp-250-belgrado-e-metz-la-situazione-aggiornata-md-e-qualificazioni-anche-berrettini-da-forfait/), rozporný cutoff Main.
 - BEL24-7: dobový ATP Rulebook VII, viz MET24-7; [DE ročník](https://de.wikipedia.org/wiki/Belgrade_Open_2024), [DE Q](https://de.wikipedia.org/wiki/Belgrade_Open_2024/Qualifikation), [EN ročník](https://en.wikipedia.org/wiki/2024_Belgrade_Open), [EN Main/Q](https://en.wikipedia.org/wiki/2024_Belgrade_Open_%E2%80%93_Singles) nezávislá kontrola, nikoli autorita finančního rozpisu.
 
+## ATP Finals 2024
+
+### 1. Identita
+
+| Parametr | Hodnota | Evidence |
+|---|---|---|
+| Název | Nitto ATP Finals | FIN24-1/2 |
+| ATP série / kategorie | 605 / ATP Finals (World Championships) | FIN24-1/3 |
+| Ročník | série od 1970; čtvrtý ročník v Turíně | FIN24-1/4 |
+| Dějiště | Inalpi Arena, Turín, Itálie | FIN24-1/2 |
+| Povrch | halový hard GreenSet | FIN24-2 |
+| Míče | Dunlop ATP | FIN24-2 |
+| Časové pásmo | Europe/Rome, CET UTC+1 | místní data |
+| Formát | BO3 tiebreak sety včetně finále, skupiny + KO | FIN24-2/5 |
+
+Samostatná kategorie, nikoli ATP1000/500/250 nebo Next Gen Finals. Žádná předturnajová zápasová kvalifikace; kvalifikování prostřednictvím sezónního žebříčku je vstupní mechanismus, ne Q los.
+
+### 2. Termíny a vstup
+
+| Událost | Lokální datum / čas | Evidence |
+|---|---|---|
+| Referenční pravidlo výběru | pondělí po posledním běžném ATP turnaji | FIN24-5 §4.01 |
+| Definitivní osmička oznámena | 2024-11-05 | FIN24-6 |
+| Los skupin | 2024-11-07, přehled 12:00, aktualizované oznámení cca 12:45 CET | FIN24-1/6 |
+| Q | neexistuje | FIN24-5 |
+| Main | 2024-11-10–17 | FIN24-1/2/4 |
+| F | 2024-11-17 NB18:00 CET | FIN24-4 |
+
+Poslední běžné ATP turnaje Metz a Belgrade skončily 9.11.; doslovné pondělí po nich je 11.11., ale los i zahájení předcházejí tomuto datu. ATP 5.11. potvrdila osmičku po odstoupení Djokovice, 7.11. skutečně losovala. Media Notes str.1 uvádí neodpovídající „Monday, 6 November“ a generické Green/Red; 6.11.2024 byla středa. Oficiální pořadatelský program výslovně pracuje s Race to Turin; nepřebírat datum 6.11. nebo tvrdit, že skutečný snapshot byl vytvořen 11.11. Přesný referenční export Race při losu a timestamp uzavření výběru nedohledány (E*). Obvyklé 28/21denní deadline ATP250 zde neplatí. Povinná účast a dostupnost dle speciálního §4.01, žádné běžné Q sign-in. Rozdíl mezi sezónní Race a průběžným 52týdenním rankingem je relevantní; rulebook používá obecný termín PIF ATP Rankings, ročníkový program Race. Skutečná osmička a nasazení doloženy, neodvozovat z pozdějšího rankingu.
+
+### 3. Nominální harmonogram
+
+| Datum | Fáze | Nominální zápasy | Plán singlů (CET) |
+|---|---|---:|---|
+| 2024-11-10 | A RR1 | 2 | NB14:00 / NB20:30 |
+| 2024-11-11 | B RR1 | 2 | NB14:00 / NB20:30 |
+| 2024-11-12 | A RR2 | 2 | NB14:00 / NB20:30 |
+| 2024-11-13 | B RR2 | 2 | NB14:00 / NB20:30 |
+| 2024-11-14 | A RR3 | 2 | NB14:00 / NB20:30 |
+| 2024-11-15 | B RR3 | 2 | NB14:00 / NB20:30 |
+| 2024-11-16 | SF | 2 | NB14:30 / NB21:00 v programu; NB20:30 večerní aktualizovaný OOP |
+| 2024-11-17 | F | 1 | NB18:00 |
+
+Červencový předturnajový plán a oficiální program str.77 potvrzují 15 singlových session v osmi dnech a uvedené denní počty. Střídání A/B odvozeno z oficiálního OOP prvních dvou dní a potvrzeno kompletními denními výsledky v ATP Media Guide 2025 str.133. Den volna mezi každými dvěma skupinovými zápasy konkrétního hráče; mezi RR3 a SF závisí na skupině. Aktualizovaný páteční OOP pro SF má večerní čas 20:30 místo programového 21:00; evidovat obě hodnoty, nikoli zaměnit původní plán se skutečnou hodinou startu. Žádný zápas o 3. místo. Součet 2+2+2+2+2+2+2+1=15.
+
+### 4. Nominální struktura a rezervy
+
+| Parametr | Hodnota |
+|---|---|
+| Kapacita / DA | 8 / 8 dle selection list |
+| Skupiny | 2 × 4 hráči (A Ilie Nastase, B John Newcombe) |
+| Nasazení | všech 8 hráčů |
+| WC / Q / BYE | 0 / 0 / 0 |
+| Alternates | jeden povinný, další dle ATP; 2024 dva přítomní mimo základní osmičku |
+| Skupinové zápasy | 6 na skupinu, celkem 12, každý hráč 3 |
+| KO | 2 SF + 1 F |
+| Postup | dva z každé skupiny, A1–B2 a B1–A2 |
+| Nominální uzly | 15 (12+2+1) |
+| Zápasy na účastníka bez výjimek | 3–5 |
+
+Selection list dle §4.01 B: nejprve sedm nejvýše postavených hráčů, potom až dva vítězové GS daného roku z pozic 8–20 seřazení podle rankingu, potom hráči od pozice 8 dále; prvních osm takové listiny jsou DA. Neznamená devět DA ani dvě divoké karty. Před oficiální mediální konferencí se odstoupivší DA nahradí dalším z listiny jako DA. První nepřijatý je povinný alternate; další může ATP dohodnout. Alternate musí být dostupný do zahájení posledního skupinového zápasu. Pokud nahrazuje před prvním RR utkáním, stává se DA; při náhradě ve 2./3. RR může s vlastními výsledky postoupit do SF, má alternate fee a získané výhry/body. Nezvyšovat nominální kapacitu skupiny ani nepřičítat výsledky původního hráče náhradníkovi.
+
+Los: seed1 A, seed2 B, zbývající dvojice 3/4, 5/6, 7/8 rozdělit vždy po jednom do každé skupiny náhodným losem. Skutečný los A 1 Sinner, 4 Medvedev, 5 Fritz, 7 de Minaur; B 2 Zverev, 3 Alcaraz, 6 Ruud, 8 Rublev. Djokovic odstoupil před losem; náhradníci Dimitrov a Tsitsipas nehráli. Skutečné obsazení je doklad geometrie, ne nominální seznam pro budoucí ročníky.
+
+### 5. Dobová pravidla
+
+§4.01 D (červencový rulebook, tištěné str.68–69): pořadí skupiny podle (1) počtu výher, (2) počtu odehraných zápasů, (3) vzájemného zápasu při rovnosti dvou hráčů. Při trojité rovnosti s jednou výhrou se vyřadí hráč, který neodehrál všechny tři, a mezi zbývajícími rozhoduje vzájemný výsledek. Jinak se použije procento vyhraných setů, potom procento vyhraných gamů (při aplikaci tohoto kritéria se vyřadí hráč nedokončivší všechny tři zápasy; zbývající dvojice dle vzájemného výsledku), nakonec pořadí dle referenčního rankingu. Jakmile některé trojité kritérium oddělí jednoho hráče a dva zůstanou shodní, rozhoduje mezi těmito dvěma jejich vzájemný zápas, nikoli další procentní kritérium. Rozlišit absolutní výhry a procenta; 2–1 má přednost před 2–0.
+
+Skreč nebo disciplinární default se při tiebreaku započte jako výhra/prohra ve dvou setech; gamy z takového zápasu se do procenta gamů nezahrnují. Lékařem schválený návrat po zdravotním skreči možný; disciplinární default vyřazuje ze zbytku soutěže kromě výslovných výjimek (ztráta fyzické kondice, oděv/vybavení). Odstoupení ze skupinového utkání po prvním kole vylučuje postup do KO. Povinná účast bez uznané omluvy a nedostavení se na požadovaná setkání mají zvláštní sankce (§4.01 C). BO3 všechny fáze; křížová SF, žádné nové nasazení ani los po skupinách, žádný zápas o bronz.
+
+### 6. Body a odměny (USD, kumulativní)
+
+| Složka | ATP body navíc | USD |
+|---|---:|---:|
+| Alternate bez hry | 0 | 155000 |
+| Účast 1 RR zápas | 0 | 165500 |
+| Účast 2 RR zápasy | 0 | 248250 |
+| Účast 3 RR zápasy | 0 | 331000 |
+| Každá RR výhra | 200 | 396500 |
+| SF výhra | 400 | 1123400 |
+| F výhra | 500 | 2237200 |
+| Neporažený vítěz (součet, nikoli další bonus) | 1500 | 4881100 |
+
+Účastnické částky jsou alternativní celkové částky za odehraný počet RR, nikoli součet všech tří řádků. Prohra sama nepřidává body ani výherní odměnu. Alternate vstupující do 2./3. RR dostává alternate fee + získané výherní odměny a body; při náhradě před prvním RR je DA bez alternate fee (§4.01 B.4). Individuální mimořádné podmínky dalších alternate neodvozovat. Při plném standardním obsazení: 8×331000 + 12×396500 + 2×1123400 + 2237200 = 11890000 USD za hrající singlisty; s dvěma nevyužitými alternates 12200000 USD. Celkový nominální bodový součet 12×200+2×400+500=3700. Celková dotace 15250000 USD zahrnuje doubles, není singlovým fondem; rozdíl 3050000 odpovídá nominální doubles tabulce a dvěma alternate týmům (8×134200+12×96600+2×178500+356800+2×51700). Nejde o audit bankovních výplat.
+
+Rozpor primárních zdrojů: webové oznámení 3.11., oficiální program a ATP článek po finále uvádějí 4881500 USD za neporaženého šampiona; všechny jednotlivé přírůstky však dávají 331000+3×396500+1123400+2237200=4881100. ATP Day1 str.1, následný ATP Media Guide 2025 str.133 a ATP 2025 retrospektiva potvrzují 4881100. Rozpor vyřešen pro nominální profil. Heritage výsledky uvádějí u Fritze 2600500, ale jeho 2 RR výhry + SF + účast =2247400 a Media Guide to výslovně potvrzuje; všechny nominální příjemce ověřeny proti tabulce Media Guide, celkem 11890000. Nepřebírat chybný souhrn jen proto, že je na oficiálním webu. Oddělit sezónní bonus pool od turnajové odměny.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/R/B/P doloženy; E* datum formálního referenčního snapshotu Race vůči doslovnému pondělnímu pravidlu a skutečný timestamp losu/uzavření vstupu nedohledány, skutečný výběr a los doloženy. Z* Day1 str.1 a prosincový rulebook str.67 vizuálně; červencový §4.01 str.67–70 textově (screenshot403), program str.77 textově (screenshot odmítnut kvůli 83 MB), Media Guide str.133 textově (screenshot403). Originální podepsaný los či ATP Detail Sheet a úplné denní OOP nedohledány; oficiální program, oznámení losu a výsledkový přehled dávají nezávislé potvrzení struktury. Bez neověřených hashů. Aritmetická kontrola 8 hráčů, 2×4, 12+2+1=15, 3700 bodů a 11890000 USD bez alternate prošla. Další Next Gen ATP Finals 2024, poté inventura dalších speciálních akcí a kontrola úplnosti roku. Bez runtime změn.
+
+### 8. Zdroje (FIN24)
+
+- FIN24-1: [ATP předturnajový přehled](https://www.atptour.com/en/news/nitto-atp-finals-2024-history-draw-schedule), indexované pasáže, otevření403; [ATP archiv série605](https://www.atptour.com/en/scores/results-archive?tournamentId=605&year=2024).
+- FIN24-2: [ATP Preview & Day1](https://www.atptour.com/-/media/36e4e2f7c83242c3af31adf98ee6ca8a.pdf), str.1 vizuálně, str.7–8 textově; povrch, míče, body/odměny, pravidla.
+- FIN24-3: [ATP Media Guide 2025](https://www.atptour.com/-/media/files/media-guide/2025/2025-atp-media-guide-full-final.pdf), tištěná str.133 textově, screenshot403; všechny denní výsledky a individuální body/odměny. [Heritage](https://www.nittoatpfinals.com/en/heritage/results-2000-2023) křížová kontrola, chyba Fritzovy částky.
+- FIN24-4: [červencové oznámení pořadatele](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-july-press-conference), [oficiální program](https://www.nittoatpfinals.com/-/media/sites/finals-new/programme/2024-nitto-atp-finals-official-programme.pdf), str.77 textově, screenshot400 (velikost); [OOP neděle/pondělí](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-schedule-sunday-monday), [OOP SF](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-sf-qualifiers).
+- FIN24-5: [ATP Rulebook IV 2.7.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_02jul.pdf), str.67–70 textově, screenshot403; [verze 21.12.2023](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-4_world-championships_21dec.pdf), str.67 vizuálně, další textově.
+- FIN24-6: [potvrzená osmička 5.11.](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-field-is-set), [oznámený los 6.11.](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-live-draw), [výsledek losu 7.11.](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-draw).
+- FIN24-7: [oficiální oznámení prize money 3.11.](https://www.nittoatpfinals.com/en/news/nitto-atp-finals-2024-prize-money), [ATP povýsledkový článek](https://www.atptour.com/en/news/sinner-nitto-atp-finals-2024-caps-historic-season) s chybným součtem, [ATP 2025 retrospektiva](https://www.atptour.com/en/news/nitto-atp-finals-2025-prize-money) s opraveným součtem; [Tennis365](https://www.tennis365.com/atp-tour/money-points-jannik-sinner-taylor-fritz-carlos-alcaraz-earn-2024-atp-finals) nezávislá kontrola včetně alternate.
+- FIN24-8: [EN ročník](https://en.wikipedia.org/wiki/2024_ATP_Finals), [EN singles](https://en.wikipedia.org/wiki/2024_ATP_Finals_%E2%80%93_Singles), [DE Eurosport los](https://www.eurosport.de/tennis/atp-finals/2024/alexander-zverev-vor-grosser-aufgabe-in-turin-gruppengegner-carlos-alcaraz-casper-ruud-und-andrey-rublev_sto20052007/story.shtml), [italský denní přehled](https://www.sportface.it/tennis/atp-finals-torino-2024-risultati-e-classifiche/2733080).
+
 ## Otevřené položky k opakované kontrole
 
 **Cílená kontrola Shanghai (2026-11-28):** [ATP předturnajová stránka](https://www.atptour.com/en/news/shanghai-2024-atp-masters-1000-history-draws-schedule) indexovaný text explicitně potvrzuje R32 59000, tedy podporuje Media Notes; [TennisTonic 30.9.](https://tennistonic.com/tennis-news/781617/atp-shanghai-draw-prize-money-sinner-zverev-alcaraz-djokovic-are-the-top-seeds-2/) a [TennisExplorer](https://www.tennisexplorer.com/shanghai/2024/atp-men/) uvádějí 59100/34500 a podporují los. Ani další zdroje nepřinesly rozhodný individuální výplatní doklad. P zůstává otevřeno, pracovní kandidát dle konečného losu zachován.
@@ -8041,3 +8145,4 @@ I/T/D/R/B/P doloženy, H* rekonstruovaná okna s předdenními pořadatelskými 
 | Paris 2024 | H*/E*/Z* | původní Q acceptance/DS, skutečné deadline/Q rank date a původní cutoff, hodiny losů a individuální SE, konečný Main a většina Main OOP, model míčů; Main acceptance str.1, předstartovní Main/Q a čtyři OOP vizuálně, konečný Q textově (screenshot500) |
 | Metz 2024 | H*/E*/R*/Z* | původní acceptance/DS, Q rank date, přesné uzávěrky/losy, individuální NG/SE případná výjimka proti oběma rozporným brožurám, původní denní OOP a plánované splity, předstartovní losy; Main konečný textově, Q konečný vizuálně, obě finanční tabulky primárně |
 | Belgrade 2024 | H*/E*/Z* | původní acceptance/DS, Main cutoff48/58, Q rank date, skutečné uzávěrky a hodiny losů, individuální SE/LE, kompletní předturnajový plán, původní předstartovní losy a model míčů; oba konečné ATP losy a finanční tabulky vizuálně ověřeny; sekundární Q3105/1695 odmítnuto |
+| ATP Finals 2024 | E*/Z* | přesný Race snapshot a skutečné uzavření vstupu/losu, originální los/DS, kompletní OOP a vizuální kontrola červencového rulebooku/programu/Media Guide; finanční rozpory 4881500/4881100 a Fritz2600500/2247400 vyřešeny dobovou tabulkou, aritmetikou a Media Guide |

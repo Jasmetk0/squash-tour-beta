@@ -369,8 +369,15 @@ def decoded_live_calendar_component(repository, *, run_id, branch_id, kind, raw,
         known = cache.pop(key, None)
         if known is not None:
             cache[key] = known
+            # Pin while this reader copies the retained model outside the lock:
+            # ``take_live_calendar_component`` never transfers a pinned value.
+            _pin_live(repository, key, +1)
     if known is not None:
-        value, _ = _copy_decoded_value(known[1], known[3] if len(known) > 3 else None)
+        try:
+            value, _ = _copy_decoded_value(known[1], known[3] if len(known) > 3 else None)
+        finally:
+            with repository._revision_validation_lock:
+                _pin_live(repository, key, -1)
         fingerprint = known[2] if len(known) > 2 else None
         if _with_fingerprint:
             fingerprint = fingerprint or value.fingerprint
@@ -447,3 +454,73 @@ def _decoded_value(repository, source, decode, *, cache_name, byte_limit, entry_
             while len(cache) > entry_limit or sum(item[0] for item in cache.values()) > byte_limit:
                 cache.pop(next(iter(cache)))
     return result
+
+
+def _pin_live(repository, key, delta):
+    """Count readers copying a retained live value (repository lock held)."""
+    pins = getattr(repository, '_live_calendar_value_pins', None)
+    if pins is None:
+        pins = repository._live_calendar_value_pins = {}
+    count = pins.get(key, 0) + delta
+    if count > 0:
+        pins[key] = count
+    else:
+        pins.pop(key, None)
+
+
+def live_component_digest(raw):
+    """``(size, sha256 digest)`` of the complete actual SQLite JSON."""
+    actual = raw.encode('utf-8')
+    return len(actual), hashlib.sha256(actual).digest()
+
+
+def take_live_calendar_component(repository, *, run_id, branch_id, kind, size, digest):
+    """Transfer the retained private decode of exactly these bytes, or ``None``.
+
+    For the manual Save coordinator only, inside its writer transaction, after
+    it hashed the complete actual row (``live_component_digest``). Exclusive
+    by construction, all decided under the repository lock:
+
+    * the value was retained as a private deep copy (``decoded_live_calendar_
+      component`` miss or ``remember_live_calendar_component``) and every
+      reader only ever received copies of it;
+    * a value some reader is still copying (pinned) is never transferred;
+    * a value that is also referenced by another cache (``shared``, i.e. one a
+      committed Save returned) is never transferred;
+    * the entry leaves the cache, so no later reader can reach it.
+
+    Otherwise the caller takes the original copying decode. Returns
+    ``(key, entry)``.
+    """
+    if repository is None or size > MAX_LIVE_COMPONENT_BYTES:
+        return None
+    key = (run_id, branch_id, kind, digest)
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_calendar_value_cache', None)
+        known = cache.get(key) if cache else None
+        if (known is None or len(known) < 4 or known[2] is None
+                or (len(known) > 4 and known[4])
+                or getattr(repository, '_live_calendar_value_pins', {}).get(key)):
+            return None
+        cache.pop(key)
+    return key, known
+
+
+def reinstall_live_calendar_component(repository, key, entry):
+    """Retain a taken value again, ONLY after its Save committed unchanged bytes.
+
+    The same model is then also owned by the global decode cache. Both caches
+    only ever return defensive copies, so neither exposes it, and the entry is
+    marked ``shared``: it is never transferred again. A value decoded meanwhile
+    by another reader is kept instead.
+    """
+    if repository is None:
+        return
+    with repository._revision_validation_lock:
+        cache = getattr(repository, '_live_calendar_value_cache', None)
+        if cache is None:
+            cache = repository._live_calendar_value_cache = {}
+        if key not in cache:
+            cache[key] = (*entry[:4], True)
+        while len(cache) > 4 or sum(item[0] for item in cache.values()) > MAX_LIVE_COMPONENT_BYTES:
+            cache.pop(next(iter(cache)))

@@ -6437,6 +6437,7 @@ class SimulationPersistenceRepository:
         global_append_ancestors = ()
         committed_global_append = None
         origin_value_projections = {}
+        reinstall_live = None
         try:
             with self._session_factory.begin() as session:
                 session.execute(text("BEGIN IMMEDIATE"))
@@ -6698,7 +6699,13 @@ class SimulationPersistenceRepository:
                 )
                 checkpoint_read = read_checkpoint_for_save(
                     session, run_id=run_id, branch_id=branch_id, repository=self,
+                    # Manual Tour Save only: transfer an exclusively owned
+                    # decode of exactly these bytes instead of copying it.
+                    take_live=expected_calendar_tour_fingerprint is not None,
                 )
+                # A value taken from the live decode cache returns there only
+                # after a successful commit (below); a rollback drops it.
+                reinstall_live = checkpoint_read.taken if checkpoint_read is not None else None
                 verify_coupled_calendar = (
                     expected_calendar_tour_fingerprint is not None
                     or (
@@ -7214,6 +7221,19 @@ class SimulationPersistenceRepository:
                 retain_origin_projection_values,
             )
             retain_origin_projection_values(self, origin_value_projections)
+            if (
+                reinstall_live is not None
+                and verified_native_save_receipt.payload["content"]
+                .get(CALENDAR_SPORTING_COMPONENT_KEY, {}).get("fingerprint") == reinstall_live[1][2]
+            ):
+                # Committed Save only. The private value taken from the live
+                # decode cache was captured as exactly the fingerprint of the
+                # unchanged live row. Only then may it serve that row's bytes
+                # again; a rolled-back or declined Save simply drops it.
+                from beta_engine.infrastructure.db.native_fork_source_projection import (
+                    reinstall_live_calendar_component,
+                )
+                reinstall_live_calendar_component(self, *reinstall_live)
         revision = (
             verified_native_save_receipt
             if verified_native_save_receipt is not None

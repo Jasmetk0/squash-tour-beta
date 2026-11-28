@@ -184,6 +184,9 @@ class _SaveCheckpointRead:
     state: CalendarSportingCheckpoint | CalendarNativeSportingCheckpoint | CalendarNativeCompetitionCheckpoint
     fingerprint: str
     payload_digest: bytes
+    # ``(key, entry)`` when ``state`` was transferred from the live decode
+    # cache instead of copied; only a committed Save may reinstall it.
+    taken: tuple | None = None
 
 
 def _read_checkpoint_columns(session: Session, *, run_id, branch_id):
@@ -195,16 +198,39 @@ def _read_checkpoint_columns(session: Session, *, run_id, branch_id):
     ).one_or_none()
 
 
-def read_checkpoint_for_save(session: Session, *, run_id, branch_id, repository):
-    """Capture one strictly validated read for use within this Save transaction."""
+def read_checkpoint_for_save(session: Session, *, run_id, branch_id, repository, take_live=False):
+    """Capture one strictly validated read for use within this Save transaction.
+
+    ``take_live`` (manual Tour Save only): if the live decode cache holds an
+    exclusively owned strict decode of exactly these complete bytes, transfer
+    it instead of copying it (``take_live_calendar_component``). Its retained
+    Run/Branch and value fingerprint must equal this row's. Anything else, a
+    miss included, is the original decode: no extra read, hash or copy.
+    """
     row = _read_checkpoint_columns(session, run_id=run_id, branch_id=branch_id)
     if row is None:
         return None
     raw, fingerprint = row
-    state = _decode_checkpoint_row(raw, fingerprint,
-        run_id=run_id, branch_id=branch_id, repository=repository)
-    return _SaveCheckpointRead(session.get_transaction(), state, fingerprint,
-                               hashlib.sha256(raw.encode('utf-8')).digest())
+    from beta_engine.infrastructure.db.native_fork_source_projection import (
+        live_component_digest, take_live_calendar_component,
+    )
+
+    size, digest = live_component_digest(raw)
+    taken = (take_live_calendar_component(repository, run_id=run_id, branch_id=branch_id,
+                                          kind=COMPONENT_KEY, size=size, digest=digest)
+             if take_live else None)
+    state = None
+    if taken is not None:
+        candidate = taken[1][1]
+        if (type(candidate.run_id) is str and type(candidate.branch_id) is str
+                and (candidate.run_id, candidate.branch_id, taken[1][2]) == (run_id, branch_id, fingerprint)):
+            state = candidate
+        else:
+            taken = None  # dropped; the original decode reports any mismatch
+    if state is None:
+        state = _decode_checkpoint_row(raw, fingerprint,
+            run_id=run_id, branch_id=branch_id, repository=repository)
+    return _SaveCheckpointRead(session.get_transaction(), state, fingerprint, digest, taken)
 
 
 def _checkpoint_for_capture(session, *, run_id, branch_id, repository, previous_read):

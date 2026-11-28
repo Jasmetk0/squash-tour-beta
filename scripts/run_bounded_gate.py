@@ -41,6 +41,7 @@ from pathlib import Path
 
 TIMEOUT_EXIT = 124
 LEFTOVER_EXIT = 125
+STACK_DUMP_BUDGET_SECONDS = 10.0
 
 
 def _group_pids(pgid):
@@ -78,6 +79,26 @@ def _stop_group(pgid, grace):
             time.sleep(0.1)
 
 
+def _dump_group_stacks(pgid, emit):
+    spy = shutil.which("py-spy")
+    if spy is None:
+        return
+    deadline = time.monotonic() + STACK_DUMP_BUDGET_SECONDS
+    for pid in _group_pids(pgid):
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            break
+        try:
+            dump = subprocess.run(
+                [spy, "dump", "--pid", str(pid)], capture_output=True,
+                text=True, timeout=remaining,
+            )
+        except (OSError, subprocess.TimeoutExpired) as exc:
+            emit(f"BOUNDED_GATE stack dump unavailable for pid {pid}: {exc}\n")
+        else:
+            emit(f"BOUNDED_GATE stacks of pid {pid}:\n{dump.stdout}{dump.stderr}")
+
+
 def run(command, *, limit, grace, log_path):
     log_path.parent.mkdir(parents=True, exist_ok=True)
     started = time.monotonic()
@@ -113,16 +134,15 @@ def run(command, *, limit, grace, log_path):
         except subprocess.TimeoutExpired:
             code = None
             outcome["status"] = "limit_exceeded"
-            spy = shutil.which("py-spy")
-            if spy:
-                for pid in _group_pids(pgid):
-                    dump = subprocess.run([spy, "dump", "--pid", str(pid)], capture_output=True,
-                                          text=True, timeout=60)
-                    emit(f"BOUNDED_GATE stacks of pid {pid}:\n{dump.stdout}{dump.stderr}")
-        leftovers = _group_pids(pgid)
+            try:
+                _dump_group_stacks(pgid, emit)
+            except OSError as exc:
+                emit(f"BOUNDED_GATE stack diagnostics unavailable: {exc}\n")
+        finally:
+            leftovers = _group_pids(pgid)
+            if leftovers:
+                _stop_group(pgid, grace)
         outcome["leftover_pids"] = leftovers
-        if leftovers:
-            _stop_group(pgid, grace)
         if code is None:
             code = process.wait(timeout=grace)
             exit_code = TIMEOUT_EXIT

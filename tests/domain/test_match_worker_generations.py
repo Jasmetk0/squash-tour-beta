@@ -1,6 +1,6 @@
 """Pool generations, bounded admission and deadlines of the opt-in spawn workers.
 
-Every scenario uses the real ``ProcessPoolExecutor`` with ``spawn`` and is
+Pool integration scenarios use the real ``ProcessPoolExecutor`` with ``spawn`` and is
 synchronized with events (no sleeps decide an outcome). A retired generation
 never affects a newer one, this process never has more live match workers
 than configured (also while a pool is replaced), and every declined, timed out
@@ -13,6 +13,7 @@ import os
 import sys
 import threading
 import time
+from concurrent.futures import Future
 
 import pytest
 
@@ -309,6 +310,17 @@ def test_install_is_atomic_and_uninstall_removes_only_its_own_executor():
         match_workers.uninstall(other)  # closing a never-started executor is harmless
     finally:
         slot_batch.install_executor(previous)
+
+
+def test_ready_results_can_be_drained_after_the_batch_deadline():
+    futures = [Future(), Future()]
+    for index, future in enumerate(futures):
+        future.set_result(index)
+    generation = match_workers._Generation(1, None)
+    batch = match_workers.ProcessBatch(generation, futures, time.monotonic() - 1)
+
+    assert list(batch) == [0, 1]
+    assert not batch.timed_out
 
 
 def test_a_retired_generation_wakes_every_other_waiting_batch_without_a_timeout(items, sequential):

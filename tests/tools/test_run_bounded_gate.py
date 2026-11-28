@@ -86,3 +86,24 @@ def test_a_successful_command_that_leaves_a_process_behind_fails_and_is_cleaned(
     record = _record(log)
     assert record["command_exit"] == 0 and record["leftover_pids"] and record["remaining_pids"] == []
     assert not _alive(int(pid_file.read_text()))
+
+
+def test_a_hung_optional_stack_dump_cannot_prevent_process_cleanup(tmp_path, monkeypatch):
+    spy = tmp_path / "py-spy"
+    spy.write_text("#!/bin/sh\nexec sleep 600\n")
+    spy.chmod(0o755)
+    monkeypatch.setenv("PATH", str(tmp_path) + os.pathsep + os.environ["PATH"])
+    monkeypatch.setattr(gate, "STACK_DUMP_BUDGET_SECONDS", 0.15)
+    log, pid_file = tmp_path / "gate.log", tmp_path / "child.pid"
+    script = (
+        "import os, time\n"
+        f"open({str(pid_file)!r}, 'w').write(str(os.getpid()))\n"
+        "print('before timeout', flush=True)\n"
+        "time.sleep(600)\n"
+    )
+    code = gate.run([PY, "-c", script], limit=2, grace=2, log_path=log)
+    assert code == gate.TIMEOUT_EXIT
+    assert "stack dump unavailable" in log.read_text()
+    assert "before timeout" in log.read_text()
+    assert _record(log)["remaining_pids"] == []
+    assert not _alive(int(pid_file.read_text()))

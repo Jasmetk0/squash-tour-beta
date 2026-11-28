@@ -141,11 +141,10 @@ class ProcessBatch:
         pending = len(self.futures)
         try:
             while pending:
-                remaining = self.deadline - time.monotonic()
                 try:
-                    if remaining <= 0:
-                        raise queue.Empty
-                    item = done.get(timeout=remaining)
+                    # Already delivered completions still count when the
+                    # caller spent the rest of the deadline decoding a result.
+                    item = done.get(timeout=max(0.0, self.deadline - time.monotonic()))
                 except queue.Empty:
                     self.timed_out = True
                     raise TimeoutError(

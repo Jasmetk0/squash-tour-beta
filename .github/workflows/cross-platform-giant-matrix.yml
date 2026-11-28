@@ -1,0 +1,316 @@
+name: Cross-platform giant engine matrix
+
+on:
+  push:
+    branches: [test/cross-platform-giant-matrix-20261128]
+    paths: ['.github/workflows/cross-platform-giant-matrix.yml']
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: Pilot (128 players through W5) or full (1000 players, five seasons)
+        required: true
+        type: choice
+        default: pilot
+        options: [pilot, full]
+
+permissions:
+  contents: read
+concurrency:
+  group: cross-platform-giant-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  giant:
+    name: ${{ matrix.platform }} / ${{ matrix.variant }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 360
+    strategy:
+      fail-fast: false
+      max-parallel: 10
+      matrix:
+        include:
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            lock: linux
+            variant: control
+            workers: '0'
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            lock: linux
+            variant: core
+            workers: '0'
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            lock: linux
+            variant: pool-off
+            workers: '0'
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            lock: linux
+            variant: pool-2
+            workers: '2'
+          - platform: linux-x64
+            runner: ubuntu-24.04
+            lock: linux
+            variant: pool-3
+            workers: '3'
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            lock: arm
+            variant: control
+            workers: '0'
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            lock: arm
+            variant: core
+            workers: '0'
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            lock: arm
+            variant: pool-off
+            workers: '0'
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            lock: arm
+            variant: pool-2
+            workers: '2'
+          - platform: linux-arm64
+            runner: ubuntu-24.04-arm
+            lock: arm
+            variant: pool-3
+            workers: '3'
+          - platform: windows-x64
+            runner: windows-latest
+            lock: windows
+            variant: control
+            workers: '0'
+          - platform: windows-x64
+            runner: windows-latest
+            lock: windows
+            variant: core
+            workers: '0'
+          - platform: windows-x64
+            runner: windows-latest
+            lock: windows
+            variant: pool-off
+            workers: '0'
+          - platform: windows-x64
+            runner: windows-latest
+            lock: windows
+            variant: pool-2
+            workers: '2'
+          - platform: windows-x64
+            runner: windows-latest
+            lock: windows
+            variant: pool-3
+            workers: '3'
+    defaults:
+      run:
+        shell: pwsh
+    env:
+      PYTHONHASHSEED: '0'
+      PYTHONUTF8: '1'
+      PYTHONUNBUFFERED: '1'
+      MODE: ${{ inputs.mode || 'pilot' }}
+    steps:
+      - name: Configure Git for portable checkouts
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.longpaths true
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          path: orchestration
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 29784d51d01d9d747705be8abae30f0c82706c1e
+          fetch-depth: 0
+          path: engine
+          persist-credentials: false
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: 51dbde8990e0118af9827485ac12d3f27286c3e4
+          path: harness
+          persist-credentials: false
+      - name: Assemble exact control and candidate (local only)
+        working-directory: engine
+        timeout-minutes: 5
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          New-Item -ItemType Directory -Force $root | Out-Null
+          git config user.name 'Diagnostic build'
+          git config user.email 'diagnostic@example.invalid'
+          $env:GIT_AUTHOR_DATE = '2026-11-28T09:00:00Z'
+          $env:GIT_COMMITTER_DATE = $env:GIT_AUTHOR_DATE
+          $base = '29784d51d01d9d747705be8abae30f0c82706c1e'
+          $follow = @('ea9978fb3e41558fef5e9f00778f2cc18cf513ba','dfb2e3a0d98bfca700ce1f9d801929ccec2544bf')
+          $old = @('72764c49f2b3b0ea7203352358ee41ff2d3688a0','47beee7a2a999cce7d9fd71aea0412e95b1d56ac','091ac6c79852ddd1fc976c0fff808795703359f5')
+          $core = @('1372c31849e242cc2ca0f0a2d67cd73af04c816f','47beee7a2a999cce7d9fd71aea0412e95b1d56ac','091ac6c79852ddd1fc976c0fff808795703359f5','1935e53555c1f6d3d11481d3e83cb9687bceb3cd','18bf7156cb056e25a5fb22a306609597a2517fd0','c1513a52ab725c67764ca693c4e262efd7612253')
+          $pool = 'b5e1ab34fd0574565224f28ac398b1a613cf4d18'
+          foreach ($pin in ($follow + $old + $core + @($pool) | Select-Object -Unique)) {
+            git fetch --no-tags origin $pin
+          }
+          function Assemble($pins) {
+            git checkout --detach $base
+            git merge-base --is-ancestor 7203f0f5cfefc99d1e2d911d7c160d86830a667d HEAD
+            git cherry-pick -x $follow
+            foreach ($pin in $pins) {
+              git merge --no-ff --no-edit $pin
+              git merge-base --is-ancestor $pin HEAD
+            }
+            git diff --exit-code
+            git diff --cached --exit-code
+          }
+          Assemble $old
+          $control = (git rev-parse HEAD).Trim()
+          if ('${{ matrix.variant }}' -ne 'control') {
+            $pins = $core
+            if ('${{ matrix.variant }}'.StartsWith('pool-')) { $pins += $pool }
+            Assemble $pins
+          }
+          $candidate = (git rev-parse HEAD).Trim()
+          @{
+            control = $control; candidate = $candidate
+            tree = (git rev-parse 'HEAD^{tree}').Trim()
+            platform = '${{ matrix.platform }}'; variant = '${{ matrix.variant }}'
+            workers = '${{ matrix.workers }}'; mode = $env:MODE
+          } | ConvertTo-Json | Set-Content (Join-Path $root 'configuration.json')
+          git log -16 --format='%H %s' | Set-Content (Join-Path $root 'candidate.txt')
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12.10'
+      - name: Install platform-locked dependencies
+        working-directory: engine
+        timeout-minutes: 8
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          $lock = switch ('${{ matrix.lock }}') {
+            linux { '.github/requirements/fast-ci-linux.lock.txt' }
+            windows { '.github/requirements/windows-preview-win-amd64.lock.txt' }
+            arm {
+              python ../orchestration/scripts/resolve_giant_arm_lock.py | Out-Host
+              Join-Path $env:RUNNER_TEMP 'arm-wheel.lock'
+            }
+          }
+          python -m pip install --only-binary=:all: --require-hashes -r $lock
+          python -m pip check
+          python -m pip freeze --all | Set-Content (Join-Path $root 'dependencies.txt')
+      - name: Focused sporting and persistence correctness
+        working-directory: engine
+        timeout-minutes: 30
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          $tests = @('tests/domain/test_native_official_ranking_seams.py','tests/domain/test_calendar_sporting_week_kernel_equivalence.py','tests/infrastructure/test_saved_v2_store.py','tests/application/test_native_week_ab_diagnostic.py','tests/api/test_calendar_tour_appended_slot_verification.py','tests/api/test_native_full_simulation_appended_slot.py','tests/api/test_save_prepared_checkpoint.py','tests/domain/test_calendar_native_health_preparation.py')
+          if ('${{ matrix.variant }}' -ne 'control') {
+            $tests += @('tests/core/test_rng_byte_equivalence.py','tests/domain/test_match_engine_single_log_validation.py','tests/domain/test_match_engine_performance_equivalence.py','tests/api/test_calendar_tour_inspection_decode.py','tests/infrastructure/test_calendar_checkpoint_decoded_body.py')
+          }
+          Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
+          if ($IsWindows -and '${{ matrix.variant }}' -ne 'control') {
+            python ../orchestration/scripts/run_giant_correctness_portable.py -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'preflight.log')
+          } else {
+            python -m pytest -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'preflight.log')
+          }
+          if ($LASTEXITCODE -ne 0) { throw 'Correctness gate failed' }
+      - name: Independent worker fault and teardown gate
+        if: startsWith(matrix.variant, 'pool-')
+        working-directory: engine
+        timeout-minutes: 12
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
+          $tests = @('tests/domain/test_calendar_match_state_hash_once.py','tests/domain/test_match_worker_generations.py','tests/domain/test_slot_match_batch.py','tests/domain/test_slot_match_replay_memo.py','tests/api/test_slot_match_workers.py')
+          python ../orchestration/scripts/run_giant_correctness_portable.py -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'worker-gate.log')
+          if ($LASTEXITCODE -ne 0) { throw 'Worker correctness gate failed' }
+      - name: Independent HTTP worker fault replay and teardown
+        if: startsWith(matrix.variant, 'pool-')
+        working-directory: engine
+        timeout-minutes: 12
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
+          python ../orchestration/scripts/run_giant_correctness_portable.py -q -rA tests/api/test_slot_worker_faults_http.py 2>&1 | Tee-Object -FilePath (Join-Path $root 'worker-http-gate.log')
+          if ($LASTEXITCODE -ne 0) { throw 'Worker HTTP fault and replay gate failed' }
+          if ($IsWindows) {
+            $cleanup = Select-String -Path (Join-Path $root 'worker-http-gate.log') -Pattern 'REPLAY_SQLITE_POOL_DISPOSED'
+            if (@($cleanup).Count -ne 2) { throw 'Expected both independent Windows replay teardown markers' }
+          }
+      - name: Same-host strict A/A or A/B W6 versus previous night
+        working-directory: engine
+        timeout-minutes: 25
+        env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+          BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          $config = Get-Content (Join-Path $root 'configuration.json') -Raw | ConvertFrom-Json
+          $driver = (Resolve-Path scripts/profile_native_week_ab.py).Path
+          $baseline = Join-Path $env:RUNNER_TEMP 'control-tree'
+          $db = Join-Path $root 'week-input.db'
+          git worktree add --detach $baseline $config.control
+          Push-Location $baseline
+          try { python $driver prepare --database $db | Tee-Object -FilePath (Join-Path $root 'prepare.log') }
+          finally { Pop-Location }
+          git worktree remove $baseline
+          $sha = (Get-FileHash -LiteralPath $db -Algorithm SHA256).Hash.ToLowerInvariant()
+          python $driver ab --scenario w6 --a $config.control --b $config.candidate --input $db --sha256 $sha --out (Join-Path $root 'timing') --repetitions 1 --worker-timeout 600 2>&1 | Tee-Object -FilePath (Join-Path $root 'ab.log')
+          if ($LASTEXITCODE -ne 0) { throw 'A/B failed' }
+          $report = Get-Content (Join-Path $root 'timing/comparison.json') -Raw | ConvertFrom-Json
+          if ($report.verdict -ne 'equal') { throw 'A/B mismatch' }
+          if ((Get-FileHash -LiteralPath $db -Algorithm SHA256).Hash.ToLowerInvariant() -ne $sha) { throw 'Fixture changed' }
+      - name: Portable real HTTP SQLite load
+        working-directory: engine
+        env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+          BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
+          GITHUB_EVENT_NAME: giant_native_load
+        run: |
+          $PSNativeCommandUseErrorActionPreference = $true
+          $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          $observer = (Resolve-Path ../orchestration/scripts/observe_giant_portable.py).Path
+          $harness = (Resolve-Path ../harness/scripts/giant_native_five_season_load.py).Path
+          $loadArgs = @('--profile','compatible','--seasons','5','--editions-per-season','60','--born-per-season','80','--saved-v2')
+          if ($env:MODE -eq 'full') {
+            $loadArgs += @('--players','1000','--budget-minutes','315','--allow-five-season-run')
+          } else {
+            $loadArgs += @('--players','128','--budget-minutes','20','--stop-after-week','5')
+          }
+          python -m py_compile $observer
+          python $observer (Get-Location).Path $harness $root @loadArgs 2>&1 | Tee-Object -FilePath (Join-Path $root 'console.log')
+          if ($LASTEXITCODE -ne 0) { throw 'Load did not complete' }
+      - name: Preserve platform and correctness evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: giant-${{ matrix.platform }}-${{ matrix.variant }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/giant-evidence/*.json
+            ${{ runner.temp }}/giant-evidence/*.jsonl
+            ${{ runner.temp }}/giant-evidence/*.txt
+            ${{ runner.temp }}/giant-evidence/*.log
+            ${{ runner.temp }}/giant-evidence/timing/**/*.json
+            ${{ runner.temp }}/giant-evidence/timing/**/*.log
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Preserve bounded restart fixtures from pilot
+        if: always() && env.MODE == 'pilot' && matrix.variant == 'core'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: giant-fixture-${{ matrix.platform }}-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/giant-evidence/before-restart.sqlite
+            ${{ runner.temp }}/giant-evidence/*manifest*.json
+          if-no-files-found: warn
+          retention-days: 7
+      - name: Verify tracked engine files remain intact
+        if: always()
+        working-directory: engine
+        run: git diff --exit-code HEAD --

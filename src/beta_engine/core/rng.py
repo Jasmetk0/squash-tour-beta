@@ -6,6 +6,7 @@ logic can depend on injected RNG instances rather than ambient randomness.
 
 from __future__ import annotations
 
+import _random
 import hashlib
 import random
 from collections.abc import MutableSequence, Sequence
@@ -15,72 +16,134 @@ from beta_engine.core.types import Seed, SeedPath, SeedScope
 
 T = TypeVar("T")
 
+_Random = random.Random
+_blake2b = hashlib.blake2b
+_int_from_bytes = int.from_bytes
+_new_object = object.__new__
+# ``random.Random(x)`` for an exact ``int`` runs only ``_random.Random.seed(x)``
+# (MT19937 ``init_by_array`` over the 32-bit words of ``abs(x)``) and sets
+# ``gauss_next = None``. Doing exactly that without the Python ``__init__`` and
+# ``seed`` frames yields the identical generator state; anything else, or a
+# ``random.Random`` whose base is not the C generator, uses the constructor.
+_seed_generator = (
+    _random.Random.seed if _Random.__bases__ == (_random.Random,) else None
+)
+_new_generator = _Random.__new__
+
+
+def _generator_for(value: object) -> random.Random:
+    if type(value) is int and _seed_generator is not None:
+        generator = _new_generator(_Random)
+        _seed_generator(generator, value)
+        generator.gauss_next = None
+        return generator
+    return _Random(value)
+
 
 class DeterministicRng:
     """Seeded RNG wrapper with deterministic child-seed derivation."""
 
+    __slots__ = ("_value", "_seed", "_generator", "_seed_text", "_prefix")
+
     def __init__(self, seed: Seed | int):
-        self._seed = seed if isinstance(seed, Seed) else Seed(int(seed))
+        if not isinstance(seed, Seed):
+            seed = Seed(int(seed))
+        self._seed: Seed | None = seed
+        self._value = seed.value
         # Created on first draw from the same seed: identical state and
         # sequence. Many child RNGs only derive further seeds and never draw.
         self._generator: random.Random | None = None
-        # Decimal text of the seed, reused by every child derivation.
+        # Decimal text of the seed and ``(scope, "v1|<scope>|<text>")`` of the
+        # last scope, reused by every child derivation. The pair is replaced
+        # in one assignment, so a concurrent reader never mixes two scopes.
         self._seed_text: str | None = None
+        self._prefix: tuple[SeedScope, str] | None = None
 
-    @property
-    def _random(self) -> random.Random:
+    @classmethod
+    def _child(cls, value: int) -> "DeterministicRng":
+        # A branch child: same state as ``DeterministicRng(Seed(value))``; its
+        # ``Seed`` object is created only if ``seed`` is read.
+        rng = _new_object(DeterministicRng)
+        rng._seed = None
+        rng._value = value
+        rng._generator = None
+        rng._seed_text = None
+        rng._prefix = None
+        return rng
+
+    def _draw(self) -> random.Random:
         generator = self._generator
         if generator is None:
-            generator = self._generator = random.Random(self._seed.value)
+            generator = self._generator = _generator_for(self._value)
         return generator
 
     @property
     def seed(self) -> Seed:
         """Return this RNG's typed seed."""
 
-        return self._seed
+        seed = self._seed
+        if seed is None:
+            seed = self._seed = Seed(self._value)
+        return seed
 
     def random(self) -> float:
         """Return a deterministic float in [0.0, 1.0)."""
 
-        return self._random.random()
+        generator = self._generator
+        if generator is None:
+            generator = self._generator = _generator_for(self._value)
+        return generator.random()
 
     def randint(self, a: int, b: int) -> int:
         """Return deterministic integer N such that a <= N <= b."""
 
-        return self._random.randint(a, b)
+        return self._draw().randint(a, b)
 
     def uniform(self, a: float, b: float) -> float:
         """Return deterministic float N such that a <= N <= b."""
 
-        return self._random.uniform(a, b)
+        generator = self._generator
+        if generator is None:
+            generator = self._generator = _generator_for(self._value)
+        return generator.uniform(a, b)
 
     def choice(self, sequence: Sequence[T]) -> T:
         """Return a deterministic element from a non-empty sequence."""
 
-        return self._random.choice(sequence)
+        return self._draw().choice(sequence)
 
     def shuffle(self, sequence: MutableSequence[T]) -> None:
         """In-place deterministic shuffle for mutable sequences."""
 
-        self._random.shuffle(sequence)
+        self._draw().shuffle(sequence)
+
+    def _child_value(self, scope: SeedScope, parts: tuple[object, ...]) -> int:
+        # Same material and digest as ``derive_child_seed`` (the reference):
+        # ``"|".join(("v1", scope.value, str(seed), *map(str, parts)))``. The
+        # first three fields are joined once per scope member and reused.
+        cached = self._prefix
+        if cached is not None and cached[0] is scope:
+            prefix = cached[1]
+        else:
+            text = self._seed_text
+            if text is None:
+                text = self._seed_text = str(self._value)
+            prefix = "|".join(("v1", scope.value, text))
+            if type(scope) is SeedScope:
+                self._prefix = (scope, prefix)
+        material = "|".join((prefix, *map(str, parts)))
+        digest = _blake2b(material.encode("utf-8"), digest_size=16).digest()
+        return _int_from_bytes(digest, "big")
 
     def derive(self, scope: SeedScope, *parts: object) -> Seed:
         """Derive a deterministic child seed for the given scope and identity parts."""
 
-        # Same material and digest as ``derive_child_seed`` (the reference),
-        # with this RNG's seed text computed once instead of per child.
-        text = self._seed_text
-        if text is None:
-            text = self._seed_text = str(self._seed.value)
-        material = "|".join(("v1", scope.value, text, *map(str, parts)))
-        digest = hashlib.blake2b(material.encode("utf-8"), digest_size=16).digest()
-        return Seed(int.from_bytes(digest, byteorder="big", signed=False))
+        return Seed(self._child_value(scope, parts))
 
     def branch(self, scope: SeedScope, *parts: object) -> "DeterministicRng":
         """Create a child RNG deterministically derived from this RNG's seed."""
 
-        return DeterministicRng(self.derive(scope, *parts))
+        return DeterministicRng._child(self._child_value(scope, parts))
 
 
 def derive_child_seed(parent_seed: Seed | int, scope: SeedScope, *parts: object) -> Seed:

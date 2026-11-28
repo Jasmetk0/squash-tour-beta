@@ -1,0 +1,26 @@
+{
+ "ko64": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+  "engine_results": 63,
+  "rallies": 3382,
+  "components_per_result": 19
+ },
+ "ko128": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "795da202c5158ef4d4f25045ad341a387e4e37805f1bf36cefab1116d087f3e4",
+  "engine_results": 127,
+  "rallies": 6779,
+  "components_per_result": 19
+ },
+ "corpus": {
+  "equal": true,
+  "differences": [],
+  "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+  "engine_results": 12,
+  "rallies": 697,
+  "components_per_result": 19
+ }
+}

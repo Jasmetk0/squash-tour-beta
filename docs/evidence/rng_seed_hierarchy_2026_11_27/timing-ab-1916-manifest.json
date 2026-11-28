@@ -1,0 +1,42 @@
+{
+ "schema": "ab_match_kernel.v1",
+ "sides": {
+  "A": {
+   "commit": "1935e53555c1f6d3d11481d3e83cb9687bceb3cd",
+   "src_tree": "9123637413dc0141dca23d4f0f2fa3a85a22681b",
+   "matches_tree": "606e703489ac67d5a0f580fe8a34ad0bc109770a",
+   "rng_blob": "259b63595f1a3db922264ff450f9987b96dece29"
+  },
+  "B": {
+   "commit": "02e530e2a5c9abddf3f1d96a1e170eb83b52e78e",
+   "src_tree": "0324c3f0f4e03889d1b92ab26492f807b198bfa7",
+   "matches_tree": "606e703489ac67d5a0f580fe8a34ad0bc109770a",
+   "rng_blob": "8a2816c89e19c91d90e7a1bb0a79f0bdd1e0b707"
+  }
+ },
+ "harness": {
+  "path": "/home/user/wt/pr1916/scripts/benchmark_match_engine.py",
+  "sha256": "00a71bddf5f8dd9fa839fa647969b5f5efcd9ca5e104bb29acec539895dd24c7",
+  "driver_head": "1935e53555c1f6d3d11481d3e83cb9687bceb3cd",
+  "driver_dirty": false
+ },
+ "python": {
+  "executable": "/home/user/venv312/bin/python",
+  "version": "3.12.3",
+  "pydantic": "2.14.2",
+  "platform": "Linux-6.18.44-fc-v880-x86_64-with-glibc2.39"
+ },
+ "machine": {
+  "cpu_model": "Intel(R) Xeon(R) Processor @ 2.30GHz",
+  "logical_cpus": 4,
+  "affinity": 4
+ },
+ "scenarios": [
+  "ko64",
+  "ko128",
+  "corpus"
+ ],
+ "rounds": 6,
+ "order": "A B B A in even rounds, B A A B in odd rounds",
+ "pythonhashseed": "0"
+}

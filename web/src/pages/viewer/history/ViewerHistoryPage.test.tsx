@@ -116,6 +116,8 @@ describe('ViewerHistoryPage source-safe canonical publication hub (mocked GET on
     }
     expect(screen.getByRole('link', { name: /History Open/ })).toHaveAttribute('href', '/viewer/runs/history%20run/calendar/EVT-1')
     expect(screen.queryByRole('link', { name: /Future Open/ })).not.toBeInTheDocument()
+    expect(screen.getByText('Nejpozději naplánovaný turnaj s publikovaným výsledkem')).toBeInTheDocument()
+    expect(screen.getByText(/nikoli podle času zveřejnění výsledku/)).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /2032\/33 · W49/ })).toHaveAttribute('href', '/viewer/runs/history%20run/rankings/2000')
     expect(screen.getByRole('link', { name: '2032/33' })).toHaveAttribute('href', '/viewer/runs/history%20run/race?raceSeason=32')
     expect(screen.getByRole('link', { name: 'Historie vybraného Runu' })).toHaveAttribute('href', '/viewer/runs/history%20run/history')

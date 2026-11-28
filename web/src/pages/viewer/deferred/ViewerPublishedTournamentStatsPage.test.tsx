@@ -56,7 +56,7 @@ function saved(events: Event[] = examples, run = active.run ?? '', branch = acti
       schema_version: 'viewer_run_calendar.v1',
       product_run_id: run, viewer_branch_id: branch,
       season_count: groups.size, event_count: events.length,
-      seasons: [...groups].map(([season, es]) => ({ season, event_count: es.length, events: es })),
+      seasons: [...groups].map(([season, es]) => ({ season, event_count: es.length, events: es.map(({ winner: _winner, ...publicEvent }) => publicEvent) })),
     },
     history: {
       schema_version: 'viewer_tournament_history.v1',
@@ -139,6 +139,8 @@ describe('Tournament Stats from verified Saved public tournament calendar and re
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/event%204')
     expect(screen.getByText('branch-a')).toBeInTheDocument()
     expect(screen.getByText(/Dokončený kalendářní turnaj a publikovaný výsledek/)).toBeInTheDocument()
+    expect(screen.getByText(/včetně zrušených turnajů/)).toBeInTheDocument()
+    expect(within(table).getByRole('columnheader', { name: 'Nejpozdější turnaj podle rozpisu' })).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
     expect(api.getViewerTournamentHistory).toHaveBeenCalledTimes(1)
     expectNoForbiddenViewerActions()

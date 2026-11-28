@@ -182,4 +182,23 @@ describe('verified Saved Tournament Catalog (legacy V1)', () => {
     expect(verifiedTournamentCatalog(nullable.calendar, nullable.history, 'run a', 'branch a')).not.toBeNull()
   })
 
+  it('requires the complete public calendar shape even for fields absent from tournament history', () => {
+    const { calendar, history } = source([event('E1')], ['E1'])
+    const season = calendar.seasons[0], row = season.events[0]
+    const withRow = (value: unknown) => ({ ...calendar, seasons: [{ ...season, events: [value] }] })
+    const { year_week: _week, ...missingWeek } = row
+    for (const invalid of [
+      { ...calendar, private_seed: 'hidden' },
+      { ...calendar, seasons: [{ ...season, unknown: 1 }] },
+      withRow({ ...row, private_seed: 'hidden' }),
+      withRow(missingWeek),
+      withRow({ ...row, year_week: 62 }),
+      withRow({ ...row, calendar_year: -1 }),
+      withRow({ ...row, prestige: -1 }),
+      withRow({ ...row, duration_in_season_weeks: 0 }),
+      withRow({ ...row, start_season_week: 5, end_season_week: 6 }),
+    ]) expect(verifiedTournamentCatalog(invalid, history, 'run a', 'branch a')).toBeNull()
+    expect(verifiedTournamentCatalog(calendar, history, 'run a', 'branch a')?.publishedCount).toBe(1)
+  })
+
 })

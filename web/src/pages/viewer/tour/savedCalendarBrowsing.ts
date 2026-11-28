@@ -8,6 +8,21 @@ const whole = (value: unknown, minimum = 0, maximum = Number.MAX_SAFE_INTEGER): 
 const nonEmpty = (value: unknown): value is string =>
   typeof value === 'string' && value.trim().length > 0
 
+const calendarFields = ['schema_version', 'product_run_id', 'viewer_branch_id', 'season_count', 'event_count', 'seasons']
+const seasonFields = ['season', 'event_count', 'events']
+const eventFields = [
+  'event_id', 'season', 'season_week', 'calendar_year', 'year_week', 'template_id',
+  'event_name', 'category', 'tour_level', 'host_country', 'host_city', 'region',
+  'duration_in_season_weeks', 'start_season_week', 'end_season_week', 'status',
+  'main_draw_size', 'qualification_draw_size', 'seeds_count', 'qualifier_spots',
+  'wild_cards', 'byes', 'prestige',
+]
+function exactFields(value: unknown, fields: readonly string[]): boolean {
+  return !!value && typeof value === 'object' && !Array.isArray(value) &&
+    Object.keys(value).length === fields.length &&
+    fields.every(field => Object.prototype.hasOwnProperty.call(value, field))
+}
+
 export function savedCalendarSeasonKey(value: unknown): string | null {
   if (nonEmpty(value)) return value
   return whole(value) ? String(value) : null
@@ -29,7 +44,7 @@ export type SavedSeasonCalendar = {
 export function verifiedSavedSeasonCalendar(
   data: unknown, runId: string, branchId: string
 ): SavedSeasonCalendar | null {
-  if (!data || typeof data !== 'object' || !nonEmpty(runId) || !nonEmpty(branchId)) return null
+  if (!exactFields(data, calendarFields) || !nonEmpty(runId) || !nonEmpty(branchId)) return null
   const value = data as Partial<ViewerRunCalendar>
   if (
     value.schema_version !== 'viewer_run_calendar.v1' ||
@@ -43,20 +58,21 @@ export function verifiedSavedSeasonCalendar(
   const seasonKeys = new Set<string>()
   const eventIds = new Set<string>()
   for (const season of value.seasons) {
-    if (!season || typeof season !== 'object') return null
+    if (!exactFields(season, seasonFields)) return null
     const key = savedCalendarSeasonKey(season.season)
     if (key === null || seasonKeys.has(key) || !whole(season.event_count) ||
         !Array.isArray(season.events) || season.event_count !== season.events.length) return null
     seasonKeys.add(key)
     seasons.push(key)
     for (const event of season.events) {
-      if (!event || !nonEmpty(event.event_id) || eventIds.has(event.event_id) ||
+      if (!exactFields(event, eventFields) || !nonEmpty(event.event_id) || eventIds.has(event.event_id) ||
           savedCalendarSeasonKey(event.season) !== key ||
           !whole(event.season_week, 1, 61) ||
           !whole(event.start_season_week, 1, 61) ||
           !whole(event.end_season_week, 1) ||
           !whole(event.duration_in_season_weeks, 1) ||
           event.end_season_week < event.start_season_week ||
+          event.season_week < event.start_season_week || event.season_week > event.end_season_week ||
           (event.year_week !== null && !whole(event.year_week, 1, 61)) ||
           (event.calendar_year !== null && !whole(event.calendar_year)) ||
           !nonEmpty(event.template_id) ||

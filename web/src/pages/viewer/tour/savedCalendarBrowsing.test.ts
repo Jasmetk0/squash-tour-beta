@@ -145,4 +145,20 @@ describe('Saved Calendar V1 viewer source and filter contract', () => {
       expect(parseSavedCalendarPage(invalid, 3)).toBeNull()
     }
   })
+  it('rejects unknown and missing fields at each public calendar level and invalid occurrence spans', () => {
+    const raw = calendar()
+    const season = raw.seasons[0]
+    const row = season.events[0]
+    const withRow = (value: unknown) => ({ ...raw, seasons: [{ ...season, events: [value] }] })
+    const { prestige: _prestige, ...missingPrestige } = row
+    for (const bad of [
+      { ...raw, private_seed: 'hidden' },
+      { ...raw, seasons: [{ ...season, private_seed: 'hidden' }] },
+      withRow({ ...row, private_seed: 'hidden' }),
+      withRow(missingPrestige),
+      withRow({ ...row, start_season_week: 6, end_season_week: 7 }),
+      withRow({ ...row, season_week: 6 }),
+    ]) expect(verified(bad)).toBeNull()
+  })
+
 })

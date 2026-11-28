@@ -452,7 +452,7 @@ describe('ViewerRunPlayersPage', () => {
     renderViewerRoute('/viewer/runs/viewer-run-2c/players', <ViewerRunPlayersPage />, '/viewer/runs/:runId/players')
 
     expect(await screen.findByText(/Failed to load canonical players/i)).toBeInTheDocument()
-    expect(screen.getByText(/player list outage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/player list outage/i)).not.toBeInTheDocument()
     expect(screen.queryByRole('link', { name: /Open Player Profile/i })).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
@@ -646,7 +646,7 @@ describe('ViewerRunPlayerCareerPage canonical current profile', () => {
     )
 
     expect(await screen.findByText(/Failed to load canonical player profile/i)).toBeInTheDocument()
-    expect(screen.getByText(/canonical player outage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/canonical player outage/i)).not.toBeInTheDocument()
     expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
@@ -693,9 +693,34 @@ describe('ViewerRunPlayerCareerPage canonical current profile', () => {
   })
 })
 
+function countryListRoster(run = 'viewer-run-2c', rows: Array<{
+  id: string; name: string; code: string; rating: number; status: 'active' | 'retired'
+}> = [
+  { id: 'EGY-0001', name: 'Ali A', code: 'EGY', rating: 191, status: 'active' },
+  { id: 'EGY-0002', name: 'Egypt Two', code: 'EGY', rating: 180, status: 'active' },
+  { id: 'EGY-0003', name: 'Egypt Three', code: 'EGY', rating: 175, status: 'active' },
+  { id: 'EGY-0004', name: 'Egypt Four', code: 'EGY', rating: 174, status: 'active' },
+  { id: 'EGY-0005', name: 'Egypt Five', code: 'EGY', rating: 172, status: 'retired' },
+  { id: 'USA-0001', name: 'US Player', code: 'USA', rating: 150, status: 'active' },
+]) {
+  const active = rows.filter(row => row.status === 'active').length
+  return {
+    schema_version: 'viewer_players.v1', product_run_id: run, viewer_branch_id: 'branch-viewer',
+    season_index: 2, week: 7, player_count: rows.length, active_player_count: active,
+    retired_player_count: rows.length - active,
+    players: rows.map(row => ({
+      player_id: row.id, name: row.name, country_code: row.code, age: 24, status: row.status,
+      tour_entry_season_index: 0, tour_entry_week: 1, current_ovr: row.rating,
+      potential_ovr: null, current_form: null, match_sharpness: null,
+      long_term_fatigue: null, identity_source: 'initial_world',
+    })),
+  }
+}
+
 describe('ViewerRunCountriesPage', () => {
   beforeEach(() => {
     vi.resetAllMocks()
+    api.getViewerPlayers.mockResolvedValue(countryListRoster())
     api.getViewerCountries.mockResolvedValue({
       schema_version: 'viewer_countries.v1',
       product_run_id: 'viewer-run-2c',
@@ -731,11 +756,12 @@ describe('ViewerRunCountriesPage', () => {
     renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
 
     expect(await screen.findByText(/Failed to load canonical countries/i)).toBeInTheDocument()
-    expect(screen.getByText(/country list outage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/country list outage/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 
   it('shows canonical no-match copy for an empty country list', async () => {
+    api.getViewerPlayers.mockResolvedValue(countryListRoster('viewer-run-2c', []))
     api.getViewerCountries.mockResolvedValue({
       schema_version: 'viewer_countries.v1',
       product_run_id: 'viewer-run-2c',
@@ -752,7 +778,43 @@ describe('ViewerRunCountriesPage', () => {
     expectNoForbiddenViewerActions()
   })
 
+  it('rejects a country projection from a different branch or clock instead of displaying its rows', async () => {
+    api.getViewerCountries.mockResolvedValueOnce({
+      schema_version: 'viewer_countries.v1', product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'foreign-branch', season_index: 2, week: 7,
+      country_count: 0, countries: [],
+    })
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved country and player sources do not match')
+    expect(screen.queryByText('foreign-branch')).not.toBeInTheDocument()
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+  })
+
+  it.each(['page', 'row', 'clock'])('rejects inconsistent or non-public country %s evidence before rendering', async kind => {
+    const original = {
+      schema_version: 'viewer_countries.v1', product_run_id: 'viewer-run-2c',
+      viewer_branch_id: 'branch-viewer', season_index: 2, week: 7, country_count: 2,
+      countries: [
+        { country_code: 'EGY', player_count: 5, active_player_count: 4, retired_player_count: 1,
+          average_current_ovr: 178.4, top_player_id: 'EGY-0001', top_player_name: 'Ali A', top_player_current_ovr: 191 },
+        { country_code: 'USA', player_count: 1, active_player_count: 1, retired_player_count: 0,
+          average_current_ovr: 150, top_player_id: 'USA-0001', top_player_name: 'US Player', top_player_current_ovr: 150 },
+      ],
+    }
+    const malformed = kind === 'page' ? { ...original, private_seed: 'hidden-page' } :
+      kind === 'row' ? { ...original, countries: [{ ...original.countries[0], private_seed: 'hidden-row' }, original.countries[1]] } :
+        { ...original, week: 8 }
+    api.getViewerCountries.mockResolvedValueOnce(malformed)
+    renderViewerRoute('/viewer/runs/viewer-run-2c/countries', <ViewerRunCountriesPage />, '/viewer/runs/:runId/countries')
+    expect(await screen.findByRole('alert')).toHaveTextContent('Saved country and player sources do not match')
+    expect(screen.queryByRole('table')).not.toBeInTheDocument()
+    expect(screen.queryByText('Ali A')).not.toBeInTheDocument()
+  })
+
   it('builds encoded Viewer-only country links from canonical identities', async () => {
+    api.getViewerPlayers.mockResolvedValue(countryListRoster('run/alpha #1', [
+      { id: 'P/1 #A', name: 'Encoded Player', code: 'CDE', rating: 188, status: 'active' },
+    ]))
     api.getViewerCountries.mockResolvedValue({
       schema_version: 'viewer_countries.v1',
       product_run_id: 'run/alpha #1',
@@ -944,7 +1006,7 @@ describe('ViewerRunCountryDetailPage canonical current profile', () => {
     )
 
     expect(await screen.findByText(/Failed to load canonical country profile/i)).toBeInTheDocument()
-    expect(screen.getByText(/canonical country outage/i)).toBeInTheDocument()
+    expect(screen.queryByText(/canonical country outage/i)).not.toBeInTheDocument()
     expectNoForbiddenViewerActions()
   })
 

@@ -203,4 +203,20 @@ describe('Viewer Current Week requires exact Saved Run/Branch evidence (mocked G
     expect(screen.getByRole('link', { name: 'Open Product Run schedule' })).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
   })
+  it.each(['completed', 'cancelled', 'active'])(
+    'does not present the latest Saved status %s as historical selected-week status', async status => {
+      setViewerActiveProductRunId('run alpha')
+      const source = savedCalendar()
+      const event = { ...source.seasons[0].events[0], status }
+      api.getViewerRunCalendar.mockResolvedValueOnce({
+        ...source, seasons: [{ ...source.seasons[0], events: [event] }],
+      })
+      mount()
+      const link = await screen.findByRole('link', { name: 'Week Ten Open' })
+      expect(link.closest('li')).not.toHaveTextContent(status)
+      expect(screen.getByText(/Stav turnajů k vybranému týdnu proto nezobrazujeme/)).toBeInTheDocument()
+      expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)
+    },
+  )
+
 })

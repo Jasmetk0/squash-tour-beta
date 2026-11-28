@@ -34,7 +34,8 @@ const copy = {
   retry: ['Načíst znovu (pouze GET)', 'Retry read (GET only)'],
   empty: ['V této uložené větvi zatím nejsou publikované sportovní výsledky.', 'No sporting results have been published in this Saved Branch yet.'],
   recentTitle: ['Poslední publikované záznamy', 'Latest published records'],
-  latestTournament: ['Poslední výsledek turnaje', 'Latest tournament result'],
+  latestTournament: ['Nejpozději naplánovaný turnaj s publikovaným výsledkem', 'Latest scheduled tournament with a published result'],
+  tournamentOrderScope: ['Turnaj je vybrán podle sezony a týdne rozpisu, nikoli podle času zveřejnění výsledku (ten zdroj neobsahuje).', 'The tournament is selected by scheduled season and week, not result publication time (which the source does not provide).'],
   latestRanking: ['Poslední Official Ranking', 'Latest Official Ranking'],
   latestRace: ['Poslední Finals Race', 'Latest Finals Race'],
   none: ['Zatím nepublikováno', 'Not published yet'],
@@ -103,6 +104,7 @@ function HistoryForBranch({ runId, branchId, t }: { runId: string; branchId: str
       {!hasPublications ? <p className="empty-state">{t.empty}</p> : (
         <section aria-label={t.recentTitle}>
           <h4>{t.recentTitle}</h4>
+          <p className="status">{t.tournamentOrderScope}</p>
           <dl className="metadata-list">
             <div>
               <dt>{t.latestTournament}</dt>

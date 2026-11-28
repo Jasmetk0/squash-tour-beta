@@ -59,7 +59,7 @@ function sources(events: Event[] = examples, run = active.run ?? '', branch = ac
       viewer_branch_id: branch, season_count: bySeason.size,
       event_count: events.length,
       seasons: [...bySeason].map(([season, es]) => ({
-        season, event_count: es.length, events: es,
+        season, event_count: es.length, events: es.map(({ winner: _winner, ...publicEvent }) => publicEvent),
       })),
     },
     history: {
@@ -141,6 +141,8 @@ describe('Title leaders derived from the verified Saved public tournament histor
     mount()
     const table = await screen.findByRole('table', { name: 'Pořadí publikovaných vítězů' })
     expect(within(table).getAllByRole('row')).toHaveLength(3)
+    expect(within(table).getByRole('columnheader', { name: 'Nejpozději plánovaný turnaj s doloženým titulem' })).toBeInTheDocument()
+    expect(screen.getByText(/neprokazuje pořadí dokončení ani publikace/)).toBeInTheDocument()
     const a = within(table).getByRole('row', { name: /player-a/ })
     const b = within(table).getByRole('row', { name: /player-b/ })
     expect(a).toHaveTextContent('2')
@@ -148,7 +150,7 @@ describe('Title leaders derived from the verified Saved public tournament histor
     expect(within(a).getByRole('link', { name: 'player-a' }))
       .toHaveAttribute('href', '/viewer/runs/run%20alpha/players/player-a/career')
     expect(within(a).getByRole('link', { name: 'Open 4' }))
-      .toHaveAttribute('href', '/viewer/runs/run%20alpha/calendar/event%204')
+      .toHaveAttribute('href', '/viewer/runs/run%20alpha/tournaments/event%204')
     expect(screen.getByText('branch-a')).toBeInTheDocument()
     expect(screen.getByText(/ne o úplný kariérní rekord/)).toBeInTheDocument()
     expect(api.getViewerRunCalendar).toHaveBeenCalledTimes(1)

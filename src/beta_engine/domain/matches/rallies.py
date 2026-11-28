@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from enum import Enum
 from itertools import pairwise
 from typing import TYPE_CHECKING, Literal
@@ -11,9 +9,11 @@ from typing import TYPE_CHECKING, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    canonical_sha256,
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
+    hash_verified_in_scope,
 )
 from beta_engine.domain.matches.gameplans import RallyGameplanContext
 from beta_engine.domain.matches.rally_rules import (
@@ -149,6 +149,17 @@ class RallyEffortChangeReason(str, Enum):
     TACTICAL_VARIATION = "TACTICAL_VARIATION"
 
 
+# Built once instead of on every validator run (same members and order).
+_EFFORT_ORDER: tuple[RallyEffortLevel, ...] = tuple(RallyEffortLevel)
+_CONTROL_VALUES: dict[RallyControlState, int] = {
+    RallyControlState.STRONG_CONTROL_A: 2,
+    RallyControlState.SLIGHT_CONTROL_A: 1,
+    RallyControlState.NEUTRAL: 0,
+    RallyControlState.SLIGHT_CONTROL_B: -1,
+    RallyControlState.STRONG_CONTROL_B: -2,
+}
+
+
 class RallyEffortChange(BaseModel):
     player_id: str = Field(min_length=1)
     from_level: RallyEffortLevel
@@ -157,7 +168,7 @@ class RallyEffortChange(BaseModel):
 
     @model_validator(mode="after")
     def validate_change(self) -> RallyEffortChange:
-        order = list(RallyEffortLevel)
+        order = _EFFORT_ORDER
         if abs(order.index(self.to_level) - order.index(self.from_level)) != 1:
             raise ValueError("within-rally effort changes must move exactly one level")
         return self
@@ -187,13 +198,7 @@ class RallyControlSegment(BaseModel):
 
     @model_validator(mode="after")
     def validate_transition(self) -> RallyControlSegment:
-        values = {
-            RallyControlState.STRONG_CONTROL_A: 2,
-            RallyControlState.SLIGHT_CONTROL_A: 1,
-            RallyControlState.NEUTRAL: 0,
-            RallyControlState.SLIGHT_CONTROL_B: -1,
-            RallyControlState.STRONG_CONTROL_B: -2,
-        }
+        values = _CONTROL_VALUES
         distance = abs(values[self.state_after] - values[self.state_before])
         expected = (
             RallyControlTransitionKind.STAY
@@ -704,6 +709,8 @@ class RallyEvent(BaseModel):
             raise ValueError("legacy rally event cannot contain gameplan context")
         if hash_check_deferred(self):
             return self  # The engine factory hashes this validated value.
+        if hash_verified_in_scope(self):
+            return self  # Unchanged since the engine factory hashed it.
         if self.event_hash != self._content_hash(
             self._hash_payload(
                 self.model_dump(
@@ -754,10 +761,7 @@ class RallyEvent(BaseModel):
 
     @staticmethod
     def _content_hash(payload: dict[str, object]) -> str:
-        encoded = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return canonical_sha256(payload)
 
 
 class MatchRallyLog(BaseModel):

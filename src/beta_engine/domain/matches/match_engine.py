@@ -9,6 +9,7 @@ from math import exp, log
 from typing import ClassVar
 
 from beta_engine.core import DeterministicRng, SeedScope
+from beta_engine.domain.matches.content_hash import engine_event_scope
 from beta_engine.domain.matches.control import RallyCalibrationProfile
 from beta_engine.domain.matches.gameplans import (
     EffectiveMatchGameplanSnapshot,
@@ -288,6 +289,15 @@ class MatchEngine:
         set's sequential terminal-roll cursor and uses the same deterministic branches
         and sporting helpers as full-match simulation.
         """
+
+        with engine_event_scope():
+            return self._simulate_next_rally(working_input, state)
+
+    def _simulate_next_rally(
+        self,
+        working_input: MatchWorkingInput,
+        state: MatchRallyWorkingState,
+    ) -> MatchRallyStepOutcome:
 
         if self.rng.seed.value != working_input.simulation_seed:
             raise ValueError("working-match engine seed does not match frozen input")
@@ -760,6 +770,32 @@ class MatchEngine:
         return MatchRallyStepOutcome(state=next_state, rally=event)
 
     def simulate(
+        self,
+        context: MatchContext,
+        *,
+        log_anchor_hash: str | None = None,
+        effective_match_timing: EffectiveMatchTimingSnapshot | None = None,
+        effective_match_stamina: EffectiveMatchStaminaSnapshot | None = None,
+        rally_calibration_profile: RallyCalibrationProfile | None = None,
+        effective_match_gameplans: EffectiveMatchGameplanSnapshot | None = None,
+        effective_rally_rules: EffectiveRallyRulesSnapshot | None = None,
+        effective_match_health: EffectiveMatchHealthSnapshot | None = None,
+    ) -> MatchResult:
+        # Events hashed by the engine factories in this call are re-validated
+        # without a second identical hash when their logs are assembled.
+        with engine_event_scope():
+            return self._simulate(
+                context,
+                log_anchor_hash=log_anchor_hash,
+                effective_match_timing=effective_match_timing,
+                effective_match_stamina=effective_match_stamina,
+                rally_calibration_profile=rally_calibration_profile,
+                effective_match_gameplans=effective_match_gameplans,
+                effective_rally_rules=effective_rally_rules,
+                effective_match_health=effective_match_health,
+            )
+
+    def _simulate(
         self,
         context: MatchContext,
         *,

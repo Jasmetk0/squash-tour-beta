@@ -1,0 +1,50 @@
+{
+ "corpus": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 12,
+  "equal": true,
+  "fingerprint": "c66519d353e5e13ae31fd2b78adc78efe585cffa7f03e111c681f39cef113914",
+  "rallies": 697
+ },
+ "http64": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 63,
+  "equal": true,
+  "fingerprint": "ea1506df7ba28ad942351c9126cfad0b6bdb0d0aeb4d17072ff2b0fe781c09f4",
+  "rallies": 3318
+ },
+ "ko128": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 127,
+  "equal": true,
+  "fingerprint": "795da202c5158ef4d4f25045ad341a387e4e37805f1bf36cefab1116d087f3e4",
+  "rallies": 6779
+ },
+ "ko32": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 31,
+  "equal": true,
+  "fingerprint": "6fbdfd28d4aa72208651635b5e868f8fcb50f2593ef1b0adc5d3775ce72a143a",
+  "rallies": 1610
+ },
+ "ko64": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 63,
+  "equal": true,
+  "fingerprint": "3f08eb6f97d7f14b7ea60760fbff59a30169271fbf16fac6bff84f55a8170b88",
+  "rallies": 3382
+ },
+ "restart": {
+  "components_per_result": 19,
+  "differences": [],
+  "engine_results": 4,
+  "equal": true,
+  "fingerprint": "5736f4e1a1f1154cbb40305ef01657a3d6f5c11ac6f9994403fabacfbe5c0211",
+  "rallies": 283
+ }
+}

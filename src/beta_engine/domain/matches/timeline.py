@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import hashlib
-import json
 from enum import Enum
 from itertools import pairwise
 from typing import Annotated, Literal, Self
@@ -11,9 +9,11 @@ from typing import Annotated, Literal, Self
 from pydantic import BaseModel, Field, model_validator
 
 from beta_engine.domain.matches.content_hash import (
+    canonical_sha256,
     create_with_input_hash,
     create_with_validated_hash,
     hash_check_deferred,
+    hash_verified_in_scope,
 )
 from beta_engine.domain.matches.timing import RestartDecisionFactor, RestartIntent
 
@@ -51,16 +51,15 @@ class MatchTimelineEventBase(BaseModel):
     def validate_event_hash(self) -> MatchTimelineEventBase:
         if hash_check_deferred(self):
             return self  # The engine factory hashes this validated value.
+        if hash_verified_in_scope(self):
+            return self  # Unchanged since the engine factory hashed it.
         if self.event_hash != self._event_hash(self):
             raise ValueError("match timeline event hash mismatch")
         return self
 
     @staticmethod
     def _content_hash(payload: dict[str, object]) -> str:
-        encoded = json.dumps(
-            payload, sort_keys=True, separators=(",", ":"), ensure_ascii=False
-        ).encode("utf-8")
-        return hashlib.sha256(encoded).hexdigest()
+        return canonical_sha256(payload)
 
 
 class RallyTimelineEvent(MatchTimelineEventBase):

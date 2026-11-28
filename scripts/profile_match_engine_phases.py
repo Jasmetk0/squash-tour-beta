@@ -16,8 +16,9 @@ The CPU pass separately measures GC runs and their time.
     python scripts/profile_match_engine_phases.py set
     python scripts/profile_match_engine_phases.py ko128 --no-alloc
 
-Unix only. The HTTP scenario runs MatchEngine on a server worker thread.
-Use the A/B timer for that scenario. Python delivers the signal callback on
+Unix only. The HTTP scenarios run MatchEngine on a server worker thread, and
+``restart`` finishes its matches in child processes.
+Use the A/B timer for those scenarios. Python delivers the signal callback on
 the main thread, so its stack cannot attribute server-side work.
 """
 
@@ -148,7 +149,8 @@ def main(argv=None):
     from scripts import benchmark_match_engine as bench
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("scenario", choices=tuple(name for name in bench.SCENARIOS if name != "http16"))
+    parser.add_argument("scenario", choices=tuple(name for name in bench.SCENARIOS
+                                                if not name.startswith("http") and name != "restart"))
     parser.add_argument("--interval", type=float, default=0.0005)
     parser.add_argument("--no-alloc", action="store_true")
     parser.add_argument("--json", action="store_true")

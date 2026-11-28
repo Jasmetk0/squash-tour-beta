@@ -9,6 +9,7 @@ on:
       - 'web/src/i18n/savedBranchArchiveText.ts'
       - 'web/src/pages/RunManagementPage.tsx'
       - 'web/acceptance/saved_branch_archive_export_browser.py'
+      - 'web/acceptance/compact_snapshot_export_browser.py'
       - '.github/workflows/saved-branch-export-browser.yml'
       - '.github/requirements/saved-branch-browser.lock.txt'
   workflow_dispatch:
@@ -24,7 +25,7 @@ jobs:
   real-export:
     name: Saved Branch archive / real Chromium + SQLite
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 22
     env:
       PYTHONPATH: ${{ github.workspace }}/src
     steps:
@@ -48,9 +49,15 @@ jobs:
         run: |
           timeout --signal=TERM --kill-after=10s 9m \
             python web/acceptance/saved_branch_archive_export_browser.py --root work/archive-export-browser
+      - name: Compact snapshot browser download and standalone validation
+        run: |
+          timeout --signal=TERM --kill-after=10s 9m \
+            python web/acceptance/compact_snapshot_export_browser.py --root work/compact-export-browser
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: saved-branch-export-${{ github.run_id }}
-          path: work/archive-export-browser/*
+          path: |
+            work/archive-export-browser/*
+            work/compact-export-browser/*
           retention-days: 14

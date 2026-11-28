@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react'
+import { useEffect, useMemo, useState, type FormEvent, type ReactNode } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useSearchParams } from 'react-router-dom'
+import { Link, useSearchParams } from 'react-router-dom'
 
 import {
   getViewerCountries,
@@ -8,18 +8,18 @@ import {
   getViewerRunCalendar,
   getViewerTournamentHistory,
 } from '../../../api/client'
-import { ViewerActiveRunLinks, ViewerEmptyState } from '../../../components/viewer/ViewerLandingComponents'
+import { ViewerActiveRunLinks, ViewerEmptyState, ViewerMetadataList } from '../../../components/viewer/ViewerLandingComponents'
 import { ViewerShellPage } from '../../../components/viewer/ViewerShellPage'
 import { useLanguage } from '../../../i18n/LanguageContext'
 import { useActiveViewerProductRunId } from '../../../viewer/useActiveViewerProductRunId'
 import { useViewerOfficialRunContext } from '../../../viewer/useViewerOfficialRunContext'
 import type { ViewerCountries, ViewerPlayers } from '../../../api/types'
 import { playerViewerBranch, verifiedViewerPlayers } from '../people/viewerPlayerDirectory'
-import { verifiedTournamentCatalog } from '../tour/viewerTournamentCatalog'
-import { viewerRunsPath } from '../../../viewer/viewerRoutes'
+import { joinedCountryRoster } from '../people/viewerCountryRosterJoin'
+import { verifiedTournamentCatalog, type SavedTournamentEntry } from '../tour/viewerTournamentCatalog'
+import { viewerRunsPath, viewerPlannedEventPath, viewerTournamentDetailPath } from '../../../viewer/viewerRoutes'
 import { renderCountrySampleMetadata, renderPlayerSampleMetadata } from '../people'
-import { normalizeViewerSearchQuery, searchTextMatches, type ViewerSearchTournamentResult } from './viewerComparisonDisplay'
-import { renderSearchTournamentMetadata } from './viewerComparisonRender'
+import { normalizeViewerSearchQuery } from './viewerComparisonDisplay'
 
 // Labels belong to Search; the existing public data and match/event metadata are unchanged.
 const searchCopy = {
@@ -31,6 +31,9 @@ const searchCopy = {
   loading: ['Načítám výsledky vyhledávání z uložených dat…', 'Loading canonical search results…'],
   sourceError: ['Některá uložená data pro vyhledávání jsou dočasně nedostupná.', 'Some canonical searchable metadata is temporarily unavailable.'],
   query: ['Dotaz', 'Query'],
+  branch: ['Viewer Branch', 'Viewer Branch'],
+  savedWeek: ['Uložený týden hráčů a zemí', 'Saved player and country week'],
+  retry: ['Načíst znovu (GET)', 'Retry reads (GET)'],
   noResults: ['Nebyly nalezeny žádné odpovídající výsledky.', 'No matching Viewer results found.'],
   players: ['Hráči', 'Players'],
   noPlayers: ['Žádní odpovídající hráči.', 'No matching players.'],
@@ -40,8 +43,120 @@ const searchCopy = {
   noTournaments: ['Žádné odpovídající turnaje.', 'No matching tournaments.'],
   links: ['Odkazy', 'Links'],
   browseRuns: ['Otevřít přehled Runů', 'Open run browser'],
+  scope: ['Hledání v aktuálně dostupných uložených projekcích; nejde o historické hledání k libovolnému týdnu. Výsledky zápasů, mladí talenti a dřívější názvy sérií zde zatím nejsou pokryté.', 'Search covers the available Saved projections, not an arbitrary historical week. Match results, pre-Tour prospects and earlier series names are not yet covered.'],
+  results: ['Výsledky', 'Results'],
+  previous: ['Předchozí', 'Previous'],
+  next: ['Další', 'Next'],
+  page: ['Strana', 'Page'],
+  first: ['První', 'First'],
+  last: ['Poslední', 'Last'],
+  jump: ['Přejít na stránku', 'Jump to page'],
+  go: ['Přejít', 'Go'],
+  pageError: ['Zadej číslo dostupné stránky.', 'Enter an available page number.'],
+  eventId: ['ID turnaje', 'Event ID'],
+  season: ['Sezona', 'Season'],
+  week: ['Týden rozpisu', 'Scheduled week'],
+  location: ['Místo', 'Location'],
+  category: ['Kategorie', 'Category'],
+  tour: ['Tour', 'Tour'],
+  template: ['Šablona', 'Template'],
+  publication: ['Publikovaný výsledek', 'Published result'],
+  yes: ['Ano', 'Yes'],
+  no: ['Ne', 'No'],
+  openResult: ['Otevřít výsledek turnaje', 'Open tournament result'],
   routeNotice: ['Odkazy na výsledky používají kanonické cesty Product Runu.', 'Result links use canonical Product Run routes.'],
 } as const
+
+const SEARCH_PAGE_SIZE = 25
+
+// Fold only search text; preserve the original IDs, names and season labels.
+function folded(value: string | number | null | undefined): string {
+  return String(value ?? '').normalize('NFD').replace(/\p{M}/gu, '').toLowerCase()
+}
+function matches(query: string, values: Array<string | number | null | undefined>): boolean {
+  const phrase = folded(query).trim().replace(/\s+/g, ' ')
+  if (!phrase) return false
+  const fields = values.map(value => folded(value).replace(/\s+/g, ' '))
+  if (fields.some(field => field.includes(phrase))) return true
+  const terms = phrase.split(' ')
+  // Preserve existing phrase-prefix behavior (e.g. "Player 0" must not
+  // match "Player 10"). Cross-field matching is only for terms that do
+  // not all occur together in any individual field.
+  return terms.length > 1 &&
+    !fields.some(field => terms.every(term => field.includes(term))) &&
+    terms.every(term => fields.some(field => field.includes(term)))
+}
+
+function SearchTournamentRow({ entry, runId, t }: {
+  entry: SavedTournamentEntry; runId: string; t: (key: keyof typeof searchCopy) => string;
+}): JSX.Element {
+  const { event, publication } = entry
+  return <>
+    <strong><Link to={viewerPlannedEventPath(runId, event.event_id)}>{event.event_name || event.event_id}</Link></strong>
+    <ViewerMetadataList items={[
+      { label: t('eventId'), value: event.event_id },
+      { label: t('season'), value: String(event.season) },
+      // The week-only route cannot identify a historical season.
+      { label: t('week'), value: 'W' + event.season_week },
+      { label: t('location'), value: [event.host_country, event.host_city].filter(Boolean).join(' · ') },
+      { label: t('tour'), value: event.tour_level ?? '—' },
+      { label: t('category'), value: event.category },
+      { label: t('template'), value: event.template_id },
+      { label: t('publication'), value: publication.result_published
+        ? <Link to={viewerTournamentDetailPath(runId, event.event_id)}>{t('openResult')}</Link> : t('no') },
+    ]} />
+  </>
+}
+
+function SearchResultsSection<T>({ title, empty, items, itemKey, renderItem, t }: {
+  title: string; empty: string; items: readonly T[]; itemKey: (item: T) => string;
+  renderItem: (item: T) => ReactNode; t: (key: keyof typeof searchCopy) => string;
+}): JSX.Element {
+  const [page, setPage] = useState(1)
+  const [jump, setJump] = useState('')
+  const [invalidJump, setInvalidJump] = useState(false)
+  const pages = Math.max(1, Math.ceil(items.length / SEARCH_PAGE_SIZE))
+  const current = Math.min(page, pages)
+  const offset = (current - 1) * SEARCH_PAGE_SIZE
+  function navigate(next: number): void {
+    setPage(next)
+    setJump('')
+    setInvalidJump(false)
+  }
+  function submitPage(event: FormEvent<HTMLFormElement>): void {
+    event.preventDefault()
+    const value = jump.trim()
+    const next = Number(value)
+    if (!/^[1-9]\d*$/.test(value) || !Number.isSafeInteger(next) || next > pages) {
+      setInvalidJump(true)
+      return
+    }
+    navigate(next)
+  }
+  return <section aria-label={title}>
+    <h4>{title}</h4>
+    {items.length ? <>
+      <p role="status">{t('results')}: {offset + 1}–{Math.min(offset + SEARCH_PAGE_SIZE, items.length)} / {items.length}</p>
+      <ul className="viewer-home-list">
+        {items.slice(offset, offset + SEARCH_PAGE_SIZE).map(item =>
+          <li key={itemKey(item)}>{renderItem(item)}</li>)}
+      </ul>
+      {pages > 1 ? <nav aria-label={title + ' – ' + t('page')}>
+        <button type="button" disabled={current === 1} onClick={() => navigate(1)}>{t('first')}</button>
+        <button type="button" disabled={current === 1} onClick={() => navigate(current - 1)}>{t('previous')}</button>
+        <span>{t('page')} {current} / {pages}</span>
+        <button type="button" disabled={current === pages} onClick={() => navigate(current + 1)}>{t('next')}</button>
+        <button type="button" disabled={current === pages} onClick={() => navigate(pages)}>{t('last')}</button>
+        <form aria-label={title + ' – ' + t('jump')} onSubmit={submitPage}>
+          <label>{t('jump')} <input inputMode="numeric" value={jump} aria-invalid={invalidJump}
+            onChange={event => { setJump(event.target.value); setInvalidJump(false) }} /></label>
+          <button type="submit">{t('go')}</button>
+          {invalidJump ? <p role="alert">{t('pageError')}</p> : null}
+        </form>
+      </nav> : null}
+    </> : <p className="status">{empty}</p>}
+  </section>
+}
 
 // Countries are a projection of the same public roster. Validate the exact
 // source and public-only shape before rendering metadata (including fallback fields).
@@ -52,43 +167,17 @@ function verifiedSearchCountries(raw: unknown, roster: ViewerPlayers): ViewerCou
       value.product_run_id !== roster.product_run_id || value.viewer_branch_id !== roster.viewer_branch_id ||
       value.season_index !== roster.season_index || value.week !== roster.week ||
       !Array.isArray(value.countries) || value.country_count !== value.countries.length) return null
-  const groups = new Map<string, { players: number; active: number; rated: number; sum: number; max: number }>()
-  const players = new Map(roster.players.map(player => [player.player_id, player]))
-  for (const player of roster.players) {
-    const row = groups.get(player.country_code) ?? { players: 0, active: 0, rated: 0, sum: 0, max: 0 }
-    row.players++
-    if (player.status === 'active') row.active++
-    if (player.current_ovr !== null) {
-      row.rated++
-      row.sum += player.current_ovr
-      row.max = Math.max(row.max, player.current_ovr)
-    }
-    groups.set(player.country_code, row)
-  }
-  const fields = new Set(['country_code', 'player_count', 'active_player_count', 'retired_player_count',
-    'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr'])
-  const seen = new Set<string>()
-  for (const country of value.countries) {
-    if (!country || typeof country !== 'object' || Object.keys(country).length !== fields.size ||
-        Object.keys(country).some(key => !fields.has(key)) ||
-        typeof country.country_code !== 'string' || !/^[A-Z]{3}$/.test(country.country_code) ||
-        seen.has(country.country_code)) return null
-    const group = groups.get(country.country_code)
-    if (!group || country.player_count !== group.players || country.active_player_count !== group.active ||
-        country.retired_player_count !== group.players - group.active) return null
-    const top = country.top_player_id === null ? null : players.get(country.top_player_id)
-    if (country.top_player_id === null) {
-      if (group.rated !== 0 || country.top_player_name !== null || country.top_player_current_ovr !== null ||
-          country.average_current_ovr !== null) return null
-    } else if (!top || top.country_code !== country.country_code || top.name !== country.top_player_name ||
-        top.current_ovr === null || top.current_ovr !== country.top_player_current_ovr ||
-        typeof country.average_current_ovr !== 'number' || !Number.isFinite(country.average_current_ovr) ||
-        country.average_current_ovr < 0 || country.average_current_ovr > top.current_ovr ||
-        top.current_ovr !== group.max || group.rated === 0 ||
-        Math.abs(country.average_current_ovr - group.sum / group.rated) > 0.00500001) return null
-    seen.add(country.country_code)
-  }
-  return seen.size === groups.size ? value as ViewerCountries : null
+  const rootFields = ['schema_version', 'product_run_id', 'viewer_branch_id', 'season_index', 'week', 'country_count', 'countries']
+  const rowFields = ['country_code', 'player_count', 'active_player_count', 'retired_player_count',
+    'average_current_ovr', 'top_player_id', 'top_player_name', 'top_player_current_ovr']
+  const exact = (record: unknown, fields: string[]): boolean =>
+    !!record && typeof record === 'object' && !Array.isArray(record) &&
+    Object.keys(record).length === fields.length &&
+    fields.every(key => Object.prototype.hasOwnProperty.call(record, key))
+  if (!exact(raw, rootFields) || !value.countries.every(row => exact(row, rowFields))) return null
+  // Use the existing roster consistency rules, including deterministic top
+  // player ties and two-decimal mean precision. No extra GET is needed.
+  return joinedCountryRoster(raw, roster) ? value as ViewerCountries : null
 }
 
 export function ViewerSearchPage(): JSX.Element {
@@ -170,23 +259,20 @@ export function ViewerSearchPage(): JSX.Element {
     ? verifiedTournamentCatalog(calendarQuery.data, historyQuery.data, productRunId ?? '', branchId ?? '') : null
   const verified = Boolean(roster && countrySource && catalog)
   const hasError = !isLoading && !verified
-  const tournaments = useMemo<ViewerSearchTournamentResult[]>(() => {
+  function retrySearch(): void {
+    if (!ready) {
+      void context.refetch()
+      return
+    }
+    void Promise.all([playersQuery.refetch(), countriesQuery.refetch(), calendarQuery.refetch(), historyQuery.refetch()])
+  }
+  const tournaments = useMemo(() => {
     if (!verified || !catalog) return []
-    return catalog.entries
-      .filter(({ event }) => searchTextMatches(urlQuery, [
-        event.event_id, event.event_name, event.tour_level,
-        event.category, event.template_id, event.season_week,
-      ]))
-      .map(({ event, publication }) => ({
-        eventId: event.event_id,
-        season: Number.parseInt(String(event.season).split('/')[0] ?? '', 10) || null,
-        week: event.season_week,
-        tour: event.tour_level,
-        category: event.category,
-        templateId: event.template_id,
-        hasPlannedEvent: true,
-        hasPersistedEvent: publication.result_published,
-      }))
+    return catalog.entries.filter(({ event }) => matches(urlQuery, [
+      event.event_id, event.event_name, event.tour_level,
+      event.category, event.template_id, event.season_week, 'W' + event.season_week,
+      event.season, event.host_country, event.host_city, event.region,
+    ]))
   }, [catalog, verified, urlQuery])
 
   if (!productRunId || !hasSearchQuery) {
@@ -205,7 +291,7 @@ export function ViewerSearchPage(): JSX.Element {
   }
 
   const players = (verified ? roster?.players ?? [] : []).filter((player) =>
-    searchTextMatches(urlQuery, [
+    matches(urlQuery, [
       player.player_id,
       player.name,
       player.country_code,
@@ -214,7 +300,7 @@ export function ViewerSearchPage(): JSX.Element {
     ])
   )
   const countries = (verified ? countrySource?.countries ?? [] : []).filter((country) =>
-    searchTextMatches(urlQuery, [
+    matches(urlQuery, [
       country.country_code,
       country.top_player_name,
       country.top_player_id,
@@ -227,53 +313,36 @@ export function ViewerSearchPage(): JSX.Element {
       <article className="viewer-active-run-card" aria-label={t('title')}>
         <span className="eyebrow">{t('selectedRun')}</span>
         <h3>{t('title')}: {urlQuery}</h3>
-        {isLoading ? <p className="status">{t('loading')}</p> : null}
-        {hasError ? <ViewerEmptyState>{t('sourceError')}</ViewerEmptyState> : null}
+        {isLoading ? <p className="status" role="status">{t('loading')}</p> : null}
+        {hasError ? <div role="alert"><p>{t('sourceError')}</p>
+          <button type="button" onClick={retrySearch}>{t('retry')}</button></div> : null}
         <dl className="metadata-list">
           <div><dt>Product Run</dt><dd>{productRunId}</dd></div>
           <div><dt>{t('query')}</dt><dd>{urlQuery}</dd></div>
+          <div><dt>{t('branch')}</dt><dd>{verified ? branchId : '—'}</dd></div>
+          <div><dt>{t('savedWeek')}</dt><dd>{verified && roster ? 'S' + roster.season_index + ' W' + roster.week : '—'}</dd></div>
         </dl>
         {searchForm}
+        <p className="status">{t('scope')}</p>
         {!isLoading && !hasError && !hasResults ? <ViewerEmptyState>{t('noResults')}</ViewerEmptyState> : null}
 
         {verified ? <>
-        <section aria-label={t('players')}>
-          <h4>{t('players')}</h4>
-          {players.length ? (
-            <ul className="viewer-home-list">
-              {players.map((player) => (
-                <li key={player.player_id}>{renderPlayerSampleMetadata({
-                  player_id: player.player_id, name: player.name, country_code: player.country_code,
-                  age: player.age, current_ovr: player.current_ovr, status: player.status,
-                  identity_source: player.identity_source,
-                }, productRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noPlayers')}</p>}
-        </section>
-
-        <section aria-label={t('countries')}>
-          <h4>{t('countries')}</h4>
-          {countries.length ? (
-            <ul className="viewer-home-list">
-              {countries.map((country) => (
-                <li key={country.country_code}>{renderCountrySampleMetadata(country, productRunId)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noCountries')}</p>}
-        </section>
-
-        <section aria-label={t('tournaments')}>
-          <h4>{t('tournaments')}</h4>
-          {tournaments.length ? (
-            <ul className="viewer-home-list">
-              {tournaments.map((event) => (
-                <li key={event.eventId}>{renderSearchTournamentMetadata(productRunId, event)}</li>
-              ))}
-            </ul>
-          ) : <p className="status">{t('noTournaments')}</p>}
-        </section>
-
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'players'])}
+          title={t('players')} empty={t('noPlayers')} items={players} t={t}
+          itemKey={player => player.player_id}
+          renderItem={player => renderPlayerSampleMetadata({
+            player_id: player.player_id, name: player.name, country_code: player.country_code,
+            age: player.age, current_ovr: player.current_ovr, status: player.status,
+            identity_source: player.identity_source,
+          }, productRunId)} />
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'countries'])}
+          title={t('countries')} empty={t('noCountries')} items={countries} t={t}
+          itemKey={country => country.country_code}
+          renderItem={country => renderCountrySampleMetadata(country, productRunId)} />
+        <SearchResultsSection key={JSON.stringify([productRunId, branchId, urlQuery, 'tournaments'])}
+          title={t('tournaments')} empty={t('noTournaments')} items={tournaments} t={t}
+          itemKey={entry => entry.event.event_id}
+          renderItem={entry => <SearchTournamentRow entry={entry} runId={productRunId} t={t} />} />
         </> : null}
         <section aria-label={t('links')}>
           <h4>{t('links')}</h4>

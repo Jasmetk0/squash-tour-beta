@@ -1,16 +1,18 @@
-import { act, cleanup, render, screen, waitFor } from '@testing-library/react'
+import { act, cleanup, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { MemoryRouter, useLocation, useNavigate } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { ViewerSearchPage } from './ViewerSearchPage'
+import { calendarEvent, historyEvent, savedCalendar, savedHistory } from '../../../test/viewerCalendarFixtures'
 
 const mocks = vi.hoisted(() => ({
   runId: 'run-a' as string | null,
   language: 'en',
   branch: 'branch-a',
   foreign: false,
+  refetchContext: vi.fn(),
   getViewerPlayers: vi.fn(),
   getViewerCountries: vi.fn(),
   getViewerRunCalendar: vi.fn(),
@@ -28,7 +30,7 @@ vi.mock('../../../viewer/useActiveViewerProductRunId', () => ({
 vi.mock('../../../viewer/useViewerOfficialRunContext', () => ({
   useViewerOfficialRunContext: (run: string | null) => ({
     data: { product_run_id: mocks.foreign ? 'foreign' : run, official_branch_id: mocks.branch },
-    isPending: false, isFetching: false, isError: false,
+    isPending: false, isFetching: false, isError: false, refetch: mocks.refetchContext,
   })
 }))
 vi.mock('../../../viewer/ViewerContext', () => ({
@@ -91,6 +93,7 @@ beforeEach(() => {
   mocks.language = 'en'
   mocks.branch = 'branch-a'
   mocks.foreign = false
+  mocks.refetchContext.mockReset()
   mocks.getViewerPlayers.mockReset().mockImplementation(async (run: string) => players(run))
   mocks.getViewerCountries.mockReset().mockImplementation(async (run: string) => countries(run))
   mocks.getViewerRunCalendar.mockReset().mockImplementation(async (run: string) => ({
@@ -259,6 +262,123 @@ describe('Viewer Search submission (mocked GET API)', () => {
     mount('/viewer/search?q=Alice')
     expect(await screen.findByText('Some canonical searchable metadata is temporarily unavailable.')).toBeInTheDocument()
     expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
+  })
+
+  it('bounds broad result rendering, pages without new GETs, and resets on a new submitted query', async () => {
+    const names = Array.from({ length: 57 }, (_, i) => 'Player ' + String(i + 1).padStart(2, '0'))
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', names))
+    mocks.getViewerCountries.mockResolvedValue(countries('run-a', names.length))
+    const user = userEvent.setup()
+    mount('/viewer/search?q=Player')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getAllByRole('listitem')).toHaveLength(25)
+    expect(within(section).queryByText('Player 26')).not.toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'Next' }))
+    expect(within(section).getByText('Player 26')).toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'Next' }))
+    expect(within(section).getAllByRole('listitem')).toHaveLength(7)
+    expect(within(section).getByRole('button', { name: 'Next' })).toBeDisabled()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
+    await user.clear(screen.getByRole('searchbox'))
+    await user.type(screen.getByRole('searchbox'), 'Player 0{Enter}')
+    const nextSection = await screen.findByRole('region', { name: 'Players' })
+    expect(within(nextSection).getAllByRole('listitem')).toHaveLength(9)
+    expect(within(nextSection).getByText('Player 01')).toBeInTheDocument()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
+  })
+
+  it('finds accented names without accents and preserves original display text', async () => {
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', ['Jiří Novák', 'Bob']))
+    mount('/viewer/search?q=jiri+novak')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getByText('Jiří Novák')).toBeInTheDocument()
+    expect(within(section).queryByText('Bob')).not.toBeInTheDocument()
+  })
+
+  it('finds tournaments by host city, retains exact season labels and avoids an ambiguous week-only link', async () => {
+    const event = calendarEvent({ event_id: 'historic/event', event_name: 'Historical Open',
+      host_country: 'CZE', host_city: 'Plzeň', season: '2004/2005', season_week: 9 })
+    mocks.getViewerRunCalendar.mockResolvedValue({ ...savedCalendar([event], 'run-a'), viewer_branch_id: mocks.branch })
+    mocks.getViewerTournamentHistory.mockResolvedValue({
+      ...savedHistory([historyEvent(event)], 'run-a'), viewer_branch_id: mocks.branch,
+    })
+    mount('/viewer/search?q=plzen')
+    const section = await screen.findByRole('region', { name: 'Tournaments' })
+    expect(within(section).getByRole('link', { name: 'Historical Open' })).toHaveAttribute(
+      'href', '/viewer/runs/run-a/calendar/historic%2Fevent',
+    )
+    expect(within(section).getByText('2004/2005')).toBeInTheDocument()
+    expect(within(section).getByText('W9')).toBeInTheDocument()
+    expect(within(section).getByText('CZE · Plzeň')).toBeInTheDocument()
+    expect(within(section).getAllByRole('link')).toHaveLength(1)
+  })
+
+  it('retries failed public sources without changing the query and displays only verified clock and branch', async () => {
+    const user = userEvent.setup()
+    mocks.getViewerCountries.mockRejectedValueOnce(new Error('internal read failure'))
+    mount('/viewer/search?q=Alice&keep=1')
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable')
+    expect(screen.queryByText('internal read failure')).not.toBeInTheDocument()
+    expect(screen.queryByText('S0 W1')).not.toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Retry reads (GET)' }))
+    expect(await screen.findByText('Alice', { selector: 'li' })).toBeInTheDocument()
+    expect(screen.getByText('S0 W1')).toBeInTheDocument()
+    expect(screen.getByText('branch-a')).toBeInTheDocument()
+    expect(screen.getByLabelText('URL')).toHaveTextContent('/viewer/search?q=Alice&keep=1')
+    expect(mocks.getViewerCountries).toHaveBeenCalledTimes(2)
+  })
+
+  it('retries only context while the current Branch cannot be verified', async () => {
+    const user = userEvent.setup()
+    mocks.foreign = true
+    mount('/viewer/search?q=Alice')
+    await user.click(await screen.findByRole('button', { name: 'Retry reads (GET)' }))
+    expect(mocks.refetchContext).toHaveBeenCalledTimes(1)
+    expect(mocks.getViewerPlayers).not.toHaveBeenCalled()
+  })
+
+  it('rejects a top-player tie inconsistent with the canonical roster identity order', async () => {
+    const roster = players('run-a')
+    mocks.getViewerPlayers.mockResolvedValue({
+      ...roster, players: roster.players.map(player => ({ ...player, current_ovr: 100 })),
+    })
+    const original = countries('run-a')
+    mocks.getViewerCountries.mockResolvedValue({
+      ...original, countries: [{ ...original.countries[0], average_current_ovr: 100,
+        top_player_id: 'bob', top_player_name: 'Bob', top_player_current_ovr: 100 }],
+    })
+    mount('/viewer/search?q=Alice')
+    expect(await screen.findByRole('alert')).toHaveTextContent('temporarily unavailable')
+    expect(screen.queryByText('Alice', { selector: 'li' })).not.toBeInTheDocument()
+  })
+
+  it('matches terms across verified player fields rather than requiring a single combined field', async () => {
+    mount('/viewer/search?q=Alice+CZE')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    expect(within(section).getByText('Alice')).toBeInTheDocument()
+    expect(within(section).queryByText('Bob')).not.toBeInTheDocument()
+  })
+
+  it('jumps to a distant result page, rejects unavailable pages and avoids extra reads', async () => {
+    const names = Array.from({ length: 101 }, (_, i) => 'Player ' + String(i + 1).padStart(3, '0'))
+    mocks.getViewerPlayers.mockResolvedValue(players('run-a', names))
+    mocks.getViewerCountries.mockResolvedValue(countries('run-a', names.length))
+    const user = userEvent.setup()
+    mount('/viewer/search?q=Player')
+    const section = await screen.findByRole('region', { name: 'Players' })
+    const field = within(section).getByLabelText('Jump to page')
+    await user.type(field, '6')
+    await user.click(within(section).getByRole('button', { name: 'Go' }))
+    expect(within(section).getByRole('alert')).toHaveTextContent('Enter an available page number.')
+    expect(within(section).getByText('Player 001')).toBeInTheDocument()
+    await user.clear(field)
+    await user.type(field, '5')
+    await user.click(within(section).getByRole('button', { name: 'Go' }))
+    expect(within(section).getAllByRole('listitem')).toHaveLength(1)
+    expect(within(section).getByText('Player 101')).toBeInTheDocument()
+    await user.click(within(section).getByRole('button', { name: 'First' }))
+    expect(within(section).getByText('Player 001')).toBeInTheDocument()
+    expect(mocks.getViewerPlayers).toHaveBeenCalledTimes(1)
   })
 
 })

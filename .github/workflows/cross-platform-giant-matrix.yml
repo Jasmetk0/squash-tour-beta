@@ -224,7 +224,8 @@ jobs:
           $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
           $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
           Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
-          python -m pytest -q tests/domain/test_calendar_match_state_hash_once.py tests/domain/test_match_worker_generations.py tests/domain/test_slot_match_batch.py tests/domain/test_slot_match_replay_memo.py tests/api/test_slot_match_workers.py tests/api/test_slot_worker_faults_http.py 2>&1 | Tee-Object -FilePath (Join-Path $root 'worker-gate.log')
+          $tests = @('tests/domain/test_calendar_match_state_hash_once.py','tests/domain/test_match_worker_generations.py','tests/domain/test_slot_match_batch.py','tests/domain/test_slot_match_replay_memo.py','tests/api/test_slot_match_workers.py','tests/api/test_slot_worker_faults_http.py')
+          python ../orchestration/scripts/run_giant_correctness_portable.py -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'worker-gate.log')
           if ($LASTEXITCODE -ne 0) { throw 'Worker correctness gate failed' }
       - name: Same-host strict A/A or A/B W6 versus previous night
         working-directory: engine

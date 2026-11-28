@@ -118,7 +118,8 @@ Change (`native_fork_source_projection.py`, call site in `repositories.py`):
 On the real W16 value (instrumented check in arm B): text equals
 `canonical_json(receipt.payload)` (223,446,331 characters). The derived component
 envelope is exactly 203,638,085, equal to the actual one. Both are oversize, as
-in the original path. The call took 10.15 s CPU in A and 0.18 s in B. Call
+in the original path. The call took 10.15 s CPU in A and 0.18 s in B (cold:
+9.58 → 0.18 s). Call
 counts differ only by the removed work: one `_value_identity`, one
 `decoded_global_checkpoint_component`, one fingerprint, one `canonical_json`.
 
@@ -129,6 +130,7 @@ counts differ only by the removed work: one `_value_identity`, one
 | warm | 112.0 s · **121.3 s timeout** | 102.2 s · 111.6 s |
 | cold | 118.4 s · **121.0 s timeout** | 116.8 s · 116.7 s |
 | mean of all 4 | 118.2 s | 111.8 s (−6.4 s, −5.4 %) |
+| instrumented service time (phases mode, attribution only) | warm 124.6 · cold 122.2 s | warm 110.3 · cold 106.9 s |
 
 An earlier warm A (same tree and input, before the order) took 108.9 s. A/A
 spread is ~9 s in the warm case: the whole container slowed during `warm-3-B` and
@@ -146,7 +148,13 @@ identical request after the response returned `409` without a new revision.
 
 ## Restart and continuation
 
-RESTART_RESULTS
+`restart` opens a fresh process on each arm's committed post-Save copy (A
+`warm-4-A`, the timed-out-but-committed run; B `warm-2-B`). It inspects, checks
+the history API and continues with W16 Edition 2: submit, approve, draw and Save.
+Both arms saved revision 98 with identical bytes (content hash `dc6a5bb4…`,
+history `30fe57a0…`, nodes `a13d1a9b…`, audit `40f34b9f…`) and passed the
+harness's full Saved v2 ancestry check. The continuation Save took A 117.8 s and
+B 104.0 s.
 
 The first cold `GET /calendar-tour` after a restart took 162–206 s here. This is
 a Tour read (#1921 boundary), not Save. Without a longer transport, a client

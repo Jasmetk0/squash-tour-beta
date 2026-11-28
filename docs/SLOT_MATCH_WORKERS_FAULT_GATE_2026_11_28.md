@@ -173,7 +173,44 @@ the artifact step keeps the log.
 
 ## Worker pilot (0 / 2 / 3)
 
-Pending: running on the fixed tree; results follow in the next commit.
+One machine (the x64 container above), one tree (#1936 + fix, commit
+`df3494f1`, tree `f442d2de`), one input SQLite per pilot, every sample a new
+process, Python 3.11.18. Short by design; not a calibration of the defaults.
+
+**Output parity over HTTP/SQLite, Saved v2, Save, restart, fork, Restore and
+two concurrent Runs** (`scripts/verify_slot_worker_parity.py`, input
+`parity.db` SHA-256 `1c99f204eb9766d1…`, two rounds, order 0 2 3 0 2 3):
+
+| workers | digest (both rounds) | wall s | executor batches / matches | fallbacks |
+| ---: | --- | ---: | ---: | ---: |
+| 0 | `8fa911f586e1070b` | 150.1, 144.2 | 0 / 0 | 0 |
+| 2 | `8fa911f586e1070b` | 145.9, 144.8 | 28 / 77 | 0 |
+| 3 | `8fa911f586e1070b` | 146.4, 146.3 | 28 / 77 | 0 |
+
+A sequential replay in a new process (`PYTHONHASHSEED=97`, workers off) of
+each saved final database gives `653666cda0a5690c` for 0, 2 and 3 workers.
+This scenario is dominated by HTTP, Save and restarts with small slots
+(2.75 matches per batch), so its wall time does not change.
+
+**Wide slots** (`scripts/profile_slot_match_workers.py run --steps 3`, 8
+parallel 8-player Editions: 32 + 16 + 8 matches, preview, execute, inspect,
+one explicit Save, cold restart; input `e8x8.db` SHA-256
+`10990537cd019caa…`; order 0 2 3 3 2 0; values per sample):
+
+| workers | execute 32 / 16 / 8 matches s | whole operation s | descendant CPU s | group peak RSS MiB |
+| ---: | --- | ---: | ---: | ---: |
+| 0 | 14.93 / 14.47 / 18.93; 14.20 / 14.46 / 18.07 | 135.5; 125.7 | 0 | 1815; 1815 |
+| 2 | 14.43 / 14.06 / 16.36; 12.39 / 12.47 / 16.04 | 123.8; 115.8 | 144.0; 127.6 | 2073; 2061 |
+| 3 | 11.37 / 12.14 / 16.05; 11.01 / 11.94 / 16.92 | 115.6; 118.3 | 131.6; 125.1 | 2169; 2126 |
+
+The recorded evidence (execute results, saved and restarted inspections) has
+the same digest `f9f43052a203a240` in all six samples; 9 executor batches,
+0 fallbacks with workers; closing the pool at server shutdown took
+0.12–0.16 s. With n = 2 per setting the ranking (3 ≤ 2 < 0 workers for the
+32-match execute, about −23 % with 3 workers) agrees with the 26 November
+measurement of #1909; the spread between the two 0-worker samples (10 s on
+the whole operation) shows that this pilot cannot resolve differences of a
+few percent.
 
 ## Reproduction commands
 

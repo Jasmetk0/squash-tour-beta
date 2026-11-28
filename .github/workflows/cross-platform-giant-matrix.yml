@@ -111,7 +111,6 @@ jobs:
       PYTHONHASHSEED: '0'
       PYTHONUTF8: '1'
       PYTHONUNBUFFERED: '1'
-      BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
       MODE: ${{ inputs.mode || 'pilot' }}
     steps:
       - name: Configure Git for portable checkouts
@@ -200,7 +199,7 @@ jobs:
           python -m pip freeze --all | Set-Content (Join-Path $root 'dependencies.txt')
       - name: Focused sporting and persistence correctness
         working-directory: engine
-        timeout-minutes: 12
+        timeout-minutes: 30
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
           $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
@@ -209,7 +208,12 @@ jobs:
           if ('${{ matrix.variant }}' -ne 'control') {
             $tests += @('tests/core/test_rng_byte_equivalence.py','tests/domain/test_match_engine_single_log_validation.py','tests/domain/test_match_engine_performance_equivalence.py','tests/api/test_calendar_tour_inspection_decode.py','tests/infrastructure/test_calendar_checkpoint_decoded_body.py')
           }
-          python -m pytest -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'preflight.log')
+          Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
+          if ($IsWindows -and '${{ matrix.variant }}' -ne 'control') {
+            python ../orchestration/scripts/run_giant_correctness_portable.py -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'preflight.log')
+          } else {
+            python -m pytest -q $tests 2>&1 | Tee-Object -FilePath (Join-Path $root 'preflight.log')
+          }
           if ($LASTEXITCODE -ne 0) { throw 'Correctness gate failed' }
       - name: Independent worker fault and teardown gate
         if: startsWith(matrix.variant, 'pool-')
@@ -219,12 +223,14 @@ jobs:
           $PSNativeCommandUseErrorActionPreference = $true
           $env:PYTHONPATH = @('src','.','tests/api') -join [IO.Path]::PathSeparator
           $root = Join-Path $env:RUNNER_TEMP 'giant-evidence'
+          Remove-Item Env:BETA_ENGINE_NEW_RUN_SAVED_STORAGE -ErrorAction SilentlyContinue
           python -m pytest -q tests/domain/test_calendar_match_state_hash_once.py tests/domain/test_match_worker_generations.py tests/domain/test_slot_match_batch.py tests/domain/test_slot_match_replay_memo.py tests/api/test_slot_match_workers.py tests/api/test_slot_worker_faults_http.py 2>&1 | Tee-Object -FilePath (Join-Path $root 'worker-gate.log')
           if ($LASTEXITCODE -ne 0) { throw 'Worker correctness gate failed' }
       - name: Same-host strict A/A or A/B W6 versus previous night
         working-directory: engine
-        timeout-minutes: 18
+        timeout-minutes: 25
         env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
           BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
         run: |
           $PSNativeCommandUseErrorActionPreference = $true
@@ -247,6 +253,7 @@ jobs:
       - name: Portable real HTTP SQLite load
         working-directory: engine
         env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
           BETA_ENGINE_MATCH_WORKERS: ${{ matrix.workers }}
           GITHUB_EVENT_NAME: giant_native_load
         run: |

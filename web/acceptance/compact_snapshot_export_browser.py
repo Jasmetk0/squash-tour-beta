@@ -57,7 +57,12 @@ def main():
 
     from beta_engine.domain.run_branch_archive import Archive, CompactSnapshot
     from scripts.native_tour_browser_acceptance import stop_process, wait_http
-    from tests.api.test_compact_snapshot_api import STANDALONE, multi_branch_run, stage
+    from tests.api.test_compact_snapshot_api import (
+        ENGINE_SOURCE,
+        STANDALONE,
+        multi_branch_run,
+        stage,
+    )
     from tests.api.test_player_generation_calendar_gate import _dump
     from tests.api.test_saved_revision_history_api import ApiServer, _request
 
@@ -227,7 +232,7 @@ def main():
     # Standalone validation: isolated interpreter, empty cwd, no SQLite connect.
     reader = root / "standalone-reader"
     reader.mkdir()
-    result = subprocess.run([sys.executable, "-I", "-c", STANDALONE, str(compact_file)],
+    result = subprocess.run([sys.executable, "-I", "-c", STANDALONE, str(compact_file), ENGINE_SOURCE],
                             cwd=reader, capture_output=True, text=True, timeout=120, check=True)
     validated = json.loads(result.stdout)
     assert validated == {k: v for k, v in reviewed.items() if k != "source_context"}, validated

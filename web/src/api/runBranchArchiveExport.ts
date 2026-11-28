@@ -383,36 +383,36 @@ async function archiveResponse(path: string, body: object, signal?: AbortSignal)
   return response
 }
 
+/** One bounded JSON preview response; the caller validates its exact scope. */
+async function previewJson(body: object, label: string, signal?: AbortSignal): Promise<unknown> {
+  const response = await archiveResponse('/export/preview', body, signal)
+  if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
+    throw new Error('Server returned a non-JSON archive preview.')
+  }
+  const previewBody = await boundedResponseText(response, MAX_BYTES)
+  if (previewBody.exceeded) throw new Error(label + ' preview exceeds the safe size limit.')
+  return JSON.parse(previewBody.text) as unknown
+}
+
 export async function previewSavedBranchArchive(
   runId: string, branchId: string, signal?: AbortSignal, mode: ArchiveExportMode = 'branch',
   selectedIds?: readonly string[]
 ): Promise<SavedBranchArchivePreview> {
   const selection = { run_id: runId, branch_id: branchId }
-  const response = await archiveResponse('/export/preview', {
+  const value = await previewJson({
     ...selection,
     ...(mode === 'branch' ? {} : {mode}),
     ...(mode === 'custom' ? {selected_branch_ids: selectedIds} : {})
-  }, signal)
-  if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
-    throw new Error('Server returned a non-JSON archive preview.')
-  }
-  const previewBody = await boundedResponseText(response, MAX_BYTES)
-  if (previewBody.exceeded) throw new Error('Saved Branch archive preview exceeds the safe size limit.')
-  return assertSavedBranchArchivePreview(JSON.parse(previewBody.text) as unknown, runId, branchId, mode, selectedIds)
+  }, 'Saved Branch archive', signal)
+  return assertSavedBranchArchivePreview(value, runId, branchId, mode, selectedIds)
 }
 
 export async function previewCompactSnapshot(
   runId: string, branchId: string, signal?: AbortSignal
 ): Promise<CompactSnapshotPreview> {
-  const response = await archiveResponse('/export/preview', {
-    run_id: runId, branch_id: branchId, mode: 'compact'
-  }, signal)
-  if (!response.headers.get('Content-Type')?.startsWith('application/json')) {
-    throw new Error('Server returned a non-JSON snapshot preview.')
-  }
-  const previewBody = await boundedResponseText(response, MAX_BYTES)
-  if (previewBody.exceeded) throw new Error('Compact snapshot preview exceeds the safe size limit.')
-  return assertCompactSnapshotPreview(JSON.parse(previewBody.text) as unknown, runId, branchId)
+  const value = await previewJson({run_id: runId, branch_id: branchId, mode: 'compact'},
+    'Compact snapshot', signal)
+  return assertCompactSnapshotPreview(value, runId, branchId)
 }
 
 /** Prove the attachment is the *exact* reviewed bytes, not merely a successful HTTP reply. */

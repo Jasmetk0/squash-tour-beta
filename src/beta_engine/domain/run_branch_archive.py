@@ -312,6 +312,32 @@ class Part(Closed):
     data_json: str
 
 
+def _decoded_parts(parts):
+    """Transport integrity of each declared part, then strict JSON decoding."""
+    decoded = {}
+    for part in parts:
+        data = part.data_json.encode("utf-8")
+        if len(data) != part.size or digest(data) != part.sha256:
+            fail("invalid_part_integrity", f"Part size or digest failed: {part.name}")
+        decoded[part.name] = decode(data)
+    return decoded
+
+
+def _encoded_parts(names, values):
+    parts = []
+    for name, value in zip(names, values, strict=True):
+        raw = encode(value)
+        parts.append(
+            {
+                "name": name,
+                "size": len(raw),
+                "sha256": digest(raw),
+                "data_json": raw.decode("utf-8"),
+            }
+        )
+    return parts
+
+
 class ArchiveSelection(Closed):
     selected_branch_id: ID
     selected_head_revision_id: ID
@@ -380,14 +406,7 @@ class Archive:
         )
         if self.envelope.omitted_areas != list(omitted_areas):
             fail("invalid_manifest", "Unsupported omitted-area declaration")
-        parts = {}
-        for part in self.envelope.parts:
-            data = part.data_json.encode("utf-8")
-            if len(data) != part.size or digest(data) != part.sha256:
-                fail(
-                    "invalid_part_integrity", f"Part size or digest failed: {part.name}"
-                )
-            parts[part.name] = decode(data)
+        parts = _decoded_parts(self.envelope.parts)
         for name in ("branches", "revisions", "audits", "checkpoints"):
             if not isinstance(parts[name], list):
                 fail("invalid_manifest", f"Part {name} must be a list")
@@ -648,17 +667,7 @@ def pack(
     custom_branch_ids=(),
 ):
     values = (run, branches, revisions, audits, checkpoints, allocator)
-    parts = []
-    for name, value in zip(PART_NAMES, values, strict=True):
-        raw = encode(value)
-        parts.append(
-            {
-                "name": name,
-                "size": len(raw),
-                "sha256": digest(raw),
-                "data_json": raw.decode("utf-8"),
-            }
-        )
+    parts = _encoded_parts(PART_NAMES, values)
     envelope = {
         "format": FORMAT,
         "engine_capability": ENGINE_CAPABILITY,
@@ -752,12 +761,7 @@ class CompactSnapshot:
             fail("invalid_manifest", "Snapshot must contain exactly the ordered v1 parts")
         if self.envelope.omitted_areas != list(COMPACT_OMITTED_AREAS):
             fail("invalid_manifest", "Unsupported omitted-area declaration")
-        parts = {}
-        for part in self.envelope.parts:
-            data = part.data_json.encode("utf-8")
-            if len(data) != part.size or digest(data) != part.sha256:
-                fail("invalid_part_integrity", f"Part size or digest failed: {part.name}")
-            parts[part.name] = decode(data)
+        parts = _decoded_parts(self.envelope.parts)
         self.run = CompactRunSpec.model_validate(parts["run"])
         self.branch = CompactBranchSpec.model_validate(parts["branch"])
         # Schema, closed component set, original owner and original Saved hash.
@@ -827,17 +831,7 @@ class CompactSnapshot:
 
 
 def pack_compact(*, run, branch, head):
-    parts = []
-    for name, value in zip(COMPACT_PART_NAMES, (run, branch, head), strict=True):
-        raw = encode(value)
-        parts.append(
-            {
-                "name": name,
-                "size": len(raw),
-                "sha256": digest(raw),
-                "data_json": raw.decode("utf-8"),
-            }
-        )
+    parts = _encoded_parts(COMPACT_PART_NAMES, (run, branch, head))
     return encode(
         {
             "format": COMPACT_FORMAT,

@@ -39,11 +39,13 @@ pytestmark = pytest.mark.pr_critical
 
 # Standalone reader: a fresh isolated interpreter in an empty directory in
 # which opening ANY SQLite connection fails. Only the snapshot bytes are input.
+ENGINE_SOURCE = str(Path(__file__).resolve().parents[2] / "src")
 STANDALONE = """
 import json, sqlite3, sys
 def no_database(*args, **kwargs):
     raise AssertionError("standalone snapshot validation opened a database")
 sqlite3.connect = no_database
+sys.path.insert(0, sys.argv[2])  # -I ignores PYTHONPATH; only the engine source
 from pathlib import Path
 from beta_engine.application.run_branch_archive_service import validate_compact_snapshot
 try:
@@ -105,7 +107,7 @@ def multi_branch_run(server):
 
 def standalone(path, cwd):
     result = subprocess.run(
-        [sys.executable, "-I", "-c", STANDALONE, str(path)],
+        [sys.executable, "-I", "-c", STANDALONE, str(path), ENGINE_SOURCE],
         cwd=cwd, capture_output=True, text=True, timeout=120, check=True,
     )
     return json.loads(result.stdout)

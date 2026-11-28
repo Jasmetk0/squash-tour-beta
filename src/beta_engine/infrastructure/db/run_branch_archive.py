@@ -233,6 +233,14 @@ def collect_archive(
     custom_branch_ids=()
 ):
     """All reads belong to ONE explicit SQLite snapshot owned by the caller."""
+    run, selected = _export_scope(session, run_id, branch_id, expected_head)
+    return _collect_archive(
+        repository, session, run=run, selected=selected, run_id=run_id,
+        branch_id=branch_id, full_run=full_run, custom_branch_ids=custom_branch_ids,
+    )
+
+
+def _export_scope(session, run_id, branch_id, expected_head):
     run = _supported_run(session, run_id)
     selected = _scope_branch(session, run_id, branch_id)
     if expected_head is not None and selected.saved_head_revision_id != expected_head:
@@ -240,10 +248,7 @@ def collect_archive(
             "stale_export_preview",
             "Saved HEAD changed since export preview; review the new Saved state",
         )
-    return _collect_archive(
-        repository, session, run=run, selected=selected, run_id=run_id,
-        branch_id=branch_id, full_run=full_run, custom_branch_ids=custom_branch_ids,
-    )
+    return run, selected
 
 
 def _supported_run(session, run_id):
@@ -278,13 +283,7 @@ def collect_compact_snapshot(repository, session, *, run_id, branch_id, expected
     (read-only) before it is omitted; only the HEAD row travels. Returns the
     snapshot bytes and a source-side summary of what was omitted.
     """
-    run = _supported_run(session, run_id)
-    selected = _scope_branch(session, run_id, branch_id)
-    if expected_head is not None and selected.saved_head_revision_id != expected_head:
-        fail(
-            "stale_export_preview",
-            "Saved HEAD changed since export preview; review the new Saved state",
-        )
+    run, selected = _export_scope(session, run_id, branch_id, expected_head)
     head = session.get(BranchSavedRevisionModel, selected.saved_head_revision_id)
     if head is None or head.run_id != run_id:
         fail("missing_revision", "Selected Saved HEAD is absent or foreign")

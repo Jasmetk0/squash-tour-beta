@@ -80,6 +80,47 @@ describe('canonical Product Run creation', () => {
     expect(localStorage.getItem('beta_engine:last_run_id')).toBe('new-run-1')
   })
 
+  it('reviews the ATP W52 calendar and opens World import for the returned Run and Timeline', async () => {
+    await openNamedRunForm()
+    await userEvent.click(screen.getByLabelText('Set up a Run from ATP packages'))
+    const create = screen.getByRole('button', {name: 'Create Run and continue to ATP packages'})
+    expect(create).toBeDisabled()
+    expect(screen.queryByLabelText('Calendar preset')).not.toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', {name: 'Review calendar'}))
+    const input = {weeks_per_year: 52, season_start_year_week: 1, start_year: 2024, season_count: 3}
+    await waitFor(() => expect(create).toBeEnabled())
+    expect(api.previewRunCalendarCreation).toHaveBeenCalledWith(input)
+    expect(api.createEmptyRunContainer).not.toHaveBeenCalled()
+    api.createEmptyRunContainer.mockResolvedValueOnce({
+      run_id: 'run/1', display_name: 'My test Run', storage_kind: 'custom_local', read_only: false,
+      metadata_json: {run_calendar: preview(input).run_calendar},
+      viewer_branch_id: 'branch/&1', official_branch_id: 'legacy-branch',
+    })
+    await userEvent.click(create)
+    await waitFor(() => expect(navigate).toHaveBeenCalledWith(
+      '/admin/packages/world/atp_earth/apply?run=run%2F1&branch=branch%2F%261',
+    ))
+    expect(api.createEmptyRunContainer).toHaveBeenCalledExactlyOnceWith('My test Run', input)
+  })
+
+  it('does not guess an ATP Timeline or retry creation when the response lacks a Viewer Branch', async () => {
+    await openNamedRunForm()
+    await userEvent.click(screen.getByLabelText('Set up a Run from ATP packages'))
+    await userEvent.click(screen.getByRole('button', {name: 'Review calendar'}))
+    const create = screen.getByRole('button', {name: 'Create Run and continue to ATP packages'})
+    await waitFor(() => expect(create).toBeEnabled())
+    const input = {weeks_per_year: 52, season_start_year_week: 1, start_year: 2024, season_count: 3}
+    api.createEmptyRunContainer.mockResolvedValueOnce({
+      run_id: 'new-run-1', display_name: 'My test Run', storage_kind: 'custom_local', read_only: false,
+      metadata_json: {run_calendar: preview(input).run_calendar}, official_branch_id: 'legacy-branch',
+    })
+    await userEvent.click(create)
+    expect(await screen.findByRole('alert')).toHaveTextContent('did not verify the initial Timeline')
+    expect(screen.getByRole('link', {name: 'Open the created Run'})).toHaveAttribute('href', '/admin/runs/new-run-1')
+    expect(create).toBeDisabled()
+    expect(navigate).not.toHaveBeenCalled()
+  })
+
   it('rejects a duplicate name without navigating or recording a guessed Run ID', async () => {
     api.createEmptyRunContainer.mockRejectedValueOnce(new Error('Display name already exists'))
     renderPage()

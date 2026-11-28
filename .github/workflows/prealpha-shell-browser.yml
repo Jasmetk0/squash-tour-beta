@@ -13,7 +13,9 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - '.github/workflows/prealpha-shell-browser.yml'
+      - 'tests/api/test_atp_w52_package_setup.py'
       - 'web/acceptance/prealpha_shell_browser_smoke.py'
+      - 'web/acceptance/atp_w52_run_setup_browser.py'
       - 'web/acceptance/calendar_standalone_match_browser_check.py'
       - 'web/acceptance/calendar_opening_knockout_browser_check.py'
       - 'web/src/pages/CalendarOpeningKnockoutPanel.tsx'
@@ -58,6 +60,12 @@ on:
       - 'web/src/pages/admin/AdminHomePage.tsx'
       - 'web/src/pages/admin/PackagesHomePage.tsx'
       - 'web/src/pages/admin/WorldPackageApplyPage.tsx'
+      - 'web/src/pages/admin/ATPSourceApplyPage.tsx'
+      - 'web/src/pages/admin/ATPCalendarReferenceApplyPage.tsx'
+      - 'web/src/pages/admin/ATPSavedRunWeekDetails.tsx'
+      - 'web/src/pages/admin/atpRunSetup.ts'
+      - 'web/src/pages/RunCreatePage.tsx'
+      - 'web/src/components/RunCalendarCreationForm.tsx'
       - 'web/src/pages/admin/packageCatalog.ts'
       - 'web/src/pages/admin/TestLabHomePage.tsx'
       - 'web/src/pages/RunManagementPage.tsx'
@@ -95,7 +103,7 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
       - name: Install backend and browser driver
-        run: python -m pip install -e . playwright
+        run: python -m pip install -e . playwright pytest
       - name: Install frontend
         run: npm --prefix web ci
       - name: Prepare Chromium
@@ -131,6 +139,15 @@ jobs:
             --population-size 64 \
             --base-url http://127.0.0.1:5173 \
             --artifacts "$RUNNER_TEMP/prealpha-shell-artifacts"
+      - name: Create a W52 Run and save ATP packages in Chromium
+        run: |
+          cp -R config/world_packages/atp_earth "$RUNNER_TEMP/prealpha-shell-run/worlds/"
+          python web/acceptance/atp_w52_run_setup_browser.py \
+            --artifacts "$RUNNER_TEMP/prealpha-shell-artifacts"
+      - name: Plan Dallas after reopening the Saved ATP W52 Run
+        env:
+          BETA_ENGINE_NEW_RUN_SAVED_STORAGE: saved_v2
+        run: python -m pytest tests/api/test_atp_w52_package_setup.py
       - name: Preserve browser evidence
         if: always()
         uses: actions/upload-artifact@v4

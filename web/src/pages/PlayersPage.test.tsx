@@ -72,6 +72,29 @@ describe('Canonical Run Players',()=>{
     expect(screen.getByText(/Historical player projection is not supported/)).toBeInTheDocument()
     expect(api.getSavedPlayersInventory).not.toHaveBeenCalled()
   })
+  it('filters by server ranking status and labels the page counts rather than Run totals',async()=>{
+    api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,head:string,filters:Filters&{ranking_status_filter?:string})=>({
+      ...response(filters,head),players:[{...player('p0'),ranking_status:filters.ranking_status_filter||'unpublished',
+        rank:filters.ranking_status_filter==='ranked'?12:null}]
+    }))
+    mount()
+    const overview=await screen.findByRole('region',{name:'Loaded page overview'})
+    expect(overview).toHaveTextContent('Counts cover this loaded page only, not the entire Run.')
+    fireEvent.change(screen.getByLabelText('Ranking status filter'),{target:{value:'ranked'}})
+    await screen.findByText('#12')
+    expect(api.getSavedPlayersInventory).toHaveBeenLastCalledWith('run-a','a','head-a',expect.objectContaining({ranking_status_filter:'ranked',offset:0}))
+    expect(screen.getByRole('region',{name:'Loaded page overview'})).toHaveTextContent('Ranked1 / 1')
+    fireEvent.click(screen.getByRole('button',{name:'Reset filters'}))
+    expect(screen.getByLabelText('Ranking status filter')).toHaveValue('')
+  })
+  it('does not display a response for a different echoed filter',async()=>{
+    api.getSavedPlayersInventory.mockImplementation(async (_r:string,_b:string,head:string,filters:Filters)=>({
+      ...response(filters,head),search:'foreign-filter'
+    }))
+    mount()
+    expect(await screen.findByRole('alert')).toHaveTextContent('Response does not belong')
+    expect(screen.queryByRole('region',{name:'Loaded page overview'})).not.toBeInTheDocument()
+  })
   it('requires explicit reveal before showing prepared prospects',async()=>{
     mount()
     await screen.findByRole('link',{name:/Player p0/})

@@ -110,7 +110,10 @@ def test_oversize_decision_from_the_committed_text_keeps_every_byte_and_cache_en
     source = request.getfixturevalue(storage)
     original = _arm(tmp_path, source, monkeypatch, label=f"original-{limit}", original=True, limit=limit)
     candidate = _arm(tmp_path, source, monkeypatch, label=f"candidate-{limit}", original=False, limit=limit)
-    assert candidate[0]["saved_revision"] == original[0]["saved_revision"]
+    def timeless(receipt):  # the server clock is not Saved content
+        return {k: v for k, v in receipt["saved_revision"].items() if k != "created_at"}
+
+    assert timeless(candidate[0]) == timeless(original[0])
     assert candidate[1] == original[1]          # identical retained decode cache
     assert candidate[3] == original[3]          # identical rows after retry, restart and 2nd Save
     assert original[2]["calls"][0] == "NoneType:identities=1"

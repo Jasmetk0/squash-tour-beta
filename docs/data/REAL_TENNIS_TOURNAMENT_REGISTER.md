@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 42 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's a rozpracované Auckland, Marseille, Santiago a Lyon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 43 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca a rozpracované Auckland, Marseille, Santiago a Lyon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -76,10 +76,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | ['s-Hertogenbosch](#s-hertogenbosch-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Halle](#halle-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Queen's](#queens-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Mallorca](#mallorca-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 42 zpracovaných ročníků; 38 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 43 zpracovaných ročníků; 39 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -127,7 +128,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 40 | 's-Hertogenbosch 2024 | HOTOVO (nominální rozsah) |
 | 41 | Halle 2024 | HOTOVO (nominální rozsah) |
 | 42 | Queen's 2024 | HOTOVO (nominální rozsah) |
-| 43 | Mallorca 2024 | NEZAHÁJENO |
+| 43 | Mallorca 2024 | HOTOVO (nominální rozsah) |
 | 44 | Eastbourne 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -188,6 +189,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#s-hertogenbosch-2024) | Libéma Open | ATP 250 | 2024-06-08–2024-06-09 | 2024-06-10–2024-06-16 | HOTOVO v nominálním rozsahu; všechny denní počty přímo doloženy |
 | [2024](#halle-2024) | Terra Wortmann Open | ATP 500 | 2024-06-15–2024-06-16 | 2024-06-17–2024-06-23 | HOTOVO v nominálním rozsahu; původní denní splity R32/R16 otevřeny |
 | [2024](#queens-2024) | cinch Championships | ATP 500 | 2024-06-15–2024-06-16 | 2024-06-17–2024-06-23 | HOTOVO v nominálním rozsahu; R32 5+11 primárně doloženo |
+| [2024](#mallorca-2024) | Mallorca Championships presented by waterdrop | ATP 250 | 2024-06-22–2024-06-23 | 2024-06-23–2024-06-29 | HOTOVO v nominálním rozsahu; nedělní souběh Q/Main |
 
 ## Wimbledon 2024
 
@@ -5199,6 +5201,115 @@ I/T/H/D/R/B doloženy v nominálním rozsahu. E* původní rank dates a cutoffy 
 - QUE24-19: [LTA oznámení samostatných exhibic](https://www.lta.org.uk/fan-zone/cinch-championships/news/2024-wheelchair-and-learning-disability-exhibitions-set-to-shine-spotlight-on-disability-tennis/).
 - QUE24-20: [ATP výsledkový archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), Mallorca 23.–29.6., Eastbourne 24.–29.6. Dobový rulebook viz ROT24-15/16.
 
+## Mallorca 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; H/E/Z s označenými mezerami). Rešerše 2026-11-28. Originální výsledkový ATP Q los z archivu RFET, páteční OOP a předturnajový program z 21.6. vizuálně ověřeny. Main ceny z dobových ATP Media Notes; sekundární chybné R32 nepřevzato.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Mallorca Championships presented by waterdrop | MAL24-1/2/3 |
+| Kategorie / ATP ID | ATP 250 / 8994 | MAL24-4 |
+| Ročník | 4. (od 2021) | MAL24-2/5 |
+| Dějiště | Mallorca Country Club, Santa Ponça, Calvià, Španělsko | MAL24-5/6 |
+| Povrch | venkovní tráva | MAL24-1/4/6 |
+| Časové pásmo | Europe/Madrid, CEST UTC+02:00 | lokalita a datum |
+| Ředitel / ATP supervisor | Tony (Toni) Nadal / Roland Herfel | MAL24-1/3 |
+| Tour manager / referee | Arnau Brugues / Javier Moreno | MAL24-3 |
+| Měna | EUR | MAL24-1/2 |
+
+Nezaměňovat s Mallorca Challenger v Manacoru, WTA Mallorca Open ani s pozdějšími názvy sponzorů. Model míčů a původní detail sheet nezískány.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-05-27 | MAL24-7 |
+| Q rank date | 2024-06-03 | MAL24-7 |
+| Nominální Main deadline | 2024-05-27 18:00 CEST | odvozeno §7.03 |
+| Nominální Q deadline | 2024-06-03 18:00 CEST | odvozeno §7.03 |
+| Nominální LE deadline | 2024-06-20 16:00 CEST | odvozeno §7.04 |
+| Main los | 2024-06-22, přesná hodina neověřena | MAL24-8 |
+| Q los | před zahájením Q1 22.6., přesná hodina neověřena | MAL24-1/9 |
+| Q | 2024-06-22–23, Q1 od 11:00 | MAL24-9 |
+| Main | 2024-06-23–29 | MAL24-2/4/8 |
+| F | 2024-06-29 nejdříve 15:00 CEST | MAL24-2/9 |
+
+Dobový přepis 20.6. uvádí původní Main cutoff 64, Q 233; Main18 DA/3 WC/4 Q, SE 0 a LE 0; Q14 DA/2 WC. Oznámení španělské federace 18.6. nezávisle vyjmenovává 18 Main a 14 Q hráčů před dalšími změnami (MAL24-6). Q výsledkový originál uvádí last direct acceptance Ramanathan 329, ne původní cutoff 233. Main konečný cutoff z originálu nedostupný (sekundární přehled uvádí Hanfmann 85; datum stavu nejasné, nepovyšovat na originální pole). Uzávěrky odvozené z pravidel pro turnajový týden; originální acceptance lists/DS a hodiny losů chybějí.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-06-22 | 8 |
+| Q2 | 2024-06-23 | 4 |
+| R32 | 2024-06-23–25 | 12 (pozorováno 3+6+3) |
+| R16 | 2024-06-25–26 | 8 (pozorováno 4+4) |
+| QF | 2024-06-27 | 4 |
+| SF | 2024-06-28 | 2 |
+| F | 2024-06-29 | 1 |
+
+Tištěný předturnajový program 21.6., str. 6 (MAL24-9) výslovně uvádí sobotní Q, nedělní Q/Main, Main do čtvrtka, páteční SF a sobotní F. Rozpis podle kurtů zahrnuje i doubles a některé řádky nejsou specifikovány; nepoužívat celkový počet rezervovaných slotů jako počet mužských singlů. Dobový ATP Day 1 potvrzuje čtyři postupující z nedělní Q a F nejdříve 15:00. ATP Day 2/3 potvrzují pondělní R32 a úterní R16, včetně souběhu s dokončováním prvního kola podle výsledkových zdrojů. Úplný výsledkový denní archiv (MAL24-12) vykazuje Q1 osm, Q2 čtyři, neděle tři R32, pondělí šest R32, úterý tři R32 a čtyři R16, středa čtyři R16. Označení kvalifikačních fází R2/R3 v tomto sekundárním archivu je posunuté; skutečný originál Q dokládá právě dvě kola. Denní počty jsou pozorované a představují kandidát nominálního rozložení, nikoli nezávisle potvrzený původní OOP. Okna R32/R16 potvrzují i ročníkové rozpisy AS a ATP poznámky; přesný předem publikovaný split prvních kol nezískán. Čtvrtek QF potvrzen ATP Day 5 a výsledky. Originální OOP 28.6. vydaný 27.6. 21:39 potvrzuje dvě SF na centru nejdříve v 15:30 a 18:00, před nimi doubles. Sobota F nejdříve 15:00, doubles F ve 12:00 podle předturnajového programu. Q 2 + Main 7 dní s překryvem 23.6., osm kalendářních dní, 39 nominálních uzlů. Nedělní souběh není mimořádný posun.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 (4 sekce po 4) |
+| DA | 18 základních, až 21 | 14 |
+| SE | 2 rezervy | 0 |
+| LE | 1 rezerva | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 (seedy 1–4) | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 18+2+1+3+4=28; Q14+2=16. Dobový přepis listiny i RFET oznámení potvrzují počáteční DA počty, ATP Day 1 uvádí osm seedů, tři WC Carreño Busta/Fognini/Thiem a čtyři Q. Úplný výsledkový Main přepis MAL24-13 potvrzuje čtyři BYE, čtyři řádné Q a LL Brouwer; sedm viditelných seedů po odstoupení seedu 7 Thompson (historická výjimka). Q originál vizuálně potvrzuje všech osm seedů, 16 hráčů, dva WC Joan Nadal a Paul Jubb (současně seed 7), jednoho Alt Casanova a čtyři čtyřčlenné sekce. Čtyři postupující Jubb/Marterer/Lestienne/Walton; další LL Brouwer není páté řádné Q místo. Main 12+8+4+2+1=27, Q8+4=12.
+
+### 5. Dobová pravidla
+
+ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle MPL24-5/6 a IW24-11/14. Main dvě SE a jedna LE rezervy; nevyužité rezervy přecházejí do DA, mezistav SE 0/LE 0 není důkaz nulové rezervy. Q dva BO3 zápasy k postupu. Q body 13/7/0 přímo v originálu, přičítají se k Main bodům. ATP Day 1 explicitně uvádí 0 bodů při první prohře po BYE. WC může být zároveň seed (Jubb v Q), nejde o dodatečné místo. Pouze dvě ATP Tour akce ve stejném týdnu (Mallorca a Eastbourne); označení #NextGenATP v Media Notes neprokazuje využití NG vstupní rezervy.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 141795 |
+| Finalista | 1 | 165 | 82715 |
+| SF | 2 | 100 | 48620 |
+| QF | 4 | 50 | 28175 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 16360 |
+| R32 | 12 | 0 | 9995 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 5000 |
+| Q1 prohra | 8 | 0 | 2725 |
+
+Main primární ATP Day 1, tabulka výslovně EUR, potvrzena dobovým Tennis Infinity. Q přímo vizuálně v originálu MAL24-1. CanalTenis ročníkový přehled má nesprávně R32 7880 EUR (odlišné od primárních 9995), jeho Q částky naopak odpovídají originálu. Nominální Main 685270 EUR, Q 41800 EUR, celkem 727070 EUR. 28 Main příjemců + 12 nepostupujících Q příjemců. Financial commitment 1005340 EUR v Q originálu ani celková prize money 932135 EUR nejsou mužský singlový součet.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B/P doloženy, H* okna kol a pozorované denní počty odděleny od původního OOP, E* rank dates/cutoffy z přepisu, Q konečný cutoff z originálu. Z* Q originál a páteční OOP po jedné straně a předturnajový program str. 6 vizuálně ověřeny. Main originál nedostupný, ATP Notes textově (obrazové pokusy 403); Main geometrie doložena ATP a úplným sekundárním pavoukem. Originální acceptance lists/DS, hodiny obou losů, původní denní OOP časných kol, Main konečný cutoff a model míčů neověřeny; žádné smyšlené SHA-256. Kontrola kvót, 28/16, osmi nominálních seedů obou fází, čtyř BYE, čtyř postupujících, 27+12 uzlů a odměn prošla. Další Eastbourne 2024. Bez runtime změn.
+
+### 8. Zdroje (MAL24)
+
+- MAL24-1: [originální ATP Q los v archivu RFET](https://www.rfet.es/descargar/file-competicion-cuadros/20365_Cuadro/2024-mallorca-championships-previa.pdf), str. 1 vizuálně, Q ceny/body, seedy, WC, cutoff 329.
+- MAL24-2: [ATP Preview & Day 1 23.6.2024](https://www.atptour.com/-/media/a470d8ddcaf1400896b4f88d1908a641.pdf), str. 1 text, Main odměny/body, osm seedů a tři WC; screenshot 403.
+- MAL24-3: [originální OOP 28.6. v RFET](https://www.rfet.es/descargar/file-competicion-cuadros/20362_Cuadro/2024-mallorca-championships-orden-de-juego.pdf), str. 1 vizuálně.
+- MAL24-4: [Tennis Europe ročníkový záznam](https://www.tenniseurope.org/calendarevent/73822/Mallorca-Championships-presented-by-Waterdrop), ATP 8994, Main 23.–29.6.; přímý ATP [Main](https://www.protennislive.com/posting/2024/8994/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/8994/qs.pdf) nedostupné.
+- MAL24-5: [RFET 30.6., závěrečná zpráva](https://www.rfet.es/es/noticia.html?Id=13688), čtvrtý ročník a místo.
+- MAL24-6: [RFET 18.6. oznámení účastníků](https://www.rfet.es/es/noticia/el-mallorca-championships-by-waterdrop-contara-con-cinco-jugadores-en-el-top-25), 18+14 jmen a termíny.
+- MAL24-7: [TennisTeen přepis Main/Q listin 20.6.](https://www.tennisteen.it/entry-list/atp/24186-atp-entry-list-24-30-giugno-2024.html), rank dates, cutoffy 64/233, Q14+2.
+- MAL24-8: [ATP oznámení losu 22.6.](https://www.atptour.com/es/news/mallorca-2024-sabado-sorteo-cuadro-thiem-monfils).
+- MAL24-9: [Majorca Daily Bulletin special supplement 21.6.2024](https://www.majorcadailybulletin.com/archivo/specials/2024-06-21.pdf), str. 6 vizuálně, předturnajový program a Q WC Joan Nadal.
+- MAL24-10: [ATP Day 2 24.6.](https://www.atptour.com/-/media/f79f6de4aaea4d0cb7b1df5ff6f6936c.pdf), text, screenshot 403.
+- MAL24-11: [ATP Day 3 25.6.](https://www.atptour.com/-/media/e1fbc323b40f419f98ed2c66555c1fca.pdf), text, screenshot 403; [ATP QF Day 5](https://www.atptour.com/-/media/f217b74104f849ee95f4ec0ea8cdf655.pdf), indexovaný text.
+- MAL24-12: [Stat Pick denní výsledky 2024](https://www.statpick.ai/tournaments/tennis/mallorca/2024), pozorované denní počty; [AS první kolo](https://en.as.com/resultados/tenis/atp_mallorca/2024/calendario/primera_ronda_a/), okno 23.–25.6.
+- MAL24-13: [CanalTenis Main pavouk 2024](https://canaltenis.com/cuadro-atp-mallorca-2024/), [ročníkový Main/Q přehled](https://en.wikipedia.org/wiki/2024_Mallorca_Championships_%E2%80%93_Singles), kapacita/seed/LL.
+- MAL24-14: [Tennis Infinity dobový Main rozpis cen](https://tennis-infinity.com/atp/2024-mallorca-open-atp-prize-money-points-overview), [CanalTenis 2024 finanční přehled](https://canaltenis.com/prize-money-atp-mallorca/), chybné R32 7880 odmítnuto; [německý ročníkový přehled](https://de.wikipedia.org/wiki/Mallorca_Championships_2024), obě ceny Q a Main R32 souhlasí, sekundární cutoff. Dobový rulebook viz MPL24-5/6 a IW24-11/14.
+
 ## Otevřené položky k opakované kontrole
 
 **Cílená opakovaná kontrola Lyon/Marseille 2024 (2026-11-28):** [TennisTeen 15.5.](https://www.tennisteen.it/entry-list/atp/24168-atp-entry-list-20-26-maggio-2024.html) pro Lyon obsahuje pouze Main, nikoli Q listinu. [Marseille originální listina 9.1.](https://www.open13.fr/wp-content/uploads/2024/01/Singles-Acceptance-List-open1324.pdf) je pouze Main (text dostupný, screenshot 502), potvrzuje 18 DA a tři souhrnné rezervy, neřeší Q kvótu. [TennisTeen 5.–11.2.](https://www.tennisteen.it/entry-list/atp/24110-atp-entry-list-5-11-febbraio-2024.html) je již známý typ přepisu. Výsledkové pavouky a oznámení WC neprokazují nominální výjimku. Nový rozhodný ročníkový Q doklad nezískán, oba E stavy zůstávají otevřené. U Stuttgart a 's-Hertogenbosch dobový přepis výslovně potvrzuje standardní 14+2 (STU24-7); není důkaz pro jinou edici.
@@ -5239,3 +5350,4 @@ I/T/H/D/R/B doloženy v nominálním rozsahu. E* původní rank dates a cutoffy 
 | 's-Hertogenbosch 2024 | E*/Z* | originální acceptance lists/DS, hodiny losů, model míčů, původní předstartovní Q los, vizuální kontrola bulletinů 12./15.6.; plán všech dnů a Main/Q finanční tabulky primárně doloženy |
 | Halle 2024 | H*/E*/P*/Z* | původní denní OOP a důvod středečního R32, acceptance lists/DS, hodiny losů, originální Q PDF a finanční tabulka (9015/5060 EUR sekundární shoda), Q konečný cutoff; oba Main losy vizuálně ověřeny |
 | Queen's 2024 | E*/P*/Z* | originální Q los/finanční tabulka (9015/5060 EUR sekundární shoda), acceptance lists/DS, Q konečný cutoff a hodiny losů, původní Q1 a čtvrteční OOP; oba Main losy a šest OOP vizuálně ověřeny |
+| Mallorca 2024 | H*/E*/Z* | původní denní OOP prvních kol, acceptance lists/DS, hodiny losů, originální Main PDF a jeho cutoff, model míčů; Q originál a finanční tabulka vizuálně ověřeny, Main ceny z primárních ATP Notes |

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 91 ročníků: nově Houston 2025; nově Marrakech 2025; nově Miami 2025; nově Indian Wells 2025; nově Santiago 2025; nově Dubai 2025; nově Acapulco 2025; nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 92 ročníků: nově Bucharest 2025; nově Houston 2025; nově Marrakech 2025; nově Miami 2025; nově Indian Wells 2025; nově Santiago 2025; nově Dubai 2025; nově Acapulco 2025; nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -125,10 +125,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Miami](#miami-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: Main R32) |
 | 2025 | [Marrakech](#marrakech-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Houston](#houston-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [Bucharest](#bucharest-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 91 zpracovaných ročníků; 77 hotových v nominálním rozsahu; 14 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 92 zpracovaných ročníků; 78 hotových v nominálním rozsahu; 14 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -226,7 +227,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 89 | Miami 2025 | ROZPRACOVÁNO (P: Main R32) |
 | 90 | Marrakech 2025 | HOTOVO (nominální rozsah) |
 | 91 | Houston 2025 | HOTOVO (nominální rozsah) |
-| 92 | Bucharest 2025 | NEZAHÁJENO |
+| 92 | Bucharest 2025 | HOTOVO (nominální rozsah) |
+| 93 | Monte-Carlo 2025 | NEZAHÁJENO |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -10094,7 +10096,101 @@ Main 500005 USD (konečný ATP los vizuálně, pořadatelská kopie textově), Q
 Otevřené doplňky: vizuální Q, předstartovní Main/Q a konečný Q, původní acceptance/DS, skutečné uzávěrky/losy, kompletní předherní OOP, individuální NG/SE/LE/LL administrativa, model míče a ročníková specifikace povrchu, rozpory souhrnných dotací. Bez smyšlených hashů. Další Bucharest 2025.
 
 
+## Bucharest 2025
+
+**Stav: HOTOVO (nominální rozsah 9/9; H/E/R/P/Z s omezeními).** Rešerše 2026-11-28. Originální předstartovní ATP Main vizuálně, výsledkový ATP Main textově; oba shodné v odměnách. Předběžná únorová/březnová tisková zpráva pořadatele uvádí jiné ceny, předstartovní los z 29.3. i dobový report po finále potvrzují finální sazby. Q ceny sekundární ročníková shoda, originální Q nezískán.
+
+### 1. Identita
+
+Țiriac Open presented by UniCredit Bank, ATP250 ID4462, 23. ročník dle pořadatele, venkovní antuka, Centrul Național de Tenis, 11 Pierre de Coubertin Boulevard, Bukurešť, Rumunsko. Nové dějiště oproti 2024 Năstase–Marica; dobová oficiální tisková zpráva výslovně potvrzuje první ročník v National Tennis Center. Europe/Bucharest EET UTC+2 před 30.3.03:00, poté EEST UTC+3 (i v průběhu Q a Main). EUR. Ředitel Cosmin Hodor dle pořadatele, supervisor Roland Herfel dle obou ATP losů. DS, značka antuky, model míče, referee a tour manager neověřeny. Nepoužívat pojmenování areálu z 2026 automaticky pro 2025.
+
+### 2. Termíny a přihlášky
+
+| Pole | Hodnota |
+|---|---|
+| Main rank date / původní cutoff | 3.3.2025 / 85, TennisTeen |
+| Q rank date / původní cutoff | 10.3.2025 / 164, TennisTeen |
+| Nominální Main deadline | 3.3. 12:00 EST = 19:00 EET |
+| Nominální Q deadline | 10.3. 12:00 EDT = 18:00 EET |
+| Nominální LE deadline | 27.3. 10:00 EDT = 16:00 EET |
+| Main los | nejpozději 29.3., release 19:31:17 v originálu |
+| Q los | před Q1 30.3.; okamžik neověřen |
+| Q | 30.–31.3. |
+| Main | 31.3.–6.4. |
+| F | 6.4. NB14:00 EEST, ATP program v pořadatelském zrcadle |
+| Main last DA | Lajovic108, obě verze |
+| Q konečný cutoff | neověřen |
+
+Uzávěrky odvozené dle §7.03/7.04; časové pásmo release neověřeno, není důkaz hodiny ceremonie. Pořadatel již 17.2. explicitně stanoví Q neděli 30.3.; dobový GSP 30.3. potvrzuje Q1 a pondělní Q2. DE Q článek chybně uvádí 29.–30.3.; nezaměnit s Houstonem ani ročníkem 2026. Konečný Main release 6.4.18:22:02. Původní acceptance lists/DS a skutečné uzávěrky otevřeny.
+
+### 3. Nominální harmonogram
+
+| Kolo | Místní okno | Uzly |
+|---|---|---:|
+| Q1 | 30.3. | 8 |
+| Q2 | 31.3. | 4 |
+| R32 | 31.3.–1.4. | 12 |
+| R16 | 2.–3.4. | 8 |
+| QF | 4.4. | 4 |
+| SF | 5.4. | 2 |
+| F | 6.4. | 1 |
+
+GSP 30.3. předem publikuje pondělní program: 3 R32 na centru (12:30, následně, NB17:00) a 4 Q2 na kurtech1/2 od11:00. Q2/Main souběh plánovaný, zbývá devět R32; úplný původní úterní OOP nezískán. Q1 a Q2 výsledky potvrzuje TennisTemple a TenisPortal. R16 okno 2.–3.4. dokládá ATP čtvrteční report; Baez–Diallo ve středu přerušeno deštěm a dokončeno ve čtvrtek, nezvyšovat uzly ani neztotožňovat pozorované denní rozdělení s předlosovým plánem. QF/SF/F termíny z výsledkového archivu; finálový program ATP potvrzuje NB14:00 po doubles F 11:30. Main27 + Q12=39, 2 Q +7 Main dní −1 překryv =8 kalendářních dní. Celý původní denní plán a přesné R16 splity neověřeny.
+
+### 4. Struktura a vstup
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Účastníci / pozice | 28 / 32 | 16 / 16 |
+| Základní běžné DA | 17 | 14 |
+| NG rezervace uvnitř DA | 1 | individuální alokace neověřena |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 | 0 |
+| Formát | BO3 | BO3 |
+| Uzly | 27 | 12 |
+
+ATP §7.08 B.1.c/E.1 a §7.04, viz RAK25/DXB25: celková základní DA kvóta 18 včetně NG. TennisTeen dobový Main přepis přímo uvádí 17 běžných DA a Basavareddyho NG (5 v NG pořadí; zároveň alternate101 v běžném rankingu). DartsRankings rovněž výslovně NG. Celkový nominál 17+1 NG+2 SE+1 LE+3 WC+4 Q=28. Hlavička listiny uvádí 18 DA a 0 SE/LE, tedy mezistav25; nevyužité rezervy se doplní podle pravidel. Předstartovní Main 29.3. vizuálně: osm seedů, BYE2/10/23/31, WC22/28/29, Q placeholdery5/18/20/30. Basavareddy27 bez NG značky v losu; dobový přepis doloží původní NG acceptance, ne úplný administrativní ledger skutečného přijetí. Finální Main text má Albot18 bez Q, Vacherot Q25 místo původního seedu6 Marozsana, další Q5/20/30; sedm skutečně označených seedů. Nominální 8 seedů/4 Q/4 BYE zachovány, skutečný náhradnický status Albota necertifikovat pouze z textu. WC Gasquet/Jianu/Wawrinka. PR neznamená další místo.
+
+Q 14 DA+2 WC přímo v TennisTeen; pořadatel uvádí 16 hráčů o čtyři postupy. Úplný sekundární Q pavouk TennisTemple osm seedů, dvě WC Preda a Andreescu, dva Alt Crețu/Prihodko, čtyři sekce po4, 8+4=12. Čtyři vítězové Vacherot, Klizan, Misolic, Skatov shodní s konečným Main. Původní Q PDF a DS nedostupné. Týden tří ATP250 (Houston/Marrakech/Bucharest): doložena konkrétní NG Main akceptace v Bukurešti, nikoli automatické další místo v Houston/Marrakech; týdenní Q NG alokace a individuální SE/LE/LL ledger stále neověřeny.
+
+### 5. Dobová pravidla
+
+ATP Competition 10.2.2025 §7.03/7.04/7.08–12/7.15–20, dříve ověřeno DXB25/RAK25; standard 28/16, top4 Main BYE, osm seedů každá fáze, čtyři Q sekce, BO3 dle výsledků, dvě SE a jedna LE rezerva, NG uvnitř DA. První Main prohra po BYE =0 bodů dle dobového rankingového předpisu; R16 odměna není nulová. Q body 13/7/0 a přičítání postupových bodů k Main dle dobového předpisu a Q ročníkové tabulky TennisTemple. Q3 v označení TennisTemple znamená postup, nikoli třetí hrané kolo. Individuální NG/SE/LE/LL administrativní kroky necertifikovány.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | Body | EUR |
+|---|---:|---:|---:|
+| W | 1 | 250 | 90675 |
+| F | 1 | 165 | 52890 |
+| SF | 2 | 100 | 31090 |
+| QF | 4 | 50 | 18015 |
+| R16 | 8 | 25 (0 po BYE) | 10460 |
+| R32 | 12 | 0 | 6390 |
+| Q postup | 4 | 13 | 0 |
+| Q2 prohra | 4 | 7 | 3200 |
+| Q1 prohra | 8 | 0 | 1745 |
+
+Main 438165 EUR, Q 26760 EUR, celkem 464925 EUR nominální singlové odměny. Main originál z 29.3. vizuálně, finální ATP originál textově, sazby shodné. Pořadatelské tiskové zprávy 17.2./4.3. uvádějí předběžné zaokrouhlené celkové prize money600000 EUR a W/F86628/52529; pro finální ročníkový nominál nepoužít, předstartovní los s plným rozpisem i konečný los a AGERPRES 6.4. jednoznačně potvrzují W/F90675/52890. TennisCompanion má SF31080 místo31090, přednost dvěma originálům; Q3200/1745 shodně TennisCompanion, TennisTemple a DE ročník. P* pouze pro chybějící originální Q finanční tabulku; sekundární nezávislost neprokázána. Main souhrnná dotace596035 EUR z losů není singlovým součtem. ITF 701217 se symbolem USD neinterpretovat jako jednotlivé odměny v USD. Nejde o audit skutečných individuálních plateb.
+
+### 7. Zdroje a omezení (BUC25)
+
+- [Originální předstartovní ATP Main](https://www.fantatennis.net/_downloads/ec62716be4505ffb86c1190b274abe11) str.1 vizuálně; [konečný ATP Main](https://www.protennislive.com/posting/2025/4462/mds.pdf) text, screenshot DisabledError (textová extrakce některých jmen/skóre vadná, výsledky nepřebírat bez kontroly); [ATP Q](https://www.protennislive.com/posting/2025/4462/qs.pdf) nedostupný.
+- [Pořadatel 17.2.](https://www.tiriacopen.ro/en/media/news/comunicat-tiriac-open), [pořadatel 4.3.](https://tiriacopen.ro/en/media/news/comunicat-de-presa) nové dějiště, kvóty, předběžné odměny; [GSP 30.3.](https://amp.gsp.ro/article/790311) původní pondělní OOP, [ATP program finále](https://www.tiriacopen.ro/en/media/news/bucharest-houston-marrakech-2025-schedule), [ATP report 3.4.](https://www.atptour.com/en/news/wawrinka-martinez-bucharest-2025-thursday), [ATP finále](https://www.atptour.com/en/news/baez-cobolli-bucharest-2025-final).
+- [TennisTeen dobový Main/Q](https://www.tennisteen.it/entry-list/atp/24328-atp-entry-list-31-marzo-6-aprile-2025.html), [LiveTennis aktualizace](https://www.livetennis.it/post/434018/atp-250-bucharest-houston-e-marrakech-la-situazione-aggiornata-md-e-qualificazioni/), [DartsRankings NG](https://www.dartsrankings.com/tennis/bucharest) ověřit ročník podle jmen, dynamická URL.
+- [TennisTemple Q](https://en.tennistemple.com/competitions/bucharest/2025/draw-qualifications), [TenisPortal Q](https://www.tenisportal.cz/bukurest/2025/atp-muzi/?phase=qualification), [TennisExplorer Main](https://www.tennisexplorer.com/bucharest/2025/atp-men/?phase=main), [Flashscore 2025](https://www.flashscoreusa.com/tennis/atp-singles/bucharest-2025/results/), [EN ročník](https://en.wikipedia.org/wiki/2025_%C8%9Airiac_Open), [DE ročník](https://de.wikipedia.org/wiki/%C8%9Airiac_Open_2025), [DE Q](https://de.wikipedia.org/wiki/%C8%9Airiac_Open_2025/Qualifikation) chybná Q data, [FR ročník](https://fr.wikipedia.org/wiki/Tournoi_de_tennis_de_Roumanie_%28ATP_2025%29).
+- [TennisCompanion EUR](https://tenniscompanion.org/prize-money/bucharest/) správná Q, SF odchylka10 EUR, [AGERPRES po finále](https://agerpres.ro/sport/2025/04/06/tenis-granollers-si-zeballos-au-castigat-titlul-la-dublu-la-tiriac-open-atp--1437908) W/F, [ITF](https://www.world.tennis/en/tournament/bucharest-250/rou/2025/m-250-rou-2025-001/draws-and-results/). Sekundární tabulky mohou sdílet původ.
+
+Otevřené doplňky: originální Q a obraz konečného Main, acceptance/DS, přesné uzávěrky/losy a Q cutoff, kompletní původní OOP, individuální NG/SE/LE/LL administrativa, model míčů. Bez smyšlených hashů. Další Monte-Carlo 2025 (ověřit nedělní start a 56členný formát).
+
+
 ## Otevřené položky k opakované kontrole
+
+**Bucharest 2025 — H*/E*/R*/P*/Z*:** Q originál a obraz finálního Main, acceptance/DS, skutečné uzávěrky/losy, Q cutoff, úplné OOP, individuální NG/SE/LE/LL ledger; Main ceny z obou originálů shodné (předběžná tisková zpráva překonána), Q3200/1745 sekundární shoda. NG Basavareddy doložen dobovou listinou.
 
 **Houston 2025 — H*/E*/R*/Z*:** obraz Q, konečný Q, předstartovní Main/Q, acceptance/DS, původní OOP, skutečné uzávěrky/losy, NG/SE/LE/LL administrativa, model míče a ročníkový povrch; Q finance 3650/1990 primárně textově, Main vizuálně, duplicita Nishikori R32 vysvětlena úterním ATP reportem.
 

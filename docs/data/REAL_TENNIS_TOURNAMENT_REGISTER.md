@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 72 ročníků: nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -104,10 +104,12 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Belgrade](#belgrade-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [ATP Finals](#atp-finals-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Next Gen ATP Finals](#next-gen-atp-finals-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 1990 | [Adelaide](#adelaide-1990) | ✓ | ? | ? | ? | ? | ? | ? | ? | ✓* | ROZPRACOVÁNO (2/9; T/H/E/D/R/B/P) |
+| 1990 | [Wellington](#wellington-1990) | ✓ | ? | ? | ? | ? | ? | ? | ? | ✓* | ROZPRACOVÁNO (2/9; T/H/E/D/R/B/P) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 70 zpracovaných ročníků; 66 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 72 zpracovaných ročníků; 66 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -183,6 +185,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 68 | Belgrade 2024 | HOTOVO (nominální rozsah) |
 | 69 | ATP Finals 2024 | HOTOVO (nominální rozsah) |
 | 70 | Next Gen ATP Finals 2024 | HOTOVO (nominální rozsah) |
+| 71 | Adelaide 1990 | ROZPRACOVÁNO (T/H/E/D/R/B/P) |
+| 72 | Wellington 1990 | ROZPRACOVÁNO (T/H/E/D/R/B/P) |
+| 73 | Sydney 1990 | NEZAHÁJENO (další chronologická rešerše) |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -8233,6 +8238,89 @@ I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně 
 - NGF24-6: [potvrzení prvních čtyř hráčů](https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-qualifications-1-2024), [Basavareddy 27.11.](https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-qualifications-3-2024), [Fonseca a kompletní osmička 29.11.](https://www.atptour.com/en/news/next-gen-atp-finals-presented-by-pif-2024-qualifications-4/), [konec Challenger sezóny](https://www.atptour.com/en/news/sakamoto-negritu-yokkaichi-challenger-2024-final), [briefing 2025 – Landaluce alternate](https://www.atptour.com/en/news/next-gen-atp-finals-2025-player-briefing).
 - NGF24-7: [oficiální prize money 2.12.](https://www.nextgenatpfinals.com/en/news/next-gen-atp-finals-presented-by-pif-2024-prize-money), [Heritage výsledky a odměny](https://www.nextgenatpfinals.com/en/heritage/results), [finále](https://www.nextgenatpfinals.com/en/news/tien-fonseca-next-gen-2024-final), [Tennis365 body a odměny 22.12.](https://www.tennis365.com/tennis-features/prize-money-points-fonseca-tien-next-gen-finals), [ATP oznámení 2016 bez bodů](https://www.atptour.com/-/media/sites/atp-tour/press/press-releases/2016-november-19-next-gen-atp-finals.pdf).
 - NGF24-8: [EN ročník](https://en.wikipedia.org/wiki/2024_Next_Gen_ATP_Finals), [DE ročník](https://de.wikipedia.org/wiki/Next_Generation_ATP_Finals_2024), [Tennis Majors](https://www.tennismajors.com/atp/next-gen-atp-finals/players-schedule-format-saudi-arabia-everything-you-always-wanted-to-know-about-next-gen-atp-finals-2024-but-never-had-time-to-find-out-798882.html), [ATP skreč Shang](https://www.nextgenatpfinals.com/en/news/michelsen-shang-next-gen-2024-friday).
+
+
+## Historická sezona 1990 — zahájení
+
+Rozhodnutí vlastníka 2026-11-28: pokračovat rokem 1990 ve stejném registru. Používat dobové kategorie World Series / Championship Series / Championship Series Single Week, nikoli dnešní ATP250/500/1000. Týmové soutěže (Hopman Cup, Davis Cup, World Team Cup), exhibice a další akce mimo stanovený individuální rozsah se nepřidávají. Pracovní inventura [PR #1891](https://github.com/Jasmetk0/squash-tour-beta/pull/1891), HEAD 5c14e3683b96da9ed322787589c12493c6d8dc1e, obsahuje 75 ATP výskytů včetně Finals, bez Grand Slamů; přesný jmenovatel tohoto registru ještě ověřit proti ATP a EN/DE/FR kalendářům. Z #1891 přebírat pouze rešeršní vodítka, nikoli engine adaptaci. Oddělovat pozorovaný Main los, uváděnou nominální kapacitu Q a hypotetickou geometrii. Nepřenášet moderní entry lhůty ani body, nevyplňovat neznámé hodnoty nulou.
+
+## Adelaide 1990
+
+**ROZPRACOVÁNO (I/Z; T/H/E/D/R/B/P otevřeny).**
+
+### 1. Identita
+
+Australian Men's Hardcourt Championships; World Series, Memorial Drive Park, Adelaide, Austrálie, venkovní tvrdý povrch; pásmo Australia/Adelaide, v lednu ACDT UTC+10:30 (dle lokality). ITF M-WSF-AUS-01A-1990. ATP a ITF uvádějí 1.–7.1.1990. ITF prize money USD 125 000, německá sezónní tabulka rozlišuje prize money 125 000 / finanční závazek 150 000 USD, AP dobově uvádí 150 000 USD. Částky nesčítat.
+
+### 2. Termíny a vstup
+
+Main archivní okno 1.–7.1.; dobová AP zpráva potvrzuje nedělní večerní finále. Originální předturnajový program R32/R16/QF/SF, data Q, entry uzávěrky a losovací hodiny neznámé. Nepředpokládat automaticky 30.–31.12.1989. Výsledkový los: 4 Q (2+2), 3 WC (2+1), 25 ostatních pozic (nikoli doložených 25 DA), žádná označená LL. Nominální rezervy, Q WC, Q seedy a vstupní pravidla nezjištěny.
+
+### 3. Struktura a formát
+
+| Fáze | Kapacita / uzly | Důkaz |
+|---|---|---|
+| Main | 32 pozic/účastníků, 8 seedů, 0 BYE | přepočteno z obou polovin losu |
+| R32/R16/QF/SF/F | 16/8/4/2/1 = 31 uzlů | aritmetika |
+| Q | uváděno 32 pozic | DE ročníková hlavička, bez Q losu |
+| Q geometrie | hypoteticky 4×8; 16+8+4 = 28 uzlů | pouze za podmínky plné Q32 bez BYE a čtyř plánovaných postupů |
+
+Pozorovaný Main včetně F odpovídá BO3. Jedno skutečné odstoupení R32 nemění nominální geometrii. Q formát, tiebreak a dobový předpis náhradníků neověřeny.
+
+### 4. Body a odměny
+
+Sekundární kandidát 1990 World Series 150K/32, podmíněný správným přiřazením finančního bandu: W/F/SF/QF/R16/R32 = 90/68/45/23/12/1; úspěšný Q +6. Q prohry mají ve zdroji prázdné buňky, nikoli doložené nuly. Dobový předpis a bonusové body otevřeny; neplést s iterací 1992 (100/75/50/25/13/1).
+
+Dobová AP přímo potvrzuje singlovou výhru USD 18 000. Daily Iowan 9.1. ve statistice celkových týdenních příjmů uvádí 18 000 a 10 600 pro finalistu; 10 600 pouze kandidát, bez oddělení případné čtyřhry. Ostatní singlové a Q sazby otevřeny.
+
+### 5. Zdroje a mezery (ADE90)
+
+- [ATP archiv](https://www.atptour.com/en/scores/results-archive?year=1990), [ITF](https://www.world.tennis/en/tournament/adelaide/aus/1990/m-wsf-aus-01a-1990/draws-and-results/) — termín, povrch, prize money.
+- [EN ročník](https://en.wikipedia.org/wiki/1990_Australian_Men%27s_Hardcourt_Championships), [EN Main rev.1284187703](https://en.wikipedia.org/w/index.php?title=1990_Australian_Men%27s_Hardcourt_Championships_%E2%80%93_Singles&oldid=1284187703) — kompletní text losu, přepočet značek.
+- [DE ročník](https://de.wikipedia.org/wiki/Australian_Men%E2%80%99s_Hardcourt_Championships_1990) — Q32 pouze indexovaný text, přístup 429; [DE sezona](https://de.wikipedia.org/wiki/ATP_Tour_1990) — finanční rozlišení.
+- [AP/LA Times 8.1.1990](https://www.latimes.com/archives/la-xpm-1990-01-08-sp-161-story.html) — celý text, nedělní finále, vítězova odměna.
+- [Daily Iowan 9.1.1990](https://dailyiowan.lib.uiowa.edu/DI/1990/di1990-01-09.pdf) — text dobového týdenního přehledu; screenshot 502/timeout, bez vizuální certifikace.
+- [Sekundární bodová tabulka](https://openerarankings.com/RankingRules1990) — indexovaný text, přímý přístup 503.
+- K doplnění: originální Main/Q, předturnajový OOP, nominální entry, dobový bodový a finanční předpis; žádné smyšlené hashe.
+
+## Wellington 1990
+
+**ROZPRACOVÁNO (I/Z; T/H/E/D/R/B/P otevřeny).**
+
+### 1. Identita
+
+BP National Championships, ATP World Series, Wellington, Nový Zéland, venkovní tvrdý povrch. ATP ID7308 dle DE ročníku, ITF M-WSF-NZL-01A-1990. Pásmo Pacific/Auckland, v lednu NZDT UTC+13 (dle lokality). ATP/ITF termín 1.–7.1.1990; nezaměňovat s ženskou únorovou akcí. ITF USD 125 000 prize money, DE ročník 125 000 prize money / 150 000 finanční závazek; AP uvádí 150 000 USD.
+
+### 2. Termíny a vstup
+
+Main archivní okno 1.–7.1.; nedělní finále dobově potvrzeno. Přesná plánovaná okna R32/R16/QF/SF, Q data, uzávěrky/losy a nominální vstupní pravidla neznámé. Pozorovaný Main: 4 Q (1+3), 3 WC (3+0), 25 ostatních pozic bez prokázaného rozdělení DA/SE, žádná označená LL. Q WC/seed neznámé.
+
+### 3. Struktura a formát
+
+| Fáze | Kapacita / uzly | Důkaz |
+|---|---|---|
+| Main | 32 pozic/účastníků, 8 seedů, 0 BYE | výsledkový Main |
+| R32/R16/QF/SF/F | 16/8/4/2/1 = 31 uzlů | aritmetika |
+| Q | uváděno 32 | DE hlavička, bez originálu |
+| Q geometrie | hypoteticky 4×8; 16+8+4 = 28 uzlů | podmíněné plnou Q32 a čtyřmi plánovanými postupy |
+
+Pozorované Main R32–SF BO3, **F BO5**: dobová AP zpráva potvrzuje pětisetové finále. Rozdíl proti Adelaide BO3 ve stejném týdnu. Nominální Q formát, dobový předpis, tiebreak a LL neověřeny.
+
+### 4. Body a odměny
+
+Sekundární kandidát World Series 150K/32 z roku 1990: 90/68/45/23/12/1, Q +6; stejné limity jako Adelaide. Nejde o potvrzenou ročníkovou bodovou tabulku.
+
+Daily Iowan uvádí 22 550 USD vítěz a 12 175 finalista, ovšem jako souhrnný týdenní příjem hráčů. Oba hráli i čtyřhru; singlový vítěz byl finalistou čtyřhry. Nelze ztotožnit s odměnou za vítězství v singlu. Singlové a Q sazby otevřeny.
+
+### 5. Zdroje a mezery (WEL90)
+
+- [ATP archiv](https://www.atptour.com/en/scores/results-archive?year=1990), [ITF](https://www.itftennis.com/en/tournament/wellington/nzl/1990/m-wsf-nzl-01a-1990/) — termín, povrch a dotace.
+- [DE ročník](https://de.wikipedia.org/wiki/BP_National_Championships_1990) — hlavička 32E/32Q/16D, celý Main textově přepočten, kontrola čtyřhry. Odstavec uvádí Everndena jako seed3, tabulka/los jako seed4: používat los, nikoli odstavec.
+- [EN ročník](https://en.wikipedia.org/wiki/1990_BP_National_Championships), [FR série](https://fr.wikipedia.org/wiki/Tournoi_de_tennis_de_Wellington) — termín a dotace.
+- [AP/LA Times 8.1.](https://www.latimes.com/archives/la-xpm-1990-01-08-sp-161-story.html) — celý text, [AP/Cayman Compass](https://www.caymancompass.com/1990/01/08/sanchez-steals-bp-nationals) — indexovaný text, přístup 403; stejná agenturní provenience, ne nezávislé potvrzení.
+- [Daily Iowan 9.1.](https://dailyiowan.lib.uiowa.edu/DI/1990/di1990-01-09.pdf) — souhrnné týdenní příjmy, screenshot nedostupný; [body](https://openerarankings.com/RankingRules1990) — sekundární, přístup 503.
+- K doplnění: originální Main/Q, nominální entry, Q/Main OOP, dobový předpis, singlový finanční rozpis. Další chronologická edice Sydney 1990.
+
 
 ## Otevřené položky k opakované kontrole
 

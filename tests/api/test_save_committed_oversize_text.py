@@ -64,9 +64,9 @@ def _arm(tmp_path, source, monkeypatch, *, label, original, limit):
         remember, identity = cache.remember_committed_global_sources, cache._value_identity
 
         def remembered(repository, src, captured, **kwargs):
-            observed["calls"].append(type(kwargs.get("_payload_text")).__name__)
             if original:
                 kwargs.pop("_payload_text", None)
+            observed["calls"].append(type(kwargs.get("_payload_text")).__name__)
             before = observed["identities"]
             remember(repository, src, captured, **kwargs)
             observed["calls"][-1] += f":identities={observed['identities'] - before}"
@@ -102,7 +102,29 @@ def _arm(tmp_path, source, monkeypatch, *, label, original, limit):
     return receipt, retained, observed, _rows(path)
 
 
-@pytest.mark.parametrize("storage", ["prepared_slots", "prepared_slots_v2"])
+@pytest.fixture(scope="module")
+def ready_slots_v2(tmp_path_factory):
+    """The same genuinely produced ``ready`` global-slot Run, stored as Saved v2."""
+    import os
+
+    from beta_engine.infrastructure.db.saved_v2_hooks import ENVIRONMENT_VARIABLE
+    from tests.api.test_calendar_global_slots import ready
+
+    path = tmp_path_factory.mktemp("oversize-text-v2") / "ready-v2.db"
+    previous = os.environ.get(ENVIRONMENT_VARIABLE)
+    os.environ[ENVIRONMENT_VARIABLE] = "saved_v2"
+    try:
+        with ApiServer(database_url=f"sqlite:///{path}") as server:
+            ready(server, 52)
+    finally:
+        if previous is None:
+            os.environ.pop(ENVIRONMENT_VARIABLE, None)
+        else:
+            os.environ[ENVIRONMENT_VARIABLE] = previous
+    return path
+
+
+@pytest.mark.parametrize("storage", ["prepared_slots", "ready_slots_v2"])
 @pytest.mark.parametrize("limit", [1024, None])
 def test_oversize_decision_from_the_committed_text_keeps_every_byte_and_cache_entry(
     tmp_path, monkeypatch, request, storage, limit,
@@ -116,11 +138,13 @@ def test_oversize_decision_from_the_committed_text_keeps_every_byte_and_cache_en
     assert timeless(candidate[0]) == timeless(original[0])
     assert candidate[1] == original[1]          # identical retained decode cache
     assert candidate[3] == original[3]          # identical rows after retry, restart and 2nd Save
-    assert original[2]["calls"][0] == "NoneType:identities=1"
     if limit is None:
-        # A value that fits keeps the original identity, key and retention.
-        assert candidate[2]["calls"][0] == "str:identities=1" and candidate[1]
+        # A value that fits keeps the original identities, key and retention.
+        identities = original[2]["calls"][0].split(":")[1]
+        assert original[2]["calls"][0] == "NoneType:" + identities
+        assert candidate[2]["calls"][0] == "str:" + identities and candidate[1]
     else:
         # Oversize: neither the payload nor the checkpoint is re-encoded and
         # nothing is retained, exactly as the original path decided.
+        assert original[2]["calls"][0] == "NoneType:identities=1"
         assert candidate[2]["calls"][0] == "str:identities=0"

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 76 ročníků: nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 77 ročníků: nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -110,10 +110,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Hong Kong](#hong-kong-2025) | ✓ | ✓ | ✓* | ? | ✓ | ✓* | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: NG a rezervy) |
 | 2025 | [Adelaide](#adelaide-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Auckland](#auckland-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ? | ✓* | ROZPRACOVÁNO (8/9; P: vítězova odměna) |
+| 2025 | [Montpellier](#montpellier-2025) | ✓ | ✓ | ✓ | ? | ✓ | ✓* | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: čtvrtá WC a rezervy) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 76 zpracovaných ročníků; 67 hotových v nominálním rozsahu; 9 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 77 zpracovaných ročníků; 67 hotových v nominálním rozsahu; 10 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -196,7 +197,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 74 | Hong Kong 2025 | ROZPRACOVÁNO (E: NG a rezervy) |
 | 75 | Adelaide 2025 | HOTOVO (nominální rozsah) |
 | 76 | Auckland 2025 | ROZPRACOVÁNO (P: vítězova odměna) |
-| 77 | Montpellier 2025 | NEZAHÁJENO |
+| 77 | Montpellier 2025 | ROZPRACOVÁNO (E: čtvrtá WC a rezervy) |
+| 78 | Dallas 2025 | NEZAHÁJENO |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -8716,7 +8718,98 @@ Main kandidát 500005 USD, při Day1 hodnotě 499995 USD; Q kandidát 30520 USD,
 
 Otevřeno P: vítězova částka 103445/103455 USD, originální Q finance; dále originální Main/Q/acceptance/DS, úplné OOP, přesné skutečné entry/losovací časy, model míčů/kurtu a individuální LL/SE/LE administrativa. Žádné PDF hashe netvrzeny. Auckland 2024 zůstává samostatný otevřený případ, neřešit automaticky hodnotami 2025. Další Montpellier 2025.
 
+
+## Montpellier 2025
+
+**Stav: ROZPRACOVÁNO (8/9; E — čtvrtá WC a nominální rozdělení rezerv).** Rešerše 2026-11-28. Původní předstartovní Main, ATP Day1, pondělní OOP a předturnajový plán pořadatele vizuálně ověřeny; také dobové ATP pravidlo str.153 a 156. 
+
+### 1. Identita
+
+Open Occitanie (dříve Open Sud de France), ATP 250 ID375, Sud de France Arena, Pérols u Montpellier, Francie, halový tvrdý povrch. Europe/Paris, CET UTC+1; EUR. 15. edice dle pořadatele a ATP Day1 (2010 a od 2012), EN Wiki uvádí širší historii 38. edice; neztotožňovat. Ředitel Sébastien Grosjean, supervisor Cedric Mourier, referee Franck Sabatier z OOP. Model míčů/kurtu neověřen.
+
+### 2. Termíny a přihlášky
+
+| Pole | Hodnota |
+|---|---|
+| Main rank date / původní cutoff | 30.12.2024 / 68, dobový přepis |
+| Q rank date / původní cutoff | 6.1.2025 / 108 |
+| Standardní entry uzávěrky | odvozené 30.12. a 6.1. 12:00 EST = 18:00 CET (§7.03) |
+| Standardní LE uzávěrka | odvozená 23.1. 10:00 EST = 16:00 CET (§7.04) |
+| Main los | publikovaný 25.1.2025 12:45:47; skutečný čas losování neověřen |
+| Main cutoff při vydání losu | Gasquet 129, původní PDF |
+| Q | 26.–27.1.2025 |
+| Main | 27.1.–2.2.2025 |
+| Q2 | 27.1. od 12:00 CET na dvou kurtech |
+| Main první zápas | 27.1. NB16:30 CET |
+| Finále | 2.2. 15:00 CET dle ATP Day1 |
+
+Původní program pořadatele výslovně odděluje nedělní Q1 a pondělní Q2 souběžnou s Main. ITF týdenní termín 27.1.–2.2. není úplný termín Q+Main. Původní acceptance, DS, hodina Q losu a skutečné uzávěrky chybí.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální plánované okno | Uzly |
+|---|---|---:|
+| Q1 | 26.1. | 8 |
+| Q2 | 27.1. | 4 |
+| R32 | 27.–29.1. | 12 |
+| R16 | 29.–30.1. | 8 |
+| QF | 31.1. | 4 |
+| SF | 1.2. | 2 |
+| F | 2.2. | 1 |
+
+Předturnajová brožura pořadatele (PDF str.2, vizuálně) výslovně potvrzuje všechna okna i středeční souběh R32/R16. Vizuálně ověřené pondělní OOP má 4 Q2 + 3 Main R32. ATP Day2 výslovně první kolo; Day3 první i druhé; Day4 druhé. Přesný původní denní split ostatních vícedenních kol není nutný k H gate a není odhadován. Brožura má překlep v objednávkové tabulce neděle 1.2.; vlastní sportovní program správně 2.2. Dobový web evous s rozpisem 28.1.2024 výslovně cituje minulý ročník, nepřebírat jako doklad 2025.
+
+### 4. Struktura a vstup
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Účastníci | 28 | 16 |
+| Pozice | 32 | 16 |
+| Nasazení | 8 | 8 |
+| BYE | 4 | 0 |
+| WC | 4 v předstartovním losu; standard 3 | 2 |
+| Q postupy | 4 | 4 |
+| Formát | BO3 | BO3 |
+| Nominální uzly | 27 | 12 |
+
+Main předstartovní originál: BYE 2/10/23/31, Q pozice 4/5/15/28, WC 1/11/22/29; osm seedů. 20 ostatních vstupů +4 WC+4 Q =28; žádné označené SE/LL. Q kompletní sekundární pavouk: 16 účastníků, osm seedů, WC pozice 14/15 (Chidekh/Paire), jeden alternate místo běžného vstupu, čtyři sekce po čtyřech. Q14 DA+2 WC shodně ročníková stránka pořadatele, přepis acceptance a §7.08 E; pozorovaný alternate nemění nominální kvótu.
+
+**E otevřeno:** dobový předpis 23.12.2024 §7.08 B.1.c (tištěná str.153 vizuálně) standard 18–20 DA, 4 Q, 3 WC, 0–2 SE, 1 LE. Ročníkový pořadatelský formát uvádí 21 rankingových vstupů, 3 WC, 4 Q (součet28, bez rozlišení rezerv). Přepis acceptance 22.1. uvádí 18 DA, 4 WC, 4 Q, 0 SE (součet26, neúplný). Původní Main z 25.1. a Day1 nezávisle potvrzují čtyři WC: Rublev, Barrère, Halys, Wawrinka. Rublev dostal WC po AO dle CanalTenis; zdroj neříká, jak byla autorizována čtvrtá pozice. Pravidlo dodatečné A+ WC platí pro ATP500, nelze jej přenést na ATP250. Individuální výjimka z ročního WC limitu pro starší šampiony dle §7.10 B (ověřen text) není sama o sobě navýšení turnajové kvóty. Týden jediného ATP turnaje, ne three-event NG rezerva. Nominální rozdělení 18 DA+2 SE+1 LE+3 WC+4 Q je standardní základ, ale není potvrzenou ročníkovou alokací; čtvrtá WC nejspíš uvnitř 28, konkrétní nahrazená rezerva a souhlas ATP neznámé. Nevyvozovat, že původní tři WC jsou skutečné čtyři standardní. Nezvyšovat kapacitu. Původní předstartovní 4 WC jsou pro plán tohoto losu jisté, mechanismus a dlouhodobá nominální kvóta otevřeny.
+
+### 5. Dobová pravidla
+
+ATP 2025 Competition 23.12.2024, §7.03/7.04, §7.08 B/E, §7.09 (vizuální kontrola str.153/156), pravidla nasazení, náhrad a přidělení Q losem po dokončení kvalifikace. Q16/4, dva seedy na sekci, 28 účastníků na 32 pozicích a čtyři BYE. Ročníkový formát pořadatele potvrzuje BO3 s tie-breakem v každém setu, výsledkový Q tomu odpovídá. R*: pravidlo čtvrté WC zůstává E mezerou, ostatní použít dobový předpis, ne pozdější verze. ATP Day1 potvrzuje 0 bodů za prohru prvního hraného zápasu po BYE, nikoli 25. Q body přičitatelné k Main dle 2025 rankingového předpisu ověřeného dříve.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| W | 1 | 250 | 90680 |
+| F | 1 | 165 | 52890 |
+| SF | 2 | 100 | 31090 |
+| QF | 4 | 50 | 18015 |
+| R16 | 8 | 25* | 10460 |
+| R32 | 12 | 0 | 6390 |
+| Q postup | 4 | 13 | 0 |
+| Q2 prohra | 4 | 7 | 3200 |
+| Q1 prohra | 8 | 0 | 1745 |
+
+Main 438170 EUR přímo ze dvou vizuálně ověřených ATP dokumentů, Q 26760 EUR z concordantní sekundární tabulky TennisTemple a DE ročníku (P*, originální Q finanční tabulka nedostupná). Celkem 464930 EUR nominálních singlových odměn. Q třetí kolo v TennisTemple je štítek kvalifikanta, nikoli třetí zápas. 673360 EUR v hlavičce commitment, FR sezonní tabulka 596035 EUR celkové prize money, včetně doubles; ITF $732764 nebrat jako EUR ani jednotlivé singlové sazby. Neodvozovat reálné platby z nominálního součtu. 
+
+### 7. Zdroje a omezení (MPL25)
+
+- [ATP předstartovní Main kopie](https://www.fantatennis.net/_downloads/64a58a911b3fc2673db96533ba92413d), vizuálně str.1; [ATP Day1](https://www.atptour.com/-/media/9146cab316b44cbcbc359269dda10e8b.pdf), vizuálně str.1. Přímé [Main](https://www.protennislive.com/posting/2025/375/mds.pdf) a [Q](https://www.protennislive.com/posting/2025/375/qs.pdf) nedostupné.
+- [Předturnajová brožura pořadatele](https://www.openoccitanie.com/wp-content/uploads/2025/01/reunir-et-divertir.pdf), str.2 vizuálně, všechna okna. [Pondělní OOP](https://www.openoccitanie.com/wp-content/uploads/2025/01/op-of-lundi.pdf), str.1 vizuálně, Q2+R32; [ATP Day2](https://www.atptour.com/-/media/49323b62712242ce858192f90a04024b.pdf), [Day3](https://www.atptour.com/-/media/ab645ea032ed42ceb89468a538a02920.pdf), [Day4](https://www.atptour.com/-/media/ba3831f2186f4753a725ea33697ad651.pdf) text, screenshot403.
+- [Ročníkový formát pořadatele 2025](https://dev.openoccitanie.com/fr/format/), [aréna ročník](https://www.parc-expo-montpellier.com/evenement/open-sud-de-france-2025/), [TennisTeen přepis](https://www.tennisteen.it/entry-list/atp/24295-atp-entry-list-27-gennaio-2-febbraio-2025.html), [TennisActu 24.1. WC](https://www.tennisactu.net/news-atp-montpellier-halys-et-barrere-wild-cards-paire-invite-en-qualifs-114057.html), [CanalTenis los](https://canaltenis.com/cuadro-atp-montpellier-2025/).
+- [ATP Competition 23.12.2024](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-7_the-competition_23dec.pdf) tištěné str.135,153,156 vizuálně; §7.04 a pravidlo WC text.
+- [EN Main/Q](https://en.wikipedia.org/wiki/2025_Open_Occitanie_%E2%80%93_Singles), [DE ročník](https://de.wikipedia.org/wiki/Open_Occitanie_2025), [DE Q](https://de.wikipedia.org/wiki/Open_Occitanie_2025/Qualifikation), [FR ročník](https://fr.wikipedia.org/wiki/Tournoi_de_tennis_de_Montpellier_(ATP_2025)), [TennisTemple Q](https://fr.tennistemple.com/competitions/montpellier-2025/67851/draw-qualifications), [ITF](https://www.itftennis.com/en/tournament/montpellier-250/fra/2025/m-250-fra-2025-001/draws-and-results/), [Tennis Abstract](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2025-0375%2FMontpellier), [ATP středa](https://www.atptour.com/en/news/rublev-montpellier-2025-wednesday). Sekundární přepisy mohou sdílet původ; nikoli více nezávislých originálů.
+
+Otevřeno E — originální Main acceptance/DS, ročníkový souhlas čtvrté WC a rozdělení SE/LE, původní Q finanční originál, finální Main/Q, další OOP, přesné skutečné deadline a draw times, model míčů/kurtu. Žádný hash nevymyšlen. Další Dallas 2025 (ATP500); Córdoba již v roce 2025 není, inventuru ověřit samostatně.
+
+
 ## Otevřené položky k opakované kontrole
+
+**Montpellier 2025 — E otevřeno:** 4 WC v původním předstartovním Main/Day1 proti standardu 3 a staršímu formátu pořadatele; získat schválenou ročníkovou alokaci, Main acceptance/DS. Q odměny 3200/1745 EUR sekundární shoda.
 
 **Auckland 2025 — P otevřeno:** ATP Day1 103445 USD vs dobový Sportface a více sekundárních zdrojů 103455 USD; originální finální Main a Q finanční tabulky chybí. Nezaměňovat s Adelaide 103525 ani s Mullerovou YTD výhrou v Hongkongu.
 

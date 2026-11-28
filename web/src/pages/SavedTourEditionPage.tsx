@@ -1,5 +1,4 @@
 import {useQuery} from '@tanstack/react-query'
-import {useState} from 'react'
 import type {KeyboardEvent} from 'react'
 import {Link,useParams,useSearchParams} from 'react-router-dom'
 import {getSavedTourEdition} from '../api/client'
@@ -36,9 +35,25 @@ export function SavedTourEditionPage():JSX.Element {
   const model=eligible&&query.isSuccess&&!query.isFetching&&query.data&&validSavedTourEdition(query.data,runId,branch!,revision!,season!,eventId)
     ?query.data:null
   const tab=tabs.includes(params.get('tab') as Tab)?params.get('tab') as Tab:'overview'
-  const [phase,setPhase]=useState<'main'|'qualification'>('main')
+  // Preserve the actual Draw view when returning from a historical Match.
+  const selectedPhase=params.get('drawPhase')==='qualification'?'qualification':'main'
+  const visualDraw=params.get('drawView')==='visual'
+  const setPhase=(next:'main'|'qualification')=>{
+    const p=new URLSearchParams(params)
+    if(next==='qualification')p.set('drawPhase',next)
+    else p.delete('drawPhase')
+    setParams(p)
+  }
+  const setVisualDraw=(next:boolean)=>{
+    const p=new URLSearchParams(params)
+    if(next)p.set('drawView','visual')
+    else p.delete('drawView')
+    setParams(p)
+  }
   const changeTab=(next:Tab)=>{
-    const p=new URLSearchParams(params);p.set('tab',next);setParams(p)
+    const p=new URLSearchParams(params);p.set('tab',next)
+    if(next!=='draw'){p.delete('drawPhase');p.delete('drawView')}
+    setParams(p)
   }
   const onTabKeyDown=(event:KeyboardEvent<HTMLButtonElement>,current:Tab)=>{
     const at=tabs.indexOf(current)
@@ -66,7 +81,7 @@ export function SavedTourEditionPage():JSX.Element {
     value==='champion'?(cs?'vítěz':'champion'):
     value==='finalist'||value==='runner_up'?(cs?'finalista':'finalist'):
     value==='bye'?(cs?'volný los':'bye'):value
-  const back=new URLSearchParams(params);back.delete('tab')
+  const back=new URLSearchParams(params);back.delete('tab');back.delete('drawPhase');back.delete('drawView')
   const returnTo='/admin/runs/'+encodeURIComponent(runId)+'/tour/calendar?'+back.toString()
   const returnCountry=verifiedCountryReturn(params.get('fromCountry'),runId,revision)
   const labels=cs?['Přehled','Přihlášky a účastníci','Pavouk / skupiny','Program a zápasy','Výsledky','Nastavení']:
@@ -87,6 +102,20 @@ export function SavedTourEditionPage():JSX.Element {
     showCurrent={sameHead}/>
   const main=matches.filter(m=>m.draw_type!=='qualification')
   const qualification=matches.filter(m=>m.draw_type==='qualification')
+  // A configured qualification is not proof of a draw or a played match.
+  // Keep recorded evidence visible even if the configuration is incomplete.
+  const hasQualification=Boolean(e&&(e.qualification_draw_size>0||e.qualifier_spots>0
+    ||entry?.qualification_player_ids.length||draw?.qualification_sections.length
+    ||plannedQualification.length||qualification.length||result?.qualification_winner_ids.length))
+  const phase=hasQualification?selectedPhase:'main'
+  const phaseLabel=cs?'Hlavní část':'Main'
+  const qualificationLabel=cs?'Kvalifikace':'Qualification'
+  const phaseLinks=(section:string)=>hasQualification&&<nav
+    aria-label={cs?'Přejít na část soutěže':'Jump to competition phase'}
+    style={{position:'sticky',top:0,zIndex:1,background:'var(--panel, #fff)',padding:'0.35rem 0'}}>
+    <a href={'#saved-'+section+'-main'}>{phaseLabel}</a>
+    <a href={'#saved-'+section+'-qualification'}>{qualificationLabel}</a>
+  </nav>
   const matchSearch=params.get('matchSearch')??''
   const filteredResults=filterSavedEditionMatches(matches,matchSearch)
   const resultMain=filteredResults.filter(m=>m.draw_type!=='qualification')
@@ -206,23 +235,139 @@ export function SavedTourEditionPage():JSX.Element {
       </table>
     </div>
   </section>
+  // Group cards join only the frozen schedule and completed standings.
+  // Group points are not Official Ranking points; the DTO contains no
+  // configured crossing/advancement mapping.
+  const groupVisual=tab==='draw'&&phase==='main'&&visualDraw&&groupSchedule&&<section aria-label={cs?'Grafický přehled skupin':'Visual group overview'}>
+    <h4>{cs?'Uložené skupiny':'Saved groups'}</h4>
+    <p className="status">{cs?'Skupinové body nejsou body Official Rankingu. Postupové vazby tento historický zdroj neposkytuje.':
+      'Group points are not Official Ranking points. This historical source does not expose advancement mappings.'}</p>
+    <div className="grid">
+      {Array.from({length:groupSchedule.group_count},(_,i)=>i+1).map(groupIndex=>{
+        const fixtures=groupSchedule.matches.filter(m=>m.group_index===groupIndex)
+          .sort((a,b)=>a.match_day_ordinal-b.match_day_ordinal||a.match_order-b.match_order)
+        const members=[...new Set(fixtures.flatMap(m=>[m.top_player_id,m.bottom_player_id]))].sort()
+        const rows=groupStandings?.groups.find(g=>g.group_index===groupIndex)?.rows
+        const finalRows=rows&&rows.length===members.length&&rows.every(r=>members.includes(r.player_id))?rows:null
+        const publishedCount=fixtures.filter(m=>matches.some(r=>r.match_id===m.match_id&&r.draw_type==='group')).length
+        return <section key={groupIndex} className="section-subtle"
+          aria-label={(cs?'Skupina ':'Group ')+groupIndex}>
+          <h5>{cs?'Skupina':'Group'} {groupIndex}</h5>
+          <p className="status">{cs?'Publikované zápasy':'Published matches'}: {publishedCount}/{fixtures.length}</p>
+          {finalRows?<><p>{cs?'Uložené konečné pořadí':'Saved final standings'}</p>
+            <div className="table-responsive"><table aria-label={(cs?'Konečné pořadí skupiny ':'Final standings for group ')+groupIndex}>
+              <thead><tr><th>#</th><th>{cs?'Hráč':'Player'}</th><th>W–L</th>
+                <th>{cs?'Skupinové body':'Group points'}</th><th>W/O +/−</th></tr></thead>
+              <tbody>{finalRows.map(r=><tr key={r.player_id}>
+                <td>{r.position}</td><td>{playerRef(r.player_id)}</td>
+                <td>{r.wins}–{r.losses}</td><td><strong>{r.group_points}</strong></td>
+                <td>{r.walkovers_received}/{r.walkovers_conceded}</td>
+              </tr>)}</tbody>
+            </table></div>
+          </>:<><p role="status">{cs?'Ověřené konečné pořadí není dostupné.':
+            'Verified final standings are unavailable.'}</p>
+            <p>{cs?'Účastníci podle uloženého rozpisu (bez pořadí)':
+              'Participants from saved schedule (unranked)'}</p>
+            <ul>{members.map(id=><li key={id}>{playerRef(id)}</li>)}</ul>
+          </>}
+          <details>
+            <summary>{cs?'Uložený program skupiny':'Saved group fixtures'} ({fixtures.length})</summary>
+            {fixtures.map(g=>{
+              const published=matches.find(m=>m.match_id===g.match_id&&m.draw_type==='group')
+              return <div key={g.match_id} style={{borderTop:'1px solid currentColor',padding:'0.5rem 0'}}>
+                <small>{cs?'Zápasový den':'Match Day'} {g.match_day_ordinal} · #{g.match_order} · BO{g.best_of}</small>
+                <p>{playerRef(g.top_player_id)} – {playerRef(g.bottom_player_id)}</p>
+                {published?<p>{cs?'Vítěz':'Winner'}: {playerRef(published.winner_player_id)} · {published.scoreline}
+                  {published.loser_player_id&&<>
+                    {' · '}<Link to={matchHref(g.match_id,'draw')}>{cs?'Detail zápasu':'Match detail'}</Link>
+                  </>}</p>:<p className="status">{cs?'Bez kanonického výsledku':'Not canonically published'}</p>}
+              </div>
+            })}
+          </details>
+        </section>
+      })}
+    </div>
+    <p className="status">{cs?'Zápasové dny jsou pořadová čísla, ne datum nebo hodina.':
+      'Match Days are ordinals, not dates or clock times.'}</p>
+    {pendingTiePanel}
+    {groupStandings&&groupStandings.tie_decisions.length>0&&<p className="status">
+      {cs?'Úplný audit rozhodnutí při shodách je v záložce Výsledky.':
+        'The full audited tie decisions are in Results.'}</p>}
+  </section>
   const statusMissing=cs?'Tento zdroj neobsahuje úplnou historickou autoritu pro tento oddíl.':
     'A complete historical authority for this section is unavailable in this source.'
   const fieldList=(label:string,ids:string[])=><section key={label} className="section-subtle">
     <h4>{label} ({ids.length})</h4>
     {ids.length?<ol>{ids.map(id=><li key={id}>{id}</li>)}</ol>:<p role="status">{cs?'Žádní uložení účastníci v této části.':'No saved participants in this section.'}</p>}
   </section>
+  const visualSlots=(bracket:SavedTourDrawBracket)=>{
+    const slots=[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index)
+    const pairable=slots.length>=2&&slots.length<=128
+      &&(slots.length&(slots.length-1))===0
+      &&slots.every((slot,i)=>slot.slot_index===i+1)
+    // Canonical draw builder pairs slots 1/2, 3/4, etc. The projected
+    // response does not include feeder nodes: do not invent later edges.
+    if(!pairable)return <p role="status">{cs?'Dvojice prvního kola nelze bezpečně zobrazit.':
+      'First-round pairings cannot be displayed safely.'}</p>
+    return <section aria-label={cs?'Dvojice prvního kola':'First-round pairings'}>
+      <div className="grid">
+        {slots.filter((_,i)=>i%2===0).map((top,i)=><section key={top.slot_index} className="section-subtle"
+          aria-label={(cs?'Dvojice ':'Pair ')+(i+1)}>
+          <h5>{cs?'Pozice':'Slots'} {top.slot_index} / {slots[i*2+1].slot_index}</h5>
+          {[top,slots[i*2+1]].map(slot=><div key={slot.slot_index}
+            style={{border:'1px solid currentColor',borderRadius:6,padding:'0.45rem',margin:'0.3rem 0',overflowWrap:'anywhere'}}>
+            <small>#{slot.slot_index}{slot.seed_number!==null?' · '+(cs?'Nasazení':'Seed')+' '+slot.seed_number:''}</small>
+            <div><strong>{slot.player_id?playerRef(slot.player_id):slot.placeholder_id??
+              (slot.entrant_kind==='bye'?'BYE':'—')}</strong></div>
+            <small>{presentEntry(slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind))}</small>
+          </div>)}
+        </section>)}
+      </div>
+      <p className="status">{cs?'Dvojice vychází z uložených pozic losu, nikoli z odhadovaných výsledků.':
+        'Pairings follow saved draw slots, not inferred outcomes.'}</p>
+    </section>
+  }
+  const visualResults=(records:typeof matches)=>{
+    const kinds=[...new Set(records.map(m=>m.draw_type))]
+    return records.length?<section aria-label={cs?'Výsledky podle kol':'Published results by round'}>
+      <p className="status">{cs?'Sloupce zobrazují pouze publikované zápasy. Vazby postupu ani chybějící zápasy nejsou dopočítávány.':
+        'Columns show published matches only. Feeder links and missing matches are not reconstructed.'}</p>
+      {kinds.map(kind=>{
+        const rows=records.filter(m=>m.draw_type===kind)
+        const rounds=[...new Set(rows.map(m=>m.round_number))].sort((a,b)=>a-b)
+        return <section key={kind}><h5>{presentPhase(kind)}</h5>
+          <div style={{display:'flex',gap:'0.75rem',overflowX:'auto',paddingBottom:'0.5rem'}}>
+            {rounds.map(round=><section key={round} style={{flex:'0 0 14rem',minWidth:0}}
+              aria-label={(cs?'Kolo ':'Round ')+round}>
+              <h5>{cs?'Kolo':'Round'} {round}</h5>
+              {rows.filter(m=>m.round_number===round)
+                .sort((a,b)=>a.bracket_position-b.bracket_position||a.match_id.localeCompare(b.match_id))
+                .map(m=><div key={m.match_id} className="section-subtle"
+                  style={{marginBottom:'0.5rem',overflowWrap:'anywhere'}}>
+                  <small>{cs?'Pozice':'Position'} {m.bracket_position}</small>
+                  <p><strong>{playerRef(m.winner_player_id)}</strong> <small>· {cs?'vítěz':'winner'}</small></p>
+                  <p>{m.loser_player_id?playerRef(m.loser_player_id):'—'}</p>
+                  <p>{m.scoreline}{m.loser_player_id&&<>
+                    {' · '}<Link to={matchHref(m.match_id,'draw')}>{cs?'Detail zápasu':'Match detail'}</Link>
+                  </>}</p>
+                </div>)}
+            </section>)}
+          </div>
+        </section>
+      })}
+    </section>:<p>{cs?'Nejsou dostupné doložené zápasy.':'No evidenced matches available.'}</p>
+  }
   const bracketView=(bracket:SavedTourDrawBracket)=><section key={bracket.section_id??bracket.draw_type}>
     <h4>{bracket.section_id??(cs?'Hlavní pavouk':'Main draw')} · {bracket.bracket_size}
       {' '}{cs?'pozic':'slots'}</h4>
-    <div className="table-responsive"><table aria-label={'Saved draw '+(bracket.section_id??bracket.draw_type)}>
+    {visualDraw?visualSlots(bracket):<div className="table-responsive"><table aria-label={'Saved draw '+(bracket.section_id??bracket.draw_type)}>
       <thead><tr><th>{cs?'Pozice':'Slot'}</th><th>{cs?'Účastník / pozice':'Entrant / placeholder'}</th>
         <th>{cs?'Nasazení':'Seed'}</th><th>{cs?'Vstup':'Entry'}</th></tr></thead>
       <tbody>{[...bracket.slots].sort((a,b)=>a.slot_index-b.slot_index).map(slot=><tr key={slot.slot_index}>
         <td>{slot.slot_index}</td><td>{slot.player_id??slot.placeholder_id??(slot.entrant_kind==='bye'?'BYE':'—')}</td>
         <td>{slot.seed_number??'—'}</td>
         <td>{presentEntry(slot.entry_status??(slot.entrant_kind==='player'?'direct':slot.entrant_kind))}</td>
-      </tr>)}</tbody></table></div>
+      </tr>)}</tbody></table></div>}
   </section>
   return <section className="panel">
     {returnCountry&&<p><Link to={returnCountry}>
@@ -277,12 +422,30 @@ export function SavedTourEditionPage():JSX.Element {
           'Authentic saved Entry Field, version:'} {entry.field_sequence} · {presentEntry(entry.mode)}
           {' · '}{cs?'Kapacita hlavního pavouku':'Main capacity'}: {entry.main_draw_capacity}
           {' · '}BYE: {entry.effective_main_bye_count}</p>
-          <div className="grid">
-            {fieldList(cs?'Hlavní účastníci':'Direct Main entrants',entry.direct_main_player_ids)}
-            {fieldList(cs?'Kvalifikace':'Qualification entrants',entry.qualification_player_ids)}
-            {fieldList(cs?'Náhradníci':'Alternates',entry.alternate_player_ids)}
-            {fieldList(cs?'Odstoupení':'Withdrawn',entry.withdrawn_player_ids)}
-          </div></>:<p role="status">{cs?'Historický Entry Field pro tuto uloženou revizi není dostupný.':
+          </>:null}
+        {(entry||result)&&<>
+          {phaseLinks('entries')}
+          <section id="saved-entries-main" style={{scrollMarginTop:'4rem'}}>
+            <h4>{phaseLabel}</h4>
+            {entry?fieldList(cs?'Hlavní účastníci':'Direct Main entrants',entry.direct_main_player_ids):
+              <p>{statusMissing}</p>}
+            {result&&result.qualification_winner_ids.length>0&&
+              fieldList(cs?'Doložení postupující z kvalifikace':'Published qualification winners',
+                result.qualification_winner_ids)}
+          </section>
+          {hasQualification&&<section id="saved-entries-qualification" style={{scrollMarginTop:'4rem'}}>
+            <h4>{qualificationLabel}</h4>
+            {entry?fieldList(cs?'Účastníci kvalifikace':'Qualification entrants',
+              entry.qualification_player_ids):<p>{statusMissing}</p>}
+          </section>}
+          {entry&&<section>
+            <h4>{cs?'Společná evidence přihlášek':'Shared entry evidence'}</h4>
+            <div className="grid">
+              {fieldList(cs?'Náhradníci':'Alternates',entry.alternate_player_ids)}
+              {fieldList(cs?'Odstoupení':'Withdrawn',entry.withdrawn_player_ids)}
+            </div>
+          </section>}</>}
+        {!entry&&<p role="status">{cs?'Historický Entry Field pro tuto uloženou revizi není dostupný.':
             'No saved Entry Field exists in this revision.'}</p>}
         {result&&<><h4>{cs?'Doložení hráči z výsledkové autority':'Players evidenced by published results'}</h4>
           <p>{cs?'Výsledková evidence není náhradou za seznam přihlášek.':
@@ -292,17 +455,30 @@ export function SavedTourEditionPage():JSX.Element {
       {tab==='draw'&&<section><h3>{labels[2]}</h3>
         <p>{cs?'První kolo je z uložené Draw authority. Výsledky zápasů jsou oddělená evidence.':
           'First-round slots come from saved Draw authority. Match results are separate evidence.'}</p>
-        <div className="grid"><button type="button" aria-pressed={phase==='main'}
+        {hasQualification&&<div className="grid"><button type="button" aria-pressed={phase==='main'}
           onClick={()=>setPhase('main')}>{cs?'Hlavní část':'Main'}</button>
           <button type="button" aria-pressed={phase==='qualification'}
-          onClick={()=>setPhase('qualification')}>{cs?'Kvalifikace':'Qualification'}</button></div>
+          onClick={()=>setPhase('qualification')}>{qualificationLabel}</button></div>}
+        <div className="grid" aria-label={cs?'Zobrazení pavouku':'Draw presentation'}>
+          <button type="button" aria-pressed={!visualDraw} onClick={()=>setVisualDraw(false)}>
+            {cs?'Tabulka':'Table view'}</button>
+          <button type="button" aria-pressed={visualDraw} onClick={()=>setVisualDraw(true)}>
+            {cs?'Grafický přehled':'Visual overview'}</button>
+        </div>
+        {phase==='main'&&groupSchedule&&(visualDraw?groupVisual:<>
+          {groupStandingsTables}{pendingTiePanel}{groupScheduleTable}
+        </>)}
         {draw?(phase==='main'?bracketView(draw.main):draw.qualification_sections.length?
           draw.qualification_sections.map(bracketView):<p>{cs?'Uložený kvalifikační pavouk není dostupný.':
             'No saved qualification bracket is available.'}</p>):
-          <p role="status">{cs?'V této revizi není uložená Draw authority.':
-            'No saved Draw authority exists in this revision.'}</p>}
+          <p role="status">{phase==='main'&&groupSchedule?
+            (cs?'Samostatný vyřazovací pavouk není v této revizi doložen.':
+              'No separate knockout draw is evidenced in this revision.'):
+            (cs?'V této revizi není uložená Draw authority.':
+              'No saved Draw authority exists in this revision.')}</p>}
         {result&&<><h4>{cs?'Publikované výsledky zápasů':'Published match results'}</h4>
-          {matchTable(phase==='main'?main:qualification)}</>}
+          {visualDraw?visualResults(phase==='main'?main:qualification):
+            matchTable(phase==='main'?main:qualification)}</>}
         {draw&&sameHead&&<SavedDrawNativeReadiness key={[runId,branch,revision,eventId].join('|')}
           runId={runId} branchId={branch!} revisionId={revision!} eventId={eventId}
           season={e!.season} cs={cs} renderPlayer={playerRef}/>}
@@ -315,16 +491,15 @@ export function SavedTourEditionPage():JSX.Element {
           {' · '}{cs?'Zdroj':'Source'}: {schedule.source}</p>:
           !groupSchedule?<p role="status">{cs?'Uložený rozpis Match Day pro tuto edici není dostupný.':
             'An event-bound Saved Match Day schedule is unavailable for this Edition.'}</p>:null}
-        {(schedule||result||groupSchedule)&&<><a href="#saved-schedule-main">{cs?'Hlavní část':'Main'}</a>
-          {' · '}<a href="#saved-schedule-qualification">{cs?'Kvalifikace':'Qualification'}</a>
-          <section id="saved-schedule-main"><h4>{cs?'Hlavní část':'Main'}</h4>
+        {(schedule||result||groupSchedule)&&<>{phaseLinks('schedule')}
+          <section id="saved-schedule-main" style={{scrollMarginTop:'4rem'}}><h4>{cs?'Hlavní část':'Main'}</h4>
             {groupScheduleTable}
             {schedule?scheduledTable(plannedMain):result?<><p>{cs?'Publikovaná výsledková evidence, nezávislá na rozpisu.':
               'Published results are independent of a scheduled Match Day.'}</p>
               {matchTable(main)}</>:!groupSchedule?<p>{statusMissing}</p>:null}</section>
-          <section id="saved-schedule-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>
+          {hasQualification&&<section id="saved-schedule-qualification" style={{scrollMarginTop:'4rem'}}><h4>{cs?'Kvalifikace':'Qualification'}</h4>
             {schedule?scheduledTable(plannedQualification):<><p>{cs?'Pouze výsledková evidence, nikoli rozpis.':
-              'Published result evidence only, not a schedule.'}</p>{matchTable(qualification)}</>}</section></>}
+              'Published result evidence only, not a schedule.'}</p>{matchTable(qualification)}</>}</section>}</>}
       </section>}
       {tab==='results'&&<section><h3>{labels[4]}</h3>
         {groupStandingsTables}
@@ -341,21 +516,31 @@ export function SavedTourEditionPage():JSX.Element {
             {' '}<strong>{filteredResults.length}/{matches.length}</strong></p>
           {matches.length>0&&filteredResults.length===0&&<p role="status">{cs?
             'Žádný publikovaný zápas neodpovídá hledání.':'No published matches match the search.'}</p>}
-          <a href="#saved-results-main">{cs?'Hlavní část':'Main'}</a>
-          {' · '}<a href="#saved-results-qualification">{cs?'Kvalifikace':'Qualification'}</a>
-          <section id="saved-results-main"><h4>{cs?'Hlavní část':'Main'}</h4>{matchTable(resultMain)}</section>
-          <section id="saved-results-qualification"><h4>{cs?'Kvalifikace':'Qualification'}</h4>{matchTable(resultQualification)}</section>
+          {phaseLinks('results')}
+          <section id="saved-results-main" style={{scrollMarginTop:'4rem'}}><h4>{phaseLabel}</h4>{matchTable(resultMain)}</section>
+          {hasQualification&&<section id="saved-results-qualification" style={{scrollMarginTop:'4rem'}}><h4>{qualificationLabel}</h4>{matchTable(resultQualification)}</section>}
         </>}
       </section>}
       {tab==='settings'&&<section><h3>{labels[5]}</h3>
         <p>{cs?'Uložené parametry edice (nikoli neuložený editor):':
           'Saved Edition parameters (not the live settings editor):'}</p>
-        <dl><dt>{cs?'Hlavní pavouk':'Main draw size'}</dt><dd>{e.main_draw_size}</dd>
-          <dt>{cs?'Kvalifikace':'Qualification draw size'}</dt><dd>{e.qualification_draw_size}</dd>
-          <dt>{cs?'Nasazení':'Seeds'}</dt><dd>{e.seeds_count}</dd>
-          <dt>{cs?'Místa kvalifikantů':'Qualifier slots'}</dt><dd>{e.qualifier_spots}</dd>
-          <dt>Wild cards</dt><dd>{e.wild_cards}</dd><dt>BYE</dt><dd>{e.byes}</dd>
-        </dl></section>}
+        {phaseLinks('settings')}
+        <section id="saved-settings-main" style={{scrollMarginTop:'4rem'}}>
+          <h4>{phaseLabel}</h4>
+          <dl><dt>{cs?'Hlavní pavouk':'Main draw size'}</dt><dd>{e.main_draw_size}</dd>
+            <dt>{cs?'Místa kvalifikantů':'Qualifier slots'}</dt><dd>{e.qualifier_spots}</dd>
+          </dl>
+        </section>
+        {hasQualification&&<section id="saved-settings-qualification" style={{scrollMarginTop:'4rem'}}>
+          <h4>{qualificationLabel}</h4>
+          <dl><dt>{cs?'Velikost kvalifikačního pavouku':'Qualification draw size'}</dt>
+            <dd>{e.qualification_draw_size}</dd></dl>
+        </section>}
+        <section><h4>{cs?'Další uložené parametry edice':'Other saved Edition parameters'}</h4>
+          <dl><dt>{cs?'Nasazení':'Seeds'}</dt><dd>{e.seeds_count}</dd>
+            <dt>Wild cards</dt><dd>{e.wild_cards}</dd><dt>BYE</dt><dd>{e.byes}</dd>
+          </dl>
+        </section></section>}
     </>}
   </section>
 }

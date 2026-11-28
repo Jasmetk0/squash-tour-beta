@@ -148,9 +148,12 @@ def verify_saved_tour_calendar(page, run_url: str, artifacts, port: int, source:
     page.get_by_role("button", name="Draw / groups").click()
     expect(page.get_by_role("table", name="Saved draw main")).to_be_visible()
     assert source["player_id"] in page.get_by_role("table", name="Saved draw main").inner_text()
-    page.get_by_role("button", name="Qualification").click()
-    expect(page.get_by_text("No evidenced matches available.")).to_be_visible()
-    page.get_by_role("button", name="Main").click()
+    # This opening-week fixture has no qualification. The Saved reader must
+    # show the Main draw without an empty Qualification switch.
+    assert edition["qualification_draw_size"] == 0, edition
+    assert edition["qualifier_spots"] == 0, edition
+    assert all(slot["draw_phase"] == "main" for slot in saved_schedule["slots"])
+    expect(page.get_by_role("button", name="Qualification", exact=True)).to_have_count(0)
     assert source["scoreline"] in page.locator("main").inner_text()
     page.get_by_role("button", name="Entries & participants").click()
     expect(page.get_by_text("Authentic saved Entry Field, version:", exact=False)).to_be_visible()

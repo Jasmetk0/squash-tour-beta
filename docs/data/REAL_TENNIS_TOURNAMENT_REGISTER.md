@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -79,7 +79,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Mallorca](#mallorca-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Eastbourne](#eastbourne-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Hamburg](#hamburg-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
-| 2024 | [Båstad](#båstad-2024) | ✓ | ✓ | ✓* | ? | ✓ | ✓ | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: alokace NG) |
+| 2024 | [Båstad](#båstad-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Gstaad](#gstaad-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Newport](#newport-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Kitzbühel](#kitzbühel-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
@@ -88,7 +88,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Washington](#washington-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Montreal](#montreal-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Cincinnati](#cincinnati-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
-| 2024 | [Winston-Salem](#winston-salem-2024) | ✓ | ✓ | ✓* | ? | ✓ | ✓ | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: PB/SE/LE rezervy) |
+| 2024 | [Winston-Salem](#winston-salem-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Chengdu](#chengdu-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Hangzhou](#hangzhou-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Tokyo](#tokyo-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
@@ -107,7 +107,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 70 zpracovaných ročníků; 64 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 70 zpracovaných ročníků; 66 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -158,7 +158,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 43 | Mallorca 2024 | HOTOVO (nominální rozsah) |
 | 44 | Eastbourne 2024 | HOTOVO (nominální rozsah) |
 | 45 | Hamburg 2024 | HOTOVO (nominální rozsah) |
-| 46 | Båstad 2024 | ROZPRACOVÁNO (E: alokace NG) |
+| 46 | Båstad 2024 | HOTOVO (nominální rozsah) |
 | 47 | Gstaad 2024 | HOTOVO (nominální rozsah) |
 | 48 | Newport 2024 | HOTOVO (nominální rozsah) |
 | 49 | Kitzbühel 2024 | HOTOVO (nominální rozsah) |
@@ -167,7 +167,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 52 | Washington 2024 | HOTOVO (nominální rozsah) |
 | 53 | Montreal 2024 | HOTOVO (nominální rozsah) |
 | 54 | Cincinnati 2024 | HOTOVO (nominální rozsah) |
-| 55 | Winston-Salem 2024 | ROZPRACOVÁNO (E: PB/SE/LE rezervy) |
+| 55 | Winston-Salem 2024 | HOTOVO (nominální rozsah) |
 | 56 | Chengdu 2024 | HOTOVO (nominální rozsah) |
 | 57 | Hangzhou 2024 | HOTOVO (nominální rozsah) |
 | 58 | Tokyo 2024 | HOTOVO (nominální rozsah) |
@@ -217,6 +217,14 @@ Otevřené brány beze změny: Auckland P, Marseille E, Santiago P, Lyon E, Bås
 - **Winston-Salem E stále otevřeno:** opět nalezen přepis 35+4+4+1+1+1=46 a §7.18 A.3, ne původní rezervní listina. **Båstad E:** v této dávce bez nového rozhodujícího dokladu.
 
 Aktuálně 60/66 nominálně kompletních edic 2024, šest otevřených; celý registr 64/70. Původní inventurní tabulka výše je historický checkpoint před touto kontrolou. Bez nových edic nebo změn runtime.
+
+### Třetí audit — nezávislost a verze zdrojů (2026-11-28)
+
+Båstad E a Winston-Salem E uzavřeny v nominálním rozsahu, viz BAS24-13 a WSA24-12–14. Závěr je rekonstrukce podložená ročníkovými přepisy a dobovým ATP předpisem, nikoli získání podepsaných originálních acceptance lists. Předchozí checkpointy výše jsou historické. Aktuálně 62/66 sezóny 2024 nominálně hotových, celý registr 66/70. Zbývají Auckland P, Marseille E, Santiago P, Shanghai P.
+
+Pro další audit: různé jazyky stejného ATP článku, kopie stejného PDF a Wikipedie/zrcadla nejsou nezávislé doklady. Rozlišovat původní plán a konečný los, publikovaný čas a skutečný okamžik, dobovou verzi pravidel a pozdější revizi. U Båstad potvrzuje úplná očíslovaná listina alokaci; u Winston-Salem pořadatelské oznámení 35/4 a předpis doplňují dva různě označené přepisy rezerv. Nepřebírat aritmeticky nemožné hlavičky. Zpřístupnění nového zdroje nesmí automaticky povýšit všechny ostatní jeho údaje.
+
+Auckland: [TennisTemple Q](https://en.tennistemple.com/competitions/auckland/2024/draw-qualifications) znovu 3550/1935, ale [Tennis Infinity 7.1.2024](https://tennis-infinity.com/atp/2024-asb-classic-auckland-atp-prize-money-points-overview) reprodukuje jinou Main tabulku (100640/58705) a neuvádí Q, takže není potvrzením této Q dvojice; vyhledávání vrátilo i ženské WTA losy, které nepatří k mužské edici. Santiago: [české zrcadlo Wiki](https://web.kurzy.cz/wiki/Chile_Open_2024) není nezávislý doklad, [TenisPortal](https://www.tenisportal.cz/santiago/2024/atp-muzi/) potvrzuje kandidáta 100640, nikoli původní výplatní doklad. Shanghai: [ATP přehled](https://www.atptour.com/en/news/shanghai-2024-atp-masters-1000-history-draws-schedule) a Day1 souhlasí 59000/34550; konečný los jinak, součty nerozlišují varianty. Žádný z těchto tří finančních rozporů neuzavřen. Marseille bez nového rozhodného dokladu v této dávce.
 
 ## Metodika evidence
 
@@ -286,7 +294,7 @@ Aktuálně 60/66 nominálně kompletních edic 2024, šest otevřených; celý r
 | [2024](#washington-2024) | Mubadala Citi DC Open | ATP 500 | 2024-07-27–2024-07-28 | 2024-07-29–2024-08-04 | HOTOVO v nominálním rozsahu; Main48/Q24, Q body 16/8/0 |
 | [2024](#montreal-2024) | National Bank Open presented by Rogers | ATP Masters 1000 | 2024-08-04–2024-08-05 | 2024-08-06–2024-08-12 | HOTOVO v nominálním rozsahu; Main56/Q28, plán posunut kvůli olympiádě |
 | [2024](#cincinnati-2024) | Cincinnati Open | ATP Masters 1000 | 2024-08-11–2024-08-12 | 2024-08-12–2024-08-19 | HOTOVO v nominálním rozsahu; Main56/Q28, plánovaný překryv Q2/Main |
-| [2024](#winston-salem-2024) | Winston-Salem Open | ATP 250 | 2024-08-17–2024-08-18 | 2024-08-18–2024-08-24 | ROZPRACOVÁNO; Main48/Q16, zvláštní PB, otevřený počáteční rozpis rezerv |
+| [2024](#winston-salem-2024) | Winston-Salem Open | ATP 250 | 2024-08-17–2024-08-18 | 2024-08-18–2024-08-24 | HOTOVO v nominálním rozsahu; Main48/Q16, zvláštní PB, nominální rezervy doloženy |
 | [2024](#chengdu-2024) | Chengdu Open | ATP 250 | 2024-09-17–2024-09-18 | 2024-09-18–2024-09-24 | HOTOVO v nominálním rozsahu; Main28/Q16, středa–úterý, překryv Q2/Main |
 | [2024](#hangzhou-2024) | Hangzhou Open | ATP 250 | 2024-09-17–2024-09-18 | 2024-09-18–2024-09-24 | HOTOVO v nominálním rozsahu; Main28/Q16, přesun Zhuhai ID4713, překryv Q2/Main |
 | [2024](#tokyo-2024) | Kinoshita Group Japan Open Tennis Championships | ATP 500 | 2024-09-23–2024-09-24 | 2024-09-25–2024-10-01 | HOTOVO v nominálním rozsahu; Main32/Q16, všech devět OOP |
@@ -5637,7 +5645,7 @@ I/T/D/R/B/P doloženy. H* původní denní OOP a přesný denní split časných
 
 ## Båstad 2024
 
-**Stav:** ROZPRACOVÁNO (8/9; E: přesná nominální alokace Next Gen v týdnu čtyř turnajů). Rešerše 2026-11-28. Rozpor 4 WC/3 Q v přepisu listiny vyřešen dvěma originálními Main losy: 3 WC/4 Q. Skutečný vstup NG Henrique Rocha potvrzen dobovými portugalskými, španělskými a italskými zdroji; není doloženo, ze které standardní rezervy byl přidělen. Kvalifikační odměny sekundární shoda.
+**Stav:** HOTOVO (nominální rozsah; H*/E*/P*/Z*). Navazující audit 2026-11-28 doložil rozklad 17 běžných DA (včetně PR) + 1 NG + 2 SE + 1 LE + 3 WC + 4 Q. Rešerše 2026-11-28. Rozpor 4 WC/3 Q v přepisu listiny vyřešen dvěma originálními Main losy: 3 WC/4 Q. Skutečný vstup NG Henrique Rocha potvrzen dobovými portugalskými, španělskými a italskými zdroji; NG je uvnitř 18 původních přímých vstupů, doloženo kompletním dobovým přepisem. Kvalifikační odměny sekundární shoda.
 
 ### 1. Identita a místo
 
@@ -5690,12 +5698,12 @@ Q1 v neděli doloženo předturnajovým přepisem 10.7. a pořadatelským bullet
 | Parametr | Main | Q |
 |---|---:|---:|
 | Kapacita / účastníci | 32 / 28 | 16 / 16 |
-| DA | 18–21 v obecném schématu bez NG; rozdělení NG rezervy neuzavřeno | 14 |
+| DA | 17 běžných DA + 1 NG uvnitř 18 základních DA; uvolněné SE/LE mohou zvýšit běžné DA až na 20 | 14 |
 | SE | 2 standardní rezervy | 0 |
 | LE | 1 standardní rezerva | 0 |
 | WC | 3 (originální los) | 2 |
 | Řádné Q postupy | 4 | 4 |
-| NG | 1 skutečně využité místo uvnitř 28, alokační pravidlo otevřeno | využití NG neprokázáno |
+| NG | 1 doložené místo uvnitř základních 18 DA, nikoli další místo | využití NG neprokázáno |
 | Nasazení | 8 | 8 |
 | BYE | 4 (seedy 1–4) | 0 |
 | Kola / zápasy | 5 / 27 | 2 / 12 |
@@ -5703,11 +5711,11 @@ Q1 v neděli doloženo předturnajovým přepisem 10.7. a pořadatelským bullet
 
 **Vyřešený rozpor:** dobový TennisTeen uvádí 18 DA/4 WC/3 Q/0 SE/0 LE (součet jen 25). Stejný poměr vykazuje u Gstaadu a Newportu. Nejde o použitelnou nominální tabulku. Předstartovní originální Main má 4 Q placeholdery (4/5/15/27), 3 WC (Nadal, Borg, Ymer), 4 BYE, 8 seedů. Konečný originál zachovává všechny 4 Q (Faria, Yevseyev, Skatov, Ajdukovic) i tři WC. LL Pellegrino nahradil Passara; jeho pozice byla odlišná od původního Q placeholderu, ale počet Q zůstal čtyři. Přesné administrativní pořadí přeskupení neodvozovat. Q úplný sekundární pavouk má 16 hráčů, osm seedů, dvě WC Hede/Rejchtman Vinciguerra, čtyři sekce; potvrzeno Q listinou 14+2. Main 12+8+4+2+1=27; Q 8+4=12.
 
-**Otevřený alokační detail:** dobové portugalské oznámení 18.6. výslovně identifikuje vstup Rocha přes NG program; další dva dobové zdroje označují NG u jeho jména. Originální předstartovní los jej má bez samostatného štítku. Skutečné obsazení předstartovního Main je 20 ostatních neoznačených hráčů + Rocha NG + 3 WC + 4 Q = 28. Nominální standard bez NG 18+2+1+3+4=28. Nelze přidat NG jako 29. místo. Přesný rozpočet rezerv (zda se NG odečítá z DA či jiné rezervy) ani podmínky jeho uvolnění pro tento konkrétní čtyřturnajový týden nebyly doloženy originální listinou či rozhodnutím ATP. Proto E zůstává otevřeno, nikoli kvůli počtu Q či WC.
+**Alokační detail uzavřen v nominálním rozsahu (2026-11-28):** dobový přepis CanalTenis BAS24-8/13 uvádí kompletní 28místnou listinu: 16 běžných jmen dle rankingu, Rocha NG na 17. řádku, Nishikori PR na 18. řádku, tři WC, dvě SE, jedno LE, čtyři Q. TennisTeen BAS24-5 rovněž uvádí 17 ostatních jmen a Rocha NG v osmnáctičlenném bloku DA, přestože souhrnnou hlavičku má chybnou. Portugalské oznámení BAS24-8 dokládá, že Rocha využil NG, ne WC. Zdroje se mohou opírat o tutéž původní ATP listinu; počítat jako shodu přepisů, nikoli tři nezávislá měření. Originální předstartovní Main potvrzuje 3 WC a 4 Q. ATP oznámení 20.12.2023 BAS24-9 říká výslovně tři nebo více ATP akcí týdně, zatímco §7.04/7.08 červencového předpisu používá formulaci tří akcí; ročníkové využití Rocha ve čtyřturnajovém týdnu potvrzuje praktickou aplikaci. Není nutné domýšlet další výjimku ani 29. místo. Původní podepsaná acceptance list/DS, individuální čas uvolnění SE/LE a Q NG využití zůstávají E*. Nominální rozklad 17+1+2+1+3+4=28.
 
 ### 5. Dobová pravidla
 
-ATP pravidla VII ve verzi 2.7.2024, §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle dřívějších zdrojů MPL24-5/6 a IW24-11/14. Verze 2.7. potvrzuje 4 Q u ATP250 a Q16 s 14 DA/2 WC. Sekce ATP Next Gen Programme stanoví věkovou způsobilost (ročník 2004 nebo mladší), Top 250 pro ATP250 příležitosti a rezervovaná místa, při nevyužití přecházející na dalšího hráče podle rankingu. Text zmiňuje týdny se třemi ATP akcemi; zde skutečně proběhly čtyři. Dobové doložené využití NG se nesmí ignorovat ani rozšířit na obecnou šablonu všech čtyř turnajů. Q dva BO3 zápasy; body 13/7/0 navíc k Main výsledku. První prohra po BYE 0 bodů dle dobového rankingového předpisu.
+ATP pravidla VII ve verzi 2.7.2024, §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle dřívějších zdrojů MPL24-5/6 a IW24-11/14. Verze 2.7. potvrzuje 4 Q u ATP250 a Q16 s 14 DA/2 WC. Sekce ATP Next Gen Programme stanoví věkovou způsobilost (ročník 2004 nebo mladší), Top 250 pro ATP250 příležitosti a rezervovaná místa, při nevyužití přecházející na dalšího hráče podle rankingu. Text červencové verze zmiňuje týdny se třemi ATP akcemi; oznámení ATP před sezonou výslovně tři nebo více, zde skutečně čtyři. Dobové doložené využití NG se nesmí ignorovat ani rozšířit na obecnou šablonu všech čtyř turnajů. Q dva BO3 zápasy; body 13/7/0 navíc k Main výsledku. První prohra po BYE 0 bodů dle dobového rankingového předpisu.
 
 ### 6. Body a odměny (EUR)
 
@@ -5727,7 +5735,7 @@ Main přímo z obou originálů; Q shodně CanalTenis, německý ročníkový p�
 
 ### 7. Kontrola a mezery
 
-I/T/H*/D/R/B/P*/Z* doloženy. E otevřeno jen pro nominální alokaci NG v konkrétním týdnu. Oba Main losy vizuálně ověřeny, pořadatelský bulletin a červencový rulebook textově (screenshoty 403); originální Q PDF nedostupné. Přesný původní denní split, hodiny losů, originální listiny/DS, Q cutoff a model míčů nezískány. Aritmetická kontrola 28/16, seedů, BYE, Q postupů, 27+12 uzlů, denních počtů a financí prošla. Další Gstaad 2024, poté Newport, u obou obdobný rozpor v přepisu listiny ověřit samostatně. Bez runtime změn.
+I/T/H*/D/R/B/P*/Z* doloženy. E* nominální alokace NG doložena kompletním dobovým přepisem a křížovou kontrolou, původní listina/DS a přesná administrace stále chybějí. Oba Main losy vizuálně ověřeny, pořadatelský bulletin a červencový rulebook textově (screenshoty 403); originální Q PDF nedostupné. Přesný původní denní split, hodiny losů, originální listiny/DS, Q cutoff a model míčů nezískány. Aritmetická kontrola 28/16, seedů, BYE, Q postupů, 27+12 uzlů, denních počtů a financí prošla. Další Gstaad 2024, poté Newport, u obou obdobný rozpor v přepisu listiny ověřit samostatně. Bez runtime změn.
 
 ### 8. Zdroje (BAS24)
 
@@ -5743,6 +5751,7 @@ I/T/H*/D/R/B/P*/Z* doloženy. E otevřeno jen pro nominální alokaci NG v konkr
 - BAS24-10: [CanalTenis historická finanční tabulka](https://canaltenis.com/prize-money-atp-bastad/), ceny 2024, historie; [německý přehled 2024](https://de.wikipedia.org/wiki/Nordea_Open_2024/Herren), ceny i Q dny; [TennisTemple Q](https://fr.tennistemple.com/competitions/bastad/2024/draw-qualifications), sekundární ceny.
 - BAS24-11: [německý Q přehled](https://de.wikipedia.org/wiki/Nordea_Open_2024/Herren/Qualifikation), 14.–15.7., čtyři postupující.
 - BAS24-12: [Eurosport dobový čas F](https://www.eurosport.es/tenis/atp-bastad/2024/horario-donde-ver-final-atp-bastad-nadal-borges_sto20019452/story.shtml); [ATP scouting report 14.7.](https://www.atptour.com/en/news/hamburg-bastad-gstaad-newport-scouting-report-2024), souběžné čtyři ATP akce.
+- BAS24-13: [CanalTenis úplná listina Båstad 2024](https://canaltenis.com/entry-list-atp-bastad-2024/), očíslovaných 28 míst včetně 17 běžných DA (PR uvnitř), 1 NG, 3 WC, 2 SE, 1 LE a 4 Q; [ATP původní oznámení](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024) potvrzuje tři nebo více akcí. Červencový rulebook opakovaně textově, screenshot403.
 
 ## Gstaad 2024
 
@@ -6651,11 +6660,11 @@ Ročníkový sekundární program WSA24-7: Q1 sobota od 11:00, neděle Q2 a Main
 | Parametr | Main | Q |
 |---|---:|---:|
 | Kapacita / základní místa | 64 / 48 | 16 / 16 (4 sekce po 4) |
-| DA | 35–37 podle znění §7.18; uvolněné rezervy dle pravidel | 14 |
-| SE | 0–2 | 0 |
-| LE | 0–1 | 0 |
+| DA | 35 původních DA; 35–37 podle §7.18 při PB, uvolnění dalších rezerv dle pravidel | 14 |
+| SE | 2 původní rezervy, 0–2 skutečné | 0 |
+| LE | 1 původní rezerva, 0–1 skutečná | 0 |
 | WC | 4 | 2 |
-| PB | 0–2 podmíněné pozice, nikoli hráči navíc | 0 |
+| PB | 2 původní rezervy, 0–2 podmíněné pozice; skutečně 0 | 0 |
 | Řádné Q postupy | 4 | 4 |
 | Nasazení | 16 | 8 |
 | BYE | 16 běžných + 0–2 PB dle využití; v ročníku 16 | 0 |
@@ -6664,7 +6673,7 @@ Ročníkový sekundární program WSA24-7: Q1 sobota od 11:00, neděle Q2 a Main
 
 Dobový srpnový předpis §7.18 A.3 má zvláštní podmínku pro finalisty Cincinnati, kteří jsou přijati v Main Winston-Salem, avšak nemají ranking pro top 16 seedů. Každý PB spot spotřebuje jedno z 48 základních míst, není to další účastník: při p využitých PB by bylo 48−p hráčů, 16+p BYE a 47−p Main uzlů. Nevyužitá rezervace před startem Q posune acceptance list o místo, po startu Q má být nahrazena způsobilým LL. Deadline potvrzení PB je start Q. Jde o odlišnou výjimku nad rámec SE, ne další běžné seedy. V roce 2024 oba finalisté Cincinnati Sinner a Tiafoe v Main Winston-Salem nejsou, konečný los obsahuje 48 skutečných hráčů a 16 BYE, žádnou využitou PB. Přesná administrativní historie rezerv není doložena.
 
-**Otevřené E:** dobový přepis 16.8. uvádí 35 DA + 4 WC + 4 Q + 1 SE + 1 LE + 1 PB = 46, nikoli 48. Plná maximální rezervace 35+4+4+2+1+2=48 je aritmeticky možná podle předpisu, nelze ji ale bez originální listiny prohlásit za konkrétní ročníkový stav. Samotný předpis uvádí DA 35–37, nikoli nezávisle kombinovatelné rozsahy všech kategorií; uvolňování PB je výslovně popsáno. Přepis LiveTennis navíc označuje SE 2/4 bez vysvětlení rozdělení. Nominální specifický mechanismus i skutečné obsazení doloženy; přesný ročníkový počáteční rozpis rezerv zůstává blokující nejasností. Neopravovat přepis přidáním dvou libovolných míst.
+**E – nominální rozpis doložen 2026-11-28:** pořadatel 24.7. potvrzuje 35 původních hráčů a čtyři WC (WSA24-12). CanalTenis 26.7. publikuje úplný přepis 35 DA + 4 WC + 4 souhrnně označené SE + 1 LE + 4 Q = 48 (WSA24-13). Dobový Sportface 16.8. rozlišuje přesně dvě SE a dvě PB v původní listině (pozdější přeškrtnutí není změnou nominální kapacity). Srpnový oficiální soupis změn ATP §7.18 A.3 výslovně zavádí PB a rozlišuje SE/PB/LE (WSA24-14). Tím je podložen původní nominální rozklad 35+4+4+2+1+2=48. TennisTeen 16.8. hlavička 35+4+4+1+1+1=46 není úplná počáteční listina; LiveTennis 2/4 a CanalTenis čtyři SE jsou agregace, nikoli důkaz čtyř běžných SE. Přepisy pravděpodobně vycházejí ze stejné ATP listiny, ale oficiální pořadatelské oznámení a dobový předpis mají odlišnou evidenční funkci. E* původní podepsaný acceptance list/DS a časové pořadí individuálního uvolnění rezerv zůstávají otevřené; nulové skutečné PB doloženo. Nezaměňovat 35–37 DA při pravidlu PB za maximální počet běžných vstupů po uvolnění všech rezerv.
 
 Výsledkový Main originál: čtyři Q na pozicích 12/37/38/43, WC 17/44/52/59, dva LL na 20/61, jeden Alt na 21, PR na 28. Seed 2 Draper odstoupil, Safiullin jako seed 17 převzal jeho BYE; plán stále 16 seedů, nikoli 17 současně. Předstartovní Q originál 16 hráčů, 8 seedů, 2 WC (10/15), 6 Alt. Q14 DA/2 WC je standardní kvóta §7.08 E, Alt mění obsazení, nikoli strukturu. Čtyři Q vítězové v konečném Main; předstartovní Q originál má ještě Mullera, který přešel do Main, nezaměňovat za konečný los. Sekundární výsledkový přepis WSA24-8 chybně obrací výsledek Svajda–Kumar (Main označení jsou rozhodná pro postup/LL). Main 16+16+8+4+2+1=47, Q8+4=12, 59 nominálních uzlů při nulovém PB.
 
@@ -6691,7 +6700,7 @@ Main 589675 USD, Q 18540 USD, celkem 608215 USD nominálních mužských singlov
 
 ### 7. Kontrola a mezery
 
-I/T/D/R/B/P doloženy, H* okna a skutečné splity, původní denní OOP neúplné. **E otevřeno** kvůli aritmeticky neúplnému přepisu Main rezerv a chybějícímu ročníkovému originálu; §7.18 A.3 a nulové skutečné PB jisté, neuzavírat chybějící dvě pozice odhadem. E* také originální acceptance lists/DS a hodiny losů. Z* kombinovaný konečný Main a předstartovní Q vizuálně ověřeny, ATP Day1 str.1–2 vizuálně (na str.1 finanční tabulka). Srpnový rulebook textově, pokus o screenshot 403; originální konečný Q, předstartovní Main a úplné denní OOP chybějí. Žádné neověřené SHA-256. Kontrola 48/16, 16/8 seedů, 16 BYE, 4 Q, 59 uzlů a primárních finančních tabulek prošla; rozpor E nezakryt. Další cílená kontrola kvót WSA, poté podzimní ATP kalendář (Chengdu/Hangzhou; US Open již evidován, Davis Cup a Laver Cup zvlášť). Bez runtime změn.
+I/T/D/R/B/P doloženy, H* okna a skutečné splity, původní denní OOP neúplné. E* nominální rezervy doloženy dobovými přepisy a oficiálním předpisem; přesný administrativní stav a ročníkový podepsaný originál otevřené. E* také originální acceptance lists/DS a hodiny losů. Z* kombinovaný konečný Main a předstartovní Q vizuálně ověřeny, ATP Day1 str.1–2 vizuálně (na str.1 finanční tabulka). Srpnový rulebook textově, pokus o screenshot 403; originální konečný Q, předstartovní Main a úplné denní OOP chybějí. Žádné neověřené SHA-256. Kontrola 48/16, 16/8 seedů, 16 BYE, 4 Q, 59 uzlů a primárních finančních tabulek prošla; rozpor neúplné hlavičky zachován, nominální rozklad doložen. Další cílená kontrola kvót WSA, poté podzimní ATP kalendář (Chengdu/Hangzhou; US Open již evidován, Davis Cup a Laver Cup zvlášť). Bez runtime změn.
 
 ### 8. Zdroje (WSA24)
 
@@ -6706,6 +6715,9 @@ I/T/D/R/B/P doloženy, H* okna a skutečné splity, původní denní OOP neúpln
 - WSA24-9: [ATP ranking rulebook 19.3.2024](https://www.atptour.com/-/media/files/rulebook/2024/2024-rulebook-chapter-9_pif-atp-rankings_19mar.pdf), indexovaný text, Q 8/4 při Main >32; přímo potvrzeno originálem WSA24-3.
 - WSA24-10: [EN ročníkový přehled](https://en.wikipedia.org/wiki/2024_Winston-Salem_Open), [DE Q](https://de.wikipedia.org/wiki/Winston-Salem_Open_2024/Qualifikation), [EN Main](https://en.wikipedia.org/wiki/2024_Winston-Salem_Open_%E2%80%93_Singles), [ITF](https://www.itftennis.com/en/tournament/winston-salem-open/usa/2024/m-250-usa-2024-006/draws-and-results/), rozdíl týdenní hlavičky.
 - WSA24-11: [ATP série 6242](https://www.atptour.com/en/tournaments/winston-salem/6242/overview), [pořadatelský archiv originálů](https://www.winstonsalemopen.com/en/tournament/history).
+- WSA24-12: [oficiální oznámení pořadatele 24.7.](https://www.winstonsalemopen.com/en/media/news/2024-field-announcement), 35 původních hráčů a 4 WC.
+- WSA24-13: [CanalTenis 26.7.](https://canaltenis.com/entry-list-atp-winston-salem-2024/), úplná 48místná listina s agregovanými čtyřmi SE; [Sportface 16.8.](https://news.sportface.it/tennis/entry-list/entry-list-atp-winston-salem-2024-partecipanti-ed-italiani-presenti/2625258), rozlišuje 2 SE a 2 PB. Přepisy nejsou originální ATP dokumenty.
+- WSA24-14: [ATP soupis změn srpen 2024](https://www.atptour.com/-/media/files/rulebook/2024/24-rulebook-changes_aug2024v1.pdf), §7.18 A.3, poslední strana textově, screenshot403, účinnost okamžitá; výslovná zvláštní nominální kompozice 48.
 
 ## Chengdu 2024
 
@@ -8255,7 +8267,7 @@ I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně 
 | Mallorca 2024 | H*/E*/Z* | původní denní OOP prvních kol, acceptance lists/DS, hodiny losů, originální Main PDF a jeho cutoff, model míčů; Q originál a finanční tabulka vizuálně ověřeny, Main ceny z primárních ATP Notes |
 | Eastbourne 2024 | E*/Z* | originální acceptance lists/DS, hodiny losů, původní předstartovní Main/Q a Q denní OOP, model míčů; Main/Q konečné finanční tabulky a šest Main OOP primárně vizuálně ověřeny |
 | Hamburg 2024 | H*/E*/Z* | původní denní OOP a plánované splity časných kol, acceptance lists/DS, skutečné hodiny losů, model míčů; tři originální ATP losy a Main/Q ceny vizuálně ověřeny |
-| Båstad 2024 | E – nominální alokace NG, blokuje HOTOVO | skutečný NG Rocha doložen třemi dobovými zdroji, 3 WC/4 Q oba Main originály; neověřeno, která rezerva se odečítá a jak platí pravidlo tří ATP akcí v tomto čtyřturnajovém týdnu. H*/P*/Z*: Q originál, Q odměny sekundární shoda 3105/1695, původní OOP, acceptance/DS, hodiny losů |
+| Båstad 2024 | H*/E*/P*/Z* | Nominální 17 DA + 1 NG + 2 SE + 1 LE + 3 WC + 4 Q doloženo úplným dobovým přepisem, pořadatelský originál acceptance/DS, přesná administrativa a Q NG, Q originál/ceny, OOP a losovací hodiny otevřeny. |
 | Gstaad 2024 | H*/E*/Z* | původní kompletní denní OOP, acceptance lists/DS, hodiny losů, originální konečný Main se spodní tabulkou, případná nevyužitá NG rezerva v týdnu čtyř akcí a potvrzení individuální emergency substitution/kompenzace; oba finanční rozpisy primárně doloženy |
 | Newport 2024 | H*/E*/P*/Z* | originální Main/Q losy a acceptance/DS, denní OOP a přesné původní splity, konečné cutoffy/hodiny losů, případná nevyužitá NG rezervace; Main primární ATP text, Q 3550/1935 USD sekundární shoda |
 | Kitzbühel 2024 | E*/Z* | originální Q acceptance list/DS, skutečné hodiny losů, původní předstartovní losy, model míčů a případná nevyužitá NG alokace; Main acceptance list, oba finanční rozpisy a všech osm OOP vizuálně ověřeny |
@@ -8264,7 +8276,7 @@ I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně 
 | Washington 2024 | H*/E*/Z* | originální Main/Q losy, acceptance/DS, přesný denní OOP, hodiny losů, konečné cutoffy, Q ranking date a původní seed tabulka, individuální A+ označení; Main/Q finance a body primární ATP text |
 | Montreal 2024 | H*/E*/P*/Z* | původní Q a konečný Main los, ATP DS, přesné hodiny uzávěrek/Q losu, konečné cutoffy, původní denní OOP a Q finanční originál (13915/7290 USD sekundární shoda); oba předstartovní Main a oba pořadatelské entry listy vizuálně ověřeny, sedm Q jednoznačně doloženo |
 | Cincinnati 2024 | E*/Z* | původní úplná ATP Q acceptance list/DS, přesné hodiny losů, předstartovní Main/Q, původní Q1/QF OOP, model míčů a rozpor hlaviček Laykold/GreenSet; Main acceptance list, oba finanční rozpisy a sedm OOP primárně vizuálně ověřeny |
-| Winston-Salem 2024 | E – počáteční alokace PB/SE/LE, blokuje HOTOVO | dobový přepis 35+4+4+1+1+1=46 vs kapacita48; §7.18 A.3 zvláštní PB doloženo, skutečné 0 PB ověřeno. Získat originální Main acceptance/DS a časový záznam uvolnění rezerv; H*/Z*: originální denní OOP, časy losů, konečný Q, předstartovní Main. Main/Q ceny primárně vizuálně ověřeny |
+| Winston-Salem 2024 | H*/E*/Z* | Nominální 35 DA + 4 WC + 4 Q + 2 SE + 1 LE + 2 PB doloženo dobovými přepisy a předpisem; skutečné 0 PB. Originální acceptance/DS, individuální uvolnění rezerv, kompletní OOP a losy otevřeny. |
 | Chengdu 2024 | H*/E*/R*/P*/Z* | původní Main/Q losy, acceptance/DS, přesné denní OOP a hodiny losů, rank dates/cutoffs, individuální SE/LE/NG alokace, Q finanční originál (6285/3425 USD sekundární shoda; TennisTemple zastaralé); oficiální pořadatelská okna a Main finance přímo ověřeny |
 | Hangzhou 2024 | H*/E*/R*/P*/Z* | původní Main/Q losy, acceptance/DS, rank dates/cutoffs, časy losů, původní úplné denní OOP, individuální SE/LE/NG, Q finanční originál (5365/2925 USD sekundární shoda); Main finance vizuálně, přesun Zhuhai primárně doložen |
 | Tokyo 2024 | E*/Z* | originální acceptance lists/DS, skutečné uzávěrky/rank dates, konečné cutoffy, přesná hodina Q losu, původní předstartovní a konečný Q, model míčů/kurtu a individuální A+ historie; oba Main, průběžný Q a všech devět denních OOP primárně vizuálně ověřeny |

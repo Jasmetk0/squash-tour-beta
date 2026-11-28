@@ -54,6 +54,13 @@ from beta_engine.domain.tournaments.native_canonical_knockout import (
     NativeCanonicalDrawBinding, is_canonical_edition, canonical_announcement_week,
     saved_ranked_point_table, validate_ranked_publication_week,
 )
+from beta_engine.domain.tournaments.native_scheduled_knockout import (
+    NativeScheduledKnockoutBinding, is_scheduled_edition, scheduled_announcement_week,
+    scheduled_draw_input, scheduled_point_table, SCHEDULED_RESULT_SCHEMA,
+)
+from beta_engine.domain.tournaments.wild_card_authority import (
+    TournamentWildCardAuthority, TournamentWildCardAuthorityBuilder,
+)
 
 def ranking_week(week):
     return CalendarRankingWeek(season_index=week.season_index, week=week.week)
@@ -63,7 +70,7 @@ from beta_engine.domain.tournaments.calendar_groups import NativeGroupConfigurat
 
 
 class CalendarTourEdition(FrozenInput):
-    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4"] = (
+    schema_version: Literal["calendar_tournament_edition.v1", "calendar_tournament_edition.v2", "calendar_tournament_edition.v3", "calendar_tournament_edition.v4", "calendar_tournament_edition.v5"] = (
         "calendar_tournament_edition.v1"
     )
     edition_id: str = Field(min_length=3, max_length=80)
@@ -125,7 +132,7 @@ class CalendarTourEdition(FrozenInput):
             if self.group_configuration is not None:
                 raise ValueError("Historical knockout Edition cannot carry group configuration")
             stages = required_stages(self.capacity.main_draw_size)
-        if self.ranked and self.schema_version == "calendar_tournament_edition.v4":
+        if self.ranked and self.schema_version in {"calendar_tournament_edition.v4", "calendar_tournament_edition.v5"}:
             # Reachable stages and exact values are verified against the Saved
             # source in CalendarEditionAuthority, not the legacy Main-only table.
             if not self.point_table or any(type(v) is not int or v < 0 for v in self.point_table.values()):
@@ -177,6 +184,16 @@ class CalendarEditionAuthority(FrozenInput):
     tournament_fingerprint: str | None = None
     result_confirmed: bool = False
     canonical_binding: NativeCanonicalDrawBinding | None = Field(default=None, exclude_if=lambda v: v is None)
+    # Native cross-week Q/Main (v5). Omitted when absent so earlier Editions keep
+    # their exact bytes and execution fingerprints.
+    scheduled_binding: NativeScheduledKnockoutBinding | None = Field(default=None, exclude_if=lambda v: v is None)
+    wild_card_authority: TournamentWildCardAuthority | None = Field(default=None, exclude_if=lambda v: v is None)
+
+    @property
+    def entry_capacity(self):
+        if self.scheduled_binding is not None:
+            return self.scheduled_binding.capacity
+        return self.edition.capacity
 
     @property
     def execution_fingerprint(self):
@@ -197,6 +214,8 @@ class CalendarEditionAuthority(FrozenInput):
                 "created_command_id": self.created_command_id,
                 "created_saved_head": self.created_saved_head,
                 **({"canonical_binding": self.canonical_binding.fingerprint} if self.canonical_binding is not None else {}),
+                **({"scheduled_binding": self.scheduled_binding.fingerprint} if self.scheduled_binding is not None else {}),
+                **({"wild_card_authority": self.wild_card_authority.fingerprint} if self.wild_card_authority is not None else {}),
             }
         )
 
@@ -236,6 +255,10 @@ class CalendarEditionAuthority(FrozenInput):
             return self
         if self.canonical_binding is not None:
             raise ValueError("Historical Edition cannot acquire canonical v4 source binding")
+        if is_scheduled_edition(self):
+            validate_scheduled_edition(self)
+        elif self.scheduled_binding is not None or self.wild_card_authority is not None:
+            raise ValueError("Only a scheduled v5 Edition may carry a scheduled binding or Wild Cards")
         ids = tuple(s.application_id for s in self.submissions)
         if ids != tuple(sorted(set(ids))) or len(
             {s.player_id for s in self.submissions}
@@ -266,7 +289,7 @@ class CalendarEditionAuthority(FrozenInput):
                 applications=tuple(
                     s.to_entry_field_application() for s in self.submissions
                 ),
-                capacity=self.edition.capacity,
+                capacity=self.entry_capacity,
             )
             if self.field != expected:
                 raise ValueError(
@@ -290,9 +313,56 @@ class CalendarEditionAuthority(FrozenInput):
         return self
 
 
+def build_scheduled_edition(binding):
+    """The only v5 Edition shape: every field follows the copied profile."""
+    profile, first = binding.profile, binding.first_round
+    return CalendarTourEdition(
+        schema_version="calendar_tournament_edition.v5",
+        edition_id=profile.occurrence_id,
+        name=profile.name,
+        week=first.week,
+        announcement_week=scheduled_announcement_week(binding),
+        start_slot=first.slot,
+        main_entrant_count=profile.main_entrants,
+        ranked=True,
+        point_table=scheduled_point_table(profile),
+        validity_weeks=binding.schedule.calendar.weeks_per_year,
+    )
+
+
+def validate_scheduled_edition(authority):
+    """Edition fields are derived from the copied profile; never client-supplied."""
+    binding, edition = authority.scheduled_binding, authority.edition
+    if binding is None:
+        raise ValueError("Scheduled v5 Edition requires its exact Saved profile binding")
+    if (
+        edition != build_scheduled_edition(binding)
+        or edition.week.calendar != binding.schedule.calendar
+        or authority.created_saved_head != binding.source_saved_revision_id
+    ):
+        raise ValueError("Scheduled Edition differs from its copied Saved profile/schedule")
+    wc = authority.wild_card_authority
+    if wc is not None:
+        if authority.field is None:
+            raise ValueError("Wild Cards require the approved Entry field")
+        expected = TournamentWildCardAuthorityBuilder.build(
+            field=authority.field, field_sequence=1, command_id=wc.resolved_by_command_id,
+            original_wild_card_player_ids=wc.original_wild_card_player_ids,
+        )
+        if wc != expected:
+            raise ValueError("Wild Card authority differs from the approved Entry field")
+    if authority.draw is not None and wc is None and binding.profile.wild_cards:
+        raise ValueError("Scheduled Draw requires resolved Wild Card authority")
+
+
 def build_draw(authority, command_id, seed):
     if authority.edition.schema_version == "calendar_tournament_edition.v3":
         return build_group_draw(authority, command_id, seed)
+    if is_scheduled_edition(authority):
+        inputs = scheduled_draw_input(
+            authority.model_copy(update={"draw_command_id": command_id, "draw_seed": seed})
+        )
+        return TournamentDrawAuthorityBuilder.build(draw_input=inputs, command_id=command_id)
     inputs = TournamentDrawInputAuthorityBuilder.build(
         authority=authority.ranking_authority,
         field=authority.field,
@@ -603,6 +673,17 @@ def lifecycle_calendars(state):
 def edition_results(authority, event):
     """One authoritative result per player; immutable Edition table is the source."""
     played_fingerprint = event.fingerprint
+    if is_scheduled_edition(authority):
+        if (event.schema_version != SCHEDULED_RESULT_SCHEMA
+            or authority.tournament_fingerprint != played_fingerprint
+            or event.edition_authority_fingerprint != authority.execution_fingerprint
+            or event.binding != authority.scheduled_binding
+            or event.draw != authority.draw
+            or event.tournament_id != authority.edition.edition_id
+            or (event.run_id, event.branch_id) != (authority.draw.run_id, authority.draw.branch_id)):
+            raise ValueError("Scheduled result differs from its exact terminal source")
+        _result, rows = event.ranking_results
+        return rows
     if is_canonical_edition(authority):
         expected_schema = (
             "native_canonical_tournament_result.v2"

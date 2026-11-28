@@ -1,3 +1,18 @@
+# Dallas 2025 playable on a native W52 Run — 25 November 2026 (unmerged Draft)
+
+Branch `claude/sleepy-gauss-uzaucb` on `buuk e3ad295`. A versioned native
+Edition `calendar_tournament_edition.v5` binds the copied Saved ATP knockout
+profile and an explicit Q/Main round schedule. Entry, Admin Wild Cards and the
+canonical v3 Draw use the ordinary native Tour commands; Q rounds play in W05
+and Main in W06 through the shared global slot ledger, and Q winners of the
+original Draw fill the Main places. The terminal result yields one ranking
+result per player (Q + Main once, profile points) at the next Week Transition.
+A real HTTP/SQLite test plays 12 Q and 31 Main MatchEngine matches with
+explicit Saves and two cold restarts; an independent Run reproduces the Q
+results for the same seeds. One tournament proves this format; two complete
+ATP seasons with Season 3 opened remain a separate acceptance. See
+[the profile contract](docs/ATP_SQUASH_SPORTING_PROFILES_V1.md).
+
 # Task Center progress without warm Saved v2 reconstruction — 25 November 2026 (unmerged candidate)
 
 The Task Center reads Saved v2 revision headers before the payload. On repeat

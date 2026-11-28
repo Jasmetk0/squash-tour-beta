@@ -378,3 +378,45 @@ prove Entry, create a Draw, run MatchEngine, Save or publish ranking. The next
 consumer must retain the original binding across Q Save/restart, ordinary Week
 Transition and Main in the existing global-slot ledger, then confirm/publish
 results through the actual Run commands. No legacy calendar guard is removed.
+
+## Native W52 cross-week play — Dallas 2025 (25 November 2026, Draft)
+
+A new versioned native Edition `calendar_tournament_edition.v5` connects one
+copied Saved knockout profile to the ordinary native Tour and the shared global
+slot ledger. Existing v1–v4 Editions, slots and results keep their bytes.
+
+1. Apply the ATP Calendar Setup, Save, initialize the native Tour.
+2. `POST .../calendar-tour/atp-source-editions/{occurrence_id}/scheduled-edition-preview`
+   takes the current Saved head, profile fingerprint and an explicit round
+   schedule. It re-runs the Saved schedule validation (Q in the sourced Q week,
+   Main in the Main source week) and returns the ordinary read-only Tour preview
+   of a `create-edition` command. Execute re-derives the Edition and binding
+   from the current Saved head; edited points, a foreign profile, another
+   Branch or a stale Saved hash are rejected.
+3. The Edition is announced at the preceding Week Transition (native one-week
+   lead; the knockout profile has no announcement date — see open option).
+4. In the Q week the normal `submit` / `approve` / `draw` commands use the
+   profile capacity (Dallas: 25 direct, Q16 with four qualifier places, three
+   Main WC, eight seeds). `draw` takes the Admin Wild Card nominations, resolved
+   by the existing WC rules; v87 requires professionals, the historical rule
+   requires a valid application. The Draw Input is canonical v3 and the
+   complete source-sized field is required.
+5. After the explicit Save of the Draw, Next Slot / Next Match play Q rounds in
+   their Run week and slots. Week Transition is blocked while any match of the
+   current or earlier scheduled week is open. In the Main week, Main nodes
+   consume exactly the accepted Q final winners of the original Draw.
+6. When all 43 nodes are accepted the ledger derives
+   `native_scheduled_knockout_result.v1`; `confirm-result` in the Main week
+   yields one `CalendarRankingResult` per player (Q and Main counted once,
+   profile points only), published at the following Week Transition with
+   W-week validity.
+
+Frozen matches carry the profile source Saved head; the Edition's played origin
+is the pre-play Saved head that already contains the native Draw, verified by
+the existing played-origin check. Every read also authenticates the copied
+profile against its physical Saved revision. Native forks of a Branch with a v5
+Edition are explicitly rejected until a versioned remapping exists.
+
+Not covered: Admin UI for this route (the catalog still reports knockout
+`execution_supported=false`), Lucky Losers/withdrawals inside a v5 Edition,
+BYE fields, and the two-season ATP acceptance.

@@ -210,8 +210,12 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
         replace_checkpoint(session, previous=cp, successor=successor, _verified_previous=cp, _repository=_repository)
         _fault_injection_point("after_global_slot_matches_write")
     events = {e.tournament_id: e for e in successor.tournaments}
+    # A scheduled v5 match keeps its copied profile source; its played origin
+    # is the actual pre-play Saved head that already contains the native Draw.
     starts = {
-        a.edition.edition_id: next(
+        a.edition.edition_id: command.expected_saved_head
+        if a.scheduled_binding is not None
+        else next(
             s.source_saved_head
             for s in slot.scheduled
             if s.edition_id == a.edition.edition_id
@@ -246,7 +250,7 @@ def apply_global_slot(session, ctx, state, command, *, persist, native_inputs=No
             "prepared_awards": [
                 a.model_dump(mode="json") for a in (
                     event.ranking_awards
-                    if event.schema_version == "native_canonical_tournament_result.v2"
+                    if event.schema_version in {"native_canonical_tournament_result.v2", "native_scheduled_knockout_result.v1"}
                     else event.prepared_awards
                 )
             ],

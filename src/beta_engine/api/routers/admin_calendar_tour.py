@@ -11,7 +11,7 @@ from beta_engine.application.atp_next_gen_edition import (
     ATPNextGenEditionPreviewRequest,
     preview_atp_next_gen_edition,
 )
-from beta_engine.application.atp_sourced_edition import inspect_atp_sourced_editions, preview_atp_sourced_edition
+from beta_engine.application.atp_sourced_edition import ATPScheduledEditionPreviewRequest, inspect_atp_sourced_editions, preview_atp_scheduled_edition, preview_atp_sourced_edition
 from beta_engine.application.atp_knockout_schedule_preview import ATPKnockoutSchedulePreviewRequest, preview_atp_knockout_schedule
 from beta_engine.application.saved_atp_scheduled_feeders import preview_saved_atp_feeders
 from beta_engine.application.calendar_tour_service import (
@@ -224,6 +224,17 @@ def atp_source_edition_preview(run_id: str, branch_id: str, occurrence_id: str,
     try:
         return preview_atp_sourced_edition(runtime.repository, run_id=run_id, branch_id=branch_id,
                                          occurrence_id=occurrence_id, request=payload)
+    except (KeyError, ValueError, TypeError) as exc:
+        raise conflict(exc) from exc
+
+
+@router.post('/atp-source-editions/{occurrence_id}/scheduled-edition-preview')
+def atp_scheduled_edition_preview(run_id: str, branch_id: str, occurrence_id: str,
+                                  payload: ATPScheduledEditionPreviewRequest,
+                                  runtime: Annotated[ApiRuntime, Depends(get_runtime)]):
+    try:
+        return preview_atp_scheduled_edition(runtime.repository, run_id=run_id, branch_id=branch_id,
+                                             occurrence_id=occurrence_id, request=payload)
     except (KeyError, ValueError, TypeError) as exc:
         raise conflict(exc) from exc
 

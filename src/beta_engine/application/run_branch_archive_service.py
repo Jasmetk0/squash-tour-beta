@@ -118,8 +118,8 @@ def inventory(archive):
                         "original_audit": "absent",
                         "evidence": "derived_from_saved_fork_lineage",
                         "reason": (
-                            "Materialized fork root written before its original "
-                            "audit existed; no audit is created or transferred"
+                            "No original audit is present for this materialized "
+                            "fork root. Its origin was checked from Saved lineage."
                         ),
                     }
                     for r in archive.legacy_unaudited_fork_roots

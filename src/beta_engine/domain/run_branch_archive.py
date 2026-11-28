@@ -374,11 +374,12 @@ def _fork_root_owner(revision, branches, revisions):
 
 
 def _legacy_unaudited_fork_root(revision, branches, revisions):
-    """Positive proof of a root written by the pre-#1939 ordinary fork writer.
+    """Identify an unaudited root consistent with the historical fork writer.
 
-    That writer (24 Sep – #1939) always produced this exact hash-bound change
-    summary and never wrote an audit. Proof requires the original Saved hash
-    (checked by ``original_authority``), the declared fork origin as parent on
+    Both the historical and current writers produce this hash-bound summary.
+    It establishes lineage, but cannot date the root or establish why its audit
+    is missing. Check the original Saved hash (in ``original_authority``),
+    the declared fork origin as parent on
     the source Branch's archived lineage, the signed Branch identity and the
     byte-exact summary bound to the root's own component fingerprints.
     """
@@ -393,20 +394,21 @@ def _legacy_unaudited_fork_root(revision, branches, revisions):
         component = content.get(key)
         return None if component is None else component.get("fingerprint")
 
-    return decode(revision.change_summary_json) == branch_fork_materialized_change_summary(
-        source_branch_id=owner.forked_from_branch_id,
-        source_saved_revision_id=revision.parent_revision_id,
-        ranking_fingerprint=fingerprint("ranking_preparation"),
-        initial_world_fingerprint=fingerprint("initial_world"),
-    )
+    return revision.change_summary_json == encode(
+        branch_fork_materialized_change_summary(
+            source_branch_id=owner.forked_from_branch_id,
+            source_saved_revision_id=revision.parent_revision_id,
+            ranking_fingerprint=fingerprint("ranking_preparation"),
+            initial_world_fingerprint=fingerprint("initial_world"),
+        )
+    ).decode("utf-8")
 
 
-def _check_fork_root_audit(audit, revision, branches):
-    owner = branches.get(revision.branch_id)
+def _check_fork_root_audit(audit, revision, branches, revisions):
+    owner = _fork_root_owner(revision, branches, revisions) if _ordinary_fork_root(revision) else None
     payload = decode(audit.payload_json)
     if not (
         audit.event_kind == BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND
-        and _ordinary_fork_root(revision)
         and owner is not None
         and audit.branch_id == revision.branch_id
         and isinstance(payload, dict)
@@ -649,8 +651,8 @@ class Archive:
                 "duplicate_audit",
                 "Each Saved revision may have only one original revision audit",
             )
-        # Roots written before #1939 never had an audit. Exempt ONLY a positively
-        # proven legacy root; it is reported as derived, never given an audit.
+        # Legacy writers omitted this audit. Only a root with matching Saved
+        # provenance and summary is eligible for derived missing-audit evidence.
         self.legacy_unaudited_fork_roots = [
             r
             for r in self.revisions
@@ -674,7 +676,7 @@ class Archive:
                 _ordinary_fork_root(revision)
                 or audit.event_kind == BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND
             ):
-                _check_fork_root_audit(audit, revision, branches)
+                _check_fork_root_audit(audit, revision, branches, revisions)
         for row in [*self.audits, *self.checkpoints]:
             if (
                 row.run_id != self.run.run_id

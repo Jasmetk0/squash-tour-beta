@@ -124,8 +124,8 @@ def test_legacy_root_is_disclosed_and_never_given_an_audit(legacy_run):
                 "original_audit": "absent",
                 "evidence": "derived_from_saved_fork_lineage",
                 "reason": (
-                    "Materialized fork root written before its original audit "
-                    "existed; no audit is created or transferred"
+                    "No original audit is present for this materialized "
+                    "fork root. Its origin was checked from Saved lineage."
                 ),
             }
         if audited_root in {r["revision_id"] for r in _part(raw, "revisions")}:
@@ -311,6 +311,25 @@ def test_rejections_keep_audit_and_provenance_strict(legacy_run):
             payload[field] = value
             a["payload_json"] = encode(payload).decode()
         assert _code(_repack(raw, edit_audit(tamper))) == "invalid_fork_audit", field
+
+    # An audit with the updated root hash must not substitute for signed origin.
+    def mismatched_audited_branch(parts):
+        root = _revision(parts, audited_root)
+        _edit(root, "payload_json", lambda p: p["branch"].update(
+            forked_from_saved_revision_id=initial,
+        ))
+        payload = decode(root["payload_json"])
+        root["content_hash"] = saved_revision_content_hash(
+            **{key: root[key] for key in ("revision_id", "run_id", "branch_id",
+                "sequence", "kind", "parent_revision_id", "payload_schema_version")},
+            payload=payload, change_summary=decode(root["change_summary_json"]),
+        )
+        row = next(a for a in parts["audits"] if a["saved_revision_id"] == audited_root)
+        details = decode(row["payload_json"])
+        details["saved_revision_content_hash"] = root["content_hash"]
+        row["payload_json"] = encode(details).decode()
+
+    assert _code(_repack(raw, mismatched_audited_branch)) == "invalid_fork_audit"
 
     # A fork-root audit kind attached to a non-fork revision.
     def misplaced(parts):

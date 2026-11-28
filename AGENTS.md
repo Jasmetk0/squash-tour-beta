@@ -45,6 +45,8 @@ autonomous; genuinely open product mechanics require the owner's decision.
 
 **Newer cost-saving workflow (Master v82 §36.8):** the continuation ChatGPT chat implements directly by default. Use Codex only for a justified bounded integration/concurrency/recovery task; choose the lightest adequate available model/effort. If credits run out, continue the same branch/PR with exact commit/test handoff. Do not duplicate work or require Codex for ordinary code/frontend/docs. This supersedes the older preferred-Codex role description above. The user still owns merge.
 
+For historical ATP Tour and Grand Slam editions, read the [research and edition approval workflow](docs/ATP_TOUR_W52_CHRONOLOGICAL_BACKLOG.md) before editing source data, calendar mappings or sporting profiles. Complete the historical research phase first, then submit one W52 conversion proposal per edition. Radim must explicitly approve each exact proposal before it is written to a production package. Planned tournament dates and draw capacities govern the proposal; incidental match moves and withdrawals remain source context.
+
 Project map: `src/beta_engine/domain` pure rules; `application` commands/services;
 `infrastructure` persistence/adapters; `api/routers` HTTP; `web/src` Admin/Viewer;
 `tests` mirrors backend layers; `docs` contains scoped contracts. Legacy season

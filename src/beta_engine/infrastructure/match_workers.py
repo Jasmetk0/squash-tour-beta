@@ -28,6 +28,11 @@ Concurrency contract (several Run/Branch requests share this executor):
 * Each admitted batch has a deadline proportional to its size (bounded by
   ``batch_timeout_cap``) before the sequential fallback; after a timeout the
   pool is not used for ``timeout_cooldown_seconds``.
+* Retiring a generation wakes every other batch still waiting on it at once
+  (``GenerationRetired``: an ordinary sequential fallback, not a timeout, no
+  cooldown) and ends the generation's processes *and* its manager thread, so
+  a retired pool can neither hold a request until its deadline nor block
+  interpreter exit.
 * No lock is held while a match is simulated or while a result is awaited.
 """
 
@@ -36,9 +41,10 @@ from __future__ import annotations
 import logging
 import multiprocessing
 import os
+import queue
 import threading
 import time
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ProcessPoolExecutor
 
 from beta_engine.domain.matches import slot_batch
 
@@ -72,10 +78,23 @@ def _warm_worker():
     import beta_engine.domain.matches.slot_batch  # noqa: F401
 
 
+class GenerationRetired(Exception):
+    """The pool generation serving a batch was retired before it completed.
+
+    Raised promptly to every other batch still waiting on that generation (for
+    example after a concurrent batch crashed, lied or timed out). It is an
+    ordinary fallback, never a timeout of the waiting batch: no cooldown.
+    """
+
+
+_RETIRED = object()  # wake-up sentinel put into the queue of a waiting batch
+
+
 class _Generation:
     """One concrete ``ProcessPoolExecutor``; retired at most once."""
 
-    __slots__ = ("number", "pool", "lock", "retired", "in_flight", "processes")
+    __slots__ = ("number", "pool", "lock", "retired", "in_flight", "processes", "waiters",
+                 "manager_thread", "result_queue")
 
     def __init__(self, number, pool):
         self.number = number
@@ -84,6 +103,9 @@ class _Generation:
         self.retired = False
         self.in_flight = 0
         self.processes = ()
+        self.waiters = set()  # completion queues of batches iterating this generation
+        self.manager_thread = None  # captured at retirement (shutdown drops the reference)
+        self.result_queue = None
 
 
 class ProcessBatch:
@@ -101,16 +123,46 @@ class ProcessBatch:
         """Yield responses as workers finish, so the parent decodes meanwhile.
 
         Completion order is irrelevant: the caller rebinds every response by
-        its request index.
+        its request index. Completion is observed through done callbacks, not
+        ``as_completed``: a future cancelled by the retirement of its pool
+        (``shutdown(cancel_futures=True)`` by a concurrent failing batch) is
+        never yielded by ``as_completed`` and would otherwise hold this batch
+        until its own deadline and be miscounted as a timeout.
         """
+        done = queue.SimpleQueue()
+        for future in self.futures:
+            future.add_done_callback(done.put)  # immediate for finished futures
+        generation = self.generation
+        with generation.lock:
+            if generation.retired:
+                done.put(_RETIRED)
+            else:
+                generation.waiters.add(done)
+        pending = len(self.futures)
         try:
-            for future in as_completed(self.futures, timeout=max(0.0, self.deadline - time.monotonic())):
+            while pending:
+                remaining = self.deadline - time.monotonic()
+                try:
+                    if remaining <= 0:
+                        raise queue.Empty
+                    item = done.get(timeout=remaining)
+                except queue.Empty:
+                    self.timed_out = True
+                    raise TimeoutError(
+                        "%d (of %d) futures unfinished" % (pending, len(self.futures))
+                    ) from None
+                if item is _RETIRED or item.cancelled():
+                    raise GenerationRetired(
+                        "Match worker pool generation %d was retired with %d of %d results pending"
+                        % (generation.number, pending, len(self.futures))
+                    )
+                pending -= 1
                 if self.first_result_seconds is None:
                     self.first_result_seconds = time.monotonic() - self.started
-                yield future.result()
-        except TimeoutError:
-            self.timed_out = True
-            raise
+                yield item.result()
+        finally:
+            with generation.lock:
+                generation.waiters.discard(done)
 
     def close(self):
         for future in self.futures:
@@ -158,7 +210,7 @@ class ProcessMatchExecutor(slot_batch.MatchBatchExecutor):
             "admitted_batches": 0, "admitted_matches": 0, "rejected_full": 0,
             "rejected_replacing": 0, "rejected_closed": 0, "rejected_cooldown": 0,
             "retired": 0, "stale_discards": 0, "timeouts": 0, "max_in_flight_seen": 0,
-            "max_live_workers_seen": 0,
+            "max_live_workers_seen": 0, "stuck_manager_threads": 0,
         }
 
     # -- generation management -------------------------------------------------
@@ -273,6 +325,12 @@ class ProcessMatchExecutor(slot_batch.MatchBatchExecutor):
             generation.processes = tuple(
                 (getattr(generation.pool, "_processes", None) or {}).values()
             )
+            # ``shutdown`` drops these references; ``_shutdown`` needs them.
+            generation.manager_thread = getattr(generation.pool, "_executor_manager_thread", None)
+            generation.result_queue = getattr(generation.pool, "_result_queue", None)
+            waiters, generation.waiters = tuple(generation.waiters), set()
+        for waiter in waiters:  # every other batch on this pool falls back now
+            waiter.put(_RETIRED)
         with self._lock:
             if self._current is generation:
                 self._current = None
@@ -282,11 +340,20 @@ class ProcessMatchExecutor(slot_batch.MatchBatchExecutor):
             generation.in_flight = 0
             self._retiring.add(generation)
             self._stats["retired"] += 1
+        stopped = False
         try:
-            _shutdown(generation.pool, generation.processes, self.join_seconds)
+            stopped = _shutdown(
+                generation.pool, generation.processes, self.join_seconds,
+                manager_thread=generation.manager_thread, result_queue=generation.result_queue,
+            )
         finally:
             with self._lock:
                 self._retiring.discard(generation)
+                if not stopped:
+                    self._stats["stuck_manager_threads"] += 1
+        if not stopped:
+            _log.error("Match worker pool generation %d left its manager thread running",
+                       generation.number)
         return True
 
     # -- observation -----------------------------------------------------------
@@ -330,7 +397,20 @@ def _run_warm(_index):
     return os.getpid()
 
 
-def _shutdown(pool, processes, join_seconds):
+def _shutdown(pool, processes, join_seconds, *, manager_thread=None, result_queue=None):
+    """Stop one retired pool: its processes and its manager thread.
+
+    Returns whether the pool's manager thread has ended. A worker terminated
+    while it was writing a large result leaves a partial message in the
+    result pipe. The manager thread then blocks in ``recv`` for bytes that
+    never come, because this process itself still holds the pipe's write end
+    (CPython 3.11-3.13 close it only in ``shutdown(wait=True)``). Interpreter
+    exit joins that thread without a limit (``concurrent.futures.process.
+    _python_exit``), so the whole process could never exit. Once every
+    worker is joined nothing can write a result any more: closing the parent's
+    write end turns the partial read into EOF, the manager thread marks the
+    pool broken and ends.
+    """
     try:
         pool.shutdown(wait=False, cancel_futures=True)
     finally:
@@ -342,6 +422,17 @@ def _shutdown(pool, processes, join_seconds):
             if process.is_alive():
                 process.kill()
                 process.join(timeout=join_seconds)
+        if not any(process.is_alive() for process in processes):
+            writer = getattr(result_queue, "_writer", None)
+            if writer is not None:
+                try:
+                    writer.close()
+                except OSError:
+                    pass
+    if manager_thread is None or manager_thread is threading.current_thread():
+        return True
+    manager_thread.join(timeout=join_seconds)
+    return not manager_thread.is_alive()
 
 
 def install_from_environment(value: str | None = None):

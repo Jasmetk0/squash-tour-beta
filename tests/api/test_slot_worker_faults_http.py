@@ -53,12 +53,20 @@ FAULTS = {
 
 
 class FaultScript(match_workers.ProcessMatchExecutor):
-    """Applies one scripted fault per admitted batch, in arrival order."""
+    """Applies one scripted fault per admitted batch, in arrival order.
+
+    The injected timeout has its own trigger, independent of runner speed: its
+    workers sleep 30 s while its deadline is 1 s. Every admitted batch is kept,
+    so each counted timeout is attributed to exactly one batch; a timeout of
+    any other (healthy or differently faulted) batch is an unexpected
+    production timeout and fails the test with its generation and size.
+    """
 
     def __init__(self, workers, script):
         super().__init__(workers, timeout_cooldown_seconds=3.0)
         self.script = list(script)
         self.applied = []
+        self.batches = []  # (fault, the batch object the request thread iterated)
         self._script_lock = threading.Lock()
 
     def run(self, requests):
@@ -69,11 +77,16 @@ class FaultScript(match_workers.ProcessMatchExecutor):
             if self.script:
                 self.script.pop(0)
             self.applied.append(fault)
-        if fault == "timeout":
-            batch.deadline = time.monotonic() + 1.0
-        elif fault in FAULTS:
-            batch = _Mutated(batch, FAULTS[fault])
+            if fault == "timeout":
+                batch.deadline = time.monotonic() + 1.0
+            elif fault in FAULTS:
+                batch = _Mutated(batch, FAULTS[fault])
+            self.batches.append((fault, batch))
         return batch
+
+    def timed_out_batches(self):
+        return [(fault, batch.generation.number, len(batch.futures))
+                for fault, batch in self.batches if batch.timed_out]
 
 
 @pytest.fixture(scope="module")
@@ -137,8 +150,14 @@ def test_faulty_shared_pool_equals_sequential_over_http_saved_v2(tmp_path, parit
     assert executor.applied[: len(script)] == script, executor.applied
     assert after["fallback_batches"] - before["fallback_batches"] >= 5  # every fault but "shuffled"
     assert after["executor_batches"] - before["executor_batches"] >= 2  # healthy after recovery
-    assert stats["timeouts"] == 1 and stats["max_live_workers_seen"] <= 2
+    timed_out = executor.timed_out_batches()
+    assert [fault for fault, *_ in timed_out] == ["timeout"], f"unexpected worker timeouts: {timed_out}"
+    assert stats["timeouts"] == 1 and stats["max_live_workers_seen"] <= 2, stats
+    assert stats["stuck_manager_threads"] == 0, stats
     assert executor.live_worker_pids() == []
+    # Nothing left that interpreter exit would join without a limit.
+    managers = [t for t in threading.enumerate() if type(t).__name__ == "_ExecutorManagerThread"]
+    assert managers == [], managers
     # A new sequential process re-verifies both stored results identically.
     branches = ["branch", sequential["fork_id"]]
     replay_sequential = _replay(sequential_db, branches, tmp_path, "sequential")

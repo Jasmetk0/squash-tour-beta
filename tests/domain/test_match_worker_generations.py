@@ -10,6 +10,7 @@ or failed batch returns the original sequential bytes.
 from __future__ import annotations
 
 import os
+import sys
 import threading
 import time
 
@@ -54,6 +55,28 @@ def crash_worker(_request):
 def slow_worker(request):
     time.sleep(30)
     return slot_batch.run_encoded(request)
+
+
+PARTIAL_MARKER = "BETA_ENGINE_TEST_PARTIAL_RESULT_MARKER"
+
+
+def partial_result_worker(_request):
+    """Write the first bytes of a large result, then stall like a busy sender.
+
+    This is exactly the state of a worker terminated in the middle of
+    ``send_bytes`` of a big ``MatchResult``: the length header promises 1 MiB,
+    only 1 KiB arrives. The marker file says the partial message is written.
+    """
+    import gc
+    import multiprocessing.queues
+    import struct
+
+    (results,) = [o for o in gc.get_objects() if isinstance(o, multiprocessing.queues.SimpleQueue)]
+    with results._wlock:
+        results._writer._send(struct.pack("!i", 1 << 20) + b"\0" * 1024)
+        with open(os.environ[PARTIAL_MARKER], "w") as marker:
+            marker.write(str(os.getpid()))
+        time.sleep(600)
 
 
 def _wait(predicate, seconds=30.0):
@@ -155,10 +178,10 @@ def test_replacement_waits_for_the_old_processes_and_never_exceeds_the_worker_li
     real_shutdown = match_workers._shutdown
     joining, release = threading.Event(), threading.Event()
 
-    def slow_shutdown(pool, processes, join_seconds):
+    def slow_shutdown(pool, processes, join_seconds, **kwargs):
         joining.set()
         assert release.wait(60)
-        real_shutdown(pool, processes, join_seconds)
+        return real_shutdown(pool, processes, join_seconds, **kwargs)
 
     try:
         executor.start()
@@ -286,3 +309,83 @@ def test_install_is_atomic_and_uninstall_removes_only_its_own_executor():
         match_workers.uninstall(other)  # closing a never-started executor is harmless
     finally:
         slot_batch.install_executor(previous)
+
+
+def test_a_retired_generation_wakes_every_other_waiting_batch_without_a_timeout(items, sequential):
+    """Nov 27 #1936: a healthy batch sharing a pool with a failing one.
+
+    Batch X holds both workers; batch Y waits on the same generation. X fails
+    (crash/duplicate/missing/foreign) and retires the pool. Y must fall back
+    at once: its futures are cancelled or never completed by the retired pool,
+    so waiting for them until Y's own deadline is a spurious timeout with a
+    cooldown. Y returns the sequential bytes and no timeout is counted.
+    """
+    executor = match_workers.ProcessMatchExecutor(2)
+    outcome = {}
+    try:
+        executor.start()
+        executor.work = slow_worker
+        held = executor.run(_requests(items[:2]))          # both workers busy for 30 s
+        executor.work = slot_batch.run_encoded
+
+        def waiting_request():
+            started = time.monotonic()
+            outcome["results"] = slot_batch.simulate_batch(items[2:5], executor=executor)
+            outcome["seconds"] = time.monotonic() - started
+
+        thread = threading.Thread(target=waiting_request)
+        thread.start()
+        _wait(lambda: executor.stats()["in_flight"] == 5)  # Y admitted on the same generation
+        deadline = executor.batch_timeout(3)
+        held.close()
+        executor.discard(held)                              # X failed: generation 1 retires
+        thread.join(60)
+        assert not thread.is_alive()
+        assert outcome["results"] == sequential[2:5]
+        stats = executor.stats()
+        assert stats["timeouts"] == 0 and stats["rejected_cooldown"] == 0, stats
+        assert stats["retired"] == 1 and stats["stale_discards"] == 1, stats
+        assert stats.get("stuck_manager_threads", 0) == 0 and stats["in_flight"] == 0
+        assert outcome["seconds"] < deadline, (outcome["seconds"], deadline)
+        assert executor.live_worker_pids() == []
+        # Not cooling down: the very next batch is served by a new generation.
+        assert slot_batch.simulate_batch(items, executor=executor) == sequential
+        assert executor.pools_started == 2
+    finally:
+        executor.close()
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="POSIX byte-stream result pipe")
+def test_a_worker_killed_while_sending_its_result_never_blocks_the_manager_thread(
+    items, tmp_path, monkeypatch,
+):
+    """Nov 27 #1936: the pytest step that never exited after its summary.
+
+    A worker retired in the middle of writing a large result leaves a partial
+    message. Without help, the manager thread of the retired pool blocks in
+    ``recv`` forever and interpreter exit (``_python_exit``) joins it without
+    a limit. Retirement must end that thread too.
+    """
+    marker = tmp_path / "partial"
+    monkeypatch.setenv(PARTIAL_MARKER, str(marker))
+    executor = match_workers.ProcessMatchExecutor(1)
+    pool = thread = results = None
+    try:
+        executor.work = partial_result_worker
+        batch = executor.run(_requests(items[:1]))
+        pool = batch.generation.pool
+        thread, results = pool._executor_manager_thread, pool._result_queue
+        _wait(marker.exists, 120)                           # the partial message is in the pipe
+        _wait(lambda: not results._reader.poll(0), 30)      # and the manager thread is reading it
+        batch.close()
+        executor.discard(batch)                             # e.g. the batch's deadline expired
+        assert executor.stats().get("stuck_manager_threads", 0) == 0
+        assert not thread.is_alive()
+        assert executor.live_worker_pids() == []
+        assert not [t for t in threading.enumerate() if t is thread]
+    finally:
+        executor.close()
+        if thread is not None and thread.is_alive():
+            # Regression: unblock it anyway so this test process can still exit.
+            results._writer.close()
+            thread.join(30)

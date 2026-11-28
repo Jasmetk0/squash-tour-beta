@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -71,7 +71,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Madrid](#madrid-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Rome](#rome-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Geneva](#geneva-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
-| 2024 | [Lyon](#lyon-2024) | ✓ | ✓ | ✓* | ? | ✓ | ✓* | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: nominální Q WC) |
+| 2024 | [Lyon](#lyon-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Stuttgart](#stuttgart-2024) | ✓ | ✓ | ✓* | ✓* | ✓* | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | ['s-Hertogenbosch](#s-hertogenbosch-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Halle](#halle-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
@@ -107,7 +107,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 70 zpracovaných ročníků; 63 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 70 zpracovaných ročníků; 64 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -150,7 +150,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 35 | Madrid 2024 | HOTOVO (nominální rozsah) |
 | 36 | Rome 2024 | HOTOVO (nominální rozsah) |
 | 37 | Geneva 2024 | HOTOVO (nominální rozsah) |
-| 38 | Lyon 2024 | ROZPRACOVÁNO (E: nominální Q WC) |
+| 38 | Lyon 2024 | HOTOVO (nominální rozsah) |
 | 39 | Stuttgart 2024 | HOTOVO (nominální rozsah) |
 | 40 | 's-Hertogenbosch 2024 | HOTOVO (nominální rozsah) |
 | 41 | Halle 2024 | HOTOVO (nominální rozsah) |
@@ -207,6 +207,17 @@ Křížová kontrola proti [ATP Results Archive 2024](https://www.atptour.com/en
 
 Otevřené brány beze změny: Auckland P, Marseille E, Santiago P, Lyon E, Båstad E, Winston-Salem E, Shanghai P. Opakovaně vizuálně ověřen [konečný Shanghai Main, obě strany](https://www.tenislosalcazares.com/cuadros/masters/shanghai24.pdf): R32/R64 59100/34500; dřívější ATP Media Notes rozpor trvá. [Santiago ATP Day1](https://www.atptour.com/-/media/0d8c7cea020848e1b5007515dbef1ab5.pdf) opakovaně textově 100635/58700, screenshot403; [dobová chilská zpráva](https://www.encancha.cl/polideportivo/tenis/2024/02/26/los-millones-del-atp-de-santiago-cuanto-dinero-reparte-en-premios-el-chile-open/) uvádí 100640. Bez rozhodného dalšího dokladu neuzavírat. Žádné nové profily ani změny jejich parametrů v tomto auditu.
 
+### Navazující kontrola otevřených bran — 2026-11-28
+
+- **Lyon E uzavřeno:** oficiální magazín a samostatný pořadatelský web potvrzují 14+2 v souladu s dobovým ATP předpisem, viz LYO24-13/16. Main sazby v EUR a Wilson míče potvrzeny přímo pořadatelem. Press kit 12+4 zachován jako rozpor, původní Q acceptance/DS a individuální využití otevřeny. PDF text dostupný, screenshoty 502.
+- **Shanghai P stále otevřeno:** [konečný los přímo na webu pořadatele](https://en.rolexshanghaimasters.com/images/draws/2024_singles.pdf?id=18) obě tabulky textově potvrzují 59100/34500, screenshoty 404; [španělská verze ATP přehledu](https://www.atptour.com/es/news/shanghai-2024-atp-masters-1000-history-draws-schedule) potvrzuje 59000, stejně jako EN. Jde o stejné zdrojové větve, nikoli nezávislý účetní doklad; neuzavírat.
+- **Marseille E stále otevřeno:** opakovaná rešerše pořadatelských dokumentů našla opět Main list, Q los a OOP, nikoli rozhodnou nominální Q listinu. Lyon 14+2 není důkaz pro jinou edici.
+- **Auckland P stále otevřeno:** opět nalezen TennisTemple Q 3550/1935; obdobné částky z jiných turnajů nejsou důkazem pro Auckland.
+- **Santiago P stále otevřeno:** [italský ročníkový přehled](https://it.wikipedia.org/wiki/Chile_Open_2024) a [dobová chilská veřejnoprávní zpráva](https://www.24horas.cl/deportes/tenis/el-nuevo-ranking-y-millonario-premio-que-aseguro-alejandro-tabilo-) podporují 100640, ale originální ATP rozpis zůstává v rozporu.
+- **Winston-Salem E stále otevřeno:** opět nalezen přepis 35+4+4+1+1+1=46 a §7.18 A.3, ne původní rezervní listina. **Båstad E:** v této dávce bez nového rozhodujícího dokladu.
+
+Aktuálně 60/66 nominálně kompletních edic 2024, šest otevřených; celý registr 64/70. Původní inventurní tabulka výše je historický checkpoint před touto kontrolou. Bez nových edic nebo změn runtime.
+
 ## Metodika evidence
 
 - **Late Entry (LE), nově doloženo pro Montpellier 2024:** ATP Rulebook, verze 22.1.2024, §7.04 a §7.08 B.1.c, stanoví jedno rezervované LE místo v ATP 250; pro 28 hráčů 18 základních DA + 2 rezervy SE + 1 LE + 4 Q + 3 WC. Nevyužité LE místo přechází na dalšího způsobilého hráče entry listu. Způsobilost se posuzuje podle rankingu 28 dní před pondělím turnaje a původního cut-off; deadline LE je čtvrtek 10:00 US Eastern před turnajem. Rozlišovat verze pravidel: konkrétní doklad pro Montpellier existuje již v listině zveřejněné 4.1.2024, nepovažovat však datum verze rulebooku za přesné datum účinnosti ani mechanicky nepřepisovat starší turnaje. Viz MPL24-5/6/7.
@@ -258,7 +269,7 @@ Otevřené brány beze změny: Auckland P, Marseille E, Santiago P, Lyon E, Bås
 | [2024](#madrid-2024) | Mutua Madrid Open | ATP Masters 1000 | 2024-04-22–2024-04-23 | 2024-04-24–2024-05-05 | HOTOVO v nominálním rozsahu; 4.5. bez mužské dvouhry |
 | [2024](#rome-2024) | Internazionali BNL d'Italia | ATP Masters 1000 | 2024-05-06–2024-05-07 | 2024-05-08–2024-05-19 | HOTOVO v nominálním rozsahu; 18.5. bez mužské dvouhry |
 | [2024](#geneva-2024) | Gonet Geneva Open | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | HOTOVO v nominálním rozsahu; souběh 19.5., sobotní F |
-| [2024](#lyon-2024) | Open Parc Auvergne-Rhône-Alpes Lyon | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | ROZPRACOVÁNO; konflikt Q WC, historická série 7694 |
+| [2024](#lyon-2024) | Open Parc Auvergne-Rhône-Alpes Lyon | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | HOTOVO v nominálním rozsahu; Q WC vyřešeny, historická série 7694 |
 | [2024](#stuttgart-2024) | BOSS OPEN | ATP 250 | 2024-06-08–2024-06-09 | 2024-06-10–2024-06-16 | HOTOVO v nominálním rozsahu; tráva, Q1 přesuny odděleny |
 | [2024](#s-hertogenbosch-2024) | Libéma Open | ATP 250 | 2024-06-08–2024-06-09 | 2024-06-10–2024-06-16 | HOTOVO v nominálním rozsahu; všechny denní počty přímo doloženy |
 | [2024](#halle-2024) | Terra Wortmann Open | ATP 500 | 2024-06-15–2024-06-16 | 2024-06-17–2024-06-23 | HOTOVO v nominálním rozsahu; původní denní splity R32/R16 otevřeny |
@@ -4744,7 +4755,7 @@ I/T/D/R/B/P doloženy. H* okna a nominální dny Q/QF/SF/F ověřeny, R32 2+6+4 
 
 ## Lyon 2024
 
-**Stav:** ROZPRACOVÁNO (8/9; E: konflikt nominálních Q WC; H/P/Z s dílčími mezerami). Rešerše 2026-11-27. Sedmý a poslední Open Parc původní antukové série ATP 7694. Dobový press kit, ATP Day 1 a původní OOP získány textově, revidovaný OOP 21.5. také vizuálně. Rozpor Q kvót nesmí být skryt převzetím standardní tabulky.
+**Stav:** HOTOVO (nominální rozsah; E*/H*/P*/Z*). Audit 2026-11-28 uzavřel nominální Q kvótu 14 DA + 2 WC podle dobového oficiálního magazínu a webu pořadatele. Rešerše 2026-11-27. Sedmý a poslední Open Parc původní antukové série ATP 7694. Dobový press kit, ATP Day 1 a původní OOP získány textově, revidovaný OOP 21.5. také vizuálně. Původní rozpor Q kvót zachován níže s vysvětlením.
 
 ### 1. Identita a místo
 
@@ -4760,7 +4771,7 @@ I/T/D/R/B/P doloženy. H* okna a nominální dny Q/QF/SF/F ověřeny, R32 2+6+4 
 | Tour manager / referee | Thomas Schrader / Carlos Ramos | LYO24-5/6/7 |
 | Měna | EUR | LYO24-1/4/8 |
 
-Pořadatel výslovně označuje 2024 za poslední ročník. Neztotožňovat s ATP 496 (Marseille do 2025, přemístění licence do Lyonu od 2026), historickým halovým Lyonem ani s Lyon Challengerem. Míče a detail sheet nezískány. ITF uvádí evidenční týden od 20.5.; ATP ročníková stránka a pořadatel potvrzují Main od neděle 19.5.
+Pořadatel výslovně označuje 2024 za poslední ročník. Neztotožňovat s ATP 496 (Marseille do 2025, přemístění licence do Lyonu od 2026), historickým halovým Lyonem ani s Lyon Challengerem. Míče Wilson Roland-Garros dle LYO24-16 (magazín Wilson); detail sheet nezískán. ITF uvádí evidenční týden od 20.5.; ATP ročníková stránka a pořadatel potvrzují Main od neděle 19.5.
 
 ### 2. Vstup a losování
 
@@ -4799,10 +4810,10 @@ Press kit LYO24-1 označuje program jako předběžný, neděli Q2 + R32, úter�
 | Parametr | Main | Q |
 |---|---:|---:|
 | Kapacita / účastníci | 32 / 28 | 16 / 16 (4 sekce po 4) |
-| DA | 18 základních, až 21 při nevyužití rezerv | 14 podle ATP / 12 podle press kitu – NEVYŘEŠENO |
+| DA | 18 základních, až 21 při nevyužití rezerv | 14 (ATP + oficiální magazín a web pořadatele) |
 | SE | 2 rezervy | 0 |
 | LE | 1 rezerva | 0 |
-| WC | 3 | 2 podle ATP / 4 podle press kitu – NEVYŘEŠENO |
+| WC | 3 | 2 (ATP + oficiální magazín a web pořadatele) |
 | Řádné Q postupy | 4 | 4 |
 | Nasazení | 8 | 8 |
 | BYE | 4 | 0 |
@@ -4811,11 +4822,11 @@ Press kit LYO24-1 označuje program jako předběžný, neděli Q2 + R32, úter�
 
 Main 18+2+1+3+4=28; press kit souhrnně označuje tři rezervy jako special exempts, dobový ATP předpis a entry list rozlišují SE a LE. Výsledkový Main přepis potvrzuje osm seedů, čtyři BYE, 3 WC (Gasquet, Müller, Mpetshi Perricard), 4 Q a další LL obsazující původní místa. Q přepis LYO24-11 má všech osm seedů, 16 hráčů a čtyři postupující. Maxime Chazal získal Q WC v předturnaji 80 účastníků na All In Country Club; nejde o třetí ATP Q kolo. TennisActu 16.5. označuje Harolda Mayota jako druhou Q WC; výsledkový přepis Mayota uvádí jako seed bez WC značky. To podporuje existenci dvou oznámených WC, neprokazuje maximální nominální kvótu ani jejich konečné využití.
 
-**Blokující rozpor E:** oficiální press kit LYO24-1 explicitně uvádí 12 DA a 4 WC pro 16členné Q; běžný dobový §7.08 E stanoví 14 DA a 2 WC. Dobové oznámení druhé WC a skutečný pavouk jsou důkaz ve prospěch standardní kvóty, ale originální Q acceptance list/DS ani schválená výjimka nebyly nalezeny. Stejný typ rozporu jako Marseille 2024, nelze přenést závěr z jiné edice. Obě varianty součtem dávají 16, nemění 8+4 Q uzlů, ale mění vstupní mechaniku; E zůstává otevřeno.
+**Rozpor E – vyřešen 2026-11-28:** press kit LYO24-1 uvádí 12 DA + 4 WC, avšak dobový oficiální magazín LYO24-13, oddíl Le tournoi en bref / Format de la compétition, explicitně uvádí 14 DA + 2 WC pro 16člennou kvalifikaci. Stejnou kvótu uvádí samostatný web pořadatele LYO24-16 s daty ročníku 2024 a odpovídá ATP §7.08 E. Tato ročníková shoda umožňuje uzavřít nominální kvótu 14+2; důvod odlišné tiskové brožury a individuální skutečné využití nejsou doloženy. Web pořadatele má naopak chybný součet Main (21+3+4+3=31), proto jeho Main údaje nepřebírat; magazín uvádí správný počet 18+3+4+3=28, tři souhrnné rezervy dále rozlišit podle ATP. Originální Q acceptance list/DS stále otevřený. Závěr se nevztahuje automaticky na Marseille.
 
 ### 5. Dobová pravidla
 
-ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle MPL24-5/6, IW24-11/14. Main rezervy SE/LE, nevyužité rezervy se vracejí do DA; čtyři top seedy s BYE a při první prohře v R16 nula bodů, což ATP Day 1 výslovně potvrzuje. Q dva BO3 tiebreak zápasy k postupu, 13/7/0 ATP bodů, bez třetího kola. LL doplňuje existující Main místo. Pořadatelská předkvalifikační WC je způsob výběru uvnitř Q kapacity, nikoli další postupové místo. Q kvóta zůstává sporná; žádná domyšlená výjimka z ATP pravidel.
+ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle MPL24-5/6, IW24-11/14. Main rezervy SE/LE, nevyužité rezervy se vracejí do DA; čtyři top seedy s BYE a při první prohře v R16 nula bodů, což ATP Day 1 výslovně potvrzuje. Q dva BO3 tiebreak zápasy k postupu, 13/7/0 ATP bodů, bez třetího kola. LL doplňuje existující Main místo. Pořadatelská předkvalifikační WC je způsob výběru uvnitř Q kapacity, nikoli další postupové místo. Q 14+2 doložena dobovým magazínem, webem a ATP pravidlem; dřívější rozporná brožura zachována.
 
 ### 6. Body a odměny (EUR)
 
@@ -4831,11 +4842,11 @@ ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle MPL24-5/6, I
 | Q2 prohra | 4 | 7 | 3105 |
 | Q1 prohra | 8 | 0 | 1695 |
 
-Main částky a body z ATP Day 1 LYO24-2; záhlaví jeho tabulky uvádí $, avšak dobový český přehled LYO24-4, TenisPortal a CanalTenis výslovně EUR se shodnými čísly, pořadatel EUR dotaci. Q 3105/1695 EUR shodně LYO24-8/14, originální Q finanční tabulka nedostupná, P*. TennisCompanion chybně prezentuje stejná nominální čísla v USD a přepočítává je na EUR (2910/1588 pro Q); nejde o nezávislou shodu měny. TennisTemple Q uvádí neslučitelná 3 kola a 12/6 bodů, 4200/2105/1055 EUR; jeho vlastní Q pavouk má pouze dvě kola. Tuto tabulku nepoužívat. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Pořadatelská prize money 579320 EUR a financial commitment 651865 EUR nejsou singlové součty; alternativní 562815 EUR v ročníkovém přehledu odpovídá 2023 dotaci podle LYO24-8/15.
+Main částky a body z ATP Day 1 LYO24-2 i oficiálního magazínu LYO24-13 (explicitně EUR); záhlaví ATP tabulky uvádí $, avšak dobový český přehled LYO24-4, TenisPortal a CanalTenis výslovně EUR se shodnými čísly, pořadatel EUR dotaci. Q 3105/1695 EUR shodně LYO24-8/14, originální Q finanční tabulka nedostupná, P*. TennisCompanion chybně prezentuje stejná nominální čísla v USD a přepočítává je na EUR (2910/1588 pro Q); nejde o nezávislou shodu měny. TennisTemple Q uvádí neslučitelná 3 kola a 12/6 bodů, 4200/2105/1055 EUR; jeho vlastní Q pavouk má pouze dvě kola. Tuto tabulku nepoužívat. Nominální Main 425905 EUR, Q 25980 EUR, celkem 451885 EUR. Pořadatelská prize money 579320 EUR a financial commitment 651865 EUR nejsou singlové součty; alternativní 562815 EUR v ročníkovém přehledu odpovídá 2023 dotaci podle LYO24-8/15.
 
 ### 7. Kontrola a mezery
 
-I/T/D/R/B/P/Z doloženy s výhradami, H* plán kol a rekonstruované denní uzly; E zůstává otevřeno kvůli konfliktu nominálních Q WC. P* Q sekundární shoda, Main primární text a korekce měny. Z* vizuálně ověřen revidovaný úterní OOP, screenshoty press kitu, pondělního/středečního OOP a ATP Day 1 selhaly 502/403. Přímé ATP Main/Q losy nedostupné, pořadatelská tabulková stránka při otevření 502. Originální acceptance/DS, Q rank date/cutoff, Q los a přesný finálový OOP zůstávají otevřené; nevymýšlet PDF hash. Aritmetika 28/16, 8/8 seedů, 4 BYE, 4 postupů, 27+12 uzlů, obou kandidátů Q kvót a cen prošla. Další krok cílená kontrola Q kvóty Lyon a Marseille; poté chronologicky Stuttgart a 's-Hertogenbosch 2024 (nejprve ověřit kalendář, Roland Garros již zpracován). Bez změn runtime.
+I/T/D/R/B/P/Z doloženy s výhradami, H* plán kol a rekonstruované denní uzly; E* nominální Q kvóta vyřešena, skutečné individuální využití a původní acceptance/DS zůstávají otevřené. P* Q sekundární shoda, Main primární text a korekce měny. Z* vizuálně ověřen revidovaný úterní OOP, screenshoty press kitu, pondělního/středečního OOP a ATP Day 1 selhaly 502/403. Přímé ATP Main/Q losy nedostupné, pořadatelská tabulková stránka při otevření 502. Originální acceptance/DS, Q rank date/cutoff, Q los a přesný finálový OOP zůstávají otevřené; nevymýšlet PDF hash. Aritmetika 28/16, 8/8 seedů, 4 BYE, 4 postupů, 27+12 uzlů, obou kandidátů Q kvót a cen prošla. Následný audit pokračuje u ostatních otevřených profilů 2024. Bez změn runtime.
 
 ### 8. Zdroje (LYO24)
 
@@ -4851,10 +4862,11 @@ I/T/D/R/B/P/Z doloženy s výhradami, H* plán kol a rekonstruované denní uzly
 - LYO24-10: [TennisActu Main los 17.5.](https://www.tennisactu.net/news-atp-lyon-humbert-gasquet-muller-mpetshi-sonego-le-tirage-de-l-open-parc-109569.html), 19:30.
 - LYO24-11: [TennisTemple Q pavouk](https://en.tennistemple.com/competitions/lyon-2024/46943/draw-qualifications), [Main pavouk](https://en.tennistemple.com/competitions/lyon-2024/46943/draw), [TenisPortal Q](https://www.tenisportal.cz/lyon/2024/atp-muzi/?phase=qualification); geometrie, nikoli vadná Q prize tabulka TennisTemple. [TennisActu první WC](https://www.tennisactu.net/news-atp-lyon-gasquet-muller-et-mayot-invites-rinderknech-rentre-109521.html) a [předturnaj Chazal 11.5.](https://www.tennisactu.net/news-atp-lyon-q-maxime-chazal-remporte-le-pre-tournoi-et-une-wild-card-qualif-109430.html).
 - LYO24-12: [pořadatel denní program](https://openparc.com/tournoi/programme-des-matchs/), odkazy na OOP; [nedělní archiv výsledků](https://en.tennistemple.com/competitions/lyon-2024/46943/orderofplay/2024-05-19). [Nedělní originální OOP](https://openparc.com/site/wp-content/uploads/2024/05/OP_1905.pdf), [sobotní finálový OOP](https://openparc.com/site/wp-content/uploads/2024/05/OP_2505.pdf) nalezené odkazy, obrazově 502.
-- LYO24-13: [originální pořadatelský magazine](https://openparc.com/site/wp-content/uploads/2024/05/MAGAZINE-OFFICIEL-OP24.pdf), indexovaný text rozpisu.
+- LYO24-13: [originální pořadatelský magazine](https://openparc.com/site/wp-content/uploads/2024/05/MAGAZINE-OFFICIEL-OP24.pdf), text oddílu Le tournoi en bref / Format de la compétition: Q 14+2, Main 18+3+4+3, Wilson a Main finanční tabulka v EUR; oddíl Le programme de l’Open s harmonogramem. Pokusy o screenshot stran 5–8 selhaly 502.
 - LYO24-14: [ročníková finanční tabulka](https://en.wikipedia.org/wiki/2024_ATP_Lyon_Open), Q 3105/1695 EUR; [TenisPortal Main](https://www.tenisportal.cz/lyon/2024/atp-muzi/), měna; [TennisAbstract 2024](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024Lyon), Main WC.
 - LYO24-15: [TennisCompanion historické tabulky a identita sérií](https://tenniscompanion.org/prize-money/lyon/), nesprávně převedené singlové částky, nepoužít jako primární finanční doklad.
 - Přímé [ATP Main](https://www.protennislive.com/posting/2024/7694/mds.pdf) a [Q](https://www.protennislive.com/posting/2024/7694/qs.pdf) nedostupné. [Pořadatelská stránka losů](https://openparc.com/tableaux/) 502. Dobové ATP předpisy viz MPL24-5/6 a IW24-11/14.
+- LYO24-16: [oficiální Tableau de bord ročníku 2024](https://openparc.com/tournoi/tableau-de-bord/), Q 14 DA/2 WC, Wilson Roland-Garros; text. Main součet 31 chybný, nepoužit.
 
 ## Stuttgart 2024
 
@@ -8235,7 +8247,7 @@ I/T/H/D/R/B/P nominálně doloženy; E* červencová změna pravidla vizuálně 
 | Madrid 2024 | H*/E*/Z* | původní denní splity R128/R64/R32, acceptance lists/DS, časy losů a model míčů; Main/Q ceny primární, konflikt souhrnného commitment 9249713/9017445 EUR bez vlivu na singlové ceny |
 | Rome 2024 | H*/E*/P*/Z* | originální Q los/finanční tabulka (11820/6130 EUR sekundární shoda), Q acceptance list/DS, Q rank date/cutoff, časy losů, původní denní R64/R32/QF OOP; originální Main acceptance list a oba Main losy vizuálně ověřeny |
 | Geneva 2024 | H*/E*/Z* | původní pre-rain OOP, originální acceptance lists/DS, Q rank date/cutoff a hodiny losů, vizuální ověření originálů; Main/Q finanční tabulky primárně textově doloženy |
-| Lyon 2024 | E – nominální Q WC, blokuje HOTOVO | press kit 12 DA+4 WC proti ATP §7.08 E 14+2; dobová oznámení dvou WC a výsledkový Q přepis neprokazují nominální výjimku. Získat originální Q acceptance list/DS nebo schválení výjimky; podobný rozpor Marseille. H*/P*/Z*: původní denní OOP, Q finanční tabulka (3105/1695 EUR sekundární shoda), časy losů, originální Main/Q PDF |
+| Lyon 2024 | H*/E*/P*/Z* | Nominální Q 14+2 vyřešeno dobovým oficiálním magazínem a webem pořadatele; původní rozpor 12+4 zachován. Originální acceptance/DS, individuální využití WC, denní OOP, Q finanční originál (3105/1695 EUR sekundární shoda), časy losů a originální Main/Q PDF otevřeny. |
 | Stuttgart 2024 | H*/E*/D*/P*/Z* | originální Main/Q PDF a acceptance/DS, časy losů, konečné cutoffy, původní OOP a Q finanční originál (3940/2150 EUR sekundární shoda); 7 skutečně označených Q seedů vs 8 nominálních |
 | 's-Hertogenbosch 2024 | E*/Z* | originální acceptance lists/DS, hodiny losů, model míčů, původní předstartovní Q los, vizuální kontrola bulletinů 12./15.6.; plán všech dnů a Main/Q finanční tabulky primárně doloženy |
 | Halle 2024 | H*/E*/P*/Z* | původní denní OOP a důvod středečního R32, acceptance lists/DS, hodiny losů, originální Q PDF a finanční tabulka (9015/5060 EUR sekundární shoda), Q konečný cutoff; oba Main losy vizuálně ověřeny |

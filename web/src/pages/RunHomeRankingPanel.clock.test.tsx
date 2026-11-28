@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react'
+import { render, screen, within, fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 import type { RunHomeRankingChanges } from '../api/types'
 
@@ -19,6 +19,33 @@ const fax = { weeks_per_year: 61, season_count: 50, start_year: 2000, season_sta
 const extended = { weeks_per_year: 80, season_count: 3, start_year: 2040, season_start_year_week: 37 }
 
 describe('Run-local Saved Ranking movement week labels', () => {
+
+  it('distinguishes complete category counts from the bounded loaded ranking records',()=>{
+    const sample:RunHomeRankingChanges={...data,total_change_count:10,moved_count:6,entered_count:2,exited_count:1,points_only_count:1,
+      changes:[
+        {player_id:'UP-PLAYER',movement:'up',previous_rank:9,current_rank:5,previous_points:100,current_points:200,rank_delta:4,points_delta:100},
+        {player_id:'DOWN-PLAYER',movement:'down',previous_rank:5,current_rank:9,previous_points:200,current_points:100,rank_delta:-4,points_delta:-100}
+      ]}
+    const view=render(<RunHomeRankingPanel data={sample} locale="en" clock={earth}/>)
+    const region=screen.getByRole('region',{name:'All recorded changes by category'})
+    expect(within(region).getByRole('meter',{name:'Rank movement'})).toHaveAttribute('value','6')
+    const select=screen.getByLabelText('Filter available records')
+    expect(select.closest('[data-run-navigation-readonly]')).not.toBeNull()
+    fireEvent.change(select,{target:{value:'up'}})
+    expect(screen.getByText('UP-PLAYER')).toBeInTheDocument()
+    expect(screen.queryByText('DOWN-PLAYER')).not.toBeInTheDocument()
+    expect(screen.getByText('Matching loaded records: 1 / 2')).toBeInTheDocument()
+    fireEvent.change(select,{target:{value:'entered'}})
+    expect(screen.getByText('No matching records in the loaded selection.')).toBeInTheDocument()
+    expect(region).toHaveTextContent('New ranking entries: 2 / 10')
+    view.rerender(<RunHomeRankingPanel data={{...sample,saved_revision_id:'new-head'}} locale="en" clock={earth}/>)
+    expect(screen.getByLabelText('Filter available records')).toHaveValue('all')
+  })
+  it('does not draw an inconsistent category breakdown',()=>{
+    render(<RunHomeRankingPanel data={{...data,total_change_count:3,moved_count:1}} locale="en" clock={earth}/>)
+    expect(screen.queryByRole('region',{name:'All recorded changes by category'})).not.toBeInTheDocument()
+  })
+
   it('uses 52 weeks and calendar years for Earth instead of legacy FAX 61', () => {
     render(<RunHomeRankingPanel data={data} locale="en" clock={earth} />)
     expect(screen.getByText(/2030 · W52 → 2031 · W1/)).toBeInTheDocument()

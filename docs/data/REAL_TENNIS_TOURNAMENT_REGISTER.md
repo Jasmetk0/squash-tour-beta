@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 63 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 64 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad, Winston-Salem a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -97,10 +97,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Almaty](#almaty-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Antwerp](#antwerp-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Stockholm](#stockholm-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Basel](#basel-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 63 zpracovaných ročníků; 56 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 64 zpracovaných ročníků; 57 hotových v nominálním rozsahu; 7 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -169,7 +170,7 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 61 | Almaty 2024 | HOTOVO (nominální rozsah) |
 | 62 | Antwerp 2024 | HOTOVO (nominální rozsah) |
 | 63 | Stockholm 2024 | HOTOVO (nominální rozsah) |
-| 64 | Basel 2024 | NEZAHÁJENO |
+| 64 | Basel 2024 | HOTOVO (nominální rozsah) |
 | 65 | Vienna 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -251,6 +252,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#almaty-2024) | Almaty Open | ATP 250 | 2024-10-13–2024-10-14 | 2024-10-14–2024-10-20 | HOTOVO v nominálním rozsahu; Main28/Q16, NG Wong, přesun Astana ID9410 |
 | [2024](#antwerp-2024) | European Open | ATP 250 | 2024-10-13–2024-10-14 | 2024-10-14–2024-10-20 | HOTOVO v nominálním rozsahu; Main28/Q16, originální plán 29.6., LE de Minaur |
 | [2024](#stockholm-2024) | BNP Paribas Nordic Open | ATP 250 | 2024-10-12–2024-10-13 | 2024-10-14–2024-10-20 | HOTOVO v nominálním rozsahu; Main28/Q16, bez překryvu, místní předkvalifikace o Q WC odděleně |
+| [2024](#basel-2024) | Swiss Indoors Basel | ATP 500 | 2024-10-19–2024-10-20 | 2024-10-21–2024-10-27 | HOTOVO v nominálním rozsahu; Main32/Q16, změna CEST→CET před F |
 
 ## Wimbledon 2024
 
@@ -7464,6 +7466,104 @@ I/T/D/R/B/P doloženy; H* denní splity pozorované s částečnou předdenní p
 - STO24-8: dobový ATP rulebook dle BEI24-9/ALM24-8/WSA24-9; [ATP NextGen program](https://www.atptour.com/en/news/next-gen-atp-brand-expansion-2024).
 - STO24-9: [DE ročník](https://de.wikipedia.org/wiki/BNP_Paribas_Nordic_Open_2024), [DE Q](https://de.wikipedia.org/wiki/BNP_Paribas_Nordic_Open_2024/Qualifikation), [EN singl](https://en.wikipedia.org/wiki/2024_Stockholm_Open_%E2%80%93_Singles), [FR ročník](https://fr.wikipedia.org/wiki/Tournoi_de_tennis_de_Stockholm_%28ATP_2024%29), [Tennis Europe](https://www.tenniseurope.org/calendarevent/73831/BNP-Paribas-Nordic-Open), [Main PDF](https://www.protennislive.com/posting/2024/429/mds.pdf) a [Q PDF](https://www.protennislive.com/posting/2024/429/qs.pdf) nedostupné.
 
+## Basel 2024
+
+### 1. Identita
+
+| Parametr | Hodnota | Evidence |
+|---|---|---|
+| Název | Swiss Indoors Basel | BAS24-1/2 |
+| ATP série / kategorie | 328 / ATP 500 | BAS24-2/9 |
+| Ročník | 53. edice | BAS24-2/9 |
+| Dějiště | St. Jakobshalle, Münchenstein u Basileje, Švýcarsko | BAS24-2/9 |
+| Povrch | halový hard | BAS24-2/9 |
+| Časové pásmo | Europe/Zurich, CEST UTC+2 do 26.10., CET UTC+1 dne 27.10. | místní data |
+| Formát | Main i Q BO3 tiebreak sety | BAS24-8 |
+
+Nominální termíny zahrnují změnu letního času před nedělním finále. Nepoužívat jeden pevný UTC offset pro celý ročník.
+
+### 2. Termíny a vstup
+
+| Událost | Lokální datum / čas | Evidence |
+|---|---|---|
+| Main standardní deadline | 2024-09-23 18:00 CEST (12:00 EDT), odvozeno | §7.03 |
+| Q standardní deadline | 2024-09-30 18:00 CEST, odvozeno | §7.03 |
+| Main pole Data entry list v přepisu | 2024-09-26 | BAS24-5 |
+| Main los | 2024-10-18 21:00 CEST, oznámený čas | BAS24-1 |
+| Main vydání archivního PDF | 2024-10-19 21:42:49 dle losu | BAS24-2 |
+| Q los | před Q1 dne 2024-10-19, hodina neověřena | BAS24-3/6 |
+| Q | 2024-10-19–20, 11:00/13:00 CEST | BAS24-1/4 |
+| Main | 2024-10-21–27 | BAS24-1/2 |
+| F | 2024-10-27 15:30 CET, plán | BAS24-1 |
+
+Referenční pondělí 21.10. Originální pořadatelská listina k 17.10. (vizuálně) uvádí cutoff Main50/Q81, 23 jmen Main bez WC, tři Main WC, 13 Q jmen a tři Q WC; zbylá Main místa nejsou jmenována. Nejde o původní ATP acceptance list s rank date. LiveTennis přepis s polem 26.9. uvádí cutoff44 a nejasnou hlavičku SE1/2; nepoužívat jako důkaz dvou ATP500 SE ani jako skutečný deadline. Předstartovní Main originál potvrzuje Carballes Baena54 jako last direct acceptance. Konečný Q cutoff, původní rank dates, skutečné časy uzávěrek a losování a DS nezískány. Oznámený Main los 18.10. a dostupný release PDF následujícího dne jsou odlišné události; samotný release není hodinou losování.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-10-19 | 8 |
+| Q2 | 2024-10-20 | 4 |
+| R32 | 2024-10-21–23 | 16 (pozorováno 5+7+4) |
+| R16 | 2024-10-23–24 | 8 (pozorováno 2+6) |
+| QF | 2024-10-25 | 4 |
+| SF | 2024-10-26 | 2 |
+| F | 2024-10-27 | 1 |
+
+Pořadatelský prozatímní plán Q z 23.4. uvádí osm Q1 (čtyři na každém kurtu) a čtyři Q2 (tři centrum, jeden Court1), samostatně označené D jsou doubles. Q1 od11:00, Q2 od13:00. Červnový program Ticketcorner potvrzuje všechna okna Main včetně souběhu R32/R16 ve středu. Denní výsledky BAS24-7 dávají R32 5+7+4, R16 2+6; odfiltrována zrušená dvojice Carballes Baena–Arnaldi nahrazená Goffin–Arnaldi a zrušená Q dvojice Kecmanovic–Altmaier nahrazená De Jong–Altmaier. Databázových 45 řádků tedy není 45 uzlů. Původní denní Main OOP nedostupné; přesné splity jsou pozorované (H*), nikoli úplný předdenní plán. Q 2 dny + Main 7 dnů bez překryvu, devět soutěžních dnů; denní součet 8/4/5/7/6/6/4/2/1=43. Nedělní finále 15:30 místního CET, ne CEST. Skreč Bublika nemění počet uzlů.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 32 | 16 / 16 (4 sekce po 4) |
+| DA | 23 základních, 24–25 při uvolnění rezerv | 13 |
+| SE | 1 podmíněná rezerva | 0 |
+| WC | 3 běžné + 1 podmíněná A+ | 3 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 0 | 0 |
+| Kola / zápasy | 5 / 31 | 2 / 12 |
+| Formát | BO3 | BO3 |
+
+Dobový §7.08 B/E: 23 DA+1 SE+3 WC+1 A+ WC+4 Q=32; Q13+3=16. Pořadatelská listina 17.10. má 23 přímých Main jmen (včetně PR Cilic), 3 WC Wawrinka/Stricker/Shapovalov; nezobrazuje zbývající rezervy a Q. Archivní originální Main z 19.10. potvrzuje osm seedů, WC6/21/29, Q placeholder11/15/18/27, SE Bautista Agut31, PR Cilic3. Zbývajících 24 přímých míst včetně PR odpovídá uvolnění podmíněné A+ rezervy; přesný administrativní záznam uvolnění chybí. Čtyři řádní Q Altmaier, Kym, Duckworth, van de Zandschulp potvrzeny výsledky a DE/EN pavoukem; LL Goffin nahradil Carballese Baenu a není pátý řádný Q. Pořadatel 17.10. explicitně potvrzuje tři Q WC Kym/Bernet/Brunold a listina 13 běžných Q. Konečný sekundární Q pavouk osm nominálních seedů, změny obsazení po přesunu Shang/Bautista Agut do Main a odstoupeních; individuální původní seedové přerozdělení neověřeno. Main16+8+4+2+1=31, Q8+4=12, celkem43. Žádná BYE ani extra uzly za LL/Alt.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.08 B/E/7.09/7.10/7.12 A.2/7.15–18 a §9.03 dle BEI24-9/WSA24-9, stejně jako TOK24. ATP50032, standard 3 WC + podmíněná A+, 1 SE a 4 Q, Q16 s 3 WC. Dvě BO3 výhry k postupu. Q body25/13/0 dle dobového ranking pravidla a ročníkového DE přehledu; přičítají se k Main. Main R32 0 bodů a bez BYE. Běžná PR/LL/Alt náhrada nemění počet míst. Souběh pouze dvou ATP500, nepřenášet ATP250 LE/NG.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 500 | 446045 |
+| Finalista | 1 | 330 | 239990 |
+| SF | 2 | 200 | 127900 |
+| QF | 4 | 100 | 65345 |
+| R16 | 8 | 50 | 34880 |
+| R32 | 16 | 0 | 18605 |
+| Q postupující | 4 | 25 | 0 samostatně |
+| Q2 prohra | 4 | 13 | 9535 |
+| Q1 prohra | 8 | 0 | 5350 |
+
+Main 1779935 EUR, Q 80940 EUR, celkem 1860875 EUR nominálních singlových odměn. Main primárně vizuálně z ATP losu, shoda ATP Day1 textově. Q 9535/5350 potvrzuje DE ročníková tabulka a SteveGTennis (u něj chybný měnový štítek A$, částky souhlasí s EUR); originální Q finanční tabulka nezískána (P*). 32 Main a 12 nepostupujících Q příjemců. Celková prize money2385100 EUR a commitment2540835 EUR dle ATP, potvrzené hlavičkou originálu a DE infoboxem; DE souvislý text je obrací, nepoužívat. Souhrnné finance nejsou singlový součet.
+
+### 7. Kontrola a mezery
+
+I/T/D/R/B doloženy, H* plán kol a Q denní počty doloženy, Main splity pozorované; E* pořadatelská listina 17.10. přímo, původní ATP acceptance/DS, rank dates, skutečné uzávěrky, hodiny losů a A+ administrace chybějí. P* Q sekundárně potvrzená shoda. Z* Main předstartovní originál a pořadatelská listina vizuálně; Q prozatímní plán textově/screenshot404, ATP Day1 textově/screenshot403. Přímé ATP Main/Q PDF nedostupné, konečný Main a původní Q losy, model kurtu/míčů a úplné Main OOP otevřeny. Bez neověřených hashů. Kontrola 32/16, 8/8 seedů, 0 BYE, 4 Q, 43 uzlů, denních a finančních součtů prošla. Další Vienna 2024. Bez runtime změn.
+
+### 8. Zdroje (BAS24)
+
+- BAS24-1: [ATP předturnajový přehled 15.10.](https://www.atptour.com/en/news/basel-2024-atp-500-history-draw-schedule), indexované pasáže, otevření403; Main los, Q/Main/F termíny a souhrnná dotace.
+- BAS24-2: [originální předstartovní Main](https://www.fantatennis.net/_downloads/2b27c49be1901bbb8911eabc435a3a40), vizuálně; [ATP Preview & Day1](https://www.atptour.com/-/media/12410ae2184e45bd95e51d9841be0af0.pdf), str.2 textově, screenshot403.
+- BAS24-3: [pořadatelská listina 17.10.](https://www.swissindoorsbasel.ch/assets/docs/turnier/Anhang-Communiqu-6E.pdf), vizuálně; [pořadatel 17.10.](https://www.swissindoorsbasel.ch/en/tournament/tournament-news/articles/2024-10-17_Swiss-Indoors-Basel-starts-with-strong-qualification-Wild-cards-for-the-Swiss-hopes.php), tři Main/Q WC a termíny.
+- BAS24-4: [pořadatelský Q plán 23.4.](https://www.swissindoorsbasel.ch/assets/docs/turnier/PROVISORISCH-Spielplan-2024_Qualifikation.pdf), text, screenshot404; [Ticketcorner plán 11.6.](https://www.ticketcorner.ch/magazine/sport/top-tennis-in-basel-swiss-indoors-2024), všechna Main okna.
+- BAS24-5: [LiveTennis přepis](https://www.livetennis.it/post/422951/atp-basilea-2024-assenza-di-alcaraz-rublev-e-hurkacz-guidano-un-forte-tabellone/), cutoff44 a pole26.9., nikoli originální acceptance list.
+- BAS24-6: [EN Main/Q](https://en.wikipedia.org/wiki/2024_Swiss_Indoors_%E2%80%93_Singles), [DE Q](https://de.wikipedia.org/wiki/Swiss_Indoors_Basel_2024/Qualifikation), [TennisTemple Main](https://en.tennistemple.com/competitions/basel/2024/draw).
+- BAS24-7: [Lunosport denní výsledky](https://www.lunosport.com/atp/tournament/basel-switzerland-1392), časy ET, dvě zrušené dvojice odděleny; [TennisExplorer](https://www.tennisexplorer.com/basel/2024/atp-men/?phase=main).
+- BAS24-8: dobové ATP pravidlo dle BEI24-9/WSA24-9 a TOK24; [SteveGTennis](https://www.stevegtennis.com/draw-results/atp/Swiss%20Indoors%20Basel%20-%20Basel/2024), Q odměny, chybný měnový štítek.
+- BAS24-9: [DE ročník](https://de.wikipedia.org/wiki/Swiss_Indoors_Basel_2024), [EN ročník](https://en.wikipedia.org/wiki/2024_Swiss_Indoors), [ITF](https://www.itftennis.com/en/tournament/swiss-indoors-basel/sui/2024/m-500-sui-2024-001/draws-and-results/); [Main PDF](https://www.protennislive.com/posting/2024/328/mds.pdf) a [Q PDF](https://www.protennislive.com/posting/2024/328/qs.pdf) nedostupné.
+
 ## Otevřené položky k opakované kontrole
 
 **Cílená kontrola Shanghai (2026-11-28):** [ATP předturnajová stránka](https://www.atptour.com/en/news/shanghai-2024-atp-masters-1000-history-draws-schedule) indexovaný text explicitně potvrzuje R32 59000, tedy podporuje Media Notes; [TennisTonic 30.9.](https://tennistonic.com/tennis-news/781617/atp-shanghai-draw-prize-money-sinner-zverev-alcaraz-djokovic-are-the-top-seeds-2/) a [TennisExplorer](https://www.tennisexplorer.com/shanghai/2024/atp-men/) uvádějí 59100/34500 a podporují los. Ani další zdroje nepřinesly rozhodný individuální výplatní doklad. P zůstává otevřeno, pracovní kandidát dle konečného losu zachován.
@@ -7529,3 +7629,4 @@ I/T/D/R/B/P doloženy; H* denní splity pozorované s částečnou předdenní p
 | Almaty 2024 | H*/E*/Z* | originální acceptance/DS, původní Q cutoff/rank date, hodiny losů, jednotlivé OOP, stav SE/LE a individuální Q NG, původní předstartovní Q, model míčů/kurtu; předstartovní Main a oba konečné federální losy vizuálně ověřeny, NG Wong přímo v dobovém přepisu |
 | Antwerp 2024 | E*/R*/P*/Z* | originální Q acceptance/DS, konečné cutoffy, skutečné hodiny losů a uzávěrek, individuální NG využití/uvolnění, Q finanční originál (3700/2020 EUR sekundární shoda), Main/Q originální losy a konkrétní OOP kromě 14.10.; původní Main acceptance a kompletní červnový plán vizuálně ověřeny |
 | Stockholm 2024 | H*/E*/R*/Z* | originální acceptance/DS, skutečné uzávěrky a Q rank date/cutoff, hodina Q losu, úplné denní OOP, individuální NG administrace, konečné Main/Q a předstartovní Q, geometrie lokálního förkval a model míčů/kurtu; archivní Main/Q finanční tabulky primárně textově, screenshoty403 |
+| Basel 2024 | H*/E*/P*/Z* | originální ATP acceptance/DS, rank dates a cutoff Q, hodiny skutečných losů/uzávěrek, A+ administrace, kompletní denní Main OOP, konečný Main a původní Q, kvalifikační finanční originál (9535/5350 EUR sekundární shoda), model míčů/kurtu; předstartovní Main a pořadatelská listina 17.10. vizuálně ověřeny |

@@ -197,7 +197,11 @@ safe to change without the owner's view of the proof boundary.
   persisted row and the retained decode cache equal the forced original path.
   It also covers a 409 retry without a new revision, a restart, another
   command and a second Save.
-- `tests/infrastructure/test_native_fork_source_projection.py` (existing).
+- With the existing `test_native_fork_source_projection.py`,
+  `test_calendar_global_part_decoding.py`, `tests/api/test_calendar_global_slots.py`
+  and `tests/api/test_saved_revision_history_api.py`, the run gives **83 passed**
+  (0 failed or skipped) on Python 3.11.18 with the pinned lock. Not run:
+  `pr_critical` and the full suite, and no Ready/manual workflow (Draft).
 
 ## Reproduction commands
 

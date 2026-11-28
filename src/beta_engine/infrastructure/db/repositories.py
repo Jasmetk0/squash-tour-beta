@@ -7207,6 +7207,10 @@ class SimulationPersistenceRepository:
             from beta_engine.infrastructure.db.native_fork_source_projection import remember_committed_global_sources
             remember_committed_global_sources(
                 self, verified_native_save_receipt, captured_sources, _take_ownership=True,
+                # The exact canonical text this Save hashed and inserted, which
+                # equalled the flushed row and decodes to the receipt payload.
+                # Only an oversize decision uses it; never a key or a proof.
+                _payload_text=canonical_payload_json,
             )
             # Publish only immutable JSON values after the complete Save
             # transaction succeeds. No typed source/math proofs survive it.

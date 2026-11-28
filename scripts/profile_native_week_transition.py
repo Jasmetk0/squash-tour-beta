@@ -45,6 +45,13 @@ PHASES = (
     ("beta_engine.application.calendar_tour_service", "CalendarTourService._transition_candidate", "transition.candidate"),
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "prepare_native_tour_week", "transition.native_week"),
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "_native_turn_pro", "lifecycle.turn_pro"),
+    # Inside lifecycle.turn_pro: its self time is the country map; the decision
+    # call includes the preliminary lifecycle (counted under lifecycle.advance).
+    ("beta_engine.domain.tournaments.calendar_native_tour_week", "native_turn_pro_decisions", "turn_pro.decisions"),
+    ("beta_engine.domain.players.turn_pro_model", "traits_from_world", "turn_pro.traits"),
+    ("beta_engine.domain.players.turn_pro_model", "turn_pro_candidates_for", "turn_pro.candidates"),
+    ("beta_engine.domain.players.turn_pro_model", "decide_turn_pro", "turn_pro.decide"),
+    ("beta_engine.domain.tournaments.calendar_tour", "turn_pro_home_opportunities", "turn_pro.home_opportunities"),
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "build_calendar_prospect_birth_event", "lifecycle.incoming_births"),
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "advance_calendar_lifecycle_with_prospects", "lifecycle.advance"),
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "advance_calendar_lifecycle", "lifecycle.advance"),
@@ -56,8 +63,19 @@ PHASES = (
     ("beta_engine.domain.tournaments.calendar_native_tour_week", "calculate_native_ranking_from_signed_lifecycle", "ranking.calculate"),
     ("beta_engine.infrastructure.db.player_lifecycle_state", "load_saved_lifecycle", "inputs.saved_lifecycle"),
     ("beta_engine.infrastructure.db.player_health_state", "load_saved_health", "inputs.saved_health"),
+    ("beta_engine.infrastructure.db.initial_world_state", "load_saved_initial_world", "inputs.saved_initial_world"),
+    # Master v87: every InitialWorld parse recomputes its opening Turn Pro evidence.
+    ("beta_engine.application.calendar_initial_world", "initial_turn_pro_evidence", "turn_pro.opening_evidence"),
     ("beta_engine.domain.players.calendar_native_sporting_intake", "develop_and_recover", "development.kernel"),
     ("beta_engine.application.calendar_tour_service", "CalendarTourService._apply", "execute.apply"),
+    # Request structure: authenticated context (load + Signed replay), the
+    # transition preparation, the write, and the independent post-write re-read.
+    ("beta_engine.application.calendar_tour_service", "CalendarTourService._context", "request.context_verify"),
+    ("beta_engine.application.calendar_tour_service", "CalendarTourService._prepare", "request.prepare"),
+    ("beta_engine.application.calendar_tour_service", "CalendarTourService._install_prepared", "request.install"),
+    ("beta_engine.application.calendar_tour_service", "CalendarTourService._verify_installed", "request.post_write_verify"),
+    ("beta_engine.infrastructure.db.calendar_native_tour", "verify_native_tour", "replay.native_tour"),
+    ("beta_engine.infrastructure.db.calendar_native_competition", "verify_competition_payload", "replay.competition"),
     ("beta_engine.application.calendar_tour_service", "CalendarTourService.preview", "http.preview"),
     ("beta_engine.application.calendar_tour_service", "CalendarTourService.execute", "http.execute"),
     ("beta_engine.application.calendar_tour_service", "CalendarTourService.inspect", "http.inspect"),
@@ -218,6 +236,21 @@ def _play(server, fields):
     return slots
 
 
+def _use_v87_population():
+    """Adopt the initial world under the explicit Master v87 lifecycle policy.
+
+    The same production HTTP adoption request as the acceptance tests, with only
+    ``lifecycle_policy`` added; the Turn Pro model stays the current default
+    calibration (no test-only eager model), so decisions are ordinary ones.
+    """
+    from tests.api import test_calendar_population_sporting_checkpoint as population
+    from tests.api.test_calendar_initial_world_adoption import request
+    from tests.api.test_calendar_tour_turn_pro_v87_flow import V87
+
+    population.population_request = lambda server, **changes: request(
+        server, **{**changes, "lifecycle_policy": V87})
+
+
 def prepare(args):
     from beta_engine.domain.calendar.run_calendar import RunCalendar
     from beta_engine.domain.calendar.run_week_position import RunWeekPosition
@@ -240,6 +273,8 @@ def prepare(args):
         print(json.dumps(row), flush=True)
 
     started = time.perf_counter()
+    if args.policy == "v87":
+        _use_v87_population()
     with ApiServer(database_url=f"sqlite:///{database}") as server:
         repo, _ = setup(server, clock, count=args.players)
         note(step="setup", players=args.players)
@@ -569,6 +604,8 @@ def main(argv=None):
     p.add_argument("--editions", type=int, default=4)
     p.add_argument("--stop-season", type=int, default=1)
     p.add_argument("--stop-week", type=int, default=1)
+    p.add_argument("--policy", choices=("legacy", "v87"), default="legacy",
+                   help="lifecycle policy of the adopted initial world (v87: Turn Pro)")
     m = sub.add_parser("measure")
     m.add_argument("--input", type=Path, required=True)
     m.add_argument("--sha256")

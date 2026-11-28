@@ -22,7 +22,11 @@ from beta_engine.domain.run_revisions import (
 )
 from tests.api.test_player_generation_calendar_gate import _dump
 from tests.api.test_run_branch_archive_api import (
-    archive_root, confirm, manual_match, raw_request, upload_preview,
+    archive_root,
+    confirm,
+    manual_match,
+    raw_request,
+    upload_preview,
 )
 from tests.api.test_saved_revision_history_api import ApiServer, _request
 from tests.support.run_branch_archive_http import ColdApiServer

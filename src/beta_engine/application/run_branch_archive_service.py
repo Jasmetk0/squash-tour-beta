@@ -106,6 +106,27 @@ def inventory(archive):
         "unresolved_package_references": unresolved,
         "continuation": "Use the existing operation-scoped preview/replay; import never grants new sporting readiness",
         "audit_event_count": len(archive.audits),
+        # Present only when needed, so previews of every other archive keep
+        # their exact shape/fingerprint. Derived classification, not an audit.
+        **(
+            {
+                "original_audit_absent_fork_roots": [
+                    {
+                        "revision_id": r.revision_id,
+                        "branch_id": r.branch_id,
+                        "source_saved_revision_id": r.parent_revision_id,
+                        "original_audit": "absent",
+                        "evidence": "derived_from_saved_fork_lineage",
+                        "reason": (
+                            "Materialized fork root written before its original "
+                            "audit existed; no audit is created or transferred"
+                        ),
+                    }
+                    for r in archive.legacy_unaudited_fork_roots
+                ]
+            }
+            if archive.legacy_unaudited_fork_roots else {}
+        ),
         "checkpoint_count": len(archive.checkpoints),
         "omitted_branch_ids": archive.envelope.omitted_branch_ids,
         "omitted_areas": archive.envelope.omitted_areas,

@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 86 ročníků: nově Dubai 2025; nově Acapulco 2025; nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 87 ročníků: nově Santiago 2025; nově Dubai 2025; nově Acapulco 2025; nově Rio de Janeiro 2025; nově Doha 2025; nově Marseille 2025; nově Delray Beach 2025; nově Buenos Aires 2025; nově Rotterdam 2025; nově Dallas 2025; nově Montpellier 2025; nově Auckland 2025; nově Adelaide 2025; nově Hong Kong 2025; nově Brisbane 2025; nově rozpracované Adelaide a Wellington 1990; dřívějších 70 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Lyon, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Båstad, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Winston-Salem, Chengdu, Hangzhou, Tokyo, Beijing, Almaty, Antwerp, Stockholm, Basel, Vienna, Paris, Metz, Belgrade, ATP Finals, Next Gen ATP Finals a rozpracované Auckland, Marseille, Santiago a Shanghai 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -120,10 +120,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2025 | [Rio de Janeiro](#rio-de-janeiro-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Acapulco](#acapulco-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2025 | [Dubai](#dubai-2025) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2025 | [Santiago](#santiago-2025) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 86 zpracovaných ročníků; 73 hotových v nominálním rozsahu; 13 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 87 zpracovaných ročníků; 74 hotových v nominálním rozsahu; 13 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -216,7 +217,8 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 84 | Rio de Janeiro 2025 | HOTOVO (nominální rozsah) |
 | 85 | Acapulco 2025 | HOTOVO (nominální rozsah) |
 | 86 | Dubai 2025 | HOTOVO (nominální rozsah) |
-| 87 | Santiago 2025 | NEZAHÁJENO |
+| 87 | Santiago 2025 | HOTOVO (nominální rozsah) |
+| 88 | Indian Wells 2025 | NEZAHÁJENO |
 | 71 | Audit existujících edic 2024 | PROBÍHÁ (bez dalších soutěží mimo rozsah) |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek; dle rozhodnutí vlastníka z 28.11. týmové a obdobné soutěže mimo rozsah nedoplňovat. Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
@@ -9623,7 +9625,98 @@ Main 2416150 USD z obou vizuálně ověřených předstartovních ATP tabulek; Q
 Otevřené doplňky: původní Q finanční tabulka, finální Main/Q, Q cutoff v losu, DS, skutečné hodiny Q losu/uzávěrek, individuální uvolnění A+/SE a LL ledger, OOP QF/SF/F, model míčů a vizuální verze únorového předpisu. Bez smyšlených hashů. Další Santiago 2025.
 
 
+## Santiago 2025
+
+**Stav: HOTOVO (nominální rozsah, 9/9 s omezeními H/E/R/P/Z).** Rešerše 2026-11-28. Originální předstartovní ATP Main vizuálně ověřen, Main ceny/body potvrzeny ATP Day1. Q ceny sekundární shoda; německý ročníkový přehled má Q ceny přesně z roku 2024. Rozpor Santiago 2024 tím není vyřešen.
+
+### 1. Identita
+
+Movistar Chile Open, ATP250 ID8996, šestá edice od obnovení 2020 (ATP), 27. historická edice podle sekundární chronologie, Club Deportivo Universidad Católica, San Carlos de Apoquindo, Court Central Jaime Fillol, Santiago, Chile; venkovní antuka, America/Santiago CLST UTC−3; USD. ATP supervisor Rogerio Santos dle originálu. Konkrétní značka povrchu, model míčů, DS a ostatní funkcionáři neověřeni; nepřenášet pozdější název BCI Seguros do 2025.
+
+### 2. Termíny a přihlášky
+
+| Pole | Hodnota |
+|---|---|
+| Main rank date / původní cutoff | 27.1.2025 / 90, TennisTeen, dobový přepis |
+| Q datum listiny / cutoff | 3.2.2025 / 140, LiveTennis; rank date nezávisle nepotvrzen |
+| Nominální Main/Q deadline | 27.1./3.2. 12:00 EST = 14:00 CLST, odvozeno dle §7.03 |
+| Nominální LE deadline | 20.2. 10:00 EST = 12:00 CLST, odvozeno |
+| Main los | 22.2. plán 13:00 CLST, pořadatel 23.1. |
+| Q | 22.–23.2., plán od12:00 CLST |
+| Main | 24.2.–2.3. |
+| F | 2.3. 19:30 CLST, pořadatel a ATP Day1 |
+| Main cutoff v předstartovním losu | Jaime Faria109 |
+| Q konečný cutoff | nedoložen |
+
+Main originál release 22.2.17:17:34, pásmo release není uvedeno; není dokladem skutečného času ceremonie. Q/Main bez překryvu. CanalTenis a TennisUpToDate úvod chybně končí 1.3., oficiální program a ATP los potvrzují 2.3. Původní acceptance/DS, skutečné deadline a Q losovací hodina otevřeny.
+
+### 3. Nominální harmonogram
+
+| Kolo | Místní okno | Uzly |
+|---|---|---:|
+| Q1 | 22.2. | 8 |
+| Q2 | 23.2. | 4 |
+| R32 | 24.–25.2. | 12 (4+8) |
+| R16 | 26.–27.2. | 8 |
+| QF | 28.2. | 4 |
+| SF | 1.3. | 2 |
+| F | 2.3. | 1 |
+
+Pořadatel 23.1. stanoví Q oba dny 12:00, Po–Čt od14:00 a večerní session19:00, Pá od14:00/18:00, So od15:30 (singles SF i doubles F, nikoli přesný začátek SF), Ne19:30. Pořadatelský program 23.2. má čtyři pondělní singles a tři doubles; ATP Day2 zbývajících osm R32 na třech kurtech. Dva R32 přerušené v úterý kvůli zákazu vycházení při celostátním výpadku proudu dohrány ve středu 26.2. (ADN, ATP, Reuters); nominální okno neprodlužovat. ES Wikipedie tvrzení bez vlivu na turnaj nesouhlasí s těmito dobovými doklady. Čt pořadatel výslovně čtyři R16, další čtyři vycházejí z kompletní geometrie a denních výsledků; původní středeční pre-curfew OOP nedoložen, přesný R16 split jako původní plán necertifikovat. Celkem 27 Main +12 Q =39 uzlů, bez navýšení kvůli dohrávce.
+
+### 4. Struktura a vstup
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Účastníci / pozice | 28 / 32 | 16 / 16 |
+| Základní DA včetně případné NG rezervy | 18 | 14 |
+| SE rezervy | 2 | 0 |
+| LE rezerva | 1 | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 | 0 |
+| Formát | BO3 | BO3 |
+| Uzly | 27 | 12 |
+
+Dobový předpis §7.08 B.1.c: 18 DA +2 SE +1 LE +3 WC +4 Q =28; TennisTeen list 18 DA a 3 WC +4 Q při nulových SE/LE v okamžiku přepisu dává25, nepovažovat za kapacitu. CanalTenis aktualizace 22.2. výslovně dokumentuje doplnění všech tří rezervovaných míst (Djere z LE, Faria a Monteiro z SE), celkem 21 ostatních +3 WC +4 Q. Jde o sekundární přepis, nikoli důkaz individuálního statusu SE: v originálním Main 22.2. nejsou tito hráči označeni SE/LE. Faria v Rio skutečně hrál QF, Monteirova individuální způsobilost SE zde neověřena. Nominální standardní rezervy jsou doložené, jejich konkrétní využití/uvolnění otevřené. Originál Main: WC5/11/30, BYE2/10/23/31, Q6/13/21/27, osm seedů; Day1 potvrzuje 3 WC a 4 Q. Q standard14+2 z pravidel a LiveTennis 14 jmen + dvě prázdná místa; výsledkový EN/DE Q osm nominálních seedů, seed7 Mena odstoupil, sedm skutečně označených, dva označené WC Feldbausch a Malla, čtyři sekce po4, 8+4 uzlů. Q status Matíase Sota v originálu neověřen. Pořadatel 23.2. potvrzuje čtyři Q postupy. Žádný dodatečný LL podle dostupného Main pavouka.
+
+Týden tří ATP akcí Acapulco/Dubai/Santiago, pouze Santiago ATP250. Dobová §7.04/7.08 NG program a únorové oznámení ATP: NG příležitosti uvnitř kapacity, ne další místa; konkrétní rezervace či propad v této edici neověřen. Buse (20) výslovně WC v originálu a ATP Day1, ne automaticky NG. Originální acceptance/DS a přesný individuální ledger otevřeny. Nominální kvóty a kapacita doloženy, status E* pouze s těmito omezeními.
+
+### 5. Dobová pravidla
+
+ATP Competition verze 23.12.2024 a aktualizace 10.2.2025 (viz DXB25; relevantní §7.03/7.04/7.08–12/7.15–20): standard ATP25028/16, osm seedů, BYE pro top4 Main, čtyři Q sekce, postup po dvou výhrách, LL/substituce dle okamžiku odstoupení. BO3 z úplného ročníkového výsledkového pavouka. ATP Day1 přímo potvrzuje nulové body při prohře prvního hraného Main utkání po BYE; finanční R16 sazba tím není nulová. Q body13/7/0 dle dobového rankingového předpisu a ročníkových tabulek, postupové body se přičítají k Main. Individuální NG/SE/LE mechanismus z výše uvedených zdrojů necertifikovat.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | Body | USD |
+|---|---:|---:|---:|
+| W | 1 | 250 | 103455 |
+| F | 1 | 165 | 60350 |
+| SF | 2 | 100 | 35480 |
+| QF | 4 | 50 | 20555 |
+| R16 | 8 | 25* | 11935 |
+| R32 | 12 | 0 | 7295 |
+| Q postup | 4 | 13 | 0 |
+| Q2 prohra | 4 | 7 | 3650 |
+| Q1 prohra | 8 | 0 | 1990 |
+
+Main 500005 USD přímo z vizuálního původního předstartovního losu a nezávisle publikovaného ATP Day1 textu. Q 30520 USD (P*) shoda TennisTemple, TennisCompanion a CanalTenis ročníkového sloupce a IT Wikipedie; DE 3550/1935 přesně odpovídá 2024 podle obou historických řad, proto zamítnuto jako zjevně zastaralý přepis, nikoli rovnocenná ročníková tabulka. Původní Q PDF chybí, nejde o audit skutečných plateb. Celkem 530525 USD nominální singles. ITF uvádí celkovou dotaci680140, předstartovní Main hlavička710735; souhrny nezaměňovat s nominálními singlovými odměnami. TennisTemple Q3 označuje postup, nikoli třetí hrané kolo. Ročník 2024 zůstává samostatným otevřeným P konfliktem.
+
+### 7. Zdroje a omezení (SCL25)
+
+- [Originální ATP předstartovní Main](https://www.raquetc.com/wp-content/uploads/2025/02/mds.pdf) str.1 vizuálně; [ATP Day1](https://www.atptour.com/-/media/4f3aee5b326e471eb96377133df5da9a.pdf) str.2 text, screenshot403; [ATP Day2](https://www.atptour.com/-/media/b986c38c54ec4e4e9289f56c5b0cfaea.pdf) text všech tří stran, screenshot403. [Finální Main](https://www.protennislive.com/posting/2025/8996/mds.pdf) a [Q](https://www.protennislive.com/posting/2025/8996/qs.pdf) nedostupné.
+- [Pořadatel 23.1. plán](https://www.chileopen.cl/todo-lo-que-necesitas-saber-para-el-movistar-chileopen-2025-horarios-shows-y-m%C3%A1s), [Main entry](https://www.chileopen.cl/doce-campeones-atp-y-un-ex-top-10-la-entry-list-del-movistar-chileopen-2025), [Q postupy](https://www.chileopen.cl/dos-brasile%C3%B1os-y-dos-argentinos-los-clasificados-al-cuadro-principal-del-movistar-chileopen-2025), [Po OOP](https://www.chileopen.cl/lunes-24-de-febrero-revisa-la-programaci%C3%B3n-para-la-primera-ronda-del-movistar-chileopen-2025), [Čt OOP](https://www.chileopen.cl/tabilo-vs-coria-y-b%C3%A1ez-vs-comesa%C3%B1a-los-partidos-que-encender%C3%A1n-este-jueves-27-de-febrero).
+- [TennisTeen](https://www.tennisteen.it/entry-list/atp/24312-atp-entry-list-24-febbraio-2-marzo-2025.html), [LiveTennis](https://www.livetennis.it/post/432250/atp-500-acapulco-dubai-e-atp-250-santiago-la-situazione-aggiornata-md-e-qualificazioni-fognini-e-passaro-danno-forfait-a-santiago/), [CanalTenis entry](https://canaltenis.com/entry-list-chile-open-2025/), [ATP Competition 23.12.2024](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook-chapter-7_the-competition_23dec.pdf) a [10.2.2025](https://www.atptour.com/-/media/files/rulebook/2025/2025-rulebook_10feb.pdf), dříve ověřené části; [ATP NG oznámení](https://www.atptour.com/en/news/next-gen-accelerator-pathway-expansion-february-2025) indexovaný text.
+- [ADN 25.2. přerušení](https://www.adnradio.cl/2025/02/25/por-toque-de-queda-suspenden-partido-de-tomas-barrios-en-el-chile-open-tras-un-primer-set-negativo-para-el-tenista-nacional/), [ATP curfew](https://www.atptour.com/en/news/santiago-2025-tuesday-curfew) indexovaný text, přímý403, [Reuters](https://www.reuters.com/sports/tennis/atp-roundup-daniil-medvedev-bucks-upset-trend-wins-opener-dubai-2025-02-26/).
+- [DE ročník](https://de.wikipedia.org/wiki/Movistar_Chile_Open_2025), [DE Q](https://de.wikipedia.org/wiki/Movistar_Chile_Open_2025/Qualifikation), [EN Main/Q](https://en.wikipedia.org/wiki/2025_Chile_Open_%E2%80%93_Singles), [ES ročník](https://es.wikipedia.org/wiki/Abierto_de_Chile_2025), [IT ročník](https://it.wikipedia.org/wiki/Chile_Open_2025), [TennisTemple Q ATP250](https://en.tennistemple.com/competitions/santiago-2025/12083/draw-qualifications) (nezaměňovat s březnovým Challenger75), [TennisCompanion](https://tenniscompanion.org/prize-money/chile/), [CanalTenis finance](https://canaltenis.com/el-prize-money-del-chile-open/), [ITF](https://www.world.tennis/en/tournament/santiago-250/chi/2025/m-250-chi-2025-001/draws-and-results/). Sekundární přepisy nemusejí být nezávislé.
+
+Otevřené doplňky: původní Q finanční tabulka a oba konečné losy, acceptance/DS, Q cutoff v losu, skutečné uzávěrky/Q los, původní R16 OOP před curfew, individuální SE/LE/NG administrativa, model míčů a vizuální ATP notes. Bez smyšlených hashů. Další Indian Wells 2025.
+
+
 ## Otevřené položky k opakované kontrole
+
+**Santiago 2025 — H*/E*/R*/P*/Z*:** původní Q finance (3650/1990 USD sekundární shoda, DE uvádí staré 2024), originální finální Main/Q, acceptance/DS, přesná SE/LE/NG administrativa, skutečné uzávěrky/Q los, Q cutoff a pre-curfew R16 OOP. Main ceny vizuálně z originálu a textově ATP Day1; 2024 P konflikt beze změny.
 
 **Dubai 2025 — E*/R*/P*/Z*:** originální finální Main/Q, Q finance (12940/7260 USD sekundární shoda), DS, Q cutoff v losu, skutečné hodiny uzávěrek/Q losu, A+/SE/LL ledger, zbývající OOP QF/SF/F. Originální Main/Q acceptance všechny 3 strany, dva předstartovní Main a pět OOP vizuálně ověřeny.
 

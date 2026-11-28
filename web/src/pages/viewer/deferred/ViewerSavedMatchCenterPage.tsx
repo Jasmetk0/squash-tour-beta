@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useSearchParams } from 'react-router-dom'
 
@@ -52,12 +52,16 @@ const messages = {
   noPublished: ['Zatím není publikován žádný turnajový výsledek.', 'No tournament results have been published yet.'],
   noMatchEvent: ['Filtrům neodpovídá žádný publikovaný turnaj.', 'No published tournament matches these filters.'],
   wrongEvent: ['Požadovaný turnaj nemá výsledek publikovaný ve zvolené Viewer Branch.', 'Requested tournament has no published result in this Viewer Branch.'],
+  wrongEventScope: ['Odkaz na turnaj patří jinému Runu nebo Viewer Branch, případně je neúplný.', 'The tournament link belongs to a different Run or Viewer Branch, or is incomplete.'],
+  unknownSeason: ['Nedostupná sezona', 'Unavailable season'],
   eventLoading: ['Načítám publikovaný výsledek vybraného turnaje…', 'Loading the selected published tournament result…'],
   eventError: ['Publikovaný turnajový výsledek není dostupný.', 'Published tournament result is unavailable.'],
   eventMismatch: ['Detail zápasů neodpovídá publikovanému turnaji nebo obsahuje nepovolené údaje.', 'Match detail disagrees with the published tournament or contains forbidden data.'],
   champion: ['Publikovaný vítěz', 'Published champion'],
   finalist: ['Publikovaný finalista', 'Published finalist'],
-  matchCount: ['Zápasů ve veřejném výsledku', 'Matches in public result'],
+  matchCount: ['Záznamů ve veřejném výsledku', 'Records in public result'],
+  completed: ['Dokončení turnaje (uložený týden)', 'Tournament completion (Saved week)'],
+  completedScope: ['Týden dokončení turnaje není čas jednotlivého zápasu ani čas publikace.', 'Tournament completion week is not the time of an individual match or its publication.'],
   matches: ['Publikované zápasy vybraného turnaje', 'Published matches for selected tournament'],
   noMatches: ['Veřejný výsledek neobsahuje žádné záznamy zápasů.', 'Public result contains no match records.'],
   noMatchRows: ['Vyhledávání neodpovídá žádný zápas.', 'No matches match these filters.'],
@@ -75,6 +79,9 @@ const messages = {
   loser: ['Poražený (ID hráče)', 'Loser (player ID)'],
   score: ['Zveřejněné skóre', 'Published score'],
   clear: ['Vymazat filtry', 'Clear filters'],
+  matchLink: ['Přímý odkaz na zápas', 'Direct match link'],
+  invalidMatch: ['Požadovaný zápas není v ověřeném výsledku tohoto turnaje nebo je odkaz nejednoznačný.', 'The requested match is not in this verified tournament result, or the link is ambiguous.'],
+  clearMatch: ['Zobrazit všechny zápasy', 'Show all matches'],
   showing: ['Zobrazeno', 'Showing'],
   of: ['z', 'of'],
   page: ['Stránka', 'Page'],
@@ -93,17 +100,57 @@ function sortEvents(a: SavedTournamentEntry, b: SavedTournamentEntry): number {
     a.event.event_id.localeCompare(b.event.event_id)
 }
 
+const exactMatchKeys = ['match', 'matchRun', 'matchBranch'] as const
+const resultFilterKeys = [...exactMatchKeys, 'matchSearch', 'matchDraw', 'matchPage'] as const
+function uniqueParam(params: URLSearchParams, key: string): string | null {
+  const values = params.getAll(key)
+  return values.length === 1 ? values[0] : null
+}
+function readPage(params: URLSearchParams, key: string): number {
+  const raw = uniqueParam(params, key)
+  if (!raw || !/^[1-9]\d*$/.test(raw)) return 1
+  const n = Number(raw)
+  return Number.isSafeInteger(n) ? n : 1
+}
+function readDraw(params: URLSearchParams): PublicMatchDraw {
+  const raw = uniqueParam(params, 'matchDraw')
+  return raw === 'qualification' || raw === 'main' || raw === 'group' || raw === 'knockout'
+    ? raw : 'all'
+}
+
 function ResultMatches({ entry, runId, branchId, t }: {
   entry: SavedTournamentEntry; runId: string; branchId: string; t: T
 }): JSX.Element {
-  const [search, setSearch] = useState('')
-  const [draw, setDraw] = useState<PublicMatchDraw>('all')
-  const [page, setPage] = useState(1)
+  const [params, setParams] = useSearchParams()
+  const search = uniqueParam(params, 'matchSearch') ?? ''
+  const draw = readDraw(params)
+  const page = readPage(params, 'matchPage')
+  const matchId = uniqueParam(params, 'match')
+  const hasMatch = params.has('match')
+  const hasMatchScope = params.has('matchRun') || params.has('matchBranch')
+  const invalidMatchScope = hasMatchScope && (!hasMatch ||
+    uniqueParam(params, 'matchRun') !== runId ||
+    uniqueParam(params, 'matchBranch') !== branchId)
+  function changeResult(update: (next: URLSearchParams) => void, replace = false): void {
+    setParams(previous => {
+      const next = new URLSearchParams(previous)
+      update(next)
+      return next
+    }, { replace })
+  }
+  function clearResultFilters(): void {
+    changeResult(next => resultFilterKeys.forEach(key => next.delete(key)))
+  }
   const query = useQuery({
     queryKey: ['viewer-saved-match-result', runId, branchId, entry.event.event_id],
     queryFn: () => getViewerTournamentResult(runId, entry.event.event_id),
+    enabled: !invalidMatchScope,
     retry: false, refetchOnWindowFocus: false,
   })
+  if (invalidMatchScope) return <div role="alert">
+    <p>{t('invalidMatch')}</p>
+    <button type="button" onClick={clearResultFilters}>{t('clearMatch')}</button>
+  </div>
   if (query.isPending || query.isFetching) return <p role="status">{t('eventLoading')}</p>
   if (query.isError) return <div role="alert">
     <p>{t('eventError')}</p>
@@ -114,27 +161,50 @@ function ResultMatches({ entry, runId, branchId, t }: {
     <p>{t('eventMismatch')}</p>
     <button type="button" onClick={() => void query.refetch()}>{t('retry')}</button>
   </div>
+  if (hasMatch && (!matchId || !source.matches.some(match => match.match_id === matchId))) {
+    return <div role="alert"><p>{t('invalidMatch')}</p>
+      <button type="button" onClick={clearResultFilters}>{t('clearMatch')}</button>
+    </div>
+  }
   return <SavedMatchRows source={source} runId={runId} t={t}
-    search={search} onSearch={value => { setSearch(value); setPage(1) }}
-    draw={draw} onDraw={value => { setDraw(value); setPage(1) }}
-    page={page} onPage={setPage}
-    onClear={() => { setSearch(''); setDraw('all'); setPage(1) }}
+    exactMatch={matchId} matchLink={id => {
+      const next = new URLSearchParams(params)
+      resultFilterKeys.forEach(key => next.delete(key))
+      next.set('match', id)
+      next.set('matchRun', runId)
+      next.set('matchBranch', branchId)
+      return '?' + next.toString()
+    }}
+    search={search} onSearch={value => changeResult(next => {
+      exactMatchKeys.forEach(key => next.delete(key)); next.delete('matchPage')
+      if (value) next.set('matchSearch', value); else next.delete('matchSearch')
+    }, true)}
+    draw={draw} onDraw={value => changeResult(next => {
+      exactMatchKeys.forEach(key => next.delete(key)); next.delete('matchPage')
+      if (value === 'all') next.delete('matchDraw'); else next.set('matchDraw', value)
+    })}
+    page={page} onPage={value => changeResult(next => {
+      if (value === 1) next.delete('matchPage'); else next.set('matchPage', String(value))
+    })}
+    onClear={clearResultFilters}
   />
 }
 
-function SavedMatchRows({ source, runId, t, search, onSearch, draw, onDraw, page, onPage, onClear }: {
+function SavedMatchRows({ source, runId, t, exactMatch, matchLink, search, onSearch, draw, onDraw, page, onPage, onClear }: {
   source: ViewerTournamentResult; runId: string; t: T
   search: string; onSearch: (v: string) => void
   draw: PublicMatchDraw; onDraw: (v: PublicMatchDraw) => void
-  page: number; onPage: (v: number | ((n: number) => number)) => void
+  exactMatch: string | null; matchLink: (id: string) => string
+  page: number; onPage: (v: number) => void
   onClear: () => void
 }): JSX.Element {
   const filtered = useMemo(
-    () => filterPublishedMatches(source.matches, search, draw),
-    [source, search, draw],
+    () => exactMatch ? source.matches.filter(match => match.match_id === exactMatch)
+      : filterPublishedMatches(source.matches, search, draw),
+    [source, search, draw, exactMatch],
   )
   const pages = Math.ceil(filtered.length / MATCHES_PAGE_SIZE)
-  const current = Math.min(page, pages || 1)
+  const current = exactMatch ? 1 : Math.min(page, pages || 1)
   const offset = (current - 1) * MATCHES_PAGE_SIZE
   const visible = filtered.slice(offset, offset + MATCHES_PAGE_SIZE)
   return <div>
@@ -144,8 +214,11 @@ function SavedMatchRows({ source, runId, t, search, onSearch, draw, onDraw, page
       <div><dt>{t('finalist')}</dt><dd><Link to={viewerPlayerProfilePath(runId, source.finalist_player_id)}>
         {source.finalist_player_id}</Link></dd></div>
       <div><dt>{t('matchCount')}</dt><dd>{source.matches.length}</dd></div>
+      <div><dt>{t('completed')}</dt><dd>S{source.completed_season_index} · W{source.completed_week}</dd></div>
     </dl>
+    <p className="status">{t('completedScope')}</p>
     {source.matches.length === 0 ? <p className="empty-state">{t('noMatches')}</p> : <>
+      {exactMatch ? <button type="button" onClick={onClear}>{t('clearMatch')}</button> :
       <div className="viewer-filters">
         <label htmlFor="viewer-match-search">{t('searchMatches')}</label>
         <input id="viewer-match-search" type="search" value={search}
@@ -160,7 +233,7 @@ function SavedMatchRows({ source, runId, t, search, onSearch, draw, onDraw, page
           <option value="knockout">{t('knockout')}</option>
         </select>
         <button type="button" onClick={onClear}>{t('clear')}</button>
-      </div>
+      </div>}
       {filtered.length === 0 ? <p className="empty-state">{t('noMatchRows')}</p> :
         <div className="table-wrap">
           <table aria-label={t('matches')}>
@@ -177,7 +250,7 @@ function SavedMatchRows({ source, runId, t, search, onSearch, draw, onDraw, page
               <td>{drawLabel(match.draw_type, t)}</td>
               <td>{match.round_number}</td>
               <td>{match.bracket_position}</td>
-              <td>{match.match_id}</td>
+              <td><Link to={matchLink(match.match_id)} title={t('matchLink')}>{match.match_id}</Link></td>
               <td><Link to={viewerPlayerProfilePath(runId, match.winner_player_id)}>
                 {match.winner_player_id}</Link></td>
               <td>{match.loser_player_id
@@ -192,10 +265,10 @@ function SavedMatchRows({ source, runId, t, search, onSearch, draw, onDraw, page
         {filtered.length ? offset + visible.length : 0} {t('of')} {filtered.length}</p>
       {pages > 1 ? <nav aria-label={t('page')}>
         <button type="button" disabled={current === 1}
-          onClick={() => onPage(n => Math.max(1, n - 1))}>{t('previous')}</button>
+          onClick={() => onPage(Math.max(1, current - 1))}>{t('previous')}</button>
         <span>{t('page')} {current} / {pages}</span>
         <button type="button" disabled={current === pages}
-          onClick={() => onPage(n => Math.min(pages, n + 1))}>{t('next')}</button>
+          onClick={() => onPage(Math.min(pages, current + 1))}>{t('next')}</button>
       </nav> : null}
     </>}
   </div>
@@ -205,9 +278,25 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
   catalog: SavedTournamentCatalog; runId: string; branchId: string; t: T
 }): JSX.Element {
   const [urlParams, setUrlParams] = useSearchParams()
-  const [season, setSeason] = useState('all')
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
+  const season = uniqueParam(urlParams, 'eventSeason') ?? 'all'
+  const search = uniqueParam(urlParams, 'eventSearch') ?? ''
+  const page = readPage(urlParams, 'eventPage')
+  function changeCatalog(key: string, value: string, fallback: string, replace = false): void {
+    setUrlParams(previous => {
+      const next = new URLSearchParams(previous)
+      if (key !== 'eventPage') next.delete('eventPage')
+      if (value === fallback) next.delete(key)
+      else next.set(key, value)
+      return next
+    }, { replace })
+  }
+  function clearCatalog(): void {
+    setUrlParams(previous => {
+      const next = new URLSearchParams(previous)
+      for (const key of ['eventSeason', 'eventSearch', 'eventPage']) next.delete(key)
+      return next
+    })
+  }
   const published = useMemo(
     () => catalog.entries.filter(entry => entry.publication.result_published).sort(sortEvents),
     [catalog],
@@ -227,12 +316,23 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
   const visible = filtered.slice(offset, offset + EVENTS_PAGE_SIZE)
   const eventParams = urlParams.getAll('event')
   const requestedEventId = eventParams.length === 1 ? eventParams[0] : null
-  const selected = published.find(item => item.event.event_id === requestedEventId) ?? null
+  const hasEventScope = urlParams.has('eventRun') || urlParams.has('eventBranch')
+  const wrongEventScope = hasEventScope && (!requestedEventId ||
+    uniqueParam(urlParams, 'eventRun') !== runId ||
+    uniqueParam(urlParams, 'eventBranch') !== branchId)
+  const selected = wrongEventScope ? null :
+    published.find(item => item.event.event_id === requestedEventId) ?? null
   function selectEvent(eventId: string | null): void {
     setUrlParams(previous => {
       const next = new URLSearchParams(previous)
-      if (eventId) next.set('event', eventId)
-      else next.delete('event')
+      resultFilterKeys.forEach(key => next.delete(key))
+      if (eventId) {
+        next.set('event', eventId)
+        next.set('eventRun', runId)
+        next.set('eventBranch', branchId)
+      } else {
+        for (const key of ['event', 'eventRun', 'eventBranch']) next.delete(key)
+      }
       return next
     })
   }
@@ -248,14 +348,16 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
         <div className="viewer-filters">
           <label htmlFor="viewer-match-season">{t('season')}</label>
           <select id="viewer-match-season" value={season}
-            onChange={e => { setSeason(e.target.value); setPage(1) }}>
+            onChange={e => changeCatalog('eventSeason', e.target.value, 'all')}>
             <option value="all">{t('allSeasons')}</option>
+            {season !== 'all' && !seasons.includes(season) ?
+              <option value={season}>{t('unknownSeason')}: {season}</option> : null}
             {seasons.map(value => <option key={value} value={value}>{value}</option>)}
           </select>
           <label htmlFor="viewer-match-events-search">{t('searchEvent')}</label>
           <input id="viewer-match-events-search" type="search" value={search}
-            onChange={e => { setSearch(e.target.value); setPage(1) }} />
-          <button type="button" onClick={() => { setSeason('all'); setSearch(''); setPage(1) }}>
+            onChange={e => changeCatalog('eventSearch', e.target.value, '', true)} />
+          <button type="button" onClick={clearCatalog}>
             {t('clear')}
           </button>
         </div>
@@ -280,18 +382,18 @@ function MatchCenterCatalog({ catalog, runId, branchId, t }: {
           {filtered.length ? offset + visible.length : 0} {t('of')} {filtered.length}</p>
         {pages > 1 ? <nav aria-label={t('page')}>
           <button type="button" disabled={current === 1}
-            onClick={() => setPage(n => Math.max(1, n - 1))}>{t('previous')}</button>
+            onClick={() => changeCatalog('eventPage', String(current - 1), '1')}>{t('previous')}</button>
           <span>{t('page')} {current} / {pages}</span>
           <button type="button" disabled={current === pages}
-            onClick={() => setPage(n => Math.min(pages, n + 1))}>{t('next')}</button>
+            onClick={() => changeCatalog('eventPage', String(current + 1), '1')}>{t('next')}</button>
         </nav> : null}
       </>}
-    {eventParams.length > 0 && !selected ? <div role="alert">
-      <p>{t('wrongEvent')}</p>
+    {(eventParams.length > 0 || hasEventScope) && !selected ? <div role="alert">
+      <p>{t(wrongEventScope ? 'wrongEventScope' : 'wrongEvent')}</p>
       <button type="button" onClick={() => selectEvent(null)}>{t('clearSelection')}</button>
     </div> : null}
     {selected ? <section aria-label={t('selected')} className="viewer-active-run-card">
-      <h3>{selected.event.event_name || selected.event.event_id} · W{selected.event.season_week}</h3>
+      <h3>{selected.event.event_name || selected.event.event_id} · {String(selected.event.season)} · W{selected.event.season_week}</h3>
       <p><Link to={viewerTournamentDetailPath(runId, selected.event.event_id)}>
         {t('detail')}</Link></p>
       <button type="button" onClick={() => selectEvent(null)}>{t('clearSelection')}</button>

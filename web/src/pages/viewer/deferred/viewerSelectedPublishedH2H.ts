@@ -174,6 +174,7 @@ export function selectedPublishedH2H(
   encounters.sort((x, y) =>
     x.season.localeCompare(y.season, undefined, { numeric: true }) ||
     x.week - y.week || x.eventId.localeCompare(y.eventId) ||
+    drawOrder.indexOf(x.draw) - drawOrder.indexOf(y.draw) ||
     x.round - y.round || x.bracketPosition - y.bracketPosition ||
     x.matchId.localeCompare(y.matchId)
   )

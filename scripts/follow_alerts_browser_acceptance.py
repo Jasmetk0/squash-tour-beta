@@ -158,15 +158,17 @@ def main():
                             expect(section).to_contain_text(nothing)
                             # The follow star in the Saved player profile uses the same Run-level follow.
                             page.goto(f"{web}/admin/runs/run/people/{champion}")
-                            star = page.get_by_role("button", name=__import__("re").compile(follow_btn))
+                            # The Admin header also has a simulation monitor with a follow label.
+                            profile = page.get_by_role("main")
+                            star = profile.get_by_role("button", name=__import__("re").compile(follow_btn))
                             expect(star).to_have_attribute("aria-pressed", "false")
                             star.click()
-                            expect(page.get_by_role("button", name=__import__("re").compile(unfollow_btn))).to_have_attribute("aria-pressed", "true")
+                            expect(profile.get_by_role("button", name=__import__("re").compile(unfollow_btn))).to_have_attribute("aria-pressed", "true")
                             page.goto(f"{web}/admin/runs/run/following")
                             expect(page.get_by_role("region", name=title)).to_contain_text(champion)
                             page.goto(f"{web}/admin/runs/run/people/{champion}")
-                            page.get_by_role("button", name=__import__("re").compile(unfollow_btn)).click()
-                            expect(page.get_by_role("button", name=__import__("re").compile(follow_btn))).to_have_attribute("aria-pressed", "false")
+                            profile.get_by_role("button", name=__import__("re").compile(unfollow_btn)).click()
+                            expect(star).to_have_attribute("aria-pressed", "false")
                             assert not errors, errors
                             context.close()
                         browser.close()

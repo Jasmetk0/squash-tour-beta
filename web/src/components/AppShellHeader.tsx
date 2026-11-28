@@ -7,6 +7,7 @@ import { ViewerActiveRunCompact } from './ViewerRunSelector'
 import { appShellSubtitleForMode, appShellTitleForMode } from '../navigation/appShellMode'
 import type { AdminScope, AppShellMode } from '../navigation/appShellMode'
 import { useLanguage } from '../i18n/LanguageContext'
+import { AdminSimulationMonitor } from './AdminSimulationMonitor'
 
 type AppShellHeaderProps = {
   mode: AppShellMode
@@ -30,6 +31,7 @@ export function AppShellHeader({ mode, pathname, adminScope }: AppShellHeaderPro
       {mode === 'admin' && <Link className="app-header__tasks" to="/admin/operations">
         {language === 'cs' ? 'Centrum simulací' : 'Simulation tasks'}
       </Link>}
+      {mode === 'admin' && pathname.replace(/\/$/,'') !== '/admin/operations' && <AdminSimulationMonitor />}
       {mode === 'admin' && <label className="app-header__language">
         <span className="sr-only">Language / Jazyk</span>
         <select aria-label="Language / Jazyk" value={language} onChange={event => setLanguage(event.target.value === 'en' ? 'en' : 'cs')}>

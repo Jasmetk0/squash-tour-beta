@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 56 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad a Winston-Salem 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 57 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch, Halle, Queen's, Mallorca, Eastbourne, Hamburg, Gstaad, Newport, Kitzbühel, Umag, Atlanta, Washington, Montreal, Cincinnati, Chengdu, Hangzhou a rozpracované Auckland, Marseille, Santiago, Lyon, Båstad a Winston-Salem 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -90,10 +90,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Cincinnati](#cincinnati-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Winston-Salem](#winston-salem-2024) | ✓ | ✓ | ✓* | ? | ✓ | ✓ | ✓ | ✓ | ✓* | ROZPRACOVÁNO (8/9; E: PB/SE/LE rezervy) |
 | 2024 | [Chengdu](#chengdu-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | [Hangzhou](#hangzhou-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓* | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 56 zpracovaných ročníků; 50 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 57 zpracovaných ročníků; 51 hotových v nominálním rozsahu; 6 rozpracovaných; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -155,7 +156,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 54 | Cincinnati 2024 | HOTOVO (nominální rozsah) |
 | 55 | Winston-Salem 2024 | ROZPRACOVÁNO (E: PB/SE/LE rezervy) |
 | 56 | Chengdu 2024 | HOTOVO (nominální rozsah) |
-| 57 | Hangzhou 2024 | NEZAHÁJENO |
+| 57 | Hangzhou 2024 | HOTOVO (nominální rozsah) |
+| 58 | Tokyo 2024 | NEZAHÁJENO |
+| 59 | Beijing 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -229,6 +232,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#cincinnati-2024) | Cincinnati Open | ATP Masters 1000 | 2024-08-11–2024-08-12 | 2024-08-12–2024-08-19 | HOTOVO v nominálním rozsahu; Main56/Q28, plánovaný překryv Q2/Main |
 | [2024](#winston-salem-2024) | Winston-Salem Open | ATP 250 | 2024-08-17–2024-08-18 | 2024-08-18–2024-08-24 | ROZPRACOVÁNO; Main48/Q16, zvláštní PB, otevřený počáteční rozpis rezerv |
 | [2024](#chengdu-2024) | Chengdu Open | ATP 250 | 2024-09-17–2024-09-18 | 2024-09-18–2024-09-24 | HOTOVO v nominálním rozsahu; Main28/Q16, středa–úterý, překryv Q2/Main |
+| [2024](#hangzhou-2024) | Hangzhou Open | ATP 250 | 2024-09-17–2024-09-18 | 2024-09-18–2024-09-24 | HOTOVO v nominálním rozsahu; Main28/Q16, přesun Zhuhai ID4713, překryv Q2/Main |
 
 ## Wimbledon 2024
 
@@ -6736,6 +6740,106 @@ I/T/H/D/B doloženy; H* přesná původní denní OOP a zejména R16 split chyb�
 - CHD24-9: [EN ročník](https://en.wikipedia.org/wiki/2024_Chengdu_Open), [DE ročník](https://de.wikipedia.org/wiki/Chengdu_Open_2024), [ES ročník](https://es.wikipedia.org/wiki/Torneo_de_Chengd%C3%BA_2024), [DE Q](https://de.wikipedia.org/wiki/Chengdu_Open_2024/Qualifikation).
 - CHD24-10: [Main ATP PDF](https://www.protennislive.com/posting/2024/7581/mds.pdf) a [Q ATP PDF](https://www.protennislive.com/posting/2024/7581/qs.pdf) nedostupné, nepovažovat za ověřené originály; [ATP finále 24.9.](https://www.atptour.com/en/news/musetti-shang-chengdu-2024-final).
 
+## Hangzhou 2024
+
+### 1. Identita
+
+| Parametr | Hodnota | Evidence |
+|---|---|---|
+| Název | Hangzhou Open | HAZ24-1/2 |
+| ATP série / kategorie | 4713 / ATP 250 | HAZ24-1/10 |
+| Ročník | první v Hangzhou, přesun existujícího Zhuhai ATP250 | HAZ24-1/2 |
+| Dějiště | Hangzhou Olympic Sports Center Tennis Center (Little Lotus), Čína | HAZ24-1/3 |
+| Povrch | venkovní hard; centrální kurt se zatahovací střechou | HAZ24-3/6/9 |
+| Časové pásmo | Asia/Shanghai, UTC+8 | místní data |
+| Formát | Main i Q BO3 tiebreak sety | HAZ24-8 |
+
+ATP výslovně oznámila přesun turnaje ze Zhuhai od září 2024; první místní edice neznamená novou nezávislou historickou licenci. Předchozí ročníky Zhuhai 2019/2023 evidovat pod skutečným místem; nepřepisovat je na Hangzhou. Nezaměňovat s Hangzhou Challenger 125 z října 2024. Středeční Main start a úterní finále byly oznámeny předem.
+
+### 2. Termíny a vstup
+
+| Událost | Lokální datum / čas | Evidence |
+|---|---|---|
+| Main deadline | 2024-08-20 00:00 CST (19.8. 12:00 EDT), odvozeno | §7.03 |
+| Q deadline | 2024-08-27 00:00 CST (26.8. 12:00 EDT), odvozeno | §7.03 |
+| Main/Q pole Data entry list | 2024-08-29 v sekundárním přepisu | HAZ24-4 |
+| LE deadline | 2024-09-12 22:00 CST (10:00 EDT), odvozeno | §7.04 |
+| Main los | 2024-09-16 odpoledne, přesná hodina neověřena | HAZ24-5 |
+| Q los | před Q1 2024-09-17, hodina neověřena | HAZ24-6 |
+| Q | 2024-09-17–18 | HAZ24-3/6 |
+| Main | 2024-09-18–24 | HAZ24-2/3 |
+| F | 2024-09-24 19:30 CST, oznámený čas | HAZ24-2 |
+
+Referenční pondělí turnajového týdne 16.9. Dobový přepis LiveTennis 13.9. uvádí Main cutoff80 a Q149, obě pole Data entry list 29.8.; tento údaj není potvrzeným originálním ranking date ani deadline. Q obsahuje 14 jmen. Main pole Special Exempts 1/2 není důkaz, že jedna SE byla skutečně přidělena. Losovací ceremonie odpoledne 16.9. potvrzena místním zpravodajstvím a China News. Datum publikace článku 20:18 není hodina losování. Originální ATP acceptance lists/DS, skutečné rank dates, konečné cutoffy a hodiny losů nezískány.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-09-17 | 8 |
+| Q2 | 2024-09-18 | 4 |
+| R32 | 2024-09-18–19 | 12 (pozorováno 3+9) |
+| R16 | 2024-09-20–21 | 8 (pozorováno 4+4) |
+| QF | 2024-09-22 | 4 |
+| SF | 2024-09-23 | 2 |
+| F | 2024-09-24 | 1 |
+
+Zpráva z pořadatelské tiskové konference 18.6. předem stanoví celkový rozsah 17.–24.9., klíčové zápasy druhého kola v sobotu 21.9., QF v neděli 22.9., večerní SF/F v pondělí a úterý 23.–24.9. Ticketing 17.8. potvrzuje tyto dny. Jeho věta o šesti následujících dnech neodpovídá vlastnímu rozsahu osmi dnů; novější oznámení 16.9. potvrzuje sedm Main dnů po úvodním kvalifikačním dni. Q2 dne 18.9. doloženo kompletními lokálními výsledky a ATP Day1 uvádí čtyři Q ještě TBD 18.9.; poznámka pod seznamem hráčů uvádí Monday, v rozporu s hlavní hlavičkou a výsledky. Pro skutečný program použít 18.9. a tuto šablonovou nesrovnalost zachovat. ATP Day2 uvádí devět plánovaných dvojic R32; Nagal odstoupil a byl nahrazen LL McCabe. R32 3+9, R16 4+4 z lokálně datovaných výsledků; bez kompletních původních OOP nejsou všechny splity doloženým předem publikovaným plánem (H*). Q 2 + Main 7 dnů, překryv 18.9., osm různých soutěžních dnů. Walkover R16 a skreč R32 nemění 39 nominálních uzlů. ITF týdenní hlavička 16.–22.9. není skutečný program.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 (4 sekce po 4) |
+| DA | 18 základních, až 21 při uvolnění rezerv | 14 |
+| SE | 2 rezervy | 0 |
+| LE | 1 rezerva | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 (top 4 seedů) | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 | BO3 |
+
+Nominální standard §7.08 B/E a §7.04: Main18+2 SE+1 LE+3 WC+4 Q=28, Q14+2=16; uvolnění rezerv dle předpisu. ATP Day1 přímo potvrzuje 8 seedů, tři Main WC Bu/Cilic/Wu a čtyři Q. Konečný sekundární pavouk má 4 BYE, 4 Q Wong/Uchiyama/Trungelliti/Yevseyev a dva LL McCabe/Krueger; Krueger zdědil pozici nasazeného Etcheverryho včetně BYE, ne dodatečný řádný postup. Zachovat osm nominálních seedů, nikoli sedm viditelných po odstoupení. Q pavouky EN/DE souhlasí: 16 hráčů, 8 seedů, 2 WC Xiao/Tergel, 2 Alt Svrcina/Opelka, čtyři sekce po čtyřech. Skutečná individuální SE/LE/NG alokace a čas uvolnění rezerv nedoloženy (E*/R*), pouze dvě běžné ATP Tour akce v týdnu a týmový Laver Cup; nepřidávat další místa. 12+8+4+2+1=27 Main a 8+4=12 Q.
+
+### 5. Dobová pravidla
+
+ATP §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18 a §9.03 dle CHD24-8 a WSA24-9. Standard ATP250 Main28/Q16, 8/8 seedů, 4 BYE, BO3, dvě Q výhry k řádnému postupu. Q body 13/7/0 potvrzeny také ročníkovým španělským přehledem HAZ24-9, přičítají se k dosaženému Main výsledku. ATP Day1 výslovně potvrzuje 0 bodů při první prohře R16 po BYE namísto 25. Běžné LL/Alt/SE/LE nenavyšují kapacitu; skutečný LL s BYE není další rezervace ani Performance Bye.
+
+### 6. Body a odměny (USD)
+
+| Výsledek | Nominální příjemci | ATP body | USD |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 152240 |
+| Finalista | 1 | 165 | 88795 |
+| SF | 2 | 100 | 52195 |
+| QF | 4 | 50 | 30245 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 17560 |
+| R32 | 12 | 0 | 10730 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 5365 |
+| Q1 prohra | 8 | 0 | 2925 |
+
+Main tabulka přímo vizuálně z ATP Day1 str.1. Q 5365/2925 shodně v dobovém TennisUpToDate a samostatném ročníkovém sloupci TennisCompanion (P*, originál Q nezískán). Main 735645 USD, Q 44860 USD, celkem 780505 USD nominálních singlových odměn. 28 Main příjemců, 12 nepostupujících Q. ITF a dobový prize-money článek uvádějí celkovou prize money 1000630 USD, EN Wikipedia uvádí 1081395 USD; druhé číslo je v rozporu s ITF, bez ověření původního označení jej nepřebírat jako prize money ani jej automaticky označovat za commitment. Obě celkové částky jsou odlišné od mužské singlové tabulky. TennisUpToDate uvádí nesouhlasný doubles rozpis, proto pro Main použít ATP a sekundární zdroj jen pro shodně doložené Q částky.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/B doloženy; H* původní úplné denní OOP a přesný předem oznámený denní split chybějí, okna podpořena dobovým plánem a výsledky. E*/R* originální acceptance lists/DS, přesné rank dates/cutoffs, hodiny losů a individuální SE/LE/NG využití neověřeny. P* Q sekundární shoda; Main přímo vizuálně. Z* ATP Day1 a Day2 str.1 vizuálně, další relevantní text, Day7 screenshot 403; originální Main/Q PDF nedostupné. Bez neověřených SHA-256. Kontrola 28/16, 8/8 seedů, 4 BYE, 4 Q postupů, 39 uzlů, denních a finančních součtů prošla. Další Tokyo (Main 25.9.–1.10.) a Beijing (26.9.–2.10.) dle ATP archivu. Bez runtime změn.
+
+### 8. Zdroje (HAZ24)
+
+- HAZ24-1: [ATP oznámení přesunu Zhuhai do Hangzhou](https://www.atptour.com/en/news/zhuhai-relocation-to-hangzhou), [ATP tisková konference 18.6.](https://www.atptour.com/en/news/hangzhou-press-conference-2024-june), [série 4713](https://www.atptour.com/en/tournaments/hangzhou/4713/overview), historická identita.
+- HAZ24-2: [ATP Preview & Day1 18.9.](https://www.atptour.com/-/media/0448f2a5347e4c298e6a9fc5d0ee956a.pdf), str.1 vizuálně, Main body/finance/seed/WC/Q/F 19:30; [ATP Day2 19.9.](https://www.atptour.com/-/media/e1922785b6664ce68c32eebbeccc6727.pdf), str.1 vizuálně a další text; [Day7 24.9.](https://www.atptour.com/-/media/5aa315bc3ecd42b2a43f3b8d0bc9b1a9.pdf), text, screenshot 403.
+- HAZ24-3: [Zhejiang Online z pořadatelské konference 18.6.](https://zjnews.zjol.com.cn/zjnews/202406/t20240618_30356207.shtml?mode=m2pc), plán kol; [ticketing 17.8.](https://apiv4.cst123.cn/cst/news/shareDetail?id=1009409730990309376), [městský portál 18.9.](https://www.ehangzhou.gov.cn/2024-09/18/c_290939.htm).
+- HAZ24-4: [LiveTennis 13.9.](https://www.livetennis.it/post/421291/atp-250-chengdu-e-hangzhou-la-situazione-aggiornata-md-e-qualificazioni-matteo-berrettini-si-cancella-dal-torneo-cinese/), Main/Q cutoffy 80/149, pole data listiny 29.8.
+- HAZ24-5: [Hangzhou News losovací ceremonie 16.9.](https://ori.hangzhou.com.cn/ornews/content/2024-09/16/content_8788471.htm), [China News 16.9.](https://www.chinanews.com/ty/2024/09-16/10287374.shtml), sedmidenní Main plán a den losu.
+- HAZ24-6: [CanalTenis denní výsledky](https://canaltenis.com/resultados-atp-hangzhou-2024/), [Main pavouk](https://canaltenis.com/cuadro-atp-hangzhou-2024/), [EN Main/Q](https://en.wikipedia.org/wiki/2024_Hangzhou_Open_%E2%80%93_Singles), [DE Q](https://de.wikipedia.org/wiki/Hangzhou_Open_2024/Qualifikation), [TennisAbstract](https://www.tennisabstract.com/cgi-bin/tourney.cgi?t=2024-4713%2FHangzhou).
+- HAZ24-7: [TennisUpToDate dobové prize money](https://tennisuptodate.com/atp/prize-money-hangzhou-open-2024-atp-with-1000630-on-offer), [TennisCompanion sloupec 2024](https://tenniscompanion.org/prize-money/hangzhou/), shoda Q 5365/2925 a Main; doubles údaje nepřebírány.
+- HAZ24-8: dobový ATP rulebook VII 2.8. a IX 19.3. podle CHD24-8/WSA24-9; standardní ATP250 alokace a body, ne novější ročníky.
+- HAZ24-9: [EN ročník](https://en.wikipedia.org/wiki/2024_Hangzhou_Open), [DE ročník](https://de.wikipedia.org/wiki/Hangzhou_Open_2024), [ES ročník/body](https://es.wikipedia.org/wiki/Torneo_de_Hangzhou_2024), [ZH ročník](https://zh.wikipedia.org/wiki/2024%E5%B9%B4%E6%9D%AD%E5%B7%9E%E5%85%AC%E5%BC%80%E8%B5%9B), [ITF](https://www.itftennis.com/en/tournament/hangzhou-open/chn/2024/m-250-chn-2024-001/draws-and-results/), odlišná celková dotace/týdenní datum.
+- HAZ24-10: [Main ATP PDF](https://www.protennislive.com/posting/2024/4713/mds.pdf) a [Q ATP PDF](https://www.protennislive.com/posting/2024/4713/qs.pdf) nedostupné; [ATP archiv sezóny 2024](https://www.atptour.com/en/scores/results-archive?tournamentId=605&year=2024), pořadí Tokyo/Beijing.
+
 ## Otevřené položky k opakované kontrole
 
 **Cílená kontrola Winston-Salem (2026-11-28):** §7.18 A.3 srpnového ATP předpisu znovu textově ověřen (screenshot 403), potvrzuje 35–37 DA a 0–2 PB; obecná §7.08 B tabulka 37–39 DA pro Main48 nezahrnuje zvláštní PB mechanismus. Rozpis TennisTeen 2024 stále dává 46, LiveTennis nemá originální ledger. [CanalTenis dobový entry](https://canaltenis.com/entry-list-atp-winston-salem-2024/) a [TennisUpToDate](https://tennisuptodate.com/atp/entry-list-2024-winston-salem-open-featuring-berrettini-draper-and-fils-last-update-13-08) neřeší počáteční rozpis rezerv. E zůstává otevřeno; další ročník nezávisle zpracován.
@@ -6792,3 +6896,4 @@ I/T/H/D/B doloženy; H* přesná původní denní OOP a zejména R16 split chyb�
 | Cincinnati 2024 | E*/Z* | původní úplná ATP Q acceptance list/DS, přesné hodiny losů, předstartovní Main/Q, původní Q1/QF OOP, model míčů a rozpor hlaviček Laykold/GreenSet; Main acceptance list, oba finanční rozpisy a sedm OOP primárně vizuálně ověřeny |
 | Winston-Salem 2024 | E – počáteční alokace PB/SE/LE, blokuje HOTOVO | dobový přepis 35+4+4+1+1+1=46 vs kapacita48; §7.18 A.3 zvláštní PB doloženo, skutečné 0 PB ověřeno. Získat originální Main acceptance/DS a časový záznam uvolnění rezerv; H*/Z*: originální denní OOP, časy losů, konečný Q, předstartovní Main. Main/Q ceny primárně vizuálně ověřeny |
 | Chengdu 2024 | H*/E*/R*/P*/Z* | původní Main/Q losy, acceptance/DS, přesné denní OOP a hodiny losů, rank dates/cutoffs, individuální SE/LE/NG alokace, Q finanční originál (6285/3425 USD sekundární shoda; TennisTemple zastaralé); oficiální pořadatelská okna a Main finance přímo ověřeny |
+| Hangzhou 2024 | H*/E*/R*/P*/Z* | původní Main/Q losy, acceptance/DS, rank dates/cutoffs, časy losů, původní úplné denní OOP, individuální SE/LE/NG, Q finanční originál (5365/2925 USD sekundární shoda); Main finance vizuálně, přesun Zhuhai primárně doložen |

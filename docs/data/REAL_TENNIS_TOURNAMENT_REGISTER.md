@@ -1,6 +1,6 @@
 # Historický registr tenisových turnajů — mužská dvouhra
 
-**Stav k 2026-11-28: 39 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart a rozpracované Auckland, Marseille, Santiago a Lyon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
+**Stav k 2026-11-28: 40 ročníků: všechny Grand Slamy 2024 a 2025, Brisbane, Hong Kong, Adelaide, Montpellier, Córdoba, Dallas, Buenos Aires, Rotterdam, Delray Beach, Rio de Janeiro, Doha, Los Cabos, Acapulco, Dubai, Indian Wells, Miami, Marrakech, Estoril, Houston, Monte-Carlo, Barcelona, Munich, Bucharest, Madrid, Rome, Geneva, Stuttgart, 's-Hertogenbosch a rozpracované Auckland, Marseille, Santiago a Lyon 2024.** Tento jediný rozšiřitelný dokument je rešeršní registr reálného tenisu. Není autoritativním runtime balíčkem. Neobsahuje převod na squash, Run, simulační týdny, sloty, vlastní bodování ani změny existujících katalogů. Navazujeme vždy jedním ročníkem; další nepřidávat, dokud není předchozí zkontrolován proti povinnému seznamu a jeho zbývající mezery výslovně zařazeny. Rozsah: mužská profesionální dvouhra včetně kvalifikací; další disciplíny pouze jako kontext souhrnných financí či kalendáře.
 
 ## Rozhodnutí vlastníka — 2026-11-27: plán je referencí
 
@@ -73,10 +73,11 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 2024 | [Geneva](#geneva-2024) | ✓ | ✓ | ✓* | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 | 2024 | [Lyon](#lyon-2024) | ✓ | ✓ | ✓* | ? | ✓ | ✓* | ✓ | ✓* | ✓* | ROZPRACOVÁNO (8/9; E: nominální Q WC) |
 | 2024 | [Stuttgart](#stuttgart-2024) | ✓ | ✓ | ✓* | ✓* | ✓* | ✓ | ✓ | ✓* | ✓* | HOTOVO (nominální rozsah) |
+| 2024 | ['s-Hertogenbosch](#s-hertogenbosch-2024) | ✓ | ✓ | ✓ | ✓* | ✓ | ✓ | ✓ | ✓ | ✓* | HOTOVO (nominální rozsah) |
 
 `*` H: doložena okna kol; přesné původní počty zápasů jednotlivých dnů u vícedenních kol se nedokládají odhadem. Z: dobové zdroje jsou dohledatelné, některé pouze indexovaným textem; chybějí nezávisle získané PDF bajty/otisky. Obojí je transparentně zaznamenáno. U 2025 E*: datum uzávěrek odvozeno z dobového předpisu, hodina losu Q neověřena, ale Main los doložen; ATP rankingový předpis 2025 byl následně úspěšně zkontrolován i vizuálně na tištěné str. 264. AO 2024 H*: oficiální říjnový program textově dostupný, obrazové vykreslení selhalo; potvrzen dobovým programem pořadatele a předturnajovým přehledem. R*: dobový Grand Slam předpis v textovém zrcadle a ATP oznámení bodů; přímé PDF rulebooků nebylo dostupné.
 
-**Součet registru:** 39 zpracovaných ročníků; 35 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
+**Součet registru:** 40 zpracovaných ročníků; 36 hotových v nominálním rozsahu; 4 rozpracované; ostatní ročníky zatím nejsou v registru, bez ohledu na stav jiných PR.
 
 ### Fronta dalších ročníků (pracovní pořadí, nikoli převzaté důkazy)
 
@@ -121,7 +122,9 @@ Stavy: **HOTOVO (nominální rozsah)** = všechny povinné oblasti doložené na
 | 37 | Geneva 2024 | HOTOVO (nominální rozsah) |
 | 38 | Lyon 2024 | ROZPRACOVÁNO (E: nominální Q WC) |
 | 39 | Stuttgart 2024 | HOTOVO (nominální rozsah) |
-| 40 | 's-Hertogenbosch 2024 | NEZAHÁJENO |
+| 40 | 's-Hertogenbosch 2024 | HOTOVO (nominální rozsah) |
+| 41 | Halle 2024 | NEZAHÁJENO |
+| 42 | Queen's 2024 | NEZAHÁJENO |
 
 Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024 a 2025 chronologicky podle dobového kalendáře, následně další ročníky postupně. Startovní inventura: `buuk` commit `29784d51d01d9d747705be8abae30f0c82706c1e`, soubor `config/reference_packages/atp_tour_1990_2026/calendar_dates_v1.json` obsahuje 62 datovaných záznamů roku 2024, prvně Brisbane, Hong Kong, Adelaide, Auckland. Jde o pracovní seznam, ne potvrzený celkový počet historických akcí; ověřovat identitu jednotlivých položek a samostatně doplnit týmové/speciální soutěže mimo tento soubor (United Cup aj.). Neoznačovat celý rok hotový pouze podle těchto 62 položek. Záznamy nikdy nevyplňovat pouze z podobného ročníku. Přesný postup u každého ročníku: (1) identita a dobový detail sheet; (2) plán fází a kol; (3) nominální struktura Main/Q a entry; (4) dobový rulebook, body a odměny; (5) porovnání nezávislého dokladu/losu, aritmetické kontroly, záznam rozporů; (6) aktualizace tabulky pokrytí. Při blokujícím neověřeném povinném údaji jej označit, necertifikovat profil a nejdříve řešit jeho doložení. Po opakované a zdokumentované neúspěšné rešerši lze konkrétní mezeru odložit do otevřeného seznamu a pokračovat dalším ročníkem; nedochází k povýšení stavu a položka se znovu kontroluje při získání lepšího zdroje.
 
@@ -178,6 +181,7 @@ Po prvním bloku Grand Slamů 2024–2025 zpracovávat ostatní turnaje ATP 2024
 | [2024](#geneva-2024) | Gonet Geneva Open | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | HOTOVO v nominálním rozsahu; souběh 19.5., sobotní F |
 | [2024](#lyon-2024) | Open Parc Auvergne-Rhône-Alpes Lyon | ATP 250 | 2024-05-18–2024-05-19 | 2024-05-19–2024-05-25 | ROZPRACOVÁNO; konflikt Q WC, historická série 7694 |
 | [2024](#stuttgart-2024) | BOSS OPEN | ATP 250 | 2024-06-08–2024-06-09 | 2024-06-10–2024-06-16 | HOTOVO v nominálním rozsahu; tráva, Q1 přesuny odděleny |
+| [2024](#s-hertogenbosch-2024) | Libéma Open | ATP 250 | 2024-06-08–2024-06-09 | 2024-06-10–2024-06-16 | HOTOVO v nominálním rozsahu; všechny denní počty přímo doloženy |
 
 ## Wimbledon 2024
 
@@ -4855,6 +4859,117 @@ I/T/E/D/R/B/P/Z doloženy s výhradami, H* plán kol a denní Main splity z pře
 - STU24-14: [TennisCompanion historická tabulka 2024](https://tenniscompanion.org/prize-money/stuttgart/), Q 3940/2150 EUR.
 - STU24-15: [CanalTenis tabulka 2024](https://canaltenis.com/prize-money-atp-stuttgart/), Q 3940/2150 EUR; dobové ATP předpisy viz MPL24-5/6 a IW24-11/14.
 
+## 's-Hertogenbosch 2024
+
+**Stav:** HOTOVO (nominální rozsah 9/9; E/Z s dílčími mezerami). Rešerše 2026-11-28. Předturnajový program pořadatele z 21.5. obsahuje přesné denní počty mužských singlů. Předstartovní Main a oba výsledkové originály ATP vizuálně ověřeny, včetně Main/Q finančních tabulek. Skutečné dešťové přesuny odděleny.
+
+### 1. Identita a místo
+
+| Pole | Hodnota | Důkaz |
+|---|---|---|
+| Název | Libéma Open (Rosmalen Grass Court Championships) | HER24-1/2/4 |
+| Kategorie / ATP ID | ATP 250 / 440 | HER24-1/2 |
+| Ročník | 33. (1990–2019, 2022–2024) | HER24-4 |
+| Dějiště | Autotron Rosmalen, 's-Hertogenbosch, Nizozemsko | HER24-4/5 |
+| Povrch | venkovní tráva | HER24-1/2/5 |
+| Časové pásmo | Europe/Amsterdam, CEST UTC+02:00 | lokalita a datum |
+| ATP supervisors | Carlos Sanches / Andrey Kornilov | HER24-1/2/3 |
+| Měna | EUR | HER24-1/2/4 |
+
+Společný ATP/WTA turnaj; oddělená ženská soutěž má jiné losy, počty i finanční tabulky. Model míčů, DS, ředitel/referee/tour manager neověřeny.
+
+### 2. Vstup a losování
+
+| Událost | Datum / místní čas | Důkaz |
+|---|---|---|
+| Main rank date | 2024-05-13 | HER24-7 |
+| Q rank date | 2024-05-20 | HER24-7 |
+| Nominální Main deadline | 2024-05-13 18:00 CEST | odvozeno §7.03 |
+| Nominální Q deadline | 2024-05-20 18:00 CEST | odvozeno §7.03 |
+| Nominální LE deadline | 2024-06-06 16:00 CEST | odvozeno §7.04 |
+| Main los | 2024-06-08, hodina neověřena | HER24-8 |
+| Q los | před zahájením Q1 8.6., hodina neověřena | HER24-2/5 |
+| Q | 2024-06-08–09 od 11:00 | HER24-5 |
+| Main | 2024-06-10–16 | HER24-1/4/5 |
+| F | 2024-06-16 12:00 CEST, plán | HER24-5/6/15 |
+
+Dobový přepis 5.6. obsahuje Main původní cutoff 66, Q 125; 18 DA, 3 WC, 4 Q, SE 0, LE 1 v Main; Q 14 DA/2 WC. Oznámení pořadatele 14.5. uvádí 18 původně přijatých hráčů (včetně PR Raonice) a čtyři Q, tři rezervy popsané společně jako SE; v dobovém předpisu 2 SE + 1 LE. Závěrečné i předstartovní ATP losy uvádějí Main last direct acceptance at deadline Purcell 84 a at draw Bautista Agut 85, Q last direct acceptance Brouwer 244. Odlišná pole a časové stavy od původního cutoffu 66/125 nezaměňovat. Uzávěrky odvozeny, nikoli auditované timestampy originálních listin. Přesný čas obou losů, originální acceptance listy a DS nezískány.
+
+### 3. Nominální harmonogram
+
+| Kolo | Lokální okno | Nominální zápasy |
+|---|---|---:|
+| Q1 | 2024-06-08 | 8 |
+| Q2 | 2024-06-09 | 4 |
+| R32 | 2024-06-10–11 | 12 (4+8) |
+| R16 | 2024-06-12–13 | 8 (4+4) |
+| QF | 2024-06-14 | 4 |
+| SF | 2024-06-15 | 2 |
+| F | 2024-06-16 | 1 |
+
+Předturnajový HER24-5 z 21.5. je výslovně předběžný program, ale odděleně vyčísluje mužské ATP singlové zápasy pro každý den (nikoli součty WTA a doubles). Potvrzuje 8/4 Q a 4/8/4/4/4/2/1 Main. První čtyři R32 v pondělním denním bulletinu HER24-9; kvůli dešti se začalo až v 15:30 (HER24-16), jeden z nich dokončen, jeden přerušen a dva přesunuty bez zahájení. Úterní HER24-10 uvádí těchto 11 zbývajících R32, tedy osm nominálních plus tři přenesené uzly. Středeční HER24-11 má čtyři R16, čtvrteční HER24-12 čtyři nové R16 plus pokračování Vukic–Khachanov. Páteční HER24-13 plánuje čtyři QF; jeden QF Humbert–Brouwer dokončen až v sobotu z důvodu počasí, viz HER24-14. Obě SF byly dokončeny v sobotu (HER24-17). Nedělní HER24-15 potvrzuje plán F ve 12:00 i po změnách programu jiných disciplín. V ročníku pořadatel prohodil pořadí mužského a ženského finále, mužské bylo plánováno dříve; jde o původní ročníkový plán, nikoli dešťový přesun. Q 2 + Main 7 dní, bez překryvu, 9 kalendářních dní, 39 nominálních uzlů. Nezaměňovat přesuny konkrétních utkání s plánem kol.
+
+### 4. Nominální struktura
+
+| Parametr | Main | Q |
+|---|---:|---:|
+| Kapacita / účastníci | 32 / 28 | 16 / 16 (4 sekce po 4) |
+| DA | 18 základních, až 21 při nevyužití rezerv | 14 |
+| SE | 2 rezervy | 0 |
+| LE | 1 rezerva | 0 |
+| WC | 3 | 2 |
+| Řádné Q postupy | 4 | 4 |
+| Nasazení | 8 | 8 |
+| BYE | 4 (seedy 1–4) | 0 |
+| Kola / zápasy | 5 / 27 | 2 / 12 |
+| Formát | BO3 setů | BO3 setů |
+
+Main 18+2+1+3+4=28; Q 14+2=16 potvrzeno dobovou listinou HER24-7. Předstartovní Main originál HER24-3 obsahuje osm seedů, čtyři BYE (2/10/23/31), tři WC (Van Rijthoven, Van de Zandschulp, Goffin) a čtyři Q placeholdery (4/6/15/26). Výsledkový Main HER24-1 dokládá čtyři řádné Q (Brouwer, Huesler, Napolitano, Schoolkate) a LL Bergs: po odstoupení Carballese Baeny se řádný kvalifikant Brouwer objevil na jiné pozici a LL na původním Q placeholderu 4. Nevyvozovat z toho další kvalifikační místo; přesné administrativní pořadí změn neověřeno. Q originál HER24-2 potvrzuje 16 míst, 2 WC (Haase, Bergs), 4 sekce a osm původně nasazených v tabulce. Seed 1 Bautista Agut přesunut do Main, jeho místo obsadil Alt Koolhof, proto jen sedm označených seedů v konečném Q pavouku. Bergs je současně seed a WC (překryv vlastností). Main 12+8+4+2+1=27, Q 8+4=12.
+
+### 5. Dobová pravidla
+
+ATP 2024 §7.03/7.04/7.08 B/E/7.09/7.10/7.15–18/7.20 a §9.03 dle MPL24-5/6 a IW24-11/14. Nevyužité SE/LE rezervy se vracejí k DA, aktuální stav přepisu SE 0 není důkaz absence rezerv. ATP Media Notes HER24-4 výslovně potvrzují 0 bodů za první prohru po BYE. Q body 13/7/0 a 0 samostatné finanční odměny za postup přímo v originálu HER24-2; Q body navíc k Main výsledku. WC i PR mohou být nasazené, pokud splňují dobové pravidlo rankingu pro nasazení; Q seed 3 WC doložen zde. LL a Alt nevytvářejí nová místa. Pouze dvě souběžné ATP Tour akce v tomto týdnu (Stuttgart a 's-Hertogenbosch); žádná extrapolace NG pravidla tří akcí.
+
+### 6. Body a odměny (EUR)
+
+| Výsledek | Nominální příjemci | ATP body | EUR |
+|---|---:|---:|---:|
+| Vítěz | 1 | 250 | 104985 |
+| Finalista | 1 | 165 | 61235 |
+| SF | 2 | 100 | 36000 |
+| QF | 4 | 50 | 20860 |
+| R16 | 8 | 25 (0 při první prohře po BYE) | 12110 |
+| R32 | 12 | 0 | 7400 |
+| Q postupující | 4 | 13 | 0 samostatně |
+| Q2 prohra | 4 | 7 | 3700 |
+| Q1 prohra | 8 | 0 | 2020 |
+
+Všechny částky primárně v obou výsledkových ATP originálech HER24-1/2 a Main též v předstartovním HER24-3 a ATP notes. Nominální Main 507340 EUR, Q 30960 EUR, celkem 538300 EUR; 28 Main příjemců a 12 nepostupujících Q příjemců. Financial commitment 767455 EUR z originálů není mužský singlový součet. Nezaměňovat se Stuttgart, jiná dotace i jednotlivé ceny při stejné geometrii.
+
+### 7. Kontrola a mezery
+
+I/T/H/D/R/B/P doloženy přímo ročníkovými zdroji. H bez hvězdičky: přesné plánované počty všech devíti dní doloženy předturnajovým programem, denní bulletiny nezávisle potvrzují jeho použití a pozdější změny. E* původní cutoffy a rank dates z dobového přepisu, původní acceptance listy/DS a přesné hodiny losů chybějí, uzávěrky odvozené. Z* vizuálně ověřeny 3 ATP losy po jedné straně a první strany denních bulletinů 10., 11., 13., 14., 16.6.; obrazové vykreslení bulletinů 12./15.6. selhalo 500, jejich programy textově dostupné, ATP notes screenshot 403. Bez získaných celých PDF bajtů neuvádět SHA-256. Kontrola kvót, 28/16, 8/8 nominálních seedů, 4 BYE, 4 postupů, denních součtů, 27+12 uzlů i odměn prošla. Další Halle a Queen's 2024, oba Main 17.–23.6. dle ATP archivu. Bez runtime změn.
+
+### 8. Zdroje (HER24)
+
+- HER24-1: [originální ATP výsledkový Main](https://www.protennislive.com/posting/2024/440/mds.pdf), str. 1 vizuálně.
+- HER24-2: [originální ATP výsledkový Q](https://www.protennislive.com/posting/2024/440/qs.pdf), str. 1 vizuálně.
+- HER24-3: [archiv původního předstartovního Main](https://www.fantatennis.net/_downloads/abc95d70d2729542c94dcfd3710a295c), str. 1 vizuálně.
+- HER24-4: [ATP Preview & Day 1 10.6.](https://www.atptour.com/-/media/23c154abd77448d6aea231d5d3c958fc.pdf), text str. 1–2, screenshot 403, historie, odměny a BYE bodová výjimka.
+- HER24-5: [pořadatel 21.5. předběžný program](https://libema-open.nl/2024/05/21/agenda-libema-open-2024/), přesné denní počty ATP singles.
+- HER24-6: [pořadatel 14.5. entry announcement](https://libema-open.nl/en/2024/05/14/as-many-as-six-atp-top20-players-open-grass-season-at-libema-open/), 18 jmen a rezervy, změna pořadí finále.
+- HER24-7: [TennisTeen přepis Main/Q listin 5.6.](https://www.tennisteen.it/entry-list/atp/24176-atp-entry-list-10-16-giugno-2024.html), 66/125 cutoff, obě rank dates, 14+2 Q.
+- HER24-8: [pořadatel Main los 8.6.](https://libema-open.nl/en/2024/06/08/title-holder-griekspoor-close-to-van-de-zandschulp-after-draw/).
+- HER24-9: [pořadatelský bulletin 10.6.](https://libema-open.nl/dagjournaals/2024/10062024_dagjournaal_maandag.pdf), str. 1 vizuálně.
+- HER24-10: [pořadatelský bulletin 11.6.](https://libema-open.nl/dagjournaals/2024/11062024_dagjournaal_dinsdag.pdf), str. 1 vizuálně.
+- HER24-11: [pořadatelský bulletin 12.6.](https://libema-open.nl/dagjournaals/2024/12062024_dagjournaal_woensdag.pdf), str. 1 text.
+- HER24-12: [pořadatelský bulletin 13.6.](https://libema-open.nl/dagjournaals/2024/13062024_dagjournaal_donderdag.pdf), str. 1 vizuálně.
+- HER24-13: [pořadatelský bulletin 14.6.](https://libema-open.nl/dagjournaals/2024/14062024_dagjournaal_vrijdag.pdf), str. 1 vizuálně.
+- HER24-14: [pořadatelský bulletin 15.6.](https://libema-open.nl/dagjournaals/2024/15062024_dagjournaal_zaterdag.pdf), str. 1 text, pokračující QF.
+- HER24-15: [pořadatelský bulletin 16.6.](https://libema-open.nl/dagjournaals/2024/16062024_dagjournaal_zondag.pdf), str. 1 vizuálně.
+- HER24-16: [ATP report 10.6.](https://www.atptour.com/en/news/nardi-goffin-s-hertogenbosch-2024-monday), dešťový posun začátku.
+- HER24-17: [ATP report 15.6.](https://www.atptour.com/en/news/korda-griekspoor-de-minaur-humbert-s-hertogenbosch-2024-saturday), obě SF sobota; [ATP výsledkový archiv 2024](https://www.atptour.com/en/scores/results-archive?year=2024), další Halle/Queen's. Dobový rulebook viz MPL24-5/6 a IW24-11/14.
+
 ## Otevřené položky k opakované kontrole
 
 **Cílená opakovaná kontrola Lyon/Marseille 2024 (2026-11-28):** [TennisTeen 15.5.](https://www.tennisteen.it/entry-list/atp/24168-atp-entry-list-20-26-maggio-2024.html) pro Lyon obsahuje pouze Main, nikoli Q listinu. [Marseille originální listina 9.1.](https://www.open13.fr/wp-content/uploads/2024/01/Singles-Acceptance-List-open1324.pdf) je pouze Main (text dostupný, screenshot 502), potvrzuje 18 DA a tři souhrnné rezervy, neřeší Q kvótu. [TennisTeen 5.–11.2.](https://www.tennisteen.it/entry-list/atp/24110-atp-entry-list-5-11-febbraio-2024.html) je již známý typ přepisu. Výsledkové pavouky a oznámení WC neprokazují nominální výjimku. Nový rozhodný ročníkový Q doklad nezískán, oba E stavy zůstávají otevřené. U Stuttgart a 's-Hertogenbosch dobový přepis výslovně potvrzuje standardní 14+2 (STU24-7); není důkaz pro jinou edici.
@@ -4892,3 +5007,4 @@ I/T/E/D/R/B/P/Z doloženy s výhradami, H* plán kol a denní Main splity z pře
 | Geneva 2024 | H*/E*/Z* | původní pre-rain OOP, originální acceptance lists/DS, Q rank date/cutoff a hodiny losů, vizuální ověření originálů; Main/Q finanční tabulky primárně textově doloženy |
 | Lyon 2024 | E – nominální Q WC, blokuje HOTOVO | press kit 12 DA+4 WC proti ATP §7.08 E 14+2; dobová oznámení dvou WC a výsledkový Q přepis neprokazují nominální výjimku. Získat originální Q acceptance list/DS nebo schválení výjimky; podobný rozpor Marseille. H*/P*/Z*: původní denní OOP, Q finanční tabulka (3105/1695 EUR sekundární shoda), časy losů, originální Main/Q PDF |
 | Stuttgart 2024 | H*/E*/D*/P*/Z* | originální Main/Q PDF a acceptance/DS, časy losů, konečné cutoffy, původní OOP a Q finanční originál (3940/2150 EUR sekundární shoda); 7 skutečně označených Q seedů vs 8 nominálních |
+| 's-Hertogenbosch 2024 | E*/Z* | originální acceptance lists/DS, hodiny losů, model míčů, původní předstartovní Q los, vizuální kontrola bulletinů 12./15.6.; plán všech dnů a Main/Q finanční tabulky primárně doloženy |

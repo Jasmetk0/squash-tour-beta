@@ -12,7 +12,12 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from beta_engine.domain.run_revisions import saved_revision_content_hash
+from beta_engine.domain.run_revisions import (
+    BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND,
+    BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+    branch_fork_materialized_change_summary,
+    saved_revision_content_hash,
+)
 
 FORMAT = "run_branch_archive.v1"
 ENGINE_CAPABILITY = "run_branch_archive.v1"
@@ -369,6 +374,118 @@ class CustomEnvelope(ArchiveSelection):
     selected_branch_ids: list[ID] = Field(min_length=2, max_length=MAX_CUSTOM_BRANCHES)
 
 
+ORDINARY_FORK_ROOT_SCHEMA = "run_saved_revision_v1"
+FORK_ROOT_AUDIT_FIELDS = frozenset(
+    {
+        "source_branch_id",
+        "source_saved_revision_id",
+        "saved_revision_content_hash",
+        "working_draft_id",
+        "viewer_branch_id",
+        "command_id",
+    }
+)
+
+
+def _ordinary_fork_root(revision):
+    # Native fork roots use their own schemas and their own original audit.
+    return (
+        revision.kind == BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND
+        and revision.payload_schema_version == ORDINARY_FORK_ROOT_SCHEMA
+    )
+
+
+def _on_lineage(head_revision_id, target_revision_id, revisions):
+    seen, current = set(), head_revision_id
+    while current is not None and current not in seen:
+        if current == target_revision_id:
+            return True
+        seen.add(current)
+        node = revisions.get(current)
+        current = node.parent_revision_id if node is not None else None
+    return False
+
+
+def _fork_root_owner(revision, branches, revisions):
+    """Owner Branch when this root is exactly the first child of its fork origin."""
+    owner = branches.get(revision.branch_id)
+    parent = revisions.get(revision.parent_revision_id)
+    if (
+        owner is None
+        or parent is None
+        or not owner.forked_from_branch_id
+        or owner.forked_from_saved_revision_id != parent.revision_id
+        or parent.branch_id == owner.branch_id
+        or revision.sequence != parent.sequence + 1
+    ):
+        return None
+    source = branches.get(owner.forked_from_branch_id)
+    if source is None or not _on_lineage(
+        source.saved_head_revision_id, parent.revision_id, revisions
+    ):
+        return None
+    signed = decode(revision.payload_json)["branch"]
+    if (
+        signed.get("branch_id"),
+        signed.get("forked_from_branch_id"),
+        signed.get("forked_from_saved_revision_id"),
+    ) != (owner.branch_id, owner.forked_from_branch_id, parent.revision_id):
+        return None
+    return owner
+
+
+def _legacy_unaudited_fork_root(revision, branches, revisions):
+    """Identify an unaudited root consistent with the historical fork writer.
+
+    Both the historical and current writers produce this hash-bound summary.
+    It establishes lineage, but cannot date the root or establish why its audit
+    is missing. Check the original Saved hash (in ``original_authority``),
+    the declared fork origin as parent on
+    the source Branch's archived lineage, the signed Branch identity and the
+    byte-exact summary bound to the root's own component fingerprints.
+    """
+    if not _ordinary_fork_root(revision):
+        return False
+    owner = _fork_root_owner(revision, branches, revisions)
+    if owner is None:
+        return False
+    content = decode(revision.payload_json)["content"]
+
+    def fingerprint(key):
+        component = content.get(key)
+        return None if component is None else component.get("fingerprint")
+
+    return revision.change_summary_json == encode(
+        branch_fork_materialized_change_summary(
+            source_branch_id=owner.forked_from_branch_id,
+            source_saved_revision_id=revision.parent_revision_id,
+            ranking_fingerprint=fingerprint("ranking_preparation"),
+            initial_world_fingerprint=fingerprint("initial_world"),
+        )
+    ).decode("utf-8")
+
+
+def _check_fork_root_audit(audit, revision, branches, revisions):
+    owner = _fork_root_owner(revision, branches, revisions) if _ordinary_fork_root(revision) else None
+    payload = decode(audit.payload_json)
+    if not (
+        audit.event_kind == BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND
+        and owner is not None
+        and audit.branch_id == revision.branch_id
+        and isinstance(payload, dict)
+        and set(payload) == FORK_ROOT_AUDIT_FIELDS
+        and payload["source_branch_id"] == owner.forked_from_branch_id
+        and payload["source_saved_revision_id"]
+        == revision.parent_revision_id
+        == owner.forked_from_saved_revision_id
+        and payload["saved_revision_content_hash"] == revision.content_hash
+    ):
+        fail(
+            "invalid_fork_audit",
+            "Materialized fork root audit does not match its original root, owner or source",
+        )
+
+
 class Archive:
     """Decoded, integrity-checked envelope; production validation still required."""
 
@@ -595,14 +712,32 @@ class Archive:
                 "duplicate_audit",
                 "Each Saved revision may have only one original revision audit",
             )
+        # Legacy writers omitted this audit. Only a root with matching Saved
+        # provenance and summary is eligible for derived missing-audit evidence.
+        self.legacy_unaudited_fork_roots = [
+            r
+            for r in self.revisions
+            if r.revision_id not in audited
+            and _legacy_unaudited_fork_root(r, branches, revisions)
+        ]
+        exempt = {r.revision_id for r in self.legacy_unaudited_fork_roots}
         if any(
-            r.kind != "initial_run_creation" and r.revision_id not in audited
+            r.kind != "initial_run_creation"
+            and r.revision_id not in audited
+            and r.revision_id not in exempt
             for r in self.revisions
         ):
             fail(
                 "missing_audit",
                 "A noninitial Saved revision is missing its original revision audit",
             )
+        for audit in self.audits:
+            revision = revisions.get(audit.saved_revision_id)
+            if revision is not None and (
+                _ordinary_fork_root(revision)
+                or audit.event_kind == BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND
+            ):
+                _check_fork_root_audit(audit, revision, branches, revisions)
         for row in [*self.audits, *self.checkpoints]:
             if (
                 row.run_id != self.run.run_id

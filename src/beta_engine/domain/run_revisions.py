@@ -26,6 +26,10 @@ VIEWER_BRANCH_SELECTION_SAVED_REVISION_KIND = "viewer_branch_selection"
 SAVED_REVISION_AUDIT_EVENT_KIND = "saved_revision_created"
 BRANCH_RESTORE_SAVED_REVISION_KIND = "branch_restore"
 BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND = "branch_fork_materialized"
+# Original audit of the ordinary (``run_saved_revision_v1``) materialized fork
+# root, written in the same transaction as that root. Native fork roots keep
+# their own ``native_fork_baseline_installed`` event.
+BRANCH_FORK_MATERIALIZED_AUDIT_EVENT_KIND = "branch_fork_materialized_created"
 BRANCH_RESTORE_AUDIT_EVENT_KIND = "branch_restored"
 SEASON_TRANSITION_SAVED_REVISION_KIND = "season_transition"
 SEASON_TRANSITION_AUDIT_EVENT_KIND = "season_transition_completed"
@@ -342,6 +346,62 @@ def saved_revision_content_hash(
         change_summary=change_summary,
     )
     return hashlib.sha256(canonical_json(envelope).encode("utf-8")).hexdigest()
+
+
+def branch_fork_materialized_change_summary(
+    *,
+    source_branch_id: str,
+    source_saved_revision_id: str,
+    ranking_fingerprint: str | None,
+    initial_world_fingerprint: str | None,
+) -> dict[str, object]:
+    """Exact Saved change summary of an ordinary materialized fork root.
+
+    Unchanged since 24 September 2026; the archive compatibility gate for roots
+    written before their audit existed compares against this exact shape.
+    """
+
+    return {
+        "kind": BRANCH_FORK_MATERIALIZED_SAVED_REVISION_KIND,
+        "summary": (
+            f"Forked Branch from {source_saved_revision_id} with remapped "
+            "Branch-owned world identity"
+        ),
+        "source_branch_id": source_branch_id,
+        "source_saved_revision_id": source_saved_revision_id,
+        "ranking_fingerprint": ranking_fingerprint,
+        "initial_world_fingerprint": initial_world_fingerprint,
+    }
+
+
+def branch_fork_materialized_audit_event_id(revision_id: str) -> str:
+    """Deterministic audit identity of exactly one materialized fork root."""
+
+    digest = hashlib.sha256(
+        canonical_json({"materialized_fork_root": revision_id}).encode("utf-8")
+    ).hexdigest()
+    return "branch-fork-audit-" + digest
+
+
+def branch_fork_materialized_audit_payload(
+    *,
+    source_branch_id: str,
+    source_saved_revision_id: str,
+    saved_revision_content_hash: str,
+    working_draft_id: str,
+    viewer_branch_id: str | None,
+    command_id: str | None,
+) -> dict[str, object]:
+    """Original fork-command facts; it never replaces the Saved hash/lineage."""
+
+    return {
+        "source_branch_id": source_branch_id,
+        "source_saved_revision_id": source_saved_revision_id,
+        "saved_revision_content_hash": saved_revision_content_hash,
+        "working_draft_id": working_draft_id,
+        "viewer_branch_id": viewer_branch_id,
+        "command_id": command_id,
+    }
 
 
 def _saved_revision_content_hash_from_new_canonical_parts(

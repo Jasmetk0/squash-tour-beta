@@ -30,27 +30,27 @@ jobs:
       matrix:
         include:
           - platform: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             lock: linux
             variant: control
             workers: '0'
           - platform: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             lock: linux
             variant: core
             workers: '0'
           - platform: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             lock: linux
             variant: pool-off
             workers: '0'
           - platform: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             lock: linux
             variant: pool-2
             workers: '2'
           - platform: linux-x64
-            runner: ubuntu-latest
+            runner: ubuntu-24.04
             lock: linux
             variant: pool-3
             workers: '3'

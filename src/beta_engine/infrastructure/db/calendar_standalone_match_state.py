@@ -455,11 +455,26 @@ def decode_prevalidated_calendar_sources(payload: dict, *, run_id: str, branch_i
         if (_repository is not None and isinstance(cp_raw.get('state'), dict)
             and cp_raw['state'].get('schema_version') == 'calendar_sporting_checkpoint.v13'):
             from beta_engine.infrastructure.db.canonical_text import span
+            from beta_engine.infrastructure.db.calendar_sporting_checkpoint import decoded_checkpoint_body
             from beta_engine.infrastructure.db.native_fork_source_projection import decoded_global_checkpoint_component
             replayed = checkpoint
+
+            def strict_decode(component):
+                if replayed is not None:
+                    return replayed
+                state = component['state']
+                # ``state`` is this authenticated payload's own decoded value.
+                # Serializing it only to parse the same text back (the whole
+                # multi-megabyte history, on every Tour read) builds the same
+                # body twice; the strict per-part decode and the scope/hash
+                # check after it are unchanged. Unusual bodies keep the round trip.
+                if decoded_checkpoint_body(state):
+                    return parse_checkpoint_json(None, _decoded=state)
+                return parse_checkpoint_json(json.dumps(state))
+
             checkpoint = decoded_global_checkpoint_component(
                 _repository, cp_raw, run_id=run_id, branch_id=branch_id,
-                decode=lambda component: replayed if replayed is not None else parse_checkpoint_json(json.dumps(component['state'])),
+                decode=strict_decode,
                 _component_text=(span(payload_proof, ("content", "calendar_player_sporting_checkpoint"))
                     if payload_proof is not None else None),
             )

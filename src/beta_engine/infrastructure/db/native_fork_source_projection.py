@@ -292,13 +292,40 @@ def decoded_global_tour_source(repository, source, decode, *, _retain_miss=True)
     return result
 
 
-def remember_committed_global_sources(repository, source, captured, *, _take_ownership=False):
+def _committed_text_exceeds(text, limit):
+    """True only if ``text`` (ASCII canonical JSON) is longer than ``limit`` bytes."""
+    return type(text) is str and text.isascii() and len(text) > limit
+
+
+def _committed_checkpoint_text_length(source, text):
+    """Exact ``len(canonical_json(component))`` derived from the payload text.
+
+    ``text`` is ``canonical_json(source.payload)``. Replacing only the sporting
+    checkpoint value by ``null`` changes only that one span of the sorted
+    canonical encoding, so the component length is the difference. This
+    encodes every OTHER component once instead of the multi-hundred-MB
+    checkpoint once more. Used only to decide that NOTHING fits the cache.
+    """
+    content = source.payload['content']
+    other = {**source.payload, 'content': {**content, 'calendar_player_sporting_checkpoint': None}}
+    return len(text) - len(canonical_json(other)) + len('null')
+
+
+def remember_committed_global_sources(repository, source, captured, *, _take_ownership=False,
+                                      _payload_text=None):
     """Called ONLY after successful Save transaction exit and append proof.
 
     An oversize full payload still hands off a fitting checkpoint. No complete
     DTO is promised in that case, matching the original oversize fallback.
     Only the Save coordinator may transfer private captured models that it
     has never exposed and will not use again. Cache reads still copy them.
+
+    ``_payload_text`` may only be the Save's own ``canonical_json`` of exactly
+    ``source.payload``: the text it hashed, inserted and compared with the
+    flushed row before commit. It never becomes a cache key or a proof. It only
+    lets an oversize payload (and an oversize checkpoint) skip re-encoding the
+    complete value merely to learn that nothing can be retained. Skipping a
+    retention is always safe: every later reader misses and strictly decodes.
     """
     component = _global_component(source)
     if component is None:
@@ -306,11 +333,19 @@ def remember_committed_global_sources(repository, source, captured, *, _take_own
         return
     # The whole-payload path now also installs the component. Avoid a second
     # handoff which would return another isolated copy of that same checkpoint.
-    identity = _value_identity(source.run_id, source.branch_id, source.payload)
-    size, _ = identity
-    if size <= MAX_GLOBAL_TOUR_BYTES:
+    if _committed_text_exceeds(_payload_text, MAX_GLOBAL_TOUR_BYTES):
+        identity = None  # canonical_json(source.payload) is this oversize text
+    else:
+        identity = _value_identity(source.run_id, source.branch_id, source.payload)
+    if identity is not None and identity[0] <= MAX_GLOBAL_TOUR_BYTES:
         _decoded_global_source(repository, source, component, lambda _source: captured,
             _identity=identity, _take_ownership=_take_ownership)
+    elif (identity is None and _committed_checkpoint_text_length(source, _payload_text)
+            + len('{"calendar_player_sporting_checkpoint":}') > MAX_GLOBAL_TOUR_BYTES):
+        # decoded_global_checkpoint_component would encode this whole component
+        # only to find it oversize, strictly re-check and return the captured
+        # value WITHOUT retaining anything; its caller discards that value.
+        return
     else:
         decoded_global_checkpoint_component(repository, component,
             run_id=source.run_id, branch_id=source.branch_id,
